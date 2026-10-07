@@ -5,25 +5,25 @@
   "released": true,
   "releasable": true,
   "invocation": "skill",
-  "timestamp": "2026-10-07_07-03-34",
+  "timestamp": "2026-10-07_05-42-38",
   "harness_version": "0.1.0",
   "model": "claude-sonnet-4-6",
   "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
   "snapshot": {
-    "packages/engine/plugin/skills/research/SKILL.md": "d310fe6f0b0144b92c2627252e596c2ed51f0c3fc9a62d81525c4eb487dcafff",
+    "packages/engine/plugin/skills/research/SKILL.md": "e2c30822f71e319dbafb870accc21bf568810964a3536a4082cfc80d63cef0a7",
     "packages/engine/plugin/agents/gps-mentor.md": "587ca17a8f2bc0f7618e05fe4de43706a5ace16e2763d624e9ee6df3b31619c2",
     "packages/engine/plugin/agents/hypothesis-tracking.md": "47d2b5f20f4cd34a8d74c66a22c87c68eb053f47bc16c3875b2ab730638219ec",
     "packages/engine/plugin/agents/image-reader.md": "6092d8f518be75236d45c09e3b8493da21bafd5700778a28500707759e86c5fb",
     "packages/engine/plugin/agents/locality-guide.md": "a149d9e2329bcd3339de508beda489ac6f4a8dd55f043e4c38ee90c68000a627",
     "packages/engine/plugin/agents/person-evidence.md": "0f70989bcafed599a9f49f4e7a87135884a0d07f3d7e50687bddfe662f636aaa",
     "packages/engine/plugin/agents/proof-conclusion.md": "6bf15ca5582fc6857513344ceb6d89a2c4137a5c67f9a15e36499d10f304825b",
-    "packages/engine/plugin/agents/question-selection.md": "32c1804be0e0aae09705bdd6aa7034bf147e8abe8ce64e9bbc3c47d2c3606cc4",
+    "packages/engine/plugin/agents/question-selection.md": "2f745366d06b48d1bfe98c8871c7d86afd9566b73fb534547431fafa17f0a1ec",
     "packages/engine/plugin/agents/research-exhaustiveness.md": "12716dfa12f4a1fbf1eef0c3af5b2d343ff5294b9ff8f709a9efeddffeaf3808",
+    "packages/engine/plugin/agents/search-external-sites.md": "3d261c01298befd903c6790c102d07404bfc200e6b1657a6d7f96b18e8455e1c",
     "eval/tests/unit/research/attached-before-searching.json": "b1b8633384f9ef530074254724255f6d22acb5d4a672a683c620d0031275ca6c",
     "eval/tests/unit/research/autonomous-handoff.json": "4d1b67882c3451bff70191e6997f82ad355bc1f75168492bd20ec4e1075452b2",
     "eval/tests/unit/research/autonomous-is-always-a-job.json": "cb7c2dc27e83c4903b4f4aef257bc9514e9fc504b2b358a9ef8275e88468ee95",
     "eval/tests/unit/research/bounded-ask-not-a-job.json": "fb0403a697c4dd1ce5153a34a3c12773f5415671c65a9251a8acf62fe1644438",
-    "eval/tests/unit/research/candidates-not-verdicts.json": "8366066d5505829df3e4de38835563cf747ed155b7087e3671a48f586b8a0cb0",
     "eval/tests/unit/research/negative-indexed-search.json": "45c8aba22f65572ac20aebb258cd226479a95781f663b0a2e7f46ca69d999025",
     "eval/tests/unit/research/negative-no-project.json": "f22a2aa4e2e1db024058e53705342b1f338b428f07126f07f7226f79fc9f6b39",
     "eval/tests/unit/research/negative-research-plan.json": "602e850085b9e40f50839379a2c11fc386098738cd3dee54965d2b9e7f360d37",
@@ -43,7 +43,6 @@
     "eval/fixtures/mcp/image-search-any.json": "65e37c0e71771edc75129d1779b96bb525f1e31ef88eb906b263b06ef55e636f",
     "eval/fixtures/mcp/person-read-driscoll-attached-sources.json": "c4e377dc2453f7c31b7c795a653cbc7aec062e919ef9ef6569c3f27a5eef278f",
     "eval/fixtures/mcp/record-search-catch-all-empty.json": "3538a26b7c68328d78f76fee85663261b241709f3fd9c697edb886dfc9d0d3c9",
-    "eval/fixtures/mcp/record-search-driscoll-sibling-candidates.json": "7e555d193a263c28a80611e9880d77a2b7e8fab62a6c3ea00ae278a6a7a53395",
     "eval/fixtures/mcp/source-attachments-driscoll.json": "1b19b8450d3fb75b554853934d1c39f7eec3d22efdc3d4e6882711df2c9db3d0",
     "eval/fixtures/mcp/volume-search-any.json": "26736619cd6e76c4e7a28423676da03987d738447c98d0f0e4c9dd862a827d38"
   },
@@ -69,19 +68,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D from Quebec Civil Registration Deaths, 1867–1900). The response accurately cites the source and provides the correct URL. Two related sources (burial entry SD-DRIS-C and headstone photograph SD-DRIS-F) are also correctly identified. All factual claims are supported by the tool response and no fabricated material is present."
+            "rationale": "Claude correctly identified that death records are already attached to Cornelius Driscoll's profile. The two sources cited (Quebec Civil Registration Deaths SD-DRIS-D and Quebec Catholic Parish Registers burial SD-DRIS-C) are both present in the tool response and accurately described. The URLs and collection titles match the tool data. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user asked a single, focused question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude directly answered this question by confirming the death record exists and identifying it by source reference and collection. The response addressed exactly what was requested without omission."
+            "rationale": "The user asked a single bounded question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude fully addressed this by confirming that yes, death records exist and are already attached, identifying both the civil registration and burial record with proper citations and URLs. The response directly answers what was asked without omission."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP tool call to mcp__genealogy__person_read with personId 'GJ72-9WD', which matches the expected_args exactly. The call was appropriate for the task and returned the necessary information about Cornelius Driscoll's attached sources."
+            "rationale": "Claude made one MCP tool call to mcp__genealogy__person_read with personId 'GJ72-9WD', which exactly matches the expected_args. The call was correctly formed and returned the full profile data including all seven attached sources. No argument errors or fixture_not_found issues occurred."
           }
         ],
         "review_dimensions": [
@@ -89,54 +88,54 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D from Quebec Civil Registration Deaths, 1867–1900). The response accurately cites the source and provides the correct URL. Two related sources (burial entry SD-DRIS-C and headstone photograph SD-DRIS-F) are also correctly identified. All factual claims are supported by the tool response and no fabricated material is present."
+            "rationale": "Claude correctly identified that death records are already attached to Cornelius Driscoll's profile. The two sources cited (Quebec Civil Registration Deaths SD-DRIS-D and Quebec Catholic Parish Registers burial SD-DRIS-C) are both present in the tool response and accurately described. The URLs and collection titles match the tool data. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user asked a single, focused question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude directly answered this question by confirming the death record exists and identifying it by source reference and collection. The response addressed exactly what was requested without omission."
+            "rationale": "The user asked a single bounded question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude fully addressed this by confirming that yes, death records exist and are already attached, identifying both the civil registration and burial record with proper citations and URLs. The response directly answers what was asked without omission."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP tool call to mcp__genealogy__person_read with personId 'GJ72-9WD', which matches the expected_args exactly. The call was appropriate for the task and returned the necessary information about Cornelius Driscoll's attached sources."
+            "rationale": "Claude made one MCP tool call to mcp__genealogy__person_read with personId 'GJ72-9WD', which exactly matches the expected_args. The call was correctly formed and returned the full profile data including all seven attached sources. No argument errors or fixture_not_found issues occurred."
           }
         ]
       },
       "totals": {
-        "duration_ms": 29016.550799999095,
-        "duration_api_ms": 25324,
-        "judge_duration_ms": 5202.084399999876,
-        "wall_clock_ms": 35776.72791481018,
+        "duration_ms": 31150.83689999301,
+        "duration_api_ms": 25648,
+        "judge_duration_ms": 5453.337999992073,
+        "wall_clock_ms": 38080.67178726196,
         "num_turns": 3,
         "input_tokens": 374,
-        "cached_input_tokens": 64725,
-        "cache_creation_input_tokens": 22807,
-        "output_tokens": 1080,
-        "judge_input_tokens": 8841,
+        "cached_input_tokens": 79439,
+        "cache_creation_input_tokens": 29229,
+        "output_tokens": 1028,
+        "judge_input_tokens": 8908,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 385,
-        "skill_cost_usd": 0.12134175,
-        "judge_cost_usd": 0.010766,
-        "total_cost_usd": 0.13210775
+        "judge_output_tokens": 382,
+        "skill_cost_usd": 0.14905845,
+        "judge_cost_usd": 0.010818,
+        "total_cost_usd": 0.15987645
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_021_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_021_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 29016.550799999095,
-          "duration_api_ms": 25324,
+          "duration_ms": 31150.83689999301,
+          "duration_api_ms": 25648,
           "num_turns": 3,
           "skill_attempts": 1,
           "input_tokens": 374,
-          "cached_input_tokens": 64725,
-          "cache_creation_input_tokens": 22807,
-          "output_tokens": 1080,
+          "cached_input_tokens": 79439,
+          "cache_creation_input_tokens": 29229,
+          "output_tokens": 1028,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 367,
@@ -150,19 +149,19 @@
             },
             "claude-sonnet-4-6": {
               "inputTokens": 7,
-              "outputTokens": 1061,
-              "cacheReadInputTokens": 64725,
-              "cacheCreationInputTokens": 22807,
+              "outputTokens": 1009,
+              "cacheReadInputTokens": 79439,
+              "cacheCreationInputTokens": 29229,
               "webSearchRequests": 0,
-              "costUSD": 0.12087975,
+              "costUSD": 0.14859645,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.12134175,
+          "skill_cost_usd": 0.14905845,
           "output": {
-            "text_response": "I'll start by reading what's already attached to Cornelius Driscoll before searching anything new.\n\nA death record is already attached — no search needed.\n\n**Source SD-DRIS-D** on Cornelius's profile is an entry from **\"Quebec, Civil Registration Deaths, 1867–1900\"**, recorded in the Sherbrooke district:\n\n> *\"Quebec, Civil Registration Deaths, 1867–1900,\" database, FamilySearch, entry for Cornelius Driscoll, Sherbrooke district.*\n> [https://familysearch.org/ark:/61903/1:1:DRIS-004](https://familysearch.org/ark:/61903/1:1:DRIS-004)\n\nTwo related sources also speak to his death and burial:\n\n- **SD-DRIS-C** — burial entry in the Quebec Catholic Parish Registers (St. Patrick's Cemetery, Sherbrooke)\n- **SD-DRIS-F** — headstone photograph at St. Patrick's Cemetery (uploaded memory)\n\nSo yes — there is a civil death registration for him, and it's already on his profile. Would you like me to extract the assertions from that record and work it into a research project, or is this all you needed?",
+            "text_response": "This is a bounded request — find a death record for Cornelius Driscoll (GJ72-9WD). I'll start by reading what's already attached to his profile before searching.\n\nReading Cornelius Driscoll's profile to see what's already attached before searching.\n\nYes — a death record is already attached to Cornelius Driscoll's FamilySearch profile. In fact there are two death-related sources:\n\n1. **Death registration** — *\"Quebec, Civil Registration Deaths, 1867–1900\"*, entry for Cornelius Driscoll, Sherbrooke district.\n   [https://familysearch.org/ark:/61903/1:1:DRIS-004](https://familysearch.org/ark:/61903/1:1:DRIS-004)\n\n2. **Burial record** — *\"Quebec, Catholic Parish Registers, 1621–1979\"*, burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke.\n   [https://familysearch.org/ark:/61903/1:1:DRIS-003](https://familysearch.org/ark:/61903/1:1:DRIS-003)\n   (His burial place is also noted on the profile directly: St. Patrick's Cemetery, Sherbrooke, Quebec.)\n\nSo the profile already has both a civil death registration and a burial entry from the Catholic parish registers. Would you like me to extract the assertions from either or both of those records and bring the details into a research project?",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -188,8 +187,8 @@
               {
                 "tool": "ToolSearch",
                 "args": {
-                  "query": "select:mcp__genealogy__person_read",
-                  "max_results": "1"
+                  "query": "select:mcp__genealogy__person_read,mcp__genealogy__source_attachments,mcp__genealogy__record_search",
+                  "max_results": "3"
                 }
               }
             ],
@@ -386,30 +385,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D from Quebec Civil Registration Deaths, 1867–1900). The response accurately cites the source and provides the correct URL. Two related sources (burial entry SD-DRIS-C and headstone photograph SD-DRIS-F) are also correctly identified. All factual claims are supported by the tool response and no fabricated material is present."
+                "rationale": "Claude correctly identified that death records are already attached to Cornelius Driscoll's profile. The two sources cited (Quebec Civil Registration Deaths SD-DRIS-D and Quebec Catholic Parish Registers burial SD-DRIS-C) are both present in the tool response and accurately described. The URLs and collection titles match the tool data. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user asked a single, focused question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude directly answered this question by confirming the death record exists and identifying it by source reference and collection. The response addressed exactly what was requested without omission."
+                "rationale": "The user asked a single bounded question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude fully addressed this by confirming that yes, death records exist and are already attached, identifying both the civil registration and burial record with proper citations and URLs. The response directly answers what was asked without omission."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call to mcp__genealogy__person_read with personId 'GJ72-9WD', which matches the expected_args exactly. The call was appropriate for the task and returned the necessary information about Cornelius Driscoll's attached sources."
+                "rationale": "Claude made one MCP tool call to mcp__genealogy__person_read with personId 'GJ72-9WD', which exactly matches the expected_args. The call was correctly formed and returned the full profile data including all seven attached sources. No argument errors or fixture_not_found issues occurred."
               }
             ],
-            "judge_cost_usd": 0.010766,
-            "duration_ms": 5202.084399999876,
+            "judge_cost_usd": 0.010818,
+            "duration_ms": 5453.337999992073,
             "error": null,
-            "input_tokens": 8841,
+            "input_tokens": 8908,
             "cached_input_tokens": 0,
-            "output_tokens": 385
+            "output_tokens": 382
           },
-          "started_at": 1791356741.1760926,
-          "ended_at": 1791356776.9528205
+          "started_at": 1791351758.6211455,
+          "ended_at": 1791351796.7018173
         }
       ],
       "grading_mode": "dimensions",
@@ -432,19 +431,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's response accurately reflects the project state and evidence. The three-source convergence (1850 census, 1860 census, death certificate) supporting Thomas Flynn as Patrick's father is correctly characterized. The birthplace conflict resolution (Ireland vs. Pennsylvania) is accurately described with proper citation to c_001. The tier rating of 'Probable' is correctly justified given the indirect census evidence and secondary informant on the death certificate. No fabricated material or unsupported claims appear. The tool responses confirm all stated facts: ps_001 exists with tier 'probable', q_001 is 'in_progress', q_002 is 'resolved', and the tree already carries R1 (ParentChild relationship). The response correctly notes that proof-critique has never run (0 evaluations returned) and that this is the mandatory next gate."
+            "rationale": "Claude's response accurately describes the project state, correctly identifies that ps_001 exists at tier 'probable' with no proof-critique evaluation yet, verifies the tree-encoding gate (R1 ParentChild relationship present), and appropriately routes to the gps-mentor skill for proof-critique review. All factual claims about the project structure, sources, and conflict resolution align with the tool responses and before-state. No fabricated material or unsupported assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: verified project existence and active status, checked both questions (q_001 and q_002) and their statuses, reviewed the proof summary (ps_001) with its tier and evidence basis, confirmed the tree-encoding gate was satisfied (R1 present), identified that proof-critique evaluation was missing (the mandatory gate), and routed to gps-mentor for proof-critique evaluation. The response then re-invoked proof-conclusion to mark q_001 resolved and complete the project. The user's autonomous request for parentage research was fully addressed without pausing for clarification. All substantive work required by the input state was completed."
+            "rationale": "Claude addressed the autonomous research request fully. It checked project existence, retrieved proof summary ps_001 and its narrative, verified the mandatory tree-encoding gate (R1 present), confirmed no prior proof-critique evaluation exists, and made the required hand-off to gps-mentor for proof-critique review. The response includes a clear summary table of gates verified and explains remaining steps before project completion. All required workflow steps were executed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. (1) project_context with correct projectPath — matched.kind='live'. (2) research_query with section='questions' — matched.kind='live', correctly retrieved both q_001 and q_002. (3) research_query with section='proof_summaries' — matched.kind='live', correctly retrieved ps_001. (4) research_query with section='evaluations', targetId='ps_001', focus='proof-critique' — matched.kind='live', correctly returned empty items list (0 evaluations). No fixture_not_found errors. Arguments align with expected_args semantically. The calls were well-sequenced to establish state before routing decisions."
+            "rationale": "All four MCP tool calls used correct arguments. project_context call passed the correct projectPath. research_query calls for proof_summaries, evaluations (with targetId ps_001 and focus proof-critique), and questions all used appropriate section parameters and targetId where needed. No calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments align semantically with expected_args (which were null, indicating any reasonable args were acceptable). No critical identifiers were wrong."
           }
         ],
         "review_dimensions": [
@@ -452,54 +451,54 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's response accurately reflects the project state and evidence. The three-source convergence (1850 census, 1860 census, death certificate) supporting Thomas Flynn as Patrick's father is correctly characterized. The birthplace conflict resolution (Ireland vs. Pennsylvania) is accurately described with proper citation to c_001. The tier rating of 'Probable' is correctly justified given the indirect census evidence and secondary informant on the death certificate. No fabricated material or unsupported claims appear. The tool responses confirm all stated facts: ps_001 exists with tier 'probable', q_001 is 'in_progress', q_002 is 'resolved', and the tree already carries R1 (ParentChild relationship). The response correctly notes that proof-critique has never run (0 evaluations returned) and that this is the mandatory next gate."
+            "rationale": "Claude's response accurately describes the project state, correctly identifies that ps_001 exists at tier 'probable' with no proof-critique evaluation yet, verifies the tree-encoding gate (R1 ParentChild relationship present), and appropriately routes to the gps-mentor skill for proof-critique review. All factual claims about the project structure, sources, and conflict resolution align with the tool responses and before-state. No fabricated material or unsupported assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: verified project existence and active status, checked both questions (q_001 and q_002) and their statuses, reviewed the proof summary (ps_001) with its tier and evidence basis, confirmed the tree-encoding gate was satisfied (R1 present), identified that proof-critique evaluation was missing (the mandatory gate), and routed to gps-mentor for proof-critique evaluation. The response then re-invoked proof-conclusion to mark q_001 resolved and complete the project. The user's autonomous request for parentage research was fully addressed without pausing for clarification. All substantive work required by the input state was completed."
+            "rationale": "Claude addressed the autonomous research request fully. It checked project existence, retrieved proof summary ps_001 and its narrative, verified the mandatory tree-encoding gate (R1 present), confirmed no prior proof-critique evaluation exists, and made the required hand-off to gps-mentor for proof-critique review. The response includes a clear summary table of gates verified and explains remaining steps before project completion. All required workflow steps were executed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. (1) project_context with correct projectPath — matched.kind='live'. (2) research_query with section='questions' — matched.kind='live', correctly retrieved both q_001 and q_002. (3) research_query with section='proof_summaries' — matched.kind='live', correctly retrieved ps_001. (4) research_query with section='evaluations', targetId='ps_001', focus='proof-critique' — matched.kind='live', correctly returned empty items list (0 evaluations). No fixture_not_found errors. Arguments align with expected_args semantically. The calls were well-sequenced to establish state before routing decisions."
+            "rationale": "All four MCP tool calls used correct arguments. project_context call passed the correct projectPath. research_query calls for proof_summaries, evaluations (with targetId ps_001 and focus proof-critique), and questions all used appropriate section parameters and targetId where needed. No calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments align semantically with expected_args (which were null, indicating any reasonable args were acceptable). No critical identifiers were wrong."
           }
         ]
       },
       "totals": {
-        "duration_ms": 193520.904099998,
-        "duration_api_ms": 165818,
-        "judge_duration_ms": 8854.256999999052,
-        "wall_clock_ms": 212125.11348724365,
+        "duration_ms": 106820.39389992133,
+        "duration_api_ms": 99829,
+        "judge_duration_ms": 7563.429999980144,
+        "wall_clock_ms": 116009.84740257263,
         "num_turns": 12,
-        "input_tokens": 363,
-        "cached_input_tokens": 319489,
-        "cache_creation_input_tokens": 41654,
-        "output_tokens": 7994,
-        "judge_input_tokens": 14903,
+        "input_tokens": 365,
+        "cached_input_tokens": 354013,
+        "cache_creation_input_tokens": 30786,
+        "output_tokens": 4593,
+        "judge_input_tokens": 14583,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 632,
-        "skill_cost_usd": 0.37221620000000005,
-        "judge_cost_usd": 0.018063,
-        "total_cost_usd": 0.39027920000000005
+        "judge_output_tokens": 444,
+        "skill_cost_usd": 0.2908094,
+        "judge_cost_usd": 0.016803000000000002,
+        "total_cost_usd": 0.3076124
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_005_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_005_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 193520.904099998,
-          "duration_api_ms": 165818,
+          "duration_ms": 106820.39389992133,
+          "duration_api_ms": 99829,
           "num_turns": 12,
           "skill_attempts": 1,
-          "input_tokens": 363,
-          "cached_input_tokens": 319489,
-          "cache_creation_input_tokens": 41654,
-          "output_tokens": 7994,
+          "input_tokens": 365,
+          "cached_input_tokens": 354013,
+          "cache_creation_input_tokens": 30786,
+          "output_tokens": 4593,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 346,
@@ -512,20 +511,20 @@
               "maxOutputTokens": 32000
             },
             "claude-sonnet-4-6": {
-              "inputTokens": 17,
-              "outputTokens": 7980,
-              "cacheReadInputTokens": 319489,
-              "cacheCreationInputTokens": 41654,
+              "inputTokens": 19,
+              "outputTokens": 4579,
+              "cacheReadInputTokens": 354013,
+              "cacheCreationInputTokens": 30786,
               "webSearchRequests": 0,
-              "costUSD": 0.3718002,
+              "costUSD": 0.29039339999999997,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.37221620000000005,
+          "skill_cost_usd": 0.2908094,
           "output": {
-            "text_response": "Let me check whether a project already exists before routing anywhere.\n\nProject exists and is active. Let me check the current state of both questions and proof summaries before routing.\n\nNow let me check if a proof-critique evaluation for ps_001 already exists.\n\nNo proof-critique exists yet. Let me also verify the tree-encoding gate — does tree.gedcomx.json already carry the ParentChild relationship the ps_001 conclusion requires?\n\nState is clear. The tree already carries the ParentChild relationship (R1: I2→I1, Thomas Flynn→Patrick Flynn), so the tree-encoding gate is satisfied. The proof-critique mentor gate for ps_001 has never run — that's the mandatory next step. Invoking it now.\n\nThe mentor gate delegation is recorded as made. Now I need to re-invoke proof-conclusion for q_001 to mark it resolved — q_002 is already resolved, so once q_001 is resolved proof-conclusion can also write project.status = \"completed.\"\n\nHere is what was accomplished this run:\n\n---\n\n## Patrick Flynn Parentage Research — Session Summary\n\n**Objective:** Identify the parents of Patrick Flynn (b. ~1845, PA, d. 1908 Schuylkill County, PA)\n\n### State found on entry\n\nThe project already had substantial work in place:\n\n| Question | Status found | Proof summary |\n|---|---|---|\n| **q_001** — Who were Patrick Flynn's parents? | `in_progress` (ps_001 written, but not yet marked resolved) | **ps_001** — tier: **Probable**, vehicle: Summary |\n| **q_002** — Where was Patrick in the 1850 census? | `resolved` (supporting question) | None required (locating question unblocking q_001) |\n\n### Evidence basis (ps_001)\n\nThree independent lines support **Thomas Flynn of Schuylkill County, PA** as Patrick's father:\n\n1. **1850 U.S. Census** — Patrick Flynn, age 5, in Thomas Flynn's household, dwelling 84, family 91, Schuylkill County. Indirect evidence (relationship column not in use until 1880).\n2. **1860 U.S. Census** — Patrick Flynn, age 15, still in Thomas Flynn's household, dwelling 112. Corroborating indirect evidence.\n3. **1908 Pennsylvania Death Certificate** — Names \"Thomas Flynn\" as father. Direct evidence; informant (son-in-law James Brown) is secondary for this fact.\n\nA birthplace conflict (censuses: Ireland vs. death cert: Pennsylvania) was resolved in conflict c_001: Ireland accepted, per GPS preponderance hierarchy (contemporary census recordings by closer informants outweigh a secondary informant's 63-years-later recollection).\n\nThe conclusion is rated **Probable** rather than Proved because both census records offer only indirect evidence of parentage and the death certificate informant is secondary. Research is noted as not yet exhaustive (1870, 1880, 1900 censuses and Thomas Flynn's probate not yet searched).\n\n### Tree encoding verified\n\n`tree.gedcomx.json` already carries relationship **R1** (`ParentChild`, parent: I2 Thomas Flynn → child: I1 Patrick Flynn), backed by sources S1 (1850 census), S2 (1860 census), and S3 (death cert). Tree-encoding gate: ✓ satisfied.\n\n### Steps routed this session\n\n1. **GPS Mentor — proof-critique on ps_001** (mandatory gate): Delegated to `gps-mentor` with focus `proof-critique`, target `ps_001`. The delegation is recorded and complete.\n2. **Proof-conclusion re-invoked for q_001**: Delegated to `proof-conclusion` to mark q_001 resolved and, with q_002 already resolved, write `project.status = \"completed\"`. The delegation is recorded and complete.\n\n---\n\nThe research concludes that Patrick Flynn was **probably** the son of **Thomas Flynn** of Schuylkill County, Pennsylvania (Irish immigrant, b. ~1818). The conclusion would advance to **Proved** if additional searches (1870/1880/1900 censuses, Thomas Flynn's probate) confirm the relationship — those searches were planned but research was declared sufficiently exhaustive at the Probable threshold given the three-source convergence.",
+            "text_response": "Starting the GPS research workflow for Patrick Flynn's parentage. Let me first check whether a project already exists.\n\nProject exists — reading current state.\n\nGood — a project exists with two questions and a proof summary at ps_001 awaiting mentor review. Let me pull the details I need before routing.\n\nNo proof-critique on record — let me also check q_002 details before routing.\n\nq_002 is already fully resolved. q_001 has ps_001 (tier \"probable\") but no proof-critique yet. Before running the mentor gate I must verify the tree-encoding gate — checking tree.gedcomx.json for the ParentChild relationship.\n\nTree-encoding gate ✓ — R1 (ParentChild: Thomas Flynn I2 → Patrick Flynn I1) is present in tree.gedcomx.json. Proceeding to the mandatory proof-critique mentor gate for ps_001.\n\nThe proof-critique mentor hand-off for ps_001 has been made. Here is a summary of the workflow routing for this autonomous run:\n\n---\n\n## Research Run Summary — Patrick Flynn Parentage\n\n**Project:** Identify the parents of Patrick Flynn (b. ca. 1845, PA; d. 1908, Schuylkill County, PA)\n\n### State at entry\nThe project already had:\n- **q_001** (\"Who were the parents of Patrick Flynn?\") — proof summary **ps_001** written at tier **Probable**, concluding Patrick is probably the son of **Thomas Flynn** of Schuylkill County, PA\n- **q_002** (\"Where was Patrick Flynn in the 1850 census?\") — fully resolved with exhaustive declaration, feeding forward into q_001\n- Three sources supporting ps_001: 1850 U.S. Census, 1860 U.S. Census, and 1908 Pennsylvania death certificate; birthplace conflict c_001 (Ireland vs. Pennsylvania) resolved in favor of Ireland based on informant proximity\n\n### Gates verified this run\n\n| Gate | Result |\n|------|--------|\n| **Tree-encoding** (ParentChild R1: Thomas Flynn I2 → Patrick Flynn I1 in tree.gedcomx.json) | ✅ Present |\n| **Proof-critique mentor gate** (ps_001) | ✅ Hand-off made |\n\n### Remaining before project completion\n- The mentor verdict for ps_001 must land in `evaluations[]` before q_001 can be marked `resolved`\n- Once q_001 is `resolved`, `@plugin:proof-conclusion` must be re-invoked to write `project.status = \"completed\"` via its §8 — the orchestrator does not write this directly\n- The proof narrative notes three gaps not yet addressed (1870, 1880, 1900 censuses; Thomas Flynn probate) — these contribute to the **Probable** rather than **Proved** tier and would need follow-up searches to advance the conclusion",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -534,7 +533,7 @@
               {
                 "tool": "mcp__genealogy__project_context",
                 "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy"
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-_mot5cap"
                 },
                 "expected_args": null,
                 "matched": {
@@ -544,7 +543,7 @@
                 "response_fixture": "live:project_context",
                 "response": {
                   "ok": true,
-                  "buildId": "0.1.0+2026-10-07.b88d2cbf",
+                  "buildId": "0.1.0+2026-10-07.8c2eb61c.dirty",
                   "projectStatus": "active",
                   "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
                   "openQuestions": [
@@ -678,7 +677,67 @@
               {
                 "tool": "mcp__genealogy__research_query",
                 "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy",
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-_mot5cap",
+                  "section": "proof_summaries"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "proof_summaries",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "ps_001",
+                      "question_id": "q_001",
+                      "tier": "probable",
+                      "vehicle": "summary",
+                      "shortfall": "gap",
+                      "supporting_assertion_ids": [
+                        "a_004",
+                        "a_010",
+                        "a_013"
+                      ],
+                      "resolved_conflict_ids": [
+                        "c_001"
+                      ],
+                      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
+                      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-_mot5cap",
+                  "section": "evaluations",
+                  "targetId": "ps_001",
+                  "focus": "proof-critique"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "evaluations",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-_mot5cap",
                   "section": "questions"
                 },
                 "expected_args": null,
@@ -751,66 +810,6 @@
                   ],
                   "truncated": false
                 }
-              },
-              {
-                "tool": "mcp__genealogy__research_query",
-                "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy",
-                  "section": "proof_summaries"
-                },
-                "expected_args": null,
-                "matched": {
-                  "kind": "live",
-                  "index": null
-                },
-                "response_fixture": "live:research_query",
-                "response": {
-                  "ok": true,
-                  "section": "proof_summaries",
-                  "count": 1,
-                  "items": [
-                    {
-                      "id": "ps_001",
-                      "question_id": "q_001",
-                      "tier": "probable",
-                      "vehicle": "summary",
-                      "shortfall": "gap",
-                      "supporting_assertion_ids": [
-                        "a_004",
-                        "a_010",
-                        "a_013"
-                      ],
-                      "resolved_conflict_ids": [
-                        "c_001"
-                      ],
-                      "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), and death certificate (FamilySearch — log_005). Probate search in progress. 1870, 1880, and 1900 censuses not yet searched.",
-                      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845–1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). The 1850 census does not state relationships, but Patrick's position in the household and shared surname are consistent with a parent-child relationship. The informant is indeterminate but likely a household member. This constitutes indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Like the 1850 census, the 1860 census does not state relationships explicitly (the relationship column was not introduced until 1880). Patrick's position in the household, shared surname, and age consistent with the 1850 enumeration support a parent-child relationship. This constitutes indirect evidence of parentage.\n\n3. **1908 Death Certificate** (Original Source). Patrick Flynn's death certificate (no. 4521, Pennsylvania Department of Health) names \"Thomas Flynn\" as his father. The informant was James Brown, identified as Patrick's son-in-law. As a son-in-law reporting his father-in-law's parentage, Brown is a secondary informant for this fact — he was not a witness to Patrick's birth and is reporting what he was told. Nevertheless, this is direct evidence naming the father.\n\n### Conflict Resolution\n\nA birthplace conflict exists: the 1850 and 1860 censuses list Patrick's birthplace as Ireland, while the 1908 death certificate states Pennsylvania. The two census records are contemporary recordings with informants likely present in the household, while the death certificate was created 63 years after Patrick's birth by a son-in-law with no firsthand knowledge of the event. Per the GPS preponderance hierarchy, contemporary recordings by closer informants outweigh later recollections by secondary informants. Ireland is accepted as the birthplace; the death certificate entry is attributed to informant error.\n\n### Assessment\n\nThe conclusion is rated **Probable** rather than **Proved** because: (a) both census sources (1850 and 1860) provide only indirect evidence of parentage (relationships not stated — the relationship column was not introduced until 1880), (b) the death certificate informant is secondary, and (c) research is not yet exhaustive — the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records have not been located. If Thomas Flynn's will names Patrick as a son, or if additional census records confirm the relationship, the conclusion would advance to **Proved**.\n\n### Citations\n\n1. 1850 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 84, family 91, Thomas Flynn household; NARA microfilm publication M432, roll 810; digital image, FamilySearch.org, accessed 1 May 2026.\n2. 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n3. Pennsylvania Department of Health, death certificate no. 4521 (1908), Patrick Flynn; Pennsylvania State Archives, Harrisburg; digital image, FamilySearch.org, accessed 3 May 2026."
-                    }
-                  ],
-                  "truncated": false
-                }
-              },
-              {
-                "tool": "mcp__genealogy__research_query",
-                "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy",
-                  "section": "evaluations",
-                  "targetId": "ps_001",
-                  "focus": "proof-critique"
-                },
-                "expected_args": null,
-                "matched": {
-                  "kind": "live",
-                  "index": null
-                },
-                "response_fixture": "live:research_query",
-                "response": {
-                  "ok": true,
-                  "section": "evaluations",
-                  "count": 0,
-                  "items": [],
-                  "truncated": false
-                }
               }
             ],
             "files_created": [],
@@ -825,37 +824,34 @@
               {
                 "tool": "ToolSearch",
                 "args": {
-                  "query": "select:mcp__genealogy__project_context,mcp__genealogy__research_query",
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
                   "max_results": "2"
                 }
               },
               {
                 "tool": "Glob",
                 "args": {
-                  "pattern": "tree.gedcomx.json",
-                  "path": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy"
+                  "pattern": "research.json"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "tree.gedcomx.json"
                 }
               },
               {
                 "tool": "Read",
                 "args": {
-                  "file_path": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy\\tree.gedcomx.json"
+                  "file_path": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-_mot5cap\\tree.gedcomx.json"
                 }
               },
               {
                 "tool": "Agent",
                 "args": {
-                  "description": "GPS mentor proof-critique for ps_001",
-                  "prompt": "You are the GPS mentor. Run a `proof-critique` review of proof summary ps_001 for question q_001 in the genealogy project at:\n\nprojectPath: C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy\nfocus: proof-critique\ntarget_id: ps_001\n\nRead the project state, evaluate ps_001's narrative against the Genealogical Proof Standard, and record a structured verdict in evaluations[].",
+                  "description": "GPS Mentor proof-critique of ps_001",
+                  "prompt": "Please perform a proof-critique of proof summary ps_001 for the Patrick Flynn parentage project.\n\nProject path: C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-_mot5cap\n\nFocus: proof-critique\nTarget ID: ps_001\n\nRead the project state and the proof summary narrative, then evaluate it against the GPS components and record a structured verdict in evaluations/. This is a mandatory gate before the question can be marked resolved.",
                   "subagent_type": "gps-mentor"
-                }
-              },
-              {
-                "tool": "Agent",
-                "args": {
-                  "description": "proof-conclusion to resolve q_001 and complete project",
-                  "prompt": "Re-invoke proof-conclusion for question q_001 (\"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\") in the genealogy project at:\n\nprojectPath: C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-g9rczegy\nquestionId: q_001\n\nContext:\n- Proof summary ps_001 already exists at tier \"probable\" (vehicle: summary).\n- The ParentChild relationship (Thomas Flynn → Patrick Flynn, R1 in tree.gedcomx.json) is already encoded in the tree.\n- The proof-critique mentor gate for ps_001 has been invoked (the delegation counts as made).\n- q_001 storedStatus is still \"in_progress\"; it needs to be marked \"resolved.\"\n- q_002 is already storedStatus \"resolved.\"\n- Once q_001 is resolved, all questions will be resolved — please also write project.status = \"completed\" per §8 of your instructions.",
-                  "subagent_type": "proof-conclusion"
                 }
               }
             ],
@@ -863,11 +859,6 @@
               {
                 "subagent_type": "gps-mentor",
                 "text": "'gps-mentor' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and complete. Do not invoke any further skill, do not re-invoke this one, and do not re-query project state to decide what to do next. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'gps-mentor' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'gps-mentor' wrote, changed or concluded anything the text does not state.",
-                "is_error": true
-              },
-              {
-                "subagent_type": "proof-conclusion",
-                "text": "'proof-conclusion' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and complete. Do not invoke any further skill, do not re-invoke this one, and do not re-query project state to decide what to do next. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'proof-conclusion' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'proof-conclusion' wrote, changed or concluded anything the text does not state.",
                 "is_error": true
               }
             ],
@@ -884,7 +875,7 @@
               {
                 "kind": "prose_observation",
                 "check": "report_no_internal_identifiers_in_response",
-                "observation": "internal identifiers in the reply: c_001, ps_001, q_001, q_002, tree.gedcomx.json"
+                "observation": "internal identifiers in the reply: c_001, evaluations[], ps_001, q_001, q_002, tree.gedcomx.json"
               }
             ]
           },
@@ -1074,30 +1065,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response accurately reflects the project state and evidence. The three-source convergence (1850 census, 1860 census, death certificate) supporting Thomas Flynn as Patrick's father is correctly characterized. The birthplace conflict resolution (Ireland vs. Pennsylvania) is accurately described with proper citation to c_001. The tier rating of 'Probable' is correctly justified given the indirect census evidence and secondary informant on the death certificate. No fabricated material or unsupported claims appear. The tool responses confirm all stated facts: ps_001 exists with tier 'probable', q_001 is 'in_progress', q_002 is 'resolved', and the tree already carries R1 (ParentChild relationship). The response correctly notes that proof-critique has never run (0 evaluations returned) and that this is the mandatory next gate."
+                "rationale": "Claude's response accurately describes the project state, correctly identifies that ps_001 exists at tier 'probable' with no proof-critique evaluation yet, verifies the tree-encoding gate (R1 ParentChild relationship present), and appropriately routes to the gps-mentor skill for proof-critique review. All factual claims about the project structure, sources, and conflict resolution align with the tool responses and before-state. No fabricated material or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: verified project existence and active status, checked both questions (q_001 and q_002) and their statuses, reviewed the proof summary (ps_001) with its tier and evidence basis, confirmed the tree-encoding gate was satisfied (R1 present), identified that proof-critique evaluation was missing (the mandatory gate), and routed to gps-mentor for proof-critique evaluation. The response then re-invoked proof-conclusion to mark q_001 resolved and complete the project. The user's autonomous request for parentage research was fully addressed without pausing for clarification. All substantive work required by the input state was completed."
+                "rationale": "Claude addressed the autonomous research request fully. It checked project existence, retrieved proof summary ps_001 and its narrative, verified the mandatory tree-encoding gate (R1 present), confirmed no prior proof-critique evaluation exists, and made the required hand-off to gps-mentor for proof-critique review. The response includes a clear summary table of gates verified and explains remaining steps before project completion. All required workflow steps were executed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments. (1) project_context with correct projectPath — matched.kind='live'. (2) research_query with section='questions' — matched.kind='live', correctly retrieved both q_001 and q_002. (3) research_query with section='proof_summaries' — matched.kind='live', correctly retrieved ps_001. (4) research_query with section='evaluations', targetId='ps_001', focus='proof-critique' — matched.kind='live', correctly returned empty items list (0 evaluations). No fixture_not_found errors. Arguments align with expected_args semantically. The calls were well-sequenced to establish state before routing decisions."
+                "rationale": "All four MCP tool calls used correct arguments. project_context call passed the correct projectPath. research_query calls for proof_summaries, evaluations (with targetId ps_001 and focus proof-critique), and questions all used appropriate section parameters and targetId where needed. No calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments align semantically with expected_args (which were null, indicating any reasonable args were acceptable). No critical identifiers were wrong."
               }
             ],
-            "judge_cost_usd": 0.018063,
-            "duration_ms": 8854.256999999052,
+            "judge_cost_usd": 0.016803000000000002,
+            "duration_ms": 7563.429999980144,
             "error": null,
-            "input_tokens": 14903,
+            "input_tokens": 14583,
             "cached_input_tokens": 0,
-            "output_tokens": 632
+            "output_tokens": 444
           },
-          "started_at": 1791356616.0396092,
-          "ended_at": 1791356828.1647227
+          "started_at": 1791351758.6122413,
+          "ended_at": 1791351874.6220887
         }
       ],
       "grading_mode": "trigger",
@@ -1120,19 +1111,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that no questions were yet registered and routed to question-selection as the appropriate next step per the GPS workflow. The project context was accurately read (Patrick Flynn I1, born ca. 1845, died 1908 in Schuylkill County PA). The response correctly framed the user's question as a research question to be registered before planning. No fabricated claims or unsupported assertions were made."
+            "rationale": "Claude correctly identified that the project has Patrick Flynn in the tree but no registered research questions yet, and correctly routed to question-selection per the routing table. The explanation of why question-selection must run first is accurate: the question must be written to research.json before downstream skills can reference it. No fabricated claims or unsupported assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request appropriately for the project state. It recognized the empty-project scenario, correctly determined that question-selection must run first, and routed the research question to that skill. The response outlined the subsequent workflow steps (research plan, search records, extraction, conflict resolution, proof conclusion) that would follow once the question is registered, treating the request as an ongoing job rather than a single deliverable, as required by the --autonomous flag."
+            "rationale": "Claude addressed the user's request fully by routing to the appropriate skill (question-selection) and explaining the delegation. The per-test context confirms this is a routing test where one hand-off and a summary is the only permitted outcome. Claude provided both the routing decision and a clear summary of what would follow, treating the request as an ongoing job rather than a single deliverable."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The research_query call queried the 'questions' section with the correct projectPath. The project_context call used the correct projectPath with no section parameter. Both calls matched the live fixture and returned valid responses. No fixture_not_found errors occurred. The arguments were semantically appropriate for the task of determining project state."
+            "rationale": "Claude made one MCP tool call (mcp__genealogy__project_context) with the correct projectPath argument. The call matched the live fixture and returned successfully (ok: true). The tool was used appropriately to verify the project state before making the routing decision."
           }
         ],
         "review_dimensions": [
@@ -1140,109 +1131,89 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that no questions were yet registered and routed to question-selection as the appropriate next step per the GPS workflow. The project context was accurately read (Patrick Flynn I1, born ca. 1845, died 1908 in Schuylkill County PA). The response correctly framed the user's question as a research question to be registered before planning. No fabricated claims or unsupported assertions were made."
+            "rationale": "Claude correctly identified that the project has Patrick Flynn in the tree but no registered research questions yet, and correctly routed to question-selection per the routing table. The explanation of why question-selection must run first is accurate: the question must be written to research.json before downstream skills can reference it. No fabricated claims or unsupported assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request appropriately for the project state. It recognized the empty-project scenario, correctly determined that question-selection must run first, and routed the research question to that skill. The response outlined the subsequent workflow steps (research plan, search records, extraction, conflict resolution, proof conclusion) that would follow once the question is registered, treating the request as an ongoing job rather than a single deliverable, as required by the --autonomous flag."
+            "rationale": "Claude addressed the user's request fully by routing to the appropriate skill (question-selection) and explaining the delegation. The per-test context confirms this is a routing test where one hand-off and a summary is the only permitted outcome. Claude provided both the routing decision and a clear summary of what would follow, treating the request as an ongoing job rather than a single deliverable."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The research_query call queried the 'questions' section with the correct projectPath. The project_context call used the correct projectPath with no section parameter. Both calls matched the live fixture and returned valid responses. No fixture_not_found errors occurred. The arguments were semantically appropriate for the task of determining project state."
+            "rationale": "Claude made one MCP tool call (mcp__genealogy__project_context) with the correct projectPath argument. The call matched the live fixture and returned successfully (ok: true). The tool was used appropriately to verify the project state before making the routing decision."
           }
         ]
       },
       "totals": {
-        "duration_ms": 64981.93329999776,
-        "duration_api_ms": 52894,
-        "judge_duration_ms": 5664.508599998953,
-        "wall_clock_ms": 72696.19607925415,
-        "num_turns": 7,
-        "input_tokens": 367,
-        "cached_input_tokens": 186532,
-        "cache_creation_input_tokens": 23910,
-        "output_tokens": 1888,
-        "judge_input_tokens": 7186,
+        "duration_ms": 37493.55450004805,
+        "duration_api_ms": 34515,
+        "judge_duration_ms": 5075.106699950993,
+        "wall_clock_ms": 42931.220293045044,
+        "num_turns": 5,
+        "input_tokens": 363,
+        "cached_input_tokens": 141652,
+        "cache_creation_input_tokens": 23935,
+        "output_tokens": 1233,
+        "judge_input_tokens": 7016,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 415,
-        "skill_cost_usd": 0.1742051,
-        "judge_cost_usd": 0.009261,
-        "total_cost_usd": 0.1834661
+        "judge_output_tokens": 355,
+        "skill_cost_usd": 0.15098784999999998,
+        "judge_cost_usd": 0.008791,
+        "total_cost_usd": 0.15977884999999997
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_023_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_023_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 64981.93329999776,
-          "duration_api_ms": 52894,
-          "num_turns": 7,
+          "duration_ms": 37493.55450004805,
+          "duration_api_ms": 34515,
+          "num_turns": 5,
           "skill_attempts": 1,
-          "input_tokens": 367,
-          "cached_input_tokens": 186532,
-          "cache_creation_input_tokens": 23910,
-          "output_tokens": 1888,
+          "input_tokens": 363,
+          "cached_input_tokens": 141652,
+          "cache_creation_input_tokens": 23935,
+          "output_tokens": 1233,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 354,
-              "outputTokens": 13,
+              "outputTokens": 14,
               "cacheReadInputTokens": 0,
               "cacheCreationInputTokens": 0,
               "webSearchRequests": 0,
-              "costUSD": 0.000419,
+              "costUSD": 0.000424,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             },
             "claude-sonnet-4-6": {
-              "inputTokens": 13,
-              "outputTokens": 1875,
-              "cacheReadInputTokens": 186532,
-              "cacheCreationInputTokens": 23910,
+              "inputTokens": 9,
+              "outputTokens": 1219,
+              "cacheReadInputTokens": 141652,
+              "cacheCreationInputTokens": 23935,
               "webSearchRequests": 0,
-              "costUSD": 0.1737861,
+              "costUSD": 0.15056385,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.1742051,
+          "skill_cost_usd": 0.15098784999999998,
           "output": {
-            "text_response": "The project is live — Patrick Flynn is the subject, no questions registered yet. Routing to question-selection to register the research question before planning.\n\nThe research question — **\"Did Patrick Flynn and his wife have a daughter named Mary?\"** — has been routed to question-selection for registration in the project's research.json audit trail.\n\n**What was determined:**\n- The project subject is **Patrick Flynn** (I1), born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA.\n- No questions were yet registered, so question-selection was the correct first stop per the GPS workflow (a question must be formally registered before a research plan or any searches can be built against it).\n- The hand-off to question-selection was made to register the completeness/child-existence question about a daughter named Mary.\n\n**Next steps once the question is registered** (to drive this to conclusion autonomously):\n1. **Research plan** — identify the record sets most likely to document Patrick Flynn's children (census records 1870–1910, vital records, church registers in Schuylkill County PA, obituaries).\n2. **Search records** — execute the plan across FamilySearch and external repositories.\n3. **Extraction → person-evidence → conflict resolution** — as records surface, extract assertions, link identities, and resolve any conflicts.\n4. **Research exhaustiveness → proof conclusion → mentor gate** — assess whether the evidence is sufficient and write a GPS-conformant conclusion.\n\nRe-invoke `/research --autonomous` to continue driving the workflow forward from where the question is now registered.",
+            "text_response": "The project has Patrick Flynn already in the tree but no questions registered yet. I'll route to question-selection to register the question about his daughter Mary.\n\nI routed to **question-selection** because the project has Patrick Flynn in the tree but no registered research questions yet. Per the routing table, a research objective without any recorded questions must go through question-selection first — the question \"Did Patrick Flynn and his wife have a daughter named Mary?\" must be written into `research.json` by that skill before any plan, search, or analysis can reference it.\n\nThe delegation was recorded. Once question-selection writes the question, the next steps in this autonomous run would be:\n1. **locality-guide** — survey Schuylkill County, PA records for the relevant time period (ca. 1865–1910), since no localities entry exists yet for that jurisdiction.\n2. **research-plan** — build a sequenced plan targeting child-enumerating sources: federal censuses (1870–1910 household listings for Patrick Flynn), Pennsylvania vital records, church baptismal registers, and obituaries.\n3. **search-records / search-external-sites** — execute each plan item, looking for a daughter named Mary in Patrick Flynn's household or birth records.\n4. **record-extraction → person-evidence → research-exhaustiveness → proof-conclusion → gps-mentor** — process findings through the full GPS chain to a defensible answer.\n\nIf you'd like to continue, just say so and I'll pick up from wherever question-selection left the project state.",
             "activated": true,
             "skills_invoked": [
               "research"
             ],
             "tool_calls": [
               {
-                "tool": "mcp__genealogy__research_query",
-                "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_023-0-0-zwymi_yg",
-                  "section": "questions"
-                },
-                "expected_args": null,
-                "matched": {
-                  "kind": "live",
-                  "index": null
-                },
-                "response_fixture": "live:research_query",
-                "response": {
-                  "ok": true,
-                  "section": "questions",
-                  "count": 0,
-                  "items": [],
-                  "truncated": false
-                }
-              },
-              {
                 "tool": "mcp__genealogy__project_context",
                 "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_023-0-0-zwymi_yg"
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_023-0-0-l9w_xok3"
                 },
                 "expected_args": null,
                 "matched": {
@@ -1252,7 +1223,7 @@
                 "response_fixture": "live:project_context",
                 "response": {
                   "ok": true,
-                  "buildId": "0.1.0+2026-10-07.b88d2cbf",
+                  "buildId": "0.1.0+2026-10-07.8c2eb61c.dirty",
                   "projectStatus": "active",
                   "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
                   "openQuestions": [],
@@ -1276,22 +1247,21 @@
               {
                 "tool": "ToolSearch",
                 "args": {
-                  "query": "select:mcp__genealogy__research_query",
-                  "max_results": "1"
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
                 }
               },
               {
-                "tool": "ToolSearch",
+                "tool": "Glob",
                 "args": {
-                  "query": "select:mcp__genealogy__project_context",
-                  "max_results": "1"
+                  "pattern": "research.json"
                 }
               },
               {
                 "tool": "Agent",
                 "args": {
-                  "description": "Register research question about Mary Flynn",
-                  "prompt": "Project: C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_023-0-0-zwymi_yg\n\nThe user wants to research: \"Did Patrick Flynn and his wife have a daughter named Mary?\"\n\nThe project subject is Patrick Flynn (I1), born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA. There are no questions registered yet.\n\nPlease register this research question in research.json so it can be planned and researched. The question is about whether Patrick Flynn and his wife had a daughter named Mary.",
+                  "description": "Register research question about Patrick Flynn's daughter Mary",
+                  "prompt": "We are researching Patrick Flynn (born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA). The user wants to answer: \"Did Patrick Flynn and his wife have a daughter named Mary?\"\n\nPlease register this as a research question in research.json. The projectPath is: C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_023-0-0-l9w_xok3\n\nThe question to register: Did Patrick Flynn and his wife have a daughter named Mary?",
                   "subagent_type": "question-selection"
                 }
               }
@@ -1311,7 +1281,7 @@
               {
                 "kind": "prose_observation",
                 "check": "report_no_gps_jargon_in_response",
-                "observation": "GPS vocabulary in the reply: gps, proof"
+                "observation": "GPS vocabulary in the reply: gps"
               },
               {
                 "kind": "prose_observation",
@@ -1506,30 +1476,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that no questions were yet registered and routed to question-selection as the appropriate next step per the GPS workflow. The project context was accurately read (Patrick Flynn I1, born ca. 1845, died 1908 in Schuylkill County PA). The response correctly framed the user's question as a research question to be registered before planning. No fabricated claims or unsupported assertions were made."
+                "rationale": "Claude correctly identified that the project has Patrick Flynn in the tree but no registered research questions yet, and correctly routed to question-selection per the routing table. The explanation of why question-selection must run first is accurate: the question must be written to research.json before downstream skills can reference it. No fabricated claims or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request appropriately for the project state. It recognized the empty-project scenario, correctly determined that question-selection must run first, and routed the research question to that skill. The response outlined the subsequent workflow steps (research plan, search records, extraction, conflict resolution, proof conclusion) that would follow once the question is registered, treating the request as an ongoing job rather than a single deliverable, as required by the --autonomous flag."
+                "rationale": "Claude addressed the user's request fully by routing to the appropriate skill (question-selection) and explaining the delegation. The per-test context confirms this is a routing test where one hand-off and a summary is the only permitted outcome. Claude provided both the routing decision and a clear summary of what would follow, treating the request as an ongoing job rather than a single deliverable."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls used correct arguments. The research_query call queried the 'questions' section with the correct projectPath. The project_context call used the correct projectPath with no section parameter. Both calls matched the live fixture and returned valid responses. No fixture_not_found errors occurred. The arguments were semantically appropriate for the task of determining project state."
+                "rationale": "Claude made one MCP tool call (mcp__genealogy__project_context) with the correct projectPath argument. The call matched the live fixture and returned successfully (ok: true). The tool was used appropriately to verify the project state before making the routing decision."
               }
             ],
-            "judge_cost_usd": 0.009261,
-            "duration_ms": 5664.508599998953,
+            "judge_cost_usd": 0.008791,
+            "duration_ms": 5075.106699950993,
             "error": null,
-            "input_tokens": 7186,
+            "input_tokens": 7016,
             "cached_input_tokens": 0,
-            "output_tokens": 415
+            "output_tokens": 355
           },
-          "started_at": 1791356777.080458,
-          "ended_at": 1791356849.776654
+          "started_at": 1791351796.733654,
+          "ended_at": 1791351839.6648743
         }
       ],
       "grading_mode": "dimensions",
@@ -1552,19 +1522,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly routed the bounded transcription request to the image-reader agent rather than performing its own task. The transcription text presented (1881 Census of Canada, Sherbrooke, Quebec) is plausible and properly formatted as a table. No fabricated material or unsupported claims are present. The response appropriately frames this as delegated work and does not pretend to have performed the transcription inline."
+            "rationale": "The skill correctly routed the bounded transcription request to the image-reader agent rather than attempting to perform transcription inline or deriving research questions from the objective. The transcription text presented (1881 Census of Canada, Sherbrooke, Quebec) is plausible census data with consistent formatting and reasonable household composition. No fabricated material or unsupported claims are present in the framing."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user's bounded request was fully addressed: a single transcription of image 004022578_00190 was provided, and Claude stopped there as instructed ('leave it at that'). The response did not attempt to derive research questions, create a plan, or perform additional research work beyond the single deliverable requested."
+            "rationale": "The user's bounded request was fully addressed: the skill transcribed the specified image (004022578_00190) and stopped there as instructed ('leave it at that'). The skill did not attempt to extract assertions, link individuals to the tree, or derive research questions—all of which would have violated the bounded-request constraint. The transcription was delivered in full."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made by Claude in this response. The routing to image-reader is handled by the agent system and does not appear in the MCP tool calls section. Per the grading instructions, Tool Arguments scores null when zero MCP tool calls occur."
+            "rationale": "No MCP tool calls were made by the router skill itself. The bounded request was correctly routed to the image-reader agent, which is an agent spawn and does not appear in the MCP tool calls list. Per the per-test context, the hand-off to image-reader is asserted deterministically and is invisible to grading. Tool Arguments is N/A."
           }
         ],
         "review_dimensions": [
@@ -1572,54 +1542,54 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly routed the bounded transcription request to the image-reader agent rather than performing its own task. The transcription text presented (1881 Census of Canada, Sherbrooke, Quebec) is plausible and properly formatted as a table. No fabricated material or unsupported claims are present. The response appropriately frames this as delegated work and does not pretend to have performed the transcription inline."
+            "rationale": "The skill correctly routed the bounded transcription request to the image-reader agent rather than attempting to perform transcription inline or deriving research questions from the objective. The transcription text presented (1881 Census of Canada, Sherbrooke, Quebec) is plausible census data with consistent formatting and reasonable household composition. No fabricated material or unsupported claims are present in the framing."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user's bounded request was fully addressed: a single transcription of image 004022578_00190 was provided, and Claude stopped there as instructed ('leave it at that'). The response did not attempt to derive research questions, create a plan, or perform additional research work beyond the single deliverable requested."
+            "rationale": "The user's bounded request was fully addressed: the skill transcribed the specified image (004022578_00190) and stopped there as instructed ('leave it at that'). The skill did not attempt to extract assertions, link individuals to the tree, or derive research questions—all of which would have violated the bounded-request constraint. The transcription was delivered in full."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made by Claude in this response. The routing to image-reader is handled by the agent system and does not appear in the MCP tool calls section. Per the grading instructions, Tool Arguments scores null when zero MCP tool calls occur."
+            "rationale": "No MCP tool calls were made by the router skill itself. The bounded request was correctly routed to the image-reader agent, which is an agent spawn and does not appear in the MCP tool calls list. Per the per-test context, the hand-off to image-reader is asserted deterministically and is invisible to grading. Tool Arguments is N/A."
           }
         ]
       },
       "totals": {
-        "duration_ms": 19032.06749999663,
-        "duration_api_ms": 14565,
-        "judge_duration_ms": 4866.945699999633,
-        "wall_clock_ms": 25440.72389602661,
+        "duration_ms": 17154.419400030747,
+        "duration_api_ms": 14261,
+        "judge_duration_ms": 4833.104899968021,
+        "wall_clock_ms": 22528.698921203613,
         "num_turns": 2,
         "input_tokens": 365,
-        "cached_input_tokens": 35803,
-        "cache_creation_input_tokens": 21013,
-        "output_tokens": 594,
-        "judge_input_tokens": 6676,
+        "cached_input_tokens": 41596,
+        "cache_creation_input_tokens": 21708,
+        "output_tokens": 580,
+        "judge_input_tokens": 6690,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 359,
-        "skill_cost_usd": 0.09863265,
-        "judge_cost_usd": 0.008471,
-        "total_cost_usd": 0.10710365
+        "judge_output_tokens": 388,
+        "skill_cost_usd": 0.10276679999999999,
+        "judge_cost_usd": 0.00863,
+        "total_cost_usd": 0.11139679999999999
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_020_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_020_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 19032.06749999663,
-          "duration_api_ms": 14565,
+          "duration_ms": 17154.419400030747,
+          "duration_api_ms": 14261,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 365,
-          "cached_input_tokens": 35803,
-          "cache_creation_input_tokens": 21013,
-          "output_tokens": 594,
+          "cached_input_tokens": 41596,
+          "cache_creation_input_tokens": 21708,
+          "output_tokens": 580,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 361,
@@ -1633,19 +1603,19 @@
             },
             "claude-sonnet-4-6": {
               "inputTokens": 4,
-              "outputTokens": 575,
-              "cacheReadInputTokens": 35803,
-              "cacheCreationInputTokens": 21013,
+              "outputTokens": 561,
+              "cacheReadInputTokens": 41596,
+              "cacheCreationInputTokens": 21708,
               "webSearchRequests": 0,
-              "costUSD": 0.09817665,
+              "costUSD": 0.1023108,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.09863265,
+          "skill_cost_usd": 0.10276679999999999,
           "output": {
-            "text_response": "Routing this bounded request straight to the image-reader — one transcription, then I'll stop.\n\nHere is the transcription of **FamilySearch image 004022578_00190** (1881 Census of Canada, Sherbrooke, Quebec, page 14):\n\n| Line | Surname | Given | Sex | Age | Birthplace | Ethnicity | Religion | Occupation |\n|------|---------|-------|-----|-----|------------|-----------|----------|------------|\n| 7 | Driscoll | Cornelius | M | 67 | Ireland | Irish | R. Catholic | Labourer |\n| 8 | Driscoll | Johanna | F | 61 | Ireland | Irish | R. Catholic | — |\n| 9 | Driscoll | Mary | F | 24 | Quebec | Irish | R. Catholic | — |\n\nThree members of the Driscoll household appear on the page; no other entries on the page relate to this household.\n\nWould you like to take this further — for example, extract these assertions into a research project or search for additional records on any of these individuals?",
+            "text_response": "Transcribing image `004022578_00190` now.\n\nHere is the transcription of image **004022578_00190** (1881 Census of Canada, Sherbrooke, Quebec, page 14):\n\n| Line | Surname | Given | Sex | Age | Birthplace | Origin | Religion | Occupation |\n|------|---------|-------|-----|-----|------------|--------|----------|------------|\n| 7 | Driscoll | Cornelius | M | 67 | Ireland | Irish | R. Catholic | Labourer |\n| 8 | Driscoll | Johanna | F | 61 | Ireland | Irish | R. Catholic | — |\n| 9 | Driscoll | Mary | F | 24 | Quebec | Irish | R. Catholic | — |\n\nThe household consists of Cornelius Driscoll (age 67, born Ireland), his likely wife Johanna (age 61, born Ireland), and Mary (age 24, born Quebec — likely a daughter). No other household members appear on this page.\n\nWould you like to take the research further — extract assertions, link these individuals to a tree, or search for additional records?",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -1657,7 +1627,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Transcribe FamilySearch image 004022578_00190",
-                  "prompt": "Please transcribe FamilySearch image 004022578_00190. The imageId is 004022578_00190 (DGS 004022578, image 00190). Return the full text transcription of the page scan.",
+                  "prompt": "Please transcribe FamilySearch image 004022578_00190. The imageId is 004022578_00190. Return the full text transcription of the page scan.",
                   "subagent_type": "image-reader"
                 }
               }
@@ -1856,806 +1826,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly routed the bounded transcription request to the image-reader agent rather than performing its own task. The transcription text presented (1881 Census of Canada, Sherbrooke, Quebec) is plausible and properly formatted as a table. No fabricated material or unsupported claims are present. The response appropriately frames this as delegated work and does not pretend to have performed the transcription inline."
+                "rationale": "The skill correctly routed the bounded transcription request to the image-reader agent rather than attempting to perform transcription inline or deriving research questions from the objective. The transcription text presented (1881 Census of Canada, Sherbrooke, Quebec) is plausible census data with consistent formatting and reasonable household composition. No fabricated material or unsupported claims are present in the framing."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user's bounded request was fully addressed: a single transcription of image 004022578_00190 was provided, and Claude stopped there as instructed ('leave it at that'). The response did not attempt to derive research questions, create a plan, or perform additional research work beyond the single deliverable requested."
+                "rationale": "The user's bounded request was fully addressed: the skill transcribed the specified image (004022578_00190) and stopped there as instructed ('leave it at that'). The skill did not attempt to extract assertions, link individuals to the tree, or derive research questions—all of which would have violated the bounded-request constraint. The transcription was delivered in full."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made by Claude in this response. The routing to image-reader is handled by the agent system and does not appear in the MCP tool calls section. Per the grading instructions, Tool Arguments scores null when zero MCP tool calls occur."
+                "rationale": "No MCP tool calls were made by the router skill itself. The bounded request was correctly routed to the image-reader agent, which is an agent spawn and does not appear in the MCP tool calls list. Per the per-test context, the hand-off to image-reader is asserted deterministically and is invisible to grading. Tool Arguments is N/A."
               }
             ],
-            "judge_cost_usd": 0.008471,
-            "duration_ms": 4866.945699999633,
+            "judge_cost_usd": 0.00863,
+            "duration_ms": 4833.104899968021,
             "error": null,
-            "input_tokens": 6676,
+            "input_tokens": 6690,
             "cached_input_tokens": 0,
-            "output_tokens": 359
+            "output_tokens": 388
           },
-          "started_at": 1791356820.1419873,
-          "ended_at": 1791356845.5827112
-        }
-      ],
-      "grading_mode": "dimensions",
-      "dimensions_gate_outcome": true
-    },
-    {
-      "test_id": "ut_research_022",
-      "test_type": "positive",
-      "expected_outcome": "pass",
-      "scenario": "driscoll-source-audit",
-      "mcp_fixtures": [
-        "person-read-driscoll-attached-sources",
-        "source-attachments-driscoll",
-        "record-search-driscoll-sibling-candidates"
-      ],
-      "outcome": "pass",
-      "flaky": false,
-      "outcome_summary": {
-        "per_run_outcomes": [
-          "pass"
-        ],
-        "aggregated_dimensions": [
-          {
-            "source": "base",
-            "name": "Correctness",
-            "score": 3,
-            "rationale": "Claude's response is factually accurate. It correctly identifies that the FamilySearch tree shows no parents or siblings for Cornelius Driscoll (GJ72-9WD). The two candidates (Mary Driscoll b. 1817, Johanna Driscoll b. 1820) are accurately described as same-surname, same-parish matches with no indexed parent names. Claude correctly states these are candidates, not confirmed siblings. The baptism record ARK URL and the explanation of why parent names are needed to confirm siblingship are accurate. No fabricated material or unsupported claims appear in the response."
-          },
-          {
-            "source": "base",
-            "name": "Completeness",
-            "score": 3,
-            "rationale": "The response fully satisfies the bounded request and the per-test requirements. It presents both candidates (Mary and Johanna) with match strength indicators (same surname, same parish, plausible spacing). It explicitly states neither is confirmed as a sibling due to lack of parent names in the indexed records. It explains the search scope (Skibbereen, c. 1810–1825). It closes with an offer to research further by reading Cornelius's baptism image directly to obtain his father's name. All three pass criteria from the per-test context are met: candidates are offered with match strength, neither is declared established, and the closing offer is to research further rather than extract or link."
-          },
-          {
-            "source": "base",
-            "name": "Tool Arguments",
-            "score": 3,
-            "rationale": "All four MCP tool calls passed arguments matching the fixture's expected_args semantically. The person_read call correctly used personId 'GJ72-9WD'. Both record_search calls used surname 'Driscoll' (matching ~Driscoll), appropriate birth year ranges, and correct place/country parameters. The second search added isPrincipal and collectionId parameters, which were reasonable refinements to target Cornelius's own record. No critical identifiers were wrong, no calls landed in fixture_not_found, and the arguments bore clear resemblance to what was expected."
-          }
-        ],
-        "review_dimensions": [
-          {
-            "source": "base",
-            "name": "Correctness",
-            "score": 3,
-            "rationale": "Claude's response is factually accurate. It correctly identifies that the FamilySearch tree shows no parents or siblings for Cornelius Driscoll (GJ72-9WD). The two candidates (Mary Driscoll b. 1817, Johanna Driscoll b. 1820) are accurately described as same-surname, same-parish matches with no indexed parent names. Claude correctly states these are candidates, not confirmed siblings. The baptism record ARK URL and the explanation of why parent names are needed to confirm siblingship are accurate. No fabricated material or unsupported claims appear in the response."
-          },
-          {
-            "source": "base",
-            "name": "Completeness",
-            "score": 3,
-            "rationale": "The response fully satisfies the bounded request and the per-test requirements. It presents both candidates (Mary and Johanna) with match strength indicators (same surname, same parish, plausible spacing). It explicitly states neither is confirmed as a sibling due to lack of parent names in the indexed records. It explains the search scope (Skibbereen, c. 1810–1825). It closes with an offer to research further by reading Cornelius's baptism image directly to obtain his father's name. All three pass criteria from the per-test context are met: candidates are offered with match strength, neither is declared established, and the closing offer is to research further rather than extract or link."
-          },
-          {
-            "source": "base",
-            "name": "Tool Arguments",
-            "score": 3,
-            "rationale": "All four MCP tool calls passed arguments matching the fixture's expected_args semantically. The person_read call correctly used personId 'GJ72-9WD'. Both record_search calls used surname 'Driscoll' (matching ~Driscoll), appropriate birth year ranges, and correct place/country parameters. The second search added isPrincipal and collectionId parameters, which were reasonable refinements to target Cornelius's own record. No critical identifiers were wrong, no calls landed in fixture_not_found, and the arguments bore clear resemblance to what was expected."
-          }
-        ]
-      },
-      "totals": {
-        "duration_ms": 142623.33399999625,
-        "duration_api_ms": 114035,
-        "judge_duration_ms": 8180.142400000477,
-        "wall_clock_ms": 160536.33046150208,
-        "num_turns": 11,
-        "input_tokens": 382,
-        "cached_input_tokens": 337551,
-        "cache_creation_input_tokens": 43387,
-        "output_tokens": 5127,
-        "judge_input_tokens": 12214,
-        "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 563,
-        "skill_cost_usd": 0.34111555,
-        "judge_cost_usd": 0.015028999999999999,
-        "total_cost_usd": 0.35614455
-      },
-      "runs": [
-        {
-          "run_index": 0,
-          "run_id": "run_ut_research_022_2026-10-07_07-03-34_0",
-          "outcome": "pass",
-          "aborted_reason": null,
-          "error": null,
-          "duration_ms": 142623.33399999625,
-          "duration_api_ms": 114035,
-          "num_turns": 11,
-          "skill_attempts": 1,
-          "input_tokens": 382,
-          "cached_input_tokens": 337551,
-          "cache_creation_input_tokens": 43387,
-          "output_tokens": 5127,
-          "model_usage": {
-            "claude-haiku-4-5-20251001": {
-              "inputTokens": 361,
-              "outputTokens": 18,
-              "cacheReadInputTokens": 0,
-              "cacheCreationInputTokens": 0,
-              "webSearchRequests": 0,
-              "costUSD": 0.000451,
-              "contextWindow": 200000,
-              "maxOutputTokens": 32000
-            },
-            "claude-sonnet-4-6": {
-              "inputTokens": 21,
-              "outputTokens": 5109,
-              "cacheReadInputTokens": 337551,
-              "cacheCreationInputTokens": 43387,
-              "webSearchRequests": 0,
-              "costUSD": 0.34066455,
-              "contextWindow": 200000,
-              "maxOutputTokens": 32000
-            }
-          },
-          "no_result_message": false,
-          "skill_cost_usd": 0.34111555,
-          "output": {
-            "text_response": "This is a bounded request — find what we can about Cornelius Driscoll's siblings and stop. Let me check the project state first.\n\nNo questions registered yet. Let me check the project context to find Cornelius Driscoll's FamilySearch ID.\n\nGood — Cornelius Driscoll is FamilySearch ID GJ72-9WD. Let me read his profile to see what relatives and sources are already attached.\n\nThe FamilySearch tree shows no parents and no siblings recorded for Cornelius. His baptism (Skibbereen, Co. Cork, 1814) is the natural starting point for finding siblings. Let me do a quick search there.\n\nFirst, let me pull Cornelius's own baptism record to get his parents' names — that's the key for finding siblings.\n\nThe search didn't return Cornelius's own baptism — let me read the record already attached to his profile to get his parents' names.\n\nLet me search specifically for Cornelius's own baptism record using `isPrincipal: true` to get his parents' names.\n\nI've reached the limits of what the indexed records will reveal without his parents' names. Here's what I found:\n\n---\n\n**Siblings of Cornelius Driscoll — what the records currently show**\n\nThe FamilySearch Family Tree has **no parents linked** and **no siblings recorded** for Cornelius Driscoll (GJ72-9WD). He is shown only as a father to Jeremiah Driscoll (b. 1852, Sherbrooke).\n\nHis attached baptism record (Ireland, Catholic Parish Registers, Skibbereen, 12 March 1814) is the natural source for his parents' names — and those names are what would unlock a sibling search. That record did not surface in the indexed search results, meaning its full content (including the father's name, which Irish Catholic registers typically record) wasn't indexed in a way I could retrieve here.\n\nA quick sweep of Driscoll baptisms in Skibbereen for roughly the right sibling years (c. 1810–1825) returned **two candidates**:\n\n| Name | Baptism year | Place | Parents named in record |\n|---|---|---|---|\n| Mary Driscoll | 1817 | Skibbereen, Cork | None indexed |\n| Johanna Driscoll | 1820 | Skibbereen, Cork | None indexed |\n\nBoth are same-surname, same-parish, plausibly-spaced — but **neither record names a parent**, so neither can be confirmed as his sibling. They're candidates, not identifications.\n\n---\n\n**To go further** you'd need to open Cornelius's Skibbereen baptism image directly (ARK: `https://familysearch.org/ark:/61903/1:1:DRIS-001`) to read his father's name, then search for other children of that father in the same register. Would you like me to pursue that?",
-            "activated": true,
-            "skills_invoked": [
-              "research"
-            ],
-            "tool_calls": [
-              {
-                "tool": "mcp__genealogy__research_query",
-                "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so",
-                  "section": "questions"
-                },
-                "expected_args": null,
-                "matched": {
-                  "kind": "live",
-                  "index": null
-                },
-                "response_fixture": "live:research_query",
-                "response": {
-                  "ok": true,
-                  "section": "questions",
-                  "count": 0,
-                  "items": [],
-                  "truncated": false
-                }
-              },
-              {
-                "tool": "mcp__genealogy__project_context",
-                "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so"
-                },
-                "expected_args": null,
-                "matched": {
-                  "kind": "live",
-                  "index": null
-                },
-                "response_fixture": "live:project_context",
-                "response": {
-                  "ok": true,
-                  "buildId": "0.1.0+2026-10-07.b88d2cbf",
-                  "projectStatus": "active",
-                  "objective": "Audit the sources attached to Cornelius Driscoll (GJ72-9WD), an Irish emigrant from Co. Cork who settled at Sherbrooke, Canada East",
-                  "openQuestions": [],
-                  "questionStatuses": [],
-                  "persons": [
-                    {
-                      "id": "GJ72-9WD",
-                      "name": "Cornelius Driscoll",
-                      "gender": "Male",
-                      "sourceRefs": []
-                    },
-                    {
-                      "id": "GJ72-9WF",
-                      "name": "Margaret Hayes",
-                      "gender": "Female",
-                      "sourceRefs": []
-                    }
-                  ],
-                  "sources": [],
-                  "localities": [],
-                  "awaitingUser": []
-                }
-              },
-              {
-                "tool": "mcp__genealogy__person_read",
-                "args": {
-                  "personId": "GJ72-9WD",
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so"
-                },
-                "expected_args": {
-                  "personId": "GJ72-9WD"
-                },
-                "matched": {
-                  "kind": "predicate",
-                  "index": 0
-                },
-                "response_fixture": "person-read-driscoll-attached-sources",
-                "response": {
-                  "persons": [
-                    {
-                      "id": "GJ72-9WD",
-                      "gender": "Male",
-                      "living": false,
-                      "names": [
-                        {
-                          "given": "Cornelius",
-                          "surname": "Driscoll"
-                        }
-                      ],
-                      "facts": [
-                        {
-                          "type": "Birth",
-                          "date": "1814",
-                          "standard_date": "1814",
-                          "place": "Ireland",
-                          "standard_place": "Ireland"
-                        },
-                        {
-                          "type": "Marriage",
-                          "date": "9 June 1849",
-                          "standard_date": "9 Jun 1849",
-                          "place": "Sherbrooke, Canada East",
-                          "standard_place": "Sherbrooke, Quebec, Canada"
-                        },
-                        {
-                          "type": "Residence",
-                          "date": "1851",
-                          "standard_date": "1851",
-                          "place": "Sherbrooke, Canada East",
-                          "standard_place": "Sherbrooke, Quebec, Canada"
-                        },
-                        {
-                          "type": "Residence",
-                          "date": "1861",
-                          "standard_date": "1861",
-                          "place": "Sherbrooke, Canada East",
-                          "standard_place": "Sherbrooke, Quebec, Canada"
-                        },
-                        {
-                          "type": "Burial",
-                          "place": "St. Patrick's Cemetery, Sherbrooke, Quebec, Canada",
-                          "standard_place": "Sherbrooke, Quebec, Canada"
-                        }
-                      ],
-                      "sources": [
-                        {
-                          "ref": "SD-DRIS-A"
-                        },
-                        {
-                          "ref": "SD-DRIS-B"
-                        },
-                        {
-                          "ref": "SD-DRIS-C"
-                        },
-                        {
-                          "ref": "SD-DRIS-D"
-                        },
-                        {
-                          "ref": "SD-DRIS-E"
-                        },
-                        {
-                          "ref": "SD-DRIS-G"
-                        }
-                      ]
-                    },
-                    {
-                      "id": "K2QT-DR4",
-                      "gender": "Male",
-                      "living": false,
-                      "names": [
-                        {
-                          "given": "Jeremiah",
-                          "surname": "Driscoll",
-                          "preferred": true
-                        }
-                      ],
-                      "facts": [
-                        {
-                          "type": "Birth",
-                          "date": "1852",
-                          "standard_date": "1852"
-                        }
-                      ],
-                      "sources": [
-                        {
-                          "ref": "SD-DRIS-H"
-                        }
-                      ]
-                    }
-                  ],
-                  "relationships": [
-                    {
-                      "type": "ParentChild",
-                      "parent": "GJ72-9WD",
-                      "child": "K2QT-DR4",
-                      "subtype": "Biological"
-                    }
-                  ],
-                  "sources": [
-                    {
-                      "id": "SD-DRIS-A",
-                      "title": "Cornelius Driscoll, \"Ireland, Catholic Parish Registers, 1655-1915\"",
-                      "citation": "\"Ireland, Catholic Parish Registers, 1655-1915\", database with images, FamilySearch, baptism of Cornelius Driscoll, 12 March 1814, Skibbereen, Co. Cork.",
-                      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-001"
-                    },
-                    {
-                      "id": "SD-DRIS-B",
-                      "title": "Cornelius Driscoll, \"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\"",
-                      "citation": "\"Quebec, Vital and Church Records (Drouin Collection), 1621-1968\", database with images, FamilySearch, marriage of Cornelius Driscoll and Margaret Hayes, St. Patrick's, Sherbrooke.",
-                      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-002"
-                    },
-                    {
-                      "id": "SD-DRIS-C",
-                      "title": "Cornelius Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\" — burial",
-                      "citation": "\"Quebec, Catholic Parish Registers, 1621-1979\", database with images, FamilySearch, burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke.",
-                      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-003"
-                    },
-                    {
-                      "id": "SD-DRIS-D",
-                      "title": "Cornelius Driscoll, \"Quebec, Civil Registration Deaths, 1867-1900\"",
-                      "citation": "\"Quebec, Civil Registration Deaths, 1867-1900\", database, FamilySearch, entry for Cornelius Driscoll, Sherbrooke district.",
-                      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-004"
-                    },
-                    {
-                      "id": "SD-DRIS-E",
-                      "title": "Cornelius Driscoll, \"Census of Canada East, 1851\"",
-                      "citation": "\"Census of Canada East, 1851\", database, FamilySearch, entry for Cornelius Driscoll, Canada East.",
-                      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-005"
-                    },
-                    {
-                      "id": "SD-DRIS-F",
-                      "title": "Driscoll headstone photograph, St. Patrick's Cemetery (uploaded memory)",
-                      "citation": "Photograph of the Driscoll headstone, St. Patrick's Cemetery, Sherbrooke; digital image uploaded by a FamilySearch contributor.",
-                      "url": "https://ancestors.familysearch.org/en/GJ72-9WD/memories",
-                      "notes": [
-                        "Contributor upload; no indexed record behind it."
-                      ],
-                      "artifact_url": "https://sg30p0.familysearch.org/service/memories/SD-DRIS-F"
-                    },
-                    {
-                      "id": "SD-DRIS-G",
-                      "title": "Cornelius Driscoll, \"Census of Canada, 1861\"",
-                      "citation": "\"Census of Canada, 1861\", database with images, FamilySearch, entry for Cornelius Driscoll, Sherbrooke, Canada East.",
-                      "url": "https://familysearch.org/ark:/61903/1:1:DRIS-006"
-                    },
-                    {
-                      "id": "SD-DRIS-H",
-                      "title": "Jeremiah Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\"",
-                      "citation": "\"Quebec, Catholic Parish Registers, 1621-1979,\" database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB : accessed 1 October 2026), Jeremiah Driscoll, baptised 3 Feb 1852; citing St. Patrick, Sherbrooke, Quebec, Canada.",
-                      "url": "https://www.familysearch.org/ark:/61903/1:1:MJ4T-2QB"
-                    }
-                  ],
-                  "staged": {
-                    "resultsRef": "results/.staging/76be9322-e4b7-4fdd-98c9-ec4158111bd2.json",
-                    "returnedCount": 1
-                  }
-                }
-              },
-              {
-                "tool": "mcp__genealogy__record_search",
-                "args": {
-                  "givenName": "Cornelius",
-                  "surname": "Driscoll",
-                  "birthYearFrom": 1812,
-                  "birthYearTo": 1816,
-                  "birthPlace": "Skibbereen, Cork, Ireland",
-                  "recordCountry": "Ireland",
-                  "recordType": "birth",
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so"
-                },
-                "expected_args": {
-                  "surname": "~Driscoll"
-                },
-                "matched": {
-                  "kind": "predicate",
-                  "index": 0
-                },
-                "response_fixture": "record-search-driscoll-sibling-candidates",
-                "response": {
-                  "query": {
-                    "givenName": "Cornelius",
-                    "surname": "Driscoll",
-                    "birthYearFrom": 1812,
-                    "birthYearTo": 1816,
-                    "birthPlace": "Skibbereen, Cork, Ireland",
-                    "recordCountry": "Ireland",
-                    "recordType": "birth",
-                    "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so"
-                  },
-                  "totalMatches": 2,
-                  "paginationCappedAt": null,
-                  "returned": 2,
-                  "offset": 0,
-                  "hasMore": false,
-                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person — a broad survey, or a person not yet in the tree.",
-                  "results": [
-                    {
-                      "personId": "GQ11-AAA",
-                      "recordId": "GQ11-AAA",
-                      "personName": "Mary Driscoll",
-                      "score": 0.62,
-                      "sex": "Female",
-                      "birthDate": "1817",
-                      "birthPlace": "Skibbereen, Cork, Ireland",
-                      "events": [],
-                      "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-AAA",
-                      "collectionId": "1473014",
-                      "recordTitle": "Mary Driscoll, baptism, Skibbereen",
-                      "primaryId": "P1",
-                      "_authoring_note": "Same surname, same parish, plausible sibling spacing to Cornelius (b. 1814). No parent named, so nothing ties her to his parents: a NAME MATCH, which is exactly what item 6 forbids reporting as an answer."
-                    },
-                    {
-                      "personId": "GQ11-BBB",
-                      "recordId": "GQ11-BBB",
-                      "personName": "Johanna Driscoll",
-                      "score": 0.58,
-                      "sex": "Female",
-                      "birthDate": "1820",
-                      "birthPlace": "Skibbereen, Cork, Ireland",
-                      "events": [],
-                      "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-BBB",
-                      "collectionId": "1473014",
-                      "recordTitle": "Johanna Driscoll, baptism, Skibbereen",
-                      "primaryId": "P1",
-                      "_authoring_note": "Second same-surname candidate in the same parish, equally unattached. Two of them is the point: a reply that picks one and calls it settled has declared the question answered on a name match."
-                    }
-                  ],
-                  "collections": {
-                    "1473014": "Ireland, Catholic Parish Registers, 1655-1915"
-                  },
-                  "staged": {
-                    "resultsRef": "results/.staging/5a85f11a-f415-4b41-8d16-2f3b6d87ad13.json",
-                    "returnedCount": 2
-                  }
-                }
-              },
-              {
-                "tool": "mcp__genealogy__record_search",
-                "args": {
-                  "givenName": "Cornelius",
-                  "surname": "Driscoll",
-                  "birthYearFrom": 1810,
-                  "birthYearTo": 1818,
-                  "recordCountry": "Ireland",
-                  "recordType": "birth",
-                  "isPrincipal": true,
-                  "collectionId": "1473014",
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so"
-                },
-                "expected_args": {
-                  "surname": "~Driscoll"
-                },
-                "matched": {
-                  "kind": "predicate",
-                  "index": 0
-                },
-                "response_fixture": "record-search-driscoll-sibling-candidates",
-                "response": {
-                  "query": {
-                    "givenName": "Cornelius",
-                    "surname": "Driscoll",
-                    "birthYearFrom": 1810,
-                    "birthYearTo": 1818,
-                    "recordCountry": "Ireland",
-                    "recordType": "birth",
-                    "isPrincipal": true,
-                    "collectionId": "1473014",
-                    "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_022-0-0-gip350so"
-                  },
-                  "totalMatches": 2,
-                  "paginationCappedAt": null,
-                  "returned": 2,
-                  "offset": 0,
-                  "hasMore": false,
-                  "rankingSkipped": "No `subjectId`, so match-score ranking and marriage jurisdiction hints did not run. Pass the tree person this search is about as `subjectId` to enable both. Omit it only when the search is not about a specific tree person — a broad survey, or a person not yet in the tree.",
-                  "unloggedSearches": "1 earlier staged search response(s) in this project have no research.json log entry: results/.staging/5a85f11a-f415-4b41-8d16-2f3b6d87ad13.json. Call `research_log_append` for each, passing that ref as `stagedResultsRef` — the staged file holds the search's own query, so the entry is filled in host-side and needs no reconstruction from memory. Log each as you go rather than batching them at the end. A search with no log entry is a search that did not happen, and the staged response is deleted 24h after it was made.",
-                  "results": [
-                    {
-                      "personId": "GQ11-AAA",
-                      "recordId": "GQ11-AAA",
-                      "personName": "Mary Driscoll",
-                      "score": 0.62,
-                      "sex": "Female",
-                      "birthDate": "1817",
-                      "birthPlace": "Skibbereen, Cork, Ireland",
-                      "events": [],
-                      "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-AAA",
-                      "collectionId": "1473014",
-                      "recordTitle": "Mary Driscoll, baptism, Skibbereen",
-                      "primaryId": "P1",
-                      "_authoring_note": "Same surname, same parish, plausible sibling spacing to Cornelius (b. 1814). No parent named, so nothing ties her to his parents: a NAME MATCH, which is exactly what item 6 forbids reporting as an answer."
-                    },
-                    {
-                      "personId": "GQ11-BBB",
-                      "recordId": "GQ11-BBB",
-                      "personName": "Johanna Driscoll",
-                      "score": 0.58,
-                      "sex": "Female",
-                      "birthDate": "1820",
-                      "birthPlace": "Skibbereen, Cork, Ireland",
-                      "events": [],
-                      "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:GQ11-BBB",
-                      "collectionId": "1473014",
-                      "recordTitle": "Johanna Driscoll, baptism, Skibbereen",
-                      "primaryId": "P1",
-                      "_authoring_note": "Second same-surname candidate in the same parish, equally unattached. Two of them is the point: a reply that picks one and calls it settled has declared the question answered on a name match."
-                    }
-                  ],
-                  "collections": {
-                    "1473014": "Ireland, Catholic Parish Registers, 1655-1915"
-                  },
-                  "staged": {
-                    "resultsRef": "results/.staging/23369c6a-5ff2-4fec-a905-28e31a72492e.json",
-                    "returnedCount": 2
-                  }
-                }
-              }
-            ],
-            "files_created": [
-              "results/.staging/23369c6a-5ff2-4fec-a905-28e31a72492e.json",
-              "results/.staging/5a85f11a-f415-4b41-8d16-2f3b6d87ad13.json",
-              "results/.staging/76be9322-e4b7-4fdd-98c9-ec4158111bd2.json"
-            ],
-            "builtin_tool_calls": [
-              {
-                "tool": "ToolSearch",
-                "args": {
-                  "query": "select:mcp__genealogy__research_query",
-                  "max_results": "1"
-                }
-              },
-              {
-                "tool": "ToolSearch",
-                "args": {
-                  "query": "select:mcp__genealogy__project_context",
-                  "max_results": "1"
-                }
-              },
-              {
-                "tool": "ToolSearch",
-                "args": {
-                  "query": "select:mcp__genealogy__person_read",
-                  "max_results": "1"
-                }
-              },
-              {
-                "tool": "ToolSearch",
-                "args": {
-                  "query": "select:mcp__genealogy__record_search",
-                  "max_results": "1"
-                }
-              },
-              {
-                "tool": "ToolSearch",
-                "args": {
-                  "query": "mcp__genealogy__record_read",
-                  "max_results": "1"
-                }
-              }
-            ],
-            "warnings": [
-              {
-                "kind": "missing_tool_usage_dimension",
-                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
-              }
-            ]
-          },
-          "validators": {
-            "passed": true,
-            "results": [
-              {
-                "name": "test_activated_run_produces_response",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_decline_response_nonempty",
-                "passed": true,
-                "error": "skipped: positive test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_direct_delegation_relayed_verbatim",
-                "passed": true,
-                "error": "skipped: not a direct-agent test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_direct_test_spawned_its_agent",
-                "passed": true,
-                "error": "skipped: not a direct-agent test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_hand_back_names_its_owner",
-                "passed": true,
-                "error": "skipped: not a hand-back test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_id_references_resolve",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_log_append_only",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_no_duplicate_tree_ids",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_no_entries_deleted",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_no_main_thread_subagent_only_calls",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_no_out_of_lane_section_writes",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_no_raw_writes_to_protected_files",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_ownership_table",
-                "passed": true,
-                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_parent_child_age_plausibility_flagged",
-                "passed": true,
-                "error": "skipped: no new ParentChild relationships",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_project_file_changes_route_through_writer_tools",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_project_files_pass_full_validation",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_research_json_validates_schema",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_skill_calls_name_a_shipped_skill",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_tool_allowlist",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_tree_facts_agree_with_linked_assertions",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_tree_gedcomx_json_validates_schema",
-                "passed": true,
-                "error": null,
-                "outcome": "passed"
-              },
-              {
-                "name": "test_tree_ownership_table",
-                "passed": true,
-                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_write_then_validate",
-                "passed": true,
-                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_creates_no_project_when_none_exists",
-                "passed": true,
-                "error": "skipped: not a research-vs-init-project scenario",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_no_browse_executed_on_indexed_search",
-                "passed": true,
-                "error": "skipped: not a no-browse-on-indexed scenario",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_no_browse_or_writes_on_planning_request",
-                "passed": true,
-                "error": "skipped: not a no-browse-no-write scenario",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_no_paired_skill_shortcut",
-                "passed": true,
-                "error": "skipped: not a no-shortcut test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_reads_attachments_before_searching",
-                "passed": true,
-                "error": "skipped: not an attached-first test",
-                "outcome": "skipped"
-              },
-              {
-                "name": "test_routes_to_expected_skill",
-                "passed": true,
-                "error": "skipped: not a routing test",
-                "outcome": "skipped"
-              }
-            ]
-          },
-          "judge": {
-            "skipped": false,
-            "dimensions": [
-              {
-                "source": "base",
-                "name": "Correctness",
-                "score": 3,
-                "rationale": "Claude's response is factually accurate. It correctly identifies that the FamilySearch tree shows no parents or siblings for Cornelius Driscoll (GJ72-9WD). The two candidates (Mary Driscoll b. 1817, Johanna Driscoll b. 1820) are accurately described as same-surname, same-parish matches with no indexed parent names. Claude correctly states these are candidates, not confirmed siblings. The baptism record ARK URL and the explanation of why parent names are needed to confirm siblingship are accurate. No fabricated material or unsupported claims appear in the response."
-              },
-              {
-                "source": "base",
-                "name": "Completeness",
-                "score": 3,
-                "rationale": "The response fully satisfies the bounded request and the per-test requirements. It presents both candidates (Mary and Johanna) with match strength indicators (same surname, same parish, plausible spacing). It explicitly states neither is confirmed as a sibling due to lack of parent names in the indexed records. It explains the search scope (Skibbereen, c. 1810–1825). It closes with an offer to research further by reading Cornelius's baptism image directly to obtain his father's name. All three pass criteria from the per-test context are met: candidates are offered with match strength, neither is declared established, and the closing offer is to research further rather than extract or link."
-              },
-              {
-                "source": "base",
-                "name": "Tool Arguments",
-                "score": 3,
-                "rationale": "All four MCP tool calls passed arguments matching the fixture's expected_args semantically. The person_read call correctly used personId 'GJ72-9WD'. Both record_search calls used surname 'Driscoll' (matching ~Driscoll), appropriate birth year ranges, and correct place/country parameters. The second search added isPrincipal and collectionId parameters, which were reasonable refinements to target Cornelius's own record. No critical identifiers were wrong, no calls landed in fixture_not_found, and the arguments bore clear resemblance to what was expected."
-              }
-            ],
-            "judge_cost_usd": 0.015028999999999999,
-            "duration_ms": 8180.142400000477,
-            "error": null,
-            "input_tokens": 12214,
-            "cached_input_tokens": 0,
-            "output_tokens": 563
-          },
-          "started_at": 1791356616.0431478,
-          "ended_at": 1791356776.5794783
+          "started_at": 1791351867.1215684,
+          "ended_at": 1791351889.6502674
         }
       ],
       "grading_mode": "dimensions",
@@ -2718,10 +1912,10 @@
         ]
       },
       "totals": {
-        "duration_ms": 10062.129999998433,
+        "duration_ms": 9186.840500100516,
         "duration_api_ms": 0,
-        "judge_duration_ms": 3798.046099997009,
-        "wall_clock_ms": 14633.329153060913,
+        "judge_duration_ms": 4038.6548000387847,
+        "wall_clock_ms": 13811.166524887085,
         "num_turns": 2,
         "input_tokens": 0,
         "cached_input_tokens": 0,
@@ -2737,11 +1931,11 @@
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_017_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_017_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 10062.129999998433,
+          "duration_ms": 9186.840500100516,
           "duration_api_ms": 0,
           "num_turns": 2,
           "skill_attempts": 1,
@@ -2765,7 +1959,7 @@
                 "tool": "Skill",
                 "args": {
                   "skill": "search-records",
-                  "args": "Search the 1850 U.S. federal census index for Patrick Flynn in Schuylkill County, Pennsylvania. Log all results including nil results."
+                  "args": "Search the 1850 U.S. federal census index for Patrick Flynn in Schuylkill County, Pennsylvania."
                 }
               }
             ]
@@ -2972,14 +2166,14 @@
               }
             ],
             "judge_cost_usd": 0.012433,
-            "duration_ms": 3798.046099997009,
+            "duration_ms": 4038.6548000387847,
             "error": null,
             "input_tokens": 11028,
             "cached_input_tokens": 0,
             "output_tokens": 281
           },
-          "started_at": 1791356846.1065211,
-          "ended_at": 1791356860.7398503
+          "started_at": 1791351874.7669237,
+          "ended_at": 1791351888.5780902
         }
       ],
       "grading_mode": "invariant",
@@ -3002,19 +2196,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly recognized that no project exists (no research.json or tree.gedcomx.json in the empty folder) and appropriately declined to perform research work. Instead of fabricating a project or attempting inline setup, Claude asked for the necessary information to proceed. The response contains no factually incorrect claims and accurately reflects the situation."
+            "rationale": "Claude correctly recognized that the project folder is empty (no research.json or tree.gedcomx.json) and appropriately declined to perform research work. Instead of attempting to initialize a project or create files inline, Claude asked for clarifying information about the person whose parents should be researched. This is the correct behavior for a negative test where the skill should route to init-project."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the routing requirement by declining to perform research and redirecting the user to provide person details. The response correctly identified that a project must be initialized first and requested the information needed to proceed with init-project. No required action was omitted."
+            "rationale": "Claude fully addressed the routing requirement by declining to perform research and instead requesting the necessary information that would be needed once a project is initialized. The response appropriately identified what information is needed (name, known details, FamilySearch Person ID) to proceed with project setup, which aligns with the correct behavior of routing to init-project."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. This is appropriate for a negative test where the skill should decline and route to init-project rather than attempt to perform research. N/A applies."
+            "rationale": "No MCP tool calls were made in this response. Claude did not attempt to call any tools, which is appropriate given that the skill should have declined and routed to init-project rather than performing its own task. N/A applies here as no tool calls occurred."
           }
         ],
         "review_dimensions": [
@@ -3022,54 +2216,54 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly recognized that no project exists (no research.json or tree.gedcomx.json in the empty folder) and appropriately declined to perform research work. Instead of fabricating a project or attempting inline setup, Claude asked for the necessary information to proceed. The response contains no factually incorrect claims and accurately reflects the situation."
+            "rationale": "Claude correctly recognized that the project folder is empty (no research.json or tree.gedcomx.json) and appropriately declined to perform research work. Instead of attempting to initialize a project or create files inline, Claude asked for clarifying information about the person whose parents should be researched. This is the correct behavior for a negative test where the skill should route to init-project."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the routing requirement by declining to perform research and redirecting the user to provide person details. The response correctly identified that a project must be initialized first and requested the information needed to proceed with init-project. No required action was omitted."
+            "rationale": "Claude fully addressed the routing requirement by declining to perform research and instead requesting the necessary information that would be needed once a project is initialized. The response appropriately identified what information is needed (name, known details, FamilySearch Person ID) to proceed with project setup, which aligns with the correct behavior of routing to init-project."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. This is appropriate for a negative test where the skill should decline and route to init-project rather than attempt to perform research. N/A applies."
+            "rationale": "No MCP tool calls were made in this response. Claude did not attempt to call any tools, which is appropriate given that the skill should have declined and routed to init-project rather than performing its own task. N/A applies here as no tool calls occurred."
           }
         ]
       },
       "totals": {
-        "duration_ms": 15590.555399998266,
-        "duration_api_ms": 10788,
-        "judge_duration_ms": 3736.1645999990287,
-        "wall_clock_ms": 19896.713972091675,
+        "duration_ms": 21129.063999978825,
+        "duration_api_ms": 15493,
+        "judge_duration_ms": 4941.850999952294,
+        "wall_clock_ms": 27664.536476135254,
         "num_turns": 2,
         "input_tokens": 363,
-        "cached_input_tokens": 27006,
-        "cache_creation_input_tokens": 11869,
-        "output_tokens": 437,
-        "judge_input_tokens": 6516,
+        "cached_input_tokens": 32650,
+        "cache_creation_input_tokens": 12613,
+        "output_tokens": 588,
+        "judge_input_tokens": 6503,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 307,
-        "skill_cost_usd": 0.05939655,
-        "judge_cost_usd": 0.008050999999999999,
-        "total_cost_usd": 0.06744755
+        "judge_output_tokens": 353,
+        "skill_cost_usd": 0.06614474999999999,
+        "judge_cost_usd": 0.008268000000000001,
+        "total_cost_usd": 0.07441274999999999
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_008_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_008_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 15590.555399998266,
-          "duration_api_ms": 10788,
+          "duration_ms": 21129.063999978825,
+          "duration_api_ms": 15493,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 363,
-          "cached_input_tokens": 27006,
-          "cache_creation_input_tokens": 11869,
-          "output_tokens": 437,
+          "cached_input_tokens": 32650,
+          "cache_creation_input_tokens": 12613,
+          "output_tokens": 588,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 359,
@@ -3083,19 +2277,19 @@
             },
             "claude-sonnet-4-6": {
               "inputTokens": 4,
-              "outputTokens": 423,
-              "cacheReadInputTokens": 27006,
-              "cacheCreationInputTokens": 11869,
+              "outputTokens": 574,
+              "cacheReadInputTokens": 32650,
+              "cacheCreationInputTokens": 12613,
               "webSearchRequests": 0,
-              "costUSD": 0.05896755,
+              "costUSD": 0.06571574999999999,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.05939655,
+          "skill_cost_usd": 0.06614474999999999,
           "output": {
-            "text_response": "I'd love to help you start a research project! It looks like you may have forgotten to include the person's details. Could you share some information about them?\n\nNo problem! To get started, please share a bit about the person whose parents you'd like to research. Either of these will work:\n\n- **A FamilySearch Person ID** (e.g. `LZNY-BFK`) — I can pull their profile directly.\n- **Their name and details** — such as full name, approximate birth year, and birthplace, and I'll search for them in FamilySearch.\n\nOnce I have that, I'll initialize the project and begin the research right away!",
+            "text_response": "I'd love to help you start a research project! To get things going, I just need a bit more information about the person whose parents you want to research.\n\nCould you share more details about the person whose parents you'd like to research? Specifically:\n\n- **Their name** (full name if possible)\n- **Any known details** — birth year, birthplace, death year, spouse's name, etc.\n- **FamilySearch Person ID** (e.g. `LZNY-BK9`), if you have it\n\nWith that information, I can initialize the project and get started right away!",
             "activated": false,
             "skills_invoked": [],
             "tool_calls": [],
@@ -3104,7 +2298,7 @@
               {
                 "tool": "AskUserQuestion",
                 "args": {
-                  "questions": "[{'question': 'Who would you like to research the parents of?', 'header': 'Person details', 'options': [{'label': 'I have a FamilySearch ID', 'description': \"Provide the FamilySearch person ID (e.g. L"
+                  "questions": "[{'question': 'Who is the person whose parents you want to research? Please provide their name and any details you know (birth year, birthplace, death year, etc.), or their FamilySearch Person ID if y"
                 }
               }
             ]
@@ -3295,30 +2489,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly recognized that no project exists (no research.json or tree.gedcomx.json in the empty folder) and appropriately declined to perform research work. Instead of fabricating a project or attempting inline setup, Claude asked for the necessary information to proceed. The response contains no factually incorrect claims and accurately reflects the situation."
+                "rationale": "Claude correctly recognized that the project folder is empty (no research.json or tree.gedcomx.json) and appropriately declined to perform research work. Instead of attempting to initialize a project or create files inline, Claude asked for clarifying information about the person whose parents should be researched. This is the correct behavior for a negative test where the skill should route to init-project."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the routing requirement by declining to perform research and redirecting the user to provide person details. The response correctly identified that a project must be initialized first and requested the information needed to proceed with init-project. No required action was omitted."
+                "rationale": "Claude fully addressed the routing requirement by declining to perform research and instead requesting the necessary information that would be needed once a project is initialized. The response appropriately identified what information is needed (name, known details, FamilySearch Person ID) to proceed with project setup, which aligns with the correct behavior of routing to init-project."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. This is appropriate for a negative test where the skill should decline and route to init-project rather than attempt to perform research. N/A applies."
+                "rationale": "No MCP tool calls were made in this response. Claude did not attempt to call any tools, which is appropriate given that the skill should have declined and routed to init-project rather than performing its own task. N/A applies here as no tool calls occurred."
               }
             ],
-            "judge_cost_usd": 0.008050999999999999,
-            "duration_ms": 3736.1645999990287,
+            "judge_cost_usd": 0.008268000000000001,
+            "duration_ms": 4941.850999952294,
             "error": null,
-            "input_tokens": 6516,
+            "input_tokens": 6503,
             "cached_input_tokens": 0,
-            "output_tokens": 307
+            "output_tokens": 353
           },
-          "started_at": 1791356828.4306207,
-          "ended_at": 1791356848.3273346
+          "started_at": 1791351758.5576136,
+          "ended_at": 1791351786.22215
         }
       ],
       "grading_mode": "invariant",
@@ -3381,10 +2575,10 @@
         ]
       },
       "totals": {
-        "duration_ms": 20526.907599996775,
+        "duration_ms": 16331.071499967948,
         "duration_api_ms": 0,
-        "judge_duration_ms": 4845.366699999431,
-        "wall_clock_ms": 26157.80806541443,
+        "judge_duration_ms": 5020.256099989638,
+        "wall_clock_ms": 21909.607887268066,
         "num_turns": 2,
         "input_tokens": 0,
         "cached_input_tokens": 0,
@@ -3400,11 +2594,11 @@
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_016_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_016_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 20526.907599996775,
+          "duration_ms": 16331.071499967948,
           "duration_api_ms": 0,
           "num_turns": 2,
           "skill_attempts": 1,
@@ -3428,7 +2622,7 @@
                 "tool": "Skill",
                 "args": {
                   "skill": "research-plan",
-                  "args": "Review the current Flynn research project plan, identify which unindexed record sets should be browsed next, and propose a prioritized browse strategy for any unindexed/image-only collections relevant"
+                  "args": "Review and revise the research plan for the Flynn project, focusing on which unindexed FamilySearch image volumes to browse next. Emphasize strategy for unindexed record sets."
                 }
               }
             ]
@@ -3635,14 +2829,14 @@
               }
             ],
             "judge_cost_usd": 0.013103,
-            "duration_ms": 4845.366699999431,
+            "duration_ms": 5020.256099989638,
             "error": null,
             "input_tokens": 11298,
             "cached_input_tokens": 0,
             "output_tokens": 361
           },
-          "started_at": 1791356709.6519334,
-          "ended_at": 1791356735.8097415
+          "started_at": 1791351839.9988716,
+          "ended_at": 1791351861.9084795
         }
       ],
       "grading_mode": "invariant",
@@ -3654,30 +2848,30 @@
       "expected_outcome": "pass",
       "scenario": "empty-project-just-created",
       "mcp_fixtures": [],
-      "outcome": "partial",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "partial"
+          "pass"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the project state (Patrick Flynn stub person I1, no questions registered, objective to identify parents). The tool call to project_context returned accurate data. Claude's description of the project status and the workflow routing decision are factually accurate. No fabricated material or unsupported claims."
+            "rationale": "Claude correctly identified the project state (Patrick Flynn stub with no questions), accurately described the objective and current status, and made the correct routing decision to question-selection. The tool call to project_context succeeded and Claude's characterization of the empty-project scenario matches the before-state exactly. No fabricated claims or unsupported assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
-            "score": 2,
-            "rationale": "Claude routed to question-selection as required for an empty-project scenario with no prior questions, which is correct. However, the per-test context explicitly states 'Find the parents of X' is an OPEN ask naming a research question, not a bounded deliverable, and the router must walk the routing table as it would for any job. Claude stopped after routing to question-selection and did not continue driving the full research workflow. The response states 'Would you like me to continue driving the research forward from here?' rather than proactively continuing, which represents incomplete execution of the open-ended research task."
+            "score": 3,
+            "rationale": "Claude addressed the user's request to find Patrick Flynn's parents by correctly routing to question-selection, which is the appropriate first step in the GPS workflow for an empty project with no registered research questions. The response explains why routing occurred and what the next steps will be, fulfilling the scope of a routing skill."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with projectPath argument. The call matched the live fixture (matched.kind == 'live') and the tool returned successfully with ok: true. The argument structure was correct and appropriate for the scenario."
+            "rationale": "The single MCP tool call (mcp__genealogy__project_context) was made with the correct projectPath argument. The call succeeded (matched.kind == 'live') and returned the expected project state. No validation errors or fixture_not_found issues occurred. The tool was used appropriately to ground the routing decision."
           }
         ],
         "review_dimensions": [
@@ -3685,54 +2879,54 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the project state (Patrick Flynn stub person I1, no questions registered, objective to identify parents). The tool call to project_context returned accurate data. Claude's description of the project status and the workflow routing decision are factually accurate. No fabricated material or unsupported claims."
+            "rationale": "Claude correctly identified the project state (Patrick Flynn stub with no questions), accurately described the objective and current status, and made the correct routing decision to question-selection. The tool call to project_context succeeded and Claude's characterization of the empty-project scenario matches the before-state exactly. No fabricated claims or unsupported assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
-            "score": 2,
-            "rationale": "Claude routed to question-selection as required for an empty-project scenario with no prior questions, which is correct. However, the per-test context explicitly states 'Find the parents of X' is an OPEN ask naming a research question, not a bounded deliverable, and the router must walk the routing table as it would for any job. Claude stopped after routing to question-selection and did not continue driving the full research workflow. The response states 'Would you like me to continue driving the research forward from here?' rather than proactively continuing, which represents incomplete execution of the open-ended research task."
+            "score": 3,
+            "rationale": "Claude addressed the user's request to find Patrick Flynn's parents by correctly routing to question-selection, which is the appropriate first step in the GPS workflow for an empty project with no registered research questions. The response explains why routing occurred and what the next steps will be, fulfilling the scope of a routing skill."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with projectPath argument. The call matched the live fixture (matched.kind == 'live') and the tool returned successfully with ok: true. The argument structure was correct and appropriate for the scenario."
+            "rationale": "The single MCP tool call (mcp__genealogy__project_context) was made with the correct projectPath argument. The call succeeded (matched.kind == 'live') and returned the expected project state. No validation errors or fixture_not_found issues occurred. The tool was used appropriately to ground the routing decision."
           }
         ]
       },
       "totals": {
-        "duration_ms": 66371.65050000476,
-        "duration_api_ms": 40159,
-        "judge_duration_ms": 6305.261299996346,
-        "wall_clock_ms": 93025.38180351257,
+        "duration_ms": 46563.19919996895,
+        "duration_api_ms": 43209,
+        "judge_duration_ms": 5237.449900014326,
+        "wall_clock_ms": 52129.23622131348,
         "num_turns": 6,
         "input_tokens": 356,
-        "cached_input_tokens": 108918,
-        "cache_creation_input_tokens": 31295,
-        "output_tokens": 1715,
-        "judge_input_tokens": 6950,
+        "cached_input_tokens": 131269,
+        "cache_creation_input_tokens": 24071,
+        "output_tokens": 2029,
+        "judge_input_tokens": 6990,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 397,
-        "skill_cost_usd": 0.17600465,
-        "judge_cost_usd": 0.008934999999999998,
-        "total_cost_usd": 0.18493965
+        "judge_output_tokens": 352,
+        "skill_cost_usd": 0.16032995,
+        "judge_cost_usd": 0.008749999999999999,
+        "total_cost_usd": 0.16907995
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_019_2026-10-07_07-03-34_0",
-          "outcome": "partial",
+          "run_id": "run_ut_research_019_2026-10-07_05-42-38_0",
+          "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 66371.65050000476,
-          "duration_api_ms": 40159,
+          "duration_ms": 46563.19919996895,
+          "duration_api_ms": 43209,
           "num_turns": 6,
           "skill_attempts": 1,
           "input_tokens": 356,
-          "cached_input_tokens": 108918,
-          "cache_creation_input_tokens": 31295,
-          "output_tokens": 1715,
+          "cached_input_tokens": 131269,
+          "cache_creation_input_tokens": 24071,
+          "output_tokens": 2029,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 345,
@@ -3746,19 +2940,19 @@
             },
             "claude-sonnet-4-6": {
               "inputTokens": 11,
-              "outputTokens": 1702,
-              "cacheReadInputTokens": 108918,
-              "cacheCreationInputTokens": 31295,
+              "outputTokens": 2016,
+              "cacheReadInputTokens": 131269,
+              "cacheCreationInputTokens": 24071,
               "webSearchRequests": 0,
-              "costUSD": 0.17559465000000002,
+              "costUSD": 0.15991995,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.17600465,
+          "skill_cost_usd": 0.16032995,
           "output": {
-            "text_response": "I'll start by checking for an existing project, then drive the full GPS workflow to find Patrick Flynn's parents.\n\nChecking for an existing project first.\n\nProject exists — Patrick Flynn (born ca. 1845 PA, died 1908 Schuylkill County, PA). No questions registered yet, so routing to question-selection first.\n\nHere's where the workflow stands for **Patrick Flynn** (born ca. 1845, Pennsylvania; died 1908, Schuylkill County, PA):\n\n**Project found** — The project is already initialized with Patrick Flynn as the subject person (I1) and the objective of identifying his parents.\n\n**Routing to question-selection** — Because no research questions had been registered yet, I routed to question-selection to formally register the first question (identifying Patrick Flynn's parents) into research.json. That step was handed off and counts as complete.\n\n---\n\n**What happens next in the full workflow:**\n\nOnce the question is registered, the GPS workflow continues as follows:\n1. **Locality guide** — survey what records exist for Schuylkill County, PA in the mid-1800s\n2. **Research plan** — identify which record sets to search (census, vital records, church records, etc.)\n3. **Searches** — execute searches on FamilySearch and external repositories\n4. **Record extraction** — extract and classify assertions from found records\n5. **Person-evidence** — link extracted assertions to tree persons\n6. **Exhaustiveness check** — evaluate whether research is reasonably complete\n7. **Proof conclusion** — write a GPS-conformant conclusion naming Patrick's parents\n\nWould you like me to continue driving the research forward from here?",
+            "text_response": "Let me start by checking the current project state.\n\nThere's an existing project for Patrick Flynn (born ca. 1845 PA, died 1908 Schuylkill County, PA) with no questions yet. Starting the GPS workflow — routing to question-selection first.\n\nThe research job is underway for **Patrick Flynn** (born ca. 1845, Pennsylvania; died 1908, Schuylkill County, PA). Here's where things stand:\n\n**Project state:**\n- A project is already initialized with Patrick Flynn (person `I1`) as the subject.\n- The objective is to identify his parents.\n- No research questions have been registered yet.\n\n**What was routed and why:**\n\nI routed to **question-selection** because the project has a clear objective but no registered research questions. Under the GPS routing table, a question must be formally written to `research.json` by question-selection before a plan can be created or searches executed — a plan referencing an unregistered question is refused by the validator.\n\nQuestion-selection was handed the project path and objective. It did not produce a change to project state in this pass, so the question remains unregistered.\n\n**Next step when resumed:**\n\nOnce question-selection successfully registers the parentage question (e.g., \"Who are the parents of Patrick Flynn, born ca. 1845 in Pennsylvania?\"), the workflow will continue:\n\n1. **Locality guide** — survey Schuylkill County, PA record availability for ca. 1840–1910\n2. **Research plan** — identify which record sets to search (census, vital records, church records, naturalization, etc.)\n3. **Search records** — execute plan items on FamilySearch and external sites\n4. **Record extraction → person-evidence → proof conclusion**\n\nWould you like me to continue driving the workflow forward?",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -3767,7 +2961,7 @@
               {
                 "tool": "mcp__genealogy__project_context",
                 "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_019-0-0-0fa7o3h0"
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_019-0-0-n26uaep0"
                 },
                 "expected_args": null,
                 "matched": {
@@ -3777,7 +2971,7 @@
                 "response_fixture": "live:project_context",
                 "response": {
                   "ok": true,
-                  "buildId": "0.1.0+2026-10-07.b88d2cbf",
+                  "buildId": "0.1.0+2026-10-07.8c2eb61c.dirty",
                   "projectStatus": "active",
                   "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
                   "openQuestions": [],
@@ -3816,7 +3010,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Question selection for Patrick Flynn parentage project",
-                  "prompt": "We have an active genealogy research project for Patrick Flynn (born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA). The project objective is to identify his parents. No research questions have been registered yet. Please select the first appropriate research question and write it to research.json. projectPath: C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_019-0-0-0fa7o3h0",
+                  "prompt": "Project path: C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_019-0-0-n26uaep0\n\nThe project objective is: \"Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\"\n\nThere are no questions yet. Please select and write the first research question to research.json.",
                   "subagent_type": "question-selection"
                 }
               }
@@ -4031,30 +3225,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the project state (Patrick Flynn stub person I1, no questions registered, objective to identify parents). The tool call to project_context returned accurate data. Claude's description of the project status and the workflow routing decision are factually accurate. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly identified the project state (Patrick Flynn stub with no questions), accurately described the objective and current status, and made the correct routing decision to question-selection. The tool call to project_context succeeded and Claude's characterization of the empty-project scenario matches the before-state exactly. No fabricated claims or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 2,
-                "rationale": "Claude routed to question-selection as required for an empty-project scenario with no prior questions, which is correct. However, the per-test context explicitly states 'Find the parents of X' is an OPEN ask naming a research question, not a bounded deliverable, and the router must walk the routing table as it would for any job. Claude stopped after routing to question-selection and did not continue driving the full research workflow. The response states 'Would you like me to continue driving the research forward from here?' rather than proactively continuing, which represents incomplete execution of the open-ended research task."
+                "score": 3,
+                "rationale": "Claude addressed the user's request to find Patrick Flynn's parents by correctly routing to question-selection, which is the appropriate first step in the GPS workflow for an empty project with no registered research questions. The response explains why routing occurred and what the next steps will be, fulfilling the scope of a routing skill."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with projectPath argument. The call matched the live fixture (matched.kind == 'live') and the tool returned successfully with ok: true. The argument structure was correct and appropriate for the scenario."
+                "rationale": "The single MCP tool call (mcp__genealogy__project_context) was made with the correct projectPath argument. The call succeeded (matched.kind == 'live') and returned the expected project state. No validation errors or fixture_not_found issues occurred. The tool was used appropriately to ground the routing decision."
               }
             ],
-            "judge_cost_usd": 0.008934999999999998,
-            "duration_ms": 6305.261299996346,
+            "judge_cost_usd": 0.008749999999999999,
+            "duration_ms": 5237.449900014326,
             "error": null,
-            "input_tokens": 6950,
+            "input_tokens": 6990,
             "cached_input_tokens": 0,
-            "output_tokens": 397
+            "output_tokens": 352
           },
-          "started_at": 1791356616.0396092,
-          "ended_at": 1791356709.064991
+          "started_at": 1791351786.3216877,
+          "ended_at": 1791351838.450924
         }
       ],
       "grading_mode": "dimensions",
@@ -4077,19 +3271,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly assessed the project state: no questions exist yet, the objective is to identify Patrick Flynn's parents, and one stub person (I1) is on file. The routing decision to question-selection is sound given the empty-project scenario. Claude's narration accurately reflects what was found via the project_context tool and what was delegated. No fabricated claims or unsupported assertions."
+            "rationale": "Claude correctly identified that no questions were registered, queried the project context to confirm the objective and stub person, and accurately described the project state (Patrick Flynn, b. ca. 1845 PA, d. 1908 Schuylkill County PA). The routing decision to invoke question-selection was correct per the routing table. No fabricated claims or unsupported assertions were made. The narration accurately reflects what the tools returned and what actions were taken."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed the user's request to 'research the next open question' by correctly identifying that no questions exist yet and routing to question-selection to derive the first research question. The response explains the project state, the routing decision, and what will happen next. All required work for this stage was completed."
+            "rationale": "Claude addressed the user's request to 'research the next open question' by correctly determining that no questions existed yet and routing to question-selection to derive the first question. The skill queried both the questions section and project context to establish the full state before routing. The objective was clearly stated and the next workflow step was identified. No required work was omitted given the empty-project scenario."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the live fixture and returned successfully with ok: true. No fixture_not_found errors or argument mismatches occurred."
+            "rationale": "Both MCP tool calls used correct arguments. The research_query call with section='questions' correctly queried for open questions. The project_context call with the correct projectPath retrieved the full project state including objective, persons, and sources. Both calls succeeded (matched.kind='live', ok=true) and returned the expected data structure. No fixture_not_found errors occurred. Arguments were semantically correct and matched the fixture's expectations."
           }
         ],
         "review_dimensions": [
@@ -4097,54 +3291,54 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly assessed the project state: no questions exist yet, the objective is to identify Patrick Flynn's parents, and one stub person (I1) is on file. The routing decision to question-selection is sound given the empty-project scenario. Claude's narration accurately reflects what was found via the project_context tool and what was delegated. No fabricated claims or unsupported assertions."
+            "rationale": "Claude correctly identified that no questions were registered, queried the project context to confirm the objective and stub person, and accurately described the project state (Patrick Flynn, b. ca. 1845 PA, d. 1908 Schuylkill County PA). The routing decision to invoke question-selection was correct per the routing table. No fabricated claims or unsupported assertions were made. The narration accurately reflects what the tools returned and what actions were taken."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed the user's request to 'research the next open question' by correctly identifying that no questions exist yet and routing to question-selection to derive the first research question. The response explains the project state, the routing decision, and what will happen next. All required work for this stage was completed."
+            "rationale": "Claude addressed the user's request to 'research the next open question' by correctly determining that no questions existed yet and routing to question-selection to derive the first question. The skill queried both the questions section and project context to establish the full state before routing. The objective was clearly stated and the next workflow step was identified. No required work was omitted given the empty-project scenario."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the live fixture and returned successfully with ok: true. No fixture_not_found errors or argument mismatches occurred."
+            "rationale": "Both MCP tool calls used correct arguments. The research_query call with section='questions' correctly queried for open questions. The project_context call with the correct projectPath retrieved the full project state including objective, persons, and sources. Both calls succeeded (matched.kind='live', ok=true) and returned the expected data structure. No fixture_not_found errors occurred. Arguments were semantically correct and matched the fixture's expectations."
           }
         ]
       },
       "totals": {
-        "duration_ms": 35693.27609999891,
-        "duration_api_ms": 27291,
-        "judge_duration_ms": 5081.183600006625,
-        "wall_clock_ms": 43215.625286102295,
-        "num_turns": 6,
-        "input_tokens": 362,
-        "cached_input_tokens": 115378,
-        "cache_creation_input_tokens": 23137,
-        "output_tokens": 1113,
-        "judge_input_tokens": 7035,
+        "duration_ms": 37322.78749998659,
+        "duration_api_ms": 33092,
+        "judge_duration_ms": 6021.261900081299,
+        "wall_clock_ms": 43947.89671897888,
+        "num_turns": 8,
+        "input_tokens": 364,
+        "cached_input_tokens": 195565,
+        "cache_creation_input_tokens": 23512,
+        "output_tokens": 1312,
+        "judge_input_tokens": 7291,
         "judge_cached_input_tokens": 0,
-        "judge_output_tokens": 346,
-        "skill_cost_usd": 0.13830415000000001,
-        "judge_cost_usd": 0.008765,
-        "total_cost_usd": 0.14706915
+        "judge_output_tokens": 421,
+        "skill_cost_usd": 0.1667575,
+        "judge_cost_usd": 0.009396,
+        "total_cost_usd": 0.1761535
       },
       "runs": [
         {
           "run_index": 0,
-          "run_id": "run_ut_research_011_2026-10-07_07-03-34_0",
+          "run_id": "run_ut_research_011_2026-10-07_05-42-38_0",
           "outcome": "pass",
           "aborted_reason": null,
           "error": null,
-          "duration_ms": 35693.27609999891,
-          "duration_api_ms": 27291,
-          "num_turns": 6,
+          "duration_ms": 37322.78749998659,
+          "duration_api_ms": 33092,
+          "num_turns": 8,
           "skill_attempts": 1,
-          "input_tokens": 362,
-          "cached_input_tokens": 115378,
-          "cache_creation_input_tokens": 23137,
-          "output_tokens": 1113,
+          "input_tokens": 364,
+          "cached_input_tokens": 195565,
+          "cache_creation_input_tokens": 23512,
+          "output_tokens": 1312,
           "model_usage": {
             "claude-haiku-4-5-20251001": {
               "inputTokens": 352,
@@ -4157,29 +3351,49 @@
               "maxOutputTokens": 32000
             },
             "claude-sonnet-4-6": {
-              "inputTokens": 10,
-              "outputTokens": 1098,
-              "cacheReadInputTokens": 115378,
-              "cacheCreationInputTokens": 23137,
+              "inputTokens": 12,
+              "outputTokens": 1297,
+              "cacheReadInputTokens": 195565,
+              "cacheCreationInputTokens": 23512,
               "webSearchRequests": 0,
-              "costUSD": 0.13787715,
+              "costUSD": 0.16633050000000005,
               "contextWindow": 200000,
               "maxOutputTokens": 32000
             }
           },
           "no_result_message": false,
-          "skill_cost_usd": 0.13830415000000001,
+          "skill_cost_usd": 0.1667575,
           "output": {
-            "text_response": "Let me start by reading the current state of the research project.\n\nNo questions exist yet — routing to question-selection to register the first research question.\n\nI've assessed the project state and routed to **question-selection** to register the first research question.\n\n**What was found:**\n- Project is active with the objective: *Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA*\n- One tree person exists: **Patrick Flynn (I1)**\n- No questions, plans, sources, or locality guides exist yet\n\n**What was routed:**\nQuestion-selection was invoked to derive and write the first GPS Step 1 research question — establishing the formal question that will drive the parentage search. Once that question is registered, the next iteration will route to a locality guide for Schuylkill County, PA (to survey what records are available for the 1845–1908 period), then to research-plan, and then into record searches.\n\nYou can invoke `/research` again to continue driving the workflow forward from that registered question.",
+            "text_response": "No questions registered yet — I'll query the project context to learn the objective, then invoke question-selection.\n\nThe objective is clear: identify the parents of Patrick Flynn (b. ca. 1845 PA, d. 1908 Schuylkill County PA). Invoking question-selection to register the first question.\n\nHere's where things stand:\n\n---\n\n**Project:** Identify the parents of Patrick Flynn, b. ca. 1845 Pennsylvania, d. 1908 Schuylkill County, PA.\n\n**What I did this run:**\n\n1. **Queried `research.json`** — confirmed the project exists and is active, with the objective recorded but no questions registered yet.\n2. **Read project context** — confirmed the subject (Patrick Flynn, `I1`) and that no sources, localities, or open questions were on file.\n3. **Routed to `question-selection`** — because the project has an objective but no registered questions, the routing table's first applicable row sent me to question-selection to derive and write the first GPS Step 1 question. That hand-off has been recorded.\n\n**Next step when you resume:** Once the question is registered, the next route will be to **locality-guide** (to survey Schuylkill County, PA records for the relevant time period) if no locality entry exists yet, followed by **research-plan** to build a sequenced search plan for that question.",
             "activated": true,
             "skills_invoked": [
               "research"
             ],
             "tool_calls": [
               {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_011-0-0-ai_30tyo",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "questions",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
                 "tool": "mcp__genealogy__project_context",
                 "args": {
-                  "projectPath": "C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_011-0-0-zpehjiok"
+                  "projectPath": "C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_011-0-0-ai_30tyo"
                 },
                 "expected_args": null,
                 "matched": {
@@ -4189,7 +3403,7 @@
                 "response_fixture": "live:project_context",
                 "response": {
                   "ok": true,
-                  "buildId": "0.1.0+2026-10-07.b88d2cbf",
+                  "buildId": "0.1.0+2026-10-07.8c2eb61c.dirty",
                   "projectStatus": "active",
                   "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
                   "openQuestions": [],
@@ -4219,15 +3433,21 @@
               {
                 "tool": "ToolSearch",
                 "args": {
-                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
-                  "max_results": "2"
+                  "query": "select:mcp__genealogy__research_query",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/research.json"
                 }
               },
               {
                 "tool": "Agent",
                 "args": {
-                  "description": "Question selection for Patrick Flynn project",
-                  "prompt": "Select the first research question for this genealogy project and write it to research.json.\n\nProject path: C:\\Users\\User\\AppData\\Local\\Temp\\eval-ut_research_011-0-0-zpehjiok\n\nProject objective: Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA.\n\nThe project has one person in the tree (I1 = Patrick Flynn) and no questions yet. Please derive the first appropriate GPS Step 1 research question and write it to research.json.",
+                  "description": "Select first research question",
+                  "prompt": "Project: C:\\Users\\RUKNAL~1\\AppData\\Local\\Temp\\eval-ut_research_011-0-0-ai_30tyo\n\nObjective: Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA.\n\nThere are no questions registered yet. Please select and write the first research question to research.json.",
                   "subagent_type": "question-selection"
                 }
               }
@@ -4248,6 +3468,11 @@
                 "kind": "prose_observation",
                 "check": "report_no_gps_jargon_in_response",
                 "observation": "GPS vocabulary in the reply: gps"
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: research.json"
               }
             ]
           },
@@ -4437,30 +3662,30 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly assessed the project state: no questions exist yet, the objective is to identify Patrick Flynn's parents, and one stub person (I1) is on file. The routing decision to question-selection is sound given the empty-project scenario. Claude's narration accurately reflects what was found via the project_context tool and what was delegated. No fabricated claims or unsupported assertions."
+                "rationale": "Claude correctly identified that no questions were registered, queried the project context to confirm the objective and stub person, and accurately described the project state (Patrick Flynn, b. ca. 1845 PA, d. 1908 Schuylkill County PA). The routing decision to invoke question-selection was correct per the routing table. No fabricated claims or unsupported assertions were made. The narration accurately reflects what the tools returned and what actions were taken."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the user's request to 'research the next open question' by correctly identifying that no questions exist yet and routing to question-selection to derive the first research question. The response explains the project state, the routing decision, and what will happen next. All required work for this stage was completed."
+                "rationale": "Claude addressed the user's request to 'research the next open question' by correctly determining that no questions existed yet and routing to question-selection to derive the first question. The skill queried both the questions section and project context to establish the full state before routing. The objective was clearly stated and the next workflow step was identified. No required work was omitted given the empty-project scenario."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the live fixture and returned successfully with ok: true. No fixture_not_found errors or argument mismatches occurred."
+                "rationale": "Both MCP tool calls used correct arguments. The research_query call with section='questions' correctly queried for open questions. The project_context call with the correct projectPath retrieved the full project state including objective, persons, and sources. Both calls succeeded (matched.kind='live', ok=true) and returned the expected data structure. No fixture_not_found errors occurred. Arguments were semantically correct and matched the fixture's expectations."
               }
             ],
-            "judge_cost_usd": 0.008765,
-            "duration_ms": 5081.183600006625,
+            "judge_cost_usd": 0.009396,
+            "duration_ms": 6021.261900081299,
             "error": null,
-            "input_tokens": 7035,
+            "input_tokens": 7291,
             "cached_input_tokens": 0,
-            "output_tokens": 346
+            "output_tokens": 421
           },
-          "started_at": 1791356776.6968524,
-          "ended_at": 1791356819.9124777
+          "started_at": 1791351838.4994957,
+          "ended_at": 1791351882.4473925
         }
       ],
       "grading_mode": "dimensions",
@@ -4468,25 +3693,25 @@
     }
   ],
   "totals": {
-    "duration_ms": 597419.309299985,
-    "duration_api_ms": 450874,
-    "judge_duration_ms": 56533.96039999643,
-    "num_turns": 53,
-    "input_tokens": 2932,
-    "cached_input_tokens": 1195402,
-    "cache_creation_input_tokens": 219072,
-    "output_tokens": 19948,
-    "judge_input_tokens": 92647,
+    "duration_ms": 323152.16739999596,
+    "duration_api_ms": 266047,
+    "judge_duration_ms": 48184.45329996757,
+    "num_turns": 42,
+    "input_tokens": 2550,
+    "cached_input_tokens": 976184,
+    "cache_creation_input_tokens": 165854,
+    "output_tokens": 11363,
+    "judge_input_tokens": 80307,
     "judge_cached_input_tokens": 0,
-    "judge_output_tokens": 4046,
-    "skill_cost_usd": 1.4812166,
-    "judge_cost_usd": 0.112877,
-    "total_cost_usd": 1.5940936,
-    "wall_clock_ms": 244700.2410888672
+    "judge_output_tokens": 3337,
+    "skill_cost_usd": 1.0868547,
+    "judge_cost_usd": 0.096992,
+    "total_cost_usd": 1.1838467000000001,
+    "wall_clock_ms": 131092.6537513733
   },
   "review_sample": {
     "tests": [
-      "ut_research_011",
+      "ut_research_016",
       "ut_research_017",
       "ut_research_019",
       "ut_research_020",
@@ -4500,9 +3725,8 @@
       "ut_research_017",
       "ut_research_019",
       "ut_research_020",
-      "ut_research_021",
-      "ut_research_022"
+      "ut_research_021"
     ],
-    "seed": 1827
+    "seed": 1832
   }
 }
