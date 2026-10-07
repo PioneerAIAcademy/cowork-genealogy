@@ -698,6 +698,31 @@ class Rehearsal:
                          {"Effect": "Allow", "Action": "s3:ListBucket", "Resource": bucket}),
         }
 
+    def eb_subnets(self, instance_type: str) -> list[str]:
+        """The default subnets in zones that offer ``instance_type``: Beanstalk refuses an
+        environment whose ``Subnets`` include a zone without it (us-east-1e has no t3)."""
+        _, subnets = self.network()
+        azs = self.state.get("subnet_azs")
+        if not azs or set(azs) != set(subnets):
+            got = self.aws("ec2", "describe-subnets", "--subnet-ids", *subnets, placeholder={
+                "Subnets": [{"SubnetId": s, "AvailabilityZone": "<az>"} for s in subnets]})
+            azs = {x["SubnetId"]: x["AvailabilityZone"] for x in got.get("Subnets", [])}
+            self.state["subnet_azs"] = azs
+            self.save()
+        offered = self.state.setdefault("az_offerings", {})
+        if instance_type not in offered:
+            got = self.aws("ec2", "describe-instance-type-offerings", "--location-type", "availability-zone",
+                           "--filters", f"Name=instance-type,Values={instance_type}", placeholder={
+                               "InstanceTypeOfferings": [{"Location": "<az>"}]})
+            offered[instance_type] = sorted({o["Location"] for o in got.get("InstanceTypeOfferings", [])})
+            self.save()
+        if self.dry:
+            return subnets
+        ids = [s for s in subnets if azs.get(s) in offered[instance_type]]
+        if len(ids) < 2:
+            raise Die(f"{instance_type} is offered in fewer than two of the default subnets' zones")
+        return ids
+
     def network(self) -> tuple[str, list[str]]:
         if "vpc_id" not in self.state:
             vpcs = self.aws("ec2", "describe-vpcs", "--filters", "Name=is-default,Values=true",
@@ -934,7 +959,8 @@ class Rehearsal:
     # tier option settings
 
     def common_options(self, tier: str, *, instance_type: str | None = None) -> list[dict]:
-        vpc, subnets = self.network()
+        vpc, _ = self.network()
+        subnets = self.eb_subnets(instance_type or INSTANCE_TYPES[tier])
         sg = {"web": "web", "worker": "worker", "tools": "tools"}[tier]
         out = [
             opt(LC_NS, "SecurityGroups", self.sg_id(sg)),
@@ -951,8 +977,8 @@ class Rehearsal:
             out.append(opt(SECRETS_NS, var, self.state.get("secrets", {}).get(key) or self.secret_arn(key)))
         return out
 
-    def load_balanced(self, *, internal: bool) -> list[dict]:
-        _, subnets = self.network()
+    def load_balanced(self, tier: str, *, internal: bool) -> list[dict]:
+        subnets = self.eb_subnets(INSTANCE_TYPES[tier])
         out = [opt(EBENV_NS, "EnvironmentType", "LoadBalanced"), opt(EBENV_NS, "LoadBalancerType", "application"),
                opt(VPC_NS, "ELBSubnets", ",".join(subnets))]
         if internal:
@@ -976,11 +1002,11 @@ class Rehearsal:
         if variant == "tools_single":
             out.append(opt(EBENV_NS, "EnvironmentType", "SingleInstance"))
         elif variant == "tools_classic":
-            _, subnets = self.network()
+            subnets = self.eb_subnets(INSTANCE_TYPES["tools"])
             out += [opt(EBENV_NS, "EnvironmentType", "LoadBalanced"), opt(VPC_NS, "ELBScheme", "internal"),
                     opt(VPC_NS, "ELBSubnets", ",".join(subnets))]
         else:
-            out += self.load_balanced(internal=True)
+            out += self.load_balanced("tools", internal=True)
         out += [opt(ENV_NS, "GENEALOGY_S3_BUCKET", self.data_bucket), opt(ENV_NS, "GENEALOGY_S3_REGION", REGION)]
         return out + self.extra_env("tools")
 
@@ -997,7 +1023,7 @@ class Rehearsal:
         return out + self.extra_env("worker")
 
     def web_options(self) -> list[dict]:
-        out = self.common_options("web") + self.load_balanced(internal=False)
+        out = self.common_options("web") + self.load_balanced("web", internal=False)
         out.append(opt(ENV_NS, "QUEUE_URL", self.state.get("queue_url") or "<queue-url>"))
         return out + self.signin_options() + self.extra_env("web")
 
