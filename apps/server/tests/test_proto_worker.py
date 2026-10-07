@@ -938,24 +938,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-two agents and 11 skills registered: clean. Twenty-one, or 10: the miss, whatever loaded --
+    # Twenty-three agents and 10 skills registered: clean. Twenty-two, or 9: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 11)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 11, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 10)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 10, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 10)) == ["10 genealogy-research:* commands registered, expected 11"]
+    assert worker.registration_problems(_info(AGENTS, 9)) == ["9 genealogy-research:* commands registered, expected 10"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 10, and a count of that same copy would have expected 10.
+    # registers 9, and a count of that same copy would have expected 9.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 10
+    assert worker.count_skills(str(copy)) == 9
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "10 genealogy-research:* commands registered, expected 11"
+        "9 genealogy-research:* commands registered, expected 10"
     ]
 
 
