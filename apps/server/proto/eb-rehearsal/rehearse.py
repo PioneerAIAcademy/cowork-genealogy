@@ -583,6 +583,10 @@ class Rehearsal:
     def role_arn(self, name: str) -> str:
         return f"arn:aws:iam::{self.account}:role{IAM_PATH}{PREFIX}-{name}"
 
+    @property
+    def rds_class(self) -> str:
+        return getattr(self.args, "rds_class", None) or RDS_CLASS
+
     def profile_arn(self, name: str) -> str:
         return f"arn:aws:iam::{self.account}:instance-profile{IAM_PATH}{PREFIX}-{name}"
 
@@ -751,7 +755,7 @@ class Rehearsal:
         self.record("db-param-group", RDS_PARAM_GROUP)
         if self.aws("rds", "describe-db-instances", "--db-instance-identifier", RDS_ID, ok=NOT_FOUND) is None:
             self.aws("rds", "create-db-instance", "--db-instance-identifier", RDS_ID,
-                     "--db-instance-class", RDS_CLASS, "--engine", "postgres", "--engine-version",
+                     "--db-instance-class", self.rds_class, "--engine", "postgres", "--engine-version",
                      RDS_ENGINE_VERSION, "--allocated-storage", "20", "--storage-type", "gp3",
                      "--storage-encrypted", "--master-username", DB_OWNER, "--manage-master-user-password",
                      "--db-name", DB_NAME, "--vpc-security-group-ids", self.sg_id("rds"),
@@ -1784,7 +1788,7 @@ U13PY
                  f"{TAG_REHEARSAL[0]}={TAG_REHEARSAL[1]} and {TAG_RUN}=<run id>")
         self.out(f"phases (up --phase all): {' '.join(PHASES)}; optional: {' '.join(OPTIONAL_PHASES)}")
         self.out(f"environments: {', '.join(ENV_NAMES.values())}; throwaways {THROWAWAY_PREFIX}*")
-        self.out(f"instance types: {INSTANCE_TYPES}; RDS {RDS_CLASS} PostgreSQL {RDS_ENGINE_VERSION}")
+        self.out(f"instance types: {INSTANCE_TYPES}; RDS {self.rds_class} PostgreSQL {RDS_ENGINE_VERSION}")
         self.out(f"probe cases: {', '.join(CASES)}")
         self.out("no AWS call is made; the commands `up --phase all` would run follow")
         for phase in PHASES:
@@ -1891,6 +1895,7 @@ def build_parser() -> argparse.ArgumentParser:
     up.add_argument("--allowed-emails", help="signin: patrons, space- or comma-separated (else .local/allowed-emails)")
     up.add_argument("--mode", choices=("loopback", "https", "off"), help="signin's mode (default loopback)")
     up.add_argument("--env", action="append", help="<tier>:NAME=VALUE, a non-secret operator override")
+    up.add_argument("--rds-class", default=RDS_CLASS, help=f"RDS instance class (default {RDS_CLASS}); another one when AWS reports InsufficientDBInstanceCapacity")
     up.add_argument("--env-file", help=f"where ANTHROPIC_API_KEY is read (default {EVAL_ENV.relative_to(REPO)})")
     sub.add_parser("status", parents=[common], help="daily cost, budget, environment health and drift")
     probe = sub.add_parser("probe", parents=[common, billed], help="apply probe cases, hold, restore")
