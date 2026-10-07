@@ -306,7 +306,9 @@ def render(
                 f"{squeezed if squeezed is not None else '--':>9}  "
                 f"{_models(sub)}{'  ' + ', '.join(flags) if flags else ''}"
             )
-        if not helper_costs:
+        if not helper_costs and unpriced:
+            out.append("  (every helper that carries token counts is unpriced — see its flags)")
+        elif not helper_costs:
             out.append("  (no helper carries token counts — this run predates per-helper metering)")
 
     # --- SUMMARY -----------------------------------------------------------
@@ -317,10 +319,14 @@ def render(
     out.append(f"  wall clock       {_minutes(usage.get('wall_clock_seconds'))}"
                f"   (slept {_minutes(usage.get('slept_seconds'))}, judge {_minutes(usage.get('judge_seconds'))})")
     whole = usage.get("whole_run_cost_usd_estimated")
-    if _is_num(whole) and main_cost is not None and status == "captured" and helper_costs and unpriced:
+    main_unpriced = main_cost is None and main_rule.startswith("no rate")
+    if _is_num(whole) and status == "captured" and (unpriced or main_unpriced):
         # A share of a partial total would overstate everyone left in it.
-        reasons = "; ".join(f"{n} {how}" for how, n in sorted(unpriced.items()))
-        out.append(f"  who spent it     {_NOT_RECORDED} ({sum(unpriced.values())} helper(s) unpriced: {reasons})")
+        parts = [f"main thread unpriced: {main_rule}"] if main_unpriced else []
+        if unpriced:
+            reasons = "; ".join(f"{n} {how}" for how, n in sorted(unpriced.items()))
+            parts.append(f"{sum(unpriced.values())} helper(s) unpriced: {reasons}")
+        out.append(f"  who spent it     {_NOT_RECORDED} ({'; '.join(parts)})")
     elif _is_num(whole) and main_cost is not None and status == "captured" and helper_costs:
         # The gate stays `whole_run_cost_usd_estimated`; only the denominator is
         # the per-model sum, so the two shares add to 100%.

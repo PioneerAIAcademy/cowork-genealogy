@@ -283,3 +283,21 @@ def test_an_unpriced_helper_blocks_the_percentages_and_says_why():
     assert "%" not in line
     assert "1 helper(s) unpriced: 1 no rate for claude-unknown-9" in line
     assert "unpriced: no rate for claude-unknown-9" in text  # flagged on its own row too
+
+
+def test_a_run_whose_only_helper_is_unpriced_says_so_not_predates():
+    """Every helper unpriced: the report must not claim the run predates helper
+    metering, nor that helper costs were not captured — they were, and could
+    not be priced."""
+    text = render(_priced_log(_helper("claude-unknown-9")), "r.json", graded=False)
+    assert "predates per-helper metering" not in text
+    assert "not captured" not in text
+    assert "every helper that carries token counts is unpriced" in text
+    assert "1 helper(s) unpriced: 1 no rate for claude-unknown-9" in text
+
+
+def test_a_main_thread_on_an_unpriced_model_blocks_the_split():
+    text = render(_priced_log(_helper("claude-sonnet-4-6"), agent_model="claude-unknown-9"),
+                  "r.json", graded=False)
+    line = next(line for line in text.splitlines() if "who spent it" in line)
+    assert "%" not in line and "main thread unpriced: no rate for claude-unknown-9" in line

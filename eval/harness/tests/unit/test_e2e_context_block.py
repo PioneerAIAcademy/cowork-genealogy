@@ -757,3 +757,26 @@ def test_the_sdks_per_model_ledger_is_kept_on_the_result_path(tmp_path, monkeypa
 
 def test_no_ledger_means_the_key_is_absent_not_null(tmp_path, monkeypatch):
     assert "model_usage" not in _usage_after(tmp_path, monkeypatch, _result())
+
+
+def test_a_run_with_no_result_message_carries_no_ledger(tmp_path, monkeypatch):
+    """The abort path (`_fallback_usage`): no ResultMessage ever arrived, so
+    there is no ledger to keep — the key is absent, never null or {}."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingAgent(hook, [], [SystemMessage(subtype="init", data={"session_id": "S1"})], {})
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    usage = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )[2]
+    assert usage is not None and usage.get("total_cost_usd") is None  # the fallback block
+    assert "model_usage" not in usage
