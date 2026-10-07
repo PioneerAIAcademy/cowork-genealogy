@@ -63,8 +63,8 @@ files, and the hook carries `set -euo pipefail` and the git exec bit.
 
 ## Why these values
 
-Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 re-sizes
-`MaxRetries` and `ErrorVisibilityTimeout` once it has measured them on AWS.
+Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 measured what
+`MaxRetries` and `ErrorVisibilityTimeout` must clear on AWS (2026-10-07, n=1) and kept both.
 
 | Option | Value | Why |
 |---|---|---|
@@ -84,10 +84,11 @@ Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 re-sizes
   all five is closed `retries_exhausted` by the worker.
 - **`ErrorVisibilityTimeout` 300** has to exceed three things:
   - **The worker's stop grace**, so a redelivery never meets the old process's CLI.
-    Compose's is 30 s. Beanstalk's is unmeasured; systemd's default is 90 s.
-  - **A deploy window.** A configuration-only update measured 78 s. An app-version
-    deploy is unmeasured.
-  - **A Postgres failover.** At AWS's 2 s default, the worker's claim-failure 500 would
+    Compose's is 30 s. Beanstalk's is 90 s (`TimeoutStopUSec`, U13).
+  - **A deploy window**, no longer: every deploy stops sqsd first and starts it last
+    (U13), so a message in flight returns after `VisibilityTimeout`, not this.
+  - **A Postgres failover.** A single-AZ reboot cut Postgres for about 12–20 s (U13;
+    Multi-AZ unmeasured). At AWS's 2 s default, the worker's claim-failure 500 would
     spend all five receives in ten seconds and dead-letter the turn.
 
   Five receives × 300 s tolerates about 20 minutes of errors.
