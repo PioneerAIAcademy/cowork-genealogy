@@ -92,8 +92,18 @@ def test_a_nil_or_errored_search_is_not_an_unsaved_find(outcome):
     ],
 )
 def test_absent_and_null_log_entry_id_both_count_as_unreferenced(assertions):
-    """`log_entry_id` is optional AND nullable; treating null as a reference
-    would silently exempt every assertion that carries one."""
+    """`log_entry_id` is optional AND nullable, and both shapes must still leave
+    the entry reported as unsaved.
+
+    CHARACTERISATION, not a discriminating guard -- stated plainly because the
+    earlier wording here claimed more than the test delivers. Dropping the
+    truthiness filter on `log_entry_id` is an EQUIVALENT MUTANT: it only puts
+    `None` into `referenced`, and since log-entry ids are non-null strings the
+    verdict is identical, so this test passes either way. What it does pin is
+    that neither shape raises and neither is mistaken for a saved find -- the
+    `.get()` could be rewritten as `a["log_entry_id"]`, which would KeyError on
+    the first case.
+    """
     found = _unsaved_finds(_state(), _state(log=[_entry()], assertions=assertions))
     assert [e["id"] for e in found] == ["log_1"]
 
