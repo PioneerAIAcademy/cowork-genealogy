@@ -1,0 +1,126 @@
+{
+  "run_log": "v10.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked against the fixture: SD-DRIS-D (\"Quebec, Civil Registration Deaths, 1867-1900\", Sherbrooke) and the SD-DRIS-C burial are correctly identified. \"A Burial fact but no death date yet\" is accurate: the profile has an undated Burial and no Death fact. \"The civil death record likely carries one\" is properly hedged, since it hasn't read that record."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Answered the bounded question: yes, a death record is already attached, and which one. It offered to extract the record rather than starting, so it stayed within \"just that one thing\"."
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One person_read call for GJ72-9WD, matching the expected args. No record_search, which is what this test checks: read what's attached before searching. Nothing written."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "he judge's reasons are wrong: both hand-offs happened (Agent → gps-mentor, then proof-conclusion, both stubbed), and the reply says only that it \"delegated\" them, which is accurate. Agent spawns never appear in the MCP call list. The ground for 2 is the genealogy: it sends proof-conclusion to \"finalize question status and close the project\" while pli_006 (Thomas Flynn's probate) is still in progress, after its own conclusion says the probate and later censuses weren't searched and could raise the tier to Proved. Same as v8 and v9."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and three research_query reads (questions, proof_summaries, evaluations with targetId ps_001 / focus proof-critique), all well-formed. One Read of tree.gedcomx.json. Nothing written."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Routing test: --autonomous triggered research, it didn't stop to ask, and it made both hand-offs. The judge's \"proof-conclusion was never actually called\" is wrong; it was spawned as an agent, which the MCP call list doesn't show. The closure problem is scored under Correctness."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "State read correctly (subject Patrick Flynn, no questions), so routing to question-selection was right. It describes the hand-off only as a request (\"once the question is registered…\") and claims no project-state change from the stubbed callee. file_changes is null."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Treated the --autonomous request as a job, not a bounded lookup: it registered the question via question-selection and laid out the chain that follows (locality guide, research plan, searches, extraction), which is what this test grades. One hand-off and a summary is the only outcome the stubs allow."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One valid project_context call before routing; the hand-off used the question-selection agent spawn."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the v10 run: empty folder, no skill, no MCP calls, no files created, so test_creates_no_project_when_none_exists passed. The user never named the person, so asking for a name or FamilySearch ID was the only sound move, and the test accepts that as a state-safe outcome."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It asked for exactly what's needed to start a project: a name or FamilySearch ID, plus birth year, birthplace or spouse to tell namesakes apart. It didn't create research.json or start research without a subject."
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool calls were made, so there are no arguments to grade."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Routing and state reading are right (objective present, no questions, so question-selection). The reply describes the hand-off as a request (\"handed the project off there to write the first question… once question-selection writes that first question…\") and claims no write; file_changes is null. That's the #3160 stub fix holding."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the state, routed, explained why, and gave next steps that fit this case (Schuylkill County locality guide, then a research plan covering census, vital, immigration and Catholic parish records)."
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One valid project_context call before routing; the hand-off used the question-selection agent spawn."
+    }
+  ]
+}
