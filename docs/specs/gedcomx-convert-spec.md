@@ -1037,3 +1037,16 @@ all surviving fields.
   — abstract data model independent of serialization
 - [GedcomX Date Format Spec](https://github.com/FamilySearch/gedcomx/blob/master/specifications/date-format-specification.md)
   — formal date encoding (`+YYYY`, `A+YYYY`, ranges, before/after)
+
+## Source-reference id precedence
+
+A source reference simplifies to `{ ref, page?, quality? }`. `ref` takes
+**`descriptionId` first**, falling back to `description` with a leading `#` stripped.
+
+Both name the same description wherever both appear (measured: 102/102 and 77/77 URL-form
+refs, `descriptionId` equal to the URL's last segment in every one). The precedence
+matters because `description` is a **full URL** on a relative's ref, pointing at a
+description the tree-read body does not contain — and a URL never equals the bare id a
+fetched description carries, so a consumer matching refs against `sources[]` ids by string
+equality would drop every one of them. Preferring the id upstream already sends also
+cannot drift from the id it names, which deriving it from the URL could.
