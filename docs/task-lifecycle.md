@@ -140,8 +140,10 @@ exactly the person whose job is catching it.
 **Stop and go to the lead** — don't re-plan around it — if the change turns out
 to do any of these:
 
-- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change. Site lists:
+- Changes `research.json` or simplified-GedcomX **schema** — a required field, a
+  new section, a new value on a closed enum, or a renamed or removed field. A new
+  optional field on an existing section doesn't stop: a senior reviewer approves
+  it after checking every site on the list. Site lists:
   [`CLAUDE.md`](../CLAUDE.md) § "Researcher profile in `research.json`".
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a credential.
 - Reverses something in [`docs/adrs/`](./adrs/) or contradicts a `CLAUDE.md` rule.
@@ -362,8 +364,9 @@ returns as an input to your review, never as your review.
    directly: does this implementation match what was agreed, and what does it do
    that nobody asked for?
 4. **Two things aren't yours to approve.** A diff that hits step 4's stop rule —
-   schema, credentials, an ADR reversal, anything hard to undo — needs the lead,
-   whatever the code looks like. And check `.github/CODEOWNERS`: on the paths it
+   a schema change other than a new optional field, credentials, an ADR
+   reversal, anything hard to undo — needs the lead, whatever the code looks
+   like. And check `.github/CODEOWNERS`: on the paths it
    lists, your approval doesn't unblock merge. Say which is still owed rather
    than leaving the author to discover it at the merge button.
 5. **Pushing a small fix to their branch is fine.** It costs nobody a
