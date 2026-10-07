@@ -2007,7 +2007,8 @@ without whichever Bedrock refuses.
   and 22 assertions, `receive_count` 1, $1.24. So a background delegation cannot occur in
   the worker any more (corrected 2026-09-29: it can; the rewrite catches only an explicit
   `true`, and CLI 2.1.220 also backgrounds a call without the flag, as the 2026-09-21 run's
-  two `record-extractor` calls were): criterion 1's delegation case is the foreground one,
+  two `record-extractor` calls were; since PR #3011 the rewrite covers every call not
+  explicitly `false`, so it cannot again): criterion 1's delegation case is the foreground one,
   which passed on
   2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
   a zero-turn redelivery from any other cause.
@@ -2050,14 +2051,11 @@ without whichever Bedrock refuses.
   compose default is 0 (off), and `proto-demo` itself stays a one-turn run. With the cap
   above 0 the worker binds a `Stop` hook (`apps/server/proto/worker/options.py`,
   `make_stop_hook`) that vetoes the model's voluntary yield exactly as the harness's does:
-  the same predicate and the same veto text for a **silent** stop — with one delta,
-  recorded because it will grow: since 2026-09-20 the harness also answers a
-  *well-formed* hand-back (one that names its next step and asks) with the
-  researcher's "Yes." rather than the veto (`classify_hand_back` / `hand_back_outcome`,
-  issues #2328 and #2292). The worker mirrors the silent-stop fallback only: the
-  classifier reads the harness's in-process narration list, and #2292's prose half has
-  not landed, so copying a moving wording would drift the moment it does. Revisit when
-  #2292 lands. The rest is as the harness has it —
+  the same predicate and the same veto text for every stop. From 2026-09-20 the
+  harness answered a *well-formed* hand-back (one that names its next step and asks)
+  with the researcher's "Yes." instead (issues #2328 and #2292); issue #2292 retired
+  that hand-back on 2026-09-27, and handoff U17 removed the "Yes." branch, so the
+  harness's classifier is telemetry only. The rest is as the harness has it —
   (`should_continue_run`, ported from
   `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
   the cap is spent, or when the previous nudge produced no tool call, the no-progress
@@ -2171,7 +2169,10 @@ without whichever Bedrock refuses.
   comparison needs `make e2e-run TEST=<fixture>` first, which is the lead's call and a
   billed research run. Nothing here writes under `eval/runlogs/`: a prototype run is not an
   e2e run, and the comparison's own output goes to stdout and, with `OUT`, to the
-  gitignored export directory. Offline tests (no judge call, no stack, no model):
+  gitignored export directory. A committed run with more than one query (a stall-resume,
+  or a background subagent's `task_notification`) is tagged on its line: its duration, SDK
+  turns and main-thread tokens cover its last query only, and its cost its last CLI process
+  (#3128). Offline tests (no judge call, no stack, no model):
   `eval/harness/tests/unit/test_e2e_grade_files.py` in `make harness-test`, and
   `apps/server/tests/test_proto_d18.py` plus the two recipes' shape in
   `tests/test_proto_config.py`, both in `make proto-test`. Forty guards were each shown red

@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from claude_agent_sdk import AgentDefinition
 
-EXPECTED_AGENT_COUNT = 20
+EXPECTED_AGENT_COUNT = 22
 
 _KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$")
 _BLOCK_INDICATORS = frozenset({">", ">-", ">+", "|", "|-", "|+"})

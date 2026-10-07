@@ -24,7 +24,8 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   reads under the worker's anchor, and is waited on by proto-up but never by
   proto-up-core (the D3 smoke must not gate on the engine image);
 - U11: the base worker, and no other service in any compose file, sets DEV_PATHS=true,
-  and it names its tool server as a literal.
+  and it names its tool server as a literal;
+- U13: the base web tier, and no other service in any compose file, sets DEV_LOGIN=true.
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -35,6 +36,7 @@ from __future__ import annotations
 
 import ast
 import contextlib
+import importlib.util
 import json
 import os
 import re
@@ -306,6 +308,20 @@ def test_no_other_compose_service_sets_dev_paths():
                 assert "TOOL_SERVER_URL" not in env, f"{path.name} overrides the worker's TOOL_SERVER_URL"
 
 
+
+def test_compose_opts_the_web_tier_into_dev_login_and_nothing_else():
+    """U13: dev-login is opt-in (web/auth.py dev_login_enabled). Compose's web tier opts in
+    with a literal, so no host variable at `up` time switches it; no other service or
+    overlay sets it."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and len(files) >= 4
+    assert _env(_service(_load(COMPOSE), "web")).get("DEV_LOGIN") == "true"
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) != (COMPOSE, "web"):
+                assert "DEV_LOGIN" not in _env(service or {}), f"{path.name}: {name} sets DEV_LOGIN"
+
+
 def _wait_services(line: str) -> list[str]:
     """The service names after `--wait` on one logical recipe line, a trailing comment stripped."""
     return line.split("#", 1)[0].split("--wait", 1)[1].split()
@@ -497,6 +513,42 @@ def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env
     would ship the stop-every-step behaviour the plan exists to remove, and it would look
     exactly like the feature not working. An explicit 0 is honoured -- proto-demo needs it."""
     assert app.max_nudges(env) == expected
+
+
+SPEND_PY = ROOT / "apps" / "server" / "app" / "agent" / "spend.py"
+
+
+def _spend_env_reads() -> dict[str, float]:
+    """Every ``_spend_env("NAME", default)`` in spend.py, by AST so a reflow still reads."""
+    tree = ast.parse(SPEND_PY.read_text(encoding="utf-8"))
+    return {
+        node.args[0].value: float(node.args[1].value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "_spend_env"
+        and len(node.args) == 2 and all(isinstance(a, ast.Constant) for a in node.args)
+    }
+
+
+def test_the_worker_passes_every_spend_variable_through_at_its_default():
+    """U23: the cap and the price vector reach the worker container, each overridable at
+    `up` time and defaulting to spend.py's own value -- so a compose run caps where an
+    image run would, and `SESSION_SPEND_CAP_USD=1` is how a live cap case lowers it. An
+    operator knob, so packaging must not refuse it as a dev variable."""
+    reads = _spend_env_reads()
+    assert set(reads) == {"SESSION_SPEND_CAP_USD", "PRICE_INPUT_PER_MTOK", "PRICE_CACHE_WRITE_PER_MTOK",
+                          "PRICE_CACHE_READ_PER_MTOK", "PRICE_OUTPUT_PER_MTOK"}, reads
+    worker = _env(_service(_load(COMPOSE), "worker"))
+    for name, default in reads.items():
+        assert name in worker, f"compose does not pass {name} to the worker"
+        var, value = _compose_default(worker[name])
+        assert var == name, f"{name} must be the caller's value, else a default: {worker[name]!r}"
+        assert float(value) == default, f"{name} defaults to {value}, spend.py to {default}"
+    spec = importlib.util.spec_from_file_location("eb_bundles_verify", ROOT / "scripts" / "eb_bundles" / "verify.py")
+    verify = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(verify)
+    findings: list[str] = []
+    verify._check_dev_env("worker", {name: "1" for name in reads}, findings)
+    assert findings == [], findings
 
 
 def test_elasticmq_has_no_redrive_policy():
