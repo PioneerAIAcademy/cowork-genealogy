@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "notes": {
+    "f1": "f1 is a relationship finding: both parent links (R17 Edwin, R18 Hannah) are present and sourced to the 1881 census. The missing christening date and exact 10 July birth date describe Lydia, not the relationship, so they don't lower the grade."
+  },
+  "annotator": "Emruthwill",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "b8ae70065960ae8196c2ae5e8b51783396192c73ea1b675c370109ba6ba90aa3"
+}

@@ -1,0 +1,326 @@
+{
+  "run_log": "v1_2026-10-06_15-13-48.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and the translation was correctly handled directly by the agent."
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Date formatting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The supplied Dutch text contains no abbreviations; “soon” is a spelling variant of “zoon,” not an abbreviation, so this dimension does not apply."
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and the skill appropriately handled the provided-text translation directly without external tools."
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Date formatting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The provided French text contains no abbreviations, so there is nothing to expand and this dimension does not apply."
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and the skill appropriately performed the direct translation without invoking external tools."
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Date formatting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and the skill appropriately performed the direct translation without invoking external tools."
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Date formatting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No MCP tool calls were made, and the skill appropriately performed the direct translation and explanation without invoking external tools."
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical context",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Date formatting",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The Latin entry contains no abbreviations, so there is nothing to expand and this dimension does not apply."
+    }
+  ]
+}

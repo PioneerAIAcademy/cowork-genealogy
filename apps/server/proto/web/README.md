@@ -39,7 +39,12 @@ U2 in `docs/plan/familysearch-handoff.md`.
   what the engine writes, is visible to nobody. Opening a session on a supplied
   `project_id` works only if the caller owns it, or under dev-login if nobody does.
   Deleting a session drops the project's documents only with its last session.
-- **FamilySearch sign-in**: `docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web`
+- **FamilySearch sign-in**: export `SESSION_SECRET` and `FS_TOKEN_ENC_KEY` (each a random
+  value, e.g. `openssl rand -hex 32`), then
+  `docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web`; the
+  overlay refuses to start without them, and the tier refuses a default. Keep the same
+  `FS_TOKEN_ENC_KEY` exported for `make proto-up` (the worker decrypts grants with it) and
+  `make proto-grant` (which encrypts with it), or turns end `signin_required`. The overlay
   publishes the tier on `127.0.0.1:1837`, the dev key's only registered redirect, and
   turns dev-login off. Put your FamilySearch email in `ALLOWED_EMAILS` first. Open the
   SPA at `http://127.0.0.1:5173` rather than `localhost`, because cookies are per host.
@@ -48,8 +53,9 @@ U2 in `docs/plan/familysearch-handoff.md`.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
   `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
   `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
-  space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL` the tier refuses to start with a
-  default or empty secret.
+  space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
+  FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty
+  secret.
 
 **Grants (U3).** Every turn's FamilySearch calls run on its project owner's grant, which
 the worker reads from `familysearch_tokens` at the start of each attempt while it holds that

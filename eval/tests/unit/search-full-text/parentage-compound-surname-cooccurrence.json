@@ -17,7 +17,7 @@
     ]
   },
   "input": {
-    "user_message": "Execute plan item pli_001: find the parents of Francisco Naveda Somarriba via full-text search of the Cantabrian parish registers. His own baptism is not name-indexed and indexed surname searches have already failed. Construct and run the full-text query (or queries) you would use to surface the records that name his parents, then report what you find.",
+    "delegation": "Execute plan item pli_001: find the parents of Francisco Naveda Somarriba via full-text search of the Cantabrian parish registers. His own baptism is not name-indexed and indexed surname searches have already failed. Construct and run the full-text query (or queries) you would use to surface the records that name his parents, then report what you find.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "naveda-fts-parents"
   },
   "mcp_fixtures": [
@@ -32,6 +32,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should REQUIRE the two surnames as a co-occurrence — `+Naveda +Somarriba` (both terms required, in any position). This is the correct decomposition of the compound surname 'Naveda Somarriba' for finding the parents, because in the FATHER's own records he is named with the paternal surname (Naveda) and the mother with the maternal surname (Somarriba), so those two words sit on different people and are not adjacent. Do NOT penalise a run for saying the surnames can appear adjacent — they can: a married woman is routinely written with her own surnames plus her husband's (\"María Somarriba de Naveda\"). The co-occurrence is still the right query because it matches that case too, and the phrase does not match the non-adjacent one.",
     "Should NOT search the adjacent phrase `+\"Naveda Somarriba\"` as the parent-finding query. The phrase (even with one-word slop) matches only where the child's own compound name is written out contiguously — it returns the Mexican godfather record, which names no parents, and misses the Limpias parish acts entirely. A run that relies on the phrase form and concludes the parents are unfindable has made the exact mistake this test targets.",
     "Should NOT scope the full-text search to a record `collectionId` guessed from record_search or a collections survey (e.g. a Diocese-of-Santander indexed-collection id). The FTS corpus is partitioned into its own auto-generated collections; the answering records here live in different FTS collections (1784529 and M9J1-WJ7). Search the whole corpus first; narrow by recordPlace*/recordType/year filters only after hits. Passing an unrelated collectionId that would exclude the answer is a defect even though the mock still returns results.",

@@ -61,7 +61,7 @@
 | Browser | `apps/web` on SSE; Vite dev server only | Static, behind the edge |
 
 - **Beanstalk probe** (D3, 2026-09-11, torn down): sqsd 3.0.5 cuts the POST at `InactivityTimeout` silently and redelivers after `VisibilityTimeout`: 300 s idle at 2,100 / 1,800. The worker tier always creates a DLQ.
-- Untested on Beanstalk: bundle cap (500 MB per AWS's documentation), worker 5xx, deploy mid-message, closed-VPC egress, memory, tmpfs.
+- Measured on Beanstalk since (U13 rehearsal, 2026-10-07, n=1 per case, handoff U13): the bundle cap is 500 MiB; a worker 400 or 500 is redelivered after `ErrorVisibilityTimeout` and dead-lettered after exactly `MaxRetries` receives; every deploy stops sqsd first, so a message in flight across a deploy waits out `VisibilityTimeout`; `/tmp` is a tmpfs of half the RAM. Still untested: closed-VPC egress and memory under load.
 
 **Since D17 and D18:** PR #2870 (merged 2026-09-27) runs a browser turn until the project completes, 60 continue-nudges, or $35 a session, with a zero-progress guard, Stop, held messages (sent mid-run, queued until it ends) and a 1,800 s step ceiling.
 
@@ -155,7 +155,7 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 
 - **Deployed gateway:** no research run; the worker ran two short turns on a local copy (P3k). Local copies add +0.35 s first byte per call, ~7–14 s a turn (P3g, 2026-09-25). TAP's auth, guardrails, capacity and deployed latency unmeasured. U14.
 - **Unmapped model id:** silently becomes a general-purpose stand-in that ignores the agent's `tools:`, and the turn reports success (P3h). U14.
-- **No prototype image on AWS:** SQS signing proven against real SQS and as an EC2 instance profile but not on Beanstalk, keyless S3 untried on AWS, the migrations runner (U9) never run against RDS, bundles built (U12) but not deployed. U7–U9, U13.
+- **Prototype on AWS, no turn yet:** the U13 rehearsal (2026-10-07, n=1) deployed the CI bundles to Beanstalk with RDS: every tier signs with its instance role, tools reaches S3 keylessly, the migrations runner ran against RDS under `verify-full`, and FamilySearch sign-in completed through the dev key's loopback callback. No research turn has run there: the acceptance turn, U5, U7 and U3 on AWS are U13's next step.
 - **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4's worker half built, its tool-server half open).
 - **No time limit or fencing:** nothing ends a run by time; a cut attempt would keep running beside its redelivery; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U6, U26.
 - **Postgres backend (R14):** 4 of 41 store cases run in CI (2026-09-29); tool suites and evals use files. U15.

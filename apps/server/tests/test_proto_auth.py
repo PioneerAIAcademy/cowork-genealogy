@@ -39,9 +39,12 @@ def _clean_auth_env(monkeypatch):
 
 @pytest.fixture
 def fs_on(monkeypatch):
-    """FamilySearch sign-in configured, with the repo's bundled client config."""
+    """FamilySearch sign-in configured, with the repo's bundled client config and the real
+    secrets ``preflight`` demands whenever sign-in is on."""
     monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
     monkeypatch.setenv("WEB_ORIGIN", "http://spa.test")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
     return monkeypatch
 
 
@@ -401,12 +404,61 @@ def test_preflight_refuses_default_secrets_on_https(monkeypatch, secret, key):
         auth.preflight()
 
 
+@pytest.mark.parametrize("secret, key", [
+    (None, None),                                          # both unset
+    ("", ""),                                              # both empty
+    ("   ", "k" * 32),                                     # whitespace-only session secret
+    (auth.DEV_SESSION_SECRET, "k" * 32),                   # default session secret
+    ("s" * 32, None),                                      # key unset
+    ("s" * 32, ""),                                        # key empty
+    ("s" * 32, auth.DEV_FS_TOKEN_ENC_KEY),                 # default key
+])
+def test_preflight_refuses_default_secrets_on_http_when_familysearch_is_on(monkeypatch, secret, key):
+    """Sign-in can run over http (a loopback PUBLIC_URL), so the scheme cannot be the only
+    trigger: sign-in on stores patron grants and signs sessions."""
+    monkeypatch.setenv("PUBLIC_URL", "http://127.0.0.1:1837")
+    monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
+    for name, value in (("SESSION_SECRET", secret), ("FS_TOKEN_ENC_KEY", key)):
+        if value is not None:
+            monkeypatch.setenv(name, value)
+    assert not auth.is_https()
+    with pytest.raises(RuntimeError, match="Refusing to start: FAMILYSEARCH_WEB_ENABLED is on"):
+        auth.preflight()
+
+
 def test_preflight_passes_on_http_with_defaults_and_on_https_with_real_secrets(monkeypatch):
+    # compose's dev-login tier: http, FamilySearch off, DEV_LOGIN on, every secret default.
+    assert auth.dev_login_enabled() and not auth.familysearch_enabled()
+    auth.preflight()
+    monkeypatch.setenv("SESSION_SECRET", "")
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", auth.DEV_FS_TOKEN_ENC_KEY)
     auth.preflight()
     monkeypatch.setenv("PUBLIC_URL", "https://search.example.org")
     monkeypatch.setenv("SESSION_SECRET", "s" * 32)
     monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
     auth.preflight()
+
+
+def test_preflight_passes_on_http_with_familysearch_on_and_real_secrets(monkeypatch):
+    monkeypatch.setenv("PUBLIC_URL", "http://127.0.0.1:1837")
+    monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    auth.preflight()
+
+
+def test_the_fs_signin_overlay_requires_both_secrets():
+    """The overlay turns sign-in on, so compose must refuse to start it on the base file's
+    `${VAR:-}` (empty, hence the development default) before preflight has to."""
+    import re
+
+    import yaml
+
+    overlay = yaml.safe_load((PROTO / "docker-compose.fs-signin.yml").read_text(encoding="utf-8"))
+    env = overlay["services"]["web"]["environment"]
+    assert env["FAMILYSEARCH_WEB_ENABLED"] == "true"
+    for name in ("SESSION_SECRET", "FS_TOKEN_ENC_KEY"):
+        assert re.fullmatch(rf"\$\{{{name}:\?[^}}]+\}}", str(env.get(name))), (name, env.get(name))
 
 
 def test_fs_enabled_with_missing_client_config_fails_boot(monkeypatch, tmp_path):
