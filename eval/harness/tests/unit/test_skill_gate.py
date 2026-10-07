@@ -22,6 +22,7 @@ from skill_gate import (  # noqa: E402
     find_test_path_by_id,
     incumbent_baseline,
     scores_of,
+    stale_snapshot_paths,
 )
 
 
@@ -224,12 +225,9 @@ def test_incumbent_baseline_populates_snapshot(tmp_path):
 
 
 def test_snapshot_drift_detected_on_non_skill_path(tmp_path):
-    """When a non-skill path in the baseline snapshot differs from disk, the
-    drift must be detected — this is the case that fires NEEDS YOUR EYES."""
-    from harness.snapshot import diff_snapshot_vs_disk
-
+    """When a non-skill path in the baseline snapshot differs from disk,
+    stale_snapshot_paths returns it — this is the case that fires NEEDS YOUR EYES."""
     skill = "citation"
-    skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
     fixture_rel = "eval/tests/unit/citation/rubric.md"
 
     # Write the fixture file on disk with known content.
@@ -241,22 +239,20 @@ def test_snapshot_drift_detected_on_non_skill_path(tmp_path):
     # Use a real 64-char hex digest so is_hashed_snapshot() returns True
     # and the test exercises the v3 sha256-comparison path, not the legacy
     # content-comparison branch.
+    skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
     snapshot = {
         skill_md_rel: "a" * 64,
         fixture_rel: "b" * 64,
     }
 
-    diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
-    drifted = [p for p in sorted(diffs) if p != skill_md_rel]
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
     assert drifted, "expected the fixture to show as drifted"
     assert fixture_rel in drifted
 
 
 def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
     """The gated skill's own SKILL.md always differs (it IS the edit being
-    gated). Drift detection must not flag it as a stale-baseline indicator."""
-    from harness.snapshot import diff_snapshot_vs_disk
-
+    gated). stale_snapshot_paths must not include it."""
     skill = "citation"
     skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
 
@@ -267,9 +263,5 @@ def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
 
     snapshot = {skill_md_rel: "c" * 64}
 
-    diffs = diff_snapshot_vs_disk(snapshot, tmp_path)
-    # The skill's own SKILL.md IS in the diffs (it really differs).
-    assert skill_md_rel in diffs
-    # But after excluding it, nothing remains.
-    drifted = [p for p in diffs if p != skill_md_rel]
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
     assert not drifted, "the gated skill's own SKILL.md must be excluded from drift"

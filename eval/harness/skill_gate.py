@@ -58,6 +58,16 @@ from harness.snapshot import diff_snapshot_vs_disk
 _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
 
 
+def stale_snapshot_paths(
+    snapshot: dict[str, str], skill: str, repo_root: Path
+) -> list[str]:
+    """Baseline paths that differ from disk, other than the gated skill's own SKILL.md."""
+    if not snapshot:
+        return []
+    own = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    return [p for p in sorted(diff_snapshot_vs_disk(snapshot, repo_root)) if p != own]
+
+
 # --------------------------------------------------------------------------
 # Pure comparison + signal logic (unit-tested in tests/unit/test_skill_gate.py)
 # --------------------------------------------------------------------------
@@ -530,11 +540,7 @@ def main(argv: list[str] | None = None) -> int:
     # the edit being gated), so exclude it. Any OTHER path differing means the
     # baseline was recorded against different repo state — fixtures, other
     # skills, agent bodies — and the comparison is stale.
-    snapshot_drifted: list[str] = []
-    if baseline.snapshot:
-        skill_md_rel = f"packages/engine/plugin/skills/{args.skill}/SKILL.md"
-        diffs = diff_snapshot_vs_disk(baseline.snapshot, REPO_ROOT)
-        snapshot_drifted = [p for p in sorted(diffs) if p != skill_md_rel]
+    snapshot_drifted = stale_snapshot_paths(baseline.snapshot, args.skill, REPO_ROOT)
 
     gate_specs = [mined_spec]
     from harness.versioning import now_utc_filename_timestamp

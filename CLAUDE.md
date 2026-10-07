@@ -685,11 +685,7 @@ When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
 
-A guard whose only observable effect is a log line (print, `console.warn`, a
-comment in the output) cannot be proven to fail by break-and-watch alone: a
-broken guard and a working guard that found nothing both produce the same empty
-output (lead, 2026-09-25). Prove the guard **emits** on a planted defect, not
-just that it exits non-zero.
+Prove the guard **emits** on a planted defect, not just that it exits non-zero — a log-line-only guard and a broken guard both produce the same empty output (lead, 2026-09-25).
 
 ### A ruling binds only while its premises hold
 
