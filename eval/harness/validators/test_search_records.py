@@ -464,9 +464,9 @@ def test_live_callee_used_its_own_tools(
     if "live-callee" not in test.get("tags", []):
         pytest.skip("only the live-callee seam test")
     # Delegation first: without it the tool assert below is satisfiable the
-    # wrong way. `run_skills` puts `external_links_search` in the SESSION
-    # allowlist and stocks its fixture, so `search-records` can call it on the
-    # main thread, never invoke Skill(), and still show the tool in
+    # wrong way. The unit harness grants every MCP tool to the main thread and
+    # the test stocks `external_links_search`'s fixture, so `search-records`
+    # can call it itself, never spawn the agent, and still show the tool in
     # `tool_calls` — the seam this test exists for would be untested and green.
     #
     # Nothing else covers it: this test's own `judge_context` forbids the judge
@@ -476,16 +476,15 @@ def test_live_callee_used_its_own_tools(
     # — it skips, and a skipped validator is recorded `passed: true`.
     handed = handoffs(skills_invoked, builtin_tool_calls)
     assert "search-external-sites" in handed, (
-        "the callee was declared under execution.run_skills, so this test's "
-        "whole subject is the caller/callee seam — but search-external-sites "
-        "was never handed off to. Calling its tools directly from the main "
+        "this test's whole subject is the caller/callee seam — but the "
+        "search-external-sites agent was never spawned. Calling its tools directly from the main "
         f"thread is the failure this asserts against, not a pass. handoffs={handed}"
     )
     called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
     assert "external_links_search" in called, (
-        "search-external-sites was allowed to run, so it had to reach its own "
+        "the search-external-sites agent ran live, so it had to reach its own "
         "tools — external_links_search is what turns a place into real "
-        "third-party collection links. Absent, the skill can only have "
+        "third-party collection links. Absent, the agent can only have "
         f"invented any URLs it presented. tools called: {sorted(called)}"
     )
 
