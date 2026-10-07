@@ -38,7 +38,7 @@ tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: project-status — a project already exists here` for status/resume wording, `Hand-back: question-selection — a project already exists here` for next-question wording — then the return contract, its researcher paragraph exactly:
+Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only read before this decision. If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Return one caller-facing line instead — `Hand-back: project-status — a project already exists here` (it reports where the project stands and recommends the next step) — then the return contract, its researcher paragraph exactly:
 > "This folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question."
 
 **Narration** (initialize path only — the guard clause above reads only `research.json`'s first line): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
