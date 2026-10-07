@@ -66,9 +66,10 @@ claim.
 
 - **Surname only:** Allowed. Recommended when given name was indexed
   as "Baby," "Infant," or initials.
-- **Given name only:** needs an anchor: `surname`, `recordCountry` or
-  `batchNumber` (`validateInput` in `record-search.ts`). A place or a date is
-  not an anchor, so `givenName` + `birthPlace` alone is refused.
+- **Given name only:** refused unless `recordCountry` or `batchNumber` is
+  set (every search needs one of `surname`, `recordCountry`, `batchNumber`;
+  `validateInput` in `record-search.ts`). A place or a date is not an anchor,
+  so `givenName` + `birthPlace` alone is refused.
 
 ## Initials
 

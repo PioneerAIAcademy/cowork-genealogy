@@ -125,8 +125,9 @@ When a search returns 0 hits with reasonable inputs, try in this order:
 Call `catalog_search` for the place: it indexes filmed and image-only
 holdings that `collections_search` (indexed collections only) cannot see, and a
 film note's `imageGroupNumber` feeds `image_search` / `fulltext_search`. A
-small place may be catalogued under its parent; retry there on 0 hits. Then
-switch to image browsing, Full-Text Search, or external indexes.
+small place may be catalogued under its parent: on 0 hits, retry once at the
+parent jurisdiction. Other routes: image browsing, Full-Text Search, or
+external indexes.
 
 ## "Reasonably exhaustive" exit criteria
 
