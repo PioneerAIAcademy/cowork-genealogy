@@ -1045,7 +1045,10 @@ describe("structural counters", () => {
   // Only parents whose edge CLAIMS biological parentage count. #2840 made
   // these two tags refuse tree writes, so counting an Adoptive edge refuses
   // the write that records the adoption.
-  const withParentSubtype = (sub: string | undefined, gender: string) => {
+  const withParentSubtype = (
+    sub: string | undefined,
+    gender: "Male" | "Female",
+  ) => {
     const tree = makeTreeWithRelatives({
       parents: [{ gender: "Male" }, { gender }],
       children: 0,
