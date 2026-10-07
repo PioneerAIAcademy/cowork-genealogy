@@ -1796,15 +1796,18 @@ U13PY
 # ── leak check ───────────────────────────────────────────────────────────────────────────
 
 
+LEAK_FILES = ("account", "zone", "host")
+
+
 def leak_values(local_dir: Path) -> list[str]:
     values = []
-    for path in sorted(p for p in local_dir.iterdir() if p.is_file()):
+    for path in sorted(p for p in local_dir.iterdir() if p.is_file() and p.name in LEAK_FILES):
         tokens = [t for t in re.split(r"[\s,]+", path.read_text(encoding="utf-8")) if t]
         if not tokens:
             raise Die(f"leak-check: {path.name} is empty or whitespace; an empty pattern matches every line")
         values.extend(tokens)
     if not values:
-        raise Die("leak-check: .local/ holds no value")
+        raise Die(f"leak-check: .local/ holds none of {', '.join(LEAK_FILES)}")
     return values
 
 
