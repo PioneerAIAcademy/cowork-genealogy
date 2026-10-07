@@ -394,8 +394,12 @@ documents in memory at this point.
 `gedcomx_source_description_id` (a caller-supplied id keeps today's verified-
 reuse semantics, §3.4 — detection is bypassed and no `sourceReuse` is echoed);
 and the batch contains at least one `assertions` append op with a non-empty
-`record_id`. Batches with zero or 2+ sources append ops, single-op calls, and
-sources-only batches are untouched.
+`record_id`. Alternatively, when the batch has **zero** assertions append ops
+and at least one assertions **update** op whose pre-call target carries a
+`record_id` (skipping any update whose `fields` sets `source_id`), the update
+targets' `record_id`s are used instead. Batches with ≥1 assertions append are
+never mixed with update-derived keys. Batches with zero or 2+ sources append
+ops, single-op calls, and sources-only batches are untouched.
 
 **Matching.** The batch's distinct assertion `record_id`s are canonicalized
 via `arkToBareId` (the same ARK normalization §3.5 uses, so resolver-URL,
@@ -433,6 +437,11 @@ call is a research-only write (`filesWritten: ["research.json"]`, no
 path 2: a stamped `S` id must exist in the tree or the batch is rejected
 op-indexed. A fold makes re-extracting the *source* safe; it does not license a
 second copy of an extracted *assertion* — §3.4.3.
+
+**Accepted residual (path 2, updates-only).** When an updates-only batch
+matches a different-repository source, `new_source_reused_s` still creates an
+uncited `src_` (no new `S`). This is the same as the append path; no refusal is
+added.
 
 ### 3.4.2 Composite persist (`verdict`) — evaluations sidecar
 
@@ -482,7 +491,9 @@ is what a re-extraction is: the extractor re-sends the whole record, source incl
 A later call that appends one more fact to an extracted record (a second parentage
 "son of Charlotte" after "son of John") re-sends no source and is never compared, nor
 is a §3.4.1 path-2 different-repository batch, nor a batch whose sources op names an
-explicit `gedcomx_source_description_id` (detection bypassed).
+explicit `gedcomx_source_description_id` (detection bypassed). An updates-only batch
+that returns `updated_existing` carries no assertions append ops, so §3.4.3 has no
+appends to compare and does not engage.
 
 **The key.** In such a batch, an `assertions` append is refused, op-indexed, when an
 assertion in the **pre-call** document shares its (`source_id`,
@@ -1255,7 +1266,11 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   no `sourceReuse`. Plus the multi-repo edge (two existing sources for the
   record — the repository-equal one is updated; a third repository reuses the
   FIRST match's S) and canonicalized `record_id` forms (resolver URL vs bare
-  ARK vs type-prefixed id all match the same existing source).
+  ARK vs type-prefixed id all match the same existing source). Plus the
+  updates-only path: sources append + only assertion updates on an extracted
+  record → `updated_existing` (source count unchanged, tree unchanged); mixed
+  batch (appends + updates) → only appends drive detection; update op setting
+  `source_id` → detection does not engage.
 
 ---
 
