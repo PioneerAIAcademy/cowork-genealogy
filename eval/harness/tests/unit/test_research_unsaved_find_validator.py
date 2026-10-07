@@ -318,3 +318,36 @@ def test_the_validator_loads_the_way_the_runner_loads_it():
     finally:
         sys.path.extend(saved)
         sys.modules.update(cached)
+
+
+# --- John's review on PR #3235: markers must be ABOUT SAVING -------------------
+def test_a_marker_about_something_else_in_the_same_clause_does_not_count():
+    """The marker sat in the same clause as the name, so the same-clause rule did
+    not catch it, but "could not" is about the WIFE, not about saving."""
+    with pytest.raises(AssertionError):
+        validator(TAGGED, _state(), _state(log=[_entry()]),
+                  "Saved to Cornelius Driscoll: 1880 census, though I could not "
+                  "find his wife.")
+
+
+def test_a_plain_statement_that_it_is_not_saved_still_passes():
+    validator(TAGGED, _state(), _state(log=[_entry()]),
+              "Found Cornelius Driscoll's 1880 census record; it is not saved.")
+
+
+@pytest.mark.parametrize(
+    "query,reply",
+    [
+        ({"recordId": "ABCD-123"}, "Record ABCD-123 could not be saved."),
+        ({"surname": "Driscoll"}, "The Driscoll find cannot be saved until extraction runs."),
+        ({"surname": "Driscoll"}, "The Driscoll record would not be saved by that step."),
+    ],
+)
+def test_the_passive_voice_counts_as_about_saving(query, reply):
+    """John's list is active voice only. "could not be saved" matched neither
+    "could not save" nor "not saved", so a correct reply failed.
+
+    Note the first case carries NO person key: a query with both a surname and a
+    recordId resolves to the surname, because _needles prefers person keys.
+    """
+    validator(TAGGED, _state(), _state(log=[_entry(query=query)]), reply)

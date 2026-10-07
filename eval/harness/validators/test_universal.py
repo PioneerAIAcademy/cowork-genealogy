@@ -1965,13 +1965,24 @@ _PERSON_KEYS = ("surname", "given", "givenName")
 _FALLBACK_KEYS = ("keywords", "recordId", "record_id", "collection", "title")
 
 _UNSAVED_MARKERS = (
+    # NARROWED to phrases that are ABOUT SAVING, per John's review on PR #3235.
+    # The earlier list carried "could not", "not yet", "failed to", "incomplete"
+    # and "still open", which occur in normal replies about other things, so
+    # "Saved to Cornelius Driscoll: 1880 census, though I could not find his
+    # wife" satisfied the check: the marker is about the WIFE but sits in the
+    # same clause as the name, which is exactly what the same-clause rule was
+    # meant to stop.
     "not saved", "wasn't saved", "was not saved", "nothing was saved", "none saved",
-    "unsaved", "not attached", "not yet", "yet to be", "did not finish",
-    "didn't finish", "did not run", "didn't run", "could not", "couldn't",
-    "not extracted", "no sources", "no assertions", "ran out", "interrupted",
-    "incomplete", "not complete", "still open", "failed to", "without saving",
-    # search-records/SKILL.md:684's own prescribed wording. Two words, not bare
-    # "candidate", which is routine phrasing under "candidates, not verdicts".
+    "unsaved", "not attached", "not yet saved", "not yet attached",
+    "not extracted", "without saving", "did not save", "didn't save",
+    "could not save", "couldn't save", "failed to save",
+    # Passive voice. John's list is active only, so "could not be saved" matched
+    # neither "could not save" (the intervening "be") nor "not saved" ("not BE
+    # saved"), and a correct reply failed. This one entry covers "could not be
+    # saved", "would not be saved" and "cannot be saved" without loosening the
+    # about-saving rule.
+    "not be saved",
+    # search-records/SKILL.md:684's own prescribed wording.
     "candidate record",
 )
 
