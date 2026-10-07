@@ -1,0 +1,462 @@
+{
+  "run_log": "v1_2026-09-15_18-56-53.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "he judge's own rationale opens \"which satisfies the hard gate\" and then scores 1 for the F2 wording. That is the one thing judge_context forbids twice: [2] says the listed failures \"are the ONLY bases for Correctness 1 on this test\", and [6] says \"SCORE THIS UNDER Narrative standalone, NOT under base Correctness\". I verified both clauses are present in the key this run used. The bounded-conclusion doctrine was met — tier possible, Death fact F3 dated \"after 1870, before 1885\", primary and sourced, validators clean. On an unchanged key this dimension scored 3, 3, then 1 across three runs, so the variable is the judge, not the answer key"
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All required work done: summary written, question resolved, bracket encoded, documented negative included."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls well formed, none errored, no fixture misses."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "possible explained against probable, naming the 1880 census, burial records and newspapers as what would advance it."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "This is where the defect belongs and the judge put it here correctly. Sixth run, sixth phrasing of the same error — this time \"the 1870 census is referenced in the question rationale, not as an extracted and linked assertion\". Still conflating a missing citation with missing evidence."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions cited, the documented negative addressed, the single-source limit and unsearched records acknowledged."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Summary is right for one correlated bounded finding with no competing candidate."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified in the final tree: F3 carries the bracket as its date rather than a collapsed year, which is the point of the bounded carve-out, and it is primary and sourced."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tier not_proved, citation matches src_001 verbatim, tree untouched with zero tree calls. Checked the one thing that would make this a 1 — foreclosure language — and the narrative says the surname \"cannot be established from the evidence gathered\", which is the phrasing the test explicitly permits, not the forbidden claim that it is unobtainable."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Question examined, all three assertions reviewed, conflicts checked, summary persisted, q_001 resolved."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls well formed, no fixture misses. "
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "not_proved justified against the components it fails, and it names five untried record types that could advance it — which is exactly what this test grades."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Readable without the JSON, full citation inline, the illegibility described rather than referenced."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions cited, and it distinguishes what the certificate does prove (the marriage, the given name) from what it cannot."
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Statement is right — one source, one illegible field, nothing to weigh"
+    },
+    {
+      "test_id": "ut_proof_conclusion_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Verified: zero tree calls, tree.gedcomx.json untouched. At not_proved nothing may be encoded. Legitimate null."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the final state: tier disproved, six assertions cited, zero tree calls. The chronological refutation is sound — a burial in November 1842 against a birth around 1845 — and the narrative classifies the burial register as primary while treating both birth estimates as age-derived.\n\n"
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Question identified, all six assertions gathered, conflicts checked, summary written, question resolved, tree correctly left alone. It also scopes the conclusion properly — Thomas is refuted, Patrick's actual parentage stays open."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls well formed, none errored, no fixture misses."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The distinction that matters is drawn explicitly: \"disproved, not merely unsubstantiated.\" A chronological impossibility refutes rather than fails to support, and the narrative says so rather than leaving the reader to infer it. That's the line between disproved and not_proved, and it's the easier one to blur."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Readable without the JSON — the 1850 household described including the absent adult male, the burial entry with its identifiers, the death certificate corroborating the birth year, all footnoted."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All six cited, and it names what the death certificate doesn't give — the father — rather than passing over the gap."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Summary is right. A Statement would under-explain three sources; an Argument would be over-built for a one-step refutation with no competing interpretation."
+    },
+    {
+      "test_id": "ut_proof_conclusion_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Verified: zero tree_edit/tree_correct calls and tree.gedcomx.json absent from file_changes. At disproved nothing may be encoded. Legitimate null, not a masked 1."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All five GPS components assessed against the three sources ps_001 actually cites, tier reasoning sound, and the dangling c_001 pointer correctly called housekeeping rather than a GPS failure. Verified nothing was written: file_changes empty, zero tree calls."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All five components covered, and the uncited sources flagged as future work rather than as defects of the current proof."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls well formed, no fixture misses."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Contrasts probable against proved and names what would close the gap — an exhaustiveness declaration plus a will or baptismal register naming Patrick as son."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Read the judge's own rationale: it says the skill correctly evaluated self-containment, correctly found a real gap (the question asks for parents, the narrative covers only the paternal line), recommended a proportionate fix, and ends \"The check was performed and a concrete gap was flagged.\" Every clause describes correct behaviour. In review mode this dimension grades the assessment, not ps_001's prose — and the judge states that principle itself two dimensions later: \"Scoring this dimension on the fixture's pre-existing tree state would fail the skill for the fixture's own content, which is incorrect per the per-test override.\" It applied that principle to Tree encoding and violated it here. Raising to 3."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Surveys every cited assertion and conflict, and labels the unextracted sources as opportunities rather than failures, per the scope note."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identifies the vehicle as summary and judges the fit rather than re-choosing a form."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly diagnoses ps_001 as not self-contained and names the five component failures concretely — bare IDs, no inline citations, analysis absent from the prose, conflict reasoning deferred to the c_001 entry, maternity unaddressed. Verified it wrote nothing: file_changes empty."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All five GPS components walked and named, the form judged separately from the execution, and the five unextracted sources flagged with their tier impact."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls fixture-matched, correctly scoped by questionId and personId, no unsupported filters attempted."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Identifies that probable is justified by the data even though the narrative is a placeholder — separating the tier's soundness from the prose's quality, which is the harder judgement here."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "This is the right treatment for review mode: the skill is credited for finding the defect rather than penalised for the fixture containing it. Worth recording because _007 in this same run gets the opposite — it also correctly identified a self-containment gap and was scored 2 for it."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Surveys everything ps_001 cites, notes c_001 is resolved but its reasoning isn't reproduced in the narrative, and labels the five uncited sources as next-round work."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly separates the form choice (Summary, defensible) from the execution (placeholder) rather than recommending a form change."
+    },
+    {
+      "test_id": "ut_proof_conclusion_r7k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Correct, and it is the counterpart to _007's error: identical review-mode conditions, and there the same dimension was scored 3 while its own rationale said \"Score null is appropriate\"."
+    },
+    {
+      "test_id": "ut_proof_conclusion_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The judge got this right, and notably it scored 3 outright rather than needing coercion — the first run where it credits the routing in its own reasoning. Verified: activated: False, skills_invoked: ['record-extraction'], and the Skill hand-off is builtin call [0], before any ToolSearch. The classification analysis is the routed-to skill's work, and it is correct on the merits: a son-in-law cannot have firsthand knowledge of his father-in-law's parentage, so secondary stands."
+    },
+    {
+      "test_id": "ut_proof_conclusion_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The coerced rationale says Claude produced analysis \"without declining or routing\". That is contradicted by the log: the hand-off to record-extraction is the first builtin call, and the coercion itself only fires because the correct skill fired. So the premise of the 1 is wrong, and N/A is right. Checked the advisory's danger case too — two MCP calls, both reads, no write, file_changes empty — so the skill under test produced no output first."
+    },
+    {
+      "test_id": "ut_proof_conclusion_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two calls, project_context and research_query on src_004, both well formed and fixture-matched, no writes."
+    },
+    {
+      "test_id": "ut_proof_conclusion_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Three calls — project_context and two research_query — all well formed, fixture-matched, no errors, no writes. A status summary needs no persistence."
+    },
+    {
+      "test_id": "ut_proof_conclusion_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Tier not_proved, citation quoted verbatim from src_001, tree untouched. Checked the one thing that would make this a 1 on this test — foreclosing the question — and none of the trigger phrasings appears. The narrative says no candidate surname exists in the available evidence, which is a true statement about what was gathered, not a claim that it is unobtainable."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Question state examined, all three assertions reviewed, conflicts checked, summary appended, question resolved."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls well formed and fixture-matched."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "not_proved justified, and it names five untried routes — pre-1889 censuses, parish registers, death certificates, and the original physical register. That is precisely what this test grades."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Readable without the JSON, full citation inline, the illegibility described in prose."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three assertions cited, and the search limitation stated plainly — \"Only FamilySearch was searched, for the marriage record alone\" — rather than glossed."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Statement is right for one source, no conflicts, no competing candidates."
+    },
+    {
+      "test_id": "ut_proof_conclusion_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Verified: zero tree_edit/tree_correct calls, tree.gedcomx.json absent from file_changes. At not_proved nothing may be encoded. Legitimate null."
+    },
+    {
+      "test_id": "ut_proof_conclusion_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "The judge's rationale ends \"Score null is appropriate\" and the recorded score is 3. The rationale is right and the score contradicts it: this is review mode, the skill wrote no conclusion — verified, file_changes is empty with zero tree calls — so there is nothing of the skill's to encode. A 3 asserts the encoding was graded and passed, which credits the skill for the fixture's pre-existing tree. Correcting to N/A, matching the judge's own reasoning and every other review-mode run."
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "research",
   "version": 9,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-07_06-10-36",
@@ -69,7 +69,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D, 'Quebec, Civil Registration Deaths, 1867\u20131900') and accurately cited it with the correct ARK URL. The response also correctly noted the companion burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. No fabricated material or unsupported claims were made."
+            "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D, 'Quebec, Civil Registration Deaths, 1867–1900') and accurately cited it with the correct ARK URL. The response also correctly noted the companion burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. No fabricated material or unsupported claims were made."
           },
           {
             "source": "base",
@@ -89,7 +89,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D, 'Quebec, Civil Registration Deaths, 1867\u20131900') and accurately cited it with the correct ARK URL. The response also correctly noted the companion burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. No fabricated material or unsupported claims were made."
+            "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D, 'Quebec, Civil Registration Deaths, 1867–1900') and accurately cited it with the correct ARK URL. The response also correctly noted the companion burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. No fabricated material or unsupported claims were made."
           },
           {
             "source": "base",
@@ -162,7 +162,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1210929,
           "output": {
-            "text_response": "This is a bounded request \u2014 find one record for Cornelius Driscoll (GJ72-9WD) and stop. Before searching, I'll check what's already attached to him on FamilySearch.\n\nYes \u2014 a death record is already attached to Cornelius Driscoll's FamilySearch profile. No search needed.\n\n**Death record found (already on profile):**\n\n> **\"Quebec, Civil Registration Deaths, 1867\u20131900\"** \u2014 database, FamilySearch\n> Entry for Cornelius Driscoll, Sherbrooke district\n> `https://familysearch.org/ark:/61903/1:1:DRIS-004`\n\nThere is also a companion **burial record** attached:\n\n> **\"Quebec, Catholic Parish Registers, 1621\u20131979\"** \u2014 burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke\n> `https://familysearch.org/ark:/61903/1:1:DRIS-003`\n\nBoth are already sources on his tree profile. The civil death registration is the direct death record; the parish burial entry is a second supporting document for the same event. His profile does not yet carry a concluded death date or place as a fact \u2014 if you'd like to extract the details from these records and encode a death fact in the tree, I can take that further.",
+            "text_response": "This is a bounded request — find one record for Cornelius Driscoll (GJ72-9WD) and stop. Before searching, I'll check what's already attached to him on FamilySearch.\n\nYes — a death record is already attached to Cornelius Driscoll's FamilySearch profile. No search needed.\n\n**Death record found (already on profile):**\n\n> **\"Quebec, Civil Registration Deaths, 1867–1900\"** — database, FamilySearch\n> Entry for Cornelius Driscoll, Sherbrooke district\n> `https://familysearch.org/ark:/61903/1:1:DRIS-004`\n\nThere is also a companion **burial record** attached:\n\n> **\"Quebec, Catholic Parish Registers, 1621–1979\"** — burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke\n> `https://familysearch.org/ark:/61903/1:1:DRIS-003`\n\nBoth are already sources on his tree profile. The civil death registration is the direct death record; the parish burial entry is a second supporting document for the same event. His profile does not yet carry a concluded death date or place as a fact — if you'd like to extract the details from these records and encode a death fact in the tree, I can take that further.",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -278,7 +278,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -332,13 +332,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -386,7 +386,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D, 'Quebec, Civil Registration Deaths, 1867\u20131900') and accurately cited it with the correct ARK URL. The response also correctly noted the companion burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. No fabricated material or unsupported claims were made."
+                "rationale": "Claude correctly identified that a death record is already attached to Cornelius Driscoll's profile (SD-DRIS-D, 'Quebec, Civil Registration Deaths, 1867–1900') and accurately cited it with the correct ARK URL. The response also correctly noted the companion burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. No fabricated material or unsupported claims were made."
               },
               {
                 "source": "base",
@@ -432,13 +432,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's factual claims are well-supported by the tool responses and before-state. The summary correctly identifies three converging sources (1850 census, 1860 census, death certificate) naming Thomas Flynn as Patrick's father. The conflict resolution (Ireland vs. Pennsylvania birthplace) accurately reflects the before-state conflict c_001 with its resolution rationale. All seven assertions queried (a_004, a_005, a_008, a_009, a_010, a_012, a_013) are correctly cited and their contents accurately represented. The log entries (log_001\u2013log_005) are correctly summarized. No fabricated material or unsupported claims appear."
+            "rationale": "Claude's factual claims are well-supported by the tool responses and before-state. The summary correctly identifies three converging sources (1850 census, 1860 census, death certificate) naming Thomas Flynn as Patrick's father. The conflict resolution (Ireland vs. Pennsylvania birthplace) accurately reflects the before-state conflict c_001 with its resolution rationale. All seven assertions queried (a_004, a_005, a_008, a_009, a_010, a_012, a_013) are correctly cited and their contents accurately represented. The log entries (log_001–log_005) are correctly summarized. No fabricated material or unsupported claims appear."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: audited the log-to-assertion cross-reference (confirming all five log entries have linked assertions), identified the seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012), routed them to person-evidence as instructed, summarized the evidence converging on Thomas Flynn as father, and outlined the remaining work (probate search pli_006, exhaustiveness assessment, proof conclusion). The autonomous flag was honored\u2014no clarifying questions were asked. All aspects of the input state required by the research task were addressed."
+            "rationale": "Claude addressed all required elements: audited the log-to-assertion cross-reference (confirming all five log entries have linked assertions), identified the seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012), routed them to person-evidence as instructed, summarized the evidence converging on Thomas Flynn as father, and outlined the remaining work (probate search pli_006, exhaustiveness assessment, proof conclusion). The autonomous flag was honored—no clarifying questions were asked. All aspects of the input state required by the research task were addressed."
           },
           {
             "source": "base",
@@ -452,13 +452,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's factual claims are well-supported by the tool responses and before-state. The summary correctly identifies three converging sources (1850 census, 1860 census, death certificate) naming Thomas Flynn as Patrick's father. The conflict resolution (Ireland vs. Pennsylvania birthplace) accurately reflects the before-state conflict c_001 with its resolution rationale. All seven assertions queried (a_004, a_005, a_008, a_009, a_010, a_012, a_013) are correctly cited and their contents accurately represented. The log entries (log_001\u2013log_005) are correctly summarized. No fabricated material or unsupported claims appear."
+            "rationale": "Claude's factual claims are well-supported by the tool responses and before-state. The summary correctly identifies three converging sources (1850 census, 1860 census, death certificate) naming Thomas Flynn as Patrick's father. The conflict resolution (Ireland vs. Pennsylvania birthplace) accurately reflects the before-state conflict c_001 with its resolution rationale. All seven assertions queried (a_004, a_005, a_008, a_009, a_010, a_012, a_013) are correctly cited and their contents accurately represented. The log entries (log_001–log_005) are correctly summarized. No fabricated material or unsupported claims appear."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: audited the log-to-assertion cross-reference (confirming all five log entries have linked assertions), identified the seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012), routed them to person-evidence as instructed, summarized the evidence converging on Thomas Flynn as father, and outlined the remaining work (probate search pli_006, exhaustiveness assessment, proof conclusion). The autonomous flag was honored\u2014no clarifying questions were asked. All aspects of the input state required by the research task were addressed."
+            "rationale": "Claude addressed all required elements: audited the log-to-assertion cross-reference (confirming all five log entries have linked assertions), identified the seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012), routed them to person-evidence as instructed, summarized the evidence converging on Thomas Flynn as father, and outlined the remaining work (probate search pli_006, exhaustiveness assessment, proof conclusion). The autonomous flag was honored—no clarifying questions were asked. All aspects of the input state required by the research task were addressed."
           },
           {
             "source": "base",
@@ -525,7 +525,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.34271495,
           "output": {
-            "text_response": "Let me check the project directory for any existing research files before deciding where to start.\n\nProject files exist. Let me query the current state before routing.\n\nGood. Two questions exist \u2014 q_001 (parentage, in_progress) and q_002 (1850 census, resolved). Let me check the plan, log, and assertions for q_001.\n\nLet me check the log entries for what's been done on q_001.\n\nNow let me check person_evidence and conflicts to complete the picture.\n\nLet me also check the q_002 assertions to complete the log-vs-assertion cross-reference.\n\nCross-reference complete. All positive log entries have linked assertions. Seven assertions (a_002, a_003, a_006, a_007, a_008, a_009, a_012) have no person_evidence entries. Routing to person-evidence before anything else.\n\nThe person-evidence delegation is recorded. Here is where the project stands and what was accomplished this run:\n\n---\n\n## Research Run Summary \u2014 Patrick Flynn Parentage\n\n**Project:** Patrick Flynn (b. ~1845, Ireland/PA; d. 1908, Schuylkill County, PA) \u2014 Who were his parents?\n\n### What the evidence shows\n\nThree independent sources converge on **Thomas Flynn** as Patrick's father:\n\n| Source | Type | Assertion |\n|--------|------|-----------|\n| 1850 U.S. Census, Schuylkill Co. (ark:/61903/1:1:MXYZ) | Original, indeterminate information | Patrick Flynn, age 5, born Ireland, in household headed by Thomas Flynn |\n| 1860 U.S. Census, Schuylkill Co. (ark:/61903/1:1:MABC) | Original, indeterminate information | Patrick Flynn, age 15, born Ireland, again in Thomas Flynn's household |\n| 1908 Death Certificate (ark:/61903/1:1:MDEF) | Original, secondary information | Father named as **Thomas Flynn**; informant son-in-law James Brown |\n\nOne conflict (birthplace: Ireland per censuses vs. Pennsylvania per death certificate) was already resolved in favour of Ireland \u2014 the census informant had first-hand knowledge; the son-in-law informant was secondary and wrote six decades after the fact.\n\n### What was done this run\n\n- **State audit completed:** All five log entries cross-referenced against assertions \u2014 every positive/partial result (log_001 through log_005) has at least one linked assertion. No extraction gaps found.\n- **Person-evidence linking routed:** Seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012 \u2014 all Patrick Flynn birth/name/residence facts) were delegated to the person-evidence agent to link to I1.\n\n### What remains\n\n1. **Probate search (pli_006, in_progress):** No search for Thomas Flynn's probate or will in Schuylkill County (1870\u20131890) has been logged yet. A will naming Patrick as a son would be strong corroborating evidence.\n2. **Research exhaustiveness assessment:** Once pli_006 is executed, route to `@plugin:research-exhaustiveness` for q_001 \u2014 current evidence already plausibly answers the question, so the stop-criteria check may declare it exhaustive even without probate, or send the search forward.\n3. **Proof conclusion:** After exhaustiveness is declared, `@plugin:proof-conclusion` writes the GPS narrative and encodes the ParentChild relationship in `tree.gedcomx.json`.\n4. **Proof-critique mentor gate:** Mandatory after the proof summary is written.\n\nThe evidence in hand is strong: two decadally-consistent census placements plus a named-father death certificate give three converging source lines identifying Thomas Flynn as Patrick's father. The next session can open by running the probate search, then proceeding directly to exhaustiveness and proof.",
+            "text_response": "Let me check the project directory for any existing research files before deciding where to start.\n\nProject files exist. Let me query the current state before routing.\n\nGood. Two questions exist — q_001 (parentage, in_progress) and q_002 (1850 census, resolved). Let me check the plan, log, and assertions for q_001.\n\nLet me check the log entries for what's been done on q_001.\n\nNow let me check person_evidence and conflicts to complete the picture.\n\nLet me also check the q_002 assertions to complete the log-vs-assertion cross-reference.\n\nCross-reference complete. All positive log entries have linked assertions. Seven assertions (a_002, a_003, a_006, a_007, a_008, a_009, a_012) have no person_evidence entries. Routing to person-evidence before anything else.\n\nThe person-evidence delegation is recorded. Here is where the project stands and what was accomplished this run:\n\n---\n\n## Research Run Summary — Patrick Flynn Parentage\n\n**Project:** Patrick Flynn (b. ~1845, Ireland/PA; d. 1908, Schuylkill County, PA) — Who were his parents?\n\n### What the evidence shows\n\nThree independent sources converge on **Thomas Flynn** as Patrick's father:\n\n| Source | Type | Assertion |\n|--------|------|-----------|\n| 1850 U.S. Census, Schuylkill Co. (ark:/61903/1:1:MXYZ) | Original, indeterminate information | Patrick Flynn, age 5, born Ireland, in household headed by Thomas Flynn |\n| 1860 U.S. Census, Schuylkill Co. (ark:/61903/1:1:MABC) | Original, indeterminate information | Patrick Flynn, age 15, born Ireland, again in Thomas Flynn's household |\n| 1908 Death Certificate (ark:/61903/1:1:MDEF) | Original, secondary information | Father named as **Thomas Flynn**; informant son-in-law James Brown |\n\nOne conflict (birthplace: Ireland per censuses vs. Pennsylvania per death certificate) was already resolved in favour of Ireland — the census informant had first-hand knowledge; the son-in-law informant was secondary and wrote six decades after the fact.\n\n### What was done this run\n\n- **State audit completed:** All five log entries cross-referenced against assertions — every positive/partial result (log_001 through log_005) has at least one linked assertion. No extraction gaps found.\n- **Person-evidence linking routed:** Seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012 — all Patrick Flynn birth/name/residence facts) were delegated to the person-evidence agent to link to I1.\n\n### What remains\n\n1. **Probate search (pli_006, in_progress):** No search for Thomas Flynn's probate or will in Schuylkill County (1870–1890) has been logged yet. A will naming Patrick as a son would be strong corroborating evidence.\n2. **Research exhaustiveness assessment:** Once pli_006 is executed, route to `@plugin:research-exhaustiveness` for q_001 — current evidence already plausibly answers the question, so the stop-criteria check may declare it exhaustive even without probate, or send the search forward.\n3. **Proof conclusion:** After exhaustiveness is declared, `@plugin:proof-conclusion` writes the GPS narrative and encodes the ParentChild relationship in `tree.gedcomx.json`.\n4. **Proof-critique mentor gate:** Mandatory after the proof summary is written.\n\nThe evidence in hand is strong: two decadally-consistent census placements plus a named-father death certificate give three converging source lines identifying Thomas Flynn as Patrick's father. The next session can open by running the probate search, then proceeding directly to exhaustiveness and proof.",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -594,13 +594,13 @@
                           "log_003"
                         ],
                         "stop_criteria": {
-                          "goal_alignment": "Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.",
+                          "goal_alignment": "Yes — Patrick Flynn located in a specific 1850 household, answering the question.",
                           "repository_breadth": "Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.",
                           "original_substitution": "FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.",
                           "independent_verification": "FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original.",
-                          "evidence_class": "Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.",
+                          "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
                           "conflict_resolution": "No conflicts on the 1850 census placement question.",
-                          "overturn_risk": "Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
+                          "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
                         }
                       }
                     }
@@ -702,7 +702,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 8,
-                      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined \u2014 ages and locations don't match.",
+                      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
                       "external_site": null
                     },
                     {
@@ -718,7 +718,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 12,
-                      "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 \u2014 consistent.",
+                      "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
                       "external_site": {
                         "site": "ancestry",
                         "url_generated": "https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania",
@@ -739,7 +739,7 @@
                       },
                       "outcome": "negative",
                       "results_examined": 0,
-                      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania \u2014 still no match.",
+                      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
                       "external_site": {
                         "site": "myheritage",
                         "url_generated": "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Pennsylvania",
@@ -817,7 +817,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -859,7 +859,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -877,9 +877,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -901,7 +901,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -951,7 +951,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -1071,7 +1071,7 @@
                         "a_009",
                         "a_012"
                       ],
-                      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant \u2014 potentially not fully independent for this fact.",
+                      "independence_analysis": "The two census records (1850, 1860) are independent original sources with different enumerators. The death certificate is a third independent original source. However, the census informants are likely the same household member (Thomas Flynn or wife), so the two census assertions may share a single informant — potentially not fully independent for this fact.",
                       "weighing_analysis": "The census records are contemporary recordings made near the time of Patrick's birth, while the death certificate was created 63 years later. The census informant was likely a household member with firsthand knowledge (primary or indeterminate), while the death certificate informant (son-in-law) is clearly secondary for birth facts. Two contemporary sources outweigh one later recollection by a secondary informant.",
                       "preferred_assertion_id": "a_002",
                       "resolution_rationale": "Ireland is accepted as the birthplace. The 1908 death certificate birthplace of 'Pennsylvania' is rejected as a likely error by the son-in-law informant, who may have confused Patrick's place of residence with his place of birth, or may not have known Patrick was born in Ireland before immigrating as a young child.",
@@ -1117,7 +1117,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -1139,9 +1139,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -1161,7 +1161,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -1181,7 +1181,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Ancestry transcriber (derivative of census enumerator)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Derivative index \u2014 transcription errors possible",
+                      "informant_bias_notes": "Derivative index — transcription errors possible",
                       "record_basis": "stated",
                       "log_entry_id": "log_002",
                       "extracted_for_question_ids": [
@@ -1240,7 +1240,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Link unlinked assertions to persons",
-                  "prompt": "Link unlinked assertions to tree persons for a Patrick Flynn parentage research project.\n\nprojectPath: C:\\Users\\HP\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-imrypuaz\n\nThe project has two persons in the tree: I1 = Patrick Flynn (b. ~1845, d. 1908, Schuylkill County PA) and I2 = Thomas Flynn (candidate father, head of household in 1850 and 1860 Schuylkill County censuses).\n\nThe following assertions currently have NO person_evidence entries and need to be linked:\n\n- a_002: birth fact for Patrick Flynn (age 5, Ireland), 1850 census, record ark:/61903/1:1:MXYZ \u2014 link to I1\n- a_003: residence fact for Patrick Flynn (Schuylkill County PA, 1850), 1850 census \u2014 link to I1\n- a_006: name fact \"Patrick Flynn\" from Ancestry derivative of 1850 census (record_id: ancestry:8054:patrick-flynn-1850) \u2014 link to I1\n- a_007: birth fact (age 5, Ireland) from Ancestry derivative of 1850 census \u2014 link to I1\n- a_008: name fact \"Patrick Flynn\" from 1860 census, record ark:/61903/1:1:MABC \u2014 link to I1\n- a_009: birth fact (age 15, ~1845, Ireland) from 1860 census \u2014 link to I1\n- a_012: birth fact \"Born 1845, Pennsylvania\" from 1908 death certificate, record ark:/61903/1:1:MDEF \u2014 link to I1\n\nAll of these assertions are for the same person (Patrick Flynn, I1), confirmed by co-located assertions in the same records that are already linked (a_001\u2192pe_001 for the 1850 census name, a_010\u2192pe_004 for the 1860 relationship, a_013\u2192pe_005 for the death certificate relationship).\n\nPlease create person_evidence entries for each of these assertions and return the IDs created.",
+                  "prompt": "Link unlinked assertions to tree persons for a Patrick Flynn parentage research project.\n\nprojectPath: C:\\Users\\HP\\AppData\\Local\\Temp\\eval-ut_research_005-0-0-imrypuaz\n\nThe project has two persons in the tree: I1 = Patrick Flynn (b. ~1845, d. 1908, Schuylkill County PA) and I2 = Thomas Flynn (candidate father, head of household in 1850 and 1860 Schuylkill County censuses).\n\nThe following assertions currently have NO person_evidence entries and need to be linked:\n\n- a_002: birth fact for Patrick Flynn (age 5, Ireland), 1850 census, record ark:/61903/1:1:MXYZ — link to I1\n- a_003: residence fact for Patrick Flynn (Schuylkill County PA, 1850), 1850 census — link to I1\n- a_006: name fact \"Patrick Flynn\" from Ancestry derivative of 1850 census (record_id: ancestry:8054:patrick-flynn-1850) — link to I1\n- a_007: birth fact (age 5, Ireland) from Ancestry derivative of 1850 census — link to I1\n- a_008: name fact \"Patrick Flynn\" from 1860 census, record ark:/61903/1:1:MABC — link to I1\n- a_009: birth fact (age 15, ~1845, Ireland) from 1860 census — link to I1\n- a_012: birth fact \"Born 1845, Pennsylvania\" from 1908 death certificate, record ark:/61903/1:1:MDEF — link to I1\n\nAll of these assertions are for the same person (Patrick Flynn, I1), confirmed by co-located assertions in the same records that are already linked (a_001→pe_001 for the 1850 census name, a_010→pe_004 for the 1860 relationship, a_013→pe_005 for the death certificate relationship).\n\nPlease create person_evidence entries for each of these assertions and return the IDs created.",
                   "subagent_type": "person-evidence"
                 }
               }
@@ -1248,7 +1248,7 @@
             "agent_returns": [
               {
                 "subagent_type": "person-evidence",
-                "text": "'person-evidence' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and complete. Do not invoke any further skill, do not re-invoke this one, and do not re-query project state to decide what to do next. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'person-evidence' was skipped or stubbed \u2014 not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'person-evidence' wrote, changed or concluded anything the text does not state.",
+                "text": "'person-evidence' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and complete. Do not invoke any further skill, do not re-invoke this one, and do not re-query project state to decide what to do next. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'person-evidence' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'person-evidence' wrote, changed or concluded anything the text does not state.",
                 "is_error": true
               }
             ],
@@ -1347,7 +1347,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -1401,13 +1401,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -1455,13 +1455,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's factual claims are well-supported by the tool responses and before-state. The summary correctly identifies three converging sources (1850 census, 1860 census, death certificate) naming Thomas Flynn as Patrick's father. The conflict resolution (Ireland vs. Pennsylvania birthplace) accurately reflects the before-state conflict c_001 with its resolution rationale. All seven assertions queried (a_004, a_005, a_008, a_009, a_010, a_012, a_013) are correctly cited and their contents accurately represented. The log entries (log_001\u2013log_005) are correctly summarized. No fabricated material or unsupported claims appear."
+                "rationale": "Claude's factual claims are well-supported by the tool responses and before-state. The summary correctly identifies three converging sources (1850 census, 1860 census, death certificate) naming Thomas Flynn as Patrick's father. The conflict resolution (Ireland vs. Pennsylvania birthplace) accurately reflects the before-state conflict c_001 with its resolution rationale. All seven assertions queried (a_004, a_005, a_008, a_009, a_010, a_012, a_013) are correctly cited and their contents accurately represented. The log entries (log_001–log_005) are correctly summarized. No fabricated material or unsupported claims appear."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: audited the log-to-assertion cross-reference (confirming all five log entries have linked assertions), identified the seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012), routed them to person-evidence as instructed, summarized the evidence converging on Thomas Flynn as father, and outlined the remaining work (probate search pli_006, exhaustiveness assessment, proof conclusion). The autonomous flag was honored\u2014no clarifying questions were asked. All aspects of the input state required by the research task were addressed."
+                "rationale": "Claude addressed all required elements: audited the log-to-assertion cross-reference (confirming all five log entries have linked assertions), identified the seven assertions lacking person_evidence entries (a_002, a_003, a_006, a_007, a_008, a_009, a_012), routed them to person-evidence as instructed, summarized the evidence converging on Thomas Flynn as father, and outlined the remaining work (probate search pli_006, exhaustiveness assessment, proof conclusion). The autonomous flag was honored—no clarifying questions were asked. All aspects of the input state required by the research task were addressed."
               },
               {
                 "source": "base",
@@ -1594,7 +1594,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.14011895,
           "output": {
-            "text_response": "There's an active project for Patrick Flynn with no open questions. I'll route to question-selection to register the new research question about Patrick Flynn's daughter Mary.\n\nI routed the researcher's new question \u2014 \"Did Patrick Flynn and his wife have a daughter named Mary?\" \u2014 to **question-selection**, which is the required first step for any objective that isn't yet registered as a formal question in the project. The project already has Patrick Flynn (born ca. 1845 PA, died 1908 Schuylkill County, PA) in the tree with the original objective of identifying his parents, but no open questions were on record. Before a research plan can be written, a completeness / child-enumeration question must be formally written into `questions[]`, because downstream skills (`research-plan`, `search-records`, `proof-conclusion`) all reference a registered `q_` id.\n\nThe delegation to question-selection has been recorded as the hand-off for this turn. Once the question is registered, the workflow will continue with:\n\n1. **research-plan** \u2014 stage searches for records that would name Patrick Flynn's children (census household listings, vital records, obituaries, church records in Schuylkill County)\n2. **search-records / search-external-sites** \u2014 execute those searches\n3. **record-extraction \u2192 person-evidence** \u2014 extract and link any Mary Flynn daughter assertions\n4. **research-exhaustiveness \u2192 proof-conclusion \u2192 gps-mentor** \u2014 evaluate the evidence and close the question\n\nIf you'd like me to continue driving the workflow forward, just say so and I'll pick up from wherever the project state lands after question-selection persists the new question.",
+            "text_response": "There's an active project for Patrick Flynn with no open questions. I'll route to question-selection to register the new research question about Patrick Flynn's daughter Mary.\n\nI routed the researcher's new question — \"Did Patrick Flynn and his wife have a daughter named Mary?\" — to **question-selection**, which is the required first step for any objective that isn't yet registered as a formal question in the project. The project already has Patrick Flynn (born ca. 1845 PA, died 1908 Schuylkill County, PA) in the tree with the original objective of identifying his parents, but no open questions were on record. Before a research plan can be written, a completeness / child-enumeration question must be formally written into `questions[]`, because downstream skills (`research-plan`, `search-records`, `proof-conclusion`) all reference a registered `q_` id.\n\nThe delegation to question-selection has been recorded as the hand-off for this turn. Once the question is registered, the workflow will continue with:\n\n1. **research-plan** — stage searches for records that would name Patrick Flynn's children (census household listings, vital records, obituaries, church records in Schuylkill County)\n2. **search-records / search-external-sites** — execute those searches\n3. **record-extraction → person-evidence** — extract and link any Mary Flynn daughter assertions\n4. **research-exhaustiveness → proof-conclusion → gps-mentor** — evaluate the evidence and close the question\n\nIf you'd like me to continue driving the workflow forward, just say so and I'll pick up from wherever the project state lands after question-selection persists the new question.",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -1653,7 +1653,7 @@
             "agent_returns": [
               {
                 "subagent_type": "question-selection",
-                "text": "'question-selection' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'question-selection' was skipped or stubbed \u2014 not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'question-selection' wrote, changed or concluded anything the text does not state.",
+                "text": "'question-selection' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'question-selection' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'question-selection' wrote, changed or concluded anything the text does not state.",
                 "is_error": true
               }
             ],
@@ -1747,7 +1747,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -1801,13 +1801,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -1907,7 +1907,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's bounded request: transcribe image 004022578_00190 and leave it at that. The transcription was delivered with appropriate context (source identification), and the skill correctly did not attempt to extract assertions, link persons, or derive research questions\u2014all of which would have violated the 'leave it at that' instruction."
+            "rationale": "The skill fully addressed the user's bounded request: transcribe image 004022578_00190 and leave it at that. The transcription was delivered with appropriate context (source identification), and the skill correctly did not attempt to extract assertions, link persons, or derive research questions—all of which would have violated the 'leave it at that' instruction."
           },
           {
             "source": "base",
@@ -1927,7 +1927,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's bounded request: transcribe image 004022578_00190 and leave it at that. The transcription was delivered with appropriate context (source identification), and the skill correctly did not attempt to extract assertions, link persons, or derive research questions\u2014all of which would have violated the 'leave it at that' instruction."
+            "rationale": "The skill fully addressed the user's bounded request: transcribe image 004022578_00190 and leave it at that. The transcription was delivered with appropriate context (source identification), and the skill correctly did not attempt to extract assertions, link persons, or derive research questions—all of which would have violated the 'leave it at that' instruction."
           },
           {
             "source": "base",
@@ -1994,7 +1994,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.0968193,
           "output": {
-            "text_response": "Transcribing image 004022578_00190 now.\n\nHere is the transcription of image **004022578_00190** (1881 Census of Canada, Sherbrooke, Quebec, page 14):\n\n| Line | Surname | Given | Sex | Age | Birthplace | Origin | Religion | Occupation |\n|------|---------|-------|-----|-----|------------|--------|----------|------------|\n| 7 | Driscoll | Cornelius | M | 67 | Ireland | Irish | R. Catholic | Labourer |\n| 8 | Driscoll | Johanna | F | 61 | Ireland | Irish | R. Catholic | \u2014 |\n| 9 | Driscoll | Mary | F | 24 | Quebec | Irish | R. Catholic | \u2014 |\n\nThree members of the Driscoll household appear on this page: Cornelius (67, born Ireland, labourer), his likely wife Johanna (61, born Ireland), and Mary (24, born Quebec, likely their Canadian-born daughter). No project files were changed. Let me know if you'd like to take this further \u2014 extracting the assertions, linking the persons to a tree, or searching for related records.",
+            "text_response": "Transcribing image 004022578_00190 now.\n\nHere is the transcription of image **004022578_00190** (1881 Census of Canada, Sherbrooke, Quebec, page 14):\n\n| Line | Surname | Given | Sex | Age | Birthplace | Origin | Religion | Occupation |\n|------|---------|-------|-----|-----|------------|--------|----------|------------|\n| 7 | Driscoll | Cornelius | M | 67 | Ireland | Irish | R. Catholic | Labourer |\n| 8 | Driscoll | Johanna | F | 61 | Ireland | Irish | R. Catholic | — |\n| 9 | Driscoll | Mary | F | 24 | Quebec | Irish | R. Catholic | — |\n\nThree members of the Driscoll household appear on this page: Cornelius (67, born Ireland, labourer), his likely wife Johanna (61, born Ireland), and Mary (24, born Quebec, likely their Canadian-born daughter). No project files were changed. Let me know if you'd like to take this further — extracting the assertions, linking the persons to a tree, or searching for related records.",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -2014,7 +2014,7 @@
             "agent_returns": [
               {
                 "subagent_type": "image-reader",
-                "text": "'image-reader' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nTRANSCRIPTION of image 004022578_00190, 1881 Census of Canada, Sherbrooke, Quebec, page 14:\nLine 7: Driscoll, Cornelius, M, 67, Ireland, Irish, R. Catholic, Labourer.\nLine 8: Driscoll, Johanna, F, 61, Ireland, Irish, R. Catholic.\nLine 9: Driscoll, Mary, F, 24, Quebec, Irish, R. Catholic.\nNothing else on the page concerns this household. No project state was changed.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'image-reader' was skipped or stubbed \u2014 not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'image-reader' wrote, changed or concluded anything the text does not state.",
+                "text": "'image-reader' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nTRANSCRIPTION of image 004022578_00190, 1881 Census of Canada, Sherbrooke, Quebec, page 14:\nLine 7: Driscoll, Cornelius, M, 67, Ireland, Irish, R. Catholic, Labourer.\nLine 8: Driscoll, Johanna, F, 61, Ireland, Irish, R. Catholic.\nLine 9: Driscoll, Mary, F, 24, Quebec, Irish, R. Catholic.\nNothing else on the page concerns this household. No project state was changed.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'image-reader' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'image-reader' wrote, changed or concluded anything the text does not state.",
                 "is_error": true
               }
             ]
@@ -2097,7 +2097,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -2151,13 +2151,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -2211,7 +2211,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's bounded request: transcribe image 004022578_00190 and leave it at that. The transcription was delivered with appropriate context (source identification), and the skill correctly did not attempt to extract assertions, link persons, or derive research questions\u2014all of which would have violated the 'leave it at that' instruction."
+                "rationale": "The skill fully addressed the user's bounded request: transcribe image 004022578_00190 and leave it at that. The transcription was delivered with appropriate context (source identification), and the skill correctly did not attempt to extract assertions, link persons, or derive research questions—all of which would have violated the 'leave it at that' instruction."
               },
               {
                 "source": "base",
@@ -2348,7 +2348,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.18488525,
           "output": {
-            "text_response": "I'll start by checking whether there's an existing project for Cornelius Driscoll before routing anywhere.\n\nGood \u2014 there's an active project for Cornelius Driscoll (GJ72-9WD). This is a bounded request, so I'll read what FamilySearch already has on file before doing anything else.\n\nNo siblings are listed in the FamilySearch tree \u2014 only Cornelius's son Jeremiah is shown. His parents aren't recorded in the tree either, so I can't search by family group without first checking the baptism record (SD-DRIS-A, Skibbereen, Co. Cork, 12 March 1814) for parents' names. Let me run a targeted search now.\n\nHere is what the available FamilySearch records show:\n\n---\n\n**Siblings of Cornelius Driscoll \u2014 what the records currently show**\n\n**In the FamilySearch Family Tree:** No siblings are recorded. Cornelius's parents are not listed in the tree, so there is no family-group link from which siblings could be derived.\n\n**In the Ireland, Catholic Parish Registers, 1655\u20131915 (Skibbereen, Co. Cork):** A targeted search on the Driscoll surname in Skibbereen for the period 1810\u20131825 returned two baptism entries:\n\n| Candidate | Baptism date | Parents named? | Record score |\n|-----------|-------------|----------------|-------------|\n| Mary Driscoll | 1817 | No | 0.62 |\n| Johanna Driscoll | 1820 | No | 0.58 |\n\nNeither record names the parents, so there is no way to confirm from these index entries alone that Mary or Johanna shared the same parents as Cornelius. \"Driscoll\" was a very common Cork surname, and the match scores are moderate \u2014 these are plausible candidates only.\n\n---\n\n**Bottom line:** No confirmed siblings have been found. Two contemporary Driscoll baptisms in Skibbereen are possible candidates, but without parents' names they cannot be tied to Cornelius. The baptism record for Cornelius himself (12 March 1814, Skibbereen) is the natural next step \u2014 it would identify his parents, and then the parish register could be searched for other children of that couple.\n\nWould you like me to pursue that \u2014 read Cornelius's baptism image and search for any further siblings from there?",
+            "text_response": "I'll start by checking whether there's an existing project for Cornelius Driscoll before routing anywhere.\n\nGood — there's an active project for Cornelius Driscoll (GJ72-9WD). This is a bounded request, so I'll read what FamilySearch already has on file before doing anything else.\n\nNo siblings are listed in the FamilySearch tree — only Cornelius's son Jeremiah is shown. His parents aren't recorded in the tree either, so I can't search by family group without first checking the baptism record (SD-DRIS-A, Skibbereen, Co. Cork, 12 March 1814) for parents' names. Let me run a targeted search now.\n\nHere is what the available FamilySearch records show:\n\n---\n\n**Siblings of Cornelius Driscoll — what the records currently show**\n\n**In the FamilySearch Family Tree:** No siblings are recorded. Cornelius's parents are not listed in the tree, so there is no family-group link from which siblings could be derived.\n\n**In the Ireland, Catholic Parish Registers, 1655–1915 (Skibbereen, Co. Cork):** A targeted search on the Driscoll surname in Skibbereen for the period 1810–1825 returned two baptism entries:\n\n| Candidate | Baptism date | Parents named? | Record score |\n|-----------|-------------|----------------|-------------|\n| Mary Driscoll | 1817 | No | 0.62 |\n| Johanna Driscoll | 1820 | No | 0.58 |\n\nNeither record names the parents, so there is no way to confirm from these index entries alone that Mary or Johanna shared the same parents as Cornelius. \"Driscoll\" was a very common Cork surname, and the match scores are moderate — these are plausible candidates only.\n\n---\n\n**Bottom line:** No confirmed siblings have been found. Two contemporary Driscoll baptisms in Skibbereen are possible candidates, but without parents' names they cannot be tied to Cornelius. The baptism record for Cornelius himself (12 March 1814, Skibbereen) is the natural next step — it would identify his parents, and then the parish register could be searched for other children of that couple.\n\nWould you like me to pursue that — read Cornelius's baptism image and search for any further siblings from there?",
             "activated": true,
             "skills_invoked": [
               "research",
@@ -2522,7 +2522,7 @@
                     },
                     {
                       "id": "SD-DRIS-C",
-                      "title": "Cornelius Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\" \u2014 burial",
+                      "title": "Cornelius Driscoll, \"Quebec, Catholic Parish Registers, 1621-1979\" — burial",
                       "citation": "\"Quebec, Catholic Parish Registers, 1621-1979\", database with images, FamilySearch, burial of Cornelius Driscoll, St. Patrick's Cemetery, Sherbrooke.",
                       "url": "https://familysearch.org/ark:/61903/1:1:DRIS-003"
                     },
@@ -2672,7 +2672,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -2726,13 +2726,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -2930,7 +2930,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -2996,7 +2996,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3032,7 +3032,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3050,13 +3050,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -3261,7 +3261,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -3327,7 +3327,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3363,7 +3363,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3381,13 +3381,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -3577,7 +3577,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1357969,
           "output": {
-            "text_response": "Let me locate the Flynn research project first.\n\nNow let me pull the research plan and search log to understand what's already been done.\n\nNow I have a complete picture of the Flynn research. Here's a targeted strategy for browsing unindexed record sets, prioritized by what's most likely to advance the proof.\n\n---\n\n## Flynn Unindexed Browse Strategy\n**Objective:** Identify parents of Patrick Flynn (b. ~1845 PA, d. 1908 Schuylkill Co.)\n**What's confirmed:** Patrick placed in Thomas Flynn's household in both 1850 and 1860 censuses; 1908 death certificate names Thomas Flynn as father. One plan item still open: **pli_006 \u2014 Thomas Flynn probate, Schuylkill Co., 1870\u20131890** (in progress).\n\n---\n\n### Priority 1 \u2014 Schuylkill County Probate / Orphans' Court *(pli_006, in progress)*\n**Why first:** A will or letters of administration for Thomas Flynn would name Patrick as a son/heir \u2014 the most direct corroboration of the parent-child relationship after the death certificate.\n**How to browse:**\n- Search FamilySearch image groups for **\"Pennsylvania, Schuylkill County, Wills and Probate Records\"**\n- Narrow the image group to roughly 1870\u20131895 (allow a buffer \u2014 Thomas's death year is unknown)\n- Scan the will index volumes first (usually the first images in the group); find Thomas Flynn, then jump to the named folio\n- Look for any inventory or distribution showing heirs \u2014 Patrick should appear\n\n---\n\n### Priority 2 \u2014 Catholic Parish Baptismal Registers, Schuylkill County (~1843\u20131848)\n**Why:** If Thomas arrived in time for Patrick's birth (~1845 in PA), a baptism entry would confirm both parents' names (father's and mother's) in one record.\n**Key parishes to target:**\n- **St. Patrick's, Pottsville** (est. 1828) \u2014 oldest Catholic parish in the county; most likely for an Irish immigrant family\n- **Annunciation, Shenandoah** \u2014 secondary option if the family was in the northern part of the county\n**How to browse:** Search FamilySearch volume_search for \"Pennsylvania Catholic Church Records, Schuylkill County\" image groups; page through the baptism register for 1843\u20131848 watching for any Flynn entries\n\n---\n\n### Priority 3 \u2014 Schuylkill County Naturalization Records (Court of Common Pleas, ~1845\u20131865)\n**Why:** Thomas Flynn was almost certainly an Irish immigrant who naturalized. Pre-1906 Pennsylvania naturalizations sometimes include a **declaration of intention** listing the exact townland or county of Irish origin \u2014 invaluable for confirming identity and potentially identifying his parents' generation.\n**How to browse:**\n- Find the FamilySearch image group for **Schuylkill County Court of Common Pleas naturalization papers**\n- The declarations (\"first papers\") and petitions are often in separate volumes \u2014 browse both\n- Index volumes at the front usually list names alphabetically; find Flynn entries and jump to the folio\n\n---\n\n### Priority 4 \u2014 Thomas Flynn Death Record / Burial Register (~1870\u20131895)\n**Why:** Pennsylvania had no statewide vital registration until 1906, but **local church burial registers** often survive. A burial record for Thomas would anchor his death date, confirm the family's parish, and may list survivors.\n**How to browse:**\n- Browse the same St. Patrick's, Pottsville burial/death register image group alongside the baptism register (Priority 2 \u2014 same volume set)\n- Scan 1870\u20131895 for a Thomas Flynn entry\n\n---\n\n### Priority 5 \u2014 Pre-1850 Irish Ship Manifests (Famine Era, ~1845\u20131848)\n**Why:** The 1840s Famine emigration is partially indexed but significant portions of pre-1895 passenger lists on FamilySearch are unindexed microfilm. If Thomas arrived 1845\u20131848, a manifest might list family members traveling together (wife, young Patrick) and an Irish port of embarkation \u2014 pointing to the Irish county of origin.\n**How to browse:**\n- FamilySearch image groups for **\"New York, Passenger Lists, 1820\u20131891\"** or **Philadelphia passenger arrivals**\n- Narrow by year range 1845\u20131849; scan for Flynn family groups with young children\n\n---\n\n## Recommended Browse Order\n\n| Order | Record Set | Expected Payoff |\n|-------|-----------|----------------|\n| 1st | Schuylkill Co. Probate (Thomas Flynn) | Names Patrick as heir \u2190 already in progress |\n| 2nd | St. Patrick's Pottsville baptism register 1843\u201348 | Both parents' names on one record |\n| 3rd | Schuylkill Co. naturalizations 1845\u201365 | Thomas's Irish origin; identity confirmation |\n| 4th | St. Patrick's burial register 1870\u201395 | Thomas's death + survivors |\n| 5th | NY/Philadelphia ship manifests 1845\u201349 | Irish county of origin |\n\n---\n\n**Next action:** Say **\"browse the Schuylkill County probate volumes\"** to kick off the image-browsing agent on Priority 1 (since pli_006 is already open), or **\"browse the St. Patrick's Pottsville parish registers\"** to start on Priority 2. Would you like to begin?",
+            "text_response": "Let me locate the Flynn research project first.\n\nNow let me pull the research plan and search log to understand what's already been done.\n\nNow I have a complete picture of the Flynn research. Here's a targeted strategy for browsing unindexed record sets, prioritized by what's most likely to advance the proof.\n\n---\n\n## Flynn Unindexed Browse Strategy\n**Objective:** Identify parents of Patrick Flynn (b. ~1845 PA, d. 1908 Schuylkill Co.)\n**What's confirmed:** Patrick placed in Thomas Flynn's household in both 1850 and 1860 censuses; 1908 death certificate names Thomas Flynn as father. One plan item still open: **pli_006 — Thomas Flynn probate, Schuylkill Co., 1870–1890** (in progress).\n\n---\n\n### Priority 1 — Schuylkill County Probate / Orphans' Court *(pli_006, in progress)*\n**Why first:** A will or letters of administration for Thomas Flynn would name Patrick as a son/heir — the most direct corroboration of the parent-child relationship after the death certificate.\n**How to browse:**\n- Search FamilySearch image groups for **\"Pennsylvania, Schuylkill County, Wills and Probate Records\"**\n- Narrow the image group to roughly 1870–1895 (allow a buffer — Thomas's death year is unknown)\n- Scan the will index volumes first (usually the first images in the group); find Thomas Flynn, then jump to the named folio\n- Look for any inventory or distribution showing heirs — Patrick should appear\n\n---\n\n### Priority 2 — Catholic Parish Baptismal Registers, Schuylkill County (~1843–1848)\n**Why:** If Thomas arrived in time for Patrick's birth (~1845 in PA), a baptism entry would confirm both parents' names (father's and mother's) in one record.\n**Key parishes to target:**\n- **St. Patrick's, Pottsville** (est. 1828) — oldest Catholic parish in the county; most likely for an Irish immigrant family\n- **Annunciation, Shenandoah** — secondary option if the family was in the northern part of the county\n**How to browse:** Search FamilySearch volume_search for \"Pennsylvania Catholic Church Records, Schuylkill County\" image groups; page through the baptism register for 1843–1848 watching for any Flynn entries\n\n---\n\n### Priority 3 — Schuylkill County Naturalization Records (Court of Common Pleas, ~1845–1865)\n**Why:** Thomas Flynn was almost certainly an Irish immigrant who naturalized. Pre-1906 Pennsylvania naturalizations sometimes include a **declaration of intention** listing the exact townland or county of Irish origin — invaluable for confirming identity and potentially identifying his parents' generation.\n**How to browse:**\n- Find the FamilySearch image group for **Schuylkill County Court of Common Pleas naturalization papers**\n- The declarations (\"first papers\") and petitions are often in separate volumes — browse both\n- Index volumes at the front usually list names alphabetically; find Flynn entries and jump to the folio\n\n---\n\n### Priority 4 — Thomas Flynn Death Record / Burial Register (~1870–1895)\n**Why:** Pennsylvania had no statewide vital registration until 1906, but **local church burial registers** often survive. A burial record for Thomas would anchor his death date, confirm the family's parish, and may list survivors.\n**How to browse:**\n- Browse the same St. Patrick's, Pottsville burial/death register image group alongside the baptism register (Priority 2 — same volume set)\n- Scan 1870–1895 for a Thomas Flynn entry\n\n---\n\n### Priority 5 — Pre-1850 Irish Ship Manifests (Famine Era, ~1845–1848)\n**Why:** The 1840s Famine emigration is partially indexed but significant portions of pre-1895 passenger lists on FamilySearch are unindexed microfilm. If Thomas arrived 1845–1848, a manifest might list family members traveling together (wife, young Patrick) and an Irish port of embarkation — pointing to the Irish county of origin.\n**How to browse:**\n- FamilySearch image groups for **\"New York, Passenger Lists, 1820–1891\"** or **Philadelphia passenger arrivals**\n- Narrow by year range 1845–1849; scan for Flynn family groups with young children\n\n---\n\n## Recommended Browse Order\n\n| Order | Record Set | Expected Payoff |\n|-------|-----------|----------------|\n| 1st | Schuylkill Co. Probate (Thomas Flynn) | Names Patrick as heir ← already in progress |\n| 2nd | St. Patrick's Pottsville baptism register 1843–48 | Both parents' names on one record |\n| 3rd | Schuylkill Co. naturalizations 1845–65 | Thomas's Irish origin; identity confirmation |\n| 4th | St. Patrick's burial register 1870–95 | Thomas's death + survivors |\n| 5th | NY/Philadelphia ship manifests 1845–49 | Irish county of origin |\n\n---\n\n**Next action:** Say **\"browse the Schuylkill County probate volumes\"** to kick off the image-browsing agent on Priority 1 (since pli_006 is already open), or **\"browse the St. Patrick's Pottsville parish registers\"** to start on Priority 2. Would you like to begin?",
             "activated": false,
             "skills_invoked": [],
             "tool_calls": [
@@ -3607,14 +3607,14 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "nextStep": "gps-mentor (proof-critique) — ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress"
                     },
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved"
                     }
@@ -3819,7 +3819,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 8,
-                      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined \u2014 ages and locations don't match.",
+                      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
                       "external_site": null
                     },
                     {
@@ -3835,7 +3835,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 12,
-                      "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 \u2014 consistent.",
+                      "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
                       "external_site": {
                         "site": "ancestry",
                         "url_generated": "https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania",
@@ -3856,7 +3856,7 @@
                       },
                       "outcome": "negative",
                       "results_examined": 0,
-                      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania \u2014 still no match.",
+                      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
                       "external_site": {
                         "site": "myheritage",
                         "url_generated": "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Pennsylvania",
@@ -3937,7 +3937,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -4003,7 +4003,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4039,7 +4039,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4057,13 +4057,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -4250,7 +4250,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.20427725,
           "output": {
-            "text_response": "A `research.json` already exists for this project. I'll route directly to the research workflow to drive the work forward and find Patrick Flynn's parents.\n\nNo questions have been written yet. I'll invoke question-selection to register the first research question.\n\nHere's where things stand on the search for Patrick Flynn's parents:\n\n**Project state:** The research project exists and holds Patrick Flynn's tree data. No research questions had been written yet, which is the necessary first step before any searching can begin.\n\n**What was routed:** I handed the work to **question-selection**, whose job is to examine the project objective (\"find the parents of Patrick Flynn\"), read the current tree to identify what is already known and what is missing, and formally write the first research question into the project record. That question must be registered before a search plan or any searches can be created \u2014 the workflow requires this sequencing so every search is tied to a documented, traceable objective.\n\n**What comes next:** Once question-selection writes the question (e.g., *\"Who were the parents of Patrick Flynn?\"*), the workflow will move to building a research plan \u2014 identifying which record sets to search (birth registrations, census records, church registers, immigration records, and so on depending on Patrick's known dates and places), then executing those searches, extracting any relevant records, and ultimately working toward a well-supported conclusion about his parents.\n\nIf you'd like to continue, just say the word and I'll pick the workflow back up from question-selection and carry it all the way through.",
+            "text_response": "A `research.json` already exists for this project. I'll route directly to the research workflow to drive the work forward and find Patrick Flynn's parents.\n\nNo questions have been written yet. I'll invoke question-selection to register the first research question.\n\nHere's where things stand on the search for Patrick Flynn's parents:\n\n**Project state:** The research project exists and holds Patrick Flynn's tree data. No research questions had been written yet, which is the necessary first step before any searching can begin.\n\n**What was routed:** I handed the work to **question-selection**, whose job is to examine the project objective (\"find the parents of Patrick Flynn\"), read the current tree to identify what is already known and what is missing, and formally write the first research question into the project record. That question must be registered before a search plan or any searches can be created — the workflow requires this sequencing so every search is tied to a documented, traceable objective.\n\n**What comes next:** Once question-selection writes the question (e.g., *\"Who were the parents of Patrick Flynn?\"*), the workflow will move to building a research plan — identifying which record sets to search (birth registrations, census records, church registers, immigration records, and so on depending on Patrick's known dates and places), then executing those searches, extracting any relevant records, and ultimately working toward a well-supported conclusion about his parents.\n\nIf you'd like to continue, just say the word and I'll pick the workflow back up from question-selection and carry it all the way through.",
             "activated": true,
             "skills_invoked": [
               "init-project",
@@ -4319,7 +4319,7 @@
             "agent_returns": [
               {
                 "subagent_type": "question-selection",
-                "text": "'question-selection' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'question-selection' was skipped or stubbed \u2014 not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'question-selection' wrote, changed or concluded anything the text does not state.",
+                "text": "'question-selection' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'question-selection' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'question-selection' wrote, changed or concluded anything the text does not state.",
                 "is_error": true
               }
             ],
@@ -4413,7 +4413,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4467,13 +4467,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4660,7 +4660,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1724992,
           "output": {
-            "text_response": "No questions exist yet \u2014 let me check whether a project is already initialized.\n\nA `research.json` exists but has no questions yet. Let me read the project objective.\n\nProject is active with a clear objective but no research questions yet. Routing to question-selection to register the first question.\n\nHere's where the project stands and what happened this turn:\n\n---\n\n**Project:** Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\n\n**State at entry:** `research.json` exists and the project is active, but no research questions had been registered yet. Patrick Flynn appears in the tree as the sole person (ID: `I1`) with no sources attached.\n\n**What was routed:** Per the GPS workflow, a project with an objective but no registered questions routes first to **question-selection**, which is responsible for deriving and writing the initial research question(s) from the objective and known information. That hand-off was made.\n\n**Next step when resumed:** Once question-selection has written the first question, the workflow will proceed to:\n1. Check whether a **locality guide** already exists for Schuylkill County, PA (the target jurisdiction) \u2014 if not, locality-guide runs first to survey available record types and repositories.\n2. Then **research-plan** stages the specific searches.\n3. Then **search-records** (FamilySearch) and/or **search-external-sites** execute those searches, beginning with records most likely to name Patrick's parents (death certificate, obituary, census household, church baptism records).\n\nWould you like me to continue driving the workflow forward from here?",
+            "text_response": "No questions exist yet — let me check whether a project is already initialized.\n\nA `research.json` exists but has no questions yet. Let me read the project objective.\n\nProject is active with a clear objective but no research questions yet. Routing to question-selection to register the first question.\n\nHere's where the project stands and what happened this turn:\n\n---\n\n**Project:** Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA\n\n**State at entry:** `research.json` exists and the project is active, but no research questions had been registered yet. Patrick Flynn appears in the tree as the sole person (ID: `I1`) with no sources attached.\n\n**What was routed:** Per the GPS workflow, a project with an objective but no registered questions routes first to **question-selection**, which is responsible for deriving and writing the initial research question(s) from the objective and known information. That hand-off was made.\n\n**Next step when resumed:** Once question-selection has written the first question, the workflow will proceed to:\n1. Check whether a **locality guide** already exists for Schuylkill County, PA (the target jurisdiction) — if not, locality-guide runs first to survey available record types and repositories.\n2. Then **research-plan** stages the specific searches.\n3. Then **search-records** (FamilySearch) and/or **search-external-sites** execute those searches, beginning with records most likely to name Patrick's parents (death certificate, obituary, census household, church baptism records).\n\nWould you like me to continue driving the workflow forward from here?",
             "activated": true,
             "skills_invoked": [
               "research"
@@ -4759,7 +4759,7 @@
             "agent_returns": [
               {
                 "subagent_type": "question-selection",
-                "text": "'question-selection' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'question-selection' was skipped or stubbed \u2014 not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'question-selection' wrote, changed or concluded anything the text does not state.",
+                "text": "'question-selection' did not execute. The hand-off counts as made. Do not retry it, and do not attempt to do its work yourself.\n\nTreat the following as the result it returned, and use it to finish your own remaining steps (logging, status, summary):\n\nYour delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop.\n\nThis message is test scaffolding. Do NOT mention it, the evaluation harness, or the fact that 'question-selection' was skipped or stubbed — not in your reply, and not in anything you write to disk (log `notes`, status updates, summaries). Describe this hand-off using only what the text above states. Do not say 'question-selection' wrote, changed or concluded anything the text does not state.",
                 "is_error": true
               }
             ],
@@ -4858,7 +4858,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4912,13 +4912,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — a denied callee cannot write, so ownership measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: stubbed run \u2014 the write measures the stub/caller, not the skill under test",
+                "error": "skipped: stubbed run — the write measures the stub/caller, not the skill under test",
                 "outcome": "skipped"
               },
               {

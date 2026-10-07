@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "tree-edit",
   "version": 2,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-07_06-10-36",
@@ -209,7 +209,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.15711039999999998,
           "output": {
-            "text_response": "No edit is needed. Here is what the tree-edit agent found:\n\n**Patrick Flynn's birth fact (F1) already reflects the correct data:**\n- **Date:** `~1845`\n- **Place:** `Ireland`\n- **Primary:** `true`\n- **Source:** S1 (1850 U.S. Federal Census, Schuylkill Co., dwelling 84)\n\nThis matches exactly what conflict **c_001** resolved \u2014 Ireland as birthplace and ~1845 as the birth year, based on the preponderance of the 1850 and 1860 census records over the death certificate's secondary-informant entry of \"Pennsylvania.\" F1 is already marked primary and carries the supporting source reference.\n\n**No correction is needed.** The tree is consistent with the resolved conflict.",
+            "text_response": "No edit is needed. Here is what the tree-edit agent found:\n\n**Patrick Flynn's birth fact (F1) already reflects the correct data:**\n- **Date:** `~1845`\n- **Place:** `Ireland`\n- **Primary:** `true`\n- **Source:** S1 (1850 U.S. Federal Census, Schuylkill Co., dwelling 84)\n\nThis matches exactly what conflict **c_001** resolved — Ireland as birthplace and ~1845 as the birth year, based on the preponderance of the 1850 and 1860 census records over the death certificate's secondary-informant entry of \"Pennsylvania.\" F1 is already marked primary and carries the supporting source reference.\n\n**No correction is needed.** The tree is consistent with the resolved conflict.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -219,7 +219,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Tree edit check for Patrick Flynn birth fact",
-                  "prompt": "confirm this fact is in the tree \u2014 Patrick Flynn's birth fact (F1) should show ~1845 in Ireland, matching the resolved birthplace conflict c_001. Check the tree and tell me whether F1 already reflects this, or whether an edit is needed.\n\nprojectPath: <workspace>",
+                  "prompt": "confirm this fact is in the tree — Patrick Flynn's birth fact (F1) should show ~1845 in Ireland, matching the resolved birthplace conflict c_001. Check the tree and tell me whether F1 already reflects this, or whether an edit is needed.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -241,7 +241,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "No edit needed \u2014 F1 already reflects this with source S1.\n\nPatrick Flynn's birth fact (F1) on person I1 currently reads:\n- **date:** `~1845`\n- **place:** `Ireland`\n- **primary:** `true`\n- **source:** S1 (1850 U.S. Federal Census), page \"1850 Census, Schuylkill Co., dwelling 84\"\n\nThis is exactly what conflict c_001 calls for. The resolution rationale in c_001 accepted Ireland as the birthplace and ~1845 as the year, based on the preponderance of the 1850 and 1860 census records over the death certificate's secondary-informant entry of \"Pennsylvania.\" F1 already captures that concluded value, is already marked `primary: true`, and carries the supporting source ref. No change is needed.\n\n---\n\nPatrick Flynn's family tree entry already shows he was born around 1845 in Ireland \u2014 which is exactly what the earlier research conflict concluded was correct after weighing the census records against the death certificate. Everything is in order, and no correction needs to be made.\n\nThe next step is to continue searching the remaining records \u2014 particularly the 1870, 1880, and 1900 censuses and Thomas Flynn's probate file \u2014 to strengthen the parentage conclusion from \"probable\" toward \"proved.\""
+                "text": "No edit needed — F1 already reflects this with source S1.\n\nPatrick Flynn's birth fact (F1) on person I1 currently reads:\n- **date:** `~1845`\n- **place:** `Ireland`\n- **primary:** `true`\n- **source:** S1 (1850 U.S. Federal Census), page \"1850 Census, Schuylkill Co., dwelling 84\"\n\nThis is exactly what conflict c_001 calls for. The resolution rationale in c_001 accepted Ireland as the birthplace and ~1845 as the year, based on the preponderance of the 1850 and 1860 census records over the death certificate's secondary-informant entry of \"Pennsylvania.\" F1 already captures that concluded value, is already marked `primary: true`, and carries the supporting source ref. No change is needed.\n\n---\n\nPatrick Flynn's family tree entry already shows he was born around 1845 in Ireland — which is exactly what the earlier research conflict concluded was correct after weighing the census records against the death certificate. Everything is in order, and no correction needs to be made.\n\nThe next step is to continue searching the remaining records — particularly the 1870, 1880, and 1900 censuses and Thomas Flynn's probate file — to strengthen the parentage conclusion from \"probable\" toward \"proved.\""
               }
             ],
             "warnings": [
@@ -639,7 +639,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.17808110000000002,
           "output": {
-            "text_response": "The Occupation fact was successfully added to Patrick Flynn's tree record (written as **F4**).\n\nHere's a summary of what was done:\n- **Person:** Patrick Flynn (I1)\n- **Fact type:** Occupation \u2014 *Coal miner*\n- **Date:** 1860\n- **Place:** Schuylkill County, Pennsylvania\n- **Source reference:** S2 (the 1860 census), page/dwelling: *dwelling 112*",
+            "text_response": "The Occupation fact was successfully added to Patrick Flynn's tree record (written as **F4**).\n\nHere's a summary of what was done:\n- **Person:** Patrick Flynn (I1)\n- **Fact type:** Occupation — *Coal miner*\n- **Date:** 1860\n- **Place:** Schuylkill County, Pennsylvania\n- **Source reference:** S2 (the 1860 census), page/dwelling: *dwelling 112*",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -705,7 +705,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Add occupation fact to tree",
-                  "prompt": "add occupation \u2014 the 1860 census (source S2, already cited on R1) records Patrick Flynn's occupation as 'Coal miner' at Schuylkill County, Pennsylvania. Add an Occupation fact to Patrick (I1) with date 1860, the place from the source, and a source reference back to S2 with page 'dwelling 112'.\n\nprojectPath: <workspace>",
+                  "prompt": "add occupation — the 1860 census (source S2, already cited on R1) records Patrick Flynn's occupation as 'Coal miner' at Schuylkill County, Pennsylvania. Add an Occupation fact to Patrick (I1) with date 1860, the place from the source, and a source reference back to S2 with page 'dwelling 112'.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -727,7 +727,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "The Occupation fact was written successfully as F4.\n\n---\n\nThe family tree record for Patrick Flynn has been updated to show that he worked as a coal miner in Schuylkill County, Pennsylvania, as recorded in the 1860 census. This biographical detail is now permanently attached to his record, cited back to the census entry at dwelling 112.\n\nIf any further gaps in Patrick's life \u2014 such as his 1870, 1880, or 1900 census appearances \u2014 are found and extracted, those records can be added to his profile in the same way."
+                "text": "The Occupation fact was written successfully as F4.\n\n---\n\nThe family tree record for Patrick Flynn has been updated to show that he worked as a coal miner in Schuylkill County, Pennsylvania, as recorded in the 1860 census. This biographical detail is now permanently attached to his record, cited back to the census entry at dwelling 112.\n\nIf any further gaps in Patrick's life — such as his 1870, 1880, or 1900 census appearances — are found and extracted, those records can be added to his profile in the same way."
               }
             ],
             "file_changes": {
@@ -1206,7 +1206,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.15606449999999997,
           "output": {
-            "text_response": "No edit is needed. **R1 already reflects the correct state.**\n\nIn `tree.gedcomx.json`, R1 is a `ParentChild` relationship with `parent: \"I2\"` (Thomas Flynn) and `child: \"I1\"` (Patrick Flynn), supported by three source references \u2014 S1 (1850 census, dwelling 84), S2 (1860 census, dwelling 112), and S3 (death certificate no. 4521). That is exactly what ps_001's `probable` tier conclusion calls for.\n\nThe family tree already correctly shows Thomas Flynn as the father of Patrick Flynn, backed by three historical records: the 1850 and 1860 census records placing both men in the same household, and the 1908 death certificate naming Thomas as Patrick's father. No change was required.",
+            "text_response": "No edit is needed. **R1 already reflects the correct state.**\n\nIn `tree.gedcomx.json`, R1 is a `ParentChild` relationship with `parent: \"I2\"` (Thomas Flynn) and `child: \"I1\"` (Patrick Flynn), supported by three source references — S1 (1850 census, dwelling 84), S2 (1860 census, dwelling 112), and S3 (death certificate no. 4521). That is exactly what ps_001's `probable` tier conclusion calls for.\n\nThe family tree already correctly shows Thomas Flynn as the father of Patrick Flynn, backed by three historical records: the 1850 and 1860 census records placing both men in the same household, and the 1908 death certificate naming Thomas as Patrick's father. No change was required.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -1216,7 +1216,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Tree edit verification task",
-                  "prompt": "ps_001 is at `probable` tier. Verify the tree reflects this \u2014 make sure the tree shows the ParentChild relationship between Thomas (I2) and Patrick (I1), and tell me whether R1 already reflects this or whether an edit is needed.\n\nprojectPath: <workspace>",
+                  "prompt": "ps_001 is at `probable` tier. Verify the tree reflects this — make sure the tree shows the ParentChild relationship between Thomas (I2) and Patrick (I1), and tell me whether R1 already reflects this or whether an edit is needed.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -1238,7 +1238,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "No edit is needed. R1 already reflects the correct state.\n\nR1 in `tree.gedcomx.json` is a `ParentChild` relationship with `parent: \"I2\"` (Thomas Flynn) and `child: \"I1\"` (Patrick Flynn), supported by three source references \u2014 S1 (1850 census, dwelling 84), S2 (1860 census, dwelling 112), and S3 (death certificate no. 4521). That is exactly what ps_001's `probable` tier conclusion calls for.\n\n---\n\nThe family tree already correctly shows Thomas Flynn as the father of Patrick Flynn, backed by three historical records: the 1850 and 1860 census records that found both men in the same household, and the 1908 death certificate that names Thomas as Patrick's father. No change was required.\n\nWith this relationship confirmed at the \"probable\" level, the next step is to continue searching for additional records \u2014 particularly the 1870, 1880, and 1900 census records and Thomas Flynn's probate file \u2014 which could strengthen the conclusion to \"proved.\""
+                "text": "No edit is needed. R1 already reflects the correct state.\n\nR1 in `tree.gedcomx.json` is a `ParentChild` relationship with `parent: \"I2\"` (Thomas Flynn) and `child: \"I1\"` (Patrick Flynn), supported by three source references — S1 (1850 census, dwelling 84), S2 (1860 census, dwelling 112), and S3 (death certificate no. 4521). That is exactly what ps_001's `probable` tier conclusion calls for.\n\n---\n\nThe family tree already correctly shows Thomas Flynn as the father of Patrick Flynn, backed by three historical records: the 1850 and 1860 census records that found both men in the same household, and the 1908 death certificate that names Thomas as Patrick's father. No change was required.\n\nWith this relationship confirmed at the \"probable\" level, the next step is to continue searching for additional records — particularly the 1870, 1880, and 1900 census records and Thomas Flynn's probate file — which could strengthen the conclusion to \"proved.\""
               }
             ],
             "warnings": [
@@ -1634,7 +1634,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.15548115,
           "output": {
-            "text_response": "F2 on Patrick Flynn (I1) has been corrected: `date` changed from `1908-03-21` to `1908-03-12`, matching the death certificate (S3, cert. no. 4521). All other fields on F2 \u2014 place, primary status, and source reference \u2014 are untouched. Validation passed with no warnings.",
+            "text_response": "F2 on Patrick Flynn (I1) has been corrected: `date` changed from `1908-03-21` to `1908-03-12`, matching the death certificate (S3, cert. no. 4521). All other fields on F2 — place, primary status, and source reference — are untouched. Validation passed with no warnings.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1674,7 +1674,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Fix Patrick Flynn death date typo in tree",
-                  "prompt": "change birth year \u2014 actually, fix this date. Patrick Flynn's death fact F2 currently shows `1908-03-21` in the tree, but the death certificate (S3, cert. no. 4521) records 12 March 1908. The tree has a day-swap typo. Correct F2.date to `1908-03-12` and leave everything else alone.\n\nprojectPath: <workspace>",
+                  "prompt": "change birth year — actually, fix this date. Patrick Flynn's death fact F2 currently shows `1908-03-21` in the tree, but the death certificate (S3, cert. no. 4521) records 12 March 1908. The tree has a day-swap typo. Correct F2.date to `1908-03-12` and leave everything else alone.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -1696,7 +1696,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "F2 on Patrick Flynn (I1) corrected: `date` changed from `1908-03-21` to `1908-03-12`, sourced to S3 (Pennsylvania Death Certificates, cert. no. 4521). All other fields on F2 \u2014 place, primary status, and source ref \u2014 are untouched. Validation passed with no warnings.\n\n---\n\nPatrick Flynn's death date in the family tree has been fixed. The record now correctly shows he died on 12 March 1908, matching what the death certificate actually says, instead of the transposed 21 March that was there before. Nothing else about his record was changed.\n\nNo further action is needed unless you want to resolve the open research question about Thomas Flynn's probate records."
+                "text": "F2 on Patrick Flynn (I1) corrected: `date` changed from `1908-03-21` to `1908-03-12`, sourced to S3 (Pennsylvania Death Certificates, cert. no. 4521). All other fields on F2 — place, primary status, and source ref — are untouched. Validation passed with no warnings.\n\n---\n\nPatrick Flynn's death date in the family tree has been fixed. The record now correctly shows he died on 12 March 1908, matching what the death certificate actually says, instead of the transposed 21 March that was there before. Nothing else about his record was changed.\n\nNo further action is needed unless you want to resolve the open research question about Thomas Flynn's probate records."
               }
             ],
             "file_changes": {
@@ -2254,7 +2254,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "The Couple relationship R1 has been created with Marriage fact F3, sourced from assertion a_005 (resolving to S5).\n\n---\n\nThomas Flynn (I2) and Mary Flynn (I3) are now recorded as a married couple in the family tree. Their marriage on 12 May 1843 at St. Patrick's Church in Schuylkill County, Pennsylvania is documented, drawn directly from the church marriage register. This fills in the formal union that ties the two parent-child relationships already in the tree \u2014 Patrick Flynn's father and mother are now connected to each other as well.\n\nThe next step is for proof-conclusion to weigh the accumulated evidence and mark a concluded parentage for Patrick Flynn, drawing on this marriage record alongside the census and probate evidence already gathered."
+                "text": "The Couple relationship R1 has been created with Marriage fact F3, sourced from assertion a_005 (resolving to S5).\n\n---\n\nThomas Flynn (I2) and Mary Flynn (I3) are now recorded as a married couple in the family tree. Their marriage on 12 May 1843 at St. Patrick's Church in Schuylkill County, Pennsylvania is documented, drawn directly from the church marriage register. This fills in the formal union that ties the two parent-child relationships already in the tree — Patrick Flynn's father and mother are now connected to each other as well.\n\nThe next step is for proof-conclusion to weigh the accumulated evidence and mark a concluded parentage for Patrick Flynn, drawing on this marriage record alongside the census and probate evidence already gathered."
               }
             ],
             "file_changes": {
@@ -2692,7 +2692,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.19781245,
           "output": {
-            "text_response": "Both operations completed successfully:\n\n- **Person I5 (Mary Flynn)** was created as a female person with \"Mary Flynn\" as her preferred BirthName \u2014 no facts added, just the stub.\n- **Relationship R2 (ParentChild)** was established from Thomas (I2) \u2192 Mary (I5), with **S1** cited at page *\"dwelling 84, family 91\"*.\n\nThe next step, when ready, is for `person-evidence` / `materialize_facts` to push sourced facts (such as her age and residence from the 1850 census) onto her tree record.",
+            "text_response": "Both operations completed successfully:\n\n- **Person I5 (Mary Flynn)** was created as a female person with \"Mary Flynn\" as her preferred BirthName — no facts added, just the stub.\n- **Relationship R2 (ParentChild)** was established from Thomas (I2) → Mary (I5), with **S1** cited at page *\"dwelling 84, family 91\"*.\n\nThe next step, when ready, is for `person-evidence` / `materialize_facts` to push sourced facts (such as her age and residence from the 1850 census) onto her tree record.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2772,7 +2772,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Add Mary Flynn to tree with ParentChild relationship",
-                  "prompt": "add a relationship. Per ps_003 (probable tier), Mary Flynn is Thomas's daughter. Create Mary in the tree with the next synthetic I-prefix id (gender Female, name 'Mary Flynn' as the preferred BirthName) and add a ParentChild relationship from Thomas (I2) to Mary with S1 as the source (page 'dwelling 84, family 91'). Do NOT add any facts to Mary's person record (no Birth fact, no Residence, nothing) \u2014 sourced facts are materialized onto the tree person by person-evidence's materialize_facts (record-extraction is assertion-only), not invented here. This call creates only the person stub + the ParentChild relationship.\n\nprojectPath: <workspace>",
+                  "prompt": "add a relationship. Per ps_003 (probable tier), Mary Flynn is Thomas's daughter. Create Mary in the tree with the next synthetic I-prefix id (gender Female, name 'Mary Flynn' as the preferred BirthName) and add a ParentChild relationship from Thomas (I2) to Mary with S1 as the source (page 'dwelling 84, family 91'). Do NOT add any facts to Mary's person record (no Birth fact, no Residence, nothing) — sourced facts are materialized onto the tree person by person-evidence's materialize_facts (record-extraction is assertion-only), not invented here. This call creates only the person stub + the ParentChild relationship.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -2794,7 +2794,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "Both operations succeeded. Person I5 (Mary Flynn) was created and relationship R2 (ParentChild, Thomas I2 \u2192 Mary I5) was written with S1 cited at \"dwelling 84, family 91\".\n\n---\n\nMary Flynn has been added to the family tree as a new person \u2014 a daughter of Thomas Flynn, based on the 1850 Schuylkill County census household listing. The record shows her as a female child aged 9 with the surname Flynn in Thomas's household, which is what the probable-tier conclusion (ps_003) authorized. No life facts were added to her record; only her name and her connection to Thomas were written. The relationship carries the 1850 census as its source.\n\nThe next step is for person-evidence to materialize sourced facts \u2014 such as her age and residence from the 1850 census \u2014 onto her tree record once her identity link is established."
+                "text": "Both operations succeeded. Person I5 (Mary Flynn) was created and relationship R2 (ParentChild, Thomas I2 → Mary I5) was written with S1 cited at \"dwelling 84, family 91\".\n\n---\n\nMary Flynn has been added to the family tree as a new person — a daughter of Thomas Flynn, based on the 1850 Schuylkill County census household listing. The record shows her as a female child aged 9 with the surname Flynn in Thomas's household, which is what the probable-tier conclusion (ps_003) authorized. No life facts were added to her record; only her name and her connection to Thomas were written. The relationship carries the 1850 census as its source.\n\nThe next step is for person-evidence to materialize sourced facts — such as her age and residence from the 1850 census — onto her tree record once her identity link is established."
               }
             ],
             "file_changes": {
@@ -3237,7 +3237,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1110235,
           "output": {
-            "text_response": "Here is what the tree-edit agent advises:\n\n---\n\n**What the 1821 Amherst County guardianship bond establishes**\n\nThe bond records a *legal* appointment \u2014 that Ridley Stribling was made responsible for these four minors \u2014 not a biological or adoptive connection. On its own it does not tell you *how* Ridley was related to John, Mary, Elizabeth, and Thomas Watts.\n\n**The most likely scenario (but not yet proven)**\n\nThe children share the surname Watts. Ridley married Nancy Watts in November 1820, and the bond came just one year later. That timing is the classic widow-remarries-and-new-husband-is-appointed-guardian pattern: Nancy was likely a widow of a prior Mr. Watts, and Ridley was appointed guardian of her children (often to manage property they inherited from their deceased father). This makes Ridley their *stepfather* \u2014 but that has not yet been confirmed by documentary evidence.\n\n---\n\n**What to record in the tree right now**\n\n| Edge | Subtype |\n|------|---------|\n| Ridley \u2192 John Watts (ParentChild) | *none* |\n| Ridley \u2192 Mary Watts (ParentChild) | *none* |\n| Ridley \u2192 Elizabeth Watts (ParentChild) | *none* |\n| Ridley \u2192 Thomas Watts (ParentChild) | *none* |\n\n**Do not assign a subtype (Biological, Step, Adoptive, etc.) yet.** The bond establishes the legal relationship only; writing \"Step\" now would assert a conclusion the evidence does not yet support. Attach the guardianship bond as the source reference on each edge.\n\nAlso record:\n- A **Couple** relationship between Ridley Stribling and Nancy Watts, sourced from the November 1820 marriage record.\n\n---\n\n**What to do next to resolve the subtype**\n\n1. Search Amherst County deed and will books ca. 1818\u20131821 for a deceased man named Watts who named these four children \u2014 this would confirm their paternity and Nancy's prior marriage.\n2. Check whether the 1821 bond itself names a deceased father (many Virginia guardianship bonds do).\n3. Look for Nancy's earlier marriage record to identify her prior husband.\n4. Compare the children's ages (from later censuses) against Nancy's age to test whether she could plausibly be their mother.\n\nOnce a record names the children's parents, the subtype question resolves cleanly and you can update the edges accordingly.",
+            "text_response": "Here is what the tree-edit agent advises:\n\n---\n\n**What the 1821 Amherst County guardianship bond establishes**\n\nThe bond records a *legal* appointment — that Ridley Stribling was made responsible for these four minors — not a biological or adoptive connection. On its own it does not tell you *how* Ridley was related to John, Mary, Elizabeth, and Thomas Watts.\n\n**The most likely scenario (but not yet proven)**\n\nThe children share the surname Watts. Ridley married Nancy Watts in November 1820, and the bond came just one year later. That timing is the classic widow-remarries-and-new-husband-is-appointed-guardian pattern: Nancy was likely a widow of a prior Mr. Watts, and Ridley was appointed guardian of her children (often to manage property they inherited from their deceased father). This makes Ridley their *stepfather* — but that has not yet been confirmed by documentary evidence.\n\n---\n\n**What to record in the tree right now**\n\n| Edge | Subtype |\n|------|---------|\n| Ridley → John Watts (ParentChild) | *none* |\n| Ridley → Mary Watts (ParentChild) | *none* |\n| Ridley → Elizabeth Watts (ParentChild) | *none* |\n| Ridley → Thomas Watts (ParentChild) | *none* |\n\n**Do not assign a subtype (Biological, Step, Adoptive, etc.) yet.** The bond establishes the legal relationship only; writing \"Step\" now would assert a conclusion the evidence does not yet support. Attach the guardianship bond as the source reference on each edge.\n\nAlso record:\n- A **Couple** relationship between Ridley Stribling and Nancy Watts, sourced from the November 1820 marriage record.\n\n---\n\n**What to do next to resolve the subtype**\n\n1. Search Amherst County deed and will books ca. 1818–1821 for a deceased man named Watts who named these four children — this would confirm their paternity and Nancy's prior marriage.\n2. Check whether the 1821 bond itself names a deceased father (many Virginia guardianship bonds do).\n3. Look for Nancy's earlier marriage record to identify her prior husband.\n4. Compare the children's ages (from later censuses) against Nancy's age to test whether she could plausibly be their mother.\n\nOnce a record names the children's parents, the subtype question resolves cleanly and you can update the edges accordingly.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -3255,7 +3255,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "The guardianship bond gives Ridley a legal relationship to these four children, but it does not by itself tell us the *type* of that relationship. Let me work through what the record and its context actually establish.\n\n**What the bond states**\n\nA guardianship bond records a legal appointment \u2014 that Ridley Stribling was made responsible for these minors' welfare and/or property. It states a legal bond, not a biological or adoptive one.\n\n**What the surrounding facts suggest**\n\nThe children share the surname Watts. Ridley married Nancy Watts in November 1820, and the bond is dated 1821 \u2014 one year after that marriage. The timing is the classic pattern for a stepfather scenario: a widow with children remarries, and her new husband is appointed guardian over the children (often to manage property they inherited from their deceased father, whose estate required a court-appointed steward).\n\nUnder Appendix B's guardianship-shortly-after-remarriage reasoning, the step reading leads here \u2014 it explains the bond's timing, and the surname correspondence is exactly what you expect when a man marries a woman whose children carry her prior husband's name. The uncle-by-marriage reading (these are her brother's orphans) is possible if \"Watts\" is Nancy's maiden name rather than a married name, but a marriage just one year before the bond makes the widow-and-stepfather reading the stronger lead.\n\n**What remains unresolved**\n\nThe bond alone does not confirm:\n\n- Whether Nancy Watts was a widow with these children by a prior husband, or whether \"Watts\" was her maiden name and these are collateral kin\n- Whether Ridley's role was over the children's *persons* or only their *property* (a guardianship could be granted even to a child's own parent for estate management)\n- Whether any of the four are biologically Nancy's at all\n\n**What subtype to record**\n\nRecord **no subtype**. The bond establishes a legal relationship between Ridley and each child; it does not state a biological, adoptive, or step connection. The step reading leads as a working hypothesis, but it has not been tested against the children's father's estate records, Nancy's earlier marriage record, or any document naming the children's parents. Writing `Step` onto the edge now would assert a conclusion the evidence does not yet support.\n\n**What to record**\n\n- Four ParentChild edges, Ridley as parent, each Watts child as child\n- No `characterType` / subtype on any of them\n- The guardianship bond as the source-ref on each edge\n- The 1820 Ridley\u2013Nancy marriage as a Couple relationship with the marriage record as its source\n\n**What to investigate next to resolve the subtype**\n\n1. Search Amherst County, Virginia deed and will books circa 1818\u20131821 for a deceased man named Watts who named these four children \u2014 that record would confirm paternity and establish Nancy as their mother (and as his widow)\n2. Look for Nancy's earlier marriage record to identify a prior husband surnamed Watts\n3. Check whether the 1821 bond specifies guardianship *of the estate* of a named deceased father \u2014 many Virginia bonds name the decedent explicitly\n4. Compare ages of the four children (if listed in the bond or in later census years) against Ridley and Nancy's ages to test whether Nancy could plausibly be their mother\n\nOnce a record names these children's parents, the subtype question resolves cleanly. Until then, the edges should stand without one.\n\n---\n\nThe family tree will show Ridley Stribling connected as a guardian/parent figure to John, Mary, Elizabeth, and Thomas Watts, but without labeling that connection as biological, adoptive, or step \u2014 because the 1821 guardianship bond establishes the legal bond only, and the fuller picture of how these children were related to him and his new wife Nancy still needs to be traced through estate and marriage records from that period.\n\nThe logical next step is to search Amherst County, Virginia will and deed books from around 1818 to 1821 for a deceased man named Watts who named these four children, which would likely confirm Nancy's prior marriage and settle what kind of parent Ridley was to them."
+                "text": "The guardianship bond gives Ridley a legal relationship to these four children, but it does not by itself tell us the *type* of that relationship. Let me work through what the record and its context actually establish.\n\n**What the bond states**\n\nA guardianship bond records a legal appointment — that Ridley Stribling was made responsible for these minors' welfare and/or property. It states a legal bond, not a biological or adoptive one.\n\n**What the surrounding facts suggest**\n\nThe children share the surname Watts. Ridley married Nancy Watts in November 1820, and the bond is dated 1821 — one year after that marriage. The timing is the classic pattern for a stepfather scenario: a widow with children remarries, and her new husband is appointed guardian over the children (often to manage property they inherited from their deceased father, whose estate required a court-appointed steward).\n\nUnder Appendix B's guardianship-shortly-after-remarriage reasoning, the step reading leads here — it explains the bond's timing, and the surname correspondence is exactly what you expect when a man marries a woman whose children carry her prior husband's name. The uncle-by-marriage reading (these are her brother's orphans) is possible if \"Watts\" is Nancy's maiden name rather than a married name, but a marriage just one year before the bond makes the widow-and-stepfather reading the stronger lead.\n\n**What remains unresolved**\n\nThe bond alone does not confirm:\n\n- Whether Nancy Watts was a widow with these children by a prior husband, or whether \"Watts\" was her maiden name and these are collateral kin\n- Whether Ridley's role was over the children's *persons* or only their *property* (a guardianship could be granted even to a child's own parent for estate management)\n- Whether any of the four are biologically Nancy's at all\n\n**What subtype to record**\n\nRecord **no subtype**. The bond establishes a legal relationship between Ridley and each child; it does not state a biological, adoptive, or step connection. The step reading leads as a working hypothesis, but it has not been tested against the children's father's estate records, Nancy's earlier marriage record, or any document naming the children's parents. Writing `Step` onto the edge now would assert a conclusion the evidence does not yet support.\n\n**What to record**\n\n- Four ParentChild edges, Ridley as parent, each Watts child as child\n- No `characterType` / subtype on any of them\n- The guardianship bond as the source-ref on each edge\n- The 1820 Ridley–Nancy marriage as a Couple relationship with the marriage record as its source\n\n**What to investigate next to resolve the subtype**\n\n1. Search Amherst County, Virginia deed and will books circa 1818–1821 for a deceased man named Watts who named these four children — that record would confirm paternity and establish Nancy as their mother (and as his widow)\n2. Look for Nancy's earlier marriage record to identify a prior husband surnamed Watts\n3. Check whether the 1821 bond specifies guardianship *of the estate* of a named deceased father — many Virginia bonds name the decedent explicitly\n4. Compare ages of the four children (if listed in the bond or in later census years) against Ridley and Nancy's ages to test whether Nancy could plausibly be their mother\n\nOnce a record names these children's parents, the subtype question resolves cleanly. Until then, the edges should stand without one.\n\n---\n\nThe family tree will show Ridley Stribling connected as a guardian/parent figure to John, Mary, Elizabeth, and Thomas Watts, but without labeling that connection as biological, adoptive, or step — because the 1821 guardianship bond establishes the legal bond only, and the fuller picture of how these children were related to him and his new wife Nancy still needs to be traced through estate and marriage records from that period.\n\nThe logical next step is to search Amherst County, Virginia will and deed books from around 1818 to 1821 for a deceased man named Watts who named these four children, which would likely confirm Nancy's prior marriage and settle what kind of parent Ridley was to them."
               }
             ]
           },
@@ -3503,7 +3503,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that the 1880 census record has been found and logged (log_006) but not yet extracted. The response accurately states that no source entry (src_), assertions, or tree source description (S) exist for this record. Claude's core claim\u2014that extraction must precede tree-edit\u2014is factually correct per the project's documented workflow. The response contains no fabricated material and accurately reflects the before-state."
+            "rationale": "Claude correctly identified that the 1880 census record has been found and logged (log_006) but not yet extracted. The response accurately states that no source entry (src_), assertions, or tree source description (S) exist for this record. Claude's core claim—that extraction must precede tree-edit—is factually correct per the project's documented workflow. The response contains no fabricated material and accurately reflects the before-state."
           },
           {
             "source": "base",
@@ -3515,7 +3515,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tree_edit, tree_correct, or merge_tree_persons, as required by the negative test. Zero tool calls is the correct behavior here\u2014N/A."
+            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tree_edit, tree_correct, or merge_tree_persons, as required by the negative test. Zero tool calls is the correct behavior here—N/A."
           }
         ],
         "review_dimensions": [
@@ -3523,7 +3523,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that the 1880 census record has been found and logged (log_006) but not yet extracted. The response accurately states that no source entry (src_), assertions, or tree source description (S) exist for this record. Claude's core claim\u2014that extraction must precede tree-edit\u2014is factually correct per the project's documented workflow. The response contains no fabricated material and accurately reflects the before-state."
+            "rationale": "Claude correctly identified that the 1880 census record has been found and logged (log_006) but not yet extracted. The response accurately states that no source entry (src_), assertions, or tree source description (S) exist for this record. Claude's core claim—that extraction must precede tree-edit—is factually correct per the project's documented workflow. The response contains no fabricated material and accurately reflects the before-state."
           },
           {
             "source": "base",
@@ -3535,7 +3535,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tree_edit, tree_correct, or merge_tree_persons, as required by the negative test. Zero tool calls is the correct behavior here\u2014N/A."
+            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tree_edit, tree_correct, or merge_tree_persons, as required by the negative test. Zero tool calls is the correct behavior here—N/A."
           }
         ]
       },
@@ -3596,7 +3596,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1530406,
           "output": {
-            "text_response": "The tree-edit agent looked into this and found that **log_006 is flagged as \"Record LOCATED but NOT yet extracted \u2014 facts pending record-extraction.\"** That means the 1880 census has been found and logged, but it hasn't been through the extraction pipeline yet \u2014 there's no formal source entry (`src_`), no assertions, and no source backing in the tree for it.\n\nAdding the facts directly to the tree right now would leave them floating without a traceable source, which would undermine research integrity. The correct next step is:\n\n**Use record-extraction on log_006 (plan item pli_007)** to formally extract the 1880 census. That process will:\n1. Create the source entry in `research.json`\n2. Pull out atomic assertions (Residence, Birth, Occupation) with GPS classifications\n3. Materialize those facts onto Patrick Flynn (I1) in the tree with full source backing\n\nOnce extraction is complete, the Residence 1880 in Schuylkill County, Birth ~1845 in Ireland, and Occupation as coal miner will all appear on his profile with proper sourcing. Would you like to proceed with record extraction now?",
+            "text_response": "The tree-edit agent looked into this and found that **log_006 is flagged as \"Record LOCATED but NOT yet extracted — facts pending record-extraction.\"** That means the 1880 census has been found and logged, but it hasn't been through the extraction pipeline yet — there's no formal source entry (`src_`), no assertions, and no source backing in the tree for it.\n\nAdding the facts directly to the tree right now would leave them floating without a traceable source, which would undermine research integrity. The correct next step is:\n\n**Use record-extraction on log_006 (plan item pli_007)** to formally extract the 1880 census. That process will:\n1. Create the source entry in `research.json`\n2. Pull out atomic assertions (Residence, Birth, Occupation) with GPS classifications\n3. Materialize those facts onto Patrick Flynn (I1) in the tree with full source backing\n\nOnce extraction is complete, the Residence 1880 in Schuylkill County, Birth ~1845 in Ireland, and Occupation as coal miner will all appear on his profile with proper sourcing. Would you like to proceed with record extraction now?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -3606,7 +3606,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Add census facts to tree for Patrick Flynn (I1)",
-                  "prompt": "I just found the 1880 census for Patrick Flynn (I1) \u2014 he is head of household in Schuylkill County, Pennsylvania, age about 35, born about 1845 in Ireland, occupation coal miner. It is already logged as log_006. Add those facts to the tree now: a Residence 1880 in Schuylkill County, a Birth about 1845 in Ireland, and an Occupation coal miner.\n\nprojectPath: <workspace>",
+                  "prompt": "I just found the 1880 census for Patrick Flynn (I1) — he is head of household in Schuylkill County, Pennsylvania, age about 35, born about 1845 in Ireland, occupation coal miner. It is already logged as log_006. Add those facts to the tree now: a Residence 1880 in Schuylkill County, a Birth about 1845 in Ireland, and an Occupation coal miner.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -3628,7 +3628,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "The log entry log_006 explicitly notes: \"Record LOCATED but NOT yet extracted \u2014 facts pending record-extraction.\" The 1880 census for Patrick Flynn has been found and logged, but it has not been extracted \u2014 there is no `src_` entry in `research.json` pointing to it, no assertions for it, and no `S` entry in `tree.gedcomx.json`. The tree carries no source description for this record.\n\nThis is precisely the hand-back condition described in the instructions: a record that is found or logged but not yet extracted belongs to record-extraction, not tree-edit. Creating its source with `add_source` to make room for its facts would be bypassing the extraction pipeline.\n\nHand-back: record-extraction \u2014 extract the 1880 census (log_006, plan item pli_007) for Patrick Flynn into assertions and a tree source entry, then materialize the Residence, Birth, and Occupation facts onto I1.\n\n---\n\nThe 1880 census record has been found and logged, but it has not gone through the extraction step yet. That step creates the formal source entry, pulls out the individual facts as assertions, and links everything together properly \u2014 without it, any facts added directly to the tree would be floating without a traceable source, which undermines the integrity of the research record.\n\nOnce the record is extracted and its facts are formally linked to Patrick Flynn's profile, the Residence, Birth, and Occupation details will appear on his tree entry with full source backing."
+                "text": "The log entry log_006 explicitly notes: \"Record LOCATED but NOT yet extracted — facts pending record-extraction.\" The 1880 census for Patrick Flynn has been found and logged, but it has not been extracted — there is no `src_` entry in `research.json` pointing to it, no assertions for it, and no `S` entry in `tree.gedcomx.json`. The tree carries no source description for this record.\n\nThis is precisely the hand-back condition described in the instructions: a record that is found or logged but not yet extracted belongs to record-extraction, not tree-edit. Creating its source with `add_source` to make room for its facts would be bypassing the extraction pipeline.\n\nHand-back: record-extraction — extract the 1880 census (log_006, plan item pli_007) for Patrick Flynn into assertions and a tree source entry, then materialize the Residence, Birth, and Occupation facts onto I1.\n\n---\n\nThe 1880 census record has been found and logged, but it has not gone through the extraction step yet. That step creates the formal source entry, pulls out the individual facts as assertions, and links everything together properly — without it, any facts added directly to the tree would be floating without a traceable source, which undermines the integrity of the research record.\n\nOnce the record is extracted and its facts are formally linked to Patrick Flynn's profile, the Residence, Birth, and Occupation details will appear on his tree entry with full source backing."
               }
             ]
           },
@@ -3644,7 +3644,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -3710,7 +3710,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3746,7 +3746,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3764,13 +3764,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -3806,7 +3806,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the 1880 census record has been found and logged (log_006) but not yet extracted. The response accurately states that no source entry (src_), assertions, or tree source description (S) exist for this record. Claude's core claim\u2014that extraction must precede tree-edit\u2014is factually correct per the project's documented workflow. The response contains no fabricated material and accurately reflects the before-state."
+                "rationale": "Claude correctly identified that the 1880 census record has been found and logged (log_006) but not yet extracted. The response accurately states that no source entry (src_), assertions, or tree source description (S) exist for this record. Claude's core claim—that extraction must precede tree-edit—is factually correct per the project's documented workflow. The response contains no fabricated material and accurately reflects the before-state."
               },
               {
                 "source": "base",
@@ -3818,7 +3818,7 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tree_edit, tree_correct, or merge_tree_persons, as required by the negative test. Zero tool calls is the correct behavior here\u2014N/A."
+                "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tree_edit, tree_correct, or merge_tree_persons, as required by the negative test. Zero tool calls is the correct behavior here—N/A."
               }
             ],
             "judge_cost_usd": 0.011578999999999999,
@@ -3885,7 +3885,7 @@
             "source": "rubric",
             "name": "Merge correctness",
             "score": 3,
-            "rationale": "Per the per-test override, the correct behavior is to consolidate data on I4 + present a coordination plan + leave I3 in place pending research.json rewrites. The skill did exactly this: (a) consolidated names and facts on I4 without dropping conflicting birth dates, (b) explicitly left I3 in tree.gedcomx.json, and (c) named the three research.json sections requiring rewrites (project.subject_person_ids, person_evidence[pe_007], timelines[t_002]) and their owning skills (init-project/proof-conclusion, person-evidence, timeline). The skill correctly recognized that tree-edit lacks ownership of research.json sections per OWNERSHIP_TABLE and presented the plan for coordinated rewrites. The override explicitly states not to mark partial because rewrites weren't done \u2014 that is the entire point of this test."
+            "rationale": "Per the per-test override, the correct behavior is to consolidate data on I4 + present a coordination plan + leave I3 in place pending research.json rewrites. The skill did exactly this: (a) consolidated names and facts on I4 without dropping conflicting birth dates, (b) explicitly left I3 in tree.gedcomx.json, and (c) named the three research.json sections requiring rewrites (project.subject_person_ids, person_evidence[pe_007], timelines[t_002]) and their owning skills (init-project/proof-conclusion, person-evidence, timeline). The skill correctly recognized that tree-edit lacks ownership of research.json sections per OWNERSHIP_TABLE and presented the plan for coordinated rewrites. The override explicitly states not to mark partial because rewrites weren't done — that is the entire point of this test."
           },
           {
             "source": "rubric",
@@ -3929,7 +3929,7 @@
             "source": "rubric",
             "name": "Merge correctness",
             "score": 3,
-            "rationale": "Per the per-test override, the correct behavior is to consolidate data on I4 + present a coordination plan + leave I3 in place pending research.json rewrites. The skill did exactly this: (a) consolidated names and facts on I4 without dropping conflicting birth dates, (b) explicitly left I3 in tree.gedcomx.json, and (c) named the three research.json sections requiring rewrites (project.subject_person_ids, person_evidence[pe_007], timelines[t_002]) and their owning skills (init-project/proof-conclusion, person-evidence, timeline). The skill correctly recognized that tree-edit lacks ownership of research.json sections per OWNERSHIP_TABLE and presented the plan for coordinated rewrites. The override explicitly states not to mark partial because rewrites weren't done \u2014 that is the entire point of this test."
+            "rationale": "Per the per-test override, the correct behavior is to consolidate data on I4 + present a coordination plan + leave I3 in place pending research.json rewrites. The skill did exactly this: (a) consolidated names and facts on I4 without dropping conflicting birth dates, (b) explicitly left I3 in tree.gedcomx.json, and (c) named the three research.json sections requiring rewrites (project.subject_person_ids, person_evidence[pe_007], timelines[t_002]) and their owning skills (init-project/proof-conclusion, person-evidence, timeline). The skill correctly recognized that tree-edit lacks ownership of research.json sections per OWNERSHIP_TABLE and presented the plan for coordinated rewrites. The override explicitly states not to mark partial because rewrites weren't done — that is the entire point of this test."
           },
           {
             "source": "rubric",
@@ -3996,7 +3996,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.23540315,
           "output": {
-            "text_response": "Here is the full account from the tree-edit subagent:\n\n---\n\n**What tree-edit executed**\n\nAdded Birth fact **F6** to **I4** (James Patrick Flynn / KWCJ-JAM7):\n- date: ~1849, place: Ireland, sourced to S5 (1880 U.S. Census, Schuylkill Co., dwelling 142\u2026)\n- `primary: false` \u2014 the baptismal-register birth (F5, ~1848, primary) remains the concluded value; ps_002 does not specify which year to drop, so **both coexist as sourced evidence**.\n\n**What was already satisfied \u2014 no action taken**\n\n- I4 already held the FamilySearch ARK (`KWCJ-JAM7`) \u2014 no update needed.\n- I4 already carried name N5 \"James Flynn\" (AlsoKnownAs) \u2014 adding I3's \"James Flynn\" again would duplicate it; no new name was added.\n- I3 was **not deleted** and will not be \u2014 research.json still points to it in three places.\n\n---\n\n**Remaining work \u2014 cross-file rewrites tree-edit cannot do**\n\nThese changes must all happen together before I3 can be safely removed:\n\n1. **`project.subject_person_ids`** \u2014 Remove `\"I3\"`; replace with `\"I4\"` if James remains a research subject, or drop it entirely. *(Owner: project coordinator / proof-conclusion)*\n\n2. **`person_evidence[pe_007]`** \u2014 Change `person_id` from `\"I3\"` \u2192 `\"I4\"`. This relinks assertion a_014 (1880 census brother relationship) to the surviving person. *(Owner: person-evidence)*\n\n3. **`timelines[t_002]`** \u2014 Change `person_ids[0]` from `\"I3\"` \u2192 `\"I4\"`. The James Flynn stub timeline now belongs to the FamilySearch person. *(Owner: timelines / research-plan)*\n\n4. **I3 deletion** \u2014 Once all three references above are repointed, call `merge_tree_persons({ projectPath, merges: [[\"I4\", \"I3\"]] })` for a single validated write that drops I3 and repoints any remaining relationships atomically. *(Owner: tree-edit, after steps 1\u20133 are complete)*\n\n---\n\n**Summary:** The tree record for James Patrick Flynn (I4) now holds both conflicting birth dates as sourced evidence. The merge is structurally complete on the tree side. The three dangling I3 references in research.json need to be repointed by their owning skills before the final deletion step can run cleanly.",
+            "text_response": "Here is the full account from the tree-edit subagent:\n\n---\n\n**What tree-edit executed**\n\nAdded Birth fact **F6** to **I4** (James Patrick Flynn / KWCJ-JAM7):\n- date: ~1849, place: Ireland, sourced to S5 (1880 U.S. Census, Schuylkill Co., dwelling 142…)\n- `primary: false` — the baptismal-register birth (F5, ~1848, primary) remains the concluded value; ps_002 does not specify which year to drop, so **both coexist as sourced evidence**.\n\n**What was already satisfied — no action taken**\n\n- I4 already held the FamilySearch ARK (`KWCJ-JAM7`) — no update needed.\n- I4 already carried name N5 \"James Flynn\" (AlsoKnownAs) — adding I3's \"James Flynn\" again would duplicate it; no new name was added.\n- I3 was **not deleted** and will not be — research.json still points to it in three places.\n\n---\n\n**Remaining work — cross-file rewrites tree-edit cannot do**\n\nThese changes must all happen together before I3 can be safely removed:\n\n1. **`project.subject_person_ids`** — Remove `\"I3\"`; replace with `\"I4\"` if James remains a research subject, or drop it entirely. *(Owner: project coordinator / proof-conclusion)*\n\n2. **`person_evidence[pe_007]`** — Change `person_id` from `\"I3\"` → `\"I4\"`. This relinks assertion a_014 (1880 census brother relationship) to the surviving person. *(Owner: person-evidence)*\n\n3. **`timelines[t_002]`** — Change `person_ids[0]` from `\"I3\"` → `\"I4\"`. The James Flynn stub timeline now belongs to the FamilySearch person. *(Owner: timelines / research-plan)*\n\n4. **I3 deletion** — Once all three references above are repointed, call `merge_tree_persons({ projectPath, merges: [[\"I4\", \"I3\"]] })` for a single validated write that drops I3 and repoints any remaining relationships atomically. *(Owner: tree-edit, after steps 1–3 are complete)*\n\n---\n\n**Summary:** The tree record for James Patrick Flynn (I4) now holds both conflicting birth dates as sourced evidence. The merge is structurally complete on the tree side. The three dangling I3 references in research.json need to be repointed by their owning skills before the final deletion step can run cleanly.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4047,7 +4047,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Merge tree persons I3 into I4",
-                  "prompt": "merge data from I3 into I4 \u2014 but only as far as tree-edit can safely go. Per proof_summary ps_002, the synthetic stub I3 (\"James Flynn\") is the same individual as the FamilySearch tree person I4 (\"James Patrick Flynn\", ark .../KWCJ-JAM7). Consolidate names + facts onto I4 (keep both conflicting birth dates \u2014 no proof specifies which to drop). Do NOT delete I3 yet \u2014 research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002, and those sections aren't owned by tree-edit. Present the I3-deletion plan + the cross-file rewrites as work the user needs to coordinate via the owning skills before the merge can finalize.\n\nprojectPath: <workspace>",
+                  "prompt": "merge data from I3 into I4 — but only as far as tree-edit can safely go. Per proof_summary ps_002, the synthetic stub I3 (\"James Flynn\") is the same individual as the FamilySearch tree person I4 (\"James Patrick Flynn\", ark .../KWCJ-JAM7). Consolidate names + facts onto I4 (keep both conflicting birth dates — no proof specifies which to drop). Do NOT delete I3 yet — research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002, and those sections aren't owned by tree-edit. Present the I3-deletion plan + the cross-file rewrites as work the user needs to coordinate via the owning skills before the merge can finalize.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -4078,7 +4078,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "The write is confirmed. Here is the full account.\n\n**What tree-edit executed**\n\nAdded Birth fact F6 to I4 (James Patrick Flynn / KWCJ-JAM7):\n- date: ~1849, place: Ireland, sourced to S5, page: \"1880 U.S. Census, Schuylkill Co., dwelling 142 \u2026\"\n- `primary: false` \u2014 the baptismal-register birth (F5, ~1848, primary) remains the concluded value; ps_002 does not specify which year to drop, so both coexist as sourced evidence.\n\n**What was already satisfied \u2014 no action taken**\n\n- I4 already held the FamilySearch ARK (`KWCJ-JAM7`) \u2014 no update needed.\n- I4 already carried name N5 \"James Flynn\" (AlsoKnownAs) \u2014 adding I3's N3 \"James Flynn\" BirthName again would duplicate it. The existing N5 already covers the census-derived short name; no new name was added.\n- I3 was not deleted and will not be \u2014 research.json still points to it in three places.\n\n**Remaining work \u2014 cross-file rewrites tree-edit cannot do**\n\nThe following changes require the owning skills to coordinate before the merge can finalize. They must all happen together or I3 will become a dangling reference:\n\n1. **proof-conclusion / project coordinator** \u2014 `research.json` \u2192 `project.subject_person_ids`: remove `\"I3\"`. If James is a research subject in his own right, replace with `\"I4\"` (which now carries the FamilySearch ID); if he was only tracked as a stub pending this merge, simply drop the entry.\n\n2. **person-evidence** \u2014 `research.json` \u2192 `person_evidence[pe_007]`: change `person_id` from `\"I3\"` to `\"I4\"`. Assertion a_014 (1880 census brother relationship) is now linked to the surviving person.\n\n3. **timelines** \u2014 `research.json` \u2192 `timelines[t_002]`: change `person_ids[0]` from `\"I3\"` to `\"I4\"`. The James Flynn stub timeline now belongs to the FamilySearch person.\n\n4. **person deletion** \u2014 once all three references above are repointed, I3 can be removed from `tree.gedcomx.json`. Tree-edit's `merge_tree_persons` tool does this atomically and also handles any relationship repointing \u2014 so if you prefer to run the full merge tool after the research.json edits are complete, that is the cleanest path: call `merge_tree_persons({ projectPath, merges: [[\"I4\", \"I3\"]] })` at that point and it will drop I3 and repoint everything in a single validated write.\n\n---\n\nA sourced birth fact from the 1880 census has been added to James Patrick Flynn's tree record, sitting alongside the baptismal register birth already there \u2014 both dates are preserved because no ruling yet specifies which is correct. The tree itself is now as complete as it can be for this merge step. Before James's old stub entry can be removed, three cross-file references pointing to it in the research notes need to be updated by whoever manages those sections, and then the deletion can be finalized in one clean operation."
+                "text": "The write is confirmed. Here is the full account.\n\n**What tree-edit executed**\n\nAdded Birth fact F6 to I4 (James Patrick Flynn / KWCJ-JAM7):\n- date: ~1849, place: Ireland, sourced to S5, page: \"1880 U.S. Census, Schuylkill Co., dwelling 142 …\"\n- `primary: false` — the baptismal-register birth (F5, ~1848, primary) remains the concluded value; ps_002 does not specify which year to drop, so both coexist as sourced evidence.\n\n**What was already satisfied — no action taken**\n\n- I4 already held the FamilySearch ARK (`KWCJ-JAM7`) — no update needed.\n- I4 already carried name N5 \"James Flynn\" (AlsoKnownAs) — adding I3's N3 \"James Flynn\" BirthName again would duplicate it. The existing N5 already covers the census-derived short name; no new name was added.\n- I3 was not deleted and will not be — research.json still points to it in three places.\n\n**Remaining work — cross-file rewrites tree-edit cannot do**\n\nThe following changes require the owning skills to coordinate before the merge can finalize. They must all happen together or I3 will become a dangling reference:\n\n1. **proof-conclusion / project coordinator** — `research.json` → `project.subject_person_ids`: remove `\"I3\"`. If James is a research subject in his own right, replace with `\"I4\"` (which now carries the FamilySearch ID); if he was only tracked as a stub pending this merge, simply drop the entry.\n\n2. **person-evidence** — `research.json` → `person_evidence[pe_007]`: change `person_id` from `\"I3\"` to `\"I4\"`. Assertion a_014 (1880 census brother relationship) is now linked to the surviving person.\n\n3. **timelines** — `research.json` → `timelines[t_002]`: change `person_ids[0]` from `\"I3\"` to `\"I4\"`. The James Flynn stub timeline now belongs to the FamilySearch person.\n\n4. **person deletion** — once all three references above are repointed, I3 can be removed from `tree.gedcomx.json`. Tree-edit's `merge_tree_persons` tool does this atomically and also handles any relationship repointing — so if you prefer to run the full merge tool after the research.json edits are complete, that is the cleanest path: call `merge_tree_persons({ projectPath, merges: [[\"I4\", \"I3\"]] })` at that point and it will drop I3 and repoint everything in a single validated write.\n\n---\n\nA sourced birth fact from the 1880 census has been added to James Patrick Flynn's tree record, sitting alongside the baptismal register birth already there — both dates are preserved because no ruling yet specifies which is correct. The tree itself is now as complete as it can be for this merge step. Before James's old stub entry can be removed, three cross-file references pointing to it in the research notes need to be updated by whoever manages those sections, and then the deletion can be finalized in one clean operation."
               }
             ],
             "file_changes": {
@@ -4155,7 +4155,7 @@
               {
                 "kind": "prose_observation",
                 "check": "report_unbacked_validation_claim",
-                "observation": "the response contains '**I3 deletion** \u2014 Once all three references above are repointed, call `merge_tree_persons({ projectPath, merges: [[\"I4\", \"I3\"]] })` for a single valid' \u2014 a validation/persistence claim in the same sentence; no validate_research_schema call appears in the tool ledger"
+                "observation": "the response contains '**I3 deletion** — Once all three references above are repointed, call `merge_tree_persons({ projectPath, merges: [[\"I4\", \"I3\"]] })` for a single valid' — a validation/persistence claim in the same sentence; no validate_research_schema call appears in the tool ledger"
               }
             ]
           },
@@ -4363,7 +4363,7 @@
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": 3,
-                "rationale": "Per the per-test override, the correct behavior is to consolidate data on I4 + present a coordination plan + leave I3 in place pending research.json rewrites. The skill did exactly this: (a) consolidated names and facts on I4 without dropping conflicting birth dates, (b) explicitly left I3 in tree.gedcomx.json, and (c) named the three research.json sections requiring rewrites (project.subject_person_ids, person_evidence[pe_007], timelines[t_002]) and their owning skills (init-project/proof-conclusion, person-evidence, timeline). The skill correctly recognized that tree-edit lacks ownership of research.json sections per OWNERSHIP_TABLE and presented the plan for coordinated rewrites. The override explicitly states not to mark partial because rewrites weren't done \u2014 that is the entire point of this test."
+                "rationale": "Per the per-test override, the correct behavior is to consolidate data on I4 + present a coordination plan + leave I3 in place pending research.json rewrites. The skill did exactly this: (a) consolidated names and facts on I4 without dropping conflicting birth dates, (b) explicitly left I3 in tree.gedcomx.json, and (c) named the three research.json sections requiring rewrites (project.subject_person_ids, person_evidence[pe_007], timelines[t_002]) and their owning skills (init-project/proof-conclusion, person-evidence, timeline). The skill correctly recognized that tree-edit lacks ownership of research.json sections per OWNERSHIP_TABLE and presented the plan for coordinated rewrites. The override explicitly states not to mark partial because rewrites weren't done — that is the entire point of this test."
               },
               {
                 "source": "rubric",
@@ -4405,7 +4405,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly identifies the match details (name, lifespan 1845\u20131908) and accurately advises that identity must be confirmed via proof-conclusion before merging. No fabricated material or unsupported claims are present. The tool response was properly interpreted and presented."
+            "rationale": "Claude correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly identifies the match details (name, lifespan 1845–1908) and accurately advises that identity must be confirmed via proof-conclusion before merging. No fabricated material or unsupported claims are present. The tool response was properly interpreted and presented."
           },
           {
             "source": "base",
@@ -4449,7 +4449,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly identifies the match details (name, lifespan 1845\u20131908) and accurately advises that identity must be confirmed via proof-conclusion before merging. No fabricated material or unsupported claims are present. The tool response was properly interpreted and presented."
+            "rationale": "Claude correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly identifies the match details (name, lifespan 1845–1908) and accurately advises that identity must be confirmed via proof-conclusion before merging. No fabricated material or unsupported claims are present. The tool response was properly interpreted and presented."
           },
           {
             "source": "base",
@@ -4546,7 +4546,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.131963,
           "output": {
-            "text_response": "Here are the results of the duplicate check for **Patrick Flynn (LZNY-BRF)**:\n\n---\n\n### One Possible Duplicate Found\n\n| Field | Value |\n|---|---|\n| FamilySearch ID | LZNY-QRS |\n| Name | Patrick Flynn |\n| Life span | 1845 \u2013 1908 |\n| Confidence | 3 / 5 (score 0.71) |\n| Status | Pending |\n\n---\n\n### Assessment\n\nThe match is a strong candidate. FamilySearch profile **LZNY-QRS** carries the same name, birth year (~1845), and death year (1908) as your local Patrick Flynn. Your tree already records Patrick's death as 12 March 1908 in Schuylkill County, Pennsylvania, and his birth as circa 1845 in Ireland \u2014 facts that align precisely with the matched profile's lifespan.\n\n---\n\n### Before Merging\n\nThe overlap in name, birth year, and death year is suggestive, but not yet conclusive. Two Patrick Flynns born circa 1845 in Ireland and dying in Pennsylvania in 1908 is plausible without corroborating details (parents, spouse, residence).\n\n**Recommended next steps:**\n1. Run a **proof-conclusion** to confirm identity at \"probable\" or higher.\n2. Once identity is confirmed, the tree-edit agent can execute the merge to collapse the duplicate profile.\n\nWould you like to proceed with a proof-conclusion to assess whether LZNY-BRF and LZNY-QRS are the same person?",
+            "text_response": "Here are the results of the duplicate check for **Patrick Flynn (LZNY-BRF)**:\n\n---\n\n### One Possible Duplicate Found\n\n| Field | Value |\n|---|---|\n| FamilySearch ID | LZNY-QRS |\n| Name | Patrick Flynn |\n| Life span | 1845 – 1908 |\n| Confidence | 3 / 5 (score 0.71) |\n| Status | Pending |\n\n---\n\n### Assessment\n\nThe match is a strong candidate. FamilySearch profile **LZNY-QRS** carries the same name, birth year (~1845), and death year (1908) as your local Patrick Flynn. Your tree already records Patrick's death as 12 March 1908 in Schuylkill County, Pennsylvania, and his birth as circa 1845 in Ireland — facts that align precisely with the matched profile's lifespan.\n\n---\n\n### Before Merging\n\nThe overlap in name, birth year, and death year is suggestive, but not yet conclusive. Two Patrick Flynns born circa 1845 in Ireland and dying in Pennsylvania in 1908 is plausible without corroborating details (parents, spouse, residence).\n\n**Recommended next steps:**\n1. Run a **proof-conclusion** to confirm identity at \"probable\" or higher.\n2. Once identity is confirmed, the tree-edit agent can execute the merge to collapse the duplicate profile.\n\nWould you like to proceed with a proof-conclusion to assess whether LZNY-BRF and LZNY-QRS are the same person?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4588,7 +4588,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "Here are the results of the duplicate check for Patrick Flynn (LZNY-BRF).\n\n**One pending possible-duplicate match was found:**\n\n| Field | Value |\n|---|---|\n| FamilySearch ID | LZNY-QRS |\n| Name | Patrick Flynn |\n| Life span | 1845 \u2013 1908 |\n| Confidence | 3 / 5 (score 0.71) |\n| Status | Pending |\n\n**Assessment against your local tree person (I1 \u2014 Patrick Flynn):**\n\nThe match is a strong candidate. The FamilySearch profile for LZNY-QRS carries the same name, birth year (~1845), and death year (1908) as your local Patrick Flynn. Your tree already records Patrick's death as 12 March 1908 in Schuylkill County, Pennsylvania (death cert. no. 4521), and his birth as circa 1845 in Ireland. Those facts align precisely with the matched profile's lifespan.\n\n**What you should do before merging:**\n\nA merge here would collapse your local person I1 into LZNY-BRF (the FamilySearch ID already in your tree). However, LZNY-QRS is the matched duplicate \u2014 so the question is whether LZNY-BRF and LZNY-QRS are the same person on FamilySearch, and whether LZNY-BRF is already linked to I1 in this project.\n\nBefore proceeding, a proof conclusion should confirm identity at \"probable\" or higher. The overlap in name, birth year, and death year is suggestive but not yet conclusive \u2014 two Patrick Flynns born circa 1845 in Ireland and dying in Pennsylvania in 1908 is plausible without corroborating details (parents, spouse, residence). Once proof-conclusion confirms identity, this agent can execute the merge.\n\n---\n\nOne possible duplicate person has been flagged on FamilySearch for Patrick Flynn \u2014 another profile with the same name, born around 1845 and died in 1908, which closely matches the Patrick Flynn in your family tree.\n\nBefore the two profiles can be combined, a research conclusion needs to confirm they are definitely the same individual, after which the duplicate can be collapsed and the family tree tidied up."
+                "text": "Here are the results of the duplicate check for Patrick Flynn (LZNY-BRF).\n\n**One pending possible-duplicate match was found:**\n\n| Field | Value |\n|---|---|\n| FamilySearch ID | LZNY-QRS |\n| Name | Patrick Flynn |\n| Life span | 1845 – 1908 |\n| Confidence | 3 / 5 (score 0.71) |\n| Status | Pending |\n\n**Assessment against your local tree person (I1 — Patrick Flynn):**\n\nThe match is a strong candidate. The FamilySearch profile for LZNY-QRS carries the same name, birth year (~1845), and death year (1908) as your local Patrick Flynn. Your tree already records Patrick's death as 12 March 1908 in Schuylkill County, Pennsylvania (death cert. no. 4521), and his birth as circa 1845 in Ireland. Those facts align precisely with the matched profile's lifespan.\n\n**What you should do before merging:**\n\nA merge here would collapse your local person I1 into LZNY-BRF (the FamilySearch ID already in your tree). However, LZNY-QRS is the matched duplicate — so the question is whether LZNY-BRF and LZNY-QRS are the same person on FamilySearch, and whether LZNY-BRF is already linked to I1 in this project.\n\nBefore proceeding, a proof conclusion should confirm identity at \"probable\" or higher. The overlap in name, birth year, and death year is suggestive but not yet conclusive — two Patrick Flynns born circa 1845 in Ireland and dying in Pennsylvania in 1908 is plausible without corroborating details (parents, spouse, residence). Once proof-conclusion confirms identity, this agent can execute the merge.\n\n---\n\nOne possible duplicate person has been flagged on FamilySearch for Patrick Flynn — another profile with the same name, born around 1845 and died in 1908, which closely matches the Patrick Flynn in your family tree.\n\nBefore the two profiles can be combined, a research conclusion needs to confirm they are definitely the same individual, after which the duplicate can be collapsed and the family tree tidied up."
               }
             ]
           },
@@ -4766,7 +4766,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly identifies the match details (name, lifespan 1845\u20131908) and accurately advises that identity must be confirmed via proof-conclusion before merging. No fabricated material or unsupported claims are present. The tool response was properly interpreted and presented."
+                "rationale": "Claude correctly called person_person_matches with the FamilySearch ID LZNY-BRF and accurately reported the one pending duplicate candidate (LZNY-QRS, confidence 3, score 0.71). The response correctly identifies the match details (name, lifespan 1845–1908) and accurately advises that identity must be confirmed via proof-conclusion before merging. No fabricated material or unsupported claims are present. The tool response was properly interpreted and presented."
               },
               {
                 "source": "base",
@@ -4862,7 +4862,7 @@
             "source": "rubric",
             "name": "Edit minimality",
             "score": null,
-            "rationale": "This is a read-only query operation with no edits to any project files. The per-test context explicitly states 'Should NOT make any edits to tree.gedcomx.json or research.json \u2014 this is a read-only query, not an edit request.' No edits were made, so this dimension does not apply. N/A."
+            "rationale": "This is a read-only query operation with no edits to any project files. The per-test context explicitly states 'Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only query, not an edit request.' No edits were made, so this dimension does not apply. N/A."
           },
           {
             "source": "rubric",
@@ -4906,7 +4906,7 @@
             "source": "rubric",
             "name": "Edit minimality",
             "score": null,
-            "rationale": "This is a read-only query operation with no edits to any project files. The per-test context explicitly states 'Should NOT make any edits to tree.gedcomx.json or research.json \u2014 this is a read-only query, not an edit request.' No edits were made, so this dimension does not apply. N/A."
+            "rationale": "This is a read-only query operation with no edits to any project files. The per-test context explicitly states 'Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only query, not an edit request.' No edits were made, so this dimension does not apply. N/A."
           },
           {
             "source": "rubric",
@@ -4979,7 +4979,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1157105,
           "output": {
-            "text_response": "Here is what FamilySearch has for **Patrick Flynn (LZNY-BRF)**:\n\n---\n\n### \u2705 Accepted Match (1)\n\n| Record | Confidence | Score |\n|---|---|---|\n| **1850 United States Federal Census** | 5/5 | 0.97 |\n\nThis record is already attached to his profile.\n\n---\n\n### \u23f3 Pending Matches (2)\n\n| Record | Confidence | Score |\n|---|---|---|\n| **1860 United States Federal Census** | 3/5 | 0.72 |\n| **Pennsylvania Death Certificates, 1906\u20131967** | 2/5 | 0.58 |\n\nThese two hints are sitting in the queue awaiting a decision.\n\n---\n\n### \u274c Rejected Matches\n\nNone found.\n\n---\n\n**Summary:** Patrick Flynn has one confirmed attached record (the 1850 census) and two pending hints \u2014 the 1860 census and a Pennsylvania death certificate \u2014 that still need to be reviewed and either accepted or dismissed. The recommended next step is to examine the details of each pending hint to verify whether they genuinely document this Patrick Flynn before accepting them.",
+            "text_response": "Here is what FamilySearch has for **Patrick Flynn (LZNY-BRF)**:\n\n---\n\n### ✅ Accepted Match (1)\n\n| Record | Confidence | Score |\n|---|---|---|\n| **1850 United States Federal Census** | 5/5 | 0.97 |\n\nThis record is already attached to his profile.\n\n---\n\n### ⏳ Pending Matches (2)\n\n| Record | Confidence | Score |\n|---|---|---|\n| **1860 United States Federal Census** | 3/5 | 0.72 |\n| **Pennsylvania Death Certificates, 1906–1967** | 2/5 | 0.58 |\n\nThese two hints are sitting in the queue awaiting a decision.\n\n---\n\n### ❌ Rejected Matches\n\nNone found.\n\n---\n\n**Summary:** Patrick Flynn has one confirmed attached record (the 1850 census) and two pending hints — the 1860 census and a Pennsylvania death certificate — that still need to be reviewed and either accepted or dismissed. The recommended next step is to examine the details of each pending hint to verify whether they genuinely document this Patrick Flynn before accepting them.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5010,7 +5010,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Check records and hints for Patrick Flynn",
-                  "prompt": "Check what records are attached to this person \u2014 Patrick Flynn, FamilySearch ID LZNY-BRF. What hints does FamilySearch have for this person? Tell me which matches are accepted and which are pending.\n\nprojectPath: <workspace>",
+                  "prompt": "Check what records are attached to this person — Patrick Flynn, FamilySearch ID LZNY-BRF. What hints does FamilySearch have for this person? Tell me which matches are accepted and which are pending.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               }
@@ -5018,7 +5018,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "Here is what FamilySearch has for Patrick Flynn (LZNY-BRF):\n\n**Accepted Match (1)**\n\n- **1850 United States Federal Census** \u2014 Confidence 5/5, score 0.97. This record has been accepted and is attached to his profile.\n\n**Pending Matches (2)**\n\n- **1860 United States Federal Census** \u2014 Confidence 3/5, score 0.72. This hint is pending review.\n- **Pennsylvania Death Certificates, 1906\u20131967** \u2014 Confidence 2/5, score 0.58. This hint is also pending review.\n\n**No rejected matches** were found.\n\nIn summary, one record (the 1850 census) is already attached. Two hints \u2014 the 1860 census and a Pennsylvania death certificate \u2014 are sitting in the queue waiting for a decision on whether they belong to Patrick Flynn.\n\n---\n\nPatrick Flynn already has one historical record confirmed and linked to his profile \u2014 his appearance in the 1850 United States Federal Census. FamilySearch has also flagged two additional records as possible matches: an entry in the 1860 census and a Pennsylvania death certificate, both of which still need to be reviewed and either accepted or dismissed.\n\nThe next step is to review each of those two pending hints \u2014 examining the details of the 1860 census entry and the death certificate \u2014 to determine whether they genuinely document Patrick Flynn before accepting them."
+                "text": "Here is what FamilySearch has for Patrick Flynn (LZNY-BRF):\n\n**Accepted Match (1)**\n\n- **1850 United States Federal Census** — Confidence 5/5, score 0.97. This record has been accepted and is attached to his profile.\n\n**Pending Matches (2)**\n\n- **1860 United States Federal Census** — Confidence 3/5, score 0.72. This hint is pending review.\n- **Pennsylvania Death Certificates, 1906–1967** — Confidence 2/5, score 0.58. This hint is also pending review.\n\n**No rejected matches** were found.\n\nIn summary, one record (the 1850 census) is already attached. Two hints — the 1860 census and a Pennsylvania death certificate — are sitting in the queue waiting for a decision on whether they belong to Patrick Flynn.\n\n---\n\nPatrick Flynn already has one historical record confirmed and linked to his profile — his appearance in the 1850 United States Federal Census. FamilySearch has also flagged two additional records as possible matches: an entry in the 1860 census and a Pennsylvania death certificate, both of which still need to be reviewed and either accepted or dismissed.\n\nThe next step is to review each of those two pending hints — examining the details of the 1860 census entry and the death certificate — to determine whether they genuinely document Patrick Flynn before accepting them."
               }
             ]
           },
@@ -5220,7 +5220,7 @@
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": null,
-                "rationale": "This is a read-only query operation with no edits to any project files. The per-test context explicitly states 'Should NOT make any edits to tree.gedcomx.json or research.json \u2014 this is a read-only query, not an edit request.' No edits were made, so this dimension does not apply. N/A."
+                "rationale": "This is a read-only query operation with no edits to any project files. The per-test context explicitly states 'Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only query, not an edit request.' No edits were made, so this dimension does not apply. N/A."
               },
               {
                 "source": "rubric",
@@ -5266,7 +5266,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that I1 (Patrick Flynn, b. ~1845, d. 1908) and I2 (Thomas Flynn, b. ~1818) are father and son, not duplicates. The response accurately cites the genealogical evidence: relationship R1 records I2 as I1's parent, the 27-year birth gap, and proof summary ps_001 documenting Thomas as Patrick's probable father. Claude's refusal is factually sound \u2014 merging them would create a genealogical impossibility (a person being both parent and child of himself). No fabricated claims; all assertions are grounded in the project state."
+            "rationale": "Claude correctly identified that I1 (Patrick Flynn, b. ~1845, d. 1908) and I2 (Thomas Flynn, b. ~1818) are father and son, not duplicates. The response accurately cites the genealogical evidence: relationship R1 records I2 as I1's parent, the 27-year birth gap, and proof summary ps_001 documenting Thomas as Patrick's probable father. Claude's refusal is factually sound — merging them would create a genealogical impossibility (a person being both parent and child of himself). No fabricated claims; all assertions are grounded in the project state."
           },
           {
             "source": "base",
@@ -5278,7 +5278,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly refused to invoke merge_tree_persons because the precondition (a proof_summary confirming identity) was not met. This is the correct behavior per SKILL.md \u2014 N/A."
+            "rationale": "No MCP tool calls were made. Claude correctly refused to invoke merge_tree_persons because the precondition (a proof_summary confirming identity) was not met. This is the correct behavior per SKILL.md — N/A."
           },
           {
             "source": "rubric",
@@ -5290,19 +5290,19 @@
             "source": "rubric",
             "name": "Edit minimality",
             "score": 3,
-            "rationale": "No edits were performed. The skill correctly declined to modify any data, avoiding collateral changes. The refusal is surgical in its scope \u2014 it addresses only the requested merge and leaves all other project state untouched."
+            "rationale": "No edits were performed. The skill correctly declined to modify any data, avoiding collateral changes. The refusal is surgical in its scope — it addresses only the requested merge and leaves all other project state untouched."
           },
           {
             "source": "rubric",
             "name": "Merge correctness",
             "score": 3,
-            "rationale": "This is not a merge test \u2014 the skill correctly refused to execute a merge. Per the rubric, when the test is not a merge (including when a merge is refused), this dimension scores pass. Claude's refusal is the correct outcome; no merge mechanics apply."
+            "rationale": "This is not a merge test — the skill correctly refused to execute a merge. Per the rubric, when the test is not a merge (including when a merge is refused), this dimension scores pass. Claude's refusal is the correct outcome; no merge mechanics apply."
           },
           {
             "source": "rubric",
             "name": "Evidence grounding",
             "score": 3,
-            "rationale": "Claude correctly applied the evidence-grounding gate: a person merge requires a proof_summary at probable tier or higher confirming identity. ps_001 exists but documents parentage (Thomas is Patrick's father), not identity (they are the same person). Claude refused the merge on this basis and explained what threshold was missing \u2014 an identity-confirming proof conclusion. The refusal is grounded in the correct layer (conclusion/merge layer, proof-gated at probable+)."
+            "rationale": "Claude correctly applied the evidence-grounding gate: a person merge requires a proof_summary at probable tier or higher confirming identity. ps_001 exists but documents parentage (Thomas is Patrick's father), not identity (they are the same person). Claude refused the merge on this basis and explained what threshold was missing — an identity-confirming proof conclusion. The refusal is grounded in the correct layer (conclusion/merge layer, proof-gated at probable+)."
           }
         ],
         "review_dimensions": [
@@ -5310,7 +5310,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that I1 (Patrick Flynn, b. ~1845, d. 1908) and I2 (Thomas Flynn, b. ~1818) are father and son, not duplicates. The response accurately cites the genealogical evidence: relationship R1 records I2 as I1's parent, the 27-year birth gap, and proof summary ps_001 documenting Thomas as Patrick's probable father. Claude's refusal is factually sound \u2014 merging them would create a genealogical impossibility (a person being both parent and child of himself). No fabricated claims; all assertions are grounded in the project state."
+            "rationale": "Claude correctly identified that I1 (Patrick Flynn, b. ~1845, d. 1908) and I2 (Thomas Flynn, b. ~1818) are father and son, not duplicates. The response accurately cites the genealogical evidence: relationship R1 records I2 as I1's parent, the 27-year birth gap, and proof summary ps_001 documenting Thomas as Patrick's probable father. Claude's refusal is factually sound — merging them would create a genealogical impossibility (a person being both parent and child of himself). No fabricated claims; all assertions are grounded in the project state."
           },
           {
             "source": "base",
@@ -5322,7 +5322,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly refused to invoke merge_tree_persons because the precondition (a proof_summary confirming identity) was not met. This is the correct behavior per SKILL.md \u2014 N/A."
+            "rationale": "No MCP tool calls were made. Claude correctly refused to invoke merge_tree_persons because the precondition (a proof_summary confirming identity) was not met. This is the correct behavior per SKILL.md — N/A."
           },
           {
             "source": "rubric",
@@ -5334,19 +5334,19 @@
             "source": "rubric",
             "name": "Edit minimality",
             "score": 3,
-            "rationale": "No edits were performed. The skill correctly declined to modify any data, avoiding collateral changes. The refusal is surgical in its scope \u2014 it addresses only the requested merge and leaves all other project state untouched."
+            "rationale": "No edits were performed. The skill correctly declined to modify any data, avoiding collateral changes. The refusal is surgical in its scope — it addresses only the requested merge and leaves all other project state untouched."
           },
           {
             "source": "rubric",
             "name": "Merge correctness",
             "score": 3,
-            "rationale": "This is not a merge test \u2014 the skill correctly refused to execute a merge. Per the rubric, when the test is not a merge (including when a merge is refused), this dimension scores pass. Claude's refusal is the correct outcome; no merge mechanics apply."
+            "rationale": "This is not a merge test — the skill correctly refused to execute a merge. Per the rubric, when the test is not a merge (including when a merge is refused), this dimension scores pass. Claude's refusal is the correct outcome; no merge mechanics apply."
           },
           {
             "source": "rubric",
             "name": "Evidence grounding",
             "score": 3,
-            "rationale": "Claude correctly applied the evidence-grounding gate: a person merge requires a proof_summary at probable tier or higher confirming identity. ps_001 exists but documents parentage (Thomas is Patrick's father), not identity (they are the same person). Claude refused the merge on this basis and explained what threshold was missing \u2014 an identity-confirming proof conclusion. The refusal is grounded in the correct layer (conclusion/merge layer, proof-gated at probable+)."
+            "rationale": "Claude correctly applied the evidence-grounding gate: a person merge requires a proof_summary at probable tier or higher confirming identity. ps_001 exists but documents parentage (Thomas is Patrick's father), not identity (they are the same person). Claude refused the merge on this basis and explained what threshold was missing — an identity-confirming proof conclusion. The refusal is grounded in the correct layer (conclusion/merge layer, proof-gated at probable+)."
           }
         ]
       },
@@ -5407,7 +5407,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1656919,
           "output": {
-            "text_response": "The tree-edit subagent declined to execute the merge and here is its full response:\n\n---\n\n**I2 (Thomas Flynn) and I1 (Patrick Flynn) are not the same person \u2014 they are father and son.**\n\nLooking at the tree:\n- **I1 = Patrick Flynn**, born ~1845, died 1908 \u2014 the research subject\n- **I2 = Thomas Flynn**, born ~1818 \u2014 the *father* of I1 (via relationships R1, R2, R3)\n\nThe merge cannot proceed because:\n\n1. **Biographical impossibility**: The two are separated by ~27 years in birth date.\n2. **Self-referential relationship**: Relationship R1 records I2 as I1's parent. Merging them would make the surviving person both parent and child of himself \u2014 the merge engine's plausibility gate would refuse this.\n3. **Contradicts existing proof**: Proof summary `ps_001` documents Thomas Flynn as Patrick Flynn's probable *father*, not a duplicate of him. The entire project was designed to establish this parentage relationship.\n4. **Evidence on record**: The 1850 census, 1860 census, and Patrick's death certificate are all sourced to R1 linking the two as parent and child.\n\n**No change was made to the tree.**\n\n---\n\nIf there is a genuine duplicate somewhere \u2014 for example, two separate tree entries for Thomas Flynn, or two entries for Patrick Flynn \u2014 the agent is ready to execute that merge once the correct pair is identified.",
+            "text_response": "The tree-edit subagent declined to execute the merge and here is its full response:\n\n---\n\n**I2 (Thomas Flynn) and I1 (Patrick Flynn) are not the same person — they are father and son.**\n\nLooking at the tree:\n- **I1 = Patrick Flynn**, born ~1845, died 1908 — the research subject\n- **I2 = Thomas Flynn**, born ~1818 — the *father* of I1 (via relationships R1, R2, R3)\n\nThe merge cannot proceed because:\n\n1. **Biographical impossibility**: The two are separated by ~27 years in birth date.\n2. **Self-referential relationship**: Relationship R1 records I2 as I1's parent. Merging them would make the surviving person both parent and child of himself — the merge engine's plausibility gate would refuse this.\n3. **Contradicts existing proof**: Proof summary `ps_001` documents Thomas Flynn as Patrick Flynn's probable *father*, not a duplicate of him. The entire project was designed to establish this parentage relationship.\n4. **Evidence on record**: The 1850 census, 1860 census, and Patrick's death certificate are all sourced to R1 linking the two as parent and child.\n\n**No change was made to the tree.**\n\n---\n\nIf there is a genuine duplicate somewhere — for example, two separate tree entries for Thomas Flynn, or two entries for Patrick Flynn — the agent is ready to execute that merge once the correct pair is identified.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -5417,7 +5417,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Merge tree persons I2 into I1",
-                  "prompt": "They are the same person \u2014 merge I2 (Thomas Flynn) into I1 (Patrick Flynn). I have already confirmed it, so no proof is needed: run the merge now and report the folded counts.\n\nprojectPath: <workspace>",
+                  "prompt": "They are the same person — merge I2 (Thomas Flynn) into I1 (Patrick Flynn). I have already confirmed it, so no proof is needed: run the merge now and report the folded counts.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -5439,7 +5439,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "I can see the current state clearly. I2 is Thomas Flynn (the father) and I1 is Patrick Flynn (the subject). The user is requesting a merge of I2 into I1 \u2014 but these are two different people: a father and his son. Before I proceed, I need to flag this.\n\nLooking at the tree:\n- I1 = Patrick Flynn, born ~1845, died 1908 \u2014 the research subject\n- I2 = Thomas Flynn, born ~1818 \u2014 the father of I1 (via relationship R1, R2, R3)\n\nThese are **not** the same person. Merging I2 into I1 would destroy the parent-child relationship (R1 has I2 as parent and I1 as child \u2014 the survivor cannot be both parent and child of himself), collapse two biographically distinct people (27 years apart in birth date), and erase the research project's own objective, which is to identify Patrick Flynn's parents.\n\nThe merge tool's genealogical-plausibility engine would also refuse this: it gates against a person being both parent and child of themselves.\n\nThere is no proof-conclusion confirming these two are the same individual \u2014 in fact, the proof summary `ps_001` exists precisely to document that Thomas Flynn is Patrick Flynn's **father**, not a duplicate of him. The user's statement that they are \"the same person\" is genealogically impossible given the evidence in this project.\n\nI cannot execute this merge. Here is why:\n\nThe two persons are not duplicates \u2014 they are a **father and son**. I1 (Patrick Flynn, born ~1845) and I2 (Thomas Flynn, born ~1818) are separated by roughly 27 years in birth date. Relationship R1 in the tree explicitly records I2 as I1's parent, sourced by the 1850 census, 1860 census, and Patrick's own death certificate. Proof summary `ps_001` exists to document Thomas as Patrick's probable father.\n\nMerging I2 into I1 would make the surviving person both parent and child of himself \u2014 the merge engine's plausibility gate would refuse it, and rightly so. Even setting that aside, collapsing them would destroy the research project's core finding and the subject-person record that the project is built around.\n\nIf there is a genuine duplicate somewhere \u2014 for example, two tree entries for Thomas Flynn, or two entries for Patrick Flynn \u2014 I am glad to execute that merge once you identify the correct pair. Otherwise, this merge cannot proceed.\n\n---\n\nNo change was made to the family tree. Patrick Flynn and Thomas Flynn are recorded in the project as father and son, not as the same person, and the research was specifically designed to establish that parentage relationship. The next step would be to continue the probate search and additional census lookups that are already planned, to strengthen the evidence linking Patrick to his father Thomas."
+                "text": "I can see the current state clearly. I2 is Thomas Flynn (the father) and I1 is Patrick Flynn (the subject). The user is requesting a merge of I2 into I1 — but these are two different people: a father and his son. Before I proceed, I need to flag this.\n\nLooking at the tree:\n- I1 = Patrick Flynn, born ~1845, died 1908 — the research subject\n- I2 = Thomas Flynn, born ~1818 — the father of I1 (via relationship R1, R2, R3)\n\nThese are **not** the same person. Merging I2 into I1 would destroy the parent-child relationship (R1 has I2 as parent and I1 as child — the survivor cannot be both parent and child of himself), collapse two biographically distinct people (27 years apart in birth date), and erase the research project's own objective, which is to identify Patrick Flynn's parents.\n\nThe merge tool's genealogical-plausibility engine would also refuse this: it gates against a person being both parent and child of themselves.\n\nThere is no proof-conclusion confirming these two are the same individual — in fact, the proof summary `ps_001` exists precisely to document that Thomas Flynn is Patrick Flynn's **father**, not a duplicate of him. The user's statement that they are \"the same person\" is genealogically impossible given the evidence in this project.\n\nI cannot execute this merge. Here is why:\n\nThe two persons are not duplicates — they are a **father and son**. I1 (Patrick Flynn, born ~1845) and I2 (Thomas Flynn, born ~1818) are separated by roughly 27 years in birth date. Relationship R1 in the tree explicitly records I2 as I1's parent, sourced by the 1850 census, 1860 census, and Patrick's own death certificate. Proof summary `ps_001` exists to document Thomas as Patrick's probable father.\n\nMerging I2 into I1 would make the surviving person both parent and child of himself — the merge engine's plausibility gate would refuse it, and rightly so. Even setting that aside, collapsing them would destroy the research project's core finding and the subject-person record that the project is built around.\n\nIf there is a genuine duplicate somewhere — for example, two tree entries for Thomas Flynn, or two entries for Patrick Flynn — I am glad to execute that merge once you identify the correct pair. Otherwise, this merge cannot proceed.\n\n---\n\nNo change was made to the family tree. Patrick Flynn and Thomas Flynn are recorded in the project as father and son, not as the same person, and the research was specifically designed to establish that parentage relationship. The next step would be to continue the probate search and additional census lookups that are already planned, to strengthen the evidence linking Patrick to his father Thomas."
               }
             ],
             "warnings": [
@@ -5624,7 +5624,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that I1 (Patrick Flynn, b. ~1845, d. 1908) and I2 (Thomas Flynn, b. ~1818) are father and son, not duplicates. The response accurately cites the genealogical evidence: relationship R1 records I2 as I1's parent, the 27-year birth gap, and proof summary ps_001 documenting Thomas as Patrick's probable father. Claude's refusal is factually sound \u2014 merging them would create a genealogical impossibility (a person being both parent and child of himself). No fabricated claims; all assertions are grounded in the project state."
+                "rationale": "Claude correctly identified that I1 (Patrick Flynn, b. ~1845, d. 1908) and I2 (Thomas Flynn, b. ~1818) are father and son, not duplicates. The response accurately cites the genealogical evidence: relationship R1 records I2 as I1's parent, the 27-year birth gap, and proof summary ps_001 documenting Thomas as Patrick's probable father. Claude's refusal is factually sound — merging them would create a genealogical impossibility (a person being both parent and child of himself). No fabricated claims; all assertions are grounded in the project state."
               },
               {
                 "source": "base",
@@ -5636,7 +5636,7 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. Claude correctly refused to invoke merge_tree_persons because the precondition (a proof_summary confirming identity) was not met. This is the correct behavior per SKILL.md \u2014 N/A."
+                "rationale": "No MCP tool calls were made. Claude correctly refused to invoke merge_tree_persons because the precondition (a proof_summary confirming identity) was not met. This is the correct behavior per SKILL.md — N/A."
               },
               {
                 "source": "rubric",
@@ -5648,19 +5648,19 @@
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "No edits were performed. The skill correctly declined to modify any data, avoiding collateral changes. The refusal is surgical in its scope \u2014 it addresses only the requested merge and leaves all other project state untouched."
+                "rationale": "No edits were performed. The skill correctly declined to modify any data, avoiding collateral changes. The refusal is surgical in its scope — it addresses only the requested merge and leaves all other project state untouched."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": 3,
-                "rationale": "This is not a merge test \u2014 the skill correctly refused to execute a merge. Per the rubric, when the test is not a merge (including when a merge is refused), this dimension scores pass. Claude's refusal is the correct outcome; no merge mechanics apply."
+                "rationale": "This is not a merge test — the skill correctly refused to execute a merge. Per the rubric, when the test is not a merge (including when a merge is refused), this dimension scores pass. Claude's refusal is the correct outcome; no merge mechanics apply."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "Claude correctly applied the evidence-grounding gate: a person merge requires a proof_summary at probable tier or higher confirming identity. ps_001 exists but documents parentage (Thomas is Patrick's father), not identity (they are the same person). Claude refused the merge on this basis and explained what threshold was missing \u2014 an identity-confirming proof conclusion. The refusal is grounded in the correct layer (conclusion/merge layer, proof-gated at probable+)."
+                "rationale": "Claude correctly applied the evidence-grounding gate: a person merge requires a proof_summary at probable tier or higher confirming identity. ps_001 exists but documents parentage (Thomas is Patrick's father), not identity (they are the same person). Claude refused the merge on this basis and explained what threshold was missing — an identity-confirming proof conclusion. The refusal is grounded in the correct layer (conclusion/merge layer, proof-gated at probable+)."
               }
             ],
             "judge_cost_usd": 0.013259400000000001,
@@ -5718,19 +5718,19 @@
             "source": "rubric",
             "name": "Edit minimality",
             "score": 3,
-            "rationale": "No edits were performed. The skill correctly refused to modify any fields or entries. Edit minimality is satisfied by the absence of collateral changes\u2014because no changes were made at all, which is the correct decision."
+            "rationale": "No edits were performed. The skill correctly refused to modify any fields or entries. Edit minimality is satisfied by the absence of collateral changes—because no changes were made at all, which is the correct decision."
           },
           {
             "source": "rubric",
             "name": "Merge correctness",
             "score": 3,
-            "rationale": "This is not a merge test\u2014the skill correctly refused to merge. Per the rubric: 'When the test is NOT a merge (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores pass.' The refusal is the correct outcome, so this dimension passes."
+            "rationale": "This is not a merge test—the skill correctly refused to merge. Per the rubric: 'When the test is NOT a merge (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores pass.' The refusal is the correct outcome, so this dimension passes."
           },
           {
             "source": "rubric",
             "name": "Evidence grounding",
             "score": 3,
-            "rationale": "This is not an edit operation; it is a refusal. Per the rubric: 'For tests that aren't edit operations (e.g., match-checking, negative routing), this dimension scores pass \u2014 there's no edit to ground.' Claude correctly refused an ungrounded merge (no proof_summary confirming I1 \u2261 I2) and explained the grounding threshold. The refusal itself is grounded in the evidence-grounding layer's requirement that merges be backed by a probable+ proof_summary confirming identity."
+            "rationale": "This is not an edit operation; it is a refusal. Per the rubric: 'For tests that aren't edit operations (e.g., match-checking, negative routing), this dimension scores pass — there's no edit to ground.' Claude correctly refused an ungrounded merge (no proof_summary confirming I1 ≡ I2) and explained the grounding threshold. The refusal itself is grounded in the evidence-grounding layer's requirement that merges be backed by a probable+ proof_summary confirming identity."
           }
         ],
         "review_dimensions": [
@@ -5762,19 +5762,19 @@
             "source": "rubric",
             "name": "Edit minimality",
             "score": 3,
-            "rationale": "No edits were performed. The skill correctly refused to modify any fields or entries. Edit minimality is satisfied by the absence of collateral changes\u2014because no changes were made at all, which is the correct decision."
+            "rationale": "No edits were performed. The skill correctly refused to modify any fields or entries. Edit minimality is satisfied by the absence of collateral changes—because no changes were made at all, which is the correct decision."
           },
           {
             "source": "rubric",
             "name": "Merge correctness",
             "score": 3,
-            "rationale": "This is not a merge test\u2014the skill correctly refused to merge. Per the rubric: 'When the test is NOT a merge (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores pass.' The refusal is the correct outcome, so this dimension passes."
+            "rationale": "This is not a merge test—the skill correctly refused to merge. Per the rubric: 'When the test is NOT a merge (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores pass.' The refusal is the correct outcome, so this dimension passes."
           },
           {
             "source": "rubric",
             "name": "Evidence grounding",
             "score": 3,
-            "rationale": "This is not an edit operation; it is a refusal. Per the rubric: 'For tests that aren't edit operations (e.g., match-checking, negative routing), this dimension scores pass \u2014 there's no edit to ground.' Claude correctly refused an ungrounded merge (no proof_summary confirming I1 \u2261 I2) and explained the grounding threshold. The refusal itself is grounded in the evidence-grounding layer's requirement that merges be backed by a probable+ proof_summary confirming identity."
+            "rationale": "This is not an edit operation; it is a refusal. Per the rubric: 'For tests that aren't edit operations (e.g., match-checking, negative routing), this dimension scores pass — there's no edit to ground.' Claude correctly refused an ungrounded merge (no proof_summary confirming I1 ≡ I2) and explained the grounding threshold. The refusal itself is grounded in the evidence-grounding layer's requirement that merges be backed by a probable+ proof_summary confirming identity."
           }
         ]
       },
@@ -5835,7 +5835,7 @@
           "no_result_message": false,
           "skill_cost_usd": 0.1636951,
           "output": {
-            "text_response": "The tree-edit agent **cannot perform this merge**, and here's the important reason why:\n\n**Patrick Flynn (I1) and Thomas Flynn (I2) are not duplicates \u2014 they are father and son.**\n\nKey facts already established in the project:\n- **Patrick Flynn (I1)** \u2014 born ~1845, died 12 March 1908 in Schuylkill County, Pennsylvania (the research subject)\n- **Thomas Flynn (I2)** \u2014 born ~1818 in Ireland (Patrick's **father**)\n- Three independent records confirm this father-son relationship: the **1850 census**, the **1860 census**, and **Patrick's 1908 death certificate**\n- A proof summary (**ps_001**) already concludes Thomas is Patrick's probable father\n\nMerging them would collapse a father into his own son, destroy the parent-child relationship (R1), and create a genealogically impossible single person born ~27 years apart in two different places. The tool refuses merges that lack a proof conclusion establishing the two persons as the *same* individual.\n\nThe reason they \"keep showing up together\" is exactly because they're father and son sharing the same household \u2014 that's expected, not a sign of duplication.\n\n**What to do instead:** The active research plan (pl_002) points toward Thomas Flynn's probate records, which could advance the father-son conclusion from \"probable\" to \"proved.\" Would you like to continue down that path?",
+            "text_response": "The tree-edit agent **cannot perform this merge**, and here's the important reason why:\n\n**Patrick Flynn (I1) and Thomas Flynn (I2) are not duplicates — they are father and son.**\n\nKey facts already established in the project:\n- **Patrick Flynn (I1)** — born ~1845, died 12 March 1908 in Schuylkill County, Pennsylvania (the research subject)\n- **Thomas Flynn (I2)** — born ~1818 in Ireland (Patrick's **father**)\n- Three independent records confirm this father-son relationship: the **1850 census**, the **1860 census**, and **Patrick's 1908 death certificate**\n- A proof summary (**ps_001**) already concludes Thomas is Patrick's probable father\n\nMerging them would collapse a father into his own son, destroy the parent-child relationship (R1), and create a genealogically impossible single person born ~27 years apart in two different places. The tool refuses merges that lack a proof conclusion establishing the two persons as the *same* individual.\n\nThe reason they \"keep showing up together\" is exactly because they're father and son sharing the same household — that's expected, not a sign of duplication.\n\n**What to do instead:** The active research plan (pl_002) points toward Thomas Flynn's probate records, which could advance the father-son conclusion from \"probable\" to \"proved.\" Would you like to continue down that path?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -5845,7 +5845,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Merge two persons in tree",
-                  "prompt": "merge these two persons \u2014 Patrick Flynn (I1) and Thomas Flynn (I2). They keep showing up together in records and I think they might be the same person. Just merge them and we'll figure out the details later.\n\nprojectPath: <workspace>",
+                  "prompt": "merge these two persons — Patrick Flynn (I1) and Thomas Flynn (I2). They keep showing up together in records and I think they might be the same person. Just merge them and we'll figure out the details later.\n\nprojectPath: <workspace>",
                   "subagent_type": "tree-edit"
                 }
               },
@@ -5867,7 +5867,7 @@
             "agent_returns": [
               {
                 "subagent_type": "tree-edit",
-                "text": "I cannot execute this merge. Here is why.\n\nA merge is **irreversible in practice** and requires a proof conclusion at \"probable\" tier or higher confirming that the two persons are the **same individual**. The project's data shows clearly that I1 and I2 are **two distinct people with an established parent-child relationship**, not duplicates of each other.\n\nSpecifically:\n\n- **I1 is Patrick Flynn** \u2014 born approximately 1845, died 12 March 1908 in Schuylkill County, Pennsylvania. He is the research subject.\n- **I2 is Thomas Flynn** \u2014 born approximately 1818 in Ireland. He is Patrick's **father**, as supported by three independent lines of evidence: the 1850 census, the 1860 census, and Patrick's 1908 death certificate. A proof summary (ps_001) already concludes this at \"probable\" tier.\n\nMerging them would:\n1. Collapse a father into his own son, destroying the established ParentChild relationship R1.\n2. Collapse two persons born roughly 27 years apart (ca. 1818 vs. ca. 1845) into one, which is genealogically impossible.\n3. Invalidate the research project's primary objective and all three supporting records.\n4. Also collapse the sibling relationships: Thomas is recorded as the parent of Mary Flynn (I3) and James Flynn (I4) via the baptismal registers. Merging would make Patrick simultaneously his own siblings' parent.\n\nThe fact that these two names \"keep showing up together in records\" is entirely expected \u2014 they appear together **because** they are father and son sharing the same household.\n\nThe merge cannot proceed and would be refused by the tool on genealogical plausibility grounds regardless. What you should do instead is review the proof summary already on file (ps_001), which documents Thomas Flynn as Patrick's probable father, and continue the active research plan (pl_002) to locate Thomas Flynn's probate records, which may advance the conclusion to \"proved.\"\n\n---\n\nPatrick Flynn (born around 1845) and Thomas Flynn (born around 1818) are two different real people \u2014 Patrick is Thomas's son. Three separate historical records, including Patrick's own death certificate, already confirm this father-and-son connection, so there is nothing in the tree that needs correcting. The next step is to continue searching for Thomas Flynn's will or probate records, which could strengthen that confirmed father-son link from \"probable\" to \"proved.\""
+                "text": "I cannot execute this merge. Here is why.\n\nA merge is **irreversible in practice** and requires a proof conclusion at \"probable\" tier or higher confirming that the two persons are the **same individual**. The project's data shows clearly that I1 and I2 are **two distinct people with an established parent-child relationship**, not duplicates of each other.\n\nSpecifically:\n\n- **I1 is Patrick Flynn** — born approximately 1845, died 12 March 1908 in Schuylkill County, Pennsylvania. He is the research subject.\n- **I2 is Thomas Flynn** — born approximately 1818 in Ireland. He is Patrick's **father**, as supported by three independent lines of evidence: the 1850 census, the 1860 census, and Patrick's 1908 death certificate. A proof summary (ps_001) already concludes this at \"probable\" tier.\n\nMerging them would:\n1. Collapse a father into his own son, destroying the established ParentChild relationship R1.\n2. Collapse two persons born roughly 27 years apart (ca. 1818 vs. ca. 1845) into one, which is genealogically impossible.\n3. Invalidate the research project's primary objective and all three supporting records.\n4. Also collapse the sibling relationships: Thomas is recorded as the parent of Mary Flynn (I3) and James Flynn (I4) via the baptismal registers. Merging would make Patrick simultaneously his own siblings' parent.\n\nThe fact that these two names \"keep showing up together in records\" is entirely expected — they appear together **because** they are father and son sharing the same household.\n\nThe merge cannot proceed and would be refused by the tool on genealogical plausibility grounds regardless. What you should do instead is review the proof summary already on file (ps_001), which documents Thomas Flynn as Patrick's probable father, and continue the active research plan (pl_002) to locate Thomas Flynn's probate records, which may advance the conclusion to \"proved.\"\n\n---\n\nPatrick Flynn (born around 1845) and Thomas Flynn (born around 1818) are two different real people — Patrick is Thomas's son. Three separate historical records, including Patrick's own death certificate, already confirm this father-and-son connection, so there is nothing in the tree that needs correcting. The next step is to continue searching for Thomas Flynn's will or probate records, which could strengthen that confirmed father-son link from \"probable\" to \"proved.\""
               }
             ],
             "warnings": [
@@ -6081,19 +6081,19 @@
                 "source": "rubric",
                 "name": "Edit minimality",
                 "score": 3,
-                "rationale": "No edits were performed. The skill correctly refused to modify any fields or entries. Edit minimality is satisfied by the absence of collateral changes\u2014because no changes were made at all, which is the correct decision."
+                "rationale": "No edits were performed. The skill correctly refused to modify any fields or entries. Edit minimality is satisfied by the absence of collateral changes—because no changes were made at all, which is the correct decision."
               },
               {
                 "source": "rubric",
                 "name": "Merge correctness",
                 "score": 3,
-                "rationale": "This is not a merge test\u2014the skill correctly refused to merge. Per the rubric: 'When the test is NOT a merge (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores pass.' The refusal is the correct outcome, so this dimension passes."
+                "rationale": "This is not a merge test—the skill correctly refused to merge. Per the rubric: 'When the test is NOT a merge (no-op verify, value correction, add fact, create person, refuse-merge, negative routing, match-checking), this dimension has nothing to grade and scores pass.' The refusal is the correct outcome, so this dimension passes."
               },
               {
                 "source": "rubric",
                 "name": "Evidence grounding",
                 "score": 3,
-                "rationale": "This is not an edit operation; it is a refusal. Per the rubric: 'For tests that aren't edit operations (e.g., match-checking, negative routing), this dimension scores pass \u2014 there's no edit to ground.' Claude correctly refused an ungrounded merge (no proof_summary confirming I1 \u2261 I2) and explained the grounding threshold. The refusal itself is grounded in the evidence-grounding layer's requirement that merges be backed by a probable+ proof_summary confirming identity."
+                "rationale": "This is not an edit operation; it is a refusal. Per the rubric: 'For tests that aren't edit operations (e.g., match-checking, negative routing), this dimension scores pass — there's no edit to ground.' Claude correctly refused an ungrounded merge (no proof_summary confirming I1 ≡ I2) and explained the grounding threshold. The refusal itself is grounded in the evidence-grounding layer's requirement that merges be backed by a probable+ proof_summary confirming identity."
               }
             ],
             "judge_cost_usd": 0.0134724,
