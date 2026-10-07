@@ -1,14 +1,46 @@
 {
   "run_log": "v8.json",
-  "annotator": "mbadiweikennaya9@gmail.com",
+  "annotator": "praisenato@gmail.com",
   "corrections": [
     {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_research_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Routing test: it triggered on --autonomous and proceeded without stopping to ask, which is what this test checks. The summary covers the evidence, the conflict and the tier. The closure problem is scored under Correctness."
+      "comment": null
     },
     {
       "test_id": "ut_research_005",
@@ -16,7 +48,79 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "project_context and three research_query reads (questions, proof_summaries, evaluations with targetId ps_001 / focus proof-critique), all well-formed. One Read, of tree.gedcomx.json only."
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_017",
@@ -24,7 +128,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Checked the run: the only call was Skill → search-records, with no MCP calls, so no volume_search/image_search despite those fixtures being loaded to catch one. test_no_browse_executed_on_indexed_search passed, and nothing was written. Right call: the 1850 census is indexed, so a name search, not a page-by-page browse."
+      "comment": null
     },
     {
       "test_id": "ut_research_017",
@@ -32,7 +136,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "A routing test, so the hand-off is the whole required outcome. The reply text is empty because the harness stops at the hand-off; the judge's \"declined and routed\" wording describes the routing, not a written reply."
+      "comment": null
     },
     {
       "test_id": "ut_research_017",
@@ -40,7 +144,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "No MCP tool calls were made (the only call was the Skill hand-off), so there are no arguments to grade."
+      "comment": null
     },
     {
       "test_id": "ut_research_008",
@@ -48,7 +152,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Checked the run: empty folder, no skill invoked, no MCP calls, no files created, so test_creates_no_project_when_none_exists passed. The user never named the person (\"this person\"), so asking for the name and identifiers was the only sound move, and the test accepts that as a state-safe outcome."
+      "comment": null
     },
     {
       "test_id": "ut_research_008",
@@ -56,7 +160,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "It asked for exactly what's needed to start a project: name, plus birth/death year and place or a FamilySearch person ID. It didn't create research.json inline or start research without a subject."
+      "comment": null
     },
     {
       "test_id": "ut_research_008",
@@ -64,15 +168,15 @@
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "No tool calls were made, so there are no arguments to grade."
+      "comment": null
     },
     {
       "test_id": "ut_research_016",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Checked the run: the only call was Skill → research-plan with the planning request, with no MCP calls, so no volume_search/image_search, and no writes. test_no_browse_or_writes_on_planning_request passed. An improvement on v7, where this test passed on the invariant but the orchestrator wrote the browse strategy inline; here it delegates, the ideal behavior per the judge context."
+      "comment": null
     },
     {
       "test_id": "ut_research_016",
@@ -80,15 +184,39 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "A routing/invariant test, so the hand-off is the whole required outcome. The empty reply is the harness stopping at the hand-off, not the skill declining."
+      "comment": null
     },
     {
       "test_id": "ut_research_016",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "No MCP tool calls were made (the only call was the Skill hand-off), so there are no arguments to grade."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_research_011",
@@ -96,7 +224,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "One valid project_context call before routing; the hand-off used the agent spawn, not a call to the deleted skill."
+      "comment": null
     },
     {
       "test_id": "ut_research_011",
@@ -104,15 +232,7 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Read the state, routed, explained why, and gave a forward plan (locality guide → research plan → searches). The false \"written\" claim is scored under Correctness."
-    },
-    {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 2,
-      "comment": "Routing is right and the cited facts hold (three evidence lines, the Ireland/PA conflict resolved, R1 present, no prior critique). The ground for 2: it sends proof-conclusion to resolve q_001 and complete the project at probable while pli_006 (Thomas Flynn's probate) is still in_progress, after itself saying the probate and later censuses were not searched and could raise the tier. A parentage question should not close with its strongest open search in flight. Note: the reply also reports recorded/completed with nothing written; that narration is harness-induced (issue 3160) and not part of this score.\n"
+      "comment": null
     },
     {
       "test_id": "ut_research_011",
@@ -120,7 +240,7 @@
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "Routing and state reading are right (objective present, no questions, so question-selection). The reply's claim that the question was written to research.json is induced by the harness: the stub text (_NO_DISCLOSE in skill_stubs.py) tells the model to narrate and record exactly as if question-selection had run normally. Not a skill defect; noted on issue 3160.\n"
+      "comment": null
     }
   ]
 }
