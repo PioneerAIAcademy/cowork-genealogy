@@ -174,6 +174,10 @@ AGENT_WRITABLE_SECTIONS = {
     # search-images updates the status of the plan item a browse executed. Its
     # browse log goes through research_log_append, which carries no `section`.
     "search-images": frozenset({"plan_items"}),
+    # search-external-sites updates the status of the plan item a search executed.
+    # Its log entries go through research_log_append and build_external_search_url,
+    # which carry no `section`.
+    "search-external-sites": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -366,10 +370,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
 
     **Gating on `research_append` alone is complete, and here is the check that
     says so** — it looks like an oversight and is the first thing a reader asks.
-    Of the five declared writers of any research.json section
+    Of the six declared writers of any research.json section
     (`research_append`, `project_create`, `research_log_append`,
-    `extraction_append`, `merge_tree_persons`), only `merge_tree_persons` also
-    writes a section this function routes, and it reaches `person_evidence` and
+    `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
+    only `merge_tree_persons` also writes a section this function routes, and it
+    reaches `person_evidence` and
     `proof_summaries` without ever passing through here.
 
     That is safe for a structural reason, not a lucky one: it writes those
