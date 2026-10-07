@@ -12,7 +12,8 @@
 #   (e) U3: the slot users each turn's CLI runs as (WORKER_TURN_USERS in
 #       02-worker.config), sharing one primary group;
 #   (f) U3: web.service runs as root, so the worker can launch each CLI as its slot user
-#       (the platform runs it as webapp); [untested on Beanstalk: U13]
+#       (the platform runs it as webapp). A configuration-only update loses the drop-in
+#       (U13, 2026-10-07), so both postdeploy/01-worker-root.sh hooks write it again.
 set -euo pipefail
 
 PLUGIN_DEST=/opt/genealogy/plugin
