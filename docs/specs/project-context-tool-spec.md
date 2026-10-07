@@ -160,7 +160,8 @@ artifact is what every downstream check joins on.
 `nextStep` orders by what blocks what: an unresolved conflict outranks an
 unregistered disagreement, which outranks competing parent sets, which outrank a
 missing critique, which outranks a missing resolve, which outranks a missing
-summary.
+summary. A superseded verdict does not count — a replacement is itself present and
+satisfies the join; if nothing replaced it, the critique no longer stands.
 
 **A conflict the evidence shows counts even when nobody registered it.** A
 `conflicts` entry is what `conflict-resolution` *produces*, so an empty
@@ -174,18 +175,18 @@ a component of the other, comparing the raw and standardized spellings separatel
 and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
 England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
 On the committed corpus (2026-10-07: 391 question entries across the scenarios and
-206 e2e final states) it fires on 12 e2e question-runs, all spot-checked as real
-disagreements (one borderline: a village against its municipality), and on no
-scenario except the two mined to need it.
+206 e2e final states) it fires on 12 e2e question-runs; the six spot-checked are
+real disagreements (one borderline: a village against its municipality). It fires on no
+scenario except `research-unregistered-census-conflicts`, mined to need it.
 
 `competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
 a person in scope — the project's `subject_person_ids` plus every person this
 question's assertions are linked to — who is the child of more than two
 `ParentChild` relationships, while fewer than two hypotheses list this question in
-`related_question_ids`. Its step is `hypothesis-tracking`. Both fields stay
-advisory: nothing refuses a write because of them. A
-superseded verdict does not count — a replacement is itself present and satisfies
-the join; if nothing replaced it, the critique no longer stands.
+`related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
+fires on 6 e2e question-runs (the two spot-checked are real: one father with two
+different mothers; two same-named mothers), and on the mined GHLT-TFG scenario.
+Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
 disagree.** `state` is this tool's reading of the documents by the ladder above;
