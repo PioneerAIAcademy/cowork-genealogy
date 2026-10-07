@@ -28,7 +28,8 @@
     "volume-search-vastra-karaby",
     "collections-search-sweden",
     "external-links-search-sweden",
-    "wiki-read-sweden-naming-customs"
+    "wiki-read-sweden-naming-customs",
+    "place-search-malmohus"
   ],
   "judge_context": [
     "Two localities entries are ALREADY in research.json (loc_001 Barsebäck, loc_002 Västra Karaby); the orchestrator ran locality-guide first. The skill should READ them. loc_002 records that Västra Karaby's birth register begins in 1688; Elena's birth is estimated c. 1680-1692. Whether the plan recognises that a baptism may not exist is the point of this test.",
