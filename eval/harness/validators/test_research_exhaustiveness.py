@@ -187,9 +187,10 @@ def test_fetches_registration_start_date(tool_calls, test):
       agent is spawned, so they make no MCP calls at all;
     - a run that correctly returns at a Step 0 precondition — `refuse-in-progress`
       (an in-flight plan item), `refuse-planned` (an undisposed one, issue
-      #1830) and `already-declared` ("stop before any other check") — never
-      reaches `## 1. Gather evidence`, so it owes no fetch. ut_005 made 4 calls
-      and ut_006 made 5, both correctly.
+      #1830), `already-declared` ("stop before any other check") and
+      `tentative-value-sweep` (a tentative value an alternative record could
+      resolve) — never reaches `## 1. Gather evidence`, so it owes no fetch.
+      ut_005 made 4 calls and ut_006 made 5, both correctly.
 
     Demanding the fetch from those is a defect in this check, not in the agent.
 
@@ -201,6 +202,19 @@ def test_fetches_registration_start_date(tool_calls, test):
     stopping there is what the agent body prescribes — "A run that ends at a
     Step 0 precondition owes nothing below, the `wiki_read` included". The
     check was contradicting the spec it grades against.
+
+    `tentative-value-sweep` is the fourth member, added the same way: ut_016
+    failed here on `v1_2026-10-06_09-22-36` with only `project_context` and
+    `research_query` calls while the judge scored all six dimensions 3. Its
+    agent return reasons the stop out loud — "the tentative-value sweep IS a
+    Step 0 block. Step 1's wiki_read is reached only when Step 0 neither stops
+    nor refuses" — which is the body's own rule. It passed four earlier runs
+    only because the agent happened to fetch anyway before stopping, so this
+    was a latent contradiction surfaced by sampling, not a regression.
+
+    Step 0 declares five hard blocks. The four named above are the ones any
+    test exercises; the classification and person_evidence blocks have no test
+    today, so a test that stops at one will need its tag added here too.
     """
     tags = test.get("tags") or []
     if "near-miss" in tags:
@@ -209,6 +223,7 @@ def test_fetches_registration_start_date(tool_calls, test):
         "refuse-in-progress" in tags
         or "refuse-planned" in tags
         or "already-declared" in tags
+        or "tentative-value-sweep" in tags
     ):
         pytest.skip("returns at a Step 0 precondition — Step 1 is never reached")
     called = [bare_tool_name(c.get("tool", "")) for c in (tool_calls or [])]

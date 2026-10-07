@@ -36,6 +36,12 @@ NEGATIVE = {"tags": ["near-miss", "exhaustiveness-vs-research-plan"]}
 IN_PROGRESS = {"tags": ["research-exhaustiveness", "refuse-in-progress"]}
 PLANNED = {"tags": ["research-exhaustiveness", "refuse-planned", "direct-arm"]}
 ALREADY_DECLARED = {"tags": ["research-exhaustiveness", "already-declared", "re-invocation"]}
+# ut_016's real tags, copied rather than minimised: the gate must fire on the
+# tag as the corpus actually spells it, beside four unrelated ones.
+TENTATIVE_VALUE = {"tags": [
+    "research-exhaustiveness", "tentative-value-sweep", "decline-declaration",
+    "alternative-record", "regression",
+]}
 
 
 def _call(tool):
@@ -105,10 +111,59 @@ def test_skips_a_run_that_returns_at_a_step_0_precondition():
     `project_context` and `research_query` calls while the judge scored every
     dimension 3 — the agent body says a Step 0 exit "owes nothing below, the
     `wiki_read` included", so the check was contradicting its own spec.
+
+    `tentative-value-sweep` is the fourth, added the same way: ut_016 failed
+    here on v1_2026-10-06_09-22-36 with the same two-call list while the judge
+    scored all six dimensions 3, having stopped at the Step 0 sweep and routed
+    to research-plan exactly as the body prescribes.
     """
-    for tags in (IN_PROGRESS, PLANNED, ALREADY_DECLARED):
+    for tags in (IN_PROGRESS, PLANNED, ALREADY_DECLARED, TENTATIVE_VALUE):
         with pytest.raises(pytest.skip.Exception):
             check([_call("mcp__genealogy__project_context")], tags)
+
+
+def test_a_step_0_exit_is_exempt_even_when_it_did_fetch():
+    """The gate is about what a run OWES, not what it happened to do.
+
+    ut_016 passed four earlier runs by fetching before it stopped and failed
+    the fifth by stopping first — same correct behaviour, graded two ways. A
+    skip that only held for the thin call list would leave that coin-flip in
+    place, so assert the exemption holds with the fetch present too.
+    """
+    with pytest.raises(pytest.skip.Exception):
+        check([_call("mcp__genealogy__project_context"),
+               _call("mcp__genealogy__wiki_read")], TENTATIVE_VALUE)
+
+
+def test_a_decline_without_a_step_0_tag_still_owes_the_fetch():
+    """The other direction, and the one that matters: ut_016 is exempt because
+    of WHERE it stopped, not because it declined. ut_014 and ut_015 also carry
+    `decline-declaration` but reach Step 2's stop criteria, so they still owe
+    the lookup — a gate keyed on `decline-declaration` would have silently
+    exempted both.
+
+    Written as an explicit three-way rather than `pytest.raises(AssertionError)`:
+    a widened gate makes `check` raise `Skipped`, which propagates and marks
+    THIS test skipped — green. Measured: keying the gate on
+    `decline-declaration` left the file at "13 passed, 1 skipped" with the
+    `raises` form, so the guard silently stopped guarding. A skip has to be
+    caught and turned into a failure here or this test cannot fail at all.
+    """
+    declining = {"tags": ["research-exhaustiveness", "decline-declaration",
+                          "decisive-record-gate", "no-exhaustive-declaration"]}
+    calls = [_call("mcp__genealogy__project_context"),
+             _call("mcp__genealogy__research_query")]
+    try:
+        check(calls, declining)
+    except pytest.skip.Exception:
+        pytest.fail(
+            "a plain decline was exempted — the Step 0 gate must be keyed on "
+            "WHERE the run stopped, not on whether it declined. ut_014/ut_015 "
+            "decline at Step 2's stop criteria and still owe the fetch."
+        )
+    except AssertionError:
+        return
+    pytest.fail("the check did not fire on a decline that owes the fetch")
 
 
 def test_the_step_0_gate_is_keyed_on_the_tag_not_on_a_thin_call_list():
