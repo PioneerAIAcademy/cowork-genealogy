@@ -133,19 +133,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
-        "tool": "tree_correct",
-        "quotes": [
-            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
-        ],
-        "reason": (
-            "negative mention: names the tool to say the agent lacks it - "
-            "'nothing in this agent's toolset can raise the gender "
-            "afterwards, since `tree_correct update_person` is not granted "
-            "to it'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
         "tool": "record_search",
         "quotes": [
