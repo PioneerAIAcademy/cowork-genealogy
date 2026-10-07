@@ -36,6 +36,7 @@
   "execution": {
     "sdk_message_silence_seconds": 360,
     "max_wall_clock_seconds": 600,
-    "max_turns": 40
+    "max_turns": 40,
+    "sdk_message_silence_seconds": 300
   }
 }

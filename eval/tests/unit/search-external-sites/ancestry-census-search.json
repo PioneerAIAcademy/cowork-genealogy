@@ -12,11 +12,12 @@
       "1870",
       "url-generation",
       "single-turn-decomposition",
-      "log-site-ancestry"
+      "log-site-ancestry",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search for Patrick Flynn on Ancestry's 1870 census.",
+    "delegation": "Search for Patrick Flynn on Ancestry's 1870 census.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

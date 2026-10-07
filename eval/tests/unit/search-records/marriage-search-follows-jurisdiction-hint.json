@@ -29,5 +29,8 @@
     "Non-compliant behavior: the skill re-runs South Carolina variants (spelling, date range, collection) after the nil, without ever trying the Arkansas candidate the hint named.",
     "Do not penalize the skill for also eventually returning to South Carolina after trying Arkansas -- the rule requires trying the hint within the next 1-2 calls, not abandoning the original jurisdiction forever."
   ],
-  "judge_reads_files": true
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40
+  }
 }
