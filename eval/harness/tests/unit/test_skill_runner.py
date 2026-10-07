@@ -2318,6 +2318,63 @@ def test_a_hand_off_in_the_next_turn_is_not_recorded_when_its_hook_runs_first(
     assert "Next, the evidence and the plan." not in result.text_response
 
 
+def test_dropping_a_next_turn_call_keeps_an_earlier_call_of_the_same_name(
+    tmp_path, monkeypatch
+):
+    """The next-turn filter removes the denied call by position. An earlier,
+    legitimate call to the same skill stays, and so does the order of the list:
+    removing by name would take out the first `search-records` instead, or both
+    of its `builtin_tool_calls` records, which are equal as values."""
+    import asyncio
+
+    returns = {}
+    search = {"tool_name": "Skill", "tool_input": {"skill": "search-records"}}
+    plan = {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _hook_runs(search, "search-1"),
+            _turn("Searching first.", _skill_block("search-records", "search-1"),
+                  message_id="turn-1"),
+            _hook_runs(plan, "plan-id"),
+            _turn("Routing to the plan.", _skill_block("research-plan", "plan-id"),
+                  message_id="turn-2"),
+            _results("plan-id"),
+            _hook_runs(search, "search-2"),
+            _turn("Searching again.", _skill_block("search-records", "search-2"),
+                  message_id="turn-3"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills={"research-plan": None},
+    ))
+
+    assert "continue_" not in returns["search-1"], "the earlier call was denied"
+    assert returns["search-2"]["continue_"] is False
+    assert result.skills_invoked == ["search-records", "research-plan"]
+    assert [
+        c["args"].get("skill") for c in result.builtin_tool_calls if c["tool"] == "Skill"
+    ] == ["search-records", "research-plan"]
+
+
+def test_a_first_hand_off_whose_message_never_arrives_is_kept(tmp_path, monkeypatch):
+    """A stream that ends after the first hand-off's hook but before its message
+    (an abort, a cap) has no turn to measure against. The filter must not drop
+    that hand-off: it is the run's routing evidence."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [_hook_runs(_SPAWN_QS, "qs-id"), _done()],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert returns["qs-id"]["continue_"] is False
+    assert _spawned(result) == ["question-selection"]
+
+
 # --- the short-circuit's abort clearing is scoped, and nothing pinned it ------
 #
 # `if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON: clear`

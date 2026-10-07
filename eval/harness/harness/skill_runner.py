@@ -1789,9 +1789,12 @@ async def run_skill(
     # and the model's next turn can reach the hook before its message reaches
     # the loop, so its hand-offs were recorded as the skill's: the walk the stop
     # exists to cut off, failing `test_no_paired_skill_shortcut` on a run that
-    # stopped correctly. A call with no id is kept, as before. Done before the
-    # slash-command entry is inserted, while every index still holds.
-    if stop_at_stub and stop_denials:
+    # stopped correctly. A call with no id is kept, as before. Skipped when no
+    # hand-off message was seen: a stream that ended before it arrived (an
+    # abort, a cap) has no turn to measure against, and filtering would drop the
+    # first hand-off, the run's routing evidence. Done before the slash-command
+    # entry is inserted, while every index still holds.
+    if stop_at_stub and stop_denials and handoff_seen["v"]:
         turn_ids = handoff_turn["tool_ids"]
         dropped = [
             (record, index) for tool_use_id, record, index in stop_denials
