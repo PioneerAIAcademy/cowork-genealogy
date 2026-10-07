@@ -1,4 +1,4 @@
-"""Lint: every tag a validator gates on is carried by a test, or declared dormant.
+"""Lint: every opt-in gate tag is carried by a test, or declared dormant.
 
 A validator gated on a test tag (``harness.runnability.tag_gated_validator_tags``)
 stops running once no test carries the tag -- after a rename, a typo, or the
@@ -11,7 +11,9 @@ are claimed by a test in any suite. A tag carried only in another suite does not
 count: a rename that lands on a tag used elsewhere is exactly the hole.
 
 Gate tags come from ``tag_gated_validator_tags`` itself, so this lint and the
-runnability gate cannot disagree about what a gate is. Suites are matched the way
+runnability gate cannot disagree about what a gate is. That function sees only the
+literal ``"<tag>" not in tags`` form, so a prefix gate (``scope-excludes-*``) or a gate
+inside a helper (``topical-fixture-required``) is not checked here. Suites are matched the way
 the harness picks a validator file: ``test.skill`` with ``-`` replaced by ``_``.
 """
 
@@ -30,9 +32,9 @@ UNIVERSAL = "universal"
 # test in its suite carries the tag, or once no validator gates on it.
 DORMANT: dict[str, str] = {
     "hypothesis-open-blocks-tier": (
-        "its only test, ut_proof_conclusion_021, was a routing negative; b68d2e9ec "
-        "retired that whole category on purpose when /research moved to calling "
-        "agents directly, so no scenario exercises it"
+        "its only test, ut_proof_conclusion_021 (a routing negative), was deleted "
+        "with that category in b68d2e9ec; the validator was kept and no positive "
+        "test carries the tag yet"
     ),
     "no-shortcut": "claimed by PR #3165 (ut_research_015); delete this entry when it lands",
 }

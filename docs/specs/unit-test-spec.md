@@ -1558,7 +1558,7 @@ vacuous — none does today, and nothing checks for one.
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
-- Every tag a validator gates on must be carried by a test in its suite (any suite, for `test_universal.py`) or listed with a reason in `DORMANT` in `eval/harness/tests/unit/test_tag_gate_coverage.py`, which fails otherwise
+- Every opt-in gate tag `tag_gated_validator_tags` reports (the literal `"<tag>" not in tags` form) must be carried by a test in its suite (any suite, for `test_universal.py`) or listed with a reason in `DORMANT` in `eval/harness/tests/unit/test_tag_gate_coverage.py`, which fails otherwise
 - Tier-1 validators are plain Python functions with the `test_` prefix; tier-2 validators use the `report_` prefix. Both raise `AssertionError` to signal a finding and take arguments from the same pool.
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
 - Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`. Both tiers are collected: `python_functions` in `eval/harness/pyproject.toml` lists `report_*` alongside `test_*`, without which every tier-2 validator is silently skipped by that command.
