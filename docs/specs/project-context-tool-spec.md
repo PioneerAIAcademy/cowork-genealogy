@@ -71,12 +71,25 @@ repo's identifier-casing rule):
     storedStatus: string | null,         // questions[].status verbatim; null when
                                          //   absent or not a string. DERIVED vs
                                          //   REPORTED — see §2.2.
+    unregisteredDisagreements: [{        // linked vital-fact assertions that
+      personId: string,                  //   disagree with no conflict naming
+      fact: string,                      //   the pair — see §2.2.
+      assertionIds: string[],
+    }],
+    competingParentSets: [{              // in-scope tree persons with >2 birth parents
+      personId: string,                  //   and <2 hypotheses on the question
+      parentIds: string[],
+    }],
   }],
   persons: [{
     id: string,                          // I id (or FS id)
     name: string | null,                 // preferred names entry, "Given Surname"
     gender: string | null,
     sourceRefs: string[],                // distinct S ids cited anywhere on the person
+    spouseIds: string[],                 // I ids joined by a Couple edge
+    parentIds: string[],                 // I ids that are this person's ParentChild parent
+    childIds: string[],                  // I ids that are this person's ParentChild child
+    diedByYear: number | null,           // year certainly dead by, from dated Death/Burial facts
   }],
   sources: [{
     id: string,                          // src_*
@@ -119,6 +132,20 @@ Projection rules:
   person has no names). `sourceRefs` collects the distinct `ref` values of
   every source reference on the person — person-level `sources`, each
   fact's `sources`, and each name's `sources` — in first-seen order.
+  `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
+  from `tree.relationships`: a `Couple` edge lists each side as the other's
+  spouse, a `ParentChild` edge lists the parent and child on each other. The
+  type matches on its last segment, so the bare name and the
+  `http://gedcomx.org/` URI both count; an edge missing either end is
+  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  the latest possible years of the person's dated `Death` and `Burial` facts
+  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), or null when none is dated;
+  a date with no upper bound (`Aft 1850`) gives no year.
+  The latest year, so a person is read as dead before a record only when they
+  certainly were: a wife who died after an 1860 census is still expected in
+  it. They exist so person-evidence can name
+  a known spouse or child missing from a household record: no other tool
+  it holds reads the tree's edges.
 - **`sources`** — every `research.sources[]` entry, in array order.
   `recordIds` are the distinct `record_id` values (verbatim, first-seen
   order) across `research.assertions[]` entries whose `source_id` is this
@@ -151,10 +178,53 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
-`nextStep` orders by what blocks what: an unresolved conflict outranks a missing
-critique, which outranks a missing resolve, which outranks a missing summary. A
-superseded verdict does not count — a replacement is itself present and satisfies
-the join; if nothing replaced it, the critique no longer stands.
+`nextStep` orders by what blocks what: an unresolved conflict outranks an
+unregistered disagreement, which outranks competing parent sets, which outrank a
+missing critique, which outranks a missing resolve, which outranks a missing
+summary. A superseded verdict does not count — a replacement is itself present and
+satisfies the join; if nothing replaced it, the critique no longer stands.
+
+**A conflict the evidence shows counts even when nobody registered it.** A
+`conflicts` entry is what `conflict-resolution` *produces*, so an empty
+`conflicts[]` cannot be the signal that routes there. `unregisteredDisagreements`
+reads the evidence instead: two assertions linked by `person_evidence` to the same
+person, about the same birth or death (`birth`/`birthplace`, `death`/`deathplace`),
+whose places disagree or whose years differ by more than two, with no conflict of
+any status listing both ids. A date is the span of years it allows, read from the
+standard form (`Bet 1836 and 1848` is 1836–1848), and two spans disagree only when
+more than two years separate them. A one-sided date is open on its unbounded side:
+`Bef 1880` has no lower bound and `Aft 1870` no upper one, so neither disagrees with
+an earlier or later year respectively. A bounded date the
+standard-date parser cannot read ("after 1870, before 1880") takes no part in the
+year comparison. At least one of the pair must be extracted for this
+question. Places agree when every component of the less specific one prefix-matches
+a component of the other, comparing the raw and standardized spellings separately
+and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
+England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
+On the committed corpus it fires on 11 e2e question-runs. An earlier count
+(2026-10-07, 12 hits over 206 final states, file selection not recorded) was
+spot-checked hit by hit and every one was a real disagreement (one borderline: a
+village against its municipality). It fires on no scenario
+except `research-unregistered-census-conflicts`, mined to need it.
+
+**How these figures are counted** (2026-10-08, `npx tsx
+dev/measure-question-state-signals.ts`, `--list` for every hit): the corpus is
+every scenario `research.json` plus every e2e `run-<ts>.final-research.json`
+(developer `scratch_` runs left out), each with its sibling tree, run through the
+shipped `questionStates`. That is 397 question entries — 154 across 113 scenarios
+and 243 across 203 e2e final states — and a hit is one question entry whose signal
+is non-empty. Comparing bounded dates as spans, leaving one-sided dates open, and
+counting only birth parents changed no hit on this corpus.
+
+`competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
+a person in scope — the project's `subject_person_ids` plus every person this
+question's assertions are linked to — who is the child of more than two birth-parent
+`ParentChild` relationships (no `subtype`, or `Biological` in any casing; `Step`,
+`Adoptive`, `Foster` and `Guardian` do not count), while fewer than two hypotheses list this question in
+`related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
+fires on 5 e2e question-runs (the two spot-checked are real: one father with two
+different mothers; two same-named mothers).
+Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
 disagree.** `state` is this tool's reading of the documents by the ladder above;

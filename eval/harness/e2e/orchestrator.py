@@ -3291,7 +3291,7 @@ async def _run_agent(
     if guardrail_shadow_violations:
         _emit(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
-            "with no recent matching Skill invocation (shadow mode — not denied)"
+            "with no recent matching Skill call or typed agent spawn (shadow mode — not denied)"
         )
     # issue #963 — fold in the hook-sourced provenance gaps collected live in
     # pretool_hook. Same list because both answer "a guardrail's effect landed
