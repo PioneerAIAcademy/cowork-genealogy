@@ -95,12 +95,27 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
 # describing the household — a note that reports the focus person and nothing
 # else has no family structure to qualify.
 _HOUSEHOLD_MENTIONS = (
-    "household",
     "dwelling",
     "co-resident",
     "coresident",
     "enumerated with",
     "living with",
+)
+
+# "household" counts as describing the record's household UNLESS it names an
+# action or collection rather than the household's membership -- "full
+# household read", "household search", "household records". Those assert no
+# structure to hedge, so requiring an inference marker on them is a false
+# positive: an audit-trail re-run note ("Re-run with subjectId ... for full
+# household read. Same result ...", issue #2484) tripped the bare-"household"
+# substring with no kinship claim anywhere. A compositional use -- "household
+# of X and Y", "household also lists", "household members" -- still matches
+# and still requires a marker. Re-verified across all committed search-records
+# run-log notes: flipping bare "household" to this regex changes exactly one
+# note's flag (the log_003 false positive) and preserves every real catch.
+_HOUSEHOLD_DESCRIPTION_PATTERNS = (
+    r"\bhousehold\b(?!\s+(?:read|reads|search|searches|lookup|lookups|"
+    r"record|records|fetch|fetches|pull|pulls|query|queries))",
 )
 
 # Role assertions that can only be read off a relationship column. Bare role
@@ -230,7 +245,9 @@ def test_pre1880_census_structure_marked_inferred(
     array of several; count each op with `outcome` in (positive, partial)
     as one logged search, matching `_new_log_entries`'s own unit of work.
 
-    Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
+    Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`
+    or a compositional `_HOUSEHOLD_DESCRIPTION_PATTERNS` use of "household" --
+    not a procedural "household read/search/records")
     or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference
     marker (`_INFERENCE_MARKERS`) must appear somewhere in the note. This is
     the original #1284 rule — what catches a bare listing with no hedge
@@ -271,9 +288,14 @@ def test_pre1880_census_structure_marked_inferred(
             continue  # a nil found no household to describe
         notes = e.get("notes") or ""
 
-        describes_household = any(
-            m in notes.lower() for m in _HOUSEHOLD_MENTIONS
-        ) or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
+        describes_household = (
+            any(m in notes.lower() for m in _HOUSEHOLD_MENTIONS)
+            or any(
+                re.search(p, notes, re.IGNORECASE)
+                for p in _HOUSEHOLD_DESCRIPTION_PATTERNS
+            )
+            or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
+        )
         if not describes_household:
             continue
         if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):

@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search returning the 1850 US Census household of Nancy Doss, Pike County, Kentucky: Amos Whitfield (the search subject, no stated role) alongside two same-surname minors (Ezra, Noah) and one unrelated-surname co-resident (Patrick Coyne), also with no stated role. Carries the real RecordSearchToolResponse shape, scrubbed from the production report behind issue #1912 (household of 5, three surnames, no relationship facts on any person).",
+  "description": "FamilySearch record search returning the 1850 US Census household of Nancy Doss, Pike County, Kentucky: Amos Whitfield (the search subject, no stated role) alongside two same-surname minors (Ezra, Noah) and one unrelated-surname co-resident (Patrick Coyne), also with no stated role. Carries the real RecordSearchToolResponse shape, scrubbed from the production report behind issue #1912 (household of 5, three surnames, no relationship facts on any person). Collection 1401638's title was reconciled to the majority mock-world spelling 'United States Census, 1850' (no comma) carried by the other 6 collection-title fixtures naming this id (issue #2484 PR1); the live FamilySearch title carries a comma ('United States, Census, 1850', as wiki-read-united-states-census.json's prose shows), but the point here is a self-consistent mock world, not live spelling.",
   "args": {
     "surname": "Whitfield"
   },
@@ -40,9 +40,9 @@
         "birthDate": "1817",
         "birthPlace": "Georgia, United States",
         "collectionId": "1401638",
-        "collectionTitle": "United States, Census, 1850",
+        "collectionTitle": "United States Census, 1850",
         "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
-        "recordTitle": "Household of Nancy Doss, \"United States, Census, 1850\"",
+        "recordTitle": "Household of Nancy Doss, \"United States Census, 1850\"",
         "recordArk": "ark:/61903/1:2:A1WF-HH1",
         "gedcomx": {
           "persons": [
@@ -224,13 +224,13 @@
           "sources": [
             {
               "id": "src_r_1",
-              "title": "Household of Nancy Doss, \"United States, Census, 1850\"",
-              "citation": "\"United States, Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:A1WF-DO2 : accessed 2026), Entry for Nancy Doss and Amos Whitfield, 1850.",
+              "title": "Household of Nancy Doss, \"United States Census, 1850\"",
+              "citation": "\"United States Census, 1850\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:A1WF-DO2 : accessed 2026), Entry for Nancy Doss and Amos Whitfield, 1850.",
               "url": "https://www.familysearch.org/ark:/61903/1:2:A1WF-HH1"
             },
             {
               "id": "sd_c_1401638",
-              "title": "United States, Census, 1850",
+              "title": "United States Census, 1850",
               "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
             },
             {
