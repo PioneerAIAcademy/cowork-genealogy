@@ -603,6 +603,81 @@ def test_jurisdiction_hints_followed(tool_calls, test):
     )
 
 
+# --- surnameVariantHints consumption -----------------------------------
+
+
+def _is_surname_field(key):
+    """`surname` and the five kin `*Surname` fields record-search.ts reads
+    (SURNAME_FIELDS in utils/surname-variant-hints.ts). Matched by shape, not
+    by a copied list, so a sixth kin field is accepted without an edit here.
+    `surnameAlt` is deliberately not one: the hint's note directs each form into
+    the field it replaces, and the alternate name is a union paired with its own
+    given name."""
+    return key == "surname" or key.endswith("Surname")
+
+
+def test_surname_variant_hints_followed(tool_calls, test):
+    """Tag-gated (surname-variant-hints-followed): issue #3054 -- when a
+    record_search response carries surnameVariantHints (a search that did not
+    find its subject, on a -datter/-dotter patronymic; see
+    packages/engine/mcp-server/src/utils/surname-variant-hints.ts), some LATER
+    record_search call must put one of the hinted abbreviated forms in a
+    surname field.
+
+    Ground truth: the 2026-07-21 anders-monsen e2e run made 24 record_search
+    calls, varied the bride's given name (Unna -> Urna), and never once sent a
+    surname other than 'Halsteinsdatter'; the index holds 'Urna Halsteinsdr'.
+    The 2026-10-08 baseline of ut_search_records_023 (before the hint) failed
+    6 of 10 runs the same way.
+
+    Any surname field counts, not only the one the hint came from: a role swap
+    (hint on spouseSurname, the bride then searched as principal) is a
+    legitimate way to act on it. "Any later call", not "the next two": two
+    calls issued together before the hint was read, or a given-name retry
+    first, would false-fail a short window. The cost is that a run which
+    wanders nine calls before abbreviating still passes here -- the judge's
+    score-2 band, not this validator, grades that.
+    """
+    if "surname-variant-hints-followed" not in test.get("tags", []):
+        pytest.skip("not a surname-variant-hints scenario")
+    record_calls = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] == "record_search"
+    ]
+
+    hint_pos = None
+    variants = set()
+    for i, c in enumerate(record_calls):
+        response = c.get("response") or {}
+        hints = response.get("surnameVariantHints") or {}
+        for entry in hints.get("fields") or []:
+            for v in entry.get("variants") or []:
+                if isinstance(v, str) and v.strip():
+                    variants.add(v.strip().lower())
+        if variants:
+            hint_pos = i
+            break
+    if hint_pos is None:
+        pytest.skip("no surnameVariantHints returned in this run")
+
+    followed = False
+    for c in record_calls[hint_pos + 1:]:
+        args = c.get("args") or {}
+        for key, value in args.items():
+            if (
+                _is_surname_field(key)
+                and isinstance(value, str)
+                and value.strip().lower() in variants
+            ):
+                followed = True
+    assert followed, (
+        "record_search returned surnameVariantHints listing "
+        + repr(sorted(variants))
+        + ", but no later record_search call put any of them in a surname "
+        "field (issue #3054)."
+    )
+
+
 # --- Asks permission instead of executing a mandated lever -------------
 
 _PERMISSION_PHRASES = (

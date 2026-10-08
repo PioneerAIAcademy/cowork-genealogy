@@ -489,6 +489,7 @@ Strict surname + birth-place match:
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] \| undefined | The results in FamilySearch's own search order. **Omitted when `ranked` carries the same rows in a usable form** — `ranked` then holds every scored candidate, ordered by match score and carrying the same triage fields, so shipping both was the same records twice. Present whenever ranking did not run, threw (`rankingError`), or returned a ranking the caller must not triage on (`subjectResolvable: false`, either branch). |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
+| `surnameVariantHints` | object \| undefined | Present **only** on a search that did not find the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. Needs neither `projectPath` nor `subjectId`. **Serialized before `results`**; never staged. See below. |
 
 ### `unloggedSearches` / `nilSearchNeedsLog` — the log obligation, at the tool
 
@@ -1030,6 +1031,91 @@ Each `RecordSearchResult`:
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
 inputs are year-only.
+
+### `surnameVariantHints` — abbreviated patronymics on a search that does not find the subject
+
+Scandinavian clerks wrote the patronymic ending *-datter* / *-dotter*
+("daughter") short, and FamilySearch's indexes transcribe the short form
+without its period. The bride a tree records as "Unna Halsteinsdatter" is
+indexed "Urna Halsteinsdr" in Norway, Marriages, 1660-1926 (collection
+`1468080`), so a search on the full spelling returns nothing. The tool lists the
+abbreviated forms itself rather than relying on the caller to remember them —
+the same reasoning as `jurisdictionHints`.
+
+**Measured basis.** The rule lived as prose in the
+`search-records` skill's `references/collection-quirks.md`. Across 12 runs of
+`ut_search_records_023` the model read that entry in every run, before its
+first search, and applied it in 7: a passing run made 1–2 `record_search` calls,
+a failing one wandered to 9–10. Three rewordings and a restored pre-slim file
+did not move the rate (`docs/deep-dives/search-records-reference-routing.md`,
+"ut_search_records_023 flaps at ~55%"). A rule reached and not followed belongs on
+a call the agent already makes (ADR-0011). Measured 2026-10-08 with
+`--runs-per-test 10`: **4 of 10** passed without the hint (every failure never
+sent an abbreviated surname), **10 of 10** with it, each run sending `Halsteinsdr`
+after the first nil.
+
+**The abbreviations are the FamilySearch wiki's.** Norway Naming
+Customs#Abbreviations: *"The abbreviations dr., dtr., d., are all substitutes
+for datter."* Sweden Naming Customs: *"The abbreviations d., dr., dtr., are all
+substitutes for dotter."* Both endings map to `dr`, `dtr`, `d`, in that order —
+`dr` first because it is the form the motivating record carries.
+
+Fires when **both** of:
+
+- the search did not find the subject — `totalMatches` is 0 **or** ranking
+  reported `subjectResolvable: false` (the `jurisdictionHints` test, and for the
+  same reason: rows that matched nobody are the same situation as no rows);
+- at least one surname field — `surname`, `spouseSurname`, `fatherSurname`,
+  `motherSurname`, `parentSurname`, `otherSurname` — ends in `datter` or
+  `dotter` (trimmed, case-insensitive) with at least one letter before the
+  ending.
+
+It needs no tree, so unlike `jurisdictionHints` it does not require
+`projectPath` or `subjectId`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `fields` | object[] | One entry per qualifying input field, in the order above: `field` (the input field name), `searched` (the value sent, trimmed), `variants` (the stem plus each abbreviation — `Halsteinsdr`, `Halsteinsdtr`, `Halsteinsd`). The stem keeps the caller's spelling; an all-capitals ending gets capital abbreviations. |
+| `note` | string | The rule in plain language: retry each form **in the same field it replaces** (not `surnameAlt`), in the same call as each given-name spelling being tried, before concluding the record is not indexed — and these are spellings to try, not evidence. It says the search "did not find the subject", never that it found nothing: on the `subjectResolvable: false` branch the rows are present and one may be the subject. |
+
+**Why every surname field, not only `surname`.** The lead's ruling (2026-10-06)
+names `surname`. The case that motivated it does not fit that: the bride is not
+indexed as a principal at all, and the one search that finds her is
+`surname=Monsen givenName=Anders spouseGivenName=Urna spouseSurname=Halsteinsdr`
+(`eval/tests/e2e/anders-monsen-ancestry/README.md`). A `surname`-only hint would
+pass the unit test and miss the production case, and a mother's patronymic on a
+christening search is abbreviated the same way. Widened to all six fields on the
+user's decision of 2026-10-08 and put back to the lead as a question; narrowing
+it again is a change to `SURNAME_FIELDS` alone.
+
+**Why the note says "same field", not `surnameAlt`.** A form already sent as
+`surnameAlt` is not dropped from the list, and the note steers away from that
+field: the alternate name is a union paired with its own given name, so a
+short form tried there with one given-name spelling may still need trying with
+another.
+
+**Serialized before `results`**, for the reason given under "`rankingSkipped`":
+anything after `results` is the first thing a size bound drops, which matters on
+the rows-present branch. **Never staged** — it is computed after staging, and it
+is advice to the caller, not what the search returned.
+
+**Rejected alternatives.**
+
+- *A quirks table keyed on `collectionId`.* It is the record-type × country
+  shape the lead has ruled out for engine data, it would have covered 8
+  collections, and the abbreviation is a property of the name, not of one
+  collection.
+- *The male half (`-son` / `-sen` → `s`).* The same wiki pages document it, but
+  `-son` also ends ordinary English surnames — Johnson, Wilson — so the hint would
+  fire on every English nil and suggest "Johns". `-datter` and `-dotter` end no
+  English surname.
+
+**One implementation.** The whole rule — trigger and content — is
+`surnameVariantHints(input, out)` in `src/utils/surname-variant-hints.ts`. The
+eval harness's mock calls that compiled function on every `record_search`
+response it serves, inside the node process it already runs, so a unit test sees
+exactly what production would send for the arguments the model actually used. No
+fixture carries a hand-written copy.
 
 ### `relativeTerms` — whether the relative you anchored on is actually there
 
@@ -1796,6 +1882,14 @@ either and importing from the other would make the two mutually importing.
 - `parseUpstreamErrorBody(body)` — pull `errors[]` from a 400
   response body.
 
+### `packages/engine/mcp-server/src/utils/surname-variant-hints.ts`
+
+- `surnameVariantHints(input, out)` — the whole `surnameVariantHints` rule:
+  trigger and content. Import-free, because the eval mock runs it out of the
+  compiled build.
+- `patronymicVariants(surname)` — the abbreviated forms of one surname, or `[]`.
+- `SURNAME_FIELDS`, `PATRONYMIC_ABBREVIATIONS`, `SURNAME_VARIANT_HINTS_NOTE`.
+
 ### `packages/engine/mcp-server/src/index.ts`
 
 Register `recordSearchTool` following the existing tool pattern (import,
@@ -1882,10 +1976,17 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 62 | Survives the staged slim block, inline **and** in the sidecar | The staged case is the normal one; proven by sabotage |
 | 63 | Reaches `ranked[].batchNumber` on a `subjectId` search | The projection a subject-named search actually reads |
 | 64 | `results` is ALWAYS present and complete, and carries the ranking annotation when ranking ran | There is one row list, so the failure to guard against is a row going missing rather than a row being duplicated. `tests/utils/staged-compaction.test.ts` pins that no row is ever dropped, that an unscored row trails the scored ones rather than vanishing, and that `ranked` gives up `matches` once the rows carry the scores. The earlier conditional-drop design and its `record-search-ranked-drop.test.ts` were removed with it. |
+| 65 | `surnameVariantHints` emitted for `ut_search_records_023`'s inputs (`surname: "Halsteinsdatter"`, `collectionId: "1468080"`, nil), with no project | The issue's case; needs no `projectPath` |
+| 66 | Emitted on `spouseSurname` when the bride is the secondary party | The shape the real index answers |
+| 67 | Serialized immediately before `results` | Key order |
+| 68 | Silent on a nil `Neal` and a nil `Johnson` | Non-qualifying surname; pins the rejected `-son` case |
+| 69 | Silent when the search found records and no ranking ran | Trigger is "did not find the subject", not "any search" |
+| 70 | Fires on rows + `subjectResolvable: false`, says "did not find the subject", precedes `results`, and is absent from the staged sidecar | The one branch that stages, so the only place "never staged" can be shown |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
-cover `batchNumber`.
+cover `batchNumber`; 65–70 cover `surnameVariantHints`, whose rule is also
+unit-tested in `tests/utils/surname-variant-hints.test.ts`.
 
 ### Smoke-test script
 
