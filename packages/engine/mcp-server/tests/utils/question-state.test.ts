@@ -331,6 +331,18 @@ describe("questionStatus — unregistered disagreements route to conflict-resolu
     expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
   });
 
+  it("a superseded link no longer ties its assertion to the old person", () => {
+    const d = doc({
+      assertions: [birthplace("a_1", "England"), birthplace("a_2", "Ohio")],
+      person_evidence: [
+        { id: "pe_1", assertion_id: "a_1", person_id: "I2", superseded_by: null },
+        { id: "pe_2", assertion_id: "a_2", person_id: "I2", superseded_by: "pe_3" },
+        { id: "pe_3", assertion_id: "a_2", person_id: "I3", superseded_by: null },
+      ],
+    });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+  });
+
   it("a disagreement wholly within another question's assertions does not route this one", () => {
     const d = doc({
       assertions: [
@@ -381,6 +393,14 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
 
   it("a person outside the question's scope is not reported", () => {
     const d = doc({ assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }] });
+    expect(questionStatus(d, question(), tree).competingParentSets).toEqual([]);
+  });
+
+  it("a person reached only through a superseded link is not in scope", () => {
+    const d = doc({
+      assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }],
+      person_evidence: [{ id: "pe_1", assertion_id: "a_1", person_id: "I1", superseded_by: "pe_2" }],
+    });
     expect(questionStatus(d, question(), tree).competingParentSets).toEqual([]);
   });
 

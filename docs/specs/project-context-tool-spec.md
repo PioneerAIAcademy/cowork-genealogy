@@ -185,7 +185,7 @@ question's assertions are linked to — who is the child of more than two
 `ParentChild` relationships, while fewer than two hypotheses list this question in
 `related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
 fires on 6 e2e question-runs (the two spot-checked are real: one father with two
-different mothers; two same-named mothers), and on the mined GHLT-TFG scenario.
+different mothers; two same-named mothers).
 Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to

@@ -134,7 +134,7 @@ export function unregisteredDisagreements(
   const groups = new Map<string, any[]>();
   for (const pe of arr(research?.person_evidence)) {
     const a = byId.get(pe?.assertion_id);
-    if (!a || typeof pe?.person_id !== "string") continue;
+    if (!a || typeof pe?.person_id !== "string" || pe?.superseded_by != null) continue;
     const key = `${pe.person_id}\u0000${VITAL_EVENT[a.fact_type]}`;
     const g = groups.get(key) ?? [];
     if (!g.includes(a)) g.push(a);
@@ -196,7 +196,11 @@ export function competingParentSets(
     arr(research?.project?.subject_person_ids).filter((id): id is string => typeof id === "string"),
   );
   for (const pe of arr(research?.person_evidence)) {
-    if (questionAssertionIds.has(pe?.assertion_id) && typeof pe?.person_id === "string") {
+    if (
+      questionAssertionIds.has(pe?.assertion_id) &&
+      typeof pe?.person_id === "string" &&
+      pe?.superseded_by == null
+    ) {
       inScope.add(pe.person_id);
     }
   }
