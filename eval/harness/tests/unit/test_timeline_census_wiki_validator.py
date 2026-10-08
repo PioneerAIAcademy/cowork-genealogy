@@ -150,6 +150,21 @@ def test_passes_on_single_entry_with_bounding_years():
     check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
 
 
+def test_passes_when_a_sibling_entry_names_only_a_bounding_year():
+    """Finding #4: a bounding year that is the ONLY year in its own
+    `expected_events` entry — no census year named in that entry at all — must
+    not be picked up as a false census year. `"England census (married 1859)"`
+    has nothing outside the parenthetical for the entry's own census word to
+    pair with, so the old code fell back to the parenthetical's 1859 (a
+    marriage year, not a census year) and flagged it absent from the England
+    page. A sibling entry naming the real year, `"England census 1861"`, must
+    still be counted and verified."""
+    gap = [{"start": "1859", "end": "1861",
+            "expected_events": ["England census (married 1859)", "England census 1861"],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
 def test_fires_on_cross_country_page_contamination():
     """Finding #3: a year attributed to Ireland that is absent from the Ireland
     page but present on another fetched page (England's 1921) must be caught.

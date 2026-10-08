@@ -152,15 +152,13 @@ added. Timelines are regeneratable — replaced wholesale when regenerated.
 
 ### 2. Gather assertions
 
-Read `research.json`:
-- Find all `person_evidence` entries for the target person(s) where
-  `superseded_by` is null
-- Collect the `assertion_id` from each
-- Fetch the full `assertions` section **once**, with no `assertionId` filter —
-  that section's supported filters are `recordId`, `recordRole`, `sourceId`, and
-  `questionId`, not `assertionId` (a filter that exists for other sections, e.g.
-  `conflicts` and `person_evidence`, but not this one). Look up each needed id
-  from the returned list rather than one `research_query` call per assertion.
+Use `project_context` and `research_query` — never `Read` the project files directly:
+- `research_query({ section: "person_evidence", personId })` for each target
+  person; page with `offset` until the response's `truncated` is false. Keep
+  only entries where `superseded_by` is null and collect their `assertion_id`.
+- `research_query({ section: "assertions" })`, no `assertionId` filter — page
+  with `offset` until `truncated` is false. Look up each needed id from the
+  accumulated list.
 
 Filter to assertions with date or place information — assertions without
 temporal or geographic data (e.g., name-only assertions) don't contribute to
@@ -418,8 +416,7 @@ input rather than retrying blindly.
 
 **Before the call, re-read every `gaps[].expected_events` entry you are about to
 send and delete any that names a non-surviving year** (step 4) — including one
-that names it with a caveat attached. This is the last point at which that is
-still cheap to fix.
+that names it with a caveat attached.
 
 **New timeline** — `op: "append"`. The tool assigns the `t_` id and stamps
 `generated`, so omit both from the entry:
@@ -439,8 +436,8 @@ research_append({
 ```
 
 **Regeneration (replace an existing timeline for the same person/hypothesis)** —
-read that timeline's `t_` id from `research.json` `timelines[]` and update it in
-place with `op: "update"`. The `fields` you pass are shallow-merged and array
+get that timeline's `t_` id from `research_query({ section: "timelines" })` and
+update it in place with `op: "update"`. The `fields` you pass are shallow-merged and array
 fields (`events`, `gaps`) are replaced **wholesale**, so pass the full recomputed
 arrays. `update` does **not** re-stamp `generated`, so include it yourself with
 the current timestamp so downstream callers know how fresh the analysis is:

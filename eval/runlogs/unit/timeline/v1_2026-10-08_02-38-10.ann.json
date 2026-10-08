@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-08-25_21-22-08.json",
-  "annotator": "eruth937@gmail.com",
+  "run_log": "v1_2026-10-08_02-38-10.json",
+  "annotator": "122873616+Cia-3@users.noreply.github.com",
   "corrections": [
     {
       "test_id": "ut_timeline_001",
@@ -11,15 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -27,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -35,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
       "dimension_name": "Tool usage — place resolution and distance",
       "llm_score": 3,
@@ -43,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
       "dimension_name": "Gap detection",
       "llm_score": 3,
@@ -51,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
       "dimension_name": "Deferral of logical-impossibility detection",
       "llm_score": 3,
@@ -59,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
       "dimension_name": "Geographic feasibility",
       "llm_score": null,
@@ -67,31 +59,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_timeline_001",
       "dimension_source": "rubric",
       "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_timeline_eng",
       "dimension_source": "rubric",
       "dimension_name": "Gap detection",
       "llm_score": 3,
@@ -99,9 +75,145 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_eng",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_eng",
       "dimension_source": "rubric",
       "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool usage — place resolution and distance",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -116,48 +228,32 @@
     },
     {
       "test_id": "ut_timeline_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Occupation and residence are not defined expected event based on the skill own rule."
+    },
+    {
+      "test_id": "ut_timeline_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_timeline_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_timeline_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -165,7 +261,23 @@
     {
       "test_id": "ut_timeline_004",
       "dimension_source": "rubric",
-      "dimension_name": "Tool usage — place resolution and distance",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -181,37 +293,21 @@
     {
       "test_id": "ut_timeline_004",
       "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_name": "Tool usage — place resolution and distance",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_timeline_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
-      "llm_score": null,
-      "corrected_score": null,
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_timeline_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_003",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_003",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -219,7 +315,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_003",
+      "test_id": "ut_timeline_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -228,32 +324,16 @@
     },
     {
       "test_id": "ut_timeline_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_timeline_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Gap detection",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -268,24 +348,40 @@
     },
     {
       "test_id": "ut_timeline_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_source": "rubric",
+      "dimension_name": "Gap detection",
       "llm_score": 3,
       "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Deferral of logical-impossibility detection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Geographic feasibility",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_timeline_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
       "test_id": "ut_timeline_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

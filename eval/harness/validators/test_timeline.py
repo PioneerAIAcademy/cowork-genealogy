@@ -26,6 +26,11 @@ from validators_lib import assert_foreign_keys_valid
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
 _PAREN_RE = re.compile(r"\([^()]*\)")
+# A parenthetical naming one of these is bounding the person's life (birth,
+# marriage, death), not naming the census year itself — "(married 1859)",
+# "(b. 1861)". A year found only inside such a parenthetical is not a census
+# year and must not be returned as one (finding #4).
+_BOUNDING_EVENT_RE = re.compile(r"\b(?:married?|marriage|wed|born|died|death)\b|\bb\.|\bd\.", re.IGNORECASE)
 
 
 # --- Helpers ----------------------------------------------------------
@@ -249,6 +254,19 @@ def _census_year_of_entry(entry: str) -> int | None:
     census_at = [m.start() for m in re.finditer("census", blanked.lower())]
     if not census_at:
         return None
+    # A year sitting inside a parenthetical that names a bounding life event
+    # (birth, marriage, death) is that event's year, never the census year —
+    # "England census (married 1859)" names no census year at all, and must
+    # return None rather than fall back to 1859 (finding #4). Spans, not a
+    # blanket "any parenthetical", because a parenthetical the jurisdiction
+    # check needs — "census (1861, England & Wales)" — must stay eligible.
+    bounding_spans = [
+        m.span() for m in _PAREN_RE.finditer(entry) if _BOUNDING_EVENT_RE.search(m.group(0))
+    ]
+
+    def _in_bounding_span(pos: int) -> bool:
+        return any(start <= pos < end for start, end in bounding_spans)
+
     # Wider than any entry, so the ordering is by in/out-of-parens first and
     # distance only within a group.
     _OUTSIDE_WINS = 10_000
@@ -259,6 +277,7 @@ def _census_year_of_entry(entry: str) -> int | None:
             _OUTSIDE_WINS if blanked[m.start() : m.end()].strip() == "" else 0,
         )
         for m in _YEAR_RE.finditer(entry)
+        if not _in_bounding_span(m.start())
     ]
     if not years:
         return None
