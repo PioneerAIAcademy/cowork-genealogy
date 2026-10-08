@@ -878,3 +878,24 @@ def test_the_probe_values_are_what_rehearse_sets():
         assert (rh.ENV_NS, name, value) in rh.CASES[probe]["ops"][tier], probe
     assert rh.CASES["idle_session_60s"]["rds_param"] == bounds.IDLE_PROBE
     assert bounds.IDLE_TEXT.read_text(encoding="utf-8").count(";") >= 10, "the idle turn must outlast a minute"
+
+
+def test_events_until_polls_the_deployed_log_until_the_turns_closing_line_lands(monkeypatch):
+    """stop_main read CloudWatch 3.8 s after its close and found no ev=halt yet (U13,
+    2026-10-08): a deployed read waits for the closing ev=turn, which is logged last."""
+    reads = iter([[{"ev": "halt", "turn_id": "t1"}],
+                  [{"ev": "halt", "turn_id": "t1"}, {"ev": "turn", "turn_id": "t1", "status": 200}],
+                  [{"ev": "halt", "turn_id": "t1"}, {"ev": "turn", "turn_id": "t1", "status": 200, "outcome": "stopped"}]])
+    monkeypatch.setattr(bounds, "TARGET", object.__new__(target.DeployedTarget))
+    monkeypatch.setattr(bounds, "worker_events", lambda: next(reads))
+    monkeypatch.setattr(bounds.smoke.time, "sleep", lambda s: None)
+    events = bounds.events_until("t1", bounds.closing_lines)
+    assert events[-1].get("outcome") == "stopped", events
+
+
+def test_events_until_looks_once_on_compose(monkeypatch):
+    calls: list[int] = []
+    monkeypatch.setattr(bounds, "TARGET", RecordingTarget([]))
+    monkeypatch.setattr(bounds, "worker_events", lambda: calls.append(1) or [])
+    assert bounds.events_until("t1", bounds.closing_lines) == []
+    assert len(calls) <= 2, "compose has no log lag to poll for"

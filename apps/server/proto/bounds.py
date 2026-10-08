@@ -767,7 +767,7 @@ def case_precli(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
             TARGET.signal("worker", "start")
     if not done(ctx, client, rep, tid):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [closed_check("precli", snap, TERMINAL_STOPPED), payload_check("precli", snap, TERMINAL_STOPPED),
                    *unbilled_checks("precli", snap, events, TERMINAL_STOPPED)]
 
@@ -781,7 +781,7 @@ def case_stop_main(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     pressed_at = stopped_at(ctx, rep.session_id)
     if not done(ctx, client, rep, tid, since=t, label="stopped"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [*halt_checks("stop_main", snap.calls, events_for(events, tid), reason=STOP_REASON, subagent=False),
                    closed_check("stop_main", snap, TERMINAL_STOPPED), payload_check("stop_main", snap, TERMINAL_STOPPED)]
     rep.figures["halt_after_press_s"] = halt_latency(snap, pressed_at)
@@ -807,7 +807,7 @@ def _delegation(ctx: Ctx, client: httpx.Client, rep: Report, *, bound: str) -> N
         t = time.monotonic()
     if not done(ctx, client, rep, tid, since=t, label="bounded"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     label = rep.case
     if bound == "stop":
         rep.checks += [*halt_checks(label, snap.calls, events_for(events, tid), reason=STOP_REASON, subagent=True),
@@ -894,14 +894,14 @@ def case_cap_main(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     t = time.monotonic()
     if not done(ctx, client, rep, tid, since=t, label="capped"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += cap_checks("cap_main", snap, events, cap_usd=ctx.cap_usd, subagent=False)
     rep.findings.append("Q1 (cap, main thread): %s -- %s" % q1_answer(events, tid))
     # The capped session's next message closes before the CLI (the precli cap half).
     nxt = post(ctx, client, rep, FOLLOW_UP_TEXT)["turn_id"]
     if not done(ctx, client, rep, nxt, label="next"):
         return
-    snap2, events = snapshot(ctx, rep.session_id, nxt), worker_events()
+    snap2, events = snapshot(ctx, rep.session_id, nxt), events_until(nxt, closing_lines)
     rep.checks += [closed_check("cap_main: next", snap2, TERMINAL_BUDGET),
                    payload_check("cap_main: next", snap2, TERMINAL_BUDGET, "spend"),
                    *unbilled_checks("cap_main: next", snap2, events, TERMINAL_BUDGET)]
@@ -913,7 +913,7 @@ def case_cap_main_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     tid = post(ctx, client, rep, demo.opening_prompt(meta, None))["turn_id"]
     if not done(ctx, client, rep, tid, label="capped"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += cap_checks("cap_main_real", snap, events, cap_usd=ctx.cap_usd, subagent=None)
     fired = [e for e in events_for(events, tid) if e.get("ev") == "spend_cap"]
     estimate = (snap.payload or {}).get("spend_estimate_usd")
@@ -959,7 +959,7 @@ def _outage(ctx: Ctx, client: httpx.Client, rep: Report, *, condition: str) -> N
     rep.findings.extend(f"tools log in the window: {ln[:200]}" for ln in tools_lines[:5])
     if not done(ctx, client, rep, tid, label="redelivered"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     want = {"stop": TERMINAL_STOPPED, "cap": TERMINAL_BUDGET, "held": TERMINAL_QUEUED}[condition]
     rep.checks += [*outage_checks(rep.case, events, tid, terminated=terminated, ran=ran),
                    redelivered_check(rep.case, snap), closed_check(rep.case, snap, want)]
@@ -1030,7 +1030,7 @@ def case_outage_hook(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.findings.append(f"calls issued in attempt 1 after the cancel with no result: {unresolved}")
     if not done(ctx, client, rep, tid, label="redelivered"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [*hook_outage_checks(rep.case, events, tid, cancelled=cancelled, ran=ran),
                    redelivered_check(rep.case, snap), ran_check(f"{rep.case}: the redelivery", snap)]
     rep.findings.extend(f"{rep.case}: {line}" for line in result_findings(events, tid))
@@ -1055,7 +1055,7 @@ def case_outage_pause(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         rep.findings.append(f"turn_done {wall:.0f}s after the unpause")
     except TimeoutError as exc:
         rep.findings.append(f"no turn_done: {exc} (settle stops it)")
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     ran, unresolved = calls_ran(entries(ctx, sdk, mark1))
     mine = events_for(events, tid)
     hook = [str(e.get("line"))[:200] for e in mine if e.get("ev") == "cli_stderr"
@@ -1186,7 +1186,7 @@ def case_sigterm_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     TARGET.signal("worker", "term")
     if not done(ctx, client, rep, target, label="resumed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, target), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, target), events_until(target, closing_lines)
     rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, target), ""))
     rep.checks += resume_checks("sigterm_real", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
                                 entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before))
@@ -1209,7 +1209,7 @@ def case_dead_letter_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.figures["terminated_backends"] = terminated
     if not done(ctx, client, rep, tid, label="closed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [closed_check("dead_letter_real", snap, "retries_exhausted"),
                    ("dead_letter_real: one receive", (snap.row or (0,))[0] == 1, f"row={snap.row}"),
                    ("dead_letter_real: its close released the held message",
@@ -1237,7 +1237,7 @@ def case_keepalive_drop(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
                        f"figures={rep.figures}"))
     if not done(ctx, client, rep, tid, label="resumed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks.append(redelivered_check("keepalive_drop", snap))
     rep.findings.append(f"store errors on the turn: {[e.get('ev') for e in events_for(events, tid) if is_store_error(str(e.get('error') or ''))][:5]}")
 
@@ -1409,6 +1409,13 @@ def turn_lines(events: list[dict], turn_id: str) -> list[dict]:
     return [e for e in events_for(events, turn_id) if e.get("ev") == "turn"]
 
 
+def closing_lines(events: list[dict], turn_id: str) -> list[dict]:
+    """The turn's closing ev=turn line (it carries ``outcome``), logged after its halt and
+    release lines: once CloudWatch has it, a deployed read has the rest (U13: stop_main read
+    the log 3.8 s after the close and found no ev=halt yet)."""
+    return [e for e in turn_lines(events, turn_id) if "outcome" in e]
+
+
 def events_until(turn_id: str, lines: Callable[[list[dict], str], list[dict]] = turn_lines) -> list[dict]:
     """The worker's lines once ``lines`` finds the turn's among them, polled for CloudWatch's
     lag; whatever is there at EVENT_LAG_S."""
@@ -1416,7 +1423,9 @@ def events_until(turn_id: str, lines: Callable[[list[dict], str], list[dict]] = 
         evs = worker_events()
         return evs if lines(evs, turn_id) else None
 
-    return smoke.wait_for(got, EVENT_LAG_S, 5.0) or worker_events()
+    # Compose reads docker logs, which have no lag: one look, not EVENT_LAG_S of polling.
+    lag = EVENT_LAG_S if isinstance(TARGET, target.DeployedTarget) else 0
+    return smoke.wait_for(got, lag, 5.0) or worker_events()
 
 
 def resumed_line_check(label: str, events: list[dict], turn_id: str) -> Check:
