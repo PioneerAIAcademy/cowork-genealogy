@@ -1275,6 +1275,432 @@ def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
                                                         if after else "neither re-ran nor read a tool-results path"))
 
 
+# -- U13 PR8: measurements under a probe case the operator set (rehearse.py probe --case) ----
+
+# What each probe case leaves on its tier, as TARGET.settings reads it back; a case checks
+# its probes before it posts, so a forgotten probe costs no turn. Pinned to rehearse.py's
+# CASES (test_proto_target.py). idle_session_60s is an RDS parameter, read from pg_settings.
+PROBE_SETTINGS = {
+    "kill_window": ("worker", "SQSD_VISIBILITY_TIMEOUT_S", "1500"),
+    "debug_hold": ("tools", "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS", "20000"),
+    "refresh_age_0": ("web", "FS_GRANT_REFRESH_AGE_S", "0"),
+}
+IDLE_PROBE = ("idle_session_timeout", "60000")
+IDLE_SETTING_SQL = "SELECT setting FROM pg_settings WHERE name = %s"
+ERROR_VISIBILITY_S = 300.0  # step 11's interim ErrorVisibilityTimeout, which has no environment mirror
+RECLAIM_BUDGET_S = 1800.0   # past kill_window's VisibilityTimeout (1500 s)
+EVENT_LAG_S = DEPLOYED_DELIVERY_S[0]
+PG_NOW_SQL = "SELECT now()"
+PROJECT_SQL = "SELECT project_id FROM sessions WHERE session_id = %s"
+USER_SEQ_SQL = ("SELECT max(seq) FROM session_events WHERE session_id = %s AND kind = 'user_msg' "
+                "AND payload->>'turn_id' = %s")
+RECLAIM_SQL = "SELECT receive_count, claimed_at, completed_at FROM turns WHERE turn_id = %s"
+# kill_hold: the delegated extraction_append inside the hold -- allowed, no duration_ms yet.
+HOLD_ROW_SQL = ("SELECT id, ts FROM tool_calls WHERE turn_id = %s AND agent_type = 'record-extractor' "
+                "AND tool_name LIKE '%%extraction_append' AND decision = 'allow' AND duration_ms IS NULL "
+                "ORDER BY id LIMIT 1")
+DURATION_SQL = "SELECT duration_ms FROM tool_calls WHERE id = %s"
+# The main-thread delegation the held call runs under: the last Agent/Task row before it.
+AGENT_ROW_SQL = ("SELECT id, duration_ms FROM tool_calls WHERE turn_id = %s AND agent_id IS NULL "
+                 "AND tool_name IN ('Agent', 'Task') AND id < %s ORDER BY id DESC LIMIT 1")
+# research.json's sources sharing one url (or, lacking one, citation): a write that both
+# committed and re-ran shows here.
+DUP_SOURCES_SQL = (
+    "SELECT COALESCE(s->>'url', s->>'citation'), count(*) FROM documents d, jsonb_array_elements("
+    "CASE WHEN jsonb_typeof(d.doc->'sources') = 'array' THEN d.doc->'sources' ELSE '[]'::jsonb END) s "
+    "WHERE d.project_id = %s AND d.name = 'research.json' GROUP BY 1 HAVING count(*) > 1 ORDER BY 1"
+)
+SOURCES_SQL = ("SELECT CASE WHEN jsonb_typeof(doc->'sources') = 'array' THEN jsonb_array_length(doc->'sources') "
+               "ELSE 0 END FROM documents WHERE project_id = %s AND name = 'research.json'")
+IDLE_TEXT = PROBES / "u13-idle-watch.txt"
+IDLE_LIMIT_S = 60.0
+IDLE_WATCH_S = 900.0
+IDLE_POLL_S = 5.0
+IDLE_CUT = "idle-session timeout"  # Postgres's FATAL text for a backend idle_session_timeout ended
+# idle_watch: the patron's attempt-lock backend (grants.ATTEMPT_LOCK_SQL's two-int4 key, so
+# objsubid 2; objid is hashtext(owner) as an unsigned oid), its age and its idle time.
+LOCK_BACKEND_SQL = (
+    "SELECT a.pid, EXTRACT(EPOCH FROM now() - a.backend_start), a.state, EXTRACT(EPOCH FROM now() - a.state_change) "
+    "FROM pg_locks l JOIN pg_stat_activity a USING (pid) "
+    "JOIN projects p ON p.project_id = (SELECT project_id FROM sessions WHERE session_id = %s) "
+    "WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 2 AND l.classid = %s::int4::oid "
+    "AND l.objid::bigint = (hashtext(p.owner_id)::bigint & 4294967295)"
+)
+TURN_BACKEND_SQL = ("SELECT pid, EXTRACT(EPOCH FROM now() - backend_start), state, "
+                    "EXTRACT(EPOCH FROM now() - state_change) FROM pg_stat_activity WHERE application_name = %s")
+RSS_EVERY_S = 10.0
+# One SSM call per sample: web.service's cgroup (the worker and every CLI it spawned), the
+# instance's MemAvailable, the /tmp tmpfs, then every process's RSS.
+RSS_COMMANDS = (
+    "echo cgroup_bytes=$(systemctl show -p MemoryCurrent --value web.service)",
+    "awk '/^MemAvailable:/ {print \"avail_kb=\" $2}' /proc/meminfo",
+    "echo tmp_used_mb=$(df -m --output=used /tmp | tail -1)",
+    "ps -eo rss,comm --no-headers",
+)
+
+
+def probes_in_effect(ctx: Ctx, rep: Report, *probes: str) -> bool:
+    """A check per probe the measurement needs; False when one is not in effect (post nothing)."""
+    ok_all, read = True, {}
+    for probe in probes:
+        if probe == "idle_session_60s":
+            name, want = IDLE_PROBE
+            got = turn.one(ctx.dsn, IDLE_SETTING_SQL, (name,))
+        else:
+            tier, name, want = PROBE_SETTINGS[probe]
+            if tier not in read:
+                read[tier] = TARGET.settings(tier)
+            got = read[tier].get(name)
+        ok = got is not None and str(got) == want
+        rep.checks.append((f"{rep.case}: probe {probe} in effect (else void)", ok, f"{name}={got!r}, wanted {want!r}"))
+        ok_all = ok_all and ok
+    return ok_all
+
+
+def redelivery_timer(gap_s: float, *, visibility_s: float, error_s: float = ERROR_VISIBILITY_S) -> str:
+    """Which sqsd timer brought a killed attempt's message back: the nearer of the two."""
+    return "ErrorVisibilityTimeout" if abs(gap_s - error_s) <= abs(gap_s - visibility_s) else "VisibilityTimeout"
+
+
+def wait_row(ctx: Ctx, turn_id: str, sql: str, params: tuple, every_s: float = 0.3) -> tuple | None:
+    """``sql``'s first row once it has one; None if the turn closes first or at --deadline-s."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < ctx.deadline_s:
+        got = turn.db(ctx.dsn, sql, params)
+        if got:
+            return got[0]
+        if turn.one(ctx.dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
+            return None
+        time.sleep(every_s)
+    return None
+
+
+def wait_reclaim(ctx: Ctx, turn_id: str, receive_count: int, budget_s: float = RECLAIM_BUDGET_S,
+                 every_s: float = 5.0) -> tuple | None:
+    """``(receive_count, claimed_at)`` once a later receive claims the turn; None if it
+    closed first or at the budget, which outlasts kill_window's VisibilityTimeout."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < budget_s:
+        got = turn.db(ctx.dsn, RECLAIM_SQL, (turn_id,))
+        if got and got[0][0] > receive_count:
+            return got[0][0], got[0][1]
+        if got and got[0][2] is not None:
+            return None
+        time.sleep(every_s)
+    return None
+
+
+def resumed_lines(events: list[dict], turn_id: str) -> list[dict]:
+    """The redelivery's ev=turn lines (receive_count >= 2) that answered 200."""
+    return [e for e in events_for(events, turn_id) if e.get("ev") == "turn" and e.get("status") == 200
+            and isinstance(e.get("receive_count"), int) and e["receive_count"] >= 2]
+
+
+def turn_lines(events: list[dict], turn_id: str) -> list[dict]:
+    return [e for e in events_for(events, turn_id) if e.get("ev") == "turn"]
+
+
+def events_until(turn_id: str, lines: Callable[[list[dict], str], list[dict]] = turn_lines) -> list[dict]:
+    """The worker's lines once ``lines`` finds the turn's among them, polled for CloudWatch's
+    lag; whatever is there at EVENT_LAG_S."""
+    def got() -> list[dict] | None:
+        evs = worker_events()
+        return evs if lines(evs, turn_id) else None
+
+    return smoke.wait_for(got, EVENT_LAG_S, 5.0) or worker_events()
+
+
+def resumed_line_check(label: str, events: list[dict], turn_id: str) -> Check:
+    lines = resumed_lines(events, turn_id)
+    return (f"{label}: the redelivery's ev=turn has resumed true and list_subkeys >= 1",
+            any(e.get("resumed") is True and (e.get("list_subkeys") or 0) >= 1 for e in lines),
+            f"lines={[{k: e.get(k) for k in ('receive_count', 'resumed', 'list_subkeys')} for e in lines]}")
+
+
+def reauth(ctx: Ctx, session_id: str, turn_id: str, sdk: str | None) -> tuple[list[str], list[str]]:
+    """``(summary hits since the turn's user_msg, full-result hits)``: demo's and turn's scans."""
+    since = turn.one(ctx.dsn, USER_SEQ_SQL, (session_id, turn_id)) or 0
+    return turn.reauth_hits(ctx.dsn, session_id, since), turn.reauth_entry_hits(ctx.dsn, sdk, turn_id)
+
+
+def _secs(a: Any, b: Any) -> float | None:
+    """``b - a`` in seconds, both Postgres timestamps; None when either is missing."""
+    ta, tb = _ts(a), _ts(b)
+    return round((tb - ta).total_seconds(), 1) if ta and tb else None
+
+
+def case_kill_hold(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M65 (acceptance 4): SIGKILL the worker while a delegated extraction_append sits in the
+    tools tier's 20 s hold (debug_hold), under kill_window. The redelivery must resume and
+    close not no_progress with research.json holding the source once. Void (H:360) unless
+    the kill landed inside the hold with the delegation's Agent row still open, or if any
+    FamilySearch call got the reconnect instruction; one kill by construction. Records
+    which sqsd timer brought the message back: seconds from the kill to the second claim."""
+    if not probes_in_effect(ctx, rep, "kill_window", "debug_hold"):
+        return
+    seeded_session(ctx, rep)
+    project_id = turn.one(ctx.dsn, PROJECT_SQL, (rep.session_id,))
+    tid = post(ctx, client, rep, EXTRACTIONS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    hold = wait_row(ctx, tid, HOLD_ROW_SQL, (tid,))
+    rep.checks.append(("kill_hold: a delegated extraction_append entered the hold", hold is not None,
+                       "the turn closed without one, or none within --deadline-s"))
+    if hold is None:
+        return
+    # Nothing between the hold and the kill but the kill: everything below is read after it,
+    # when the dead worker can write no entry, stamp no duration_ms and add no source.
+    kill_at = turn.one(ctx.dsn, PG_NOW_SQL, ())
+    try:
+        TARGET.signal("worker", "kill")
+        killed_by = turn.one(ctx.dsn, PG_NOW_SQL, ())
+        held_ms = turn.one(ctx.dsn, DURATION_SQL, (hold[0],))
+        agent = turn.db(ctx.dsn, AGENT_ROW_SQL, (tid, hold[0]))
+    finally:
+        TARGET.signal("worker", "start")
+    sdk_before = sdk_of(ctx, rep.session_id)
+    at_kill = max_entry(ctx, sdk_before)
+    # The held write commits ~20 s on whatever happens here, so this may or may not hold its
+    # source; either way only the redelivery can make a second copy.
+    dups_before = turn.db(ctx.dsn, DUP_SOURCES_SQL, (project_id,))
+    rep.figures["sources_at_kill"] = turn.one(ctx.dsn, SOURCES_SQL, (project_id,))
+    hold_s = int(PROBE_SETTINGS["debug_hold"][2]) / 1000
+    sent_s, landed_s = _secs(hold[1], kill_at), _secs(hold[1], killed_by)
+    rep.figures.update({"hold_call_id": hold[0], "kill_sent_s_into_hold": sent_s,
+                        "kill_landed_by_s_into_hold": landed_s, "kill_signal_s": _secs(kill_at, killed_by)})
+    # killed_by is only an upper bound (SSM's poll); a worker alive past the hold would
+    # have stamped duration_ms, so no stamp plus a send inside the hold places the kill.
+    rep.checks += [
+        ("kill_hold: the kill landed inside the hold (else void)",
+         held_ms is None and sent_s is not None and sent_s < hold_s,
+         f"duration_ms={held_ms} sent {sent_s}s (landed by {landed_s}s) into {hold_s:g}s"),
+        ("kill_hold: the delegation's Agent row had no duration_ms at the kill (else void)",
+         bool(agent) and agent[0][1] is None, f"agent row={agent}"),
+    ]
+    reclaim = wait_reclaim(ctx, tid, 1)
+    gap = _secs(killed_by, reclaim[1]) if reclaim else None
+    if gap is not None:
+        rep.figures.update({"reclaimed_after_kill_s": gap, "redelivered_by": redelivery_timer(
+            gap, visibility_s=float(PROBE_SETTINGS["kill_window"][2]))})
+    else:
+        rep.findings.append(f"no second claim within {RECLAIM_BUDGET_S:g} s of the kill (closed first, or never redelivered)")
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, resumed_lines)
+    hits, entry_hits = reauth(ctx, rep.session_id, tid, sdk_before)
+    grown = [d for d in turn.db(ctx.dsn, DUP_SOURCES_SQL, (project_id,)) if d not in dups_before]
+    rep.figures.update({"sources_after": turn.one(ctx.dsn, SOURCES_SQL, (project_id,)),
+                        "reauth_hits": len(hits), "reauth_entry_hits": len(entry_hits)})
+    rep.checks += [
+        *resume_checks("kill_hold", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
+                       entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before)),
+        resumed_line_check("kill_hold", events, tid),
+        ("kill_hold: research.json holds each source once (no duplicate the kill added)", not grown,
+         f"duplicated (key, count)={grown}"),
+        ("kill_hold: no FamilySearch call got the reconnect instruction (else void)", not hits and not entry_hits,
+         f"hits={(hits + entry_hits)[:2]}"),
+    ]
+    rep.findings.extend(f"kill_hold: {line}" for line in result_findings(events, tid))
+
+
+def case_kill_refresh(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M55: SIGKILL mid-turn under kill_window and refresh_age_0, so the web tier refreshes
+    the grant -- revoking the killed attempt's token -- before the redelivery; the resumed
+    attempt must bear the new one (no reconnect instruction anywhere) and resume."""
+    if not probes_in_effect(ctx, rep, "kill_window", "refresh_age_0"):
+        return
+    fresh_session(ctx, client, rep)
+    project_id = turn.one(ctx.dsn, PROJECT_SQL, (rep.session_id,))
+    tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    if reach(ctx, rep, tid, subagent=False) is None:
+        return
+    sdk_before = sdk_of(ctx, rep.session_id)
+    at_kill = max_entry(ctx, sdk_before)
+    grant_before = turn.one(ctx.dsn, turn.GRANT_START_SQL, (project_id,))
+    refreshed = False
+    try:
+        TARGET.signal("worker", "kill")
+        # No attempt is live now, so the web tier's loop may refresh the grant.
+        refreshed = turn.wait_grant_refresh(ctx.dsn, project_id, grant_before)
+    finally:
+        TARGET.signal("worker", "start")
+    rep.figures["grant_refreshed"] = refreshed
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap = snapshot(ctx, rep.session_id, tid)
+    hits, entry_hits = reauth(ctx, rep.session_id, tid, sdk_before)
+    rep.figures.update({"receive_count": snap.row[0] if snap.row else None, "reauth_hits": len(hits),
+                        "reauth_entry_hits": len(entry_hits)})
+    rep.checks += [
+        ("kill_refresh: grant refreshed between attempts", bool(refreshed),
+         "session_started_at did not move while no attempt was live"),
+        ("kill_refresh: reauth_hits=0 since the user_msg", not hits, f"hits={hits[:2]}"),
+        ("kill_refresh: reauth_entry_hits=0 (full tool results)", not entry_hits, f"hits={entry_hits[:2]}"),
+        *resume_checks("kill_refresh", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
+                       entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before)),
+    ]
+
+
+@dataclass
+class IdleSample:
+    """One idle_watch poll: the lock and turn backends as ``(pid, age_s, state, idle_s)``."""
+
+    at_s: float
+    receive_count: int
+    completed: bool
+    lock: list[tuple] = field(default_factory=list)
+    turn: list[tuple] = field(default_factory=list)
+
+
+def idle_figures(samples: list[IdleSample]) -> dict[str, Any]:
+    """Over attempt 1's samples (the first receive_count seen): the lock backends, their
+    oldest age and longest idle; the turn:<id> backends, and when one vanished with the turn
+    still open."""
+    first = [s for s in samples if s.receive_count == samples[0].receive_count] if samples else []
+    seen, cut_at = False, None
+    for i, s in enumerate(first):
+        if s.turn:
+            seen = True
+        # A backend gone in a sample read just before the turn closed is the close, not a
+        # cut: count it only when the next sample still shows the turn open.
+        elif seen and not s.completed and cut_at is None and i + 1 < len(samples) and not samples[i + 1].completed:
+            cut_at = s.at_s
+    # pg_stat_activity hides another role's backend_start/state_change (None) from a role
+    # without pg_read_all_stats: those read as missing, not as a crash.
+    return {
+        "lock_pids": list(dict.fromkeys(r[0] for s in first for r in s.lock)),
+        "lock_max_age_s": max((float(r[1]) for s in first for r in s.lock if r[1] is not None), default=None),
+        "lock_max_idle_s": max((float(r[3]) for s in first for r in s.lock if r[2] == "idle" and r[3] is not None),
+                               default=None),
+        "turn_pids": list(dict.fromkeys(r[0] for s in first for r in s.turn)),
+        "turn_max_idle_s": max((float(r[3]) for s in first for r in s.turn if r[2] == "idle" and r[3] is not None),
+                               default=None),
+        "turn_backend_gone_at_s": cut_at,
+        "final_receive_count": samples[-1].receive_count if samples else None,
+        "samples": len(samples),
+    }
+
+
+def case_idle_watch(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M22: under idle_session_60s (a 60 s parameter-group idle_session_timeout), the attempt's
+    lock connection, which sets idle_session_timeout=0, must outlive 60 s idle with no
+    ev=grant_lock_lost. Polls both backends every 5 s through the driver's own connections
+    until the first redelivery or IDLE_WATCH_S, then Stops a turn still running. Records
+    whether the turn:<id> connection, which TURN_CONN_KWARGS does not shield, was cut."""
+    if not probes_in_effect(ctx, rep, "idle_session_60s"):
+        return
+    fresh_session(ctx, client, rep)
+    since_ms = epoch_ms(utc_now())
+    tid = post(ctx, client, rep, IDLE_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    samples: list[IdleSample] = []
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < IDLE_WATCH_S:
+        row = turn.db(ctx.dsn, RECLAIM_SQL, (tid,))
+        rc, completed = (row[0][0], row[0][2] is not None) if row else (0, False)
+        if rc >= 1:
+            samples.append(IdleSample(at_s=round(time.monotonic() - t0, 1), receive_count=rc, completed=completed,
+                                      lock=turn.db(ctx.dsn, LOCK_BACKEND_SQL, (rep.session_id, ATTEMPT_LOCK_NS)),
+                                      turn=turn.db(ctx.dsn, TURN_BACKEND_SQL, (f"turn:{tid}",))))
+        if completed or rc >= 2:
+            break
+        time.sleep(IDLE_POLL_S)
+    figures = idle_figures(samples)
+    rep.figures.update(figures)
+    if samples and samples[-1].completed:
+        done(ctx, client, rep, tid, label="done")
+    else:
+        t = press(ctx, client, rep)
+        done(ctx, client, rep, tid, since=t, label="stopped")
+    events = events_until(tid)  # ev=grant_lock_lost precedes the attempt's ev=turn
+    lost = [e for e in events_for(events, tid) if e.get("ev") == "grant_lock_lost"]
+    five = [e.get("error") for e in events_for(events, tid) if e.get("ev") == "turn" and e.get("status") == 500]
+    age, idle = figures["lock_max_age_s"], figures["lock_max_idle_s"]
+    rep.checks += [
+        (f"idle_watch: attempt 1's lock backend lived past {IDLE_LIMIT_S:g} s (else void)",
+         age is not None and age > IDLE_LIMIT_S, f"lock_max_age_s={age}"),
+        (f"idle_watch: the lock backend outlived {IDLE_LIMIT_S:g} s idle, one pid throughout attempt 1",
+         idle is not None and idle > IDLE_LIMIT_S and len(figures["lock_pids"]) == 1,
+         f"lock_max_idle_s={idle} lock_pids={figures['lock_pids']}"),
+        ("idle_watch: no ev=grant_lock_lost", not lost, f"lost={lost[:2]}"),
+    ]
+    cut = figures["turn_backend_gone_at_s"]
+    rep.findings.append(
+        f"turn:{tid} backend " + (f"vanished at ~{cut:g} s with the turn open (a cut: a finding against H:327)"
+                                  if cut is not None else "never vanished while the turn was open")
+        + f"; longest idle {figures['turn_max_idle_s']} s; receive_count {figures['final_receive_count']}; "
+          f"500s {five}")
+    for tier in ("web", "tools"):
+        cut_lines = [ln for ln in TARGET.logs(tier, since_ms).splitlines() if IDLE_CUT in ln]
+        rep.findings.append(f"{tier} tier: {len(cut_lines)} log line(s) naming the idle-session timeout"
+                            + (f", first {cut_lines[0][:200]!r}" if cut_lines else ""))
+
+
+def parse_rss(text: str) -> dict[str, Any]:
+    """One RSS_COMMANDS sample, in MB: the ``key=value`` lines, then ``<rss kB> <comm>`` per
+    process. A figure the instance could not give is None."""
+    keys: dict[str, int | None] = {}
+    procs: list[tuple[int, str]] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        key, sep, value = line.partition("=")
+        if sep and key in ("cgroup_bytes", "avail_kb", "tmp_used_mb"):
+            keys[key] = int(value) if value.strip().isdigit() else None
+            continue
+        parts = line.split(None, 1)
+        if len(parts) == 2 and parts[0].isdigit():
+            procs.append((int(parts[0]), parts[1]))
+    top = max(procs, default=None)
+    cgroup, avail = keys.get("cgroup_bytes"), keys.get("avail_kb")
+    return {"total_rss_mb": round(sum(p[0] for p in procs) / 1024, 1),
+            "top_mb": round(top[0] / 1024, 1) if top else None, "top_comm": top[1] if top else None,
+            "cgroup_mb": round(cgroup / 1048576, 1) if cgroup is not None else None,
+            "avail_mb": round(avail / 1024, 1) if avail is not None else None, "tmp_used_mb": keys.get("tmp_used_mb")}
+
+
+def rss_figures(samples: list[dict]) -> dict[str, Any]:
+    """The peaks over every sample (MemAvailable's floor)."""
+    def over(key: str, pick: Callable = max) -> Any:
+        return pick((s[key] for s in samples if s.get(key) is not None), default=None)
+
+    top = max((s for s in samples if s.get("top_mb") is not None), key=lambda s: s["top_mb"], default=None)
+    return {"rss_samples": len(samples), "peak_total_rss_mb": over("total_rss_mb"), "peak_cgroup_mb": over("cgroup_mb"),
+            "peak_process_mb": top["top_mb"] if top else None, "peak_process": top["top_comm"] if top else None,
+            "min_avail_mb": over("avail_mb", min), "peak_tmp_used_mb": over("tmp_used_mb")}
+
+
+def case_concurrent_rss(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M49: two turns at once on two fresh sessions (HttpConnections 2), the worker's memory
+    sampled over SSM every RSS_EVERY_S until both close: peak total RSS, the peak process,
+    web.service's cgroup, MemAvailable's floor and /tmp, for U18. Void unless both ran at
+    once. run_case settles the second session; this settles the first."""
+    sessions: list[str] = []
+    try:
+        for _ in range(2):
+            sessions.append(fresh_session(ctx, client, rep))
+            post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())
+        tids = list(rep.turn_ids)
+        samples: list[dict] = []
+        overlapped = False
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < ctx.deadline_s:
+            t = time.monotonic()
+            samples.append(parse_rss(TARGET.run("worker", *RSS_COMMANDS, comment="U13 concurrent_rss: sample memory")))
+            rows = [turn.db(ctx.dsn, RECLAIM_SQL, (tid,)) for tid in tids]
+            overlapped = overlapped or sum(1 for r in rows if r and r[0][1] is not None and r[0][2] is None) == 2
+            if all(r and r[0][2] is not None for r in rows):
+                break
+            time.sleep(max(0.0, RSS_EVERY_S - (time.monotonic() - t)))
+        rep.figures.update(rss_figures(samples))
+        rep.checks += [("concurrent_rss: both turns ran at once (else void)", overlapped,
+                        "never both claimed and open in one sample"),
+                       ("concurrent_rss: memory sampled", bool(samples), "no sample")]
+        for sid, tid, label in zip(sessions, tids, ("first", "second")):
+            rep.session_id = sid
+            done(ctx, client, rep, tid, label=label)
+    finally:
+        for sid in sessions[:-1]:
+            running, _held = settle(ctx, client, sid)
+            rep.checks.append((f"concurrent_rss: no turn left running on {sid}", not running, f"running={running}"))
+
+
 CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "precli": case_precli,
     "stop_main": case_stop_main,
@@ -1294,14 +1720,19 @@ CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "dead_letter_real": case_dead_letter_real,
     "keepalive_drop": case_keepalive_drop,
     "spill_kill": case_spill_kill,
+    "kill_hold": case_kill_hold,
+    "kill_refresh": case_kill_refresh,
+    "idle_watch": case_idle_watch,
+    "concurrent_rss": case_concurrent_rss,
 }
-SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe_resume"})
+SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe_resume", "kill_hold"})
 # Cases a deployed target cannot run yet, and why.
 COMPOSE_ONLY = {
     "outage_pause": "RDS has no freeze (U19 calls a pause no RDS failure shape)",
 }
 # Cases only a deployed target runs (U13): they signal or firewall the Beanstalk worker.
-DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill"})
+DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill",
+                           "kill_hold", "kill_refresh", "idle_watch", "concurrent_rss"})
 
 
 def run_case(ctx: Ctx, name: str) -> Report:
