@@ -76,7 +76,7 @@ repo's identifier-casing rule):
       fact: string,                      //   the pair — see §2.2.
       assertionIds: string[],
     }],
-    competingParentSets: [{              // in-scope tree persons with >2 parents
+    competingParentSets: [{              // in-scope tree persons with >2 birth parents
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
@@ -169,7 +169,11 @@ satisfies the join; if nothing replaced it, the critique no longer stands.
 reads the evidence instead: two assertions linked by `person_evidence` to the same
 person, about the same birth or death (`birth`/`birthplace`, `death`/`deathplace`),
 whose places disagree or whose years differ by more than two, with no conflict of
-any status listing both ids. At least one of the pair must be extracted for this
+any status listing both ids. A date is the span of years it allows, read from the
+standard form (`Bet 1836 and 1848` is 1836–1848, `Bef 1880` is 1870–1880), and two
+spans disagree only when more than two years separate them. A bounded date the
+standard-date parser cannot read ("after 1870, before 1880") takes no part in the
+year comparison. At least one of the pair must be extracted for this
 question. Places agree when every component of the less specific one prefix-matches
 a component of the other, comparing the raw and standardized spellings separately
 and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
@@ -181,8 +185,9 @@ scenario except `research-unregistered-census-conflicts`, mined to need it.
 
 `competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
 a person in scope — the project's `subject_person_ids` plus every person this
-question's assertions are linked to — who is the child of more than two
-`ParentChild` relationships, while fewer than two hypotheses list this question in
+question's assertions are linked to — who is the child of more than two birth-parent
+`ParentChild` relationships (no `subtype`, or `Biological` in any casing; `Step`,
+`Adoptive`, `Foster` and `Guardian` do not count), while fewer than two hypotheses list this question in
 `related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
 fires on 6 e2e question-runs (the two spot-checked are real: one father with two
 different mothers; two same-named mothers).

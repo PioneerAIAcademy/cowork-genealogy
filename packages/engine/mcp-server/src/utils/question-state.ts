@@ -113,14 +113,18 @@ const placesAgree = (xs: string[][], ys: string[][]): boolean =>
     }),
   );
 
+const BOUNDED_TEXT = /\b(between|bet|after|aft|before|bef)\b/i;
+
 /** The span of years an assertion's date allows — `Bet 1836 and 1848` is
- *  [1836, 1848], `Bef 1880` is [1870, 1880]. A date the standard-date parser
- *  cannot read falls back to its first four-digit year as a one-year span. */
+ *  [1836, 1848], `Bef 1880` is [1870, 1880]. A bounded date the standard-date
+ *  parser cannot read ("after 1870, before 1880") is left out; any other
+ *  unreadable date falls back to its first four-digit year as a one-year span. */
 const yearsOf = (a: any): [number, number] | null => {
   for (const raw of [a?.standard_date, a?.date]) {
     if (typeof raw !== "string") continue;
     const lo = earliestYear(raw), hi = latestYear(raw);
     if (lo !== null && hi !== null) return [lo, hi];
+    if (BOUNDED_TEXT.test(raw)) return null;
     const m = raw.match(/\b(\d{4})\b/);
     if (m) return [Number(m[1]), Number(m[1])];
   }
@@ -187,8 +191,9 @@ export function unregisteredDisagreements(
 }
 
 /** Persons this question bears on — the project's subjects plus every person
- *  its assertions are linked to — whose tree carries more than two parents,
- *  while fewer than two hypotheses relate to the question. Two candidate parent
+ *  its assertions are linked to — whose tree carries more than two birth
+ *  parents (no subtype, or `Biological`), while fewer than two hypotheses relate
+ *  to the question. Two candidate parent
  *  couples with no hypothesis per candidate is identity uncertainty nobody has
  *  set up to test. */
 export function competingParentSets(
@@ -216,7 +221,7 @@ export function competingParentSets(
   const parents = new Map<string, Set<string>>();
   for (const r of arr(tree?.relationships)) {
     if (r?.type !== "ParentChild" || typeof r?.child !== "string" || typeof r?.parent !== "string") continue;
-    if (typeof r?.subtype === "string" && r.subtype.toLowerCase() === "step") continue;
+    if (r?.subtype != null && String(r.subtype).toLowerCase() !== "biological") continue;
     if (!inScope.has(r.child)) continue;
     const s = parents.get(r.child) ?? new Set<string>();
     s.add(r.parent);

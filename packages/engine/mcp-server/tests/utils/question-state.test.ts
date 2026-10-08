@@ -332,6 +332,26 @@ describe("questionStatus — unregistered disagreements route to conflict-resolu
     ]);
   });
 
+  it("Edmond's three bounded dates do not disagree with a year inside their bounds", () => {
+    const birth = (id: string, date: string, standard_date?: string) =>
+      ({ id, fact_type: "birth", date, ...(standard_date ? { standard_date } : {}), extracted_for_question_ids: [Q] });
+    const cases: Array<[ReturnType<typeof birth>, string]> = [
+      [birth("a_1", "between 1836 and 1848"), "1845"],
+      [birth("a_1", "after 1870, before 1880"), "1878"],
+      [birth("a_1", "Bef 1880", "Bef 1880"), "1876"],
+    ];
+    for (const [bounded, year] of cases) {
+      const d = doc({ assertions: [bounded, birth("a_2", year)], person_evidence: linked("a_1", "a_2") });
+      expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+    }
+  });
+
+  it("birth years exactly three apart disagree", () => {
+    const birth = (id: string, date: string) => ({ id, fact_type: "birth", date, extracted_for_question_ids: [Q] });
+    const d = doc({ assertions: [birth("a_1", "1819"), birth("a_2", "1822")], person_evidence: linked("a_1", "a_2") });
+    expect(questionStatus(d, question()).unregisteredDisagreements).toHaveLength(1);
+  });
+
   it("assertions linked to different persons, or not vital facts, never disagree", () => {
     const d = doc({
       assertions: [
@@ -410,15 +430,29 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
     expect(questionStatus(withSubject(), question(), t).competingParentSets).toEqual([]);
   });
 
-  it("step-parents, in any casing, do not count toward competing sets; other subtypes do", () => {
+  it("only birth parents count: Step, Adoptive, Foster and Guardian do not, in any casing", () => {
     const rel = (parent: string, subtype?: string) =>
       ({ type: "ParentChild", parent, child: "I1", ...(subtype ? { subtype } : {}) });
-    const steps = { relationships: [rel("I2"), rel("I3"), rel("I4", "Step"), rel("I5", "step")] };
-    expect(questionStatus(withSubject(), question(), steps).competingParentSets).toEqual([]);
-    const adoptive = { relationships: [rel("I2"), rel("I3"), rel("I4", "Adoptive")] };
-    expect(questionStatus(withSubject(), question(), adoptive).competingParentSets).toEqual([
+    for (const subtype of ["Step", "step", "Adoptive", "Foster", "Guardian"]) {
+      const t = { relationships: [rel("I2"), rel("I3"), rel("I4", subtype)] };
+      expect(questionStatus(withSubject(), question(), t).competingParentSets).toEqual([]);
+    }
+    const biological = { relationships: [rel("I2"), rel("I3", "Biological"), rel("I4", "biological")] };
+    expect(questionStatus(withSubject(), question(), biological).competingParentSets).toEqual([
       { personId: "I1", parentIds: ["I2", "I3", "I4"] },
     ]);
+  });
+
+  it("three birth parents are already competing", () => {
+    const t = { relationships: tree.relationships.slice(0, 3) };
+    expect(questionStatus(withSubject(), question(), t).competingParentSets).toEqual([
+      { personId: "I1", parentIds: ["I2", "I3", "I4"] },
+    ]);
+  });
+
+  it("one related hypothesis does not clear it", () => {
+    const hyps = [{ id: "h_1", related_question_ids: [Q] }];
+    expect(questionStatus(withSubject({ hypotheses: hyps }), question(), tree).competingParentSets).toHaveLength(1);
   });
 
   it("a person outside the question's scope is not reported", () => {
