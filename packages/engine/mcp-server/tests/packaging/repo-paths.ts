@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync, type Dirent } from "node:fs";
 import { join } from "node:path";
 
@@ -171,6 +172,54 @@ export function pathResolves(projectRoot: string, cited: string): boolean {
   return globResolves(projectRoot, pattern);
 }
 
+/**
+ * Every path git can see — tracked files plus untracked files that are not
+ * ignored (`git ls-files --cached --others --exclude-standard`) — and every
+ * directory above one. A gitignored path can exist on one checkout and not
+ * another (a linked `eval/.env`, a build, installed `node_modules`), so a cite
+ * resolved against the disk passes locally and fails in CI. Resolving against
+ * this set gives the same answer everywhere; a gitignored cite needs a
+ * `KNOWN_ABSENT` entry.
+ */
+export function visibleEntries(projectRoot: string): Set<string> {
+  const run = spawnSync("git", ["ls-files", "-z", "--cached", "--others", "--exclude-standard"], {
+    cwd: projectRoot,
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  if (run.status !== 0) throw new Error(`git ls-files failed in ${projectRoot}: ${run.stderr}`);
+  const entries = new Set<string>();
+  for (const file of run.stdout.split("\0")) {
+    if (!file) continue;
+    entries.add(file);
+    for (let i = file.indexOf("/"); i !== -1; i = file.indexOf("/", i + 1)) entries.add(file.slice(0, i));
+  }
+  return entries;
+}
+
+/**
+ * `pathResolves`, answered from `visibleEntries` instead of the disk. Same
+ * placeholder and glob rules: placeholders become `*`, `*` matches within one
+ * segment, `**` matches zero or more directories, a trailing `**` needs an entry.
+ */
+export function pathResolvesIn(entries: Set<string>, cited: string): boolean {
+  const pattern = cited.replace(new RegExp(`(?:${PLACEHOLDER.source})+`, "g"), "*");
+  const segments = pattern.split("/").filter((s) => s.length > 0);
+  if (!pattern.includes("*")) return entries.has(segments.join("/"));
+  let re = "^";
+  segments.forEach((segment, i) => {
+    const last = i === segments.length - 1;
+    if (segment === "**") {
+      re += last ? "[^/]+(?:/[^/]+)*" : "(?:[^/]+/)*";
+      return;
+    }
+    re += segment.split("*").map(escapeRe).join("[^/]*") + (last ? "" : "/");
+  });
+  const rx = new RegExp(`${re}$`);
+  for (const entry of entries) if (rx.test(entry)) return true;
+  return false;
+}
+
 /** Fenced ```code``` blocks, contents only. */
 export function fencedBlocks(text: string): string[] {
   return [...text.matchAll(/^```[^\n]*\n([\s\S]*?)^```/gm)].map((m) => m[1]);
@@ -239,17 +288,30 @@ export function headingAnchors(text: string): Set<string> {
  * `make <target>` citations. Read only from code — inline spans and fenced
  * blocks — never from prose, because "make sure", "make the call", and "make
  * it fail" all parse as `make <target>` otherwise.
+ *
+ * A target may name a family with `*` after a literal prefix (`make e2e-*`);
+ * `makeTargetResolves` reads that as a glob. A target that is only a
+ * placeholder (`make <target>`) names no target and is not extracted.
  */
+const MAKE_TARGET = String.raw`[A-Za-z0-9_.-]+(?:\*[A-Za-z0-9_.-]*)*`;
+
 export function citedMakeTargets(text: string): string[] {
   const found = new Set<string>();
   for (const m of text.matchAll(/`([^`\n]+)`/g)) {
-    const inline = m[1].trim().match(/^make\s+([A-Za-z0-9_.-]+)/);
+    const inline = m[1].trim().match(new RegExp(`^make\\s+(${MAKE_TARGET})`));
     if (inline) found.add(inline[1]);
   }
   for (const block of fencedBlocks(text)) {
-    for (const m of block.matchAll(/^[ \t]*make\s+([A-Za-z0-9_.-]+)/gm)) found.add(m[1]);
+    for (const m of block.matchAll(new RegExp(`^[ \\t]*make\\s+(${MAKE_TARGET})`, "gm"))) found.add(m[1]);
   }
   return [...found];
+}
+
+/** Does a cited make target exist? A `*` matches one or more characters of one target name. */
+export function makeTargetResolves(targets: Set<string>, cited: string): boolean {
+  if (!cited.includes("*")) return targets.has(cited);
+  const re = new RegExp(`^${cited.split("*").map(escapeRe).join("[A-Za-z0-9_.-]+")}$`);
+  return [...targets].some((t) => re.test(t));
 }
 
 /**

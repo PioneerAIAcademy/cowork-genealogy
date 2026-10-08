@@ -7,9 +7,12 @@ timeline is hand-computed so the tool-vs-non-tool split is checkable by eye.
 
 from __future__ import annotations
 
+import pytest
+
 from e2e.latency_report import (
     LatencyBreakdown,
     analyze_result,
+    exclusion_reason,
     format_breakdown,
     format_markdown_table,
     format_skill_phases,
@@ -294,3 +297,94 @@ def test_a_counted_sleep_under_a_minute_is_still_shown():
     bd = analyze_result(_windows_slept())
     bd.counted_sleep_s = 55.0
     assert "host sleep:      0.9m" in format_breakdown(bd)
+
+
+# ---------------------------------------------------------------------------
+# Multi-query runs (#3128): their ResultMessage figures cover the last query
+# only, so the summary and the table name them instead of printing them. The
+# per-skill phases read the timeline and wall clock, which are whole-run.
+# ---------------------------------------------------------------------------
+
+
+def _multi_query_result(**overrides):
+    """`_result()` with a second query: a background subagent's notification and
+    then a fresh `system:init`, the anders-monsen-ancestry 2026-09-24 shape."""
+    usage = {
+        **_result()["usage"],
+        "num_turns": 3,
+        "timeline": [
+            [0.0, "system:init", []],
+            [8.0, "assistant", ["Skill:question-selection"]],
+            [10.0, "tool_result", ["Skill"]],
+            [12.0, "system:task_notification", []],
+            [12.5, "system:init", []],
+            [20.0, "assistant", []],
+        ],
+    }
+    return _result(usage=usage, test_id="anders-monsen-ancestry", **overrides)
+
+
+def test_exclusion_reason_names_a_multi_query_run():
+    assert exclusion_reason(_multi_query_result()) == "multi-query"
+
+
+def test_exclusion_reason_is_none_for_a_one_query_run_and_for_no_usage():
+    assert exclusion_reason(_result()) is None
+    assert exclusion_reason({"fixture": "found-slug"}) is None
+
+
+def _write(tmp_path, name, result):
+    import json
+
+    p = tmp_path / name
+    p.write_text(json.dumps(result), encoding="utf-8")
+    return p
+
+
+@pytest.mark.parametrize("mode", [[], ["--markdown"]])
+def test_summary_and_table_name_a_multi_query_run_instead_of_printing_it(
+    mode, tmp_path, capsys
+):
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    assert latency_report.main([*mode, str(flagged)]) == 0
+    out = capsys.readouterr().out
+    assert "excluded (multi-query)" in out
+    assert str(flagged) in out
+    assert "anders-monsen-ancestry" not in out.replace(str(flagged), "")
+
+
+def test_markdown_separates_the_exclusion_from_the_table(tmp_path, capsys):
+    """A line straight after a GFM table reads as another row, so `MD=1 > table.md`
+    would carry the exclusion inside the table."""
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    clean = _write(tmp_path, "run-2026-09-25_00-00-00.json", _result())
+    assert latency_report.main(["--markdown", str(clean), str(flagged)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    at = next(i for i, line in enumerate(lines) if "excluded (multi-query)" in line)
+    assert lines[at - 1] == ""
+    assert lines[at - 2].startswith("| kenneth-quass-death |")
+
+
+def test_a_clean_run_still_prints_beside_an_excluded_one(tmp_path, capsys):
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    clean = _write(tmp_path, "run-2026-09-25_00-00-00.json", _result())
+    assert latency_report.main([str(flagged), str(clean)]) == 0
+    out = capsys.readouterr().out
+    assert "=== kenneth-quass-death" in out
+    assert "excluded (multi-query)" in out
+
+
+def test_by_skill_still_prints_a_multi_query_runs_phases(tmp_path, capsys):
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    assert latency_report.main(["--by-skill", str(flagged)]) == 0
+    out = capsys.readouterr().out
+    assert "anders-monsen-ancestry — per-skill phase breakdown" in out
+    assert "excluded" not in out

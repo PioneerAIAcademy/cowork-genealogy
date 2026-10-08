@@ -1,0 +1,1 @@
+Call collections_search with standardPlace "England" once, then read its complete result and answer in one line with how many collections it listed.

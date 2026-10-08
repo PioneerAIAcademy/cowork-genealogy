@@ -45,5 +45,6 @@
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]
-  }
+  },
+  "judge_reads_files": true
 }

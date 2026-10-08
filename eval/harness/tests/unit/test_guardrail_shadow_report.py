@@ -169,6 +169,26 @@ def test_format_detail_empty_list():
     assert "none" in format_detail([])
 
 
+def test_format_detail_survives_a_null_required_skill():
+    """`warnings_unchecked` entries carry `required_skill: None` by design --
+    the retargeted check names no skill, because the engine refuses the write
+    and no skill invocation would resolve it. The printer pads that field, and
+    `format(None, "<24")` raises TypeError, so an unguarded printer crashes the
+    whole report the first time one of these entries reaches it."""
+    out = format_detail(
+        [
+            {
+                "fixture": "f",
+                "index": -1,
+                "tool": "tree.gedcomx.json",
+                "required_skill": None,
+                "question_id": None,
+            }
+        ]
+    )
+    assert "tree.gedcomx.json" in out
+
+
 # --- scan_provenance / format_provenance (issue #963 stored shadow entries) ---
 # These are READ from each run's stored `guardrail_shadow_violations`, not
 # replayed from tool_calls: the #963 check depends on the seed tree and on what
@@ -622,13 +642,21 @@ def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path)
 # plumbing must redden these.
 
 
-def _write_posthoc_run(root, slug, name, *, tool_calls=None, research=None, tree=None):
+def _write_posthoc_run(
+    root, slug, name, *, tool_calls=None, research=None, tree=None, captures_stripped=False
+):
     """A committed-run layout: the run log plus its two final-state sidecars.
-    A sidecar passed as None is not written, which is how a skip is provoked."""
+    A sidecar passed as None is not written, which is how a skip is provoked.
+    `captures_stripped` stamps the flag `strip_captures_one` writes, which is
+    what the warnings skip reads -- inferring it from an absent
+    `response_summary` is wrong in both directions."""
     d = root / "eval" / "runlogs" / "e2e" / slug
     d.mkdir(parents=True, exist_ok=True)
     p = d / name
-    p.write_text(json.dumps({"tool_calls": tool_calls or []}), encoding="utf-8")
+    log = {"tool_calls": tool_calls or []}
+    if captures_stripped:
+        log["captures_stripped"] = True
+    p.write_text(json.dumps(log), encoding="utf-8")
     if research is not None:
         p.with_name(f"{p.stem}.final-research.json").write_text(
             json.dumps(research), encoding="utf-8"
@@ -685,8 +713,11 @@ def _tree_with_parentchild():
     }
 
 
-def _tree_edit_call():
-    return {"tool": "mcp__genealogy__tree_edit", "is_error": None}
+def _tree_edit_call(*, unjustified=False):
+    call = {"tool": "mcp__genealogy__tree_edit", "is_error": None}
+    if unjustified:
+        call["response_summary"] = '{"ok": false, "reason": "unjustified_warnings"}'
+    return call
 
 
 def test_replay_citation_nulling_fires_on_a_synthetic_concluded_source(tmp_path):
@@ -717,12 +748,14 @@ def test_replay_conflict_unpersisted_fires_on_a_synthetic_conclusion(tmp_path):
 
 
 def test_replay_warnings_unchecked_fires_on_a_synthetic_run(tmp_path):
+    """Retargeted by #2840: fires when a writer returned unjustified_warnings
+    and the agent never re-called with justifications."""
     fixtures = _write_fixture(tmp_path, "fx", []).parent
     p = _write_posthoc_run(
         tmp_path,
         "fx",
         "run-1.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call(unjustified=True)],
         research={},
         tree=_tree_with_parentchild(),
     )
@@ -733,17 +766,49 @@ def test_replay_warnings_unchecked_fires_on_a_synthetic_run(tmp_path):
     assert rep.warnings.skipped == []
 
 
-def test_replay_warnings_unchecked_silent_when_the_relationship_is_seeded(tmp_path):
-    """The paired negative, and the one that can tell a LOADED seed tree from a
-    silently missed one: the detector treats starting_tree=None as "everything is
-    new", so without this a replay that never opened the seed fires identically
-    to one that did. That is the defect that put a 59th run in this change's own
-    headline figure before it was caught."""
+def test_replay_warnings_unchecked_skips_a_capture_stripped_run(tmp_path):
+    """A stripped run must be NAMED, never counted clean.
+
+    This replaced a seeded-relationship negative that the retarget made
+    vacuous: the detector no longer reads either tree, so that test passed
+    identically with no seed file, a wrong one, or with the seed read deleted.
+
+    What matters now is the denominator. Retention reduces `response_summary`
+    to a replay remnant past 14 days, and 134 of the 201 committed run logs are
+    in that state, carrying no `response_summary` at all -- so they cannot hold
+    the refusal marker this check keys on. Counting them as scanned reports the
+    corpus as cleaner than it was measured to be, and the promotion decision
+    reads exactly that number."""
     d = tmp_path / "eval" / "tests" / "e2e" / "fx"
     d.mkdir(parents=True, exist_ok=True)
-    (d / "starting-tree.gedcomx.json").write_text(
-        json.dumps(_tree_with_parentchild()), encoding="utf-8"
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        # The real retention flag, not an inference. A log stripped under the
+        # current remnant logic KEEPS a `response_summary` on every parseable
+        # call, so absence of the field does not mean stripped -- and a run that
+        # aborted before any tool returned is not stripped either.
+        tool_calls=[_tree_edit_call(unjustified=True)],
+        captures_stripped=True,
+        research={},
+        tree=_tree_with_parentchild(),
     )
+    rep = replay_post_hoc([p], fixtures_root=d.parent)
+    assert rep.warnings.violations == []
+    assert rep.warnings.runs_scanned == 0
+    assert len(rep.warnings.skipped) == 1
+    assert "captures stripped" in rep.warnings.skipped[0]
+    # The research-only checks keep their own denominators.
+    assert rep.citation.runs_scanned == 1
+
+
+def test_replay_warnings_unchecked_names_a_run_that_recorded_no_response(tmp_path):
+    """Skipped too, but under its OWN reason. A run that aborted before any tool
+    returned is not capture-stripped, and calling it so mis-describes the
+    denominator the spec table quotes."""
+    d = tmp_path / "eval" / "tests" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
     p = _write_posthoc_run(
         tmp_path,
         "fx",
@@ -753,9 +818,29 @@ def test_replay_warnings_unchecked_silent_when_the_relationship_is_seeded(tmp_pa
         tree=_tree_with_parentchild(),
     )
     rep = replay_post_hoc([p], fixtures_root=d.parent)
-    assert rep.warnings.violations == []
-    assert rep.warnings.runs_scanned == 1
+    assert rep.warnings.runs_scanned == 0
+    assert len(rep.warnings.skipped) == 1
+    assert "no tool call recorded a response" in rep.warnings.skipped[0]
+    assert "captures stripped" not in rep.warnings.skipped[0]
+
+
+def test_replay_warnings_unchecked_scans_a_run_that_kept_its_captures(tmp_path):
+    """The accept direction for the skip above: a run that still carries a
+    `response_summary` is scanned, not skipped."""
+    d = tmp_path / "eval" / "tests" / "e2e" / "fx"
+    d.mkdir(parents=True, exist_ok=True)
+    p = _write_posthoc_run(
+        tmp_path,
+        "fx",
+        "run-1.json",
+        tool_calls=[_tree_edit_call(unjustified=True)],
+        research={},
+        tree=_tree_with_parentchild(),
+    )
+    rep = replay_post_hoc([p], fixtures_root=d.parent)
     assert rep.warnings.skipped == []
+    assert rep.warnings.runs_scanned == 1
+    assert len(rep.warnings.violations) == 1
 
 
 def test_replay_citation_nulling_silent_on_a_populated_citation(tmp_path):
@@ -796,28 +881,34 @@ def test_replay_conflict_unpersisted_silent_when_a_resolved_conflict_backs_it(tm
     assert rep.conflict.skipped == []
 
 
-def test_replay_post_hoc_names_a_run_with_no_seed_tree_and_still_scans_research_only(tmp_path):
-    """The per-check denominators. One run in the corpus today
-    (william-ferber-ancestry) has a committed run log and no fixture directory.
-    It cannot be scanned for warnings-unchecked, which needs a baseline — but the
-    two research-only checks need no tree at all, so a single shared skip list
-    would drop it from their denominators too and discard anything it held."""
+def test_replay_post_hoc_scans_a_run_with_no_seed_tree_for_warnings(tmp_path):
+    """The per-check denominators, and the warnings check no longer needs a tree.
+
+    One run in the corpus (william-ferber-ancestry) has a committed run log and
+    no fixture directory. It used to be skipped for warnings-unchecked, which
+    diffed relationships and so needed a baseline. The retargeted check reads
+    `tool_calls` only -- a writer was refused and nothing landed after it -- so
+    a missing tree no longer tells us anything about whether it can be graded,
+    and skipping on one would quietly shrink this check's denominator.
+
+    The original point stands and is still asserted: the research-only checks
+    keep their own skip lists, so a run dropped from one denominator is not
+    dropped from theirs."""
     empty_fixtures = tmp_path / "eval" / "tests" / "e2e"
     empty_fixtures.mkdir(parents=True, exist_ok=True)
     p = _write_posthoc_run(
         tmp_path,
         "orphan",
         "run-1.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call(unjustified=True)],
         research=_research_nulled_citation(""),
         tree=_tree_with_parentchild(),
     )
     rep = replay_post_hoc([p], fixtures_root=empty_fixtures)
 
-    assert len(rep.warnings.skipped) == 1
-    assert "orphan/run-1.json" in rep.warnings.skipped[0]
-    assert rep.warnings.runs_scanned == 0
-    assert rep.warnings.violations == []
+    assert rep.warnings.skipped == []
+    assert rep.warnings.runs_scanned == 1
+    assert len(rep.warnings.violations) == 1
 
     assert rep.citation.skipped == []
     assert rep.citation.runs_scanned == 1
@@ -903,7 +994,7 @@ def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, mon
         tmp_path,
         "fx",
         "run-2026-07-01_00-00-00.json",
-        tool_calls=[_tree_edit_call()],
+        tool_calls=[_tree_edit_call(unjustified=True)],
         research=_research_nulled_citation(""),
         tree=_tree_with_parentchild(),
     )

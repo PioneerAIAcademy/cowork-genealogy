@@ -13,7 +13,7 @@ carrying its own. What stays genuinely separate is ``eval/harness``: the worker 
 not copy ``eval/``, and a test asserts those two trees never import each other.
 
 So this file pins the one remaining seam. The harness's version is the original; the
-shared copy is a port that has since grown three clauses (``stopped``,
+shared copy is a port that has since grown several clauses (``stopped``,
 ``pending_user_message``, ``pending_decision``) the harness does not have. Those default
 False, which is exactly what makes the comparison meaningful: **with the new flags off,
 the two must be the same function**, case for case. A change to the harness's rule that
@@ -40,6 +40,7 @@ REPO = Path(__file__).resolve().parents[3]
 
 SHARED = REPO / "apps/server/app/agent/continue_policy.py"
 HARNESS = REPO / "eval/harness/e2e/stop_checker.py"
+ORCHESTRATOR = REPO / "eval/harness/e2e/orchestrator.py"
 
 # The names each copy must expose. `terminal_reason` is in both: the harness wrote it
 # first, and 1c ported it so `turns.outcome` can say WHY a run ended.
@@ -127,7 +128,10 @@ def test_terminal_reason_agrees_wherever_the_harness_has_an_opinion(copies):
 
 def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
     """Directional, so a lazy "fix" that deletes the new clauses to make the sweep pass
-    reds instead. The three flags are 1b's and 1c's whole mechanism.
+    reds instead. The first three flags are 1b's and 1c's whole mechanism; `delivered`
+    joined them with the hosted-alpha port and is listed here for the same reason -- it
+    returns False in `should_continue_run`, so it must be nameable by `terminal_reason`
+    or the two have silently stopped mirroring each other.
 
     The sweep above only exercises the harness's 5-parameter signature, so a clause
     that exists ONLY in the shared copy would be invisible to it by construction, and
@@ -137,10 +141,47 @@ def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
     base = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0,
                 tool_count_at_last_nudge=-1)
     for flag, reason in (("stopped", "stopped"), ("pending_user_message", "queued"),
-                         ("pending_decision", "decision")):
+                         ("pending_decision", "decision"), ("delivered", "delivered"),
+                         ("mcp_unavailable", "mcp_unavailable")):
         assert shared["should_continue_run"](**{**base, flag: True}) is False, flag
         assert shared["terminal_reason"](
             research=None, nudges_used=0, max_nudges=5, **{flag: True}) == reason
+
+
+def test_the_harness_stop_hook_has_one_reply_and_it_is_the_workers(copies):
+    """U17: the harness answered a `Next: <step>. Continue?` hand-back "Yes." (1 of 3
+    bagley stops) and a false completion with text of its own, where the worker sends
+    CONTINUE_REASON to every stop it vetoes. A paired grade then compares two Stop
+    policies, not two stacks.
+
+    So every `return` in the orchestrator's `stop_hook` is either the allow (`{}`) or a
+    block dict whose reason is spelled as a literal equal to the shared CONTINUE_REASON.
+    A reason held in a name, a dict built elsewhere, or a second literal fails here --
+    the shapes the retired branch took (`return {"decision": "block", "reason": reply}`)."""
+    shared, _ = copies
+    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
+    hooks = [n for n in ast.walk(tree)
+             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "stop_hook"]
+    assert len(hooks) == 1, f"expected one stop_hook in orchestrator.py, found {len(hooks)}"
+    returns = [n for n in ast.walk(hooks[0]) if isinstance(n, ast.Return)]
+    blocks = 0
+    for ret in returns:
+        where = f"orchestrator.py:{ret.lineno}"
+        assert isinstance(ret.value, ast.Dict), f"{where}: stop_hook returns a non-literal"
+        fields = {k.value: v for k, v in zip(ret.value.keys, ret.value.values)
+                  if isinstance(k, ast.Constant)}
+        assert len(fields) == len(ret.value.keys), f"{where}: a computed key in the reply"
+        if not fields:
+            continue
+        assert set(fields) == {"decision", "reason"}, f"{where}: reply keys {sorted(fields)}"
+        decision, reason = fields["decision"], fields["reason"]
+        assert isinstance(decision, ast.Constant) and decision.value == "block", where
+        assert isinstance(reason, ast.Constant), f"{where}: the veto reason is computed"
+        assert reason.value == shared["CONTINUE_REASON"], (
+            f"{where}: the harness vetoes with text the worker does not send"
+        )
+        blocks += 1
+    assert blocks == 1, f"stop_hook has {blocks} veto replies; parity allows exactly one"
 
 
 def test_there_is_no_third_copy(tmp_path):

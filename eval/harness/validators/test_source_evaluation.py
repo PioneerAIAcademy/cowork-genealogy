@@ -520,6 +520,43 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
     )
 
 
+#: ARKs that belong to a RELATIVE's own source in the two source-evaluation
+#: fixtures, and to nothing else. Deliberately unremarkable: an earlier revision
+#: used `1:1:REL-9999` on a person `REL-0001` with source `SD-REL-*`, so a model
+#: could skip the entry by reading "REL" in the id and never apply the audit-list
+#: rule at all -- and this validator could not tell that apart from the rule
+#: working.
+RELATIVE_ONLY_ARKS = ("MH7Q-9KZ", "MJ4T-2QB")
+
+
+def test_a_relatives_source_is_not_audited(tool_calls, test):
+    """A relative's attached source must never be `record_read` as the subject's.
+
+    `person_read` returns the relatives' attached sources in the same `sources[]`
+    array as the subject's own (issue #1689 Half 3), so "the sources array is the
+    audit list" started meaning "audit the whole family". Measured on a real
+    profile: 192 `record_read` calls where 17 were the subject's. Step 2 then
+    recommends detaching a record that is "about a different person" -- which a
+    sibling's record correctly is, so the advice is wrong and confident.
+
+    Each fixture carries one relative-only source (`SD-HOLE-E` / `SD-DRIS-H`),
+    whose ARK appears nowhere else. Nothing else grades WHICH sources were
+    read, so without this the planted relative tests nothing.
+    """
+    read_arks = [
+        str((c.get("args") or {}).get("url") or (c.get("args") or {}).get("recordId") or "")
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
+    ]
+    audited = [a for a in read_arks if any(k in a for k in RELATIVE_ONLY_ARKS)]
+    assert not audited, (
+        "a RELATIVE's attached source was audited as the subject's: "
+        f"{audited}. `person_read`'s `sources[]` carries the relatives' sources too; "
+        "the audit list is the entries `persons[0].sources[].ref` names, plus entries "
+        "carrying `artifact_url`."
+    )
+
+
 # --- front-door gate: hand back, call nothing (tag-gated) ---
 
 _HANDBACK_TAG_PREFIX = "handback-to-"
@@ -640,3 +677,22 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
         if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
     ]
     assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
+
+
+# A validator that tried to pin "name no person you have not read" lived here and
+# was REMOVED after misfiring twice, at the cost of two paid runs.
+#
+# Why it cannot be written with the data this layer has: a FamilySearch person id
+# and a source id in this corpus are the same shape -- `KD96-TV2` and `DRIS-001`
+# are both four characters, a hyphen, three. Shape cannot separate them. The
+# obvious repair, subtracting the ids the responses call sources, does not work
+# either: a `tool_calls` entry carries `tool`, `args`, `expected_args`, `matched`
+# and `response_fixture`, and NO response body, so the source ids are not
+# reachable from here at all. The first cut flagged six sources as unread persons;
+# the second cut read a `response` key that does not exist and flagged them again.
+#
+# The behaviour is real and worth catching -- `ut_source_evaluation_m8q` asserted
+# "the source is also attached to KD96-WX7, a different person named ..." without
+# reading KD96-WX7 -- and the JUDGE does catch it, which is how it was found. If
+# this is ever made deterministic it needs the test to declare which ids are
+# persons, not a pattern over the reply.

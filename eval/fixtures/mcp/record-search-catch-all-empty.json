@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all record_search for the attached-first tests. Its PURPOSE is to make searching POSSIBLE, not to be used: `test_reads_attachments_before_searching` asserts the router does NOT search for a record the person already has. Without a registered search tool the model cannot search at all, so the assertion could never fail and the test would have been proving that the HARNESS blocks searching rather than that the SKILL BODY does. The predicate is `~` on surname, which the matcher treats as a case-insensitive substring and an empty needle matches anything, so any search the router attempts is recorded as a real dispatch in `tool_calls` where the assertion can see it. It returns zero results because a test that rewards searching is the opposite of this one.",
+  "args": {
+    "surname": "~"
+  },
+  "response": {
+    "query": {
+      "surname": "Driscoll"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

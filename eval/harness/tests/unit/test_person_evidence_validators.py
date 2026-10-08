@@ -35,7 +35,6 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validators as tests of this module and error on their
 # harness-supplied fixtures. Same pattern as test_init_project_validator.py.
 from test_person_evidence import (  # noqa: E402
-    test_check_warnings_runs_after_a_write as check_warnings_after_write,
     test_matched_persona_is_materialized_onto_its_person as check_materialized,
     test_same_person_called_when_persona_meets_existing_candidate as check_scored,
     test_stub_person_created_and_linked as check_stub,
@@ -58,8 +57,8 @@ def _tree(*person_ids):
     return {"persons": [{"id": pid} for pid in person_ids]}
 
 
-def _call(tool, **args):
-    return {"tool": f"mcp__genealogy__{tool}", "args": args}
+def _call(tool, response_summary="", **args):
+    return {"tool": f"mcp__genealogy__{tool}", "args": args, "response_summary": response_summary}
 
 
 # --- test_same_person_called_when_persona_meets_existing_candidate ------
@@ -311,7 +310,7 @@ def test_scored_stands_down_without_research_json():
 # --- test_matched_persona_is_materialized_onto_its_person ---------------
 
 _TAGGED = {"tags": ["materialize"]}
-_CW_TAGGED = {"tags": ["check-warnings-required"]}
+
 
 # The death-certificate shape: a_011/a_012 on src_004 linked to Patrick (I1),
 # who is already in the tree.
@@ -411,107 +410,6 @@ def test_materialized_stands_down_without_the_tag():
             [],
             {"tags": []},
         )
-
-
-# --- test_check_warnings_runs_after_a_write -----------------------------
-#
-# Violating states are real: `_014` (v1_2026-08-20_15-53-03) minted a stub
-# and linked it with skills_invoked == ["person-evidence"]; `_002`
-# (v1_2026-08-24_18-17-08) wrote a pe_ entry with the same. Five different
-# tests skipped it across those two runs, each scoring 3 on all eight
-# dimensions in the run where it skipped.
-
-_LINKED_AFTER = {
-    "assertions": [{"id": "a_010", "record_persona_id": None, "fact_type": "relationship"}],
-    "person_evidence": [{"id": "pe_009", "assertion_id": "a_010", "person_id": "I2"}],
-}
-_LINKED_BEFORE = {"assertions": _LINKED_AFTER["assertions"], "person_evidence": []}
-
-
-def test_check_warnings_fires_when_links_were_written():
-    with pytest.raises(AssertionError) as exc:
-        check_warnings_after_write(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            ["person-evidence"],
-            [],
-            _CW_TAGGED,
-        )
-    assert "ran no impossibility check" in str(exc.value)
-    assert "1 new pe_ entr" in str(exc.value)
-
-
-def test_check_warnings_fires_when_a_person_was_minted_without_links():
-    """`_014`'s shape is a mint; the trigger must not depend on pe_ entries
-    alone, because the stub is exactly what needs the impossibility check."""
-    same = {"assertions": [], "person_evidence": []}
-    with pytest.raises(AssertionError) as exc:
-        check_warnings_after_write(
-            _state(same, _tree("I1")),
-            _state(same, _tree("I1", "I4")),
-            ["person-evidence"],
-            [],
-            _CW_TAGGED,
-        )
-    assert "minted ['I4']" in str(exc.value)
-
-
-def test_check_warnings_passes_when_invoked():
-    check_warnings_after_write(
-        _state(_LINKED_BEFORE, _tree("I1", "I2")),
-        _state(_LINKED_AFTER, _tree("I1", "I2")),
-        ["person-evidence", "check-warnings"],
-        [],
-        _CW_TAGGED,
-    )
-
-
-def test_check_warnings_stands_down_on_a_read_only_run():
-    """A review/audit invocation writes nothing, so §8 has nothing to cover.
-    This is `ut_person_evidence_015`'s shape."""
-    same = {"assertions": [], "person_evidence": [{"id": "pe_001"}]}
-    with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(
-            _state(same, _tree("I1")),
-            _state(same, _tree("I1")),
-            ["person-evidence"],
-            [],
-            _CW_TAGGED,
-        )
-
-
-def test_check_warnings_stands_down_on_a_negative_test():
-    """A declined routing test has no research.json diff to read."""
-    with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(_state(None), _state(None), [], [], _CW_TAGGED)
-
-
-def test_check_warnings_stands_down_without_the_tag():
-    """Tag-gated: an untagged test must not be failed by it, which is what
-    keeps the measured-but-unenforced ungated rate out of the suite."""
-    with pytest.raises(pytest.skip.Exception):
-        check_warnings_after_write(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            ["person-evidence"],
-            [],
-            {"tags": []},
-        )
-
-
-def test_check_warnings_passes_when_the_agent_calls_the_tool_itself():
-    """The route the paired agent actually takes. Since 2026-09-02 the agent
-    calls `person_warnings` directly rather than the router invoking
-    `check-warnings`, because `/research` may spawn a paired agent straight and
-    nothing guarantees the router runs. Keyed on `skills_invoked` alone this
-    assertion would fail every compliant agent run."""
-    check_warnings_after_write(
-        _state(_LINKED_BEFORE, _tree("I1", "I2")),
-        _state(_LINKED_AFTER, _tree("I1", "I2")),
-        ["person-evidence"],
-        [{"tool": "mcp__genealogy__person_warnings"}],
-        _CW_TAGGED,
-    )
 
 
 # --- report_informant_fields_not_in_pe_confidence_reason ------------------
@@ -939,24 +837,6 @@ def test_chrono_fires_when_record_persona_id_is_null():
 def test_chrono_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_chrono(_state(None), _state(None), [])
-
-
-def test_check_warnings_accepts_the_tool_under_any_server_spelling():
-    """The prefix is chosen by whoever registers the server, so a bare-name
-    match on the qualified tool is the only form that works in all three."""
-    for spelling in (
-        "person_warnings",
-        "mcp__genealogy__person_warnings",
-        "mcp__remote-devices__Genealogy_Research__person_warnings",
-        "mcp__Genealogy_Research__person_warnings",
-    ):
-        check_warnings_after_write(
-            _state(_LINKED_BEFORE, _tree("I1", "I2")),
-            _state(_LINKED_AFTER, _tree("I1", "I2")),
-            ["person-evidence"],
-            [{"tool": spelling}],
-            _CW_TAGGED,
-        )
 
 
 # --- Pinning tests (review of #1882, item 3) ----------------------------

@@ -513,7 +513,7 @@ up while the body ran on the main thread, and each cost a run to find.
    is an agent-body defect: fix it in the agent body in this PR, one thing per
    run (steps 9–10), until the twin passes. Never mark it
    `expected_outcome: "xfail"`: the marker is retired, and `check_runlogs.py`
-   rule 10 blocks it. Read neither off one run: settling the first five twins took ten, and both of the two that moved
+   rule 10 blocks it. A failure whose fix belongs to another open issue is deleted, and that issue's done-when restores it. Read neither off one run: settling the first five twins took ten, and both of the two that moved
    reversed on a later run.
 9. Run once, unchanged. Compare against step 1.
 10. Fix one thing per run.

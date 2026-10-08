@@ -41,7 +41,7 @@ TMPDIR = "/tmp"
 WEB_DIST_DIR = "web-dist"
 
 # U11: compose, harness and debug switches, never in a tier's template, hook or image.
-# DEV_PATHS is one of the DEV_ prefix. AUTONOMOUS_MAX_NUDGES is the web tier's operator
+# DEV_PATHS and DEV_LOGIN are two of the DEV_ prefix. AUTONOMOUS_MAX_NUDGES is the web tier's operator
 # cap; on the worker it is the cap for a message without one, which only the dev CLI sends.
 # WORKER_TURN_USERS=none runs every turn's CLI as the worker's own user.
 DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")

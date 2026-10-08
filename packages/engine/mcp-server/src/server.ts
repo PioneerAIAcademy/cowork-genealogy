@@ -148,7 +148,7 @@ export function createServer(principal: Principal): Server {
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (request.params.name === "research_delivered") {
-      // A pure signal: no network, no auth, no project write. On the PROTOTYPE worker a
+      // A pure signal: no network, no auth, no project write. On BOTH hosted planes a
       // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
       // arm runs only where no such hook binds (Cowork, the e2e harness).
       //

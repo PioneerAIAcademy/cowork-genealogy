@@ -248,8 +248,9 @@ class Embedded:
         self.pg = pgserver.get_server(self.pgdata)
         self.dsn = self.pg.get_uri()
         os.environ["PG_DSN"] = self.dsn
-        # U2: the driver signs in through dev-login, which an https PUBLIC_URL or
-        # FamilySearch sign-in would turn off.
+        # U2: the driver signs in through dev-login, which is opt-in and which an https
+        # PUBLIC_URL or FamilySearch sign-in would turn off.
+        os.environ["DEV_LOGIN"] = "true"
         os.environ.pop("PUBLIC_URL", None)
         os.environ.pop("FAMILYSEARCH_WEB_ENABLED", None)
         import migrate  # proto/ is on sys.path (HERE, above)

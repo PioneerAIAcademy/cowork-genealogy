@@ -394,8 +394,12 @@ documents in memory at this point.
 `gedcomx_source_description_id` (a caller-supplied id keeps today's verified-
 reuse semantics, §3.4 — detection is bypassed and no `sourceReuse` is echoed);
 and the batch contains at least one `assertions` append op with a non-empty
-`record_id`. Batches with zero or 2+ sources append ops, single-op calls, and
-sources-only batches are untouched.
+`record_id`. Alternatively, when the batch has **zero** assertions append ops
+and at least one assertions **update** op whose pre-call target carries a
+`record_id` (skipping any update whose `fields` sets `source_id`), the update
+targets' `record_id`s are used instead. Batches with ≥1 assertions append are
+never mixed with update-derived keys. Batches with zero or 2+ sources append
+ops, single-op calls, and sources-only batches are untouched.
 
 **Matching.** The batch's distinct assertion `record_id`s are canonicalized
 via `arkToBareId` (the same ARK normalization §3.5 uses, so resolver-URL,
@@ -433,6 +437,11 @@ call is a research-only write (`filesWritten: ["research.json"]`, no
 path 2: a stamped `S` id must exist in the tree or the batch is rejected
 op-indexed. A fold makes re-extracting the *source* safe; it does not license a
 second copy of an extracted *assertion* — §3.4.3.
+
+**Accepted residual (path 2, updates-only).** When an updates-only batch
+matches a different-repository source, `new_source_reused_s` still creates an
+uncited `src_` (no new `S`). This is the same as the append path; no refusal is
+added.
 
 ### 3.4.2 Composite persist (`verdict`) — evaluations sidecar
 
@@ -482,7 +491,9 @@ is what a re-extraction is: the extractor re-sends the whole record, source incl
 A later call that appends one more fact to an extracted record (a second parentage
 "son of Charlotte" after "son of John") re-sends no source and is never compared, nor
 is a §3.4.1 path-2 different-repository batch, nor a batch whose sources op names an
-explicit `gedcomx_source_description_id` (detection bypassed).
+explicit `gedcomx_source_description_id` (detection bypassed). An updates-only batch
+that returns `updated_existing` carries no assertions append ops, so §3.4.3 has no
+appends to compare and does not engage.
 
 **The key.** In such a batch, an `assertions` append is refused, op-indexed, when an
 assertion in the **pre-call** document shares its (`source_id`,
@@ -578,7 +589,27 @@ append op (deliberately simple):
      `standard_place` is **copied** — no geocoding call;
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
-     unset with a warning, never fails the op.
+     unset with a warning, never fails the op. The op's record context goes with
+     it: the places the call's other assertions with the same `record_id` name.
+     A bare single-segment place ("Shenandoah") has no context of its own, so
+     the resolver uses that record context: a sibling place whose first segment
+     is the name, or the name after an administrative prefix ("Borough of",
+     "Town of", "City of", "Township of", …), is resolved instead — "New York" is
+     not the fuller form of "York", else a best match typed continent, country,
+     state or province is kept as it is, even against the record's area (a bare
+     "Germany" beside Gettysburg is not Germany Township; the cost: a bare
+     "Washington" beside Kentucky places is the state), else only a candidate
+     whose own name starts with the same word and has a segment equal to a
+     jurisdiction the siblings share counts (a variant-name hit, "Laxton" for
+     "Lexington", never does), else the best match is kept only
+     when FamilySearch types it a jurisdiction (continent, country, state,
+     province, territory, county, district, region, or first/second-level admin
+     division) and is otherwise left unset (genealogist ruling 2026-10-06, option
+     C with fallback B′). Measured on
+     the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
+     of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
+     Temple" to France, and the country guard below cannot catch either, since a
+     one-token place names no country.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
@@ -1255,7 +1286,11 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   no `sourceReuse`. Plus the multi-repo edge (two existing sources for the
   record — the repository-equal one is updated; a third repository reuses the
   FIRST match's S) and canonicalized `record_id` forms (resolver URL vs bare
-  ARK vs type-prefixed id all match the same existing source).
+  ARK vs type-prefixed id all match the same existing source). Plus the
+  updates-only path: sources append + only assertion updates on an extracted
+  record → `updated_existing` (source count unchanged, tree unchanged); mixed
+  batch (appends + updates) → only appends drive detection; update op setting
+  `source_id` → detection does not engage.
 
 ---
 

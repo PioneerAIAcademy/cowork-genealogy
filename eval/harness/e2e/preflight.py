@@ -5,7 +5,7 @@ missing FS token surfaces mid-run; an unbuilt server fails at spawn; a
 missing API key fails at the judge). With many contributors that's the
 same handful of setup questions over and over. This check green-lights
 all of them up front, so a contributor knows they're ready before
-spending 20–60 minutes (and $3–10) on a run.
+spending about an hour and single-digit dollars, with a long tail, on a run.
 
 Checks, in order:
   1. FamilySearch token   — ~/.familysearch-mcp/tokens.json exists

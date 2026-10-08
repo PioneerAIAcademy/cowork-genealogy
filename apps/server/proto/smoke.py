@@ -76,6 +76,7 @@ from psycopg.types.json import Jsonb
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from enqueue import DEFAULT_ENDPOINT, DEFAULT_QUEUE, SqsError, purge_queue, queue_url, send_turn  # noqa: E402
+from target import json_records  # noqa: E402
 
 COMPOSE = HERE / "docker-compose.yml"
 CEILING = HERE / "docker-compose.ceiling.yml"
@@ -144,18 +145,7 @@ def compose(*args: str, files: tuple[Path, ...] = (COMPOSE,), env: dict[str, str
 
 def service_lines(service: str, ev: str) -> list[dict]:
     """One service's JSON log lines with this ``ev``, oldest first."""
-    out: list[dict] = []
-    for line in compose("logs", "--no-color", "--no-log-prefix", service).splitlines():
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            rec = json.loads(line)
-        except ValueError:
-            continue
-        if isinstance(rec, dict) and rec.get("ev") == ev:
-            out.append(rec)
-    return out
+    return [r for r in json_records(compose("logs", "--no-color", "--no-log-prefix", service)) if r.get("ev") == ev]
 
 
 def shim_decisions(msgid: str) -> list[dict]:

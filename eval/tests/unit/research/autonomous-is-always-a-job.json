@@ -1,0 +1,79 @@
+{
+  "test": {
+    "id": "ut_research_023",
+    "skill": "research",
+    "name": "An autonomous run is a job even when the question looks bounded",
+    "type": "positive",
+    "description": "Guards the e2e corpus against the 'Bounded request or job' section. Every e2e run enters as `/research --autonomous {researcher_question}` (eval/harness/e2e/orchestrator.py), so every run reads that section -- and 63 of the 136 committed e2e fixtures ask a question whose SHAPE is on the bounded list: 'Did X and Y have a son named Z', 'Who were the siblings of X', 'When and where did X die'. Without the `--autonomous` carve-out the router would deliver one answer and stop on those, instead of running the job the benchmark grades, and the e2e stop checker (e2e/stop_checker.py) has no `delivered` arm to even recognise the exit. The completeness sub-shape is the sharpest case because it was added to the bounded list by this same branch. GRADING: deterministic, via routes-to:question-selection -- the project has an objective and zero questions, so a job routes there first, and a bounded reading would stop instead. ENTRY FORM: this is e2e's exact entry, `/research --autonomous {question}`. It is gradable because PR #3146 merged (2026-10-06): `slash_skill_from_entry` records the skill for a slash entry, which `skills_invoked` could not see before, since the CLI expands a slash command rather than calling the `Skill` tool and the PreToolUse hook therefore never fires (issue #3116). Verified against the merged helper: all three of its conditions hold here -- the message begins `/research`, the command is registered, and `.claude/skills/research/` is staged. Before #3146 this test ran without the prefix, because a positive test entered by slash graded `fail` whatever the router did, and rule 10 (on main since 2026-10-06) blocks the xfail marker that would otherwise have papered over it.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection",
+      "bounded-request"
+    ]
+  },
+  "input": {
+    "user_message": "/research --autonomous Did Patrick Flynn and his wife have a daughter named Mary?",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test and the hand-off is asserted deterministically. Do NOT grade routing, and do NOT grade whether the research was driven to completion.",
+    "Every callee here is STUBBED, and each stub tells the router its delegation 'changed no project state' and not to walk further down the routing table. So one hand-off and a summary is the only outcome the harness permits. The v8 run failed this test for 'did not drive the research to completion', which no behaviour could have satisfied.",
+    "The question's shape is on the skill's own bounded list (whether a person's children are complete), but it arrives with `--autonomous`, which means drive it to completion. Grade only this: does the reply treat the request as a JOB rather than announcing a single deliverable and closing? Framing it as the first step of ongoing work is correct.",
+    "Do not penalise the reply for reporting what the stubbed callee did, and do not reward it for claiming project state changed when the stub said it did not."
+  ],
+  "judge_reads_files": true
+}
