@@ -164,6 +164,13 @@
  *      sampled items had none, 6 had a dict, others a list of up to 29).
  *      Any parser must normalize to an array before reading.
  *
+ *   H. `Accept: application/json` is load-bearing — omit it and the service
+ *      answers 200 with XML, so a JSON parse fails on a response that looked
+ *      successful. And `identifier.value` IS the item endpoint URL
+ *      (`.../catalog/item/koha:3308785`), so a caller fetches it verbatim
+ *      rather than rebuilding `{ns}:{n}` — measured 2026-10-02, 25 of 25
+ *      hits on-prefix, namespace `koha:`. Run `--section H` to re-measure.
+ *
  *   G. `film_note[].digital_film_no` is an image group number (DGS). DGS
  *      5157135 resolves against the group service image_search already uses
  *      (sg30p0.../rms/group-service/group/{dgs}/apid) to apid
@@ -553,6 +560,69 @@ async function sectionG(token: string): Promise<void> {
   }
 }
 
+
+/**
+ * SECTION H — the two claims `catalog_search`'s spec leans on that no earlier
+ * section regenerates: that `Accept: application/json` is load-bearing, and
+ * what `identifier.value` actually is.
+ *
+ * Added 2026-10-02. The spec tells readers to re-run a section rather than
+ * trust a stale figure; these two had no section to re-run, and the tool's
+ * host check rests on the second.
+ */
+async function sectionH(token: string): Promise<void> {
+  console.log("\n=== H. Accept header, and the identifier.value census ===");
+
+  const base = `${SEARCH_URL}?q.placeId=${MAINE_REP_ID}&q.place.exact=on&m.queryRequireDefault=on&count=25`;
+
+  // H1 — vary ONLY the Accept header.
+  for (const accept of ["application/json", null]) {
+    const h: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      "User-Agent": BROWSER_USER_AGENT,
+    };
+    if (accept) h.Accept = accept;
+    const res = await fetchWithRetry(base, { headers: h });
+    const body = await res.text();
+    const looksJson = body.trimStart().startsWith("{");
+    console.log(
+      `  Accept: ${(accept ?? "(omitted)").padEnd(18)} -> ${res.status}  ` +
+        `body ${looksJson ? "JSON" : "NOT JSON"} (starts ${JSON.stringify(body.slice(0, 14))})`,
+    );
+  }
+
+  // H2 — census identifier.value over one full page.
+  const res = await fetchWithRetry(base, { headers: headers(token) });
+  const body = (await res.json()) as SearchResponse;
+  const hits = body.searchHits ?? [];
+  const PREFIX = `${ITEM_URL}/`;
+  const ns = new Map<string, number>();
+  let offPrefix = 0;
+  let absent = 0;
+  for (const hit of hits) {
+    const v = hit.metadataHit?.metadata?.identifier?.value;
+    if (typeof v !== "string") {
+      absent++;
+      continue;
+    }
+    if (!v.startsWith(PREFIX)) {
+      offPrefix++;
+      console.log(`  OFF-PREFIX identifier: ${v}`);
+      continue;
+    }
+    const tail = v.slice(PREFIX.length);
+    const key = tail.includes(":") ? `${tail.split(":")[0]}:` : "(no namespace)";
+    ns.set(key, (ns.get(key) ?? 0) + 1);
+  }
+  console.log(`  ${hits.length} hits: ${absent} with no identifier, ${offPrefix} off-prefix`);
+  for (const [k, n] of ns) console.log(`    namespace ${k.padEnd(8)} ${n}`);
+  console.log(
+    `  every identifier.value ${offPrefix === 0 && absent === 0 ? "IS" : "is NOT"} ` +
+      `the item endpoint URL — which is why the tool fetches it verbatim ` +
+      `and refuses anything off-prefix before attaching a credential.`,
+  );
+}
+
 const SECTIONS: Record<string, (token: string) => Promise<void>> = {
   A: sectionA,
   B: sectionB,
@@ -561,6 +631,7 @@ const SECTIONS: Record<string, (token: string) => Promise<void>> = {
   E: sectionE,
   F: sectionF,
   G: sectionG,
+  H: sectionH,
 };
 
 async function main(): Promise<void> {

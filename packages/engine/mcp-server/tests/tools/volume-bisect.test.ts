@@ -3,7 +3,7 @@
  *
  * The three checks the plan named, in order: the tool refuses to keep probing a
  * sub-volume whose year headings contradict each other; it refuses a bare
- * image-group prefix; and a probe charges the SHARED browse budget under the
+ * image-group prefix; and a probe charges the SHARED image cap under the
  * project's own key.
  *
  * Mocked at the module boundary (the `person-read-memories-ocr.test.ts` pattern)
@@ -14,18 +14,29 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../../src/tools/image-search.js", () => ({ imageSearchTool: vi.fn() }));
-vi.mock("../../src/utils/fs-image-fetch.js", () => ({
+// Partial: the network legs are mocked, the pure helpers stay real so the
+// mixed-tool cap test can drive the real image_transcribe through them.
+vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/utils/fs-image-fetch.js")>()),
   resolveFsImageInput: vi.fn(),
   fetchFsImageBytes: vi.fn(),
 }));
-vi.mock("../../src/utils/ocr.js", () => ({ runOcr: vi.fn() }));
+vi.mock("../../src/utils/ocr.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/utils/ocr.js")>()),
+  runOcr: vi.fn(),
+}));
 vi.mock("../../src/auth/config.js", () => ({
   getOpenRouterApiKey: vi.fn(),
   getOpenRouterModel: vi.fn(),
 }));
 
 import { volumeBisectTool, parseProbeYear } from "../../src/tools/volume-bisect.js";
-import { __clearBrowseBudgetForTests } from "../../src/utils/browse-budget.js";
+import { imageTranscribeTool } from "../../src/tools/image-transcribe.js";
+import {
+  __clearImageBrowseMemoryForTests,
+  checkImageBrowseCap,
+  recordImageBrowse,
+} from "../../src/utils/browse-budget.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { imageSearchTool } from "../../src/tools/image-search.js";
 import { resolveFsImageInput, fetchFsImageBytes } from "../../src/utils/fs-image-fetch.js";
@@ -57,7 +68,7 @@ let nextProbeYear: number | null = 1700;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  __clearBrowseBudgetForTests();
+  __clearImageBrowseMemoryForTests();
   nextProbeYear = 1700;
 
   search.mockResolvedValue({
@@ -442,9 +453,9 @@ describe("input domain", () => {
   });
 });
 
-describe("browse budget", () => {
+describe("image cap (#3010)", () => {
   /**
-   * Drive `n` probes that each land on a DISTINCT image, so the counter has 20
+   * Drive `n` probes that each land on a DISTINCT image, so the cap has 20
    * real reads to count.
    *
    * Each call is its own hunt, seeded one image further along than the last: a
@@ -477,40 +488,75 @@ describe("browse budget", () => {
     return { last, probed };
   }
 
-  it("does not fire below the bound and fires once past it", async () => {
+  it("allows 20 distinct probes and refuses the 21st before fetching it", async () => {
     const under = await probe(20, "/projects/alpha");
     expect(under.probed).toHaveLength(20);
     expect(new Set(under.probed.map((r) => r.imageId)).size).toBe(20);
-    expect(under.last.browseBudget).toBeUndefined();
 
-    const over = await probe(1, "/projects/alpha", 20);
-    expect(over.last.browseBudget).toMatchObject({
-      imageGroup: PREFIX,
-      distinctImagesRead: 21,
-    });
-    // The bisect's own wording, not the transcription hunt's — telling a
-    // converging bisect to "pivot to the indexed route" is the regression.
-    expect(over.last.browseBudget!.notice).toContain("bisect");
-    expect(over.last.browseBudget!.notice).not.toContain("transcribed");
+    fetchBytes.mockClear();
+    const err = await probe(1, "/projects/alpha", 20).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toMatch(/Image cap reached/);
+    expect((err as Error).message).toContain(PREFIX);
+    // The bisect's own instruction: report the bracket, not just "pivot".
+    expect((err as Error).message).toContain("bracket");
+    // The actual bracket from the readings, not a generic line: the seed at 40 read 1600.
+    expect((err as Error).message).toMatch(/positions 40\.\.\d+, years 1600\.\./);
+    expect(fetchBytes).not.toHaveBeenCalled();
+  });
+
+  it("a failed probe fetch does not advance the count", async () => {
+    await probe(19, "/projects/alpha");
+    fetchBytes.mockRejectedValueOnce(new Error("FamilySearch image fetch failed: 503"));
+    await expect(probe(1, "/projects/alpha", 19)).rejects.toThrow(/503/);
+    const next = await probe(1, "/projects/alpha", 20);
+    expect(next.last.reading).toBeDefined();
+  });
+
+  it("15 image_transcribe reads, then a bisect in the same group: refused on its 6th page, unfetched", async () => {
+    for (let i = 300; i < 315; i++) {
+      await imageTranscribeTool({ imageId: imageIdAt(i), projectPath: "/projects/alpha" }, LOCAL);
+    }
+    const five = await probe(5, "/projects/alpha");
+    expect(five.probed).toHaveLength(5);
+
+    fetchBytes.mockClear();
+    await expect(probe(1, "/projects/alpha", 5)).rejects.toThrow(/Image cap reached/);
+    expect(fetchBytes).not.toHaveBeenCalled();
+  });
+
+  it("a probe whose OCR fails does not advance the count", async () => {
+    await probe(19, "/projects/alpha");
+    ocr.mockRejectedValueOnce(new Error("Could not reach OpenRouter"));
+    await expect(probe(1, "/projects/alpha", 19)).rejects.toThrow(/OpenRouter/);
+    const next = await probe(1, "/projects/alpha", 20);
+    expect(next.last.reading).toBeDefined();
+  });
+
+  it("shares one count with image_transcribe and image_read", async () => {
+    for (let i = 300; i < 320; i++) {
+      await recordImageBrowse(await checkImageBrowseCap({ imageId: imageIdAt(i) }, "/projects/alpha", "image_transcribe"));
+    }
+    await expect(probe(1, "/projects/alpha")).rejects.toThrow(/Image cap reached/);
   });
 
   it("charges the project's key, not a shared one", async () => {
     await probe(20, "/projects/alpha");
-    // Keyed on the group alone, or on the `<no-project>` sentinel, this 21st
-    // read lands in alpha's bucket and fires. Keyed on the project, it is
-    // beta's first.
+    // Keyed on the group alone this 21st read lands in alpha's bucket and
+    // refuses. Keyed on the project, it is beta's first.
     const beta = await probe(1, "/projects/beta", 20);
-    expect(beta.last.browseBudget).toBeUndefined();
+    expect(beta.last.reading).toBeDefined();
 
-    const sentinel = await probe(1, undefined, 21);
-    expect(sentinel.last.browseBudget).toBeUndefined();
+    // A probe with no projectPath cannot say which project it belongs to, so on
+    // the file backend it sees every in-process read of the group — alpha's 20
+    // included — rather than getting a second 20 of its own.
+    await expect(probe(1, undefined, 21)).rejects.toThrow(/Image cap reached/);
   });
 
   it("normalizes the project path before keying", async () => {
     await probe(20, "/projects/alpha");
-    // The same project spelled differently must not get a fresh budget.
-    const same = await probe(1, "/projects/alpha/", 20);
-    expect(same.last.browseBudget).toBeDefined();
+    // The same project spelled differently must not get a fresh count.
+    await expect(probe(1, "/projects/alpha/", 20)).rejects.toThrow(/Image cap reached/);
   });
 });
 

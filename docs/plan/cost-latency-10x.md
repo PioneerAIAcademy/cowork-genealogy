@@ -300,7 +300,8 @@ the first time it is pulled.
   halves edit the same instrumentation, and under merge doctrine they are one PR.
 - **Per-thread windows for subagents**, so Wave 4's Haiku arms can be verified.
 
-**The replay harness — Promise's first build after issue #2582.** Re-issue a committed
+**The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
+only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed
 runlog's tool calls against a candidate tool implementation and diff the payload
 sizes. **Zero model calls**, repeatable, and it measures exactly what Waves 1–2
 change. This is the fast loop; `make gate-skill` cannot be it, because the unit plane
@@ -504,8 +505,7 @@ recall drop; 3 runs × 3 fixtures detects **0.355**; detecting 0.20 needs **28
 runs/arm**, 0.10 needs **113**. So a three-run arm is a **collapse detector, not a
 measurement**, and the repo's "3 runs, all pass" convention false-fails a genuinely
 0.90-quality config **27%** of the time. Score on `judge_output.recall_required`, never
-`outcome` or `verdict` — both are four-value categoricals, not scores, and since the §8 demotion on 2026-09-25 `outcome` IS `verdict`, so neither adds anything the other lacks
-regardless of research quality.
+`outcome` or `verdict` — both are four-value categoricals, not scores, and since the §8 demotion on 2026-09-25 `outcome` IS `verdict`, so neither adds anything the other lacks.
 
 Fixture selection: `cruz-corona-ancestry` scores `[0.6, 0.833, 1.0, 1.0, 1.0, 1.0]`
 over 6 graded runs, so it moves in both directions and is a good candidate.

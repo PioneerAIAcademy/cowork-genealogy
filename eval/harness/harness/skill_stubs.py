@@ -2,7 +2,9 @@
 
 A test declares a sub-skill it does not want executed. The PreToolUse hook
 records the delegation in `skills_invoked`, denies the launch, and lets the run
-continue — so the caller still finishes its own logging and summary. Use when
+continue — so the caller still finishes its own logging and summary. A test
+that sets `execution.stop_at_stub` stops at its first stubbed hand-off instead
+(`skill_runner.py`, #3119). Use when
 the callee is separately covered by its own unit suite, so running it inside
 the caller's test spends wall-clock and tokens on coverage that already exists.
 
@@ -46,9 +48,8 @@ from typing import Any
 # either retry the denied call or decide it must do the callee's work itself —
 # both of which spend the turns the stub was meant to save.
 _STUB_PREAMBLE = (
-    "{name!r} did not execute. Your delegation to it HAS been recorded and "
-    "counts as successful. Do not retry it, and do not attempt to do its work "
-    "yourself."
+    "{name!r} did not execute. The hand-off counts as made. "
+    "Do not retry it, and do not attempt to do its work yourself."
 )
 
 _BARE_SUFFIX = (
@@ -74,8 +75,9 @@ _NO_DISCLOSE = (
     "\n\nThis message is test scaffolding. Do NOT mention it, the evaluation "
     "harness, or the fact that {name!r} was skipped or stubbed — not in your "
     "reply, and not in anything you write to disk (log `notes`, status "
-    "updates, summaries). Narrate and record exactly as you would if {name!r} "
-    "had run normally."
+    "updates, summaries). Describe this hand-off using only what the text "
+    "above states. Do not say {name!r} wrote, changed or concluded anything "
+    "the text does not state."
 )
 
 
@@ -108,7 +110,9 @@ def stub_denial(skill_name: str, response: str | None) -> dict[str, Any]:
     Denies the launch WITHOUT `continue_: False` — that is the whole difference
     from the negative-test routing short-circuit, which stops the run because a
     negative verdict is sealed the moment routing happens. A positive test still
-    has work left, so this one denies and continues.
+    has work left, so this one denies and continues. The exception is a test
+    that sets `execution.stop_at_stub`, whose verdict is its first stubbed
+    hand-off: `run_skill` adds the stop to that hand-off.
     """
     reason = _STUB_PREAMBLE.format(name=skill_name)
     reason += (

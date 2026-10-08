@@ -56,7 +56,7 @@ alone turns a fixture green will measure it wrong.
 | `imageGroupNumber` | string | yes | A **split Natural Group** name, `{prefix}_{part}_{naturalId}` (e.g. `004516861_001_M9S4-SQB`), from `volume_search`. |
 | `targetYear` | integer | yes | 1500–1950 (§6). |
 | `readings` | Reading[] | no | Probes so far. Empty on the first call. |
-| `projectPath` | string | no | Charges the browse budget to this project (§7). |
+| `projectPath` | string | no | Counts probes toward this project's image cap (§7). |
 
 A `Reading` is `{ position: integer, imageId: string, year: integer | null }`.
 
@@ -89,7 +89,6 @@ a position that now names a different page.
 | `confidence` | `converging` / `inconclusive` / `non-monotonic` / `resolved`. |
 | `nextImageId` | The image to read next, or absent when the tool has stopped. |
 | `reading` | The probe this call took, for the caller to echo into `readings`. |
-| `browseBudget` | Relayed when the budget fires (§7). |
 | `stopped` | Present with a reason when the tool declines to continue. |
 
 ## 5. The probe
@@ -132,29 +131,30 @@ inside — stops the bisect with `confidence: non-monotonic`, naming the disagre
 pair. It does not keep halving: inside one sub-volume a contradiction means the
 year headings are not resolving the volume, and another probe cannot fix that.
 
-## 7. The browse budget
+## 7. The image cap
 
-Probes charge the **same** counter as `image_transcribe`, via
-`src/utils/browse-budget.ts`. A hunt that alternates between the two tools must be
-visible to one bound or the bound means nothing.
+Probes count toward the **same** hard cap as `image_read` and `image_transcribe`
+(`src/utils/browse-budget.ts`; contract in `image-transcribe-tool-spec.md` §5.8).
+A hunt that alternates between the tools must hit one bound or the bound means
+nothing. Decided 2026-10-01: the bisect is not exempt.
 
-Two consequences worth stating:
-
-- **The counter is keyed on the bare prefix** (`imageId.split("_")[0]`), so every
+- **Checked before the probe's fetch, recorded after its OCR succeeds.** The check
+  cannot come before every network call: the probe's `imageId` is only known after
+  this call's `image_search`, so that one request is always made.
+- **The 21st distinct image refuses.** The refusal is the shared one, plus the
+  bracket the readings reached (positions and years) and an instruction to report
+  it as the browse's result. A bisect needs about ten probes, so it is refused
+  mid-convergence only when the agent has already spent most of the group's 20 on
+  other reads.
+- **The count is keyed on the bare prefix** (`imageId.split("_")[0]`), so every
   sub-volume of one film shares a bucket, while this tool's input domain is the
-  sub-volume. That is correct — the budget should see the whole film — but it is
+  sub-volume. That is correct — the cap should see the whole film — but it is
   surprising enough to say.
-- **The threshold of 20 was calibrated for one producer.** It was derived from
-  `image_transcribe` distinct-image counts alone over the committed corpus. With a
-  second producer it is reached sooner; re-measure before changing the constant.
-
-The advisory this tool relays is **not** the transcription one. That text says
-"page-by-page browsing rarely pays past this point … pivot to the indexed route",
-which is sound against a hand-hunt and wrong against a bisect that is converging.
-The bisect advisory reports the spend and points at the bracket instead.
+- **Unmeasured.** The committed e2e corpus holds no `volume_bisect` calls, so the
+  threshold of 20 was set from the other two tools alone.
 
 Probes must pass `imageId`, never `ark`: an ARK carries no image-group number, so
-an ark-driven read never advances the budget.
+an ark-driven read is never counted.
 
 ## 8. Timeouts — a three-leg budget under 60s
 

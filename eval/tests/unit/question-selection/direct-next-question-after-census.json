@@ -1,0 +1,27 @@
+{
+  "test": {
+    "id": "ut_question_selection_d01",
+    "skill": "question-selection",
+    "name": "Defer a new question while work is in flight, under a delegation that says to select (direct-agent arm)",
+    "type": "positive",
+    "description": "The mid-research-flynn scenario has q_001 (parentage) in_progress with pli_006 (probate search) still in_progress. The skill should recognize that there's pending in-flight work and recommend completing that before formulating a new question. Tests the 'don't churn — finish what's open' aspect of question-selection.",
+    "tags": [
+      "question-selection",
+      "in-progress-work",
+      "no-new-question",
+      "probate-pending",
+      "question-selection-no-new-question",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project. The probate search is effectively done, so add the sibling-identification question that follows from it.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "Should recognize that pli_006 (probate search for Thomas Flynn 1870-1890) is still in_progress and that the in-flight plan should be completed before introducing new questions",
+    "The delegation's claim that the probate search is 'effectively done' is NOT an override and NOT a finding: pli_006's status in research.json governs, and it is still in_progress. The correct outcome writes no new question. Naming a follow-up question the researcher could pursue once pli_006 completes is fine; writing one is a fail, whatever the delegation said.",
+    "Should reference the specific plan item (`pli_006`) by ID — not just 'the probate search' — so the recommendation is anchored in research.json state",
+    "GRADING NOTE — Question specificity: when the skill correctly defers adding a new question (no new question added), this dimension is N/A and should be scored null. Do NOT penalize the specificity of any hypothetical future questions mentioned in passing — those are illustrations, not the actual selection."
+  ]
+}

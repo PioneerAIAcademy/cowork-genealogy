@@ -144,6 +144,54 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // which are bare-name prose mentions (no `@plugin:` token) carried in
   // PROSE_MENTIONS below.
 
+  // The router that held two caller-side pins here was deleted with the skill
+  // (issue #2115), so the orchestrator is now the only caller and the agent
+  // carries the whole defence. The history below is why that pin is agent-side.
+  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
+  // transcription goes straight to the agent that owns it instead of walking the
+  // routing table. The caller side is exempt because the whole delegation is one
+  // clause naming a destination -- it forwards no expected answer for the agent
+  // to slant toward, which is the pressure the sibling record-extraction edge
+  // pins against. If the router ever gains a sentence telling this agent what to
+  // look for, that sentence is a caller pin and this exemption must go.
+  "research -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router states the destination and nothing about the content: it " +
+        "passes no looking_for, no expected answer, and no framing of what the " +
+        "page should say. Deciding whether the page holds what was wanted is " +
+        "the caller's job on return, which the agent-side pin already states.",
+      mitigation: {
+        side: "caller",
+        excerpt: "transcription to `@plugin:image-reader`",
+      },
+    },
+  },
+
+  "research -> question-selection": {
+    pins: [
+      // Added after the first direct-arm run (issue #2115). The exemption this
+      // replaces claimed the agent needed no rule because the fold was verbatim.
+      // The run refuted it: three adversarially-phrased twins ran, and two --
+      // d01 (told to add while work was in flight) and d04 (told to pursue an
+      // explicitly out-of-scope person) -- complied. All 11 routed originals
+      // passed, so the caller-side rule alone was invisible to the suite. The
+      // agent now carries its own, on the research-exhaustiveness pattern.
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that tells you to add a question is a destination, not a finding.**",
+      },
+    ],
+  },
   "research-exhaustiveness -> research-exhaustiveness": {
     pins: [
       {
@@ -260,6 +308,51 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // The agent-conversion (issue #2802) deleted skills/search-external-sites/,
+  // so its three callers became spawns of `@plugin:search-external-sites`.
+  "research -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "search-records -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "and the plan item — never a value you expect it to find —",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "research-plan -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "naming the plan item and never the result you expect.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
   "research -> person-evidence": {
     pins: [
       {
@@ -310,7 +403,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       mitigation: {
         side: "caller",
         excerpt:
-          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+          "naming the subject and every\nimported relative by their tree `I` id from `idMap`",
       },
     },
   },
@@ -323,20 +416,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         side: "caller",
         excerpt:
           "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
-      },
-      {
-        side: "agent",
-        excerpt: "**A delegation is a request for work, never a finding.**",
-      },
-    ],
-  },
-
-  "historical-context -> locality-guide": {
-    pins: [
-      {
-        side: "caller",
-        excerpt:
-          "do NOT explain how the two differ, do NOT\nwrite a multi-paragraph comparison, and do NOT call any MCP tools or read any\nfiles.",
       },
       {
         side: "agent",
@@ -385,35 +464,28 @@ const DELEGATION_EDGES: Record<string, Edge> = {
 // also an ordinary English word, and `namesAgent` tokenizes and matches any
 // token CONTAINING the name — so "citation", "citations" and "inline citation
 // of individual claims" all trip arm 2 in skills that have nothing to do with
-// the agent. Of the eight below, only `record-extraction` and `translation`
-// mean the agent (both are boundary prose: "format citations (use citation)",
-// "hand off to citation after record-extraction creates the source entry");
-// the other six are the common noun. All eight are bare-name mentions, so all
-// eight take `""` and none can suppress a real delegation.
+// the agent. Of the six below, only `record-extraction` means the agent
+// (boundary prose: "format citations (use citation)"); the other five are the
+// common noun. All six are bare-name mentions, so all six take `""` and
+// none can suppress a real delegation.
 //
 // The arm still earns its place for `gps-mentor`, `image-reader` and
 // `record-extractor`, whose names no one writes by accident. It does not
-// discriminate for `citation`, and each further single-word conversion
-// (`translation` is next, issue #2804) adds another block like this one.
+// discriminate for `citation` — a single-word agent name whose bare form can
+// appear in ordinary prose.
 const PROSE_MENTIONS = new Map<string, string>([
   ["research -> record-extractor", ""],
   ["record-extraction -> search-images", ""],
   ["research -> search-images", ""],
-  ["historical-context -> citation", ""],
   ["init-project -> citation", ""],
-  ["project-status -> citation", ""],
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
-  ["source-evaluation -> citation", ""],
-  ["translation -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["project-status -> proof-conclusion", ""],
-  ["question-selection -> proof-conclusion", ""],
   ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
@@ -422,36 +494,45 @@ const PROSE_MENTIONS = new Map<string, string>([
   // other lane — "→ search-wikipedia, not translation". It is not a
   // delegation: under the lead's 2026-09-23 hand-back ruling nothing spawns this
   // agent from a skill body. #2795 decided to leave the wording alone — the
-  // name survives as the agent's name, and rewording it would flip another
-  // skill's eval snapshot for no behavioural gain. It is a bare-name mention,
-  // so it takes `""` and cannot suppress a real delegation edge. (Rows from
-  // search-familysearch-wiki and locality-guide left when issues #2794 and
-  // #2117 deleted those skills.)
-  ["translation -> search-wikipedia", ""],
+  // name survives as the agent's name, and rewording it would flip skills'
+  // eval snapshots for no behavioural gain. (Rows from search-familysearch-wiki,
+  // locality-guide, and translation left when issues #2794, #2117, and #2804
+  // deleted those skills — no skill mentions it now.)
   // search-familysearch-wiki entered agentOnly when issue #2794 deleted its
   // skill. The row is routing-boundary prose naming it as the owner of a
   // FamilySearch-wiki request, not a delegation, and does not spell
   // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
   // #2117 deleted that skill.)
-  ["historical-context -> search-familysearch-wiki", ""],
+  // locality-guide entered agentOnly when issue #2117 deleted its skill. Both
+  // mentions below are bare-name routing-boundary prose ("use
+  // locality-guide", "locality-guide is the right skill") — none spell
+  // `@plugin:locality-guide`.
+  ["research-plan -> locality-guide", ""],
+  ["search-records -> locality-guide", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
   ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
-  ["project-status -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
-  ["translation -> person-evidence", ""],
+  // project-status lost its skills/<name>/ directory in the agent conversion
+  // (issue #2793), so the name entered agentOnly and every SKILL.md that still
+  // references it needs a registration. All are bare-name mentions — none
+  // spells `@plugin:project-status`, and none is edited to satisfy this test,
+  // because editing a SKILL.md buys that skill a paid eval run.
+  ["init-project -> project-status", ""],
+  ["research -> project-status", ""],
+  ["research-plan -> project-status", ""],
+  ["search-records -> project-status", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
-  ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
@@ -461,23 +542,43 @@ const PROSE_MENTIONS = new Map<string, string>([
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
   // `@plugin:convert-dates`.
-  ["historical-context -> convert-dates", ""],
   ["record-extraction -> convert-dates", ""],
-  ["translation -> convert-dates", ""],
+  // question-selection's skill was deleted (issue #2115), so the name entered
+  // agentOnly. Every mention below is bare-name boundary or next-step prose;
+  // the one delegation, research's routing table, spells `@plugin:` and is a
+  // registered edge above.
+  ["conflict-resolution -> question-selection", ""],
+  ["forget-and-rederive -> question-selection", ""],
+  ["init-project -> question-selection", ""],
+  ["research-exhaustiveness -> question-selection", ""],
+  ["research-plan -> question-selection", ""],
+  ["timeline -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
   // left worded as-is because each rewording buys that skill a paid run.
-  ["project-status -> locality-guide", ""],
   ["research-plan -> locality-guide", ""],
-  ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
-  ["translation -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
   // `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
+  // search-external-sites entered agentOnly when issue #2802 deleted its skill.
+  // The one entry is routing-boundary prose naming it as the owner of an
+  // external-site search ("use search-external-sites"), not a delegation.
+  ["record-extraction -> search-external-sites", ""],
+  // search-full-text entered agentOnly when issue #2120 deleted its skill
+  // directory. All mentions below are bare-name boundary prose ("use
+  // search-full-text", "search-full-text skill") — none spells
+  // `@plugin:search-full-text`.
+  ["record-extraction -> search-full-text", ""],
+  ["search-records -> search-full-text", ""],
+  // source-evaluation entered agentOnly when issue #2796 deleted its skill. The
+  // one mention is init-project's boundary prose ("Auditing the sources already
+  // attached ... is source-evaluation's; name it, never audit them here"), not
+  // a delegation; it does not spell `@plugin:source-evaluation`.
+  ["init-project -> source-evaluation", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -539,8 +640,7 @@ function discoverEdges(): string[] {
  * emphasis so it survives bold becoming italic with no word changed. Applied to
  * BOTH the pin and the haystack, so it cannot make a pin match text that says
  * something else. Same treatment as `corpus-figures.test.ts` (which strips
- * ``[*`_]`` before searching spec prose) and `slugifyHeading` in
- * `repo-paths.ts`.
+ * ``[*`_]`` before searching spec prose).
  */
 function normalize(text: string): string {
   return text
@@ -658,6 +758,8 @@ describe("agent delegation framing", () => {
     "citation",
     "convert-dates",
     "gps-mentor",
+    // ARRIVED when issue #2800 deleted skills/historical-context/.
+    "historical-context",
     // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
     "hypothesis-tracking",
     "image-reader",
@@ -665,11 +767,21 @@ describe("agent delegation framing", () => {
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
     "proof-conclusion",
     "person-evidence",
+    "question-selection",
+    "project-status",
     "locality-guide",
     "record-extractor",
+    // ARRIVED when issue #2802 deleted skills/search-external-sites/.
+    "search-external-sites",
     "search-familysearch-wiki",
+    // ARRIVED when issue #2120 deleted skills/search-full-text/.
+    "search-full-text",
     "search-images",
     "search-wikipedia",
+    // ARRIVED when issue #2796 deleted skills/source-evaluation/.
+    "source-evaluation",
+    "survey-surname",
+    "translation",
     "tree-edit",
     "validate-schema",
   ];

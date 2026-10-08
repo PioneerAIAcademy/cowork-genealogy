@@ -18,13 +18,20 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // a skill here (and copy the file) when it starts using place tools or writing
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
-  "historical-context",
-  "search-external-sites",
   "timeline",
   "conflict-resolution",
   "record-extraction",
-  "init-project",
 ];
+
+// Agents that inline the canonical places guidance verbatim in their body
+// (CLAUDE.md "No playbook/reference files for agents": an agent carries its own
+// doctrine, so the guidance is inlined rather than loaded from a references/
+// file). The canonical file carries a leading HTML comment describing the
+// skill-copy mechanism, which does not apply inside an agent, so the agent
+// inlines the canonical BODY (comment stripped) and this arm asserts that body
+// appears verbatim. historical-context moved here from the skills list when
+// issue #2800 converted it to an agent.
+const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context"];
 
 // Skills whose copy is deliberately specialized, so byte-identical is the wrong
 // contract for them. Each needs a reason — this list is not an escape hatch for
@@ -54,6 +61,14 @@ const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: 
     // localities entry, you do not call them here."
     why: "delegates place-fact fetching to locality-guide; canonical names four tools it cannot call",
     sha256: "0521723c5e9de12e2277909a23963ff1f32e691e3620b31a9351dc7151cad78d",
+  },
+  {
+    skill: "init-project",
+    // Issue #2944: project_create builds the starting tree from the staged
+    // person_read, standard_place included, so the canonical "copy it from a
+    // person_read result" bullet describes a step init-project no longer takes.
+    why: "project_create carries person_read's standard_place; the canonical copy-it bullet names a step init-project no longer takes",
+    sha256: "8b907a20b43d3393ebf9160224b5ff60ae89a30f1ef435f90453f752baffb3fd",
   },
 ];
 
@@ -87,6 +102,27 @@ describe("places-guidance drift lint", () => {
       const copy = readFileSync(copyPath, "utf8");
       // Byte-identical: edit the canonical, then re-copy into every skill.
       expect(copy).toBe(canonical);
+    });
+  }
+
+  // The canonical body (the leading HTML comment, which only describes the
+  // skill-copy mechanism, stripped) must appear verbatim in each agent that
+  // inlines the guidance. LF-normalized so a CRLF checkout matches.
+  const canonicalBody = canonical
+    .replace(/\r\n/g, "\n")
+    .replace(/^<!--[\s\S]*?-->\n*/, "")
+    .trim();
+
+  for (const agent of AGENTS_WITH_PLACES_GUIDANCE) {
+    it(`${agent} agent inlines the canonical places-guidance body verbatim`, () => {
+      const agentPath = join(repoRoot, "plugin", "agents", `${agent}.md`);
+      expect(existsSync(agentPath), `missing agent: ${agentPath}`).toBe(true);
+      const body = readFileSync(agentPath, "utf8").replace(/\r\n/g, "\n");
+      expect(
+        body.includes(canonicalBody),
+        `${agent}.md no longer contains the canonical places-guidance body ` +
+          `verbatim. Edit the canonical, then re-inline it into the agent.`,
+      ).toBe(true);
     });
   }
 

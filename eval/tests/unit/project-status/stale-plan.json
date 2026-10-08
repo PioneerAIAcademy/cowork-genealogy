@@ -9,11 +9,12 @@
       "status",
       "integrity",
       "stale-plan",
-      "recommendation"
+      "recommendation",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Where are we on this project, and what should I do next?",
+    "delegation": "Report where this research project stands: the user-friendly summary first, then the detailed GPS-state summary, with any integrity warnings surfaced above both, and the recommended next step.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-stale-plan"
   },
   "judge_context": [

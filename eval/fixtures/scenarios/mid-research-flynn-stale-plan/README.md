@@ -20,7 +20,7 @@ detection (test `ut_project_status_007`).
     active plan has an outstanding planned item (decision-tree branch 2's
     "active plan with items status planned" condition). The clean
     `mid-research-flynn` has no `planned` items left in `pl_002`.
-- **Why this shape:** `project-status/SKILL.md` Step 2 ("Stale plans") flags
+- **Why this shape:** `agents/project-status.md` Step 2 ("Stale plans") flags
   an active plan whose most recent item predates the newest log entry or
   assertion for its question. Here the "recent findings" are the five
   unprocessed post-plan sources.

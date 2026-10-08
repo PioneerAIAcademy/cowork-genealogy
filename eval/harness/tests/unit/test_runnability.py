@@ -202,7 +202,29 @@ def test_blocks_when_negative_correct_skill_has_typo(tmp_path):
     )
     assert result.runnable is False
     assert "search-record" in result.reason
-    assert "not an existing skill" in result.reason
+    assert "neither an existing skill" in result.reason
+    # The name matches no agent file either, which is what still makes it a typo
+    # rather than a converted skill (issue #2793).
+    assert "nor an existing agent" in result.reason
+
+
+def test_allows_a_negative_correct_skill_naming_a_converted_agent(tmp_path):
+    """The other direction of the same guard: a `correct_skill` naming a skill
+    that was CONVERTED to an agent is a real destination, not a typo. Requiring
+    a skill directory would fail a correctly-routed test for a migration the
+    test is not about (issue #2793)."""
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {
+        "correct_skill": ["project-status"],  # an agent file, no skill directory
+        "explanation": "x",
+    }
+    spec = load_test_from_dict(d)
+    result = check_runnable(
+        spec, scenarios_dir=SCENARIOS, fixtures_dir=FIXTURES,
+        skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is True, result.reason
 
 
 def _stub_check(execution):
@@ -237,6 +259,53 @@ def test_allows_stub_skills_naming_a_real_skill():
         {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
     )
     assert result.runnable is True
+
+
+# --- execution.stop_at_stub (#3119) ---------------------------------------------
+
+
+def test_stop_at_stub_is_refused_with_nothing_stubbed():
+    result = _stub_check({"stop_at_stub": True})
+    assert result.runnable is False
+    assert "requires a non-empty stub_skills" in result.reason
+
+
+def test_stop_at_stub_is_refused_on_a_negative_test():
+    d = _runnable_test_dict()
+    d["test"]["type"] = "negative"
+    d["negative"] = {"correct_skill": ["search-records"], "explanation": "x"}
+    d["execution"] = {"stop_at_stub": True, "stub_skills": ["search-records"]}
+    result = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert result.runnable is False
+    assert "positive tests only" in result.reason
+
+
+def test_stop_at_stub_is_allowed_with_a_stub():
+    result = _stub_check({"stop_at_stub": True, "stub_skills": ["search-records"]})
+    assert result.runnable is True, result.reason
+
+
+def test_a_no_shortcut_test_must_set_stop_at_stub():
+    """Its validator reads the first hand-off, and without the stop the router
+    walks on past it."""
+    d = _runnable_test_dict()
+    d["test"]["tags"] = ["no-shortcut"]
+    d["execution"] = {"stub_skills": ["search-records"]}
+    refused = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert refused.runnable is False
+    assert "must set execution.stop_at_stub" in refused.reason
+    d["execution"]["stop_at_stub"] = True
+    allowed = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert allowed.runnable is True, allowed.reason
 
 
 def test_allows_stub_skills_naming_an_agent_with_no_skill_directory():

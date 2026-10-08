@@ -1,0 +1,278 @@
+{
+  "run_log": "v1_2026-10-03_03-18-39.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill resolved the double-dated year but omitted the Julian-to-Gregorian day offset, leaving the converted date incomplete."
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Only one of two applicable corrections was applied — the day shift was missed."
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Double-date resolved correctly but the 11-day Julian-to-Gregorian offset for 1750 England was not applied."
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The presented result omits the day correction, so the final date is still Julian rather than fully Gregorian."
+    },
+    {
+      "test_id": "ut_convert_dates_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No ambiguity — the date deterministically predates the Gregorian reform in its jurisdiction."
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool calls made — the skill correctly identified this as a reformatting task needing no conversion."
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool calls made — the skill correctly declined the out-of-scope request and routed to validate-schema."
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No ambiguity — both dates are unambiguous in their respective jurisdictions."
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Ambiguity handling",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No ambiguity — Russia was on the Julian calendar with a single clear offset."
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Genealogical presentation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Conversion accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

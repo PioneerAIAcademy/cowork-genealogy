@@ -364,3 +364,33 @@ def test_main_test_flag_still_honors_the_since_cutoff(tmp_path, monkeypatch, cap
     assert rc == 0
     assert "Fixture: old-fixture" in out
     assert "Window: entire corpus (1 run(s))." in out
+
+
+def test_five_element_timeline_rows_still_segment():
+    """The row grew to five columns on 2026-10-02 (#2582: `wall_ts`, `message_id`).
+
+    Under the previous `len(entry) != 3` check this returned
+    `unsegmentable-timeline` — an *exclusion reason*, not an error — so
+    `make e2e-compaction` and `make e2e-ranked-reads` (which imports this same
+    function as its only cursor) would have kept printing a healthy-looking
+    report while silently dropping every run written after that date.
+
+    The opposite direction is pinned by
+    `test_two_element_timeline_is_unsegmentable_and_excluded` above: a legacy
+    2-wide row must still be rejected, so the relaxation is `< 3`, never "any
+    width".
+    """
+    doc = {
+        "usage": {
+            "timeline": [
+                [0.0, "system:init", [], "2026-10-02T00:00:00.000Z", None],
+                [1.0, "assistant", ["record_read"], "2026-10-02T00:00:01.000Z", "msg_1"],
+                [2.0, "tool_result", ["record_read"], "2026-10-02T00:00:02.000Z", None],
+            ]
+        },
+        "tool_calls": [_tool_call("mcp__genealogy__record_search", subject_id="I1")],
+    }
+    calls, reason = segment_run(doc)
+
+    assert reason is None
+    assert calls == [(0, True)]

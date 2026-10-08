@@ -493,19 +493,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/research-exhaustiveness/ut_research_exhaustiveness_011.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "The correct outcome is routing to proof-conclusion, with no exhaustive_declaration changes and no validate_research_schema call",
-        ],
-        "reason": (
-            "negative mention in a triggering-boundary test - 'The correct "
-            "outcome is routing to proof-conclusion, with no "
-            "exhaustive_declaration changes and no validate_research_schema "
-            "call'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "wiki_search",
         "quotes": [
@@ -596,60 +583,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "negative mention of another skill's tool - 'Should NOT scope "
             "the full-text search to a record `collectionId` guessed from "
             "record_search or a collections survey'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
-        "tool": "place_search",
-        "quotes": [
-            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
-            "its tool calls legitimately appear in search-records' transcript",
-        ],
-        "reason": (
-            "cross-owner, live callee - 'search-external-sites RUNS FOR "
-            "REAL here - it is not stubbed. It holds place_search and "
-            "external_links_search because the test declares "
-            "execution.run_skills ... its tool calls legitimately appear in "
-            "search-records' transcript'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
-        "tool": "external_links_search",
-        "quotes": [
-            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
-            "its tool calls legitimately appear in search-records' transcript",
-        ],
-        "reason": (
-            "cross-owner, live callee - 'search-external-sites RUNS FOR "
-            "REAL here - it is not stubbed. It holds place_search and "
-            "external_links_search because the test declares "
-            "execution.run_skills ... its tool calls legitimately appear in "
-            "search-records' transcript'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
-        "tool": "place_search",
-        "quotes": [
-            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
-        ],
-        "reason": (
-            "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry 'Norway' is "
-            "a sufficient anchor for the church search'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
-        "tool": "collections_search",
-        "quotes": [
-            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
-        ],
-        "reason": (
-            "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry 'Norway' is "
-            "a sufficient anchor for the church search'"
         ),
     },
     {
@@ -866,17 +799,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "`record_search` / `search-full-text`)'; its description line "
             "says 'Do NOT use for indexed records (use record_read / "
             "record_search)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/person-evidence.md",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "The persistence tools validate before writing, so no separate `validate_research_schema` pass is needed",
-        ],
-        "reason": (
-            "not-needed - 'The persistence tools validate before writing, "
-            "so no separate `validate_research_schema` pass is needed'"
         ),
     },
     {

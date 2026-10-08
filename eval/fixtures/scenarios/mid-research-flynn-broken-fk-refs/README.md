@@ -9,7 +9,7 @@ broken-foreign-key variants project-status checks beyond
   - `timelines[0].person_ids` (`t_001`) changed from `["I1"]` to
     `["I1", "I9"]`.
   - `I9` does not exist in `tree.gedcomx.json` (only `I1` and `I2` do).
-- **Why this shape:** `project-status/SKILL.md` Step 2 lists four
+- **Why this shape:** `agents/project-status.md` Step 2 lists four
   foreign-key sources; `person_evidence` is covered by
   `mid-research-flynn-broken-fk`, and this scenario covers the
   `subject_person_ids` and `timelines.person_ids` variants in one run.

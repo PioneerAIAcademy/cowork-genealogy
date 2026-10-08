@@ -10,9 +10,12 @@ contract for tool results.
 
 ## Live tools
 
-Some MCP tools are deterministic functions of local workspace state — they
-require no network and their return value depends on what the skill just
-wrote. Canning their response as a fixture would be dishonest: a fixture
+Some MCP tools are deterministic functions of local workspace state — their
+return value depends on what the skill just wrote. One exception reaches the
+network: `project_create` with `personReadRef` retries, through the anonymous
+Places API, any place the staged read left without a `standard_place`. No
+committed `person-read-*` fixture has such a fact, so unit runs make no call;
+a fixture that adds one makes the run network-dependent. Canning their response as a fixture would be dishonest: a fixture
 can't reflect the actual file content the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
@@ -99,9 +102,12 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Local-only: reads tree.gedcomx.json from the workspace. The compiled-tool
-    # handler computes every tag deterministically from the workspace tree, so a
-    # live handler is more faithful than a canned answer. Live since 2026-09-03
+    # Reads tree.gedcomx.json from the workspace. The compiled-tool handler
+    # computes every tag from the workspace tree, so a live handler is more
+    # faithful than a canned answer. Its one networked check
+    # (hasBirthFarFromParentsResidence) is switched off through
+    # `_COMPILED_TOOL_EXTRA_ARGS`: a unit run must not reach the Places API, and
+    # the tool skips that check when a lookup returns nothing. Live since 2026-09-03
     # (lead ruling on PR #2151). `person_quality` is NOT here and must not be:
     # it calls FamilySearch.
     "person_warnings",
@@ -745,6 +751,7 @@ def _stage_person_read(
     """
     person_read_js = _MCP_BUILD / "tools" / "person-read.js"
     if not person_read_js.exists():
+        _warn_unstaged(f"no engine build at {person_read_js}")
         return response
 
     posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
@@ -770,13 +777,27 @@ def _stage_person_read(
         )
         out = proc.stdout.strip()
         if proc.returncode != 0 or not out:
+            _warn_unstaged(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
             return response
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
+            _warn_unstaged("the stager returned no `staged` key")
             return response
         return {**response, **parsed}
-    except Exception:
+    except Exception as e:
+        _warn_unstaged(f"{type(e).__name__}: {e}")
         return response
+
+
+def _warn_unstaged(why: str) -> None:
+    """A canned person_read the mock could not stage. init-project now passes
+    the staged ref to project_create and stops when there is none, so this reads
+    as the skill stopping. Say it was the harness (#2944 Stage B)."""
+    warnings.warn(
+        f"mock person_read could not be staged ({why}); the response goes back with no "
+        "`staged`, so a skill that needs the ref will stop for a harness reason",
+        stacklevel=2,
+    )
 
 
 def create_mock_server(
@@ -1166,6 +1187,14 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: `principal` arrives `undefined`.
 _COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
 
+#: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
+#: `person_warnings` gets a place resolver that resolves nothing, so its
+#: birthplace-distance check never makes a network call and never fires here
+#: (lead ruling on issue #1962, 2026-09-27).
+_COMPILED_TOOL_EXTRA_ARGS: dict[str, str] = {
+    "person_warnings": "{ placeCoords: async () => null }",
+}
+
 
 def _make_live_handler(
     tool_name: str,
@@ -1526,6 +1555,8 @@ def _make_compiled_tool_handler(
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
             )
             call_args = "input, LOCAL" if takes_principal else "input"
+            if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
+                call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"

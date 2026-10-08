@@ -1,6 +1,6 @@
 import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile } from "fs/promises";
+import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -16,6 +16,7 @@ import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -36,6 +37,7 @@ function mockImageResponse(bytes?: Uint8Array) {
 }
 
 beforeEach(() => {
+  __clearImageBrowseMemoryForTests();
   mockFetch.mockReset();
   mockedGetValidToken.mockReset();
   mockedGetValidToken.mockResolvedValue("test-token");
@@ -361,5 +363,65 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
       imageReadTool({ memoryArtifactUrl: "https://evil.example.com/a/dist.jpg" }, LOCAL),
     ).rejects.toThrow(/Unrecognized memoryArtifactUrl/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)", () => {
+  const GROUP = "004884748";
+  const img = (seq: number) => `${GROUP}_${String(seq).padStart(5, "0")}`;
+  let project: string;
+
+  beforeEach(async () => {
+    project = await mkdtemp(join(tmpdir(), "imgr-cap-"));
+    await writeFile(join(project, "research.json"), "{}");
+  });
+
+  afterEach(async () => {
+    await rm(project, { recursive: true, force: true });
+  });
+
+  async function readTwenty() {
+    for (let i = 1; i <= 20; i++) {
+      mockImageResponse();
+      await imageReadTool({ imageId: img(i), projectPath: project }, LOCAL);
+    }
+  }
+
+  it("refuses the 21st distinct image in a group without fetching it", async () => {
+    await readTwenty();
+    mockFetch.mockClear();
+    await expect(imageReadTool({ imageId: img(21), projectPath: project }, LOCAL)).rejects.toThrow(
+      /Image cap reached: 20 distinct images from image group 004884748/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("re-reading one of the first 20 still works", async () => {
+    await readTwenty();
+    mockImageResponse();
+    const again = await imageReadTool({ imageId: img(3), projectPath: project }, LOCAL);
+    expect(again.metadata.sizeBytes).toBe(4);
+  });
+
+  it("counts a DGS distribution URL passed as ark", async () => {
+    await readTwenty();
+    mockFetch.mockClear();
+    await expect(
+      imageReadTool({ ark: `https://familysearch.org/das/v2/dgs:${img(21)}/dist.jpg`, projectPath: project }, LOCAL),
+    ).rejects.toThrow(/Image cap reached/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("a failed fetch does not advance the count", async () => {
+    for (let i = 1; i <= 19; i++) {
+      mockImageResponse();
+      await imageReadTool({ imageId: img(i), projectPath: project }, LOCAL);
+    }
+    mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: "Not Found", headers: { get: () => null } });
+    await expect(imageReadTool({ imageId: img(20), projectPath: project }, LOCAL)).rejects.toThrow();
+    mockFetch.mockReset();
+    mockImageResponse();
+    const r = await imageReadTool({ imageId: img(21), projectPath: project }, LOCAL);
+    expect(r.metadata.sizeBytes).toBe(4);
   });
 });

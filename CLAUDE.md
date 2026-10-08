@@ -21,7 +21,9 @@ We ship two separate artifacts from this single repo:
 - A Cowork plugin folder packaged as a `.zip` (runs in the Cowork VM)
 
 These two pieces are tightly coupled and must be developed together,
-which is why they live in one repo.
+which is why they live in one repo. The search-agent prototype adds three
+Elastic Beanstalk source bundles, web, worker and tools (`make eb-bundles`;
+`docs/plan/familysearch-handoff.md`).
 
 ## Architecture you must understand before changing anything
 
@@ -77,7 +79,8 @@ in the sense that they cannot.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
-- `scripts/` — Build scripts for both artifacts.
+- `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
+  Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
   smoke tests that invoke a tool directly against live APIs (no MCP
   harness; useful for debugging a tool in isolation), plus
@@ -409,7 +412,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-six other agents also carry no line — `search-wikipedia` is the one whose
+seven other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 
@@ -682,6 +685,8 @@ When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
 
+Prove the guard **emits** on a planted defect, not just that it exits non-zero — a log-line-only guard and a broken guard both produce the same empty output (lead, 2026-09-25).
+
 ### A ruling binds only while its premises hold
 
 A ruling (a `**Ruling:**` comment, a `Decided (lead, …)` line, "lead ruling <date>"
@@ -801,7 +806,7 @@ Where to look first:
   Use `fetchWithRetry` for new call sites; `fetchWithTimeout` is still
   exported for the handful of excluded sites that manage their own retry or
   carry timeouts too long for the budget (`image_transcribe` 180s,
-  `fs-image-fetch` 90s, `place-api`, `match-engine`). Node's global `fetch`
+  `fs-image-fetch` 90s, `match-engine`). Node's global `fetch`
   never times out on its own; a stalled upstream connection
   (FamilySearch/Imperva, the wiki-query-api sidecar, OpenRouter) hangs the
   call forever otherwise. This file is the only one allowed to call the global

@@ -2,16 +2,17 @@
   "test": {
     "id": "ut_source_evaluation_p2v",
     "skill": "source-evaluation",
-    "name": "Triggers on the tester's own phrasing from feedback case #1536",
+    "name": "Audits on the tester's own phrasing from feedback case #1536",
     "type": "positive",
-    "description": "Trigger test. Issue #1606 records that this flow 'has no skill and no routing today; it was freelanced in the main thread with only init-project ever invoked' -- the user addressed the session directly and nothing fired. That is a description binding, not a routing one (docs/architecture.md, 'Fix a skill that is not triggering', case 2), so it is pinned here as a trigger positive on the utterance the tester actually used.",
+    "description": "The tester's own utterance from feedback case #1536. Issue #1606 records that this flow 'has no skill and no routing today; it was freelanced in the main thread with only init-project ever invoked'. Formerly pinned as a trigger positive for the skill's description; since issue #2796 the agent is spawned directly with this request, so the test grades the audit it produces on the tester's phrasing, not whether anything fired.",
     "tags": [
       "trigger",
-      "feedback-1536"
+      "feedback-1536",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Can you evaluate the sources on this profile and look for errors? KD96-TV2.",
+    "delegation": "Can you evaluate the sources on this profile and look for errors? KD96-TV2.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
   "mcp_fixtures": [
@@ -24,9 +25,11 @@
     "person-quality-hole-detail"
   ],
   "judge_context": [
-    "The source-evaluation skill must activate on this utterance",
-    "It must not hand off to conflict-resolution, check-warnings or record-extraction -- the user asked for an audit of what is attached, which is this skill's own job",
+    "Should carry out the audit itself on this utterance rather than handing the request back",
+    "It must not hand back to conflict-resolution, check-warnings or record-extraction -- the user asked for an audit of what is attached, which is this agent's own job",
     "Should begin by enumerating the attached sources with person_read before judging any of them",
-    "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted."
+    "Ground truth for the death index: `record_read` on HOLE-002 indexes the death as 10 June 1954, and `person_read` on KD96-TV2 records 10 June 1945 on the profile. A finding that reports the index as 1954 and the profile as 1945 is CORRECT and must not be deducted.",
+    "The Hole profile carries SD-HOLE-D, a memory with an `artifact_url` and no record-persona ARK. It IS in the audit list — the rule keeps an entry carrying `artifact_url`, because no person entry references a memory — so the reply must name it among the sources it could not check, by what it is. A reply that omits it has silently dropped an audit-list entry; a reply that says only a generic \"some sources could not be checked\" has not identified it.",
+    "The Hole profile also carries SD-HOLE-E, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all — not as a finding, and not among the sources it could not check. Naming it either way is wrong: it was never in scope."
   ]
 }

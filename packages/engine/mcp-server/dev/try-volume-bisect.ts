@@ -31,7 +31,6 @@ for (let i = 0; i < 12; i++) {
       `bracket ${r.bracket.lowPosition}..${r.bracket.highPosition} ` +
       `(${r.bracket.lowYear}..${r.bracket.highYear})  ${r.confidence}`,
   );
-  if (r.browseBudget) console.log(`  budget: ${r.browseBudget.notice}`);
   if (r.stopped) { console.log(`  stopped: ${r.stopped}`); break; }
   if (!r.reading || !r.nextImageId) break;
   readings.push(r.reading);

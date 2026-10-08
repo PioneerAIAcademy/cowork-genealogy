@@ -146,6 +146,11 @@ function registeredServerKey(site: (typeof SERVER_KEY_SITES)[number]): string | 
 
 const agentFiles = readdirSync(agentsDir).filter((f) => f.endsWith(".md"));
 const knownTools = new Set(allToolSchemas.map((s) => s.name));
+const manifestTools = new Set<string>(
+  (JSON.parse(readFileSync(join(mcpRoot, "manifest.json"), "utf8")).tools as { name: string }[]).map(
+    (t) => t.name,
+  ),
+);
 
 /** Bare tool names an agent names in BOTH `tools:` and `disallowedTools:`.
  *
@@ -283,14 +288,29 @@ describe("plugin agent tool names", () => {
 
       for (const key of ["tools", "disallowedTools"] as const) {
         const entries = extractList(text, key).filter((t) => t.startsWith("mcp__"));
+        // No agent ships a disallowedTools block; restore the pre-guard behaviour
+        // for empty disallowedTools so the describe is not registered at all —
+        // only the tools: side carries the parser regression guard.
         if (key === "disallowedTools" && entries.length === 0) continue;
+
+        // An agent whose AGENT_PERMISSIONS row contains no manifest MCP tool
+        // holds none by design (currently: translation, which holds only Read).
+        // AGENT_PERMISSIONS stores BARE names ("research_append"), so testing
+        // for mcp__ prefix — as the previous version did — was always false and
+        // always waived the assertion. Test manifest membership instead.
+        const noMcpByDesign =
+          key === "tools" &&
+          !(AGENT_PERMISSIONS[file]?.tools ?? []).some((t: string) => manifestTools.has(t));
 
         describe(key, () => {
           it("parses at least one MCP entry", () => {
             // Guards the assertions below against passing vacuously if the
             // frontmatter parser stops matching the block-sequence form.
+            if (noMcpByDesign) return;
             expect(entries.length).toBeGreaterThan(0);
           });
+
+          if (entries.length === 0) return;
 
           it("uses only recognized server prefixes", () => {
             for (const entry of entries) {
@@ -500,20 +520,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // the check-warnings SKILL — a route an agent does not have. Widened
   // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
   // in the routing skill: `/research` may spawn this agent directly, so no
-  // plane guarantees the router runs at all. Still no `Read` and no
-  // `project_context` — the body reaches project state through research_query
-  // and never named either.
+  // plane guarantees the router runs at all. Still no `Read`: the body reaches
+  // research.json through research_query. `place_search`, `place_distance` and `wiki_read`
+  // were added for #2537: the identity decision measures a move outside the
+  // residence cluster and reads the destination's migration page and the
+  // country's naming page (ADR-0012), so those facts left the body.
+  // `place_distance` alone would be a dead grant — it takes the `standardPlace`
+  // only `place_search` returns. `project_context` was added for the same issue:
+  // it is the only tool that lists a person's tree spouses and children, which
+  // the Household check needs to name an absent spouse (ut_person_evidence_026).
   "person-evidence.md": {
     tools: [
       "materialize_facts",
       "merge_warnings",
       "person_quality",
       "person_warnings",
+      "place_distance",
+      "place_search",
+      "project_context",
       "record_read",
       "research_append",
       "research_query",
       "same_person",
       "tree_edit",
+      "wiki_read",
     ],
     denies: [],
   },
@@ -553,6 +583,17 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "validate_research_schema",
       "wiki_read",
     ],
+    denies: [],
+  },
+
+  // Read-only by contract: it reports project state and never writes. It calls
+  // no MCP tool at all — `eval/harness/validators/test_project_status.py`
+  // enforces that — so `Read` is the whole grant (issue #2793). `translation.md`
+  // was the first agent to hold only built-in tools and holds the same shape, so
+  // both are skipped by `noMcpByDesign` below; neither can be covered by the
+  // "parses at least one MCP entry" arm, because there is no MCP entry to parse.
+  "project-status.md": {
+    tools: ["Read"],
     denies: [],
   },
 
@@ -628,6 +669,25 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // The folded historical-context skill (issue #2800) holds the six tools that
+  // skill declared, plus the built-in `Read` for research.json's
+  // narration_guidance. No `Write` and no project-state tool: this agent writes
+  // nothing. No spawn tool: a request belonging to locality-guide,
+  // search-records, translation, convert-dates or conflict-resolution is handed
+  // BACK by name for the main thread to spawn (lead ruling 2026-09-23).
+  "historical-context.md": {
+    tools: [
+      "Read",
+      "place_population",
+      "place_search",
+      "place_search_all",
+      "wiki_read",
+      "wiki_search",
+      "wikipedia_search",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
@@ -636,6 +696,73 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "research_log_append",
       "volume_search",
+    ],
+    denies: [],
+  },
+  // Cost- and context-motivated conversion (issue #2120), not a hook route.
+  // The grant is derived from what the folded body actually calls: step 1 reads
+  // research.json directly via Read (not project_context, which returns neither
+  // plans nor log); the narration line reads researcher_profile.narration_guidance
+  // the same way; step 5 reads staged.resultsRef via Read; and wiki_search /
+  // wiki_read are called in the pre-work block of step 3.
+  "search-full-text.md": {
+    tools: [
+      "Read",
+      "fulltext_search",
+      "get_name_variants",
+      "research_append",
+      "research_log_append",
+      "source_attachments",
+      "wiki_read",
+      "wiki_search",
+    ],
+    denies: [],
+  },
+  // Cost- and context-motivated conversion (issue #2115), not a hook route.
+  // The grant is derived from what the folded body actually CALLS, not from the
+  // former skill's `allowed-tools`, which listed `research_append` alone: that
+  // field is a grant and never constrained the skill, since production and the
+  // unit harness both hand a skill every registered MCP tool. An agent's
+  // `tools:` is exact-match restrictive, so copying that one-entry list would
+  // have spawned an agent that cannot read project state — and, because one
+  // entry resolves, the runtime's zero-tools refusal would NOT have fired.
+  // `Read` is required for tree.gedcomx.json (persons' dates, places and
+  // sources); the body forbids reading research.json with it.
+  "question-selection.md": {
+    tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [],
+  },
+
+  // The folded search-external-sites skill (issue #2802): its seven tools plus
+  // `project_context`, which is how a triage invocation finds the open hand-off
+  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
+  // parish page arrives in the delegation as `baseUrl`.
+  "search-external-sites.md": {
+    tools: [
+      "Read",
+      "build_external_search_url",
+      "collections_search",
+      "external_links_search",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_log_append",
+      "research_query",
+    ],
+    denies: [],
+  },
+
+  // survey-surname (issue #2065) holds three MCP tools and Write. place_search
+  // resolves the state/county. record_search with projectPath stages results.
+  // research_log_append logs each search page. Write saves the markdown table.
+  // No research_append: the log section is written via research_log_append,
+  // which takes no section argument. No Read: builds from inline stubs.
+  "survey-surname.md": {
+    tools: [
+      "Write",
+      "place_search",
+      "record_search",
+      "research_log_append",
     ],
     denies: [],
   },
@@ -682,6 +809,27 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   "search-wikipedia.md": {
     tools: ["Write", "wikipedia_search"],
+    denies: [],
+  },
+
+  // The folded source-evaluation skill (issue #2796) holds the four tools that
+  // skill declared, plus `Read` for the Narration line's read of research.json
+  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
+  // route. A request belonging to conflict-resolution, check-warnings or
+  // record-extraction is handed back by name, so no spawn tool.
+  "source-evaluation.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "record_read",
+      "source_attachments",
+      "person_quality",
+    ],
+    denies: [],
+  },
+
+  "translation.md": {
+    tools: ["Read"],
     denies: [],
   },
 };

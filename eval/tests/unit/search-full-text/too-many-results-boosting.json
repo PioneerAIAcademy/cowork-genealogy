@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_search_full_text_016",
+    "skill": "search-full-text",
+    "name": "Too-many-results: use includeFacets then scope to facet-derived collectionId",
+    "type": "positive",
+    "description": "A broad keywords search for Flynn returns 847 total results plus facet collection breakdowns. The skill should use includeFacets on the first call, then scope a follow-up call to a facet-derived collectionId. Tests the too-many-results boosting ladder from search-strategies.md and the safe includeFacets scoping pattern from query-syntax.md.",
+    "tags": ["fulltext", "boosting", "too-many-results", "includeFacets", "collection-scoping"]
+  },
+  "input": {
+    "delegation": "Search the full-text index for Thomas Flynn in Pennsylvania land records.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-collection-scoped",
+    "fulltext-search-flynn-broad-with-facets",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "The first fulltext_search call returns 847 total results plus a facets array. The skill is expected to handle a result set this large by narrowing — either via boosting terms per the too-many-results ladder (search-strategies.md) or by using includeFacets to identify the best collection and scoping a follow-up call.",
+    "The facets show two collections: Pennsylvania Land Records (623 results, filterParam 2220359) and Pennsylvania Wills and Probate Records (224 results, filterParam 2017696). The skill should pick one and scope the follow-up call using that filterParam as the collectionId.",
+    "QUERY-CONSTRUCTION GRADING NOTE: If the skill uses includeFacets and then a follow-up collectionId, that collectionId MUST come from the facets returned by the first call — the safe scoping pattern from query-syntax.md. A skill that narrows only via boost terms (no collectionId) is also acceptable. A borrowed collectionId (not from any facet response) scores FAIL on collection scoping per rubric.",
+    "The scoped follow-up returns 12 results from Pennsylvania Land Records — the skill should triage these against Thomas Flynn's identity using names, dates, and places in the result stubs.",
+    "RESULT TRIAGE: The scoped results include both Flynn-as-witness and Flynn-as-principal records. The skill should note which records name Thomas Flynn directly (as opposed to other family members) when triaging match quality."
+  ]
+}

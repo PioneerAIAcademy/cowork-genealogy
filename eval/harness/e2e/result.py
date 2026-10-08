@@ -141,6 +141,24 @@ from typing import Any
 #       agree with: `axes_from_runlog` re-derives every vintage under the new
 #       rule and never reads the stored key. 55 of the 56 committed v1+ logs
 #       store `fail`, and 40 of those have a non-`fail` verdict.
+#   7 — `compliance` gets strictly LOOSER, the mirror of entry 3. A typed
+#       `Agent`/`Task` spawn whose `subagent_type` (plugin namespace stripped)
+#       names a guardrail arm now credits that arm exactly as a `Skill` call
+#       does, in both `find_effects_without_invocation` and the shadow
+#       `recently_succeeded` window; a `Skill` name spelled with a plugin
+#       namespace (`genealogy-research:<skill>`) now credits too; and a
+#       protected write whose own `agent_type` is its owner is never a shadow
+#       violation. The direct
+#       spawn of a paired agent is the sanctioned in-loop route, and through v6
+#       every run taking it failed compliance for doing the right thing. Same
+#       shape as entries 2, 4, 5 and 6: `compliance` keeps its name and type
+#       while what a `pass` requires changes, with no tell in the payload. A
+#       v1-v6 log's stored `compliance` and `guardrail_bypass_violations` can
+#       carry a "was never successfully invoked" entry this code no longer
+#       raises; `corpus_report.py --recompute` re-derives them and lists such a
+#       run as "stored N -> recomputed M" under "TODAY's detector clears a
+#       violation the run recorded" — the detector getting looser, not the run
+#       getting better. `outcome` does not move: since entry 6 it is the verdict.
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -148,10 +166,10 @@ from typing import Any
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entries 2, 4, 5 and 6 above are exactly it: `response_summary` stays a
+# and entries 2, 4, 5, 6 and 7 above are exactly it: `response_summary` stays a
 # string, `is_error` stays a bool and `outcome` stays a string, and only what
 # each one means changes.
-HARNESS_SCHEMA_VERSION = 6
+HARNESS_SCHEMA_VERSION = 7
 
 
 @dataclass
@@ -323,7 +341,9 @@ class E2eResult:
     # protected writes (a proof_summaries/person_evidence/conflicts/
     # exhaustive_declaration write, or a tree_edit/tree_correct/
     # materialize_facts write one of the four GPS guardrail skills owns) with
-    # no matching successful `Skill` invocation in a trailing window. Logged,
+    # no matching successful invocation (a `Skill` call or a typed agent spawn
+    # of the owner's name) in a trailing window, and not made by the owning
+    # agent itself. Logged,
     # never denied, at this stage — the point is to measure the false-positive
     # rate against real runs before any call is ever rejected. Each entry is
     # {index, tool, required_skill, question_id} — see
@@ -526,6 +546,43 @@ def detector_era_runlog(data: dict[str, Any]) -> bool:
     `compliance` directly.
     """
     return "harness_schema_version" not in data and "guardrail_shadow_violations" in data
+
+
+def result_message_covers_last_query_only(usage: Any) -> bool:
+    """Whether this run's `usage` block came from a ResultMessage that saw only its
+    last query (issue #3128).
+
+    The SDK's ResultMessage reports `usage`, `num_turns` and `duration_ms` for the
+    last query of a session. A query starts at each `system:init` row in
+    `usage.timeline`, and a run gets a second one from a stall-resume or from a
+    background subagent's `task_notification` followed by a fresh `system:init`.
+    Compaction emits `system:compact_boundary`, so a long run is still one query.
+
+    On a flagged run `usage.usage`, `num_turns` and `duration_ms` describe the last
+    query only. `total_cost_usd` and `duration_api_ms` are per CLI process: they span
+    the run when `resumes` is 0, and cover only the last process when it is not,
+    because a stall-resume starts a new one.
+
+    `num_turns` is the orchestrator's own test for "a ResultMessage arrived". A
+    fallback block carries `num_turns: None` and is built from the stream
+    accumulator, which spans every query. Timeline rows are 2, 3 or 5 wide
+    depending on when the run was written, so they are indexed, never unpacked.
+
+    Here rather than in `orchestrator.py` for the reason `pricing.py` gives: the
+    reports that exclude these runs must not import the orchestrator and, with it,
+    the SDK.
+    """
+    if not isinstance(usage, dict) or usage.get("num_turns") is None:
+        return False
+    timeline = usage.get("timeline")
+    if not isinstance(timeline, list):
+        return False
+    inits = sum(
+        1
+        for row in timeline
+        if isinstance(row, list) and len(row) > 1 and row[1] == "system:init"
+    )
+    return inits > 1
 
 
 def write_result_files(

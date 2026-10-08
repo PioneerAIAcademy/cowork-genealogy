@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial",
+    "f3": "partial",
+    "f4": "false",
+    "f5": "false"
+  },
+  "proof_quality_score": null,
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
+  "blind_bundle_digest": "56389a1cf13df10cbeb5d78384080d119db7fdd11e5553695bd94b0dea8f3272"
+}

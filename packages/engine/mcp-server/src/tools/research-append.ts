@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { getProjectStore } from "../store/project-store.js";
-import { VALIDATOR_ENUMS } from "../validation/validator.js";
+import { SETTLED_CONFLICT_STATUSES, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -45,7 +45,7 @@ import {
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
-import { placeSegments } from "../utils/place-resolver.js";
+import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -399,6 +399,91 @@ function conflictInvariants(entry: any): string[] {
     errs.push("preferred_assertion_id must be one of competing_assertion_ids");
   }
   return errs;
+}
+
+/** A [?] assertion cannot win a conflict on its own evidence — it needs
+ *  corroboration from a different record with the same fact_type, same value
+ *  (once [?] is stripped, whitespace collapsed and case folded), no [?] of its
+ *  own, and tied to the same person. Reads live `research`. */
+function uncertainPreferenceInvariants(entry: any, research: any): string[] {
+  if (entry.preferred_assertion_id == null) return [];
+  const assertions: any[] = research.assertions ?? [];
+  const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
+  const preferred = byId.get(entry.preferred_assertion_id);
+  if (!preferred || !hasUncertainReading(preferred)) return [];
+
+  const competing: string[] = Array.isArray(entry.competing_assertion_ids)
+    ? entry.competing_assertion_ids
+    : [];
+  const preferredRecord = preferred.record_id ?? preferred.source_id ?? null;
+  const normalizedPreferredValue = normalizeUncertainValue(preferred.value);
+
+  // Build set of person_ids the preferred assertion is linked to via live
+  // person_evidence rows.
+  const preferredPersonIds = new Set<string>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.assertion_id === entry.preferred_assertion_id && pe.superseded_by == null) {
+      if (pe.person_id != null) preferredPersonIds.add(pe.person_id);
+    }
+  }
+
+  // Build a map from assertion_id → set of person_ids for fast lookup.
+  const assertionToPersonIds = new Map<string, Set<string>>();
+  for (const pe of research.person_evidence ?? []) {
+    if (pe && pe.superseded_by == null && pe.person_id != null) {
+      let s = assertionToPersonIds.get(pe.assertion_id);
+      if (!s) {
+        s = new Set<string>();
+        assertionToPersonIds.set(pe.assertion_id, s);
+      }
+      s.add(pe.person_id);
+    }
+  }
+
+  for (const a of assertions) {
+    if (!a || a.id === entry.preferred_assertion_id) continue;
+    // Condition 1: no [?] on the corroborator.
+    if (hasUncertainReading(a)) continue;
+    // Condition 2: different record.
+    const aRecord = a.record_id ?? a.source_id ?? null;
+    if (aRecord == null || aRecord === preferredRecord) continue;
+    // Condition 3: same fact_type, equal value once [?] removed + normalized.
+    if (a.fact_type !== preferred.fact_type) continue;
+    if (typeof a.value !== "string") continue;
+    if (normalizeUncertainValue(a.value) !== normalizedPreferredValue) continue;
+    // Condition 4: same person — in competing_assertion_ids, or linked to
+    // the same person via live person_evidence.
+    const inCompeting = competing.includes(a.id);
+    if (!inCompeting) {
+      const aPersonIds = assertionToPersonIds.get(a.id);
+      if (!aPersonIds || !setsOverlap(aPersonIds, preferredPersonIds)) continue;
+    }
+    // All four conditions met — corroborated.
+    return [];
+  }
+
+  return [
+    `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
+      `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
+      `find a second record whose reading agrees, or update the assertion (op: "update", ` +
+      `entryId: "${entry.preferred_assertion_id}", fields: {value: "<confirmed reading>"}) to ` +
+      `remove the [?] once the user confirms the reading. Leaving preferred_assertion_id null ` +
+      `— a deferral is a finding, not an omission — stays legal.`,
+  ];
+}
+
+/** Strip [?], collapse whitespace, fold case — for value comparison. */
+function normalizeUncertainValue(v: string): string {
+  return v.replace(/\[\?\]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+/** True when two sets share at least one element. */
+function setsOverlap(a: Set<string>, b: Set<string>): boolean {
+  const [smaller, larger] = a.size <= b.size ? [a, b] : [b, a];
+  for (const x of smaller) {
+    if (larger.has(x)) return true;
+  }
+  return false;
 }
 
 function planActiveInvariants(entry: any, research: any): string[] {
@@ -898,6 +983,176 @@ export function coreIdentifierContradictionInvariants(
   ];
 }
 
+const US_STATES: ReadonlySet<string> = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware",
+  "district of columbia", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+  "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota",
+  "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey",
+  "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon",
+  "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah",
+  "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming",
+]);
+const US_STATE_CODES: ReadonlySet<string> = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia",
+  "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm",
+  "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa",
+  "wv", "wi", "wy",
+]);
+/** Countries whose borders moved across the years genealogy records cover, so a
+ *  place named under one and a later record under another can be the same
+ *  village. A move inside one group is never read as a move between countries:
+ *  Ireland was in the United Kingdom until 1922, Prussian Posen is Polish
+ *  Poznań, and Norway shared a crown with Denmark and then Sweden. */
+const COUNTRY_GROUPS: ReadonlyMap<string, string> = new Map([
+  ...["united kingdom", "england", "scotland", "wales", "northern ireland", "ireland"].map(
+    (c) => [c, "british isles"] as [string, string],
+  ),
+  ...["germany", "poland", "austria", "hungary", "russia", "switzerland"].map(
+    (c) => [c, "central europe"] as [string, string],
+  ),
+  ...["norway", "sweden", "denmark"].map((c) => [c, "scandinavia"] as [string, string]),
+]);
+
+/** The country group a free-text place names, or null when its last comma
+ *  segment is not a country `canonicalCountry` recognizes (or a US state or
+ *  state code, read as the United States). Country, never state: a state line
+ *  is crossed by a short move as often as a long one, and the tool cannot tell
+ *  which (#2537). */
+export function placeCountry(place: unknown): string | null {
+  if (typeof place !== "string") return null;
+  const segments = placeSegments(place);
+  const last = segments[segments.length - 1];
+  if (!last) return null;
+  const lower = last.toLowerCase();
+  if (US_STATES.has(lower) || US_STATE_CODES.has(lower)) return "united states";
+  const country = canonicalCountry(last);
+  if (!country) return null;
+  return COUNTRY_GROUPS.get(country) ?? country;
+}
+
+const HEAD_ROLES: ReadonlySet<string> = new Set(["head", "principal", "self"]);
+
+const RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+const TREE_RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+
+/** A `confident` link across an unexplained move between countries is refused.
+ *
+ *  The move is read from the documents alone (ADR-0011's first question): the
+ *  record's residence country, from any residence or census assertion on the
+ *  linked record, against the countries of the Residence facts the tree person
+ *  carries. A Residence fact whose every source is a record this person is linked
+ *  to only below `confident` does not count, so the first capped link cannot
+ *  vouch for the next record in the same new place. No attested residence, no
+ *  cluster, no refusal. The agent clears it by naming what bridges the move in
+ *  `move_bridge`; `probable` is never refused. The body's prose cap held about
+ *  two runs in three (ut_person_evidence_g7m, 2026-10-06), which is why it is
+ *  enforced here. */
+export function unexplainedMoveInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  if (entry?.confidence !== "confident") return [];
+  if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") return [];
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const linked = assertionById.get(entry.assertion_id);
+  if (!linked) return [];
+  const recordId = linked.record_id ?? linked.source_id ?? null;
+  if (recordId == null) return [];
+
+  // The linked party's own residence; failing that, the household head's (a
+  // census lists the residence once, on the head). Never another party's: an
+  // informant living elsewhere says nothing about where the subject lived.
+  const residenceOf = (pick: (a: any) => boolean) => {
+    const countries = new Set<string>();
+    let place: string | null = null;
+    for (const a of assertionById.values()) {
+      if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
+      if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!pick(a)) continue;
+      const c = placeCountry(a.place);
+      if (c) {
+        countries.add(c);
+        place ??= a.place;
+      }
+    }
+    return { countries, place };
+  };
+  const linkedParty = partyKey(linked);
+  let { countries: recordCountries, place: recordPlace } = residenceOf(
+    (a) => linkedParty !== null && partyKey(a) === linkedParty,
+  );
+  if (recordCountries.size === 0) {
+    ({ countries: recordCountries, place: recordPlace } = residenceOf((a) =>
+      HEAD_ROLES.has(String(a.record_role ?? "").toLowerCase()),
+    ));
+  }
+  if (recordCountries.size === 0) return [];
+
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
+  if (!person) return [];
+
+  // Tree S id -> research source id, and which research sources carry a
+  // confident link to this person.
+  const researchSourceByTreeRef = new Map<string, string>();
+  for (const src of (research?.sources ?? []) as any[]) {
+    if (src && typeof src.gedcomx_source_description_id === "string" && typeof src.id === "string") {
+      researchSourceByTreeRef.set(src.gedcomx_source_description_id, src.id);
+    }
+  }
+  const linkedBelowConfident = new Set<string>();
+  const linkedConfident = new Set<string>();
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    // The entry under write is already in the array; it must not vouch for itself.
+    if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
+    if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    const a = assertionById.get(pe.assertion_id);
+    if (!a || typeof a.source_id !== "string") continue;
+    (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
+  }
+
+  const residenceCountries = new Set<string>();
+  let residencePlace: string | null = null;
+  for (const f of (person.facts ?? []) as any[]) {
+    const kind = typeof f?.type === "string" ? f.type.split("/").pop()!.toLowerCase() : "";
+    if (!TREE_RESIDENCE_FACT_TYPES.has(kind)) continue;
+    const c = placeCountry(f.place);
+    if (!c) continue;
+    // A Residence fact vouches only through a source other than the record being
+    // judged, and not one this person is linked to only below confident. An
+    // unmapped ref (a tree source with no research entry) is pre-existing
+    // evidence and vouches; so does a fact with no sources at all.
+    const refs = ((f.sources ?? []) as any[]).map((r: any) => researchSourceByTreeRef.get(r?.ref) ?? null);
+    const vouches =
+      refs.length === 0 ||
+      refs.some(
+        (id) =>
+          id === null ||
+          (id !== linked.source_id && !(linkedBelowConfident.has(id) && !linkedConfident.has(id))),
+      );
+    if (!vouches) continue;
+    residenceCountries.add(c);
+    residencePlace ??= f.place;
+  }
+  if (residenceCountries.size === 0) return [];
+  for (const c of recordCountries) if (residenceCountries.has(c)) return [];
+
+  return [
+    `confidence 'confident' is not available on this link: the record places the person in ` +
+      `'${recordPlace}' while the tree attests residence only in '${residencePlace}', a move ` +
+      `between countries that nothing on the entry explains. Measure it (place_search, then ` +
+      `place_distance), read the destination's {Jurisdiction}_Emigration_and_Immigration wiki ` +
+      `page, and look for a record of the move. If a page sentence naming arrivals from the ` +
+      `person's prior country, or a record, bridges it, quote it in move_bridge and keep ` +
+      `'confident'; otherwise write 'probable' and name the gap in the rationale.`,
+  ];
+}
+
 /** A declared core-identifier conflict caps the link at `speculative`.
  *
  *  Decidable from the write payload alone: it reads the entry's own
@@ -1382,6 +1637,136 @@ function disputedSourceIds(research: any): Map<string, string[]> {
   return bySource;
 }
 
+// ─── A conflict resolved in prose must reach conflicts[] ─────────────────────
+//
+// A port of `find_unpersisted_conflict_resolutions` (eval/harness/harness/
+// skill_invocation.py). The two must agree on every case in the shared case file,
+// tests/guard-cases/unpersisted-conflict-resolution.json, which both planes replay
+// (ADR-0011, "The bar is inspection, not a rate"). Keep the vocabulary below in
+// step with the Python copy: the case file is what catches a divergence.
+
+/** A stop-criterion carrying one of these says there was no conflict to persist. */
+const NO_CONFLICT_SUBSTRINGS = [
+  "no conflict",
+  "no material conflict",
+  "no remaining conflict",
+  "no unresolved conflict",
+  "no discrepanc",
+  "without conflict",
+  "no resolution",
+];
+/** Whole-field values (trimmed, lowercased) meaning the same, matched exactly. */
+const NO_CONFLICT_EXACT = new Set(["", "none", "n/a", "na", "not applicable"]);
+/** Positive resolution language. `\b` keeps `resolved` from matching inside `unresolved`. */
+const RESOLUTION_MARKER_RE =
+  /\b(resolv(?:ed|es|ing)|resolution|reconcil(?:ed|es|ing)|outweigh(?:s|ed|ing)?|adjudicated|preferred assertion)\b/i;
+/** A stop-criterion opening by negating a resolution ("UNRESOLVED.", "Not met —"). */
+const NON_RESOLUTION_OPENER_RE = /^[ \t\n\r\f\v]*(unresolved|not met|partial|partially met|n\/?a\b|not applicable|none)/i;
+/** The one whitespace set both planes trim: JavaScript's `trim()` and Python's
+ *  `strip()` remove different Unicode characters, and the planes must agree. */
+const ASCII_EDGE_WHITESPACE_RE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
+
+/** The stop-criterion text when it claims a conflict was resolved, else null. */
+function claimedConflictResolution(question: any): string | null {
+  const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
+  if (typeof cr !== "string") return null;
+  const crl = cr.replace(ASCII_EDGE_WHITESPACE_RE, "").toLowerCase();
+  if (NO_CONFLICT_EXACT.has(crl)) return null;
+  if (NO_CONFLICT_SUBSTRINGS.some((s) => crl.includes(s))) return null;
+  if (NON_RESOLUTION_OPENER_RE.test(crl)) return null;
+  if (!RESOLUTION_MARKER_RE.test(crl)) return null;
+  return cr;
+}
+
+const conflictKey = (value: unknown): string | null =>
+  typeof value === "string" && value !== "" ? value.toLowerCase() : null;
+
+/** A `proof_summaries` write whose question's
+ *  `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict
+ *  was resolved, while `conflicts[]` holds no record of it — the resolution lives
+ *  only in prose, the viewer's Conflicts section is blank, and every conflict
+ *  gate here passes vacuously because each one iterates the array that was never
+ *  written. research-append-tool-spec.md §5.
+ *
+ *  Backed, and allowed, when: a settled (`resolved`/`moot`) conflict is cited on
+ *  this summary's `resolved_conflict_ids` or names this question in its
+ *  `blocks_question_ids`; a `c_` id the stop-criterion names exists in
+ *  `conflicts[]` at any status; or the prose names no id and `conflicts[]` holds
+ *  any entry. The question is "was it persisted", not "was it resolved": a
+ *  recorded but open conflict is not this miss, and `proof-conclusion` is told to
+ *  write a `not_proved` summary in exactly that state. Ids compare
+ *  case-insensitively.
+ *
+ *  Scoped to the entry being written and its own question, never every summary
+ *  in the document, so one violating summary does not refuse every later write.
+ *  Reads the LIVE document for both halves: the requirement is that the record
+ *  is PRESENT, and a pre-call snapshot would refuse the very call that supplies
+ *  a same-batch `questions` update. Not tier-gated: most violations stand at
+ *  `probable`/`possible`, so a `proved`-only gate would reach almost none.
+ *
+ *  What it knowingly lets through (ADR-0011 limit 1). The reliance signal is a
+ *  text heuristic over one prose field: a stop-criterion containing "no
+ *  conflicts remain" is read as "there was no conflict", even beside a
+ *  resolution sentence. The same makes rewording the stop-criterion a way to
+ *  launder the refusal, which is why the message never suggests it. When the
+ *  prose names no `c_` id, ANY `conflicts[]` entry backs it — an open conflict,
+ *  or one about another question — so in a multi-question project one recorded
+ *  conflict turns this off for every id-less resolution claim; the harness rule
+ *  before graduation required a resolved one. And a
+ *  resolution-claiming stop-criterion written AFTER the summary is not caught,
+ *  because the `questions` write is not gated here; in every committed run that
+ *  fires, the declaration was written first. */
+export function unpersistedConflictResolutionInvariants(entry: any, research: any): string[] {
+  if (!entry || typeof entry !== "object") return [];
+  const qid = entry.question_id;
+  if (qid === undefined || qid === null || qid === "") return [];
+  const questions = Array.isArray(research?.questions) ? research.questions : [];
+  const question = questions.find((q: any) => q && typeof q === "object" && q.id && q.id === qid);
+  if (!question) return [];
+  const claimed = claimedConflictResolution(question);
+  if (claimed === null) return [];
+
+  const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const recorded = new Set<string>();
+  const settled = new Set<string>();
+  const settledBlocked = new Set<unknown>();
+  for (const c of conflicts) {
+    if (!c || typeof c !== "object") continue;
+    const key = conflictKey(c.id);
+    if (key) recorded.add(key);
+    if (SETTLED_CONFLICT_STATUSES.has(c.status)) {
+      if (key) settled.add(key);
+      for (const q of Array.isArray(c.blocks_question_ids) ? c.blocks_question_ids : []) settledBlocked.add(q);
+    }
+  }
+  const cited = Array.isArray(entry.resolved_conflict_ids) ? entry.resolved_conflict_ids : [];
+  const named = new Set([...claimed.matchAll(/\bc_\d+\b/gi)].map((m) => m[0].toLowerCase()));
+  const backed =
+    cited.some((rc: unknown) => {
+      const key = conflictKey(rc);
+      return key !== null && settled.has(key);
+    }) ||
+    settledBlocked.has(qid) ||
+    [...named].some((id) => recorded.has(id)) ||
+    (named.size === 0 && recorded.size > 0);
+  if (backed) return [];
+
+  const quote = claimed.length > 300 ? `${claimed.slice(0, 300)}…` : claimed;
+  const missing =
+    named.size > 0
+      ? `it names ${[...named].join(", ")}, which conflicts[] does not hold`
+      : "conflicts[] is empty";
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid}'s ` +
+      `exhaustive_declaration.stop_criteria.conflict_resolution says a conflict was resolved — ` +
+      `"${quote}" — but conflicts[] holds no record of it (${missing}). A resolution that lives ` +
+      `only in prose never reaches the Conflicts section, and no conflict gate can see it. ` +
+      `Record the conflict and its resolution with conflict-resolution, the only writer of ` +
+      `conflicts[] (from an agent, hand back to the main thread and name it), then cite the ` +
+      `settled c_ id on this summary's resolved_conflict_ids and send this write again.`,
+  ];
+}
+
 /** A conclusion may not out-tier the reliability of the sources it rests on.
  *
  *  **Correlation presupposes identity** (lead ruling, 2026-08-19). When an
@@ -1549,9 +1934,32 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.exhaustive_declaration?.declared !== true) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.question_id !== qid) continue;
+  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
+    (item) => item.itemId,
+  );
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
+  ];
+}
+
+/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
+ *  the given snapshot. Shared by the two in-flight gates so which plans and
+ *  items count as in flight is decided once. */
+function activePlanInProgressItems(
+  research: any,
+  includePlan: (plan: any) => boolean,
+): { itemId: string; questionId: unknown }[] {
+  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
     // `research-plan` supersedes a plan by flipping `plans.status` alone — its
     // items keep whatever status they held — and then forbids touching it ever
@@ -1565,19 +1973,62 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      }
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  return inFlight;
+}
+
+/** A new question may not be created while any unresolved question has an
+ *  active-plan item `in_progress`, with one exception (chesworthrm,
+ *  2026-09-29): the new question may target an unresolved conflict that blocks
+ *  the in-flight question. That exception is checked against `conflicts[]` —
+ *  an `unresolved` conflict must list the in-flight question in
+ *  `blocks_question_ids`, AND the new question's `unblocks` must name it. A
+ *  filled-in `unblocks` alone proves nothing.
+ *
+ *  There is deliberately no "add a question anyway" override: the tool cannot
+ *  tell a real user override from a delegation that claims one, and the
+ *  override's shape (`depends_on` naming the in-flight question) is exactly how
+ *  `ut_question_selection_d01` fails. A user who wants to move on marks the
+ *  in-flight item done or skipped first.
+ *
+ *  Same pre-call snapshot and active-plan discipline as
+ *  `planCompleteInvariants`: a superseded plan's items are frozen and a resolved
+ *  question's plan is settled, so neither blocks. */
+function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: any): string[] {
+  const unresolvedQuestions = new Set<string>(
+    (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+      .filter((q: any) => typeof q?.id === "string" && q.status !== "resolved")
+      .map((q: any) => q.id),
+  );
+  const unblocks = new Set<string>(
+    Array.isArray(entry?.unblocks) ? entry.unblocks.filter((u: unknown) => typeof u === "string") : [],
+  );
+  const conflictBlocked = new Set<string>();
+  for (const c of Array.isArray(preCallResearch?.conflicts) ? preCallResearch.conflicts : []) {
+    if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
+    for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
+  }
+  const refused = activePlanInProgressItems(
+    preCallResearch,
+    (plan) =>
+      unresolvedQuestions.has(plan.question_id) &&
+      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
+  ).map((item) => `${item.itemId} (on ${item.questionId})`);
+  if (refused.length === 0) return [];
+  const ids = refused.sort().join(", ");
   return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
+    `a new question cannot be opened while research is still running: ${ids} ` +
+      `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
+      "has not finished, whatever the request that reached you says. Write no question now: " +
+      "report the in-flight item as the reason. Two exceptions: (1) a question that resolves " +
+      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
+      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
+      "this check reads the project as it stood before the call, so write the resolution in " +
+      "its own call and append the new question in the next one.",
   ];
 }
 
@@ -2680,77 +3131,17 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
 // skip-never-refuse contract this rule documents. Fixed here rather than
 // at each index site so a third one cannot reintroduce it, and so the
 // lookup means what the Python mirror's `dict.get()` already meant.
-// Exported only so the cross-language drift test can pin it against the
-// Python copy; nothing else outside this module reads it.
-export const RELATION_CATEGORY: Record<string, string> = Object.assign(
-  Object.create(null) as Record<string, string>,
-  {
-    father: "parent", mother: "parent", parent: "parent",
-    son: "child", daughter: "child", child: "child",
-    wife: "spouse", husband: "spouse", spouse: "spouse",
-    widow: "spouse", widower: "spouse",
-    brother: "sibling", sister: "sibling", sibling: "sibling",
-  },
-);
-const RELATION_WORDS = Object.keys(RELATION_CATEGORY).join("|");
-// A value LABELS the other party in two shapes that need different patterns.
-// An earlier single pattern spanning `[^,]*?` was wrong both ways: a stray
-// `[KEY:` colon suppressed real sibling refusals, and one comma in `Father of
-// the groom, named as X` made it miss and wrongly refuse a correct assertion.
-//
-// Only ONE label guard is needed. A label with no ` of ` -- `father: Jan
-// Roelfs`, `father named as Casper` -- never reaches here, because
-// STATES_SUBJECT_ROLE requires ` of `. A second guard for those was
-// written, measured against the corpus, found to change nothing, and
-// deleted; do not add it back.
-//
-// By role: `Father of groom named as Tellef`. The party being named is
-// identified by ROLE -- a bare lowercase word -- so it is the other party. A
-// CAPITALISED token there is a name, so the value states the subject's own tie
-// and must not be skipped.
-const LABELS_BY_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(?:${RELATION_WORDS})\\s+of\\s+(?:the\\s+)?(\\w+)[\\s,]*(?::|\\s+named\\b)`,
-  "i",
-);
-const STATES_SUBJECT_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(${RELATION_WORDS})\\s+of\\s+`,
-  "i",
-);
-
-/** Exported only so the cross-language drift test can pin it against the
- *  Python `_relationship_category`: the table alone does not cover the
- *  `_inferred` strip or the trim, and `String.replace` with a string
- *  pattern replaces the FIRST occurrence here while Python's replaces
- *  every one. */
-export function relationshipCategory(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
-  // strips the FIRST occurrence here and EVERY occurrence in the Python
-  // mirror, so `child_inferred_inferred` was unknown to this side and
-  // `child` to that one.
-  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
-}
-
-/** The category the VALUE claims for the record subject, or undefined when it
- *  does not speak to the subject's own role. Exported so the cross-language
- *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
- *  because the harness and the engine share no runtime, and nothing else keeps
- *  the two in step. */
-export function subjectRoleInValue(value: string): string | undefined {
-  const byRole = LABELS_BY_ROLE.exec(value);
-  // A lowercase ASCII token is a role word, not a name. Must stay an
-  // explicit class, never a case test: `=== toLowerCase()` is true for a
-  // token with no case (`2`) where the Python mirror's .islower() is
-  // false, so the two disagreed in both directions before this. The
-  // capture stays `\w+` although that is ASCII here and Unicode
-  // there: with this guard both spellings reach the same verdict either
-  // way, and widening it to `\S+?` was reverted as unobservable.
-  if (byRole && /^[a-z]+$/.test(byRole[1])) return undefined;
-  const m = STATES_SUBJECT_ROLE.exec(value);
-  if (!m) return undefined;
-  return RELATION_CATEGORY[m[1].toLowerCase()];
-}
+// The relation-word tables lifted to `src/utils/relationship-category.ts` so
+// rank-search-matches can reuse `relationshipCategory` without the packaging
+// writer-tool check flagging the importer. Re-exported here for the
+// cross-language drift lint (`tests/packaging/relationship-direction-drift.test.ts`),
+// which asserts the pin against the Python copy and reads them from this file.
+import {
+  RELATION_CATEGORY,
+  relationshipCategory,
+  subjectRoleInValue,
+} from "../utils/relationship-category.js";
+export { RELATION_CATEGORY, relationshipCategory, subjectRoleInValue };
 
 function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // `fact_type: relationship` only, which is what the refusal-table row and
@@ -3228,6 +3619,9 @@ function applyOne(
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
+    if (op.op === "append") {
+      invariantErrors.push(...newQuestionWhileSearchInFlightInvariants(resultEntry, preCallResearch));
+    }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
@@ -3257,6 +3651,16 @@ function applyOne(
       // the two dates cannot be ordered. See unorderableDateWarnings for why
       // this is a warning rather than a precondition.
       opWarnings.push(...unorderableDateWarnings(resultEntry, research));
+    }
+    // Uncertain-preference guard: on append, or an update that (re)sets
+    // preferred_assertion_id or status. Scoped so an unrelated edit to a
+    // conflict written before this rule is not refused.
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "preferred_assertion_id") ||
+      Object.prototype.hasOwnProperty.call(conflictFields, "status")
+    ) {
+      invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
     }
   }
   // One active plan per question — enforced on append OR an update that
@@ -3411,6 +3815,19 @@ function applyOne(
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
     );
+    // An update re-checks the move only when it sets the tier or the bridge, or
+    // re-points the link (a new pairing, as the score gate below reads it), so a
+    // rationale edit on a link written before this rule stays possible.
+    const touchesMove =
+      op.op !== "update" ||
+      ["confidence", "move_bridge", "assertion_id", "person_id"].some((f) =>
+        Object.prototype.hasOwnProperty.call(op.fields ?? {}, f),
+      );
+    invariantErrors.push(
+      ...((op.op === "update" && resultEntry.superseded_by) || !touchesMove
+        ? []
+        : unexplainedMoveInvariants(resultEntry, research, tree, batchAssertions)),
+    );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append
     // the circular link with a null score, then UPDATE it to 0.995. (An
@@ -3481,6 +3898,10 @@ function applyOne(
     // source is invalid whether or not this call put it there. Lowering the
     // tier in the same update satisfies it, so the deny stays satisfiable.
     invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Also NOT tier-gated, and reads LIVE research: a conflict resolved only in
+    // prose must reach conflicts[] before any summary relies on it. See
+    // `unpersistedConflictResolutionInvariants` for scope and what it lets through.
+    invariantErrors.push(...unpersistedConflictResolutionInvariants(resultEntry, research));
     // Reads LIVE research, not the pre-call snapshot: two appends inside one
     // batch must collide with each other, not just with what was already there.
     //
@@ -3815,6 +4236,11 @@ function recordIdsForPersonEvidence(research: any, ops: ResearchAppendOp[]): Set
   return out;
 }
 
+/** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
+ *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
+ *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
+ *  matrix, place levers, and match-score gates. Returns the prepared state or
+ *  collected errors. */
 async function prepareOps(
   input: ResearchAppendInput,
   ops: ResearchAppendOp[],
@@ -3866,12 +4292,17 @@ async function prepareOps(
   // append with NO explicit S reference (a caller-supplied
   // gedcomx_source_description_id keeps the verified-reuse semantics and is
   // never second-guessed), plus at least one assertions append carrying a
-  // record_id. Record ids compare canonicalized (arkToBareId), repositories
-  // by normalized exact match (trim + casefold).
+  // record_id — OR, when the batch has zero assertion appends, at least one
+  // assertions update op whose pre-call target carries a record_id (and
+  // whose fields do not set source_id). Record ids compare canonicalized
+  // (arkToBareId), repositories by normalized exact match (trim + casefold).
   let reuseSkipsSourceDescription = false;
   let detectionEngaged = false;
   const assertionAppends = ops.filter(
     (op) => op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object",
+  );
+  const assertionUpdates = ops.filter(
+    (op) => op.section === "assertions" && op.op === "update" && typeof op.entryId === "string",
   );
   if (sourcesAppendIdx.length === 1) {
     const srcOp = ops[sourcesAppendIdx[0]];
@@ -3882,6 +4313,24 @@ async function prepareOps(
         .filter((v: unknown): v is string => factText(v) !== undefined)
         .map((v: string) => arkToBareId(v)),
     );
+    // When the batch has zero assertion appends, derive record keys from
+    // update targets in the pre-call research.assertions (§3.4.1 updates-only).
+    // Never mixed with append-derived keys: a mixed batch that extracts new
+    // record X and corrects old record Y would fold X's source onto Y's.
+    if (assertionAppends.length === 0 && assertionUpdates.length > 0) {
+      const existingAssertions: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+      for (const uop of assertionUpdates) {
+        // Skip any update op whose fields set source_id — it is re-pointing
+        // the assertion, and a fold would leave it naming a source the batch
+        // no longer creates.
+        if (uop.fields && typeof uop.fields === "object" && Object.prototype.hasOwnProperty.call(uop.fields, "source_id")) continue;
+        const target = existingAssertions.find((a: any) => a && a.id === uop.entryId);
+        if (target && typeof target.record_id === "string") {
+          const bare = arkToBareId(target.record_id);
+          if (bare !== "") batchRecordKeys.add(bare);
+        }
+      }
+    }
     if (
       srcEntry &&
       typeof srcEntry === "object" &&
@@ -4091,6 +4540,17 @@ async function prepareOps(
     return results;
   };
 
+  // The other places each record's assertions name in this batch: a bare place
+  // ("Shenandoah") is resolved against them, not against the whole world.
+  const placesByRecord = new Map<string, string[]>();
+  for (const op of ops) {
+    const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
+    const place = e ? factText(e.place) : undefined;
+    if (!place) continue;
+    const key = String(e.record_id ?? "");
+    placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
+  }
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4278,7 +4738,9 @@ async function prepareOps(
         // a miss and a failure look the same here — both warrant the warning
         // (a silently unresolved place is part of the wrong-geocode theme).
         try {
-          sp = (await resolveStandardPlace(entry.place)) ?? null;
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
         } catch {
           sp = null;
         }

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -260,6 +260,43 @@ describe("tool server over Streamable HTTP", () => {
     for (const call of upstream.calls) {
       expect(call.url).toMatch(/familysearch\.org/);
     }
+  });
+
+  it("4b. the image cap is counted per project: A's 21st image refuses without fetching, B's is fetched (#3010)", async () => {
+    const idA = `capa-${randomUUID()}`;
+    const idB = `capb-${randomUUID()}`;
+    const [a, b] = await Promise.all([
+      connect({ [PROJECT_HEADER]: idA, Authorization: "Bearer tok-A" }),
+      connect({ [PROJECT_HEADER]: idB, Authorization: "Bearer tok-B" }),
+    ]);
+    for (const [client, given] of [[a, "Alpha"], [b, "Beta"]] as const) {
+      const created = await client.callTool({ name: "project_create", arguments: createArgs(given) });
+      expect(created.isError, textOf(created)).not.toBe(true);
+    }
+    // A has already read 20 distinct images from the group, in its own log.
+    const group = "004261111";
+    const lines = Array.from({ length: 20 }, (_, i) =>
+      JSON.stringify({ image_group: group, image_id: `${group}_${String(i + 1).padStart(5, "0")}`, tool: "image_read", at: "2026-10-01T00:00:00Z" }),
+    );
+    await mkdir(join(root, idA, "results"), { recursive: true });
+    await writeFile(join(root, idA, "results", "image-browse.jsonl"), lines.join("\n") + "\n");
+
+    upstream.calls.length = 0;
+    const next = `${group}_00021`;
+    const refusedA = await a.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
+    expect(refusedA.isError).toBe(true);
+    expect(textOf(refusedA)).toMatch(/Image cap reached/);
+    // No projectPath: still counted against A's bound project, through its anchorPath.
+    const refusedBare = await a.callTool({ name: "image_read", arguments: { imageId: next } });
+    expect(textOf(refusedBare)).toMatch(/Image cap reached/);
+    expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-A")).toHaveLength(0);
+
+    const fetchedB = await b.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
+    expect(textOf(fetchedB)).not.toMatch(/Image cap reached/);
+    expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-B").length).toBeGreaterThan(0);
+    // B's bare call on a new image: counted against B's own project, never A's full group.
+    const bareB = await b.callTool({ name: "image_read", arguments: { imageId: `${group}_00022` } });
+    expect(textOf(bareB)).not.toMatch(/Image cap reached/);
   });
 
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {

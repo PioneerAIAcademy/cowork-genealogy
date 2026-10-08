@@ -1,7 +1,8 @@
 # Research-Latency Reduction — Plan
 
 **Project:** Cowork Genealogy — AI genealogy research assistant
-**Status:** DRAFT, for review (dev + designer + genealogist)
+**Status: SUPERSEDED 2026-10-01 by [`cost-latency-10x.md`](./cost-latency-10x.md), which carries the
+current baseline, levers and sequencing.** Never left draft. Do not plan from this file.
 **Goal:** Roughly halve the agent-controllable wall-clock of a single research
 session, without removing safety gates on irreversible/external actions and without
 re-architecting the skill pipeline.

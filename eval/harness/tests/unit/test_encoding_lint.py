@@ -54,7 +54,6 @@ Generated / vendored trees we neither own nor can fix are skipped.
 from __future__ import annotations
 
 import ast
-import warnings
 from pathlib import Path
 
 # <repo>/eval/harness/tests/unit/test_encoding_lint.py -> parents[4] == <repo>.
@@ -243,12 +242,10 @@ def test_no_bare_text_mode_file_io():
 
     offenders, unparseable = _scan_tree(REPO_ROOT)
 
-    if unparseable:
-        warnings.warn(
-            "encoding lint could not parse and skipped these files (not scanned):\n  "
-            + "\n  ".join(sorted(unparseable)),
-            stacklevel=2,
-        )
+    assert not unparseable, (
+        "encoding lint could not parse these files, so it did not scan them:\n  "
+        + "\n  ".join(sorted(unparseable))
+    )
 
     assert not offenders, (
         'bare text-mode I/O found -- CLAUDE.md requires encoding="utf-8" on every '

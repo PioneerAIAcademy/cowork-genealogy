@@ -42,13 +42,29 @@ and the transient frames are never replayed -- the same split as TRANSIENT_KINDS
 hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; unset -> NullQueue, turns are recorded but not enqueued),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``). With
-QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
+queue URL, the shim's shape; required -- unset or empty refuses to start),
+POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (60 -- see ``max_nudges``),
+GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
-region). Startup applies proto/sql/*.sql (all idempotent) and logs
-``queue: <url>; sqs credentials: <mode>; region <r>``.
+region). Startup verifies the schema -- reads the ledger ``migrate.py`` keeps and compares
+it with the proto/sql/*.sql this tier ships, running no DDL (U9) -- and syncs the
+allowlist, one inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried
+in the background and never stops the tier listening (U10). It logs
+``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
+FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
+table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
+label, never a message.
+
+WEB_DIST_DIR (unset: no SPA) names the ``apps/web`` SSE build to serve at ``/``; a
+relative value resolves against the tier root, and a missing dist refuses to start
+(``web/spa.py``).
+
+Grants (U3): this tier is every FamilySearch grant's only refresher. ``grant_refresh_loop``
+runs every ``FS_GRANT_REFRESH_INTERVAL_S`` (30) and refreshes, between attempts, the grant
+of each patron with an open turn whose session is ``FS_GRANT_REFRESH_AGE_S`` (3600) old,
+under the per-patron advisory locks in ``proto/grants.py``; lines are ``ev=grant_refresh``.
 
 Run: ``make proto-web`` (from the venv, with the dummy GENEALOGY_SQS_* pair elasticmq
 ignores).
@@ -57,10 +73,12 @@ ignores).
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import html
 import json
 import logging
 import os
+import re
 import secrets
 import sys
 import time
@@ -74,26 +92,31 @@ from typing import Any, Protocol
 from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response, StreamingResponse
-from pydantic import BaseModel, Field
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from pydantic import BaseModel, Field, field_validator
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
 SQL_DIR = PROTO_DIR / "sql"
-# enqueue.py is a sibling of this package in the repo (proto/) and in the container
-# (/app); make it importable from wherever uvicorn, the driver or pytest started.
+# enqueue.py, grants.py and migrate.py are siblings of this package in the repo (proto/)
+# and in the container (/app); make them importable from wherever uvicorn, the driver or
+# pytest started.
 if str(PROTO_DIR) not in sys.path:
     sys.path.insert(0, str(PROTO_DIR))
 
 import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
+import grants  # noqa: E402  (U3: grant custody, shared with the worker)
+import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
+from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 
 log = logging.getLogger("proto.web")
 # What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the
 # account id and the instance role's ARN. The log line beside the 502 carries the detail.
 ENQUEUE_FAILED_MESSAGE = "queue send failed; please try again"
 # uvicorn configures only its own loggers, so without a handler of its own every INFO line
-# here -- the schema and the ``queue: ...; sqs credentials: ...`` start line -- is dropped.
+# here -- the schema, the ``queue: ...; sqs credentials: ...`` start line and an ok health
+# transition -- is dropped.
 if not log.handlers:
     _handler = logging.StreamHandler()
     _handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
@@ -101,6 +124,26 @@ if not log.handlers:
     log.setLevel(logging.INFO)
 
 DEFAULT_PG_DSN = "postgresql://postgres:proto@localhost:5434/proto"
+# U10: readiness. The probe's whole deadline sits under the image HEALTHCHECK's
+# urlopen(timeout=2); psycopg's connect_timeout floor is 2 s, so it is a race.
+READY_TIMEOUT_S = 1.5
+READY_CONNECT_TIMEOUT_S = 2
+READY_STATEMENT_TIMEOUT_MS = 1500
+# Every table and function this tier queries; a missing one fails `postgres`.
+WEB_TABLES = ("sessions", "projects", "turns", "session_events", "session_seq", "session_activity",
+              "session_entries", "tool_calls", "documents", "users", "allowed_emails",
+              "familysearch_tokens")
+WEB_FUNCTIONS = ("next_session_seq(text)",)
+READY_SQL = (
+    "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
+    "UNION ALL SELECT f FROM unnest(%s::text[]) f WHERE to_regprocedure(f) IS NULL"
+)
+# The lifespan's inline schema check and allowlist sync share this, so a blackholed
+# Postgres holds uvicorn at most this long before it listens; each background retry is
+# bounded by it too, and backs off STARTUP_BACKOFF_FIRST_S doubling to _MAX_S.
+STARTUP_BUDGET_S = 5.0
+STARTUP_BACKOFF_FIRST_S = 1.0
+STARTUP_BACKOFF_MAX_S = 30.0
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -163,6 +206,12 @@ class ProjectNotOwned(Exception):
     404, the same as for a project that does not exist, so the answer leaks nothing."""
 
 
+class GrantBusy(Exception):
+    """The sign-in's grant write could not take the patron's write lock within
+    ``grants.WRITE_LOCK_TIMEOUT_S`` (a refresher holds it for at most
+    ``REFRESH_HTTP_TIMEOUT_S`` plus two short transactions); the callback answers 503."""
+
+
 class IdentityMismatch(Exception):
     """A FamilySearch sign-in presented an email already pinned to a DIFFERENT
     FamilySearch account. The alpha's upsert never compared the two
@@ -201,13 +250,13 @@ class Store(Protocol):
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
     async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
-    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn: ...
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
+    async def put_back_held(self, turn_id: str) -> bool: ...
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]: ...
     async def activity(self, session_id: str) -> Activity | None: ...
     async def turn_active(self, session_id: str) -> bool: ...
     async def has_queued(self, session_id: str) -> bool: ...
-    async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None: ...
     async def request_stop(self, session_id: str) -> bool: ...
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
@@ -379,6 +428,40 @@ async def stream_frames(
         await asyncio.sleep(poll_s)
 
 
+# ── readiness labels (U10) ───────────────────────────────────────────────────────
+
+_DSN_CREDENTIALS = re.compile(r"\b[\w.+-]+://[^\s@/]*@")
+
+
+class ReadyCheckError(Exception):
+    """A readiness failure whose label is not an error code or type name."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def ready_label(exc: BaseException) -> str:
+    """What a failed check reports: the SQLSTATE when there is one, else the type name.
+    Never ``str(exc)``: /api/health is unauthenticated, and psycopg's message carries the
+    host, the port and the user. The worker has the same rule (``worker.ready_label``);
+    the web image does not ship the worker, so it is not imported."""
+    if isinstance(exc, ReadyCheckError):
+        return exc.label
+    sqlstate = getattr(exc, "sqlstate", None)
+    return str(sqlstate) if sqlstate else type(exc).__name__
+
+
+def redact(text: str) -> str:
+    """A message for the log, with any ``scheme://user:password@`` taken out."""
+    return _DSN_CREDENTIALS.sub("", text)
+
+
+def check_out(state: str) -> dict[str, Any]:
+    """One ``app.state.startup`` value (``ok``, ``pending`` or a label) as a check."""
+    return {"ok": True} if state == "ok" else {"ok": False, "error": state}
+
+
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
@@ -391,26 +474,91 @@ class PgStore:
 
     def __init__(self, dsn: str) -> None:
         self.dsn = dsn
+        # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
+        # and the postgres check's last outcome for the transition log.
+        self._ready_task: asyncio.Task | None = None
+        self._ready_last: bool | None = None
+
+    async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
+        """``{ok, checks: {postgres}}`` from a connection of its own that must see every
+        table this tier queries, raced against ``timeout_s`` (``READY_TIMEOUT_S``, read per
+        call). The race runs INSIDE one shared task, so its report is the raced one and no
+        caller's cancellation reaches it: each caller waits through ``asyncio.shield``, and
+        the slot clears when the task finishes. Never raises."""
+        task = self._ready_task
+        if task is None:
+            task = self._ready_task = asyncio.create_task(
+                self._probe_ready(READY_TIMEOUT_S if timeout_s is None else timeout_s)
+            )
+            task.add_done_callback(self._ready_done)
+        return await asyncio.shield(task)
+
+    def _ready_done(self, task: asyncio.Task) -> None:
+        if self._ready_task is task:
+            self._ready_task = None
+
+    async def _probe_ready(self, timeout_s: float) -> dict[str, Any]:
+        try:
+            await asyncio.wait_for(self._probe_postgres(), timeout_s)
+            check, detail = {"ok": True}, ""
+        except Exception as exc:  # noqa: BLE001 - TimeoutError included; every failure is a label
+            check, detail = {"ok": False, "error": ready_label(exc)}, redact(f"{type(exc).__name__}: {exc}")
+        if self._ready_last is not check["ok"]:
+            self._ready_last = check["ok"]
+            if check["ok"]:
+                log.info("ev=health check=postgres ok=true")
+            else:
+                log.warning("ev=health check=postgres ok=false error=%s", detail or check["error"])
+        return {"ok": check["ok"], "checks": {"postgres": check}}
+
+    async def _probe_postgres(self) -> None:
+        import psycopg
+
+        conn = await psycopg.AsyncConnection.connect(
+            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+            options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+        )
+        try:
+            cur = await conn.execute(READY_SQL, (list(WEB_TABLES), list(WEB_FUNCTIONS)))
+            missing = [str(row[0]) for row in await cur.fetchall()]
+        finally:
+            await conn.close()
+        if missing:
+            names = ",".join(missing)
+            raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
         import psycopg
         from psycopg.rows import dict_row
 
-        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True)
+        # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
+        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True,
+                                                     connect_timeout=10)
 
-    async def apply_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
-        """Run proto/sql/*.sql in name order. Every statement is IF NOT EXISTS / OR
-        REPLACE, and each file goes down as ONE multi-statement execute (no parameters,
-        so psycopg uses the simple query protocol and 002_seq.sql's $$ body survives)."""
-        files = sorted(sql_dir.glob("*.sql"))
-        if not files:
-            raise RuntimeError(f"no schema files under {sql_dir}; refusing to start without a schema")
-        applied: list[str] = []
-        async with await self._connect() as conn:
-            for path in files:
-                await conn.execute(path.read_text(encoding="utf-8"))
-                applied.append(path.name)
-        return applied
+    async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
+        """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
+        names when it is at this build's level (or ahead of it), else ``ReadyCheckError``
+        with the verdict's label (``schema: unmigrated``, ``behind``, ``drift``,
+        ``out_of_order``). Runs no DDL, so a DML-only role passes once someone has
+        migrated. A connection of its own with positional rows and a server-side
+        statement_timeout, like ``_probe_postgres``, and awaited rather than run on a
+        thread, so the shared startup budget can cancel it."""
+        import psycopg
+
+        shipped = migrate.load(sql_dir)
+        conn = await psycopg.AsyncConnection.connect(
+            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+            options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+        )
+        try:
+            exists = bool((await (await conn.execute(migrate.LEDGER_EXISTS_SQL)).fetchone())[0])
+            rows = await (await conn.execute(migrate.LEDGER_SELECT_SQL)).fetchall() if exists else []
+        finally:
+            await conn.close()
+        found = migrate.verdict(shipped, migrate.ledger_from_rows(exists, rows))
+        if found.label is not None:
+            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN")
+        return [m.name for m in shipped]
 
     @staticmethod
     def _row(r: dict[str, Any]) -> SessionRow:
@@ -537,38 +685,70 @@ class PgStore:
             cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
 
-    async def begin_turn(self, session: SessionRow, text: str, *, queued: bool = False) -> Turn:
+    async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]:
+        """Record the patron's message and decide whether it goes out now (1b): ``(turn,
+        held, rescued)``. Held when a turn is running OR an older message is already
+        held (U23 D7: otherwise a newer message overtakes the older one). ``rescued`` is
+        the oldest held body this call claimed because no turn is running -- possibly an
+        older message than this one -- which the caller enqueues.
+
+        U23 D8: one transaction under the session's queue lock (``grants.QUEUE_LOCK_NS``),
+        which the worker's release takes around its own check and claim. Two round trips
+        on two connections used to separate this tier's "is a turn running?" from its
+        insert, and the worker's from its claim, so a message could go straight out while
+        the worker released another: two turns on one session. The caller's send runs
+        after the commit, outside the lock. A lock wait past ``QUEUE_LOCK_TIMEOUT_S``
+        raises (a 500) rather than hanging the post."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                await conn.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session.session_id))
+                held = (await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active")
+                        or await self._exists(conn, HAS_QUEUED_SQL, session.session_id, "queued"))
+                turn = await self._insert_turn(conn, session, text, queued=held)
+                rescued = None
+                # Asked again after the write: a turn that closed in between without
+                # releasing (a crash between its close and its release) strands the row.
+                if held and not await self._exists(conn, TURN_ACTIVE_SQL, session.session_id, "active"):
+                    rescued = await self._claim_held(conn, session.session_id)
+        return turn, held, rescued
+
+    @staticmethod
+    async def _exists(conn, sql: str, session_id: str, column: str) -> bool:
+        cur = await conn.execute(sql, (session_id, QUEUED_OUTCOME))
+        return bool((await cur.fetchone())[column])
+
+    @staticmethod
+    async def _insert_turn(conn, session: SessionRow, text: str, *, queued: bool) -> Turn:
         from psycopg.types.json import Jsonb
 
         turn_id = str(uuid.uuid4())
         enqueued_at = datetime.now(tz=timezone.utc).isoformat()
         body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
-        async with await self._connect() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
-                    "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
-                    (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at,
-                     QUEUED_OUTCOME if queued else None),
-                )
-                # ONLY when this message is actually being enqueued. A HELD message
-                # must not clear the flag: the patron presses Stop, then types a
-                # correction while the turn is still winding down -- which 1b's own UI
-                # change encourages, since Send now sits beside Stop -- and clearing it
-                # here would cancel the Stop they just pressed. The worker's halt() reads
-                # this column on every tool call and would find nothing, so the run would
-                # carry on to job end with the turn recorded as an ordinary close.
-                if not queued:
-                    await conn.execute(CLEAR_STOP_SQL, (session.session_id,))
-                cur = await conn.execute("SELECT next_session_seq(%s) AS seq", (session.session_id,))
-                seq = (await cur.fetchone())["seq"]
-                await conn.execute(
-                    "INSERT INTO session_events (session_id, seq, kind, payload) VALUES (%s, %s, 'user_msg', %s)",
-                    (session.session_id, seq, Jsonb({"text": text, "turn_id": turn_id})),
-                )
-                await conn.execute(
-                    "UPDATE sessions SET updated_at = now() WHERE session_id = %s", (session.session_id,)
-                )
+        await conn.execute(
+            "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
+            "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
+            (turn_id, session.session_id, session.project_id, Jsonb(body), enqueued_at,
+             QUEUED_OUTCOME if queued else None),
+        )
+        # ONLY when this message is actually being enqueued. A HELD message
+        # must not clear the flag: the patron presses Stop, then types a
+        # correction while the turn is still winding down -- which 1b's own UI
+        # change encourages, since Send now sits beside Stop -- and clearing it
+        # here would cancel the Stop they just pressed. The worker's halt() reads
+        # this column on every tool call and would find nothing, so the run would
+        # carry on to job end with the turn recorded as an ordinary close.
+        if not queued:
+            await conn.execute(CLEAR_STOP_SQL, (session.session_id,))
+        cur = await conn.execute("SELECT next_session_seq(%s) AS seq", (session.session_id,))
+        seq = (await cur.fetchone())["seq"]
+        await conn.execute(
+            "INSERT INTO session_events (session_id, seq, kind, payload) VALUES (%s, %s, 'user_msg', %s)",
+            (session.session_id, seq, Jsonb({"text": text, "turn_id": turn_id})),
+        )
+        await conn.execute(
+            "UPDATE sessions SET updated_at = now() WHERE session_id = %s", (session.session_id,)
+        )
         return Turn(turn_id=turn_id, seq=seq, body=body)
 
     async def fail_turn(self, turn_id: str, reason: str) -> None:
@@ -576,6 +756,19 @@ class PgStore:
             await conn.execute(
                 "UPDATE turns SET outcome = %s, completed_at = now() WHERE turn_id = %s", (reason, turn_id)
             )
+
+    async def put_back_held(self, turn_id: str) -> bool:
+        """Hold a rescued message again after its send failed (U23), so an older message is
+        never closed for a failure the patron is told was theirs. Only while no worker has
+        received it: a send that landed after its timeout is claimed, which bumps
+        ``receive_count``. False when the row had moved on."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE turns SET outcome = %s WHERE turn_id = %s AND completed_at IS NULL "
+                "AND outcome IS NULL AND receive_count = 0",
+                (QUEUED_OUTCOME, turn_id),
+            )
+            return cur.rowcount == 1
 
     async def events_after(self, session_id: str, after: int, limit: int) -> list[EventRow]:
         async with await self._connect() as conn:
@@ -609,7 +802,8 @@ class PgStore:
             cur = await conn.execute(HAS_QUEUED_SQL, (session_id, QUEUED_OUTCOME))
             return bool((await cur.fetchone())["queued"])
 
-    async def claim_queued_turn(self, session_id: str) -> dict[str, Any] | None:
+    @staticmethod
+    async def _claim_held(conn, session_id: str) -> dict[str, Any] | None:
         """Take the session's oldest held message so THIS tier can enqueue it (1b).
 
         Deliberately the same statement as the worker's ``take_queued_turn``: the UPDATE
@@ -617,22 +811,21 @@ class PgStore:
         tier rescuing a stranded row cannot both enqueue the same message -- exactly one
         UPDATE finds the row with ``outcome = 'queued'`` and the other returns nothing.
         That is the whole reason this is not a SELECT followed by an UPDATE."""
-        async with await self._connect() as conn:
-            cur = await conn.execute(
-                "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
-                "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
-                "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
-                ") RETURNING message",
-                (session_id, QUEUED_OUTCOME),
-            )
-            row = await cur.fetchone()
-            body = row["message"] if row else None
-            if body is not None:
-                # Claiming IS enqueuing, so the Stop flag clears here for the same reason
-                # it clears in the worker's `take_queued_turn`. `begin_turn` deliberately
-                # does not clear it for a held message, so without this the rescued turn
-                # halts at its first tool call with "Stopped by the researcher."
-                await conn.execute(CLEAR_STOP_SQL, (session_id,))
+        cur = await conn.execute(
+            "UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = ("
+            "  SELECT turn_id FROM turns WHERE session_id = %s AND outcome = %s "
+            "  AND completed_at IS NULL ORDER BY enqueued_at LIMIT 1 FOR UPDATE SKIP LOCKED"
+            ") RETURNING message",
+            (session_id, QUEUED_OUTCOME),
+        )
+        row = await cur.fetchone()
+        body = row["message"] if row else None
+        if body is not None:
+            # Claiming IS enqueuing, so the Stop flag clears here for the same reason
+            # it clears in the worker's `take_queued_turn`. `_insert_turn` deliberately
+            # does not clear it for a held message, so without this the rescued turn
+            # halts at its first tool call with "Stopped by the researcher."
+            await conn.execute(CLEAR_STOP_SQL, (session_id,))
         return body if isinstance(body, dict) else None
 
     async def request_stop(self, session_id: str) -> bool:
@@ -708,19 +901,126 @@ class PgStore:
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
-        """One statement, ciphertext only. granted_at restarts on every sign-in and never
-        on refresh (it records the sign-in); a response without a refresh token keeps the one
-        already stored."""
+        """Ciphertext only, in ONE transaction under the patron's grant write lock
+        (``grants.WRITE_LOCK_NS``), so a sign-in never interleaves with a refresh: a
+        refresher holding the lock makes this wait, bounded by ``lock_timeout``, and then
+        the sign-in's grant wins. It never takes the attempt lock -- a second sign-in does
+        not revoke the first token (U2), so a live attempt keeps its token and the next one
+        reads this grant. granted_at restarts on every sign-in and never on refresh (it
+        records the sign-in); a sign-in also starts a new session and clears a refusal and
+        an ambiguous-refresh marker. A response without a refresh token keeps the one
+        already stored. Raises GrantBusy on the lock timeout."""
+        from psycopg import errors
+
+        try:
+            async with await self._connect() as conn:
+                async with conn.transaction():
+                    await conn.execute(grants.WRITE_LOCK_TIMEOUT_SQL)
+                    await conn.execute(grants.WRITE_XACT_LOCK_SQL, (grants.WRITE_LOCK_NS, user_id))
+                    await conn.execute(
+                        "INSERT INTO familysearch_tokens "
+                        "(user_id, access_token_enc, refresh_token_enc, expires_at, granted_at, updated_at, "
+                        "session_started_at) "
+                        "VALUES (%s, %s, %s, %s, now(), now(), now()) "
+                        "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc, "
+                        "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc), "
+                        "expires_at = EXCLUDED.expires_at, granted_at = now(), updated_at = now(), "
+                        "session_started_at = now(), refresh_started_at = NULL, refresh_refused_at = NULL, "
+                        "refresh_refused_reason = NULL",
+                        (user_id, access_token_enc, refresh_token_enc, expires_at),
+                    )
+        except errors.LockNotAvailable as exc:
+            raise GrantBusy(user_id) from exc
+
+    # -- grants (U3): this tier is the only refresher ----------------------------------
+
+    async def due_grant_users(self, refresh_age_s: float, limit: int = grants.DUE_BATCH) -> list[tuple[str, float]]:
+        """``(user_id, session age)`` for every grant the loop should try, oldest first."""
         async with await self._connect() as conn:
-            await conn.execute(
-                "INSERT INTO familysearch_tokens "
-                "(user_id, access_token_enc, refresh_token_enc, expires_at, granted_at, updated_at) "
-                "VALUES (%s, %s, %s, %s, now(), now()) "
-                "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc, "
-                "refresh_token_enc = COALESCE(EXCLUDED.refresh_token_enc, familysearch_tokens.refresh_token_enc), "
-                "expires_at = EXCLUDED.expires_at, granted_at = now(), updated_at = now()",
-                (user_id, access_token_enc, refresh_token_enc, expires_at),
-            )
+            cur = await conn.execute(grants.DUE_SQL, (refresh_age_s, limit))
+            return [(str(r["user_id"]), float(r["age_s"] or 0)) for r in await cur.fetchall()]
+
+    async def _grant_connect(self):
+        """A connection of its own for one refresh: its session advisory locks die with it,
+        and the server's keepalives end its backend if this host vanishes mid-refresh."""
+        import psycopg
+        from psycopg.rows import dict_row
+
+        return await psycopg.AsyncConnection.connect(
+            self.dsn, row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS,
+        )
+
+    async def refresh_grant(
+        self, user_id: str, *, refresh: Callable[[str], Awaitable[grants.RefreshResult]], refresh_age_s: float,
+    ) -> str:
+        """One refresh of one patron's grant, only if no attempt of theirs is live.
+
+        1. Try the write lock (``skipped_busy``: another refresher has it), then the attempt
+           lock EXCLUSIVELY (``skipped_live``: an attempt holds it shared, and a refresh
+           would revoke the token it bears).
+        2. Transaction 1: lock the row, re-check it is due (``not_due``: another instance
+           just did it), decrypt the refresh token (an undecryptable one marks the grant
+           refused), set the ambiguous-refresh marker.
+        3. ``refresh``, with no transaction open (``auth.refresh_tokens``: one 30 s total
+           deadline).
+        4. Transaction 2: lock the row and record the outcome -- new tokens and a new
+           session start; the refusal; the marker cleared (``not_sent``, unless it was
+           already set before this refresh: that one came from an earlier refresh this
+           ``not_sent`` says nothing about); or the marker kept (``ambiguous``:
+           FamilySearch may have revoked the stored access token, so no attempt starts on
+           it until a later refresh settles it).
+        5. Close the connection, which releases both locks.
+
+        Returns ``refreshed``, ``skipped_live``, ``skipped_busy``, ``not_due``, ``refused``,
+        ``not_sent`` or ``ambiguous``. Never logs or returns a token."""
+        conn = await self._grant_connect()
+        try:
+            cur = await conn.execute(grants.TRY_LOCK_SQL, (grants.WRITE_LOCK_NS, user_id))
+            if not (await cur.fetchone())["pg_try_advisory_lock"]:
+                return "skipped_busy"
+            cur = await conn.execute(grants.TRY_LOCK_SQL, (grants.ATTEMPT_LOCK_NS, user_id))
+            if not (await cur.fetchone())["pg_try_advisory_lock"]:
+                return "skipped_live"
+            async with conn.transaction():
+                cur = await conn.execute(grants.GRANT_FOR_UPDATE_SQL, (user_id,))
+                row = grants.GrantRow.from_row(await cur.fetchone())
+                if row is None or not grants.refresh_due(row, refresh_age_s=refresh_age_s):
+                    return "not_due"
+                refresh_token = auth.decrypt(row.refresh_token_enc)
+                if not refresh_token:
+                    await conn.execute(grants.REFRESH_REFUSED_SQL, (grants.UNDECRYPTABLE, user_id))
+                    return "refused"
+                # A marker already set is an EARLIER refresh's, one FamilySearch may have
+                # processed; only a ``not_sent`` of a refresh that set it may clear it.
+                inherited_marker = row.refresh_pending
+                await conn.execute(grants.MARK_REFRESH_SQL, (user_id,))
+            try:
+                result = await refresh(refresh_token)
+            except Exception as exc:  # noqa: BLE001 - unknown whether it reached FamilySearch
+                log.warning("ev=grant_refresh_error user_id=%s error=%s", user_id, type(exc).__name__)
+                result = grants.RefreshResult("ambiguous", reason=type(exc).__name__)
+            async with conn.transaction():
+                await conn.execute(grants.GRANT_FOR_UPDATE_SQL, (user_id,))
+                if result.kind == "ok":
+                    await conn.execute(grants.REFRESH_OK_SQL, (
+                        auth.encrypt(result.access_token or ""),
+                        auth.encrypt(result.refresh_token) if result.refresh_token else None,
+                        grants.SESSION_IDLE_S, user_id,
+                    ))
+                    return "refreshed"
+                if result.kind == "refused":
+                    await conn.execute(grants.REFRESH_REFUSED_SQL, (result.reason or "refused", user_id))
+                    return "refused"
+                if result.kind == "not_sent":
+                    await conn.execute(
+                        grants.REFRESH_AMBIGUOUS_SQL if inherited_marker else grants.REFRESH_NOT_SENT_SQL,
+                        (user_id,),
+                    )
+                    return "not_sent"
+                await conn.execute(grants.REFRESH_AMBIGUOUS_SQL, (user_id,))
+                return "ambiguous"
+        finally:
+            await conn.close()
 
 
 # ── queues ───────────────────────────────────────────────────────────────────────
@@ -747,16 +1047,6 @@ class SqsQueue:
         return enqueue.xml_text(doc, "MessageId")
 
 
-class NullQueue:
-    """No queue configured: the turn is recorded (turns row + user_msg event) and never
-    enqueued. This is the 'rows a script inserts' mode; the compose service never uses it."""
-
-    async def send(self, body: dict[str, Any]) -> str:
-        message_id = "null-" + uuid.uuid4().hex[:12]
-        log.info("NullQueue: turn %s recorded, not enqueued", body.get("turn_id"))
-        return message_id
-
-
 # ── app ──────────────────────────────────────────────────────────────────────────
 
 
@@ -775,9 +1065,16 @@ class PatchSessionBody(BaseModel):
 
 
 class MessageBody(BaseModel):
-    # Not blank: the worker would take a whitespace-only text for a stub message and
-    # complete the turn with no reply, and a 400 there would requeue it forever.
-    text: str = Field(min_length=1, pattern=r"\S")
+    # Not blank by the worker's own predicate (is_real_turn: text.strip()): a text it
+    # strips to nothing ("\x1c" passes a regex \S) is a stub message there, which it 400s.
+    text: str = Field(min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, text: str) -> str:
+        if not text.strip():
+            raise ValueError("text is blank")
+        return text
 
 
 class DevLoginBody(BaseModel):
@@ -844,6 +1141,89 @@ def max_nudges(env: Mapping[str, str] | None = None) -> int:
     return n
 
 
+# ── startup (U10) ────────────────────────────────────────────────────────────────
+
+
+async def startup_attempt(
+    startup: dict[str, str], name: str, step: Callable[[], Awaitable[Any]], *, timeout_s: float | None = None,
+) -> bool:
+    """One attempt at a startup step; ``startup[name]`` becomes ``ok`` or the error's
+    label, logged once per change. Never raises."""
+    try:
+        result = await (step() if timeout_s is None else asyncio.wait_for(step(), timeout_s))
+    except Exception as exc:  # noqa: BLE001 - recorded, retried, reported by /api/health
+        label = ready_label(exc)
+        if startup.get(name) != label:
+            log.warning("startup %s failing (%s): %s", name, label, redact(f"{type(exc).__name__}: {exc}"))
+        startup[name] = label
+        return False
+    if name == "schema" and isinstance(result, list) and result:
+        log.info("schema at %s", result[-1])
+    else:
+        log.info("startup %s ok", name)
+    startup[name] = "ok"
+    return True
+
+
+async def retry_startup(startup: dict[str, str], steps: dict[str, Callable[[], Awaitable[Any]]]) -> None:
+    """Retry each failed startup step independently, backing off STARTUP_BACKOFF_FIRST_S
+    doubling to STARTUP_BACKOFF_MAX_S, until it lands -- so a schema check failing until
+    someone migrates never holds up the allowlist sync, and turns green with no restart.
+    Cancelled at lifespan exit."""
+
+    async def one(name: str, step: Callable[[], Awaitable[Any]]) -> None:
+        delay = STARTUP_BACKOFF_FIRST_S
+        while True:
+            await asyncio.sleep(delay)
+            if await startup_attempt(startup, name, step, timeout_s=STARTUP_BUDGET_S):
+                return
+            delay = min(delay * 2, STARTUP_BACKOFF_MAX_S)
+
+    await asyncio.gather(*(one(name, step) for name, step in steps.items()))
+
+
+# ── grant refresh (U3) ──────────────────────────────────────────────────────────
+
+
+async def grant_refresh_loop(
+    store: Any, *, interval_s: float, refresh_age_s: float,
+    refresh: Callable[[str], Awaitable[grants.RefreshResult]],
+) -> None:
+    """This tier is every grant's only refresher (list 3 step 19). Every ``interval_s`` it
+    asks the store for the grants that are due -- an open turn, a session at least
+    ``refresh_age_s`` old or an ambiguous last refresh -- and tries each under
+    ``PgStore.refresh_grant``'s locks, which skip any patron with a live attempt. It
+    sleeps one interval BEFORE its first tick. Exceptions are caught per user and per
+    tick, so the loop never dies; cancelled at lifespan exit.
+
+    One ``ev=grant_refresh`` line per attempt, never with a token or an email (errors are
+    named by type only, since a message is whatever the failing layer put in it); a
+    ``skipped_live`` only when a patron's result changes, so a 10-hour attempt does not
+    log a line every interval."""
+    last: dict[str, str] = {}
+    while True:
+        await asyncio.sleep(interval_s)
+        try:
+            due = await store.due_grant_users(refresh_age_s)
+        except Exception as exc:  # noqa: BLE001 - the next tick retries
+            log.warning("ev=grant_refresh_tick error=%s", type(exc).__name__)
+            continue
+        due_ids = {user_id for user_id, _ in due}
+        for user_id in [u for u in last if u not in due_ids]:
+            del last[user_id]  # no open turn: the next live period logs afresh
+        for user_id, age_s in due:
+            try:
+                result = await store.refresh_grant(user_id, refresh=refresh, refresh_age_s=refresh_age_s)
+            except Exception as exc:  # noqa: BLE001 - one patron's failure must not stop the others
+                result = "error"
+                log.warning("ev=grant_refresh user_id=%s result=error error=%s", user_id, type(exc).__name__)
+            if result == "skipped_live" and last.get(user_id) == "skipped_live":
+                continue
+            last[user_id] = result
+            if result != "error":
+                log.info("ev=grant_refresh user_id=%s result=%s age_s=%d", user_id, result, int(age_s))
+
+
 def create_app(
     store: Store | None = None,
     queue: Queue | None = None,
@@ -853,44 +1233,91 @@ def create_app(
     stream_max_polls: int | None = None,
 ) -> FastAPI:
     """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    (or NullQueue) from env; tests pass fakes and shrink the timings."""
+    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
-        if app.state.store is None:
-            pg = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
-            applied = await pg.apply_schema()
-            log.info("schema applied: %s", ", ".join(applied))
-            app.state.store = pg
-        if hasattr(app.state.store, "sync_allowlist"):
-            await app.state.store.sync_allowlist(auth.allowed_emails())
+        # U7: a half SQS pair refuses here, before a startup step or its background retry
+        # exists, so the refusal leaves nothing running.
         if app.state.queue is None:
-            queue_url = os.environ.get("QUEUE_URL")
-            if queue_url:
-                try:
-                    sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
-                except enqueue.SqsConfigError as exc:
-                    raise RuntimeError(str(exc)) from exc
-                app.state.queue = SqsQueue(queue_url)
-                log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
-                if sqs_auth.method is None:
-                    log.warning("no AWS credentials found yet: SendMessage retries the chain "
-                                "and fails until it resolves")
-            else:
-                app.state.queue = NullQueue()
-                log.warning("QUEUE_URL unset: turns are recorded but NOT enqueued (NullQueue)")
-        yield
+            # U11: no queue means a turn is recorded and nothing ever runs it.
+            queue_url = (os.environ.get("QUEUE_URL") or "").strip()
+            if not queue_url:
+                raise RuntimeError("QUEUE_URL is unset or empty: the web tier needs the turns queue")
+            try:
+                sqs_auth = await asyncio.to_thread(enqueue.configure, os.environ, queue_url)
+            except enqueue.SqsConfigError as exc:
+                raise RuntimeError(str(exc)) from exc
+            app.state.queue = SqsQueue(queue_url)
+            log.info("queue: %s; %s", queue_url, enqueue.describe(sqs_auth))
+            if sqs_auth.method is None:
+                log.warning("no AWS credentials found yet: SendMessage retries the chain "
+                            "and fails until it resolves")
+        # U10 D8: the store goes on app.state before either step, so every route and
+        # /api/health see it while Postgres is down; neither step can stop the tier listening.
+        steps: dict[str, Callable[[], Awaitable[Any]]] = {}
+        if app.state.store is None:
+            app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
+            steps["schema"] = app.state.store.verify_schema
+        store = app.state.store
+        if hasattr(store, "sync_allowlist"):
+            emails = auth.allowed_emails()
+            steps["allowlist"] = lambda: store.sync_allowlist(emails)
+        startup: dict[str, str] = {name: "pending" for name in steps}
+        app.state.startup = startup
 
-    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan)
+        async def inline() -> None:
+            for name, step in steps.items():
+                await startup_attempt(startup, name, step)
+
+        # One shared budget, not one per step: a blackholed Postgres holds uvicorn at most
+        # STARTUP_BUDGET_S before it listens.
+        try:
+            await asyncio.wait_for(inline(), STARTUP_BUDGET_S)
+        except TimeoutError:
+            log.warning("startup: Postgres did not answer within %ss; retrying in the background", STARTUP_BUDGET_S)
+        failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
+        retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
+        # U3: only a store that can refresh (PgStore) gets the loop; a test's FakeStore never.
+        refresher = None
+        if hasattr(store, "refresh_grant"):
+            interval = grants.env_seconds(os.environ, "FS_GRANT_REFRESH_INTERVAL_S", grants.DEFAULT_REFRESH_INTERVAL_S)
+            refresher = asyncio.create_task(grant_refresh_loop(
+                store, refresh=auth.refresh_tokens,
+                interval_s=interval if interval > 0 else grants.DEFAULT_REFRESH_INTERVAL_S,
+                refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
+            ))
+        try:
+            yield
+        finally:
+            for task in (retry, refresher):
+                if task is not None:
+                    task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await task
+
+    # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
+    # public host, and nothing in the repo reads them.
+    app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
+                  docs_url=None, redoc_url=None, openapi_url=None)
     app.state.store = store
     app.state.queue = queue
+    # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
+    # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
+    app.state.startup = None
     app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
     app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
     app.state.stream_max_polls = stream_max_polls
 
     def _store(request: Request) -> Store:
         return request.app.state.store
+
+    def _allowlist_ready(request: Request) -> bool:
+        """Fail-closed (U10 D8): until this boot's sync has replaced ``allowed_emails``, a
+        table an earlier boot left could still admit a removed patron."""
+        startup = request.app.state.startup
+        return startup is None or startup.get("allowlist", "ok") == "ok"
 
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions route."""
@@ -903,8 +1330,11 @@ def create_app(
             raise HTTPException(status_code=401, detail="Unknown user")
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
-        if auth.familysearch_configured() and not await store.is_allowed(user.email):
-            raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        if auth.familysearch_configured():
+            if not _allowlist_ready(request):
+                raise HTTPException(status_code=503, detail="Not ready")
+            if not await store.is_allowed(user.email):
+                raise HTTPException(status_code=403, detail="Account removed from allowlist")
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -919,14 +1349,32 @@ def create_app(
     # -- health ---------------------------------------------------------------------
 
     @app.get("/api/health")
-    async def health(request: Request) -> dict:
-        return {
+    async def health(request: Request) -> JSONResponse:
+        """Readiness (U10): 200 or 503, the same keys either way so every script reading
+        ``queue`` or ``ping_s`` keeps working, plus ``checks`` -- the store's probe when it
+        has one, and the lifespan's startup steps when it ran. A report that raises is a
+        503 without ``checks``, never a 500."""
+        state = request.app.state
+        body: dict[str, Any] = {
             "ok": True,
             "tier": "proto-web",
-            "queue": type(request.app.state.queue).__name__,
-            "poll_s": request.app.state.poll_s,
-            "ping_s": request.app.state.ping_s,
+            "queue": type(state.queue).__name__,
+            "poll_s": state.poll_s,
+            "ping_s": state.ping_s,
         }
+        checks: dict[str, Any] = {}
+        try:
+            if hasattr(state.store, "check_ready"):
+                checks.update((await state.store.check_ready())["checks"])
+            for name, value in (state.startup or {}).items():
+                checks[name] = check_out(value)
+        except Exception as exc:  # noqa: BLE001 - the load balancer reads the status
+            log.warning("health: %s", redact(f"{type(exc).__name__}: {exc}"))
+            return JSONResponse({**body, "ok": False}, status_code=503)
+        if checks:
+            body["ok"] = all(c["ok"] for c in checks.values())
+            body["checks"] = checks
+        return JSONResponse(body, status_code=200 if body["ok"] else 503)
 
     # -- sign-in (web/auth.py) ------------------------------------------------------
 
@@ -984,7 +1432,10 @@ def create_app(
         Order matters, and each refusal writes nothing: state, code exchange, identity,
         allowlist, then the user (refused if the email is pinned to another FamilySearch
         account), and only then the grant -- encrypted here, so the store sees ciphertext.
-        No refresh: the grant is written once and U3 owns every later write."""
+        The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
+        interleaves with a refresh; while a refresher holds the lock past
+        ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
+        later write is the refresh loop's (U3)."""
         fail = "FamilySearch sign-in failed; return to the app and try again."
         data = auth.read_oauth_state_cookie(request.cookies.get(auth.FS_OAUTH_COOKIE))
         if data is None:
@@ -1005,6 +1456,8 @@ def create_app(
                 status_code=403,
             )
         store = _store(request)
+        if not _allowlist_ready(request):
+            return HTMLResponse(f"Not ready: the allowlist has not loaded yet. {fail}", status_code=503)
         if not await store.is_allowed(email):
             return HTMLResponse(
                 f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
@@ -1021,12 +1474,15 @@ def create_app(
                 status_code=403,
             )
         refresh = token_json.get("refresh_token")
-        await store.store_grant(
-            user.id,
-            auth.encrypt(token_json["access_token"]),
-            auth.encrypt(refresh) if isinstance(refresh, str) and refresh else None,
-            auth.expires_at_from(token_json),
-        )
+        try:
+            await store.store_grant(
+                user.id,
+                auth.encrypt(token_json["access_token"]),
+                auth.encrypt(refresh) if isinstance(refresh, str) and refresh else None,
+                auth.expires_at_from(token_json),
+            )
+        except GrantBusy:
+            return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         resp = RedirectResponse(auth.redirect_target(data.get("next")))
         resp.set_cookie(
             auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
@@ -1143,21 +1599,12 @@ def create_app(
         # session, two CLIs appending to one transcript. Hold it instead: the row is
         # written now (the patron sees their message immediately) and the worker enqueues
         # it when the turn holding it ends.
-        held = await store.turn_active(row.session_id)
-        turn = await store.begin_turn(row, body.text, queued=held)
+        turn, held, rescued = await store.admit_message(row, body.text)
         if held:
-            # The read above and the insert are two round-trips on two connections, and
-            # the worker releases held messages only at a turn's END -- so a turn that
-            # ends between them strands this row: its release found nothing, and the next
-            # one is not until the patron sends another message, which is exactly what
-            # someone who has just been told "picked up at the next step" will not do.
-            #
-            # So confirm after the write rather than trusting the read. If no turn is
-            # running now, claim the oldest held row and enqueue it here. The claim is the
-            # worker's own single-statement UPDATE, so if the worker IS releasing
-            # concurrently exactly one of the two wins and the message is enqueued once.
-            rescued = None if await store.turn_active(row.session_id) else \
-                await store.claim_queued_turn(row.session_id)
+            # A held message with no turn running would wait for a release that never
+            # comes, so admit_message claimed the oldest held row (the worker's own
+            # single-statement claim, under the lock its release takes) for this tier to
+            # enqueue.
             if rescued is None:
                 return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": None, "queued": True}
             # Oldest-first, so what got claimed may be a message held BEFORE this one --
@@ -1171,16 +1618,19 @@ def create_app(
         try:
             message_id = await request.app.state.queue.send(sending)
         except Exception as exc:  # any queue failure: the row stays, marked, and the UI sees 502
-            # Whichever turn we tried to send is the one that failed, and for a rescue
-            # that is not `turn`.
-            failed_id = str(sending.get("turn_id") or turn.turn_id)
-            await _store(request).fail_turn(failed_id, "enqueue_failed")
-            log.error("enqueue failed for turn %s: %s", failed_id, exc)
+            # The 502 is about the patron's OWN message, so that is the one failed. A rescued
+            # OLDER message goes back to held, not closed: the patron is told to try again,
+            # and the retry rescues it first (U23; D7 made this path common).
+            sent_id = str(sending.get("turn_id") or turn.turn_id)
+            if sent_id != turn.turn_id and not await store.put_back_held(sent_id):
+                log.error("rescued turn %s moved on after its failed send; not held again", sent_id)
+            await store.fail_turn(turn.turn_id, "enqueue_failed")
+            log.error("enqueue failed for turn %s (sent %s): %s", turn.turn_id, sent_id, exc)
             # The user_msg row was committed before the send and stays (seqs are dense), so
             # the 502 names its seq: the SPA still has an echo to drop.
             raise HTTPException(
                 status_code=502,
-                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": failed_id, "seq": turn.seq},
+                detail={"message": ENQUEUE_FAILED_MESSAGE, "turn_id": turn.turn_id, "seq": turn.seq},
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
@@ -1223,6 +1673,8 @@ def create_app(
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
 
+    # Last, so it sees every API route it must not shadow (web/spa.py).
+    spa.mount_spa(app, tier_root=PROTO_DIR)
     return app
 
 

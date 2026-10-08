@@ -1,10 +1,27 @@
 # Reduce main-thread residency
 
-**Status:** Not started. Instrumentation (`result_chars`, `usage.message_usage`,
-`usage.thread_windows`) landed on branch `worktree-main-thread-instrumentation`;
-levers 1–2 below are ready to scope now, 3–6 are gated on the first instrumented
-run. Nothing here is filed as an issue yet — this doc is what the board draws
-from, not a substitute for it.
+**Status: SUPERSEDED 2026-10-01 by [`cost-latency-10x.md`](./cost-latency-10x.md).** Do not plan from this
+file; it is kept for its measurements. The instrumentation half is complete — the
+13 committed runs carrying `result_chars`, `usage.message_usage` and
+`usage.thread_windows` are its output.
+
+Where each lever went:
+
+| lever | outcome |
+|---|---|
+| 1 and 4 — convert `locality-guide` (#2117) and `search-records` (#2243) | **Absorbed**, Wave 3 (skill→agent conversion, standing ruling 2026-09-22). |
+| 2 — route `Read` of `research.json` to `research_query` (19,062 tok/run) | **Absorbed**, Wave 1. Done there as a tool-shape change (the join), not as routing prose. |
+| 3 — use the staging sidecars | **Answered.** Its open question was whether compaction is too weak or triage re-reads the full set. Neither: staging is at 100% adoption and the inline stub's own width is the cost (p50 9,470 chars). Absorbed, Wave 2. |
+| 5 — decompose the ~27k startup baseline per category | **DEFERRED (Promise, 2026-10-01)**, not dropped. Agent `description:` blocks are **not** deferred by tool search: 15 agents = 13,558 bytes ≈ 3,389 tokens resident every turn, and 17 skills still to convert roughly doubles that. Costs ~$0.024/run today, so it is not a money lever on its own — it is compaction headroom. **Trigger to revisit:** the skill→agent conversion completing, or Wave 2's schema trim stalling for want of a per-category target. |
+| 6 — narration (median 18,210 chars ≈ 4,552 tok/run) | **DEFERRED (Promise, 2026-10-01)**, not dropped. ≈$0.10/run, ~1% of the bill — above but near the successor's own noise floor (it dropped tool-call memoisation at $0.065/run). The measurement needs no new run. **Trigger to revisit:** the hosted web app's dropped agent narration (A3 #21, commit `175cded1a`, 2026-09-18) being decided either way — text generated at $15/MTok and then binned is waste at any size. |
+
+**One disagreement, recorded rather than resolved.** "Not in this plan" below drops
+lowering `effort`, on the grounds that tool bytes (451,080) exceed main-thread
+window growth (412,447), so thinking is not a *residency* term. The successor makes
+effort its largest lever at $4.67/run. Both can hold: this file measured what
+thinking costs to **carry**; the successor prices what it costs to **generate**
+($3.16) *plus* carry ($1.51), and an output token is billed at $15/MTok on top of
+carry. The successor's Wave 4 is the test.
 
 ## Objective
 

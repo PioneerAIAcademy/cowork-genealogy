@@ -5,10 +5,15 @@
     "name": "Summarize a completed project",
     "type": "positive",
     "description": "Project status reporting on a finished project. All questions resolved, proof at `proved`, the probate search is in. Tests the closed-out summary shape, distinct from the mid-project summary the seed test covers.",
-    "tags": ["status", "completed-project", "proved-tier"]
+    "tags": [
+      "status",
+      "completed-project",
+      "proved-tier",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "How is the Flynn parentage research wrapping up?",
+    "delegation": "Report where this research project stands: the user-friendly summary first, then the detailed GPS-state summary, with any integrity warnings surfaced above both, and the recommended next step.\n\nprojectPath: <workspace>",
     "scenario": "flynn-resolved"
   },
   "judge_context": [

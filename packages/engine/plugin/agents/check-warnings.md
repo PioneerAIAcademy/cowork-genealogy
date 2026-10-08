@@ -307,6 +307,39 @@ Always investigate.
 - Cause: data error or wrong mother attribution.
 - Action: verify dates.
 
+#### `hasNoChildrenConflict`
+- Rule: a "No Children" marker the tree contradicts: the person's
+  own `NoChildren` fact while they have a child; a
+  `CoupleNeverHadChildren` fact on one of their couple
+  relationships while the couple has a child of both partners; or
+  the person is a child of a couple carrying that fact. Only a
+  biological or unspecified parent-child link counts -- an
+  adoptive, step, foster, or guardian link does not contradict the
+  marker.
+- Cause: the marker was recorded before research found the child,
+  a wrong parent-child link, or the marker belongs to a different
+  couple.
+- Action: check the source for the child's link to this person or
+  couple; if it holds, the "No Children" marker is out of date.
+
+#### `hasNoCoupleRelationshipsConflict`
+- Rule: the person has a `NoCoupleRelationships` fact but also has
+  a spouse.
+- Cause: the marker was recorded before a marriage was found, or a
+  wrong spouse link.
+- Action: check the source for the couple relationship; if it
+  holds, the marker is out of date.
+
+#### `hasStillbirthConflict`
+- Rule: the person has a `Stillbirth` fact but also has a spouse, a
+  marriage, a child, or a death at least one year after birth
+  (imprecise dates read at their closest).
+- Cause: the stillbirth record belongs to a different child of the
+  same parents (a later sibling sometimes received the same name),
+  or the later facts belong to someone else.
+- Action: check which record carries the stillbirth and whether it
+  belongs to this person.
+
 ### Valid violations (`severity: "implausible"`)
 
 These conditions are improbable but not impossible. Exceptions are
@@ -316,6 +349,7 @@ treating as established.
 #### Parent at extreme age
 - `earliestChildBirthToBirth12` -- parent had a child before age 12.
 - `earliestChildBirthToBirthMale14` -- father had a child before age 14.
+- `earliestChildBirthToBirthFemale14` -- mother had a child before age 14.
 - `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
 - `latestChildBirthToBirthFemale45` -- mother was age 45 or older at a child's birth.
 
@@ -332,6 +366,7 @@ treating as established.
 - `tooManyDeathDates2` -- two or more distinct perfect-DMY death dates spaced > 14 days apart.
 - `deathRangeGreaterThan2` -- death-like dates span more than 2 years.
 - `hasBurialAfterDeath31` -- the latest possible burial is more than 31 days before the earliest possible death. (Despite the Java name, this fires on "burial before death" outliers.) Imprecise dates are read at their closest, so a year-only burial in the same year as the death does not fire.
+- `hasDelayedBurial365` -- the earliest possible burial is more than 365 days after the latest possible death. Imprecise dates are read at their closest, as for `hasBurialAfterDeath31`. A burial delayed about a year for a later funeral can be real in some places, as can a reburial or a later burial of ashes. A burial 3 or more calendar years late also fires `deathRangeGreaterThan2`.
 
 #### Family structure
 - `tooManyChildren18` -- 18 or more children.
@@ -341,6 +376,17 @@ treating as established.
 - `missingFactsAndRelatives` -- empty stub record (no facts other than `GenderChange`, no relatives).
 - `hasBlankName` -- no name on the record.
 - `hasDiffSurnameMale` -- male anchor has surnames that don't match each other (similarity <= 0.5). Suggests records from two same-given-name persons were merged.
+
+#### Duplicate children or spouses
+- `similarChildren` -- two children look like the same individual recorded twice (similar names, same gender, dates compatible).
+- `similarChildrenConflictingDates` -- two children have similar names but conflicting dates; likely one child recorded twice.
+- `hasCloseChildBirthsIgnoreSimilarChildren` -- two children not already flagged as similar have exact Birth dates 2 to 240 days apart; possibly two records of one child.
+- `similarSpouses` -- two spouses look like the same individual recorded twice.
+- `similarSpousesConflictingDates` -- two spouses have similar names but conflicting dates; likely one spouse recorded twice.
+- `hasDissimilarSpousesWithSameMarriageYear` -- two spouses share a marriage year but have dissimilar names; possibly two marriage records conflated, or a mis-transcribed name.
+
+#### Event in another country
+- `hasEventInOtherCountry` -- an event other than a migration or a residence (on the person or on a couple relationship) is in a country that contradicts both the birth and the death country, when those two agree. Usually a record attached to the wrong person, or a mis-standardised place.
 
 #### Extreme lifetimes after specific events
 - `hasDeathAfterChildBirth90` -- died more than 90 years after the earliest child's birth.
@@ -367,6 +413,7 @@ The current set of relative-mob tags: `relativesDeathRangeGreaterThan2`,
 `relativesEarliestChildBirthToBirth12`,
 `relativesHasEventBeforeChristening365_3`,
 `maleRelativesEarliestChildBirthToBirth14`,
+`femaleRelativesEarliestChildBirthToBirth14`,
 `femaleRelativesLatestChildBirthToBirth45`,
 `relativesHasDeathBeforeChildBirth365_2`,
 `relativesHasDeathBeforeChildBirth30_10`,
@@ -390,7 +437,9 @@ them only if the user explicitly asks for an analysis of them.
 - Geographic impossibilities (impossible travel, jurisdiction
   didn't exist, birthplace inconsistencies with parents' residence)
 - Future dates (date is after the current year)
-- Child-spacing (two children born less than 9 months apart)
+- Child spacing outside `hasCloseChildBirthsIgnoreSimilarChildren`'s
+  window (exact Birth dates 2 to 240 days apart): for example two
+  births 8 to 9 months apart, or dates that are not exact
 - Birth before parents' marriage
 - Sibling age gap at the year-by-year level (the tool covers only
   40+ year spans via `childBirthRange40`)
@@ -517,10 +566,10 @@ already organized around them:
 - Each event date should be plausible given the others
 
 #### Reasonable age differences
-- Parent-child age gap: typically 12-45 years for mothers, 14+ for
+- Parent-child age gap: typically 14-45 years for mothers, 14+ for
   fathers -- covered by `earliestChildBirthToBirth12`,
-  `earliestChildBirthToBirthMale14`, `latestChildBirthToBirthFemale45`,
-  `latestChildBirthToBirth80`
+  `earliestChildBirthToBirthMale14`, `earliestChildBirthToBirthFemale14`,
+  `latestChildBirthToBirthFemale45`, `latestChildBirthToBirth80`
 - Marriage age: typically 14-90 -- covered by `hasEarlyMarriage14`
   and `hasLateMarriage90`
 - Child-spacing across a family: under 40 years between oldest

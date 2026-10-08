@@ -49,9 +49,11 @@ def _lines(proc: subprocess.Popen) -> "queue.Queue[dict]":
     return out
 
 
-def _wait_for(lines: "queue.Queue[dict]", ev: str, timeout: float = 20) -> dict:
+def _wait_for(lines: "queue.Queue[dict]", ev: str, timeout: float = 20,
+              seen: list[dict] | None = None) -> dict:
+    """The first ``ev`` line; every line skipped on the way goes into ``seen``."""
     deadline = time.monotonic() + timeout
-    seen = []
+    seen = [] if seen is None else seen
     while time.monotonic() < deadline:
         try:
             line = lines.get(timeout=max(0.01, deadline - time.monotonic()))
@@ -68,20 +70,28 @@ def _sigterm_one_post(max_retries: int) -> tuple[int, dict, int, float, "queue.Q
     Returns (status, reply, exit code, seconds from the signal to the exit, log lines)."""
     port = _free_port()
     env = {**os.environ, "PORT": str(port), "SHUTDOWN_GRACE_S": str(GRACE_S), "QUEUE_URL": "",
+           "WORKER_TURN_USERS": "none", "MODEL_PROVIDER": "anthropic",
+           "TOOL_SERVER_URL": "http://tools:8787/mcp",
            "SWEEP_INTERVAL_S": "0", "SQSD_MAX_RETRIES": str(max_retries), "PYTHONUNBUFFERED": "1"}
     env.pop("SQSD_RETENTION_PERIOD_S", None)
     proc = subprocess.Popen([sys.executable, str(HARNESS)], cwd=SERVER, env=env, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, text=True, encoding="utf-8")
     try:
         lines = _lines(proc)
-        start = _wait_for(lines, "start")
+        early: list[dict] = []
+        start = _wait_for(lines, "start", seen=early)
         assert start["shutdown_grace_s"] == GRACE_S and start["sweep"] is False
         conn = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
         body = json.dumps({"turn_id": "turn-sig", "session_id": "sess-sig", "project_id": "proj-sig",
                            "text": "hello"})
         conn.request("POST", "/turn", body=body, headers={"Content-Type": "application/json",
                                                           "X-Aws-Sqsd-Receive-Count": "1"})
-        _wait_for(lines, "harness_attempt")
+        _wait_for(lines, "harness_attempt", seen=early)
+        while not lines.empty():
+            early.append(lines.get_nowait())
+        # U10: the schema thread's connect also passes connect_timeout; a release line
+        # before the signal would let the last-receive case pass without a release.
+        assert not any(line.get("ev") == "harness_release" for line in early), early
         proc.send_signal(signal.SIGTERM)
         signalled = time.monotonic()
         response = conn.getresponse()

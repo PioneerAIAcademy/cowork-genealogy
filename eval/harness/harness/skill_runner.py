@@ -36,6 +36,7 @@ from claude_agent_sdk import (
     HookMatcher,
     RateLimitEvent,
     ResultMessage,
+    SystemMessage,
     TextBlock,
     ToolResultBlock,
     ToolUseBlock,
@@ -375,6 +376,125 @@ def handoffs(
     return out
 
 
+def slash_skill_from_entry(
+    user_message: str,
+    slash_commands: list[str] | None,
+    staged_skills_root: Path | None,
+) -> str | None:
+    """The skill a `/<name> …` entry loaded, or None.
+
+    `skills_invoked` is filled by the PreToolUse hook on a `Skill` call. A slash
+    command is expanded by the CLI, not called as a tool, so the hook never
+    fires and the entry point production uses (`/research --autonomous`) was
+    ungradable: `derive_activated` and `_compute_outcome` both test membership
+    (issue #3116).
+
+    **Registered and staged, not expanded.** Step 0 measured what reaches the
+    SDK stream and the answer was nothing: no `<command-name>`, no `Base
+    directory for this skill`, and `UserMessage` carries neither `isMeta` nor
+    `sourceToolUseID` — those are CLI-transcript fields that do not survive into
+    the stream. So this cannot witness the expansion and does not claim to. It
+    reports that the CLI **registered** the command and that the skill was
+    **staged**, which is what the init message and the workspace can show.
+    Ruling: chesworthrm on #3116, 2026-10-05.
+
+    Three conditions, all required — the `slash_commands` check is what keeps
+    this from being a prefix rule that passes every slash test by default:
+
+    1. the message begins `/<name>`;
+    2. `<name>` is in the init `SystemMessage`'s `slash_commands`;
+    3. `.claude/skills/<name>/` was staged into the workspace.
+
+    A namespaced spelling (`/genealogy-research:research`) resolves to neither 2
+    nor 3 and records nothing — staging is by bare name
+    (`workspace.py` stages to `.claude/skills/<name>/`).
+    """
+    if not user_message.startswith("/"):
+        return None
+    rest = user_message[1:]
+    # The name must follow the slash immediately. `split()` skips leading
+    # whitespace, so without this `"/ research"` -- which the CLI does not
+    # expand -- resolved to `research`.
+    if not rest or rest[0].isspace():
+        return None
+    head = rest.split(None, 1)[0]
+    if not slash_commands or head not in slash_commands:
+        return None
+    if staged_skills_root is None or not (staged_skills_root / head).is_dir():
+        return None
+    return head
+
+
+def judge_skills_slot(
+    skills_invoked: list[str],
+    builtin_tool_calls: list[dict[str, Any]],
+    slash_entry: str | None = None,
+) -> list[str]:
+    """The judge's "Skills Claude invoked" list on a skill test: `skills_invoked`,
+    with each agent the main thread spawned inserted at its place in call order
+    as "<name> (agent)", and a slash-command entry marked as
+    "<name> (slash command)".
+
+    `skills_invoked` holds `Skill` calls only, so without the spawns a
+    judge_context asking whether the skill delegated to an agent is graded on a
+    call the judge never sees. Measured on `ut_init_project_q7b` under one judge
+    prompt hash: init-project's v6.json made its check-warnings call as a `Skill`
+    and scored 3 on Correctness and Completeness; v7.json and v8.json made the
+    same call as an `Agent` and scored 2 on both, for "no Agent call with
+    subagent_type check-warnings".
+
+    Not `handoffs`, on purpose. It drops a `Skill` call made inside a subagent,
+    which `skills_invoked` counts, and it names a spawn exactly as it names a
+    skill. Every `skills_invoked` entry is kept here, in order, and a run with no
+    named main-thread spawn gets `skills_invoked` back unchanged.
+    """
+    calls = builtin_tool_calls or []
+    spawns = spawned_agents(calls)
+    rest = list(skills_invoked or [])
+
+    # Lifted above the branching so EVERY return path marks it. The judge is
+    # told to ground its rationales in this list, and a bare name would let it
+    # write "the right skill was invoked" on a slash test — asserting exactly
+    # what this harness deliberately does NOT claim, since the entry comes from
+    # registration and staging rather than from anything the model did. Marked
+    # like a spawn is, for the same reason.
+    #
+    # `skills_invoked` itself stays plain: `derive_activated` and
+    # `_compute_outcome` test membership and must keep matching the bare name.
+    lead: list[str] = []
+    if slash_entry is not None and rest and rest[0] == slash_entry:
+        lead.append(f"{rest.pop(0)} (slash command)")
+
+    if not spawns:
+        return lead + rest
+    if not any(call.get("tool") == "Skill" for call in calls):
+        return lead + rest + [f"{name} (agent)" for name in spawns]
+    remaining = rest
+    out: list[str] = list(lead)
+    # Removing the entry above is also what keeps the positional walk below
+    # honest: it has no `Skill` call of its own, so the walk would never match
+    # it, stall permanently, and dump the whole list after the spawns —
+    # destroying call order, and only on slash-entry tests (issue #3116).
+    #
+    # Passed in, never inferred. An earlier version detected it as
+    # `len(skills_invoked) == n_Skill_calls + 1`, which one `Skill` call with an
+    # unreadable input shape defeats: the hook puts that call in
+    # `unread_skill_calls` and NOT in `skills_invoked` while it still counts as
+    # a `Skill` call here, so the arithmetic silently reverted to the corruption
+    # it was added to prevent. `run_skill` knows the fact outright.
+    for call in calls:
+        tool = call.get("tool")
+        if tool == "Skill":
+            name, _ = read_skill_tool_input(call.get("args") or {})
+            if name and remaining and remaining[0] == name:
+                out.append(remaining.pop(0))
+        elif tool in SPAWN_TOOL_NAMES and "agent_id" not in call:
+            name = (call.get("args") or {}).get("subagent_type")
+            if name:
+                out.append(f"{name} (agent)")
+    return out + remaining
+
+
 def spawn_stub_denial(
     tool_name: str, input_data: dict[str, Any], stub_agents: dict[str, str | None]
 ) -> dict[str, Any] | None:
@@ -391,6 +511,21 @@ def spawn_stub_denial(
     if name not in stub_agents:
         return None
     return stub_denial(name, stub_agents[name])
+
+
+def is_stubbed_handoff(block: Any, stubbed: dict[str, str | None]) -> bool:
+    """Whether a streamed ToolUseBlock hands off to a name in `stub_skills`.
+
+    A `Skill` call or an agent spawn naming a stubbed callee. A `Skill` call
+    whose name cannot be read is not counted: `unread_skill_calls` already
+    warns about it.
+    """
+    if block.name == "Skill":
+        name = read_skill_tool_input(dict(block.input or {}))[0]
+        return bool(name) and name in stubbed
+    if block.name in SPAWN_TOOL_NAMES:
+        return (dict(block.input or {})).get("subagent_type") in stubbed
+    return False
 
 
 def spawn_prompts(
@@ -691,6 +826,11 @@ class SkillRunResult:
     # this harness reads, holding that input's actual keys. Non-empty means the
     # SDK's Skill-tool contract moved and `skills_invoked` is undercounting.
     unread_skill_calls: list[list[str]] = field(default_factory=list)
+    # The skill a `/<name> …` entry loaded, or None. Carried so callers are
+    # TOLD rather than inferring it from `skills_invoked`'s shape — see
+    # `judge_skills_slot`, where that inference was defeated by an unreadable
+    # `Skill` call.
+    slash_entry_skill: str | None = None
     # Every built-in (non-MCP) tool call the run emitted, as
     # {"tool", "args", "agent_id"?} — see builtin_call_record for why this
     # exists. Telemetry for every tool EXCEPT `Agent`/`Task`: the direct-agent arm
@@ -717,8 +857,8 @@ class SkillRunResult:
     # structurally cannot carry a result.
     agent_returns: list[dict[str, Any]] = field(default_factory=list)
     # True when the run ended before a ResultMessage ever arrived even though
-    # it is NOT an abort — currently only the negative-test routing
-    # short-circuit (issue #2189). On that path num_turns is real (turns_seen
+    # it is NOT an abort — the negative-test routing short-circuit (issue
+    # #2189) and a `stop_at_stub` stop, which shares its exit (#3119). On that path num_turns is real (turns_seen
     # survives regardless of exit path), but output_tokens has no real answer:
     # no partial token count exists before a ResultMessage. This says so
     # instead of leaving 0 indistinguishable from "the skill used no tokens."
@@ -751,6 +891,7 @@ async def run_skill(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    stop_at_stub: bool = False,
     declared_tools: set[str] | None = None,
 ) -> SkillRunResult:
     """Invoke the SDK against a per-test workspace and collect outputs.
@@ -788,6 +929,8 @@ async def run_skill(
     disallowed_tools = list(DISALLOWED_BACKSTOP)
 
     skills_invoked: list[str] = []
+    # Filled from the init SystemMessage; read once the stream ends.
+    slash_commands_seen: list[str] = []
     # Mutable counter shared between hook and loop so the hook can flag
     # over-limit calls without raising (the SDK swallows hook exceptions
     # in some paths).
@@ -796,8 +939,10 @@ async def run_skill(
     # the verdict is sealed the moment that skill is invoked (orchestrator
     # `_compute_outcome` grades negatives on routing, not on downstream
     # execution), so we deny the sub-skill launch and stop the run instead
-    # of paying for the routed-to skill's full workload. The loop reads
-    # this after consuming to force a clean (non-aborted) termination.
+    # of paying for the routed-to skill's full workload. A `stop_at_stub`
+    # test's first stubbed hand-off sets it too (`stop_at_stub_denial` below,
+    # #3119). The loop reads this after consuming to force a clean
+    # (non-aborted) termination.
     routing_resolved: dict[str, Any] = {"v": False, "tool_use_id": None}
     _short_circuit = routing_short_circuit_skills or set()
     # Positive-test sub-skill stubbing (`execution.stub_skills`). Distinct from
@@ -806,6 +951,8 @@ async def run_skill(
     # test still has work to do after the hand-off (its closing log entry and
     # summary), so this one DENIES AND CONTINUES — the delegation is recorded in
     # skills_invoked, the callee never executes, and the caller finishes normally.
+    # The exception is a test that sets `execution.stop_at_stub`, whose verdict
+    # is its first stubbed hand-off: there the stub denies and stops (#3119).
     # Maps skill name -> canned response (None = bare deny); see skill_stubs.py
     # for which form a given hand-off needs.
     _stub_skills = stub_skills or {}
@@ -813,6 +960,50 @@ async def run_skill(
     # one of these names is denied and continued the same way (issue #2825).
     # The orchestrator passes only stub entries with no skill directory.
     _stub_agents = stub_agents or {}
+    # `execution.stop_at_stub` (#3119): the first main-thread hand-off to a
+    # stubbed name, by `Skill` call or agent spawn, ends the run through the
+    # stop path of the negative-test short-circuit above, once the turn that
+    # made it is over. For a test whose verdict is that hand-off, such as a
+    # router told to walk on down its table after it, a walk no stub can stop.
+    # False leaves every other test as it was.
+
+    # Every hand-off the stop denied: (tool_use_id, the builtin_tool_calls
+    # record, the skills_invoked index or None). Once the stream ends, one whose
+    # call never appeared in a message of the hand-off's own turn is taken back
+    # out of both lists (after the stream, below).
+    stop_denials: list[tuple[str | None, dict[str, Any] | None, int | None]] = []
+
+    def stop_at_stub_denial(
+        name: str,
+        tool_use_id: str | None,
+        record: dict[str, Any] | None,
+        skill_index: int | None,
+    ) -> dict[str, Any]:
+        # Once armed, every later main-thread hand-off is denied too, stubbed or
+        # not: a second one in the same turn is a shortcut the validators must
+        # still see, and it must not run. The stop waits for the model's next
+        # turn (the message scan), so every hook of this turn has run and
+        # recorded its call first; which hand-off's id is kept here does not
+        # move the stop.
+        stop_denials.append((tool_use_id, record, skill_index))
+        routing_resolved["v"] = True
+        routing_resolved["tool_use_id"] = tool_use_id
+        if name in _stub_skills:
+            denial = stub_denial(name, _stub_skills[name])
+        else:
+            callee = repr(name) if name else "a callee whose name cannot be read"
+            denial = {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"hand-off to {callee} observed; this test ends at its "
+                        "first stubbed hand-off"
+                    ),
+                }
+            }
+        return {**denial, "continue_": False, "stopReason": "stop_at_stub"}
+
     # Main-thread calls to subagent-only tools, denied by the hook below.
     blocked_context_calls: list[dict[str, Any]] = []
     # Raw writes to a protected project file, denied by the hook below.
@@ -843,6 +1034,14 @@ async def run_skill(
             skill_name, unread_keys = read_skill_tool_input(tool_input)
             if not skill_name:
                 unread_skill_calls.append(unread_keys)
+                # An armed stop denies every later main-thread hand-off, and an
+                # unreadable name is no reason to let one run.
+                if (
+                    stop_at_stub
+                    and routing_resolved["v"]
+                    and not input_data.get("agent_id")
+                ):
+                    return stop_at_stub_denial("", tool_use_id, builtin_record, None)
             else:
                 skills_invoked.append(skill_name)
                 # Negative-test routing short-circuit: the correct skill was
@@ -865,11 +1064,60 @@ async def run_skill(
                         "continue_": False,
                         "stopReason": "routing_resolved",
                     }
+                if (
+                    stop_at_stub
+                    and not input_data.get("agent_id")
+                    and (skill_name in _stub_skills or routing_resolved["v"])
+                ):
+                    return stop_at_stub_denial(
+                        skill_name, tool_use_id, builtin_record, len(skills_invoked) - 1
+                    )
                 # Positive-test stub: record the hand-off, skip the callee's
                 # execution, but let this run finish its own remaining work —
                 # handing back the canned response when the caller reads one.
                 if skill_name in _stub_skills:
                     return stub_denial(skill_name, _stub_skills[skill_name])
+        elif (
+            tool_name in SPAWN_TOOL_NAMES
+            and not input_data.get("agent_id")
+            and (_spawned := (input_data.get("tool_input") or {}).get("subagent_type"))
+            in _short_circuit
+        ):
+            # Negative-test routing short-circuit, agent form. The Skill branch
+            # above is the original; this is its twin for a callee that has since
+            # been CONVERTED to an agent. Without it such a negative can never
+            # resolve -- `skills_invoked` records Skill calls only, so the run ends
+            # with an empty list and the routing verdict reads as "went nowhere".
+            # That is how `ut_init_project_009` broke: project-status became an
+            # agent in #3092 (2026-10-03) and the next init-project run was three
+            # days later. The stub path already had this twin (issue #2825); the
+            # routing path did not.
+            skills_invoked.append(_spawned)
+            routing_resolved["v"] = True
+            routing_resolved["tool_use_id"] = tool_use_id
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": (
+                        f"negative-test routing to agent {_spawned!r} "
+                        f"observed; verdict decided, stopping"
+                    ),
+                },
+                "continue_": False,
+                "stopReason": "routing_resolved",
+            }
+        elif (
+            stop_at_stub
+            and tool_name in SPAWN_TOOL_NAMES
+            and not input_data.get("agent_id")
+            and (
+                (input_data.get("tool_input") or {}).get("subagent_type") in _stub_skills
+                or routing_resolved["v"]
+            )
+        ):
+            agent = (input_data.get("tool_input") or {}).get("subagent_type") or ""
+            return stop_at_stub_denial(agent, tool_use_id, builtin_record, None)
         elif (denial := spawn_stub_denial(tool_name, input_data, _stub_agents)):
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
@@ -1028,6 +1276,28 @@ async def run_skill(
     # flag is already up while messages that PRECEDE the hand-off are still
     # arriving, and stopping on one of those drops the hand-off entirely.
     handoff_seen: dict[str, bool] = {"v": False}
+    # A `stop_at_stub` run stops at the model's next turn, not at the hand-off
+    # message. The CLI streams one block per AssistantMessage, so a second
+    # hand-off in the same turn arrives as a message of its own, and its hook
+    # can run after the first one's. Stopping at the hand-off message, or
+    # reading that block as the model's reaction, ended the run before its
+    # hook ran, and the validators never saw it. Every block of one turn
+    # carries that API response's `message_id`, and the next turn cannot begin
+    # until every hook of this one has returned, so the first main-thread
+    # message with another id is the reaction. With no id to compare, the
+    # first main-thread tool result after the hand-off marks the turn's end.
+    # `tool_ids` holds the id of every call in a main-thread message of the
+    # hand-off's turn; a denied hand-off outside it belongs to the next turn.
+    handoff_turn: dict[str, Any] = {
+        "message_id": None, "results_seen": False, "tool_ids": set()
+    }
+
+    def after_handoff_turn(message: Any) -> bool:
+        message_id = getattr(message, "message_id", None)
+        if message_id is not None and handoff_turn["message_id"] is not None:
+            return message_id != handoff_turn["message_id"]
+        return handoff_turn["results_seen"]
+
     # See SkillRunResult.suppressed_post_deny_calls.
     suppressed_post_deny_calls: list[dict[str, Any]] = []
     # Set on the routing short-circuit path when no ResultMessage arrived, so
@@ -1076,6 +1346,22 @@ async def run_skill(
                 return
             except asyncio.TimeoutError:
                 raise _LimitExceeded("sdk_stream_silence")
+            if (
+                isinstance(message, SystemMessage)
+                and getattr(message, "subtype", None) == "init"
+            ):
+                # The init message is the only carrier of `slash_commands`, and
+                # nothing else in the stream shows a command was registered
+                # (#3116 Step 0). Filtered on `subtype` because SystemMessage
+                # covers several kinds, and `isinstance(data, dict)` because a
+                # non-mapping `data` on some other subtype would otherwise
+                # raise inside the stream loop and abort a paid run.
+                data = getattr(message, "data", None)
+                cmds = data.get("slash_commands") if isinstance(data, dict) else None
+                if isinstance(cmds, list):
+                    slash_commands_seen.extend(
+                        c for c in cmds if isinstance(c, str)
+                    )
             if isinstance(message, RateLimitEvent):
                 # The CLI emits this whenever rate-limit state transitions. It
                 # is in the SDK's Message union and streamed straight past this
@@ -1111,6 +1397,10 @@ async def run_skill(
                 # that reaction as the skill's own turns and text (review of
                 # #2189, round 2).
                 routed_call_seen = False
+                # A subagent's own messages carry the spawn's id here. Like the
+                # hook arms, which skip a call carrying `agent_id`, the stop
+                # reads only the main thread's.
+                main_thread = getattr(message, "parent_tool_use_id", None) is None
                 # Held per-turn rather than appended straight through: a turn
                 # that turns out to be the model's reaction to the deny is not
                 # the skill's own work and must not reach the run log.
@@ -1151,8 +1441,22 @@ async def run_skill(
                             and read_skill_tool_input(dict(block.input or {}))[0]
                             in _short_circuit
                         ) or (
+                            # the agent twin of the line above, for a converted callee
+                            block.name in SPAWN_TOOL_NAMES
+                            and (dict(block.input or {})).get("subagent_type")
+                            in _short_circuit
+                        ) or (
                             routing_resolved["tool_use_id"] is not None
                             and block.id == routing_resolved["tool_use_id"]
+                        ) or (
+                            # By name too, for the ordering where the hook has
+                            # not run yet; only on the main thread, since a
+                            # subagent's call is never the hand-off. Which
+                            # message ends the hand-off's turn is decided by
+                            # `after_handoff_turn`, not by this match.
+                            stop_at_stub
+                            and main_thread
+                            and is_stubbed_handoff(block, _stub_skills)
                         ):
                             routed_call_seen = True
                         if block.name in SPAWN_TOOL_NAMES:
@@ -1168,12 +1472,35 @@ async def run_skill(
                 # the flag is already up and THIS message is not the hand-off,
                 # the message is the model reacting to the deny: it is not the
                 # skill's turn, so nothing from it is recorded and the turn it
-                # was already counted as is given back.
-                post_routing_reaction = (
-                    routing_resolved["v"] and handoff_seen["v"] and not routed_call_seen
-                )
+                # was already counted as is given back. On a `stop_at_stub`
+                # run, a later block of the hand-off's own turn is still the
+                # skill's turn; only a message of the next turn is the
+                # reaction (`handoff_turn` above).
+                if stop_at_stub:
+                    post_routing_reaction = (
+                        routing_resolved["v"]
+                        and handoff_seen["v"]
+                        and main_thread
+                        and after_handoff_turn(message)
+                    )
+                else:
+                    post_routing_reaction = (
+                        routing_resolved["v"] and handoff_seen["v"] and not routed_call_seen
+                    )
+                if routed_call_seen and not handoff_seen["v"]:
+                    handoff_turn["message_id"] = getattr(message, "message_id", None)
                 if routed_call_seen:
                     handoff_seen["v"] = True
+                if (
+                    stop_at_stub
+                    and main_thread
+                    and handoff_seen["v"]
+                    and not post_routing_reaction
+                ):
+                    handoff_turn["tool_ids"].update(
+                        b.id for b in message.content
+                        if isinstance(b, ToolUseBlock) and b.id
+                    )
                 if post_routing_reaction:
                     turns_seen["n"] -= 1
                     suppressed_post_deny_calls.extend(turn_mcp_calls)
@@ -1211,7 +1538,12 @@ async def run_skill(
                     )
                     if turn_input > max_input_tokens_per_turn:
                         raise _LimitExceeded("max_input_tokens_per_turn")
-                if routing_resolved["v"] and (routed_call_seen or post_routing_reaction):
+                # A `stop_at_stub` run never stops at the hand-off message
+                # itself: the rest of that turn, and its hooks, come first.
+                stop_here = post_routing_reaction or (
+                    routed_call_seen and not stop_at_stub
+                )
+                if routing_resolved["v"] and stop_here:
                     # Negative-test routing short-circuit: the hook denied the
                     # correct-skill launch when it saw the ToolUseBlock and set
                     # routing_resolved. Keyed on the flag, never on this message
@@ -1262,7 +1594,17 @@ async def run_skill(
                 # Tool results stream back as ToolResultBlocks on a UserMessage.
                 # Only a spawn's result is kept; every other tool's result is
                 # already recorded by the mock (`tool_calls`) or is noise.
-                for block in message.content if isinstance(message.content, list) else []:
+                result_blocks = message.content if isinstance(message.content, list) else []
+                # The end of the hand-off turn when no `message_id` can say so
+                # (`handoff_turn` above).
+                if (
+                    stop_at_stub
+                    and handoff_seen["v"]
+                    and getattr(message, "parent_tool_use_id", None) is None
+                    and any(isinstance(b, ToolResultBlock) for b in result_blocks)
+                ):
+                    handoff_turn["results_seen"] = True
+                for block in result_blocks:
                     if not isinstance(block, ToolResultBlock):
                         continue
                     subagent = _spawn_ids.get(block.tool_use_id)
@@ -1442,6 +1784,52 @@ async def run_skill(
 
     duration_ms = (time.perf_counter() - start) * 1000.0
 
+    # A `stop_at_stub` run keeps a denied hand-off only if its call appeared in
+    # a message of the hand-off's own turn. The hook records before it decides,
+    # and the model's next turn can reach the hook before its message reaches
+    # the loop, so its hand-offs were recorded as the skill's: the walk the stop
+    # exists to cut off, failing `test_no_paired_skill_shortcut` on a run that
+    # stopped correctly. A call with no id is kept, as before. Skipped when no
+    # hand-off message was seen: a stream that ended before it arrived (an
+    # abort, a cap) has no turn to measure against, and filtering would drop the
+    # first hand-off, the run's routing evidence. Every denial is kept then, a
+    # second one too: with no message, a same-turn shortcut and a next-turn walk
+    # cannot be told apart. Done before the slash-command entry is inserted,
+    # while every index still holds.
+    if stop_at_stub and stop_denials and handoff_seen["v"]:
+        turn_ids = handoff_turn["tool_ids"]
+        dropped = [
+            (record, index) for tool_use_id, record, index in stop_denials
+            if tool_use_id is not None and tool_use_id not in turn_ids
+        ]
+        if dropped:
+            dropped_records = [record for record, _ in dropped if record is not None]
+            builtin_tool_calls[:] = [
+                call for call in builtin_tool_calls
+                if not any(call is record for record in dropped_records)
+            ]
+            dropped_indexes = {index for _, index in dropped if index is not None}
+            skills_invoked[:] = [
+                name for i, name in enumerate(skills_invoked) if i not in dropped_indexes
+            ]
+
+    # Index 0: `derive_activated` and `_compute_outcome` test membership, and
+    # the judge's slot and the routing validators both read position. Inserted
+    # after the stream because `slash_commands` only arrives with the init
+    # message — never appended, which would put the entry point last.
+    slash_entry = slash_skill_from_entry(
+        user_message, slash_commands_seen, workspace / ".claude" / "skills"
+    )
+    if slash_entry:
+        # Unconditional, because "recorded first" is the contract the spec and
+        # every position-reading caller rest on. A `slash_entry not in
+        # skills_invoked` guard looked like sensible de-duplication and broke
+        # it: when the model ALSO reached the skill through a `Skill` call, the
+        # entry point was left at whatever position that call produced. The two
+        # are different events — entered-by-slash and called-as-a-tool — and
+        # collapsing them loses the one this change exists to record.
+        skills_invoked.insert(0, slash_entry)
+
     return SkillRunResult(
         # Turn-separated, not "".join: two AssistantMessages' text must not
         # run together (issue #2189). Each text_chunks entry is already one
@@ -1460,6 +1848,7 @@ async def run_skill(
         blocked_protected_writes=blocked_protected_writes,
         registered_mcp_tools=set(tools_by_name.keys()),
         unread_skill_calls=unread_skill_calls,
+        slash_entry_skill=slash_entry,
         builtin_tool_calls=builtin_tool_calls,
         agent_returns=agent_returns,
         no_result_message=no_result_message_flag["v"],

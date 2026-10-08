@@ -876,6 +876,41 @@ describe("helpers", () => {
       })
     ).toBe("a; b");
   });
+
+  it("parseUpstreamErrorBody reads the Catalog's RFC7807 detail", () => {
+    expect(
+      parseUpstreamErrorBody({
+        detail: "Validation failure",
+        instance: "/v3/search",
+        status: 400,
+        title: "Bad Request",
+      })
+    ).toBe("Validation failure");
+  });
+
+  it("parseUpstreamErrorBody falls through to detail when errors yields nothing", () => {
+    // PRESENT but unusable is not the same as absent. Branching on the
+    // array's shape up front returned null and lost the only readable
+    // explanation the body carried.
+    expect(
+      parseUpstreamErrorBody({
+        errors: [{ code: 400 }],
+        detail: "Validation failure",
+      })
+    ).toBe("Validation failure");
+  });
+
+  it("parseUpstreamErrorBody prefers errors[] over a generic detail", () => {
+    // Pins the ORDER. `detail` is generic ("Bad Request"); errors[].message
+    // names the offending parameter, which is what three callers' messages
+    // were built around. Checking detail first silently swapped them.
+    expect(
+      parseUpstreamErrorBody({
+        detail: "Bad Request",
+        errors: [{ message: "q.birthLikeDate.from must precede .to" }],
+      })
+    ).toBe("q.birthLikeDate.from must precede .to");
+  });
 });
 
 describe("recordSearchTool — User-Agent contract", () => {
@@ -1063,6 +1098,25 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(out.ranked).toBeTruthy();
     expect(out.ranked!.subjectId).toBe("I1");
     expect(out.rankingError).toBeUndefined();
+  });
+
+  it.each([
+    ["1900", true],
+    ["4 Dec 1900", undefined],
+  ])("carries ranked.subjectTooThin through the folded path (birth %j → %j)", async (date, flag) => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [{ id: "I1", names: [{ preferred: true, given: "A", surname: "B" }], facts: [{ type: "Birth", date, place: "X" }] }],
+      }),
+      "utf-8",
+    );
+    mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
+
+    const out = await recordSearchTool({ surname: "Lincoln", projectPath: dir, subjectId: "I1" }, LOCAL);
+
+    expect(out.rankingError).toBeUndefined();
+    expect(out.ranked!.subjectTooThin).toBe(flag);
   });
 
   it("keeps count at 20 when there is no subject to rank against", async () => {
