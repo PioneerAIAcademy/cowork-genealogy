@@ -1,0 +1,632 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Trace William Weller (b. ~1825, Horsham, Sussex, England) and his family after 1861",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-01",
+    "updated": "2026-10-03"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Are the 1870 and 1880 Maury County, Tennessee census households of William Weller the subject's family?",
+      "rationale": "The family is documented in Horsham, Sussex, England through 1861 and then disappears from the English censuses; two U.S. census households match it by names and ages.",
+      "selection_basis": "record_found_incidentally",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-01",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-02",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "United States",
+          "date_range": "1870-1880",
+          "repository": "FamilySearch",
+          "rationale": "Look for the family in the U.S. censuses after it leaves Horsham.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-03T11:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "given": "William",
+        "surname": "Weller",
+        "birth_year": 1825,
+        "birth_place": "England",
+        "collection": "United States Census, 1870"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "results_ref": "results/log_001.json",
+      "results_available": 1,
+      "notes": "One household headed by William Weller, born England, in Maury County, Tennessee in 1870: William 45, Mary 42, James 18, Ellen 15, George 11.",
+      "external_site": null
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-03T12:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "given": "William",
+        "surname": "Weller",
+        "birth_year": 1825,
+        "birth_place": "England",
+        "collection": "United States Census, 1880"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "results_ref": "results/log_002.json",
+      "results_available": 1,
+      "notes": "One household headed by William Weller, born England, in Maury County, Tennessee in 1880: William 55, Mary 52, George 21.",
+      "external_site": null
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S10",
+      "citation": "1870 U.S. Census, Maury County, Tennessee, population schedule, William Weller household; digital image, FamilySearch.org, accessed 3 October 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Office",
+        "what": "1870 U.S. Federal Census, population schedule",
+        "when_created": "1870",
+        "when_accessed": "2026-10-03",
+        "where": "FamilySearch.org",
+        "where_within": "Maury County, Tennessee, William Weller household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_001"
+    },
+    {
+      "id": "src_002",
+      "gedcomx_source_description_id": "S11",
+      "citation": "1880 U.S. Census, Maury County, Tennessee, population schedule, William Weller household; digital image, FamilySearch.org, accessed 3 October 2026.",
+      "citation_detail": {
+        "who": "U.S. Census Office",
+        "what": "1880 U.S. Federal Census, population schedule",
+        "when_created": "1880",
+        "when_accessed": "2026-10-03",
+        "where": "FamilySearch.org",
+        "where_within": "Maury County, Tennessee, William Weller household"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-03",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "url_archived": null,
+      "notes": null,
+      "transcription": null,
+      "log_entry_id": "log_002"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "head",
+      "record_persona_id": "CP1",
+      "fact_type": "name",
+      "value": "William Weller",
+      "structured_value": {
+        "given": "William",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "head",
+      "record_persona_id": "CP1",
+      "fact_type": "birth",
+      "value": "age 45, born England",
+      "structured_value": {
+        "year": 1825
+      },
+      "date": "~1825",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_1",
+      "record_persona_id": "CP2",
+      "fact_type": "name",
+      "value": "Mary Weller",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_1",
+      "record_persona_id": "CP2",
+      "fact_type": "birth",
+      "value": "age 42, born England",
+      "structured_value": {
+        "year": 1828
+      },
+      "date": "~1828",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_2",
+      "record_persona_id": "CP3",
+      "fact_type": "name",
+      "value": "James Weller",
+      "structured_value": {
+        "given": "James",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_006",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_2",
+      "record_persona_id": "CP3",
+      "fact_type": "birth",
+      "value": "age 18, born England",
+      "structured_value": {
+        "year": 1852
+      },
+      "date": "~1852",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_007",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_3",
+      "record_persona_id": "CP4",
+      "fact_type": "name",
+      "value": "Ellen Weller",
+      "structured_value": {
+        "given": "Ellen",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_008",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_3",
+      "record_persona_id": "CP4",
+      "fact_type": "birth",
+      "value": "age 15, born England",
+      "structured_value": {
+        "year": 1855
+      },
+      "date": "~1855",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_009",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_4",
+      "record_persona_id": "CP5",
+      "fact_type": "name",
+      "value": "George Weller",
+      "structured_value": {
+        "given": "George",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_010",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "household_member_4",
+      "record_persona_id": "CP5",
+      "fact_type": "birth",
+      "value": "age 11, born England",
+      "structured_value": {
+        "year": 1859
+      },
+      "date": "~1859",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_011",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+      "record_role": "head",
+      "record_persona_id": "CP1",
+      "fact_type": "residence",
+      "value": "Maury County, Tennessee, 1870",
+      "structured_value": null,
+      "date": "1870",
+      "date_certainty": "exact",
+      "place": "Maury, Tennessee, United States",
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_012",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "head",
+      "record_persona_id": "DP1",
+      "fact_type": "name",
+      "value": "William Weller",
+      "structured_value": {
+        "given": "William",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "head",
+      "record_persona_id": "DP1",
+      "fact_type": "birth",
+      "value": "age 55, born England",
+      "structured_value": {
+        "year": 1825
+      },
+      "date": "~1825",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "wife",
+      "record_persona_id": "DP2",
+      "fact_type": "name",
+      "value": "Mary Weller",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "wife",
+      "record_persona_id": "DP2",
+      "fact_type": "birth",
+      "value": "age 52, born England",
+      "structured_value": {
+        "year": 1828
+      },
+      "date": "~1828",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_016",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "son",
+      "record_persona_id": "DP3",
+      "fact_type": "name",
+      "value": "George Weller",
+      "structured_value": {
+        "given": "George",
+        "surname": "Weller"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_017",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "son",
+      "record_persona_id": "DP3",
+      "fact_type": "birth",
+      "value": "age 21, born England",
+      "structured_value": {
+        "year": 1859
+      },
+      "date": "~1859",
+      "date_certainty": "estimated",
+      "place": "England",
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": "Age and birthplace as reported to the enumerator.",
+      "record_basis": "inferred",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_018",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "head",
+      "record_persona_id": "DP1",
+      "fact_type": "residence",
+      "value": "Maury County, Tennessee, 1880",
+      "structured_value": null,
+      "date": "1880",
+      "date_certainty": "exact",
+      "place": "Maury, Tennessee, United States",
+      "information_quality": "indeterminate",
+      "informant": "Census enumerator",
+      "informant_proximity": "official_duty",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_019",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "wife",
+      "record_persona_id": "DP2",
+      "fact_type": "relationship",
+      "value": "Wife of William Weller",
+      "structured_value": {
+        "relationship_type": "wife",
+        "related_person_role": "head"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:TN80-WEL",
+      "record_role": "son",
+      "record_persona_id": "DP3",
+      "fact_type": "relationship",
+      "value": "Son of William Weller",
+      "structured_value": {
+        "relationship_type": "son",
+        "related_person_role": "head"
+      },
+      "date": null,
+      "date_certainty": null,
+      "place": null,
+      "information_quality": "indeterminate",
+      "informant": "Household member reporting to the enumerator",
+      "informant_proximity": "household_member",
+      "informant_bias_notes": null,
+      "record_basis": "stated",
+      "log_entry_id": "log_002",
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
