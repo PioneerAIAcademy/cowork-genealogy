@@ -688,8 +688,12 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
     matched on the fact's owner (by FamilySearch PID), type and raw `place`,
     which the build carries unchanged, and only for facts that really arrived
     unresolved, and only for the value the build wrote into the write-once
-    `starting-tree.gedcomx.json`. A copy of the fact's own free-text `place` is none of these --
-    that is the 56-value defect this closes.
+    `starting-tree.gedcomx.json`. Fourth: on the hand-built path (no
+    `personReadRef`), `project_create` standardizes every place itself and
+    reports each in `placesFilled`; such a value is accepted for that raw
+    `place` only, and only as written into the starting tree. A copy of the
+    fact's own free-text `place` is none of these -- that is the 56-value defect
+    this closes.
     """
     tree = _written_tree(after_state)
     written = [
@@ -743,6 +747,16 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
                 for f in holder.get("facts") or []:
                     if isinstance(f, dict) and f.get("place") and not f.get("standard_place"):
                         host_filled.add((owner, f.get("type"), f.get("place")))
+    # What a successful hand-built project_create resolved itself, by raw place.
+    hand_filled = set()
+    for c in tool_calls or []:
+        args = c.get("args") or {}
+        resp = c.get("response")
+        if _tool(c) == "project_create" and "personReadRef" not in args \
+                and isinstance(resp, dict) and resp.get("ok") is True:
+            for item in resp.get("placesFilled") or []:
+                if isinstance(item, dict):
+                    hand_filled.add((item.get("place"), item.get("standardPlace")))
     owner_of = {id(f): owner for owner, f in _tree_fact_owners(tree)}
     # What the host build actually wrote: the write-once starting tree. A value
     # on that fact now that differs from it (a copy of `place`, or anything a
@@ -768,6 +782,8 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
         # here: the fact arrived unresolved and the host resolver filled it.
         key = (owner_of.get(id(fact)), fact.get("type"), fact.get("place"))
         if key in host_filled and (*key, value) in baseline:
+            continue
+        if (fact.get("place"), value) in hand_filled and (*key, value) in baseline:
             continue
         note = (
             " (a copy of the fact's own free-text place)"

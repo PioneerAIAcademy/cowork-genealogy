@@ -11,11 +11,12 @@ contract for tool results.
 ## Live tools
 
 Some MCP tools are deterministic functions of local workspace state — their
-return value depends on what the skill just wrote. One exception reaches the
-network: `project_create` with `personReadRef` retries, through the anonymous
-Places API, any place the staged read left without a `standard_place`. No
-committed `person-read-*` fixture has such a fact, so unit runs make no call;
-a fixture that adds one makes the run network-dependent. Canning their response as a fixture would be dishonest: a fixture
+return value depends on what the skill just wrote. `project_create` resolves
+places (every place on a hand-built tree, and any place a staged read left
+without a `standard_place`) through the anonymous Places API; the mock gives the
+compiled resolver a table built from the test's own `place_search` fixtures
+(`_place_table`), so it stays offline and a place no fixture matches resolves to
+null. Canning their response as a fixture would be dishonest: a fixture
 can't reflect the actual file content the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
@@ -1165,7 +1166,10 @@ def create_mock_server(
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
     for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
-        live_handler = _make_live_handler(live_tool_name, workspace, call_log)
+        live_handler = _make_live_handler(
+            live_tool_name, workspace, call_log,
+            place_predicated=list((manifest.get("place_search") or {}).get("predicated") or []),
+        )
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
         )
@@ -1252,6 +1256,7 @@ def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    place_predicated: list | None = None,
 ):
     """Return an async handler for a live tool."""
     if tool_name == "validate_research_schema":
@@ -1263,8 +1268,44 @@ def _make_live_handler(
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
+        place_table = (
+            (lambda args: _place_table(place_predicated or [], args))
+            if tool_name == "project_create" else None
+        )
+        return _make_compiled_tool_handler(
+            tool_name, js_file, export_name, workspace, call_log, place_table=place_table
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
+
+
+def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
+    """The place resolver's answers for one `project_create` call, from the test's
+    own `place_search` fixtures.
+
+    `project_create` standardizes every place in a hand-built tree, and retries a
+    read's unresolved ones, through the anonymous Places API. The harness stays
+    offline, so the compiled resolver is given this table instead
+    (`__usePlaceTableForTests`): each place in the call's tree, matched against
+    the fixtures with the same `matches` a `place_search` call is, answered with
+    the first result's `standardPlace`. A place no fixture matches resolves to
+    null, as an unknown place does in production.
+    """
+    tree = args.get("tree") if isinstance(args.get("tree"), dict) else {}
+    places: list[str] = []
+    for holder in [*(tree.get("persons") or []), *(tree.get("relationships") or [])]:
+        for fact in (holder.get("facts") if isinstance(holder, dict) else None) or []:
+            if isinstance(fact, dict) and isinstance(fact.get("place"), str) and fact["place"].strip():
+                places.append(fact["place"])
+    table: dict[str, str | None] = {}
+    for place in places:
+        hit = next(
+            (resp for (pred, resp, _src) in place_predicated if matches(pred, {"placeName": place})),
+            None,
+        )
+        results = (hit or {}).get("results") or []
+        first = results[0] if results and isinstance(results[0], dict) else {}
+        table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
+    return table
 
 
 def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
@@ -1560,6 +1601,7 @@ def _make_compiled_tool_handler(
     export_symbol: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    place_table=None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -1610,16 +1652,36 @@ def _make_compiled_tool_handler(
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
+            # A tool that resolves places gets the test's own answers and no
+            # network: the table is installed in the resolver module the tool
+            # itself imports (same build path, so the same module instance).
+            stdin_obj: Any = input_obj
+            table_import = ""
+            if place_table is not None:
+                resolver_js = str(_MCP_BUILD / "utils" / "place-resolver.js").replace("\\", "/")
+                resolver_url = ("file:///" + resolver_js) if sys.platform == "win32" else resolver_js
+                table_import = (
+                    f" import {{ __usePlaceTableForTests }} from '{resolver_url}';"
+                    " __usePlaceTableForTests(payload.placeTable);"
+                )
+                stdin_obj = {"input": input_obj, "placeTable": place_table(args)}
+            read_input = (
+                " const payload = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const input = payload.input;"
+                if place_table is not None
+                else " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+            )
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"
                 f"{principal_import}"
                 " import { readFileSync } from 'node:fs';"
-                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                f"{read_input}"
+                f"{table_import}"
                 f" const r = await {export_symbol}({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                proc = _run_node_eval(script, json.dumps(stdin_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:
