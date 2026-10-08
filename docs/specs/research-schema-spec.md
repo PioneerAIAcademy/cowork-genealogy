@@ -612,7 +612,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `date_range` | string | yes | Target date range (e.g., "1840", "1830-1850") |
 | `repository` | `repository` | yes | Where to search (see open enums in Section 2) |
 | `rationale` | string | yes | Why this record set for this question |
-| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for, or null |
+| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for — an item of the same plan — or null. `validate_research_schema` rejects any other value, so every writer does. |
 | `status` | `plan_item_status` | yes | Current status |
 | `skip_category` | `skip_category` | no | Why a `skipped` item was skipped, as something the exhaustiveness gate can read; `status` alone cannot tell these apart. Two of the seven — `inaccessible` and `no_coverage` — say the source could not be evaluated at all; the other five are decisions taken with the source reachable. That split is the line the gate's pursued-and-unavailable exception turns on. See the discussion below |
 | `skip_reason` | string | no | One line on why this item was skipped. Distinct from `rationale`, which is why the item was *planned* — without this field that prose lands in `rationale` and corrupts a required one |

@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **11** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **22** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **9** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **24** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-two agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-four agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
-`search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
+`search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`source-evaluation` and `survey-surname`.
+`search-external-sites`, `source-evaluation` and `survey-surname`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -353,7 +353,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-8 of the 11 skills carry a `references/` folder, loaded on demand, in-session,
+6 of the 9 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -670,8 +670,9 @@ Architecturally:
   return `noProjectResult()` (`"read"` for a read or a preview), so a user who
   is not in a research project gets an answer rather than `research.json not
   found in projectPath`. Then add the tool to `CALLS` in
-  `tests/tools/no-project.test.ts` — that list is hand-maintained and nothing
-  derives it, so a tool left out is uncovered. Read and write through the
+  `tests/tools/no-project.test.ts` — that list is backed by a derivation test
+  that traces each tool's imports transitively and flags any project-reading tool
+  absent from both `CALLS` and `OPTIONAL_PROJECT_TOOLS`. Read and write through the
   `project-io` / `results-staging` / `image-store` helpers or `getProjectStore()`
   (`src/store/`), with project-relative refs — never `fs` and never an absolute
   path. A tool that imports `fs` fails `tests/packaging/no-fs-outside-store.test.ts`,
@@ -1486,8 +1487,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 11 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 10 of them as the first line of the body,
+All 9 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 8 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1870,12 +1871,24 @@ touches:
   otherwise.
 - **A resource kind.** It needs an entry in `KINDS`, a `down` step and a `prove-empty`
   check. The test's own kind-to-call maps fail until all three exist.
+- **A systemd setting on a tier** (the worker's root drop-in). Write it under
+  `/usr/lib/systemd/system/web.service.d/`. Every deploy, app or configuration, deregisters
+  `web` and deletes `/etc/systemd/system/web.service.d` after predeploy and before the
+  restart, and a configuration deploy runs no `.platform/hooks/`. A test pins the path.
+- **A `.ebextensions` file.** Name it `*.config`. Beanstalk ignores any other name without an
+  error; `scripts/eb_bundles/verify.py` refuses one.
+- **Between sessions,** `pause` scales the tiers to 0/0 and stops RDS and the bastion;
+  `resume` reverses it. AWS restarts a stopped RDS instance after seven days.
 
 **What nothing checks here.** The tests run against a fake `aws`, so they prove the
 commands the tool sends, never that AWS accepts them. The option names in the
 `aws:elasticbeanstalk:sqsd`, `aws:elbv2:*` and `environmentsecrets` namespaces come from AWS
 documentation: `describe-configuration-options` lists them only for an existing
-environment's tier. The first live `up` is the first real check, and no CI job runs one.
+environment's tier. Only a live run checks them: the first (fts-int, 2026-10-07) found four
+faults the fake could not (RDS capacity, a zone without the instance type, drift as
+Beanstalk reports options back, a rejected update read as success), and no CI job runs one.
+Beanstalk itself reports a deploy successful while the app exits at once, so environment
+health is the only signal that a tier refused to start.
 The account-id leak check (`rehearse.py leak-check`) runs only where `.local/` exists, so
 CI skips it. In CI, that rule is enforced only by the 12-digit account-id scan in
 `apps/server/tests/test_proto_rehearsal.py`, over the paths in its `SCAN_PATHS`; each of those

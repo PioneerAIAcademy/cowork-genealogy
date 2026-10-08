@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "user_message": "Run a full-text search of FamilySearch's Cuban notarial protocolos collection for 'José Maria García' (1830s Habana). Use the Spanish-orthography spelling (with the diacritic) rather than an Anglicised form, since FTS does not transliterate. Log the search in this project's research log as an ad-hoc query (plan_item_id: null) — do not add a new question or plan item; only the search log entry and its result sidecar should be written.",
+    "delegation": "Run a full-text search of FamilySearch's Cuban notarial protocolos collection for 'José Maria García' (1830s Habana). Use the Spanish-orthography spelling (with the diacritic) rather than an Anglicised form, since FTS does not transliterate. Log the search in this project's research log as an ad-hoc query (plan_item_id: null) — do not add a new question or plan item; only the search log entry and its result sidecar should be written.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -28,6 +28,7 @@
     "wiki-search-any"
   ],
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should recognise that pre-1850 Latin American notarial protocolos are exactly the thin-index source class that the skill's references/search-strategies.md flags as FTS-preferred — and should explain the rationale briefly to the user",
     "Should construct a query whose keywords include the Spanish-orthography 'García' (with the diacritic, or at minimum the unaccented 'Garcia') — NOT an Anglicised form like 'Garcia/Garcis/Garsey'",
     "Should successfully recover the fixture's 1834 poder otorgado (recordPlace: Habana, recordType: Notarial), which records García as the apoderado on a power of attorney",

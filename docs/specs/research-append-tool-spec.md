@@ -589,7 +589,27 @@ append op (deliberately simple):
      `standard_place` is **copied** — no geocoding call;
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
-     unset with a warning, never fails the op.
+     unset with a warning, never fails the op. The op's record context goes with
+     it: the places the call's other assertions with the same `record_id` name.
+     A bare single-segment place ("Shenandoah") has no context of its own, so
+     the resolver uses that record context: a sibling place whose first segment
+     is the name, or the name after an administrative prefix ("Borough of",
+     "Town of", "City of", "Township of", …), is resolved instead — "New York" is
+     not the fuller form of "York", else a best match typed continent, country,
+     state or province is kept as it is, even against the record's area (a bare
+     "Germany" beside Gettysburg is not Germany Township; the cost: a bare
+     "Washington" beside Kentucky places is the state), else only a candidate
+     whose own name starts with the same word and has a segment equal to a
+     jurisdiction the siblings share counts (a variant-name hit, "Laxton" for
+     "Lexington", never does), else the best match is kept only
+     when FamilySearch types it a jurisdiction (continent, country, state,
+     province, territory, county, district, region, or first/second-level admin
+     division) and is otherwise left unset (genealogist ruling 2026-10-06, option
+     C with fallback B′). Measured on
+     the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
+     of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
+     Temple" to France, and the country guard below cannot catch either, since a
+     one-token place names no country.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
