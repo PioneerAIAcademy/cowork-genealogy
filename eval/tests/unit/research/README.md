@@ -153,7 +153,10 @@ every predicate key be present (`harness/fixtures.py:93`), so a router omitting 
 optional argument would have matched nothing and been refused — the wrong failure for
 a test about whether the router looks before it searches.
 
-`ut_research_022` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
+`ut_research_022` (`candidates-not-verdicts.json`) covers item 6. It is deleted until
+#2813 restores it: #3124 measured it failing about two runs in three, on that branch's
+`research/SKILL.md` and on main's alike, and its fix belongs to #2813. Its Driscoll
+fixture stays for that. It is **judge-graded
 on purpose** — which is a different thing from 020's accident. Every part of that rule
 is a property of the reply: whether a name match was presented as an answer, whether
 match strength and search scope were given, and whether the closing offer is to research
