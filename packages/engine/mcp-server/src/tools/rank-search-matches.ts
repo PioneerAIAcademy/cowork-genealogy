@@ -12,6 +12,7 @@ import { MODIFIERS, MONTHS, normalizeAccents } from "../utils/date-constants.js"
 import { gatherRelatives } from "../utils/relatives.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type {
   RankSearchMatchesInput,
   RankSearchMatchesResult,
@@ -622,7 +623,7 @@ function subjectRelationshipFacts(
   subjectId: string,
 ): any[] {
   return (tree.relationships ?? [])
-    .filter((r) => [r.person1, r.person2, r.parent, r.child].includes(subjectId))
+    .filter((r) => relationshipEndpoints(r).includes(subjectId))
     .flatMap((r) => (Array.isArray(r.facts) ? r.facts : []));
 }
 
