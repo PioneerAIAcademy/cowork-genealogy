@@ -208,10 +208,10 @@ except `research-unregistered-census-conflicts`, mined to need it.
 dev/measure-question-state-signals.ts`, `--list` for every hit): the corpus is
 every scenario `research.json` plus every e2e `run-<ts>.final-research.json`
 (developer `scratch_` runs left out), each with its sibling tree, run through the
-shipped `questionStates`. That is 394 question entries — 151 across 110 scenarios
+shipped `questionStates`. That is 397 question entries — 154 across 113 scenarios
 and 243 across 203 e2e final states — and a hit is one question entry whose signal
-is non-empty. Comparing bounded dates as spans and counting only birth parents
-changed no hit on this corpus.
+is non-empty. Comparing bounded dates as spans, leaving one-sided dates open, and
+counting only birth parents changed no hit on this corpus.
 
 `competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
 a person in scope — the project's `subject_person_ids` plus every person this
