@@ -12,6 +12,8 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
+    _stop_at_stub,
+    _stopped_at_a_handoff,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
@@ -325,7 +327,10 @@ def test_no_warning_on_out_of_scope_negative():
     assert warnings == []
 
 
-def test_no_warning_on_grade_on_invariant():
+def test_grade_on_invariant_is_coerced_and_names_its_mode():
+    """Ruling on issue #2190 (2026-09-07): an invariant negative no longer
+    short-circuits. Its 1 is coerced like a routing negative's, but the warning
+    and rationale must say the validator decides it, not routing."""
     dims = _routing_dims()
     warnings: list = []
     flag_routing_negative_judge_fail(
@@ -335,6 +340,43 @@ def test_no_warning_on_grade_on_invariant():
         skills_invoked=["search-records"],
         warnings=warnings,
     )
+    assert [d["score"] for d in dims] == [None, None, None]
+    assert [w["kind"] for w in warnings] == ["coerced_routing_negative_to_na"] * 2
+    assert "decided by its invariant validator alone" in warnings[0]["advisory"]
+    assert "decided by its invariant validator alone" in dims[0]["rationale"]
+    assert "decided by routing" not in dims[0]["rationale"]
+
+
+def test_routing_negative_coercion_still_says_routing():
+    """The other direction: a negative without `grade_on_invariant` keeps the
+    routing wording."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert "decided by routing alone" in warnings[0]["advisory"]
+    assert "decided by routing alone" in dims[0]["rationale"]
+
+
+def test_activated_invariant_negative_is_not_coerced():
+    """The `activated` guard stays for invariant negatives: one may activate and
+    still pass on its validator, and there its 1 is left a 1 for the review
+    sample's first trigger to catch."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=True,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
     assert warnings == []
 
 
@@ -1007,6 +1049,35 @@ def test_negative_judge_context_renders_as_two_nested_lists_in_the_judge_prompt(
     author_at = lines.index("- Test author's notes (written for this test):")
     assert lines[author_at + 1] == "  - AUTHOR-NOTE"
     assert author_at == 4  # label + three harness lines precede it
+
+
+def test_negative_judge_context_self_route_only_renders_the_no_skill_arm():
+    """A `correct_skill` naming only the skill under test
+    (`ut_record_extraction_011`) must not tell the judge to route to the skill
+    it was told must not do its task; the emptied list takes the no-skill arm."""
+    spec = _negative_spec(skill="record-extraction", correct=["record-extraction"])
+    ctx = _negative_judge_context(spec)
+    assert "decline without invoking any skill" in ctx[0]
+    assert "route the user to" not in ctx[0]
+
+
+def test_negative_judge_context_drops_the_skill_under_test_from_the_route():
+    """`ut_conflict_resolution_010`'s shape: the skill under test plus one
+    other. Only the other is named as the route."""
+    spec = _negative_spec(
+        skill="conflict-resolution",
+        correct=["record-extraction", "conflict-resolution"],
+    )
+    ctx = _negative_judge_context(spec)
+    assert "decline and route the user to: record-extraction." in ctx[0]
+
+
+def test_negative_judge_context_unchanged_when_skill_not_in_route():
+    """The other direction: a route not naming the skill under test is rendered
+    in full, in order."""
+    spec = _negative_spec(skill="citation", correct=["record-extraction", "timeline"])
+    ctx = _negative_judge_context(spec)
+    assert "decline and route the user to: record-extraction, timeline." in ctx[0]
 
 
 def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
@@ -2170,6 +2241,148 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
 
 
+# --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
+
+
+def _positive_spec_with(execution, skill="research"):
+    return load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "execution": execution,
+        "judge_context": [],
+    })
+
+
+_STOPPING = {"stop_at_stub": True, "stub_skills": ["question-selection"]}
+
+
+def test_stop_at_stub_is_on_only_when_a_positive_test_sets_it():
+    assert _stop_at_stub(_positive_spec_with(_STOPPING)) is True
+    assert _stop_at_stub(_positive_spec_with({"stub_skills": ["question-selection"]})) is False
+
+
+def test_stop_at_stub_is_off_on_a_negative_test():
+    """A negative test already stops on its own routing short-circuit, so the
+    field is ignored there even when it is set."""
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_004", "skill": "research", "name": "n", "type": "negative",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "negative": {"correct_skill": ["search-records"], "explanation": "x"},
+        "execution": _STOPPING,
+        "judge_context": [],
+    })
+    assert spec.execution.get("stop_at_stub") is True
+    assert _stop_at_stub(spec) is False
+
+
+def _run_with(*builtin_calls):
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="", skills_invoked=["research"], tool_calls=[], duration_ms=1.0,
+        usage={}, builtin_tool_calls=list(builtin_calls),
+    )
+
+
+_ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
+_SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
+
+
+def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
+    stopping = _positive_spec_with(_STOPPING)
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
+        "the skill's own entry is not a stubbed hand-off"
+    )
+    unstubbed = {"tool": "Agent", "args": {"subagent_type": "gps-mentor"}}
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, unstubbed)) is False, (
+        "a hand-off to an unstubbed name is not what the stop ends at"
+    )
+    plain = _positive_spec_with({"stub_skills": ["question-selection"]})
+    assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False
+
+
+def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):
+    """The stop leaves only the narration before the hand-off, which can be short
+    and name the next row. That run still activated: the hand-off is its work."""
+    import asyncio
+    from harness.judge import JudgeOutput
+    from harness.skill_runner import SkillRunResult
+
+    spec = load_test(REPO_ROOT / "eval/tests/unit/research/route-shortcut-guard.json")
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="No questions yet. Routing to question-selection, then research-plan.",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=10.0,
+            usage={"num_turns": 3},
+            builtin_tool_calls=[
+                {"tool": "Skill", "args": {"skill": "research"}},
+                {"tool": "Agent", "args": {"subagent_type": "question-selection"}},
+            ],
+        )
+
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": name, "score": 3, "rationale": "fine"}
+                for name in ("Correctness", "Completeness", "Tool Arguments")
+            ],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0, output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert entry["runs"][0]["output"]["activated"] is True
+    assert entry["outcome"] == "pass"
+
+
+def test_a_stop_at_stub_test_reaches_run_skill_with_the_stop(tmp_path, monkeypatch):
+    """The orchestrator hop of `stop_at_stub` (#3119): only the
+    `_execute_single_run` call site and the retry wrapper carry it to the hook,
+    and dropping either would leave `_stop_at_stub`'s own tests green."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["execution"] = {**raw.get("execution", {}), "stop_at_stub": True,
+                        "stub_skills": ["search-records"]}
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert seen.get("stop_at_stub") is True
+
+
 # --- #2057: a failing validator no longer skips the judge --------------------
 #
 # The gate is in `_execute_single_run`, NOT in `_compute_outcome`. A test that
@@ -2178,19 +2391,13 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # `if not validators_passed: return "fail"` runs ahead of every judge_skipped
 # branch. These drive the real path.
 
-# A negative fixture with a non-empty `correct_skill` and NO
-# `grade_on_invariant`. That second condition is load-bearing and easy to get
-# wrong: `grade_on_invariant` is the FIRST guard in
-# flag_routing_negative_judge_fail, so a fixture carrying it is exempt from the
-# coercion and would make this test pass for the wrong reason. (The example
-# this comment used to cite was search-wikipedia's three negatives; issue #2795
-# deleted two of them and made the third — `ut_search_wikipedia_008` — a DIRECT
-# negative that still carries `grade_on_invariant`, so it is exempt from the
-# coercion for that reason rather than for having ceased to be a negative.) 81 of the committed negative
-# fixtures qualify; this one is
-# picked because its scenario exists and OrchestratorPaths resolves it, and it
-# sits in record-extraction's suite, which stays a skill (the check-warnings one
-# it replaced was deleted with that skill, issue #2118).
+# A negative fixture with a non-empty `correct_skill`. It needs no
+# `grade_on_invariant` exclusion any more: since issue #3080 deleted that early
+# return from flag_routing_negative_judge_fail, an invariant negative is coerced
+# too, so neither kind makes the coercion test below pass for the wrong reason.
+# This one is picked because its scenario exists and OrchestratorPaths resolves
+# it, and it sits in record-extraction's suite, which stays a skill (the
+# check-warnings one it replaced was deleted with that skill, issue #2118).
 NEGATIVE_TEST_PATH = (
     REPO_ROOT / "eval/tests/unit/record-extraction/negative-search-vs-extract.json"
 )
