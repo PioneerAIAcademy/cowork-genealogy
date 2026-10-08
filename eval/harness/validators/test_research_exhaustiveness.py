@@ -24,7 +24,11 @@ import re
 
 import pytest
 
-from validators_lib import bare_tool_name, check_no_exhaustive_declaration
+from validators_lib import (
+    _questions_by_id,
+    bare_tool_name,
+    check_no_exhaustive_declaration,
+)
 
 
 # --- Helpers ---------------------------------------------------------
@@ -38,10 +42,6 @@ REQUIRED_STOP_CRITERIA_KEYS = {
     "conflict_resolution",
     "overturn_risk",
 }
-
-
-def _questions_by_id(state: dict) -> dict[str, dict]:
-    return {q.get("id"): q for q in (state or {}).get("questions") or [] if q.get("id")}
 
 
 def _questions_with_changed_declaration(before: dict, after: dict) -> list[dict]:

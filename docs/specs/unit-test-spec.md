@@ -652,12 +652,20 @@ across the conversion; minting new ids would orphan every prior grade on the
 The "separate file, own id" rule above still governs a **pair** — a routing
 skill that still ships — because there both arms exist and both are graded.
 
-**Historical note (2026-10-08).** The paired-skill pattern described above is
-now nearly retired. `person-evidence`, `proof-conclusion`, and
-`research-exhaustiveness` have all been deleted as routing skills; only
-`record-extraction` → `record-extractor` remains as a shipped pair. The
-conversion rules and the direct-agent arm still apply to that suite and to any
-future pair, but the population they govern has shrunk from four pairs to one.
+**The paired-skill pattern is retired (lead ruling 2026-09-22, restated
+2026-09-29).** A conversion now ends with the agent authored and
+`skills/<name>/` deleted in the same PR. What it beat was keeping
+the thin routing skill on disk as the direct-user and unit-eval entry point —
+the shape §0 of `docs/skill-to-agent-pair-conversion.md` was written for, which
+left a rule stated only in the routing skill's body switched off during
+production research while still billing its tokens.
+
+Four of the five pairs are gone: `search-images` (2026-09-29),
+`person-evidence`, `proof-conclusion` and `research-exhaustiveness`
+(2026-10-08). Only `record-extraction` →
+`record-extractor` remains, under the 2026-09-21 exemption. The conversion
+rules and the direct-agent arm still apply to that suite and to any future
+pair, but the population they govern has shrunk from five pairs to one.
 
 **A negative converts too, when its outcome does not depend on routing.** The
 conversion doc says negatives get no twin, and for a pair that is right: routing
