@@ -216,6 +216,9 @@ def expected_research_owners() -> dict[str, set[str]]:
         expected[section] |= added
     for section, removed in NARROWED.items():
         expected[section] -= removed
+    # Sections the frozen table predates, declared rather than frozen in.
+    for section, writers in ADDED.items():
+        expected[section] = set(writers)
     return expected
 
 
