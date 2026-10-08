@@ -40,7 +40,6 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
-    "no-shortcut": "claimed by PR #3165 (ut_research_015); delete this entry when it lands",
     "confidence-calibration": (
         "its only test, ut_person_evidence_001 (an xfail), was deleted under "
         "runlog rule 10; the restore line is on issue #2537 and the validator "
