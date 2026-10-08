@@ -24,7 +24,9 @@ import pytest
 
 from harness.record_basis import record_basis_of
 from validators_lib import (
+    as_mapping,
     assert_foreign_keys_valid,
+    bare_tool_name,
     assert_no_section_deletions,
     extract_year,
 )
@@ -1209,10 +1211,24 @@ def report_chronological_contradiction_not_speculative(
 
     # Build (record_persona_id, tree_person_id) → same_person args index.
     sp_by_pair: dict[tuple, dict] = {}
+    # (assertionId, treePersonId) → the record party that call scored, for the
+    # project-relative shape. A call naming a recordRole/recordPersonaId other
+    # than the assertion's own scored the assertion's SECOND party (the father a
+    # "son of" entry names), and the record states no birth year for that party.
+    second_party: set[tuple] = set()
+    _own = _assertions_by_id(after_state.get("research_json") or {})
     for tc in (tool_calls or []):
         if "same_person" not in (tc.get("tool") or ""):
             continue
-        args = tc.get("args") or {}
+        args = as_mapping(tc.get("args"))
+        named = args.get("recordPersonaId") or args.get("recordRole")
+        own = _own.get(args.get("assertionId") or "") or {}
+        own_keys = {str(k).lower() for k in (own.get("record_persona_id"), own.get("record_role")) if k}
+        # Only a call naming a DIFFERENT party than the assertion's own is a
+        # second-party call. An assertion with no role of its own gives nothing
+        # to differ from, so a named role there is its own party, not a second one.
+        if named and own_keys and str(named).lower() not in own_keys:
+            second_party.add((args.get("assertionId"), args.get("treePersonId")))
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
         if not (p1 and p2):
             # The project-relative call shape (issue #1731) names its two sides
@@ -1257,6 +1273,8 @@ def report_chronological_contradiction_not_speculative(
         if not person_id:
             continue
 
+        if (pe.get("assertion_id"), person_id) in second_party:
+            continue
         record_persona_id = assertion.get("record_persona_id")
         sp_args = (
             sp_by_pair.get((record_persona_id, person_id))
@@ -1313,3 +1331,127 @@ def report_chronological_contradiction_not_speculative(
             "adult baptism) the link must be `speculative` at most:\n"
             + "\n".join(offenders)
         )
+
+
+# --- Geography and naming read from tools, not from memory (#2537) -----
+#
+# The geographic-plausibility cap rests on two lookups the agent body names
+# unconditionally: place_search -> place_distance for the move, and wiki_read of
+# the destination's {Jurisdiction}_Emigration_and_Immigration page for the
+# corridor. A run that reaches the right tier WITHOUT the calls is reasoning
+# from the model's own knowledge, which is what ADR-0012 moved off the prompt;
+# ADR-0012 requires the fetch be observed, not merely instructed. Substring
+# matches on the tool name, so they hold under any server-prefix spelling.
+
+
+def _calls_to(tool_calls, name: str) -> list[dict]:
+    return [tc for tc in (tool_calls or []) if bare_tool_name(tc.get("tool") or "") == name]
+
+
+def _wiki_read_slugs(tool_calls) -> list[str]:
+    """Page slugs the run's wiki_read calls could actually fetch. wiki_read
+    throws on a url without `/wiki/` (`urlToSlug`), so a bare slug the mock
+    would serve is a lookup production never performs and does not count."""
+    slugs = []
+    for tc in _calls_to(tool_calls, "wiki_read"):
+        url = str(as_mapping(tc.get("args")).get("url") or "")
+        if "/wiki/" in url:
+            slugs.append(url.split("/wiki/", 1)[1].split("#")[0].split("?")[0])
+    return slugs
+
+
+def test_geography_measured_with_place_distance(tool_calls, test):
+    """Tag-gated (`geography-distance`): the implausible case must be measured
+    with place_distance, not asserted (issue #2537's acceptance names the
+    implausible case only; the corridor case is checked by its wiki read)."""
+    if "geography-distance" not in (test.get("tags") or []):
+        pytest.skip("not a geography-distance test")
+    assert _calls_to(tool_calls, "place_distance"), (
+        "geography-distance test made no place_distance call: a record outside "
+        "the attested residence cluster must be measured (place_search, then "
+        "place_distance on the two standardPlaces), not judged from memory. "
+        f"Tools called: {sorted({tc.get('tool') for tc in (tool_calls or [])})}"
+    )
+
+
+def test_corridor_read_from_wiki(tool_calls, test):
+    """Tag-gated (`geography-from-tools`): whether a corridor explains the move
+    is read from the destination's {Jurisdiction}_Emigration_and_Immigration
+    page. Deliberately does not assert WHICH jurisdiction, so the same check
+    covers any destination."""
+    if "geography-from-tools" not in (test.get("tags") or []):
+        pytest.skip("not a geography-from-tools test")
+    slugs = _wiki_read_slugs(tool_calls)
+    assert any(s.endswith("_Emigration_and_Immigration") for s in slugs), (
+        "geography-from-tools test must read the destination's "
+        "{Jurisdiction}_Emigration_and_Immigration page with wiki_read (a full "
+        "/wiki/ url) before deciding whether a corridor explains the move; "
+        f"wiki pages read: {slugs}"
+    )
+
+
+def test_naming_system_read_from_wiki(tool_calls, test):
+    """Tag-gated (`naming-from-wiki`): a patronymic or cross-language name
+    mismatch must fetch the jurisdiction's `{Country}_Naming_Customs` page
+    rather than apply a remembered rule (ADR-0012, issue #2537; the same check
+    conflict-resolution carries for #2254)."""
+    if "naming-from-wiki" not in (test.get("tags") or []):
+        pytest.skip("not a naming-from-wiki test")
+    slugs = _wiki_read_slugs(tool_calls)
+    assert any(s.endswith("_Naming_Customs") for s in slugs), (
+        "naming-from-wiki test must call wiki_read for a {Country}_Naming_Customs "
+        f"page (a full /wiki/ url) before ruling on the name; wiki pages read: {slugs}"
+    )
+
+
+def _subject_ids(research: dict) -> set:
+    return set((research.get("project") or {}).get("subject_person_ids") or [])
+
+
+def test_unexplained_move_not_confident(before_state, after_state, test):
+    """Tag-gated (`unexplained-move-cap`): with nothing bridging a move outside
+    the attested residence cluster, no link to a person already in the tree may
+    be `confident` (lead ruling 2026-09-18: `probable` at most). Persons the
+    run minted are excluded: they did not move. Writing no link, and asking
+    first, also passes; that is the judge's to grade."""
+    if "unexplained-move-cap" not in (test.get("tags") or []):
+        pytest.skip("not an unexplained-move-cap test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    existing = _tree_person_ids(before_state.get("tree_gedcomx_json"))
+    # New links, and existing ones the run raised to confident.
+    was_confident = {e.get("id") for e in (before.get("person_evidence") or []) if e.get("confidence") == "confident"}
+    confident = [
+        e for e in (after.get("person_evidence") or [])
+        if e.get("confidence") == "confident"
+        and e.get("id") not in was_confident
+        and e.get("person_id") in existing
+    ]
+    assert not confident, (
+        "an unexplained move outside the attested residence cluster caps the "
+        "link at `probable`; these new links to persons already in the tree are "
+        f"`confident`: {[(e.get('id'), e.get('assertion_id'), e.get('person_id')) for e in confident]}"
+    )
+
+
+def test_corridor_move_links_confident(before_state, after_state, test):
+    """Tag-gated (`corridor-move-link`): the negative arm. When a corridor on
+    the destination's page explains the move and correlation is Strong, the
+    subject gets an ordinary `confident` link. A cap here, or no link at all,
+    is the geographic rule over-firing."""
+    if "corridor-move-link" not in (test.get("tags") or []):
+        pytest.skip("not a corridor-move-link test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    subjects = _subject_ids(before)
+    to_subject = [e for e in _new_person_evidence(before, after) if e.get("person_id") in subjects]
+    assert any(e.get("confidence") == "confident" for e in to_subject), (
+        "a move a corridor explains takes the ordinary tiers, and Strong "
+        "correlation across two independent records is `confident`; links "
+        f"written to the subject {sorted(subjects)}: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in to_subject] or 'none'}"
+    )
