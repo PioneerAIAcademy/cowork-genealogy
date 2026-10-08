@@ -140,6 +140,26 @@ whole section, one 50-item page at a time.
 
 ## 3. Decisions recorded
 
+**`assertionId` means two different things, and only one of them is "the
+assertion itself".** On `assertions` it matches the item's own `id`; on
+`person_evidence`, `conflicts`, `hypotheses` and `proof_summaries` it matches a
+field holding *references* to an assertion (`assertion_id`,
+`competing_assertion_ids`, `supporting`/`contradicting_assertion_ids`,
+`supporting_assertion_ids`). One parameter name, five fields, two meanings.
+
+Before the filter was added the allow-list throw carried that distinction for free: a caller
+who meant `person_evidence` and wrote `assertions` got
+`'assertionId' is not a supported filter for section 'assertions'` and
+self-corrected. That error is now gone, and the wrong section returns a
+plausible `count: 1` holding the assertion body — which has no `person_id` and
+no `confidence`, so a caller using the "an empty result IS the answer: unlinked"
+idiom reads a hit as "already linked". The filter was still worth adding (26
+measured mis-calls on main came from its absence), but the trade is real and is
+recorded here rather than discovered.
+
+The field is `id`, never `assertion_id` — an assertion object has no such key,
+so that rule would be accepted and match nothing, ever.
+
 - **A second tool, not an extension of `project_context`.** `project_context`
   is one fixed, unfiltered projection for one consumer (the record-extractor's
   startup) — extending it with per-call scoping parameters would either (a)

@@ -155,7 +155,9 @@ interface FilterRule {
  *  parameters are accepted, and only on the sections where they mean
  *  something. Supplying `recordId` against `section: "proof_summaries"` is a
  *  clear error, not a silently-ignored no-op. */
-const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, FilterRule>>> = {
+// Exported for the schema-field guard in tests/tools/research-query.test.ts:
+// a rule naming a field its section does not have matches nothing, ever.
+export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, FilterRule>>> = {
   questions: {
     questionId: { field: "id", mode: "exact" },
     status: { field: "status", mode: "exact" },
@@ -174,6 +176,16 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
     // `id`, not `assertion_id` — an assertion object has no `assertion_id`
     // key (that is person_evidence's POINTER to one, below). A rule on
     // `assertion_id` here is accepted by the tool and matches nothing, ever.
+    //
+    // NOTE the overload this creates. On every OTHER section `assertionId`
+    // means "entries REFERENCING this assertion"; here alone it means "the
+    // assertion itself". The allow-list throw used to be what separated them:
+    // a model that meant `person_evidence` and slipped the section got a loud
+    // error and self-corrected (observed in hypothesis-tracking's
+    // v1_2026-09-18_15-42-44 run). It now gets a plausible `count: 1` holding
+    // the assertion body — no `person_id`, no `confidence` — which reads as
+    // "already linked" to person-evidence's "an empty result IS the answer"
+    // idiom. Recorded in the spec's §3; there is no cheap guard for it.
     assertionId: { field: "id", mode: "exact" },
     recordId: { field: "record_id", mode: "exact" },
     recordRole: { field: "record_role", mode: "exact" },
@@ -379,8 +391,8 @@ export const researchQuerySchema = {
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
     "(questionId, status), `log` (planItemId), `sources` (sourceId), `assertions` " +
-    "(assertionId — matches id, recordId, recordRole, sourceId, questionId — " +
-    "matches extracted_for_question_ids), " +
+    "(recordId, recordRole, sourceId, questionId — matches " +
+    "extracted_for_question_ids, assertionId — matches the assertion's own id), " +
     "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids, status), " +
     "`hypotheses` (questionId — matches " +
