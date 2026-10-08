@@ -134,16 +134,18 @@ def _paired_names() -> set[str]:
 
 
 def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
-    """On a ``no-shortcut`` test, no paired row may be reached at all.
+    """On a ``no-shortcut`` test, no paired row but the expected one may be reached.
 
-    ``test_routes_to_expected_skill`` asserts only the FIRST delegation, and it
-    reads ``skills_invoked``, which ``skill_runner.py:654`` gates on
-    ``tool_name == "Skill"``. So a router that spawns
-    ``Agent(@plugin:proof-conclusion)`` and then calls
-    ``Skill(question-selection)`` satisfies it — ``delegations[0]`` is the
-    expected name — while doing the exact thing ut_research_015 exists to
-    forbid. Both call mechanisms are checked here because the routing table
-    reaches its ``@plugin:`` rows by spawn and the rest by ``Skill``.
+    Such a test must set ``execution.stop_at_stub`` (the runnability gate
+    requires it), so the harness ends the run once the turn of the router's
+    first stubbed hand-off is over (#3119), and ``test_routes_to_expected_skill``
+    asserts, in call order, that the hand-off is the expected one. So a paired
+    row other than the expected one is either that first hand-off itself, which
+    the routing check also fails, or one made later in that turn, which the stop
+    denies but records, and which only this check sees. A shortcut in a later
+    turn is cut off by the stop and never reaches the record. Both call mechanisms
+    are checked because the routing table reaches its ``@plugin:`` rows by spawn
+    and the rest by ``Skill``.
     """
     from harness.skill_runner import spawned_agents
 
