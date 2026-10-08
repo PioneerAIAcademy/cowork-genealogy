@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e.agent_spend_report import collect
-from e2e.result import axes_from_runlog
+from e2e.result import axes_from_runlog, result_message_covers_last_query_only
 from e2e.run_report import KEEP_REPORTS, per_type_seconds, run_cost
 from e2e.runlog_selection import all_result_jsons
 
@@ -70,8 +70,8 @@ def _fmt(value: Any, kind: str) -> str:
     return f"{value:,}" if isinstance(value, int) else f"{value:,.0f}"
 
 
-def _row(label: str, before: Any, after: Any, kind: str = "n") -> str:
-    return f"  {label:<24} {_fmt(before, kind):>12} -> {_fmt(after, kind):<12} {_pct(before, after):>6}"
+def _row(label: str, before: Any, after: Any, kind: str = "n", pct: bool = True) -> str:
+    return f"  {label:<24} {_fmt(before, kind):>12} -> {_fmt(after, kind):<12} {_pct(before, after) if pct else '':>6}"
 
 
 def _facts(log: dict[str, Any], path: Path) -> dict[str, Any]:
@@ -88,6 +88,7 @@ def _facts(log: dict[str, Any], path: Path) -> dict[str, Any]:
     none_ran = log.get("subagent_capture_status") == "matched_no_transcripts" and not log.get("subagents")
     return {
         "cost": run_cost(usage)[0],
+        "cost_basis": run_cost(usage)[1],
         "wall": usage.get("wall_clock_seconds"),
         "turns": usage.get("num_turns"),
         "tool_calls": len(log["tool_calls"]) if isinstance(log.get("tool_calls"), list) else None,
@@ -135,6 +136,12 @@ def compare(before: dict[str, Any], b_path: Path, after: dict[str, Any], a_path:
         "  (MCP tool code, the fixture and the harness are not covered — same skills is not"
         " the same as nothing changed)"
     )
+    multi = [side for side, u in (("before", ub), ("after", ua)) if result_message_covers_last_query_only(u)]
+    resumed = [side for side, u in (("before", ub), ("after", ua)) if u.get("resumes")]
+    if multi:
+        out.append(f"multi-query run ({' and '.join(multi)}): main turns cover only the last query, so no change is shown")
+    if resumed:
+        out.append(f"resumed run ({' and '.join(resumed)}): cost covers only the part after the last resume, so no change is shown")
     out.append("")
 
     out.append("RESULT")
@@ -150,9 +157,13 @@ def compare(before: dict[str, Any], b_path: Path, after: dict[str, Any], a_path:
     out.append("")
 
     out.append("COST AND TIME")
-    out.append(_row("cost", fb["cost"], fa["cost"], "$"))
+    same_basis = fb["cost_basis"] == fa["cost_basis"]
+    out.append(_row("cost", fb["cost"], fa["cost"], "$", pct=same_basis and not resumed))
+    if not same_basis:
+        out.append(f"  {'':<24} not comparable: before is {fb['cost_basis'] or 'not recorded'},"
+                   f" after is {fa['cost_basis'] or 'not recorded'}")
     out.append(_row("wall clock", fb["wall"], fa["wall"], "min"))
-    out.append(_row("main turns", fb["turns"], fa["turns"]))
+    out.append(_row("main turns", fb["turns"], fa["turns"], pct=not multi))
     out.append(_row("tool calls", fb["tool_calls"], fa["tool_calls"]))
     out.append(_row("main busiest moment", fb["main_peak"], fa["main_peak"]))
     out.append(_row("main squeezes", fb["main_squeezes"], fa["main_squeezes"]))

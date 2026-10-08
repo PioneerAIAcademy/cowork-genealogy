@@ -58,7 +58,7 @@ from typing import Any
 
 from e2e import pricing
 from e2e.agent_spend_report import NO_TOKENS, NOT_RECORDED, collect, price_helper
-from e2e.result import axes_from_runlog
+from e2e.result import axes_from_runlog, result_message_covers_last_query_only
 from e2e.runlog_selection import all_result_jsons
 
 REPORTS_DIRNAME = "reports"
@@ -231,6 +231,9 @@ def render(
         f"  stop reason      {log.get('stop_reason', '?')}",
         f"  compliance       {compliance}",
     ]
+    if result_message_covers_last_query_only(usage):
+        out.append("  multi-query run  turns, main tokens and main cost cover only the last query;"
+                   " run cost covers only the part after the last resume if the run resumed")
     if log.get("error"):
         out.append(f"  run error        {log['error']}")
     if judge.get("error"):
@@ -359,7 +362,7 @@ def render(
         out.append(f"  busiest moment   {_NOT_RECORDED}")
     out.append(
         f"  squeezes         main {squeezes if squeezes is not None else _NOT_RECORDED}"
-        f" · helpers {helper_squeezes if subs else _NOT_RECORDED}"
+        f" · helpers {helper_squeezes if any(isinstance(s.get('compactions'), list) for s in subs) else _NOT_RECORDED}"
     )
     if per_agent:
         seconds_by_type = per_type_seconds(log)

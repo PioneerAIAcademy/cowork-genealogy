@@ -113,7 +113,11 @@ def compare(before: dict[str, Any], b_name: str, after: dict[str, Any], a_name: 
     out.append("")
 
     tb, ta = _tests(before), _tests(after)
-    common = [tid for tid in ta if tid in tb]
+    def _runs(test):
+        return len(test.get("runs") or [])
+
+    common = [tid for tid in ta if tid in tb and _runs(tb[tid]) == _runs(ta[tid])]
+    uneven = [tid for tid in ta if tid in tb and tid not in common]
     out.append(
         f"{'test':<26} {'result':<17} {'cost':<19} {'change':>6}  "
         f"{'turns':<8} {'seconds':<12} busiest moment"
@@ -146,6 +150,8 @@ def compare(before: dict[str, Any], b_name: str, after: dict[str, Any], a_name: 
         out.append(f"only in before ({len(only_b)}): {', '.join(only_b)}")
     if only_a:
         out.append(f"only in after ({len(only_a)}): {', '.join(only_a)}")
+    if uneven:
+        out.append(f"not compared, different run counts ({len(uneven)}): {', '.join(uneven)}")
 
     out.append("")
     out.append(f"SUMMARY  (the {len(common)} test(s) in both runs only)")

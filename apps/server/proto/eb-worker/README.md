@@ -48,16 +48,23 @@ files, and the hook carries `set -euo pipefail` and the git exec bit.
   `genealogy-turn`; `WORKER_TURN_USERS` in `02-worker.config` names the same two) and a
   `web.service` drop-in that runs the worker as root, so it can launch each turn's CLI as
   its own slot user. The kernel then keeps one patron's turn out of another's files and the
-  worker's `/proc`. Whether the drop-in survives the platform's own unit rewrite, and that
-  a slot user cannot read `/opt/elasticbeanstalk/deployment/env`, are U13 measurements. Whether Beanstalk re-chowns it after predeploy is a U13 measurement.
+  worker's `/proc`. The drop-in is written under `/usr/lib/systemd/system/web.service.d/`:
+  every deploy, app or configuration, deregisters `web` and deletes
+  `/etc/systemd/system/web.service.d` after predeploy and before the restart, so a drop-in
+  there left the worker starting as `webapp`, exiting at `step=turn_users`, and the next
+  deploy failing on a root-owned `/var/pids/web.pid` (U13, 2026-10-07, n=1 each). The
+  `/usr/lib` one governed the restart of two app deploys and two configuration updates. A
+  slot user cannot read `/opt/elasticbeanstalk/deployment/env` (U13, 2026-10-07). Beanstalk
+  re-chowns `/var/app/current` to `webapp:webapp` after predeploy (U13, 2026-10-07); no file in
+  it is group- or other-writable and nothing runs as `webapp`, so no turn can write it.
 
 `../eb-worker-probe/` is the 2026-09-11 measurement and stays as it was; its
 `deploy.sh` overrides its own `.ebextensions` with experiment values.
 
 ## Why these values
 
-Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 re-sizes
-`MaxRetries` and `ErrorVisibilityTimeout` once it has measured them on AWS.
+Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 measured what
+`MaxRetries` and `ErrorVisibilityTimeout` must clear on AWS (2026-10-07, n=1) and kept both.
 
 | Option | Value | Why |
 |---|---|---|
@@ -77,10 +84,11 @@ Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 re-sizes
   all five is closed `retries_exhausted` by the worker.
 - **`ErrorVisibilityTimeout` 300** has to exceed three things:
   - **The worker's stop grace**, so a redelivery never meets the old process's CLI.
-    Compose's is 30 s. Beanstalk's is unmeasured; systemd's default is 90 s.
-  - **A deploy window.** A configuration-only update measured 78 s. An app-version
-    deploy is unmeasured.
-  - **A Postgres failover.** At AWS's 2 s default, the worker's claim-failure 500 would
+    Compose's is 30 s. Beanstalk's is 90 s (`TimeoutStopUSec`, U13).
+  - **A deploy window**, no longer: every deploy stops sqsd first and starts it last
+    (U13), so a message in flight returns after `VisibilityTimeout`, not this.
+  - **A Postgres failover.** A single-AZ reboot cut Postgres for about 12–20 s (U13;
+    Multi-AZ unmeasured). At AWS's 2 s default, the worker's claim-failure 500 would
     spend all five receives in ten seconds and dead-letter the turn.
 
   Five receives × 300 s tolerates about 20 minutes of errors.

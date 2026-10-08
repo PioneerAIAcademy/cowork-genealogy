@@ -36,5 +36,8 @@
     "Must NOT set pli_001 status to 'completed' — extraction of these two new candidates has not happened yet, so the plan item should remain 'in_progress', not 'completed'.",
     "IMPORTANT — How file writes work: `research_log_append` writes the log entry AND the results/ sidecar host-side from the staged handle; the skill does not hand-write either. The sidecar is a newly created file, so it never appears in the file-change diff — its absence from it is not evidence of anything.",
     "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

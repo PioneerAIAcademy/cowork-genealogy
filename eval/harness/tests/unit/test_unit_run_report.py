@@ -146,15 +146,17 @@ def test_a_run_that_aborted_before_capture_is_not_called_old():
 def test_cost_by_model_adds_up_to_the_agent_cost_on_a_real_log():
     """A figure the report works out itself, checked against one it copies.
 
-    Committed log, so this reads real SDK output rather than a fixture.
+    Committed log, so this reads real SDK output rather than a fixture. A
+    released `v{N}.json`, never a candidate: candidates are pruned past the
+    newest five, and releasing one renames it.
     """
-    real = Path(__file__).resolve().parents[3] / "runlogs" / "unit" / "check-warnings" / "v1_2026-10-02_16-46-15.json"
+    real = Path(__file__).resolve().parents[3] / "runlogs" / "unit" / "gps-mentor" / "v3.json"
     log = json.loads(real.read_text(encoding="utf-8"))
     summary = render(log, real.name).split("SUMMARY")[1]
     by_model = [line for line in summary.splitlines() if "claude-" in line and "$" in line]
     added = sum(float(line.split("$")[1].split()[0]) for line in by_model)
     assert abs(added - log["totals"]["skill_cost_usd"]) < 0.0002
-    assert "agent cost         $1.5690" in summary
+    assert "agent cost         $0.8269" in summary
 
 
 def test_a_multi_run_test_shows_every_run_and_an_aborted_one_says_why():

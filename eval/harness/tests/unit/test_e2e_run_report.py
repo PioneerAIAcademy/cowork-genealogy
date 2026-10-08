@@ -148,18 +148,15 @@ def test_orphan_reports_are_removed(tmp_path: Path):
     assert txt_path_for(path).exists()
 
 
-def test_a_real_committed_run_shows_helper_time_and_who_spent_what():
-    """Its helpers were captured before `duration_seconds` existed, so their
-    time comes from each Agent call's own `duration_ms` trailer."""
+def test_a_real_committed_run_shows_who_spent_what():
+    """Reads only what the 14-day capture strip keeps: `usage` and `subagents`."""
     log = json.loads(REAL.read_text(encoding="utf-8"))
-    assert len(agent_call_durations(log)) == 20
     text = render(log, REAL.name, graded=False, per_agent=collect([REAL])[0])
     summary = text.split("SUMMARY")[1]
     assert "main $7.70 (45%) · helpers $9.35 (55%)   of the $17.06 whole-run per-model estimate" in summary
-    assert "57.4 min summed over 20 launch(es)" in summary
     assert "busiest moment   165,460 tokens (main researcher)" in summary
-    assert "squeezes         main 3 · helpers 0" in summary
-    assert "  1  question-selection            11    $0.15      33 s" in text
+    assert "squeezes         main 3 · helpers not recorded" in summary
+    assert "  1  question-selection            11    $0.15" in text
 
 
 def test_a_helpers_own_meters_fill_its_row():
@@ -172,6 +169,7 @@ def test_a_helpers_own_meters_fill_its_row():
                if line.startswith("    1  record-extractor"))
     assert "148,200" in row and "claude-sonnet-5" in row
     assert row.split()[-2] == "1"  # squeezed once
+    assert "helpers 1" in render(log, "r.json", graded=False)
 
 
 _SUB = {"agent_type": "record-extractor", "num_assistant_turns": 6,
@@ -301,3 +299,25 @@ def test_a_main_thread_on_an_unpriced_model_blocks_the_split():
                   "r.json", graded=False)
     line = next(line for line in text.splitlines() if "who spent it" in line)
     assert "%" not in line and "main thread unpriced: no rate for claude-unknown-9" in line
+
+
+def test_a_multi_query_run_is_flagged():
+    usage = dict(_log()["usage"], num_turns=1, timeline=[[0.0, "system:init"], [9.0, "system:init"]])
+    assert "multi-query run" in render(_log(usage=usage), "r.json", graded=False)
+
+
+# The CLI's Agent-call trailer, verbatim as a committed run log keeps it.
+_TRAILER = (
+    '[{"type": "text", "text": "agentId: acf71bd2e7482395e (use SendMessage with to: '
+    "'acf71bd2e7482395e' to continue this agent)\\n<usage>total_tokens: 18476\\n"
+    'tool_uses: 7\\nduration_ms: 33256</usage>"}]'
+)
+
+
+def test_a_helper_without_its_own_duration_takes_the_call_trailer():
+    sub = dict(_SUB, transcript="agent-acf71bd2e7482395e.jsonl")
+    log = _log(subagents=[sub], subagent_capture_status="captured",
+               tool_calls=[{"tool": "Agent", "response_summary": _TRAILER}])
+    assert agent_call_durations(log) == {"acf71bd2e7482395e": 33.256}
+    assert "33 s summed over 1 launch(es)" in render(log, "r.json", graded=False)
+

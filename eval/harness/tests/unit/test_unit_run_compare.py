@@ -93,3 +93,11 @@ def test_latest_two_sorts_by_the_logs_own_timestamp_not_the_filename(tmp_path: P
     (tmp_path / "broken.json").write_text("{", encoding="utf-8")
     pair = latest_two(paths + [tmp_path / "broken.json"])
     assert [p.name for p, _ in pair] == ["v1_2026-10-06_00-00-00.json", "scratch_2026-10-07_00-00-00.json"]
+
+
+def test_a_test_with_a_different_run_count_is_not_compared():
+    before = _log("t1", [dict(_test("ut_1", 0.432), runs=[{"outcome": "pass"}] * 3)])
+    after = _log("t2", [_test("ut_1", 0.144)])
+    text = compare(before, "b", after, "a")
+    assert "not compared, different run counts (1): ut_1" in text
+    assert "-67%" not in text
