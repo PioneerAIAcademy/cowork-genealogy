@@ -142,8 +142,8 @@ way project state changes.
 `logout` and `auth_status` are direct-invocation tools — Claude calls
 them in response to the user ("log me out", "am I logged in?") rather
 than as part of any skill workflow. `login` is invoked both directly
-and by the `init-project`, `search-records`, and `search-external-sites`
-skills when a tool call needs authentication.
+by the `init-project` and `search-records` skills, and by the
+`search-external-sites` agent, when a tool call needs authentication.
 
 The `place_population` tool combines data from populstat (234 countries),
 gapminder, and FamilySearch indexed birth records. The `wiki_search`
@@ -163,7 +163,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 11 skills covering the full GPS research cycle. Skills
+The plugin ships 9 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -189,8 +189,6 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
-| **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-external-sites** | Generates search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, and twelve other genealogy sites (`build_external_search_url`'s full site list). Walks the click-capture-analyze loop. | "Search Ancestry for Thomas Flynn" |
 
 ### Analyzing evidence
 
@@ -229,7 +227,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-two Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-four Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -242,10 +240,12 @@ don't load it explicitly.
 | **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. `/research` routes to it at the conclusion step, and you can ask for it directly; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | "Write the conclusion" / "What's the proof?" |
 | **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. The `research-exhaustiveness` skill delegates to it; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | (not invoked directly — `research-exhaustiveness` delegates) |
 | **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
+| **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. Logs every search for the audit trail. | "Full-text search for Flynn in Schuylkill County deeds" |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
+| **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
-| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person, and `tree-edit` after every edit or merge. | "Check for warnings" / "Any problems with his dates?" |
+| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person; the tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Writes nothing — it returns narrative context. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
 | **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
@@ -254,7 +254,7 @@ don't load it explicitly.
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
 | **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
 | **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
-| **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. After any change it hands back so `check-warnings` runs on the persons it touched. | "Fix this name" / "Merge these two persons" |
+| **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, check FamilySearch record hints and possible duplicates. Also executes person merges after proof-conclusion confirms identity. A write that would introduce an unjustified genealogical warning is refused by the tool itself. | "Fix this name" / "Merge these two persons" |
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
 | **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 | **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
@@ -267,7 +267,7 @@ don't load it explicitly.
 3. research-plan             "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
    search-full-text          ...or full-text search for witnesses/FAN mentions
-   search-external-sites     ...or on Ancestry/MyHeritage/FindMyPast
+   search-external-sites (agent) ...or on Ancestry/MyHeritage/FindMyPast
 5. record-extraction         Extract assertions from found records
                              (evidence classifications are written
                              here and are final at extraction)
@@ -466,11 +466,11 @@ What's shipped:
 - **52 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **11 shipped skills.** Full GPS research cycle from `init-project`
+- **9 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **22 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **24 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
@@ -481,7 +481,8 @@ What's shipped:
   Explained refinement of citations on sources that already exist),
   `convert-dates` (calendar-system date conversion), `question-selection`
   (the next research question, and the only minter of questions), `search-images`
-  (page-by-page browse of an unindexed volume),
+  (page-by-page browse of an unindexed volume), `search-external-sites`
+  (external-site search URLs, the capture hand-off and its triage),
   `check-warnings` (genealogical-impossibility checks on one person's data),
   `validate-schema` (read-only schema audit of both project files),
   `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved

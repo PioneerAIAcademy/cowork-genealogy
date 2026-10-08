@@ -654,6 +654,29 @@ def test_the_default_kill_signal_still_kills_and_starts(monkeypatch, capsys):
     assert not any(o.startswith("docker restart") for o in order)
 
 
+class _RecordingTarget:
+    def __init__(self, order: list[str]):
+        self.order = order
+
+    def signal(self, tier: str, action: str) -> None:
+        self.order.append(f"deployed {action} {tier}")
+
+
+@pytest.mark.parametrize("signal, expected", [
+    ("kill", ["deployed kill worker", "deployed start worker"]),
+    ("term", ["deployed term worker"]),
+])
+def test_a_deployed_kill_signals_over_the_target_and_never_runs_docker(monkeypatch, capsys, signal, expected):
+    """U13: on Beanstalk the kill goes over SSM (target.DeployedTarget); docker is never run."""
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", kill_signal=signal,
+                         deployed=_RecordingTarget(order))
+    turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order[order.index("take_marks") + 1:][:len(expected)] == expected, order
+    assert not any(o.startswith("docker") for o in order), order
+
+
 # ── U23: no billed turn is left running on a path that gives up ─────────────────────
 
 

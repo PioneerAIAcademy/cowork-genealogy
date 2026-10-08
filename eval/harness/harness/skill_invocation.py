@@ -27,6 +27,7 @@ Three consumers, all described in the plan:
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter
 from typing import Any
@@ -177,6 +178,77 @@ def recently_succeeded(
     return False
 
 
+def response_text(entry: dict[str, Any]) -> str:
+    """The tool call's response payload as a string, whichever tier recorded it.
+
+    THE TWO TIERS USE DIFFERENT KEYS, and a predicate that reads only one is
+    silently dead in the other. The e2e tier records `response_summary`
+    (`e2e/feedback_transcript_adapter.py`, and `_summarize_tool_response` in
+    `e2e/orchestrator.py`). The unit tier records `response`: `mock_mcp.py`
+    appends `entry["response"] = <dict>` at every one of its `call_log.append`
+    sites, `skill_runner` passes `call_log` through as `tool_calls`, and
+    `validator_runner` hands it to the validators unchanged.
+
+    Measured, not assumed: `eval/runlogs/unit/person-evidence/
+    v1_2026-10-05_03-04-24.json` carries 206 tool calls whose keys are
+    `tool`/`args`/`expected_args`/`matched`/`response_fixture`/`response` and
+    ZERO `response_summary` — including one real `materialize_facts` refusal
+    (`{"ok": false, "reason": "unjustified_warnings", ...}`) that a
+    `response_summary`-only read cannot see.
+
+    Returns a string so callers keep doing substring matching, which is what
+    `did_not_land` documents at length: the payload arrives single-encoded,
+    double-encoded and truncated across the corpus, and a parse fails on shapes
+    a substring handles.
+    """
+    # FALSY, not just None. A producer that sets `response_summary` to "" rather
+    # than omitting the key would otherwise shadow a populated `response` and
+    # reopen the tier-blindness this function exists to close. The scannability
+    # check in `guardrail_shadow_report.missing_for_warnings` uses truthiness on
+    # the same field, and the two must agree on what "recorded" means.
+    raw = entry.get("response_summary") or entry.get("response")
+    if raw is None or raw == "":
+        return ""
+    if isinstance(raw, str):
+        return raw
+    try:
+        return json.dumps(raw)
+    except (TypeError, ValueError, RecursionError):
+        # `orchestrator._serialize_result` guards the same call for the same
+        # reason, with the comment "Letting it escape aborts a run costing
+        # $7-25". This function is reached live at the end of a billed run via
+        # `did_not_land` -> `find_unguarded_protected_writes`, from a
+        # shadow-mode detector whose contract is that it never fails a run.
+        return repr(raw)
+
+
+def _normalized_response(entry: dict[str, Any]) -> str:
+    """`response_text` with the envelope escaping flattened and `ok` spacing
+    normalised, for matchers that key on a QUOTED JSON key.
+
+    `did_not_land` documents why this is needed and matches the bare name
+    `no_project` to dodge it: `_summarize_tool_response` passes any response
+    under 500 chars through VERBATIM as the raw MCP envelope, where the tool's
+    document is an escaped string — `{\\"ok\\": false}` — so a quoted-key
+    match finds nothing. `ok` is too short to match bare the way `no_project`
+    can, so the escaping is flattened first instead, which is what
+    `e2e/image_transcribe_report.py` does for the same reason.
+
+    Measured over the committed corpus, counting per tool-call payload rather
+    than per raw file byte: of 851 `ok:false` occurrences, 107 (13%) are in the
+    escaped shape — and the escaping is concentrated in the e2e tier, where 102
+    of 480 (21%) are escaped and the unit tier has none. A quoted-key matcher
+    is blind to all of them, and this arm CREDITS a call, so each blind spot is
+    a silent miss.
+    """
+    unescaped = response_text(entry).replace('\\"', '"')
+    # One canonical spacing. A plain `.replace('"ok":', '"ok": ')` doubles the
+    # space on the ALREADY-spaced shape and the matcher then misses it -- which
+    # is how the first version of this silently passed two of the corpus's four
+    # real spellings.
+    return re.sub(r'"ok"\s*:\s*', '"ok": ', unescaped)
+
+
 def did_not_land(entry: dict[str, Any]) -> bool:
     """True when this tool call changed nothing on disk.
 
@@ -211,7 +283,7 @@ def did_not_land(entry: dict[str, Any]) -> bool:
     """
     if entry.get("is_error") is True:
         return True
-    return "no_project" in str(entry.get("response_summary") or "")
+    return "no_project" in response_text(entry)
 
 
 def find_unguarded_protected_writes(
@@ -302,9 +374,10 @@ def _relationship_key(r: dict[str, Any]) -> tuple[Any, ...]:
     the endpoint tuple, never on `id`: 7 fixtures seed a relationship pointing at
     a PID-TODO placeholder that the agent resolves during the run, and an `id`
     key would read that genuinely-re-pointed relationship as seeded — a false
-    negative in the gates that diff against the starting tree. Shared by
-    `find_effects_without_invocation` (§8 hard gate) and
-    `find_relationship_writes_without_warnings_check` (§7 shadow).
+    negative in the gates that diff against the starting tree. Used by
+    `find_effects_without_invocation` (§8 hard gate). The §7 warnings check was
+    a second consumer until issue #2840 retargeted it onto the write boundary;
+    it diffs no relationships now and reads `tool_calls` alone.
     """
     return (r.get("type"), r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
 
@@ -314,9 +387,7 @@ def _relationship_conclusion_signature(r: dict[str, Any]) -> tuple[Any, ...]:
     INTO an existing relationship — a marriage fact dated onto a seeded couple, a
     parentage re-classified Biological->Adopted — which `_relationship_key` alone
     cannot see (issue #1569, was #1368). Used only by
-    `find_effects_without_invocation`'s proof-conclusion arm;
-    `find_relationship_writes_without_warnings_check` asks a different question (was a
-    NEW edge written) and keeps using the plain endpoint key.
+    `find_effects_without_invocation`'s proof-conclusion arm.
 
     Ignores `id` for the same reason `_relationship_key` does, and ignores fact ORDER —
     a harmless re-serialization must not register as a new conclusion, the exact disease
@@ -1135,6 +1206,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # it to `localities` and routes nothing to it; `ownership.json` names
         # `agent:locality-guide` on that row.
         "locality-guide",
+        # Same shape as search-images (issue #2802): a converted skill, not a
+        # hook-routed pair. It writes `log` entries (one through
+        # build_external_search_url) and a plan item's `status`, and
+        # `ownership.json` names `agent:search-external-sites` on those rows.
+        # Listed because the set is asserted equal to the shipped agent files.
+        "search-external-sites",
         # Same shape as convert-dates (issue #2800): a converted skill with no
         # hook route. It writes no project state at all -- its output is a
         # narrative to the user -- so `ownership.json` names it on no row. Listed
@@ -1146,6 +1223,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # to it. Listed because the set is asserted equal to the shipped agent
         # files. `ownership.json` names `agent:survey-surname` on the `log` row.
         "survey-surname",
+        # Same shape as search-images and citation (issue #2120): a
+        # cost-motivated conversion, no hook route. It writes `log` entries via
+        # `research_log_append` and updates `plan_items` status via
+        # `research_append`. No hook routes anything to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json`
+        # names `agent:search-full-text` on the `plan_items` and `log` rows.
+        "search-full-text",
     }
 )
 
@@ -1387,13 +1471,25 @@ CITATION_NULLING_KIND = "citation_nulling"
 # (and with it the Claude Agent SDK) just to learn one string.
 PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 
-# Marks a #1193 warnings-unchecked shadow entry in the shared
-# `guardrail_shadow_violations` list: a run wrote a new ParentChild/Couple
-# relationship but never called the (free, deterministic) `person_warnings`
-# guardrail. `guardrail_shadow_report.py` keys on it to count this class in its
+# Marks a warnings-unchecked shadow entry in the shared
+# `guardrail_shadow_violations` list: a tree writer returned
+# `unjustified_warnings` and nothing landed after it, so the write was blocked
+# and the agent gave up. The NAME IS HISTORICAL — under #1193 this meant a
+# parentage write with no `person_warnings` call, and every entry stored before
+# the #2840 retarget still carries that retired meaning, which is why
+# `format_warnings_unchecked` prints the stored count under its own caveat.
+# `guardrail_shadow_report.py` keys on it to count this class in its
 # own bucket. Lives here beside its siblings so the report can read it without
 # importing the orchestrator (and the Claude Agent SDK) for one string.
-WARNINGS_UNCHECKED_KIND = "warnings_unchecked"
+# Bumped when the check was retargeted onto the engine gate. The pre-retarget
+# entries already in the committed corpus answer a DIFFERENT question -- a
+# parentage write with no `person_warnings` call -- and keeping one bucket would
+# mix two incompatible meanings with nothing to tell them apart, which is what
+# made the "STORED -- pre-retarget semantics" caveat on the §7 line true only
+# until the next panel run. Readers that want the history still match the old
+# value, which is retained for exactly that.
+WARNINGS_UNCHECKED_KIND_LEGACY = "warnings_unchecked"
+WARNINGS_UNCHECKED_KIND = "unresolved_warning_refusal"
 
 
 def find_citation_nulling_in_conclusions(
@@ -1884,91 +1980,147 @@ def find_unpersisted_conflict_resolutions(
     return violations
 
 
+TREE_WRITER_TOOLS = frozenset(
+    {"tree_edit", "tree_correct", "merge_tree_persons", "materialize_facts"}
+)
+
+# The engine's STALE-JUSTIFICATION branch returns the same
+# `reason: "unjustified_warnings"` as a genuine refusal while meaning the
+# opposite: the agent sent a warningId matching no introduced warning, and the
+# gate is telling it to re-call WITHOUT justifications to get the current ids.
+# That is a round-trip the agent is expected to make, not a refusal it
+# abandoned, so counting it inflates the fire rate the promotion decision reads
+# (`guardrail-enforcement-spec.md`). The `reason` cannot discriminate the two,
+# so the message must — and because that couples this module to a string in
+# `src/tools/tree-edit.ts`, `test_stale_justification_marker_matches_the_engine`
+# reads the engine source and fails if the wording moves.
+STALE_JUSTIFICATION_MARKER = "Stale warningId"
+
+
+def unresolved_warning_refusal(tool_calls: list[dict[str, Any]] | None) -> bool:
+    """True when a tree writer returned `unjustified_warnings` (issue #2840's
+    engine gate) and nothing resolved it — the write was blocked and the agent
+    gave up.
+
+    One caller today: this module's shadow detector. It was written three
+    times — here and in the `tree-edit` / `person-evidence` validators — and
+    carried the same defects in each copy, which is why it was shared; both
+    validators were then deleted (`guardrail-enforcement-spec.md`, "No eval
+    validator asserts this gate"), leaving this the single consumer.
+
+    ORDER IS LOAD-BEARING. Asking whether *any* writer call succeeded credits
+    one that landed BEFORE the refusal, so a run that wrote op A, was refused
+    on op B and abandoned it reads as clean. Take the LAST refusal and require
+    a success after it.
+
+    SUCCESS IS `did_not_land`, never a bare `is_error`. The no-project answer
+    returns `reason: "no_project"` deliberately WITHOUT `is_error` (issue
+    #1695), so an `is_error` test counts a write that never happened as the
+    success that resolves the refusal — and this arm CREDITS a call rather than
+    skipping it, so a wrong credit is a MISSED violation, and a missed
+    violation here reports nothing at all.
+
+    A SUCCESS MUST SAY SO: `"ok": true` present, never merely `"ok": false`
+    absent. `did_not_land` knows two non-landing shapes, `is_error` and
+    `no_project`; the writers return their commoner failure — validate-before-
+    persist errors, and the stale-justification branch — as an ordinary result
+    with neither, so an absence test credits a re-call that failed for an
+    unrelated reason. Absence also credits a call with NO RECORDED RESPONSE AT
+    ALL (`response_text` returns `""`), which is what a run truncated by the
+    wall-clock or turn cap leaves behind — the write never completed, and the
+    refusal reads as resolved. Requiring the positive marker costs nothing:
+    across the 67 runs the replay scans, all 351 writer calls carry an explicit
+    `ok` (316 true, 35 false) and none is response-less, so this manufactures
+    no violation on today's corpus while closing the shape for future runs.
+
+    READ BOTH RESPONSE KEYS (`response_text`). Keying on `response_summary`
+    alone made this predicate constantly False in the unit tier, where
+    `mock_mcp` records `response` — so both validators returned early 100% of
+    the time while their unit tests, which hand-build `response_summary`,
+    passed. A check that cannot fail reads as coverage; CLAUDE.md forbids one.
+
+    A STALE-JUSTIFICATION ANSWER IS NEITHER. The engine returns the same
+    `reason` for it (`STALE_JUSTIFICATION_MARKER`), so it is excluded from the
+    refusals; and it carries `"ok": false`, so it cannot pass as the resolving
+    success either. Both arms have to agree on that or the exclusion just moves
+    the miscount from one side to the other.
+
+    KNOWN IMPRECISION, deliberately not guessed at: any later landed writer
+    call clears the refusal, including one for an unrelated op. Tying the
+    success to the refused op is not generally decidable here — the agent may
+    resolve it with `warningJustifications`, or by amending the write so it
+    introduces no warning at all, and only the first is visible in the args.
+    This errs toward missing a violation rather than manufacturing one, which
+    is the right direction for a shadow detector.
+    """
+    calls = tool_calls or []
+
+    def _is_writer(call: Any) -> bool:
+        return isinstance(call, dict) and bare_tool_name(call.get("tool") or "") in TREE_WRITER_TOOLS
+
+    def _is_refusal(call: dict[str, Any]) -> bool:
+        text = response_text(call)
+        return "unjustified_warnings" in text and STALE_JUSTIFICATION_MARKER not in text
+
+    refusals = [i for i, call in enumerate(calls) if _is_writer(call) and _is_refusal(call)]
+    if not refusals:
+        return False
+    return not any(
+        _is_writer(call)
+        and not _is_refusal(call)
+        and not did_not_land(call)
+        and '"ok": true' in _normalized_response(call)
+        for call in calls[refusals[-1] + 1 :]
+    )
+
+
 def find_relationship_writes_without_warnings_check(
     tool_calls: list[dict[str, Any]] | None,
     tree: dict[str, Any] | None,
     *,
     starting_tree: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Shadow-mode post-hoc detector (issue #1193): the run wrote a NEW
-    ``ParentChild``/``Couple`` relationship but never called ``person_warnings``,
-    the cheapest guardrail in the system (deterministic, no LLM — it reads
-    ``tree.gedcomx.json`` and evaluates ~75 predicates, so a call costs one tool
-    round-trip). Two runs of the same fixture, same skills, diverged only on
-    whether the parentage write was delegated to ``proof-conclusion`` (which
-    carries the "run check-warnings after tree writes" step) or inlined by the
-    orchestrator (which does not) — and nothing recorded that the guardrail was
-    never consulted. This makes that omission visible.
+    """Shadow-mode post-hoc detector (issue #1193, retargeted by issue #2840).
 
-    GATED ON A NEW RELATIONSHIP THIS RUN. Fires only when a ``ParentChild`` or
-    ``Couple`` relationship in the final tree is absent from the starting tree
-    (diffed on the endpoint tuple, not ``id`` — see ``_relationship_key``). 99 of
-    104 fixtures seed such relationships, so an ungated check would fire on seed
-    state alone; the diff is what limits it to this run's own product. When no
-    starting tree is given, treat everything as new (best-effort), matching
-    ``find_effects_without_invocation``.
+    Since PR 1 of #2840, the four tree writer tools (``tree_edit``,
+    ``tree_correct``, ``merge_tree_persons``, ``materialize_facts``) refuse a
+    write that introduces an unjustified genealogical warning at the engine
+    level. The prose "run check-warnings after writes" step is redundant and
+    has been removed.
 
-    KEYED ON THE TOOL, not the ``check-warnings`` agent. The #1193 signal is
-    literally "the guardrail tool never ran", so it must catch a direct/ToolSearch
-    ``person_warnings`` call and a ``check-warnings`` agent that launches but fails
-    before reaching the tool alike. Sub-agent / inside-skill MCP calls surface in
-    the flat e2e ``tool_calls`` stream, so a tool-name scan sees ``person_warnings``
-    even when it fired inside ``check-warnings``. A call counts as consulting the
-    guardrail only if it succeeded (``is_error`` falsy) — a failed call left the
-    tree unchecked.
+    This detector is now retargeted: instead of checking whether
+    ``person_warnings`` was ever called (the old prose-compliance signal), it
+    checks whether any writer call returned ``unjustified_warnings`` and was
+    never followed by a successful re-call — i.e., the engine gate blocked a
+    write and the agent gave up.
 
-    SHADOW MODE ONLY: returns violation records shaped to share
-    ``guardrail_shadow_violations`` with the other shadow sources (an ``int``
-    ``index`` and string ``tool`` so ``guardrail_shadow_report``'s formatters
-    never hit a ``None`` format spec; ``kind == WARNINGS_UNCHECKED_KIND`` so that
-    report counts this class in its own bucket). Never fails a run. Promotion to a
-    hard gate — or a mandatory pre/post-write call in the ``/research``
-    orchestrator so an inlined write is still gated — is a deliberate follow-up
-    (issue #1193, question b), gated on measuring this fire rate across the corpus.
+    Still SHADOW MODE ONLY: returns violation records shaped for
+    ``guardrail_shadow_violations``.
     """
-    tree = tree or {}
-    relationships = tree.get("relationships") if isinstance(tree.get("relationships"), list) else []
-
-    starting_relationship_keys = {
-        _relationship_key(r)
-        for r in ((starting_tree or {}).get("relationships") or [])
-        if isinstance(r, dict) and r.get("type") in ("ParentChild", "Couple")
-    }
-    new_relationship = any(
-        isinstance(r, dict)
-        and r.get("type") in ("ParentChild", "Couple")
-        and (starting_tree is None or _relationship_key(r) not in starting_relationship_keys)
-        for r in relationships
-    )
-    if not new_relationship:
-        return []  # the gate: nothing was written that a warnings check should have preceded
-
-    # NOTE the polarity: unlike every other `is_error` gate in this module, this
-    # one CREDITS a call rather than skipping it — a successful person_warnings
-    # means the tree was checked. So the no-project answer has to be excluded
-    # from `consulted`, not added to a skip. Get it backwards and a warnings
-    # check that never ran is credited as done, which is a MISSED violation and
-    # therefore silent (issue #1695).
-    consulted = any(
-        isinstance(call, dict)
-        and bare_tool_name(call.get("tool") or "") == "person_warnings"
-        and not did_not_land(call)
-        for call in (tool_calls or [])
-    )
-    if consulted:
-        return []
+    # NO TREE GATE. The pre-#2840 predicate asked "was a relationship written
+    # without a person_warnings call", so gating on a new ParentChild/Couple
+    # edge was the question. The retargeted one asks "was a writer refused and
+    # the agent gave up" — and a refused write never lands, so the very runs
+    # this hunts leave NOTHING in the final tree to gate on. Keeping the gate
+    # made the detector fire only when some unrelated edge happened to land,
+    # and never at all for a refusal on a fact write (`tree_correct` on a date,
+    # `materialize_facts`), which creates no edge by construction. `tree` and
+    # `starting_tree` are kept in the signature for the two call sites and the
+    # record shape; they no longer decide anything.
+    if not unresolved_warning_refusal(tool_calls):
+        return []  # no refusal, or one the run went on to resolve
 
     return [
         {
-            "index": -1,  # post-hoc final-state read; there is no tool-call index
+            "index": -1,
             "tool": "tree.gedcomx.json",
-            "required_skill": "check-warnings",
+            "required_skill": None,
             "question_id": None,
             "kind": WARNINGS_UNCHECKED_KIND,
             "detail": (
-                "a new ParentChild/Couple relationship was written this run but "
-                "person_warnings (the free deterministic guardrail) was never "
-                "successfully called"
+                "a tree writer returned unjustified_warnings but the agent "
+                "never re-called with warningJustifications — the write was "
+                "blocked and the warning gate was not satisfied"
             ),
         }
     ]

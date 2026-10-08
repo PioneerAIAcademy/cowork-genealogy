@@ -374,6 +374,10 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     for handle, handle_calls in by_handle.items():
         for i, c in enumerate(handle_calls):
             args = c["args"]
+            # Name-field searches use a different nil-recovery path (switch to
+            # keywords), not filter removal; their retry has a different handle.
+            if "name" in args:
+                continue
             present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
             if not present_filters:
                 continue

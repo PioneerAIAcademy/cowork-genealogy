@@ -167,7 +167,7 @@ are worth reading carefully rather than routing around:
 
 Proceed exactly as you would for a real question — `/research`, or the relevant
 sub-skills. If the forgotten slice isn't already covered by an open research
-question, create or reopen one (via `question-selection`) that targets exactly
+question, create or reopen one (via the `question-selection` agent) that targets exactly
 what was forgotten, and let it drive a plan — do not fall back to ad-hoc
 `record_search` calls with no `plan_item_id`. A forgotten relationship is a new
 question in its own right.

@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_tri",
+    "skill": "search-external-sites",
+    "name": "Triage a returned capture and close its open hand-off",
+    "type": "positive",
+    "description": "The triage invocation. The MyHeritage hand-off for pli_001 is open in awaitingUser; the researcher brings the results back. The agent must find the row through project_context, triage per result, log the closing entry with the SAME url_generated (capture_received true), and end the plan item completed. Gated by test_triage_closes_its_open_handoff.",
+    "tags": [
+      "myheritage",
+      "external-site",
+      "census",
+      "triage",
+      "triage-closes-handoff",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher opened the MyHeritage link for plan item pli_001 and brought back the results page:\n\n1855 Massachusetts State Census — 4 results for \"Josiah Barnes\"\n\n1. Josiah Barnes — age 37, born abt 1818, Massachusetts. Concord, Middlesex, Massachusetts. Household: Mary Barnes 34; Josiah Barnes Jr. 11; Ellen Barnes 8; Charles Barnes 5.\n2. Josiah H. Barnes — age 22, born abt 1833, Massachusetts. Lowell, Middlesex, Massachusetts. Household: Sarah Barnes 21.\n3. Josiah Barns — age 39, born abt 1816, Maine. New Bedford, Bristol, Massachusetts. Household: Lucy Barns 36; Henry Barns 14.\n4. J. Barnes — age 36, born abt 1819, Massachusetts. Springfield, Hampden, Massachusetts. Household not shown.\n\ncapture: the results text above\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "ma-state-census-handoff-open"
+  },
+  "mcp_fixtures": [
+    "place-search-massachusetts",
+    "external-links-search-massachusetts",
+    "collections-search-massachusetts-census"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is a triage turn: the capture is in the delegation. Do not penalize the absence of a new URL or of capture instructions.",
+    "Triage must be per-result with a stated reason, against the subject Josiah Barnes (b. c. 1818, Massachusetts; 1850 residence Middlesex County). Result 1 is the strong match (age 37 fits b. 1818, Middlesex County agrees with the 1850 residence, household is plausible). Results 2 and 3 are not matches (b. abt 1833 is the wrong decade; b. Maine is the wrong birth state). Result 4 is a possible (initial only, age and birth state fit, different county). Do not require these exact labels, but a bulk accept or bulk reject with no per-record reasoning is a fail.",
+    "The closing log entry must be an external_site entry with capture_received TRUE and the same url_generated as the open log_001 hand-off — that is what closes it. outcome comes from the triage (positive: results were found), never partial.",
+    "pli_001 must end completed: the capture was triaged."
+  ]
+}

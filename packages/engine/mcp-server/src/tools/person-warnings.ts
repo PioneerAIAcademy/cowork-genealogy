@@ -323,15 +323,36 @@ export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
  * Java MobWarnings.earliestChildBirthToBirth (warnings.java:1723).
  *
  * Returns true when `earliestChildBirthYear − earliestSelfBirthYear <= cutoff`
- * for the anchor's birth-like facts and any child's birth-like facts. Per the
- * 2026-06-02 meeting, the spec's "conservative range" principle is overridden
- * by this earliest-to-earliest bound. Used at cutoff = 14 (male anchor) under
- * tag `earliestChildBirthToBirthMale14`, and at cutoff = 12 (any gender) under
- * tag `earliestChildBirthToBirth12` (gender-neutral — implemented at
- * `earliestChildBirthToBirth` and registered in the check list below).
+ * for the anchor's birth-like facts and any child's birth-like facts. Used at
+ * cutoff = 14 (male anchor) under tag `earliestChildBirthToBirthMale14`, and at
+ * cutoff = 12 (any gender) under tag `earliestChildBirthToBirth12`
+ * (gender-neutral — implemented at `earliestChildBirthToBirth` and registered
+ * in the check list below).
+ *
+ * The child side reads each date's LATEST bound, so the check fires on a
+ * certainty rather than a possibility: a child dated `Bef 1880` (1870..1880)
+ * under a parent born 1860 could have been born at the parent's age 10 or 20,
+ * and only the second reading refuses to call that a warning. The self side
+ * stays on the earliest bound, which is the same direction — both choices
+ * maximise the computed age.
+ *
+ * THIS REVERSES A RECORDED CALL. The 2026-06-02 meeting overrode the spec's
+ * "conservative range" principle here in favour of an earliest-to-earliest
+ * bound. That call was made when `person_warnings` only REPORTED, where
+ * over-firing costs a glance; #2840 made the same predicate refuse writes,
+ * where over-firing blocks legitimate work, and `earliestChildBirthToBirth12`
+ * is the tag standing between the gate and a child born before their parent.
+ * No test pinned the earliest-to-earliest reading — all five used exact years,
+ * where the bounds coincide. Flagged for the lead on the PR rather than
+ * decided silently.
  */
 export function earliestChildBirthToBirth(mob: Mob, cutoff: number): boolean {
-  const earliestChildBirth = earliestYearOfChildFacts(mob, BIRTHLIKE_FACT_TYPES);
+  const earliestChildBirth = earliestYearOfChildFacts(
+    mob,
+    BIRTHLIKE_FACT_TYPES,
+    null,
+    "latest",
+  );
   const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
   if (earliestChildBirth === null || earliestBirth === null) return false;
   return earliestChildBirth - earliestBirth <= cutoff;
@@ -480,21 +501,73 @@ export function tooManyChildren(mob: Mob, cutoff: number): boolean {
   return mob.getChildren().length >= cutoff;
 }
 
+/** `parent_subtype` values that are NOT a claim of biological parentage.
+ *  The recommended enum is `Biological | Adoptive | Step | Foster | Guardian`
+ *  (`simplified-gedcomx-spec.md`); an ABSENT subtype is biological, which is
+ *  FamilySearch's own data-model default, so only these four are excluded.
+ *
+ *  Held lowercase and matched through `isNonBiologicalSubtype`, because
+ *  `parent_subtype_recommended` is an OPEN enum — nothing rejects a tree
+ *  carrying `adoptive` or the upstream GedcomX `AdoptiveParent`, whose
+ *  `Parent` suffix the simplified format drops and restores on round-trip.
+ *  Matched as an exact string, all three of those counted as biological. */
+const NON_BIOLOGICAL_PARENT_SUBTYPES: ReadonlySet<string> = new Set([
+  "adoptive",
+  "step",
+  "foster",
+  "guardian",
+]);
+
+/** True when a `parent_subtype` denies biological parentage, tolerating case
+ *  and the upstream `…Parent` suffix. An unrecognized value counts as
+ *  biological: it may mean anything, and assuming otherwise would silently
+ *  drop a real second-father from the count. */
+function isNonBiologicalSubtype(sub: unknown): boolean {
+  if (typeof sub !== "string") return false;
+  const normalized = sub.trim().replace(/parent$/i, "").toLowerCase();
+  return NON_BIOLOGICAL_PARENT_SUBTYPES.has(normalized);
+}
+
+/** Ids of the anchor's parents by a relationship that claims biological
+ *  parentage — every ParentChild edge except the four subtypes above. */
+function biologicalParentIds(mob: Mob): Set<string> {
+  const out = new Set<string>();
+  for (const r of mob.tree.relationships ?? []) {
+    if (r.type !== "ParentChild" || r.child !== mob.anchorId) continue;
+    if (isNonBiologicalSubtype((r as { subtype?: string }).subtype)) continue;
+    if (r.parent) out.add(r.parent);
+  }
+  return out;
+}
+
 /**
  * Java MobWarnings.tooManyFathers (warnings.java:2178). Returns true when
  * the anchor has at least 2 male parents — each person has at most one
  * biological father, so 2+ is a structural problem. Tag: `tooManyFathers2`.
+ *
+ * Counts only parents whose edge CLAIMS biological parentage. An adoptive or
+ * step father beside a biological one is the ordinary way an adoption is
+ * recorded, not a structural problem, and the warning's own message says
+ * "biological father". #2840 made this tag refuse tree writes rather than
+ * merely report, so counting an Adoptive edge here blocks the write that
+ * records the adoption. No instance exists in the committed corpus — of its 2266
+ * ParentChild edges, 839 are `Biological` and 1427 carry no subtype, with none
+ * of the other four — so this changes no measured refusal; it is the shape,
+ * not a rate.
  */
 export function tooManyFathers(mob: Mob): boolean {
-  return mob.getFathers().length >= 2;
+  const biological = biologicalParentIds(mob);
+  return mob.getFathers().filter((p) => p.id && biological.has(p.id)).length >= 2;
 }
 
 /**
  * Java MobWarnings.tooManyMothers (warnings.java:2182). Mirror of
- * tooManyFathers for the female-parent side. Tag: `tooManyMothers2`.
+ * tooManyFathers for the female-parent side, including the subtype rule.
+ * Tag: `tooManyMothers2`.
  */
 export function tooManyMothers(mob: Mob): boolean {
-  return mob.getMothers().length >= 2;
+  const biological = biologicalParentIds(mob);
+  return mob.getMothers().filter((p) => p.id && biological.has(p.id)).length >= 2;
 }
 
 /**
@@ -1207,14 +1280,23 @@ export function unionFactIds(...lists: WarningFact[][]): WarningFact[] {
 }
 
 /** Child with the earliest fact year in `types` (the one an earliest-* check keyed on). */
+/** Child with the earliest fact year in `types`.
+ *
+ *  `bound` selects which end of each fact's date range is read before taking
+ *  the minimum. A check that fires on a CERTAINTY must pass `"latest"`, or it
+ *  names the child with the earliest *possible* date rather than the one that
+ *  actually tripped it — which is how an age-14 message came to read "at most
+ *  -10". Defaults to `"earliest"` so the checks that genuinely want the
+ *  earliest-possible child are unchanged. */
 function childWithEarliestYear(
   mob: Mob,
   types: ReadonlySet<string>,
+  bound: "earliest" | "latest" = "earliest",
 ): SimplifiedPerson | undefined {
   let best: SimplifiedPerson | undefined;
   let bestYear: number | null = null;
   for (const c of mob.getChildren()) {
-    const y = earliestYearOfPersonFacts(c, types);
+    const y = earliestYearOfPersonFacts(c, types, null, bound);
     if (y === null) continue;
     if (bestYear === null || y < bestYear) {
       bestYear = y;
@@ -1336,15 +1418,20 @@ function checkEarliestChildBirthToBirthMale14(
   if (mob.getGender() !== "Male") return null;
   if (!earliestChildBirthToBirth(mob, 14)) return null;
 
+  // The LATEST bound on both, matching the predicate that fired: reading the
+  // child at its earliest possible date makes the age in this message the
+  // smallest one consistent with the data rather than the one that tripped it.
   const earliestChildBirth = earliestYearOfChildFacts(
     mob,
     BIRTHLIKE_FACT_TYPES,
+    null,
+    "latest",
   );
   const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
   // Non-null here because the predicate would have returned false otherwise.
   const ageAtEarliestChildBirth = earliestChildBirth! - earliestBirth!;
 
-  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES, "latest");
   const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
@@ -1372,15 +1459,20 @@ function checkEarliestChildBirthToBirthFemale14(
   if (mob.getGender() !== "Female") return null;
   if (!earliestChildBirthToBirth(mob, 14)) return null;
 
+  // The LATEST bound on both, matching the predicate that fired: reading the
+  // child at its earliest possible date makes the age in this message the
+  // smallest one consistent with the data rather than the one that tripped it.
   const earliestChildBirth = earliestYearOfChildFacts(
     mob,
     BIRTHLIKE_FACT_TYPES,
+    null,
+    "latest",
   );
   const earliestBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
   // Non-null here because the predicate would have returned false otherwise.
   const ageAtEarliestChildBirth = earliestChildBirth! - earliestBirth!;
 
-  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
+  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES, "latest");
   const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
@@ -1440,23 +1532,54 @@ function checkHasBurialAfterDeath31(mob: Mob): PersonWarning | null {
   };
 }
 
-function checkEarliestChildBirthToBirth12(mob: Mob): PersonWarning | null {
-  if (!earliestChildBirthToBirth(mob, 12)) return null;
-  const child = childWithEarliestYear(mob, BIRTHLIKE_FACT_TYPES);
-  const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
-  return {
-    scoreType: COHERENCE,
-    issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
-    severity: "implausible",
-    personId: mob.anchorId,
-    personName: getPersonName(mob.getPerson()),
-    facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
-    ...(childC.relatedPersonId
-      ? { relatedPersonId: childC.relatedPersonId }
-      : {}),
-    message:
-      "This person appears to have had a child at age 12 or younger, which is normally before childbearing years.",
-  };
+/**
+ * Every child CERTAINLY born by the anchor's age `cutoff` — each child read at
+ * the minimum of its birth-like facts' LATEST years, the anchor at its
+ * earliest. Same two bounds `earliestChildBirthToBirth` uses, applied per
+ * child instead of collapsed to the earliest one.
+ *
+ * Exists because a single warning per parent cannot say WHICH child is
+ * impossible, and the write gate subtracts on a key that includes the child.
+ * With one warning keyed on whichever child happened to sort first, adding a
+ * second impossible child changed the key and read as introduced, while adding
+ * one whose key the parent already carried read as pre-existing and LANDED.
+ * Both were measured; the second is a real shape in the corpus
+ * (`elisabetha-sugecz-parents`: a mother born 1810 with children born 1816,
+ * 1820 and 1821).
+ */
+function childrenBornByAnchorAge(mob: Mob, cutoff: number): SimplifiedPerson[] {
+  const selfBirth = earliestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (selfBirth === null) return [];
+  return mob.getChildren().filter((child) => {
+    const y = earliestYearOfPersonFacts(
+      child,
+      BIRTHLIKE_FACT_TYPES,
+      null,
+      "latest",
+    );
+    return y !== null && y - selfBirth <= cutoff;
+  });
+}
+
+/** One warning per impossible child, not one per parent — see
+ *  `childrenBornByAnchorAge`. */
+function checkEarliestChildBirthToBirth12(mob: Mob): PersonWarning[] {
+  return childrenBornByAnchorAge(mob, 12).map((child) => {
+    const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
+    return {
+      scoreType: COHERENCE,
+      issueType: EARLIEST_CHILD_BIRTH_TO_BIRTH_12,
+      severity: "implausible" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: unionFactIds(selfFactIds(mob, BIRTHLIKE_FACT_TYPES), childC.facts),
+      ...(childC.relatedPersonId
+        ? { relatedPersonId: childC.relatedPersonId }
+        : {}),
+      message:
+        "This person appears to have had a child at age 12 or younger, which is normally before childbearing years.",
+    };
+  });
 }
 
 function checkDeathRangeGreaterThan2(mob: Mob): PersonWarning | null {
@@ -2082,8 +2205,8 @@ function checkRelativesEarliestChildBirthToBirth12(
 ): PersonWarning[] {
   const out: PersonWarning[] = [];
   for (const rel of relativeMobs) {
-    if (!earliestChildBirthToBirth(rel, 12)) continue;
-    const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+    // One per impossible child of this relative, matching the self form.
+    for (const child of childrenBornByAnchorAge(rel, 12)) {
     const childC = relativeContribution(child, BIRTHLIKE_FACT_TYPES);
     out.push({
       scoreType: COHERENCE,
@@ -2101,6 +2224,7 @@ function checkRelativesEarliestChildBirthToBirth12(
       message:
         "This person had a child before age 12, which is biologically implausible.",
     });
+    }
   }
   return out;
 }
@@ -2136,7 +2260,7 @@ function checkMaleRelativesEarliestChildBirthToBirth14(
   const males = relativeMobs.filter((r) => r.getGender() === "Male");
   const rel = males.find((r) => earliestChildBirthToBirth(r, 14));
   if (!rel) return null;
-  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES, "latest");
   const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
@@ -2164,7 +2288,7 @@ function checkFemaleRelativesEarliestChildBirthToBirth14(
   const females = relativeMobs.filter((r) => r.getGender() === "Female");
   const rel = females.find((r) => earliestChildBirthToBirth(r, 14));
   if (!rel) return null;
-  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES);
+  const child = childWithEarliestYear(rel, BIRTHLIKE_FACT_TYPES, "latest");
   const c = relativeMobContribution(rel, BIRTHLIKE_FACT_TYPES);
   return {
     scoreType: COHERENCE,
@@ -3914,8 +4038,8 @@ export function calculateWarnings(
   const stillbirthConflict = checkHasStillbirthConflict(mergedMob);
   if (stillbirthConflict) warnings.push(stillbirthConflict);
 
-  const youngParent12 = checkEarliestChildBirthToBirth12(mergedMob);
-  if (youngParent12) warnings.push(youngParent12);
+  // One per impossible child, so this is an array rather than a nullable.
+  warnings.push(...checkEarliestChildBirthToBirth12(mergedMob));
 
   const deathRange = checkDeathRangeGreaterThan2(mergedMob);
   if (deathRange) warnings.push(deathRange);
