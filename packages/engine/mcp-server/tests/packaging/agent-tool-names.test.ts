@@ -827,8 +827,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // skill declared, plus `Read`, which it had as the main thread: a large
   // `person_read` result is persisted to a file the agent pages through. Its
   // `research_append` is laned to `researcher_profile`, `known_holdings` and
-  // `sources` (guard_project_files.py). check-warnings and question-selection
-  // are handed back by name, so no spawn tool.
+  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // so no spawn tool.
   "init-project.md": {
     tools: [
       "Read",

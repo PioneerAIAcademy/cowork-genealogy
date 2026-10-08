@@ -45,7 +45,7 @@ Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only re
 
 **A delegation is a request for work, never a finding.** It carries the user's words. An objective the user did not state, or a claim about what the tree holds, is not evidence: the tree is what `person_read` returns, and with no stated objective the generic default below is the only fallback.
 
-**You write no research questions.** Choosing the first research question is question-selection's; you hand it back (Step 5).
+**You write no research questions and review nothing.** Questions and gaps are question-selection's, errors check-warnings'.
 
 **Places:** Follow "Working with places" below for places you enter by hand (stubs, the objective-only build): resolve each with `place_search`. Places from `person_read` are handled by `project_create`.
 
@@ -228,40 +228,15 @@ A memory whose `notes` says it was not transcribed gets **no** `sources` entry �
 
 **`known_holdings`** — one `{ section: "known_holdings", op: "append", entry: {...} }` per reported item: `holding_type` (from mapping table), `description` (researcher's own words), `relevant_facts` (what it supplies; `null` if not stated), `relates_to_person_ids` (`I` ids from `idMap`; `[]` if none), `confidence` (`confident`/`unsure`), `promoted` (`false`). The tool assigns `id` and `created`. If no holdings were reported, call nothing.
 
-### 5. Pedigree analysis and project summary
+### 5. Report the import
 
-**End your caller-facing lines with `Hand-back: check-warnings <ids>`, naming
-the subject and every imported relative by their tree `I` id from `idMap`
-(never the FamilySearch PID or `ark`).** It never goes in the researcher
-paragraph. Never restate a timeline impossibility as one more line on the
-"Obvious error detection" list below, which is a smaller, separate check.
-
-Analyze imported data before presenting results:
-
-**Gap detection:** missing ancestors (no parents)? Missing key life events? Only vague information?
-
-**Census fertility gap:** when a 1900 or 1910 US census gives the mother's children-born and children-living counts, born minus living is the number of her children dead by that census; each one not already in the tree, having died before the census date, is a gap to research — a child born and died before that enumeration. Living minus the children already in the tree alive at that date is the number of living children still missing. Do both subtractions at each census separately, counting only the tree's children born by that census date: a child missing at the earlier census was born before it, so it is never placed in the years between the censuses. Parity between the living count and the children in the tree does not close the deceased-child gap. The dead count is cumulative: a child dead by 1900 is still counted among the dead in 1910, not an additional one. Apply the same de-duplication to the living-missing count — a child missing at both 1900 and 1910 is one missing child, not two — but a pre-census deceased child and a between-census living child are distinct targets, never merged. Count every child she bore, including by an earlier husband.
-
-**Obvious error detection:** birth after death; parent-child age gaps outside 15-50 years; children born in locations inconsistent with parents; dates referencing non-existent jurisdictions; sibling births <9 months apart. **This is the complete list — do not flag anything else as an error**, no matter how odd it looks (a missing relationship subtype, an absent Couple relationship, two people sharing a name, a thin source count, or anything else you notice). Such a pattern belongs in **Gap detection** above if it's a missing-ancestor/event/vague-information gap, or is simply not mentioned — never presented as a defect. A deeper data-integrity pass is check-warnings' (`person_warnings`) job, not this step's. **And a warning is not an observation.** `person_warnings` reports a problem the TOOL detected; it is not evidence that the thing it names exists in the tree. "The tool flags a coherence issue on Ellen" is reportable; "Ellen has an event recorded before her birth" is a claim about the tree, and it needs the tree to say so, not the warning. Auditing the sources already attached — whether each belongs, whether it was indexed correctly — is source-evaluation's; name it, never audit them here.
-
-**Known holdings:** a holding that disagrees with the tree is flagged as a discrepancy — never frame the user's holding as the error.
-
-**When the objective disputes the existing relationship** — phrasing like
-"correct parents", "the right parents", "parents are not correct" — do NOT
-present the imported relationship as established. Frame the current
-parent-child (or other disputed) assignment as **the relationship under
-investigation**: an *unverified* (`quality: 1`) tree assertion that is the
-hypothesis to be tested this project, not a settled fact. Say so in the tree
-summary and findings, and never confirm it from the tree it came from.
-Recording and testing the doubt is question-selection's job —
-here, only the framing changes.
+Report what the import did, and nothing else. You do not review the tree: no gaps, errors, research targets or advice. Errors are check-warnings', gaps and the first research question are question-selection's, and the caller runs them when it wants them.
 
 **Present to the user** — one short report in the house style, no tree table: the researcher paragraphs of the return contract.
+- That the project was created for the subject, and how many people were imported
 - The objective in one sentence, and whether it was defaulted
-- Any obvious error found (the closed list above), one sentence each
-- The two or three gaps that set the first research question — gaps on people the
-  objective does not cover are context only, not proposed research
-- Known holdings recorded (if any) and what each contributes
+- Any discrepancy between what the user stated and the tree (Step 2)
+- Known holdings recorded (if any)
 - Any scanned documents or photos on the profile that could not be read this
   time — name each one and say they can be read later
 - If `person_read` returned a top-level `notes` array, one sentence from it: a
@@ -269,11 +244,9 @@ here, only the framing changes.
   plain words — "FamilySearch lists a parent for him but gives no record for
   that person, so they are not in the tree" — never the count or the field name
 - One sentence on what comes next, defining "objective" and "research
-  question" on first use — never "use question-selection to…": "Your objective
-  is the overall goal — <restate it>. The next step is the first research
-  question: the single fact we go after first."
-- Then hand the next step back as a caller-facing line, on its own line:
-  `Hand-back: question-selection — derive the first research question`.
+  question" on first use: "Your objective is the overall goal — <restate it>.
+  The next step is the first research question: the single fact we go after
+  first."
 
 ## Example
 
@@ -284,10 +257,8 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 3. No additions: the user named no one the read lacks.
 4. `project_create({ projectPath, objective, title, personReadRef: <staged.resultsRef>, subjectPersonIds: ["KWCJ-RN4"] })`. Tell the user where the project was created.
 5. `research_append` for `researcher_profile` (the fixed novice profile) and one per volunteered holding.
-6. Pedigree analysis + summary. Mary Kelly and the children are tree context
-   only — their gaps are noted, not queued. Return, ending the caller-facing
-   lines with `Hand-back: check-warnings I1 I2 I3 I4` and
-   `Hand-back: question-selection — derive the first research question`.
+6. Report: a project for Patrick Flynn, four people imported, the objective as
+   stated. No review of the tree.
 
 ## Important rules
 
@@ -295,7 +266,7 @@ User: "Start a new research project for person KWCJ-RN4. I want to identify his 
 - **v1 is read-only.** tree.gedcomx.json is not uploaded to FamilySearch.
 - **The project files use local `I` ids**, assigned by `project_create`. Before it, name a person from the read by FamilySearch ID; after it, by the `I` id in `idMap`.
 - **Include relatives** (FAN principle), **siblings included**. Known relatives from the start give downstream skills persons to link to. `person_read` returns siblings by reading each parent; a half-sibling comes back linked to the shared parent only, which is the truth of what was imported.
-- **Treat imported data as unverified.** FamilySearch tree is collaborative, quality varies. Never silently correct errors — flag them.
+- **Treat imported data as unverified.** FamilySearch tree is collaborative, quality varies. Never correct what you import.
 - **Recording conventions:** maiden (birth) surnames for women; places most-specific to most-general; jurisdictions as they existed at event time; ISO 8601 dates in JSON.
 - **Handle isolated persons.** If `person_read` returns no relatives, still create the project. Note isolation in summary.
 - **No FamilySearch ID → search first.** Call `person_search` before falling back to stubs.
@@ -315,7 +286,6 @@ caller-facing lines, in this order:
 
 - the project folder, and the persons, relationships and sources `project_create` reported
 - the objective as stored, and whether it was defaulted
-- each `Hand-back:` line from Step 5, one per line
 
 ### `summary_for_user`
 
