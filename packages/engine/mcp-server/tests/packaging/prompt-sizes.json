@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 57357,
+    "CLAUDE.md": 57344,
     "packages/engine/plugin/agents/check-warnings.md": 47535,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11818,
@@ -36,7 +36,7 @@
     "packages/engine/plugin/skills/record-extraction/SKILL.md": 15878,
     "packages/engine/plugin/skills/research-exhaustiveness/SKILL.md": 5064,
     "packages/engine/plugin/skills/research-plan/SKILL.md": 33383,
-    "packages/engine/plugin/skills/research/SKILL.md": 35925,
+    "packages/engine/plugin/skills/research/SKILL.md": 36042,
     "packages/engine/plugin/skills/search-records/SKILL.md": 64608,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833
   },
@@ -64,7 +64,7 @@
     "tool:person_read": 1380,
     "tool:person_record_matches": 1115,
     "tool:person_search": 7949,
-    "tool:person_warnings": 640,
+    "tool:person_warnings": 704,
     "tool:place_distance": 630,
     "tool:place_population": 906,
     "tool:place_search": 1027,
