@@ -1027,3 +1027,62 @@ describe("project_create — a mis-copied personReadRef (resolveStagedRef)", () 
     expect(result.errors.join(" ")).toMatch(/is not a staged read/);
   });
 });
+
+describe("project_create — hand-entered places are standardized by the tool", () => {
+  let dir: string;
+  const resolver = vi.mocked(resolveStandardPlace);
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-create-places-"));
+    resolver.mockImplementation(async (place: string) =>
+      /^boston/i.test(place) ? "Boston, Suffolk, Massachusetts, United States" : null,
+    );
+  });
+  afterEach(async () => {
+    resolver.mockImplementation(async () => null);
+    await rm(dir, { recursive: true, force: true });
+  });
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const person = (facts: unknown[]) => ({
+    id: "I1", gender: "Male", names: [{ id: "N1", given: "Michael", surname: "Brennan" }], facts,
+  });
+
+  it("replaces a standard_place the caller typed with the resolver's, and says so", async () => {
+    const tree = {
+      persons: [person([{ id: "F1", type: "Birth", date: "~1850", place: "Boston, Massachusetts", standard_place: "Boston, Massachusetts, United States" }])],
+      relationships: [], sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.validation.warnings.join(" ")).toContain(
+      "standard_place 'Boston, Massachusetts, United States' for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
+    );
+  });
+
+  it("fills a hand-entered place the caller left unstandardized, and reports it", async () => {
+    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Boston" }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
+  });
+
+  it("drops a typed standard_place the resolver cannot confirm, and says so", async () => {
+    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).toContain("standard_place 'Ballyowen, Ireland' for 'Ballyowen' was not kept");
+  });
+
+  it("standardizes a relationship's own fact too", async () => {
+    const tree = {
+      persons: [person([]), { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Kelly" }] }],
+      relationships: [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F2", type: "Marriage", place: "Boston, Massachusetts" }] }],
+      sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).relationships[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+  });
+});

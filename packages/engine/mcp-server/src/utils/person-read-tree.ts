@@ -333,13 +333,14 @@ export interface FilledPlace {
  * converter's soft cap on a large pedigree): one more try, through the same
  * resolver. A no-op, with no network traffic, when every fact already has one.
  *
- * Only the READ's facts: a stub's place is the caller's, resolved with
- * place_search. And on copies: `standardizePlaces` mutates in place and keeps
+ * On the read path, only the READ's facts; on the hand-built path
+ * `project_create` passes every fact, having cleared each `standard_place`
+ * first. And on copies: `standardizePlaces` mutates in place and keeps
  * running past the budget, so a late answer must not land on a tree that has
  * already been validated and written (it would reach one of the two files and
  * not the other).
  */
-async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
+export async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
   const copies = facts.map((f) => ({ ...f }));
   await Promise.race([
     standardizePlaces(copies),

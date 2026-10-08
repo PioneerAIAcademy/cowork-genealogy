@@ -48,11 +48,13 @@ import {
   formatIssues,
 } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
+import { collectFacts } from "../utils/gedcomx-convert.js";
 import { checkStagedResults, resolveStagedRef, stagedRefCorrectionWarning } from "../utils/results-staging.js";
 import {
   TreeBuildError,
   buildFromStagedRead,
   normalizeHandBuilt,
+  retryUnresolvedPlaces,
   type IdMap,
   type FilledPlace,
 } from "../utils/person-read-tree.js";
@@ -234,6 +236,34 @@ export async function projectCreate(
         fillPlaces = built.fillPlaces;
       } else {
         ({ tree, idMap } = normalizeHandBuilt(given, now, input.subjectPersonIds));
+        // A hand-entered place is standardized here, by the resolver person_read
+        // and tree_edit use, never taken from the caller: a value no place
+        // authority returned is a claim FamilySearch did not make, and a model
+        // told to call place_search first skipped it often enough to invent one.
+        const handFacts = collectFacts(tree as never).filter(
+          (f) => f && typeof f === "object" && typeof f.place === "string" && f.place.trim() !== "",
+        );
+        const supplied = new Map<object, string>();
+        for (const f of handFacts) {
+          if (typeof f.standard_place === "string") supplied.set(f, f.standard_place);
+          delete f.standard_place;
+        }
+        fillPlaces = async () => {
+          const filled = await retryUnresolvedPlaces(handFacts);
+          for (const [f, was] of supplied) {
+            const resolved = (f as { standard_place?: string }).standard_place;
+            if (resolved !== was) {
+              refWarnings.push(
+                resolved === undefined
+                  ? `standard_place '${was}' for '${(f as { place: string }).place}' was not kept: ` +
+                      "project_create standardizes hand-entered places itself, and this one did not resolve"
+                  : `standard_place '${was}' for '${(f as { place: string }).place}' was replaced by '${resolved}': ` +
+                      "project_create standardizes hand-entered places itself",
+              );
+            }
+          }
+          return filled;
+        };
       }
     } catch (e) {
       if (e instanceof TreeBuildError) throw new ProjectCreateError(e.message);

@@ -27,6 +27,7 @@ import {
   deriveContextName,
   sharedJurisdiction,
   __clearPlaceResolverCachesForTests,
+  __usePlaceTableForTests,
 } from "../../src/utils/place-resolver.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
@@ -902,5 +903,29 @@ describe("sharedJurisdiction", () => {
   it("returns nothing when the siblings share no tail or there are none", () => {
     expect(sharedJurisdiction([["Logan", "Cache", "Utah"], ["Cork", "Ireland"]])).toEqual([]);
     expect(sharedJurisdiction([])).toEqual([]);
+  });
+});
+
+describe("__usePlaceTableForTests (the eval harness's offline resolver)", () => {
+  afterEach(() => {
+    __usePlaceTableForTests(null);
+    __clearPlaceResolverCachesForTests();
+  });
+
+  it("answers from the table, normalized, and never searches", async () => {
+    mockSearchPlace.mockClear();
+    __usePlaceTableForTests({ "Boston, Massachusetts": "Boston, Suffolk, Massachusetts, United States" });
+    expect(await resolveStandardPlace("  boston,   MASSACHUSETTS ")).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(await resolveStandardPlace("Ballyowen")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+
+  it("searches again once the table is removed", async () => {
+    __usePlaceTableForTests({});
+    __usePlaceTableForTests(null);
+    mockSearchPlace.mockClear();
+    mockSearchPlace.mockResolvedValue([]);
+    await resolveStandardPlace("Boston, Massachusetts");
+    expect(mockSearchPlace).toHaveBeenCalled();
   });
 });

@@ -156,6 +156,14 @@ source refs, `subjectPersonIds`), so a minted id never turns a dangling
 reference into a valid one. Anything with no source is cited to the
 researcher's statement as above. A `tree` that is not an object is refused.
 
+**Places on the objective-only build** are the tool's to standardize, never the
+caller's. Every fact `place` — on a person or a relationship — has any
+caller-supplied `standard_place` cleared, then is resolved with the same resolver
+`person_read` and `tree_edit` use, after every refusal and validation, exactly as
+the ref path's retry runs. A resolved value is reported in `placesFilled`. A
+caller-supplied value that the resolver replaced or could not confirm is named in
+`validation.warnings`; one that did not resolve is left unset, never kept.
+
 **The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
 `sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
 `familySearchTreeSource`, and `statementSource` when one was created. It also
