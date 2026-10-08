@@ -59,3 +59,21 @@ def test_a_near_copy_reads_through_as_production_resolves_it(tmp_path):
 def test_a_call_with_no_ref_is_answered_from_the_fixture_as_before(tmp_path):
     out = _read(tmp_path, {"recordId": "~9XKD-R7M"})
     assert "error" not in out
+
+
+def test_an_exact_ref_is_answered_without_running_node(tmp_path, monkeypatch):
+    import harness.mock_mcp as mock
+
+    calls = []
+    real = mock._run_node_eval
+
+    def counted(*a, **k):
+        calls.append(a)
+        return real(*a, **k)
+
+    monkeypatch.setattr(mock, "_run_node_eval", counted)
+    _stage(tmp_path)
+    for ref in (GOOD, str(tmp_path / GOOD)):
+        out = _read(tmp_path, {"recordId": "~9XKD-R7M", "projectPath": str(tmp_path), "resultsRef": ref})
+        assert "error" not in out
+    assert calls == []

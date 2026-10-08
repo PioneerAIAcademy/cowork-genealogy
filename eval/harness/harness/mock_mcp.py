@@ -743,6 +743,25 @@ STAGED_REF_READERS: dict[str, str] = {
 }
 
 
+def _readable_sidecar(workspace: Path, ref: str) -> bool:
+    """True when `ref` names, exactly, a sidecar `readStagedResults` reads as is:
+    a file under `results/.staging/` or a top-level `results/*.json`, whose
+    `payload.results` is a list. Anything else goes to the compiled check."""
+    root = workspace.resolve()
+    path = Path(ref)
+    path = (path if path.is_absolute() else root / path).resolve()
+    results = root / "results"
+    if not (path.is_relative_to(results / ".staging")
+            or (path.parent == results and path.suffix == ".json")):
+        return False
+    try:
+        envelope = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    payload = envelope.get("payload") if isinstance(envelope, dict) else None
+    return isinstance(payload, dict) and isinstance(payload.get("results"), list)
+
+
 def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str | None:
     """Production's refusal of a staged ref the workspace does not hold, or None.
 
@@ -757,6 +776,8 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     field = STAGED_REF_READERS.get(tool)
     ref = args.get(field) if field else None
     if not isinstance(ref, str) or not ref.strip():
+        return None
+    if _readable_sidecar(workspace, ref):
         return None
     staging_js = _MCP_BUILD / "utils" / "results-staging.js"
     if not staging_js.exists():

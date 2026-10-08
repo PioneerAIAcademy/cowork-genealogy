@@ -1113,3 +1113,14 @@ def test_v3_fires_when_the_value_is_not_what_the_create_wrote():
     after = {**after, "files": {"starting-tree.gedcomx.json": json.dumps(
         _hand_tree(value="Boston, Massachusetts, United States")["tree_gedcomx_json"])}}
     assert "match neither" in _fails(check_std_place, after, [_hand_create()])
+
+
+def test_v3_passes_a_second_spelling_of_a_place_the_create_reported_once():
+    after = _as_built(_hand_tree(place="boston,  MASSACHUSETTS "))
+    check_std_place(after, [_hand_create(place="Boston, Massachusetts")])
+
+
+def test_v3_passes_an_addition_place_a_ref_create_standardized():
+    create = _hand_create()
+    create["args"] = {"objective": "x", "personReadRef": "results/.staging/x.json", "tree": {"persons": []}}
+    check_std_place(_as_built(_hand_tree()), [create])
