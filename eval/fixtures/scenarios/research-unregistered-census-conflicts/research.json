@@ -33,9 +33,9 @@
       "resolution_assertion_ids": [],
       "search_stop": {
         "stopped_because": null,
-        "log_entry_ids": null,
+        "log_entry_ids": [],
         "stop_criteria": null,
-        "not_reached": null
+        "not_reached": []
       }
     }
   ],
