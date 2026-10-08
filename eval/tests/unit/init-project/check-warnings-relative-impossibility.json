@@ -4,14 +4,13 @@
     "skill": "init-project",
     "name": "Invoke check-warnings on every imported relative and relay a split-point finding",
     "type": "positive",
-    "description": "init-project must hand the imported people to check-warnings after project_create: as an agent (issue #2122) it holds no Agent tool, so the step is a caller-facing `Hand-back: check-warnings <I ids>` line naming the subject and every imported relative, kept out of the researcher paragraph. The fixture's wife, Bridget Doyle, carries a genuine timeline impossibility (Death 1875, Residence 1880) on a NON-subject relative, so the hand-back must cover relatives, not just the subject, and the complete tree must still be written with both facts intact.",
+    "description": "init-project imports the tree and reports the import; it reviews nothing (lead ruling on issue #2122, 2026-10-08: error checking is check-warnings', gaps are question-selection's). The fixture's wife, Bridget Doyle, carries a genuine timeline impossibility (Death 1875, Residence 1880) on a NON-subject relative: both facts must reach the tree unchanged, and the reply must not analyse them, correct them, or hand them to check-warnings.",
     "tags": [
       "initialization",
       "familysearch",
-      "check-warnings",
       "identity-conflation",
       "relatives",
-      "delegation",
+      "no-review",
       "direct-arm"
     ]
   },
@@ -40,10 +39,10 @@
     ]
   },
   "judge_context": [
-    "Should end its caller-facing lines with `Hand-back: check-warnings` naming the subject (I1, Thomas Doyle) and every imported relative (Bridget, John and Kate Doyle) by tree `I` id, so the caller can run check-warnings on all four. The agent holds no Agent tool and cannot run check-warnings itself; a reply that claims to have checked warnings, or reports warning findings, invented them. Graded deterministically by test_check_warnings_handed_back_for_every_imported_person.",
-    "The researcher paragraph after the final `---` must not contain the Hand-back line or name check-warnings. Bridget Doyle's 1880 Residence after her 1875 Death may be noted as a date inconsistency on the closed obvious-error list, but must not be framed as a settled error or resolved by dropping either fact.",
-    "Should NOT restate identity-conflation heuristics, the timeline-impossibility-as-split-point reasoning, the posthumous-mention exception, or the clustered-warnings escalation rules in its own prose -- that doctrine belongs to check-warnings, which the caller runs on the hand-back.",
-    "Should still create the complete tree from the read regardless of the check-warnings finding -- Thomas, Bridget, John, Kate, the Couple relationship with its Marriage fact, all four ParentChild relationships, and both source descriptions all reach tree.gedcomx.json with quality: 1 refs. The check-warnings finding is presented alongside the summary, not a reason to omit or alter what was imported.",
+    "Should import the read and report the import only. The agent does not run, invoke or hand back to check-warnings, and its reply carries no `Hand-back: check-warnings` line: error checking is not this agent's job.",
+    "The reply must not analyse Bridget Doyle's 1875 Death against her 1880 Residence — no 'error', 'inconsistency', 'conflict' or 'impossibility' framing, and no explanation of how both could be true. Reporting the import faithfully is the whole job.",
+    "Should NOT reason about identity conflation, split points, posthumous mentions or clustered warnings in its own prose — that doctrine belongs to check-warnings.",
+    "Should create the complete tree from the read -- Thomas, Bridget, John, Kate, the Couple relationship with its Marriage fact, all four ParentChild relationships, and both source descriptions all reach tree.gedcomx.json with quality: 1 refs.",
     "Bridget Doyle's Death (1875) and Residence (1880) facts must both be carried through with their standard_date/standard_place sidecars exactly as the fixture returned them -- init-project must not 'fix' or drop either fact because check-warnings flagged them as inconsistent."
   ],
   "judge_reads_files": true

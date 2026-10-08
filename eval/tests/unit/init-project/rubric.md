@@ -50,7 +50,7 @@ length is not graded here: objectives are meant to be broad, so an 8-word
 objective is fine. Only a genuinely restated full-sentence title (the whole
 objective copied into the title field) is a weakness.
 
-The report no longer carries a minimum-information check, historical-context signals, a source-evaluation block or a holdings head-start list: no test or rubric line read them, and question-selection re-derives the gaps from the project files. Do not mark a reply down for their absence.
+The report describes the import only (lead ruling, 2026-10-08): no gaps, errors, research targets or advice. Errors are check-warnings', gaps and the first research question are question-selection's. Do not mark a reply down for leaving them out; mark it down for adding them.
 
 - **pass:** `project` block complete and sensible; all required sections
   present (empty arrays where nothing was gathered); the written
