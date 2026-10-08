@@ -8,6 +8,7 @@ prefix no longer hides its event; a cookie file signs a driver in without dev-lo
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 import subprocess
@@ -846,12 +847,125 @@ def test_concurrent_rss_is_void_when_the_turns_ran_one_after_the_other(monkeypat
     assert _failed(rep) == ["concurrent_rss: both turns ran at once (else void)"]
 
 
+def _heavy(monkeypatch, *, in_window: int = 3, claim_at=(0.0, 0.0), close_at=(None, None),
+           projects=("proj_1", "proj_2"), deadline_s: float = 30.0, ssm_fails: int = 0):
+    """concurrent_rss_heavy on a fake clock (sleep advances it): each turn is claimed at
+    ``claim_at`` and closes at ``close_at`` (None: only a Stop closes it). ``deadline_s``
+    sits far under HEAVY_WINDOW_S, so a window it cut would show."""
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    target_ = RecordingTarget(order, run_out=RSS_OUT)
+    fails = [ssm_fails]
+    real_run = target_.run
+
+    def run(tier, *commands, comment=""):
+        if fails[0] > 0:
+            fails[0] -= 1
+            raise subprocess.CalledProcessError(254, ["aws", "ssm", "send-command"])
+        return real_run(tier, *commands, comment=comment)
+
+    target_.run = run
+    monkeypatch.setattr(bounds, "TARGET", target_)
+    clock = [0.0]
+    monkeypatch.setattr(bounds.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(bounds.time, "sleep", lambda s: clock.__setitem__(0, clock[0] + max(s, 0.01)))
+    seeds = iter([("sess_1", projects[0], {"researcher_question": "Who was Q's father?"}),
+                  ("sess_2", projects[1], {"researcher_question": "Who was Q's father?"})])
+    monkeypatch.setattr(bounds.demo, "seed_session", lambda args: next(seeds))
+    turns = iter(["t1", "t2"])
+    monkeypatch.setattr(bounds, "post", lambda ctx, client, rep, text: order.append(f"post {rep.session_id} {text}")
+                        or rep.turn_ids.append(next(turns)) or {"turn_id": rep.turn_ids[-1]})
+    by_tid = {"t1": 0, "t2": 1}
+    stopped: set[int] = set()
+
+    def reclaim(params):
+        i = by_tid[params[0]]
+        closed = i in stopped or (close_at[i] is not None and clock[0] >= close_at[i])
+        return [(1, T0 if clock[0] >= claim_at[i] else None, T0 if closed else None)]
+
+    def press(ctx, client, rep):
+        order.append(f"stop {rep.session_id} at {clock[0]:g}")
+        stopped.add(int(rep.session_id[-1]) - 1)
+        return clock[0]
+
+    window_params: list[tuple] = []
+    _db(monkeypatch, {bounds.RECLAIM_SQL: reclaim,
+                      bounds.PG_NOW_SQL: lambda p: [(T0 + timedelta(seconds=clock[0]),)],
+                      bounds.SUBAGENT_ROWS_SQL: [(in_window + 2,)],
+                      bounds.WINDOW_SUBAGENT_SQL: lambda p: window_params.append(p) or [(in_window,)]})
+    monkeypatch.setattr(bounds, "press", press)
+    monkeypatch.setattr(bounds, "done", lambda ctx, client, rep, tid, since=None, **k:
+                        order.append(f"done {rep.session_id} {tid} since={since}") or True)
+    monkeypatch.setattr(bounds, "settle", lambda ctx, client, sid: order.append(f"settle {sid}") or ([], []))
+    rep = bounds.Report(case="concurrent_rss_heavy")
+    bounds.case_concurrent_rss_heavy(dataclasses.replace(_ctx(), deadline_s=deadline_s), None, rep)
+    return rep, order, window_params
+
+
+def test_concurrent_rss_heavy_stops_both_at_the_window_end_and_records_the_load(monkeypatch):
+    rep, order, window_params = _heavy(monkeypatch)
+    assert not _failed(rep), rep.checks
+    posts = [o for o in order if o.startswith("post")]
+    assert posts == ["post sess_1 /research --autonomous Who was Q's father?",
+                     "post sess_2 /research --autonomous Who was Q's father?"]
+    # A 30 s --deadline-s does not cut the window short; sampling runs on until both close.
+    assert [o for o in order if o.startswith("stop")] == ["stop sess_1 at 600", "stop sess_2 at 600"]
+    assert rep.figures["window_s"] == bounds.HEAVY_WINDOW_S and rep.figures["stopped"] == ["sess_1", "sess_2"]
+    assert rep.figures["subagent_rows"] == 5 and rep.figures["subagent_rows_in_window"] == 3
+    assert window_params == [(["t1", "t2"], T0, T0 + timedelta(seconds=600))]
+    assert rep.figures["peak_total_rss_mb"] == 515.0 and rep.figures["rss_samples"] == 62
+    assert ["done sess_1 t1 since=600.0", "done sess_2 t2 since=600.0", "settle sess_1"] == [
+        o for o in order if o.startswith(("done", "settle"))]
+    assert rep.session_id == "sess_2", "run_case settles the second session"
+
+
+def test_concurrent_rss_heavy_stops_only_the_turn_still_open(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, close_at=(300.0, None))
+    assert [o for o in order if o.startswith("stop")] == ["stop sess_2 at 600"]
+    assert rep.figures["stopped"] == ["sess_2"] and not _failed(rep)
+    assert "done sess_1 t1 since=None" in order
+
+
+@pytest.mark.parametrize(("over", "failing"), [
+    ({"in_window": 0}, "concurrent_rss_heavy: a subagent tool call ran inside the window (else void)"),
+    ({"projects": ("proj_1", "proj_1")}, "concurrent_rss_heavy: two projects seeded"),
+])
+def test_concurrent_rss_heavy_voids_each_way(monkeypatch, over, failing):
+    rep, _order, _ = _heavy(monkeypatch, **over)
+    assert _failed(rep) == [failing]
+
+
+def test_concurrent_rss_heavy_stops_at_once_when_the_turns_never_ran_together(monkeypatch):
+    # The first closed before the second was claimed: void already, so the second is not
+    # billed a ten-minute window.
+    rep, order, _ = _heavy(monkeypatch, claim_at=(0.0, 20.0), close_at=(10.0, None))
+    assert [o for o in order if o.startswith("stop")] == ["stop sess_2 at 20"]
+    assert rep.figures["window_s"] is None and rep.figures["subagent_rows_in_window"] == 0
+    assert _failed(rep) == ["concurrent_rss_heavy: both turns ran at once (else void)",
+                            "concurrent_rss_heavy: a subagent tool call ran inside the window (else void)"]
+
+
+def test_concurrent_rss_heavy_rides_out_a_failed_ssm_sample(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, ssm_fails=2)
+    assert not _failed(rep), rep.checks
+    assert rep.figures["rss_sample_errors"] == 2 and rep.figures["rss_samples"] == 60
+    assert [o for o in order if o.startswith("stop")] == ["stop sess_1 at 600", "stop sess_2 at 600"]
+    assert any("2 memory sample(s) lost" in f for f in rep.findings)
+
+
+def test_concurrent_rss_heavy_counts_subagent_rows_by_agent_id():
+    # agent_type is set on the main thread of an --agent session; agent_id only on a subagent's.
+    for sql in (bounds.SUBAGENT_ROWS_SQL, bounds.WINDOW_SUBAGENT_SQL):
+        assert "agent_id IS NOT NULL" in sql and "agent_type" not in sql
+
+
 def test_redelivery_timer_picks_the_nearer_timer():
     assert bounds.redelivery_timer(305, visibility_s=1500) == "ErrorVisibilityTimeout"
     assert bounds.redelivery_timer(1490, visibility_s=1500) == "VisibilityTimeout"
 
 
-@pytest.mark.parametrize("case", ["kill_hold", "kill_refresh", "idle_watch", "concurrent_rss"])
+@pytest.mark.parametrize("case", ["kill_hold", "kill_refresh", "idle_watch", "concurrent_rss",
+                                  "concurrent_rss_heavy"])
 def test_the_probe_cases_refuse_compose_and_run_deployed(case):
     with pytest.raises(ValueError, match="--target deployed"):
         bounds.make_ctx(bounds.build_parser().parse_args(["--case", case]), None)

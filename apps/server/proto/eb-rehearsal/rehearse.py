@@ -411,6 +411,9 @@ CASES: dict[str, dict] = {
         (ENV_NS, "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS", "20000")]}},
     "refresh_age_0": {"measures": "grant refresh every turn", "ops": {"web": [(ENV_NS, "FS_GRANT_REFRESH_AGE_S", "0")]}},
     "cap_1usd": {"measures": "session spend cap", "ops": {"worker": [(ENV_NS, "SESSION_SPEND_CAP_USD", "1")]}},
+    "nudges_3": {"measures": "web nudge cap at compose's 3", "ops": {"web": [(ENV_NS, "AUTONOMOUS_MAX_NUDGES", "3")]}},
+    "no_telemetry": {"measures": "CLI nonessential egress off", "ops": {"worker": [
+        (ENV_NS, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")]}},
     "idle_session_60s": {"measures": "Postgres idle-session timeout", "rds_param": ("idle_session_timeout", "60000")},
 }
 

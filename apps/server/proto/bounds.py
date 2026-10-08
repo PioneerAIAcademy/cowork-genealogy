@@ -602,10 +602,14 @@ def seeded_session(ctx: Ctx, rep: Report) -> str:
     if ctx.session:
         rep.session_id = ctx.session
     else:
-        args = argparse.Namespace(fixture=ctx.fixture, project_id=None, title=f"u23 {rep.case}", pg_dsn=ctx.dsn,
-                                  s3_endpoint=ctx.s3_endpoint, base=ctx.base, email=ctx.email)
-        rep.session_id, _project, _meta = demo.seed_session(args)
+        rep.session_id, _project, _meta = demo.seed_session(seed_args(ctx, rep))
     return rep.session_id
+
+
+def seed_args(ctx: Ctx, rep: Report) -> argparse.Namespace:
+    """demo.seed_session's arguments for a fresh seed of ``--fixture``."""
+    return argparse.Namespace(fixture=ctx.fixture, project_id=None, title=f"u23 {rep.case}", pg_dsn=ctx.dsn,
+                              s3_endpoint=ctx.s3_endpoint, base=ctx.base, email=ctx.email)
 
 
 def post(ctx: Ctx, client: httpx.Client, rep: Report, text: str) -> dict:
@@ -1734,6 +1738,96 @@ def case_concurrent_rss(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
             rep.checks.append((f"concurrent_rss: no turn left running on {sid}", not running, f"running={running}"))
 
 
+HEAVY_WINDOW_S = 600.0
+# concurrent_rss_heavy: the delegated rows across both turns, and those inside the window. A
+# subagent's row is the one with an agent_id (is_subagent): agent_type is also set on the main
+# thread of a session started with --agent (worker/options.py).
+SUBAGENT_ROWS_SQL = "SELECT count(*) FROM tool_calls WHERE turn_id = ANY(%s) AND agent_id IS NOT NULL"
+WINDOW_SUBAGENT_SQL = SUBAGENT_ROWS_SQL + " AND ts >= %s AND ts <= %s"
+
+
+def case_concurrent_rss_heavy(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M49 under real load: two seeds of ``--fixture`` (two projects), each posted the
+    harness's ``/research --autonomous <researcher_question>``, the worker's memory sampled
+    as concurrent_rss does. The window opens at the first sample with both turns running;
+    HEAVY_WINDOW_S later Stop is pressed on each turn still open, and sampling runs on until
+    both close. If both are claimed without ever running at once the case is already void,
+    so the open one is Stopped then rather than billed the window. Void unless both ran at
+    once and a subagent tool call landed inside the window. A failed SSM sample is counted,
+    not fatal. run_case settles the second session; this settles the first."""
+    sessions: list[str] = []
+    try:
+        projects = []
+        for _ in range(2):
+            sid, project, meta = demo.seed_session(seed_args(ctx, rep))
+            rep.session_id = sid
+            sessions.append(sid)
+            projects.append(project)
+            post(ctx, client, rep, demo.opening_prompt(meta, None))
+        tids = list(rep.turn_ids)
+        samples: list[dict] = []
+        sample_errors: list[str] = []
+        overlapped = False
+        window_at = window_from = window_to = None
+        pressed: dict[str, float] = {}  # session -> its Stop's monotonic time
+        stopping = False
+        limit = time.monotonic() + ctx.deadline_s
+        # The window is not cut by --deadline-s, which bounds the wait for both claims and,
+        # after the Stop, the wait for both closes.
+        while (window_at is not None and not stopping) or time.monotonic() < limit:
+            t = time.monotonic()
+            try:
+                samples.append(parse_rss(TARGET.run("worker", *RSS_COMMANDS,
+                                                    comment="U13 concurrent_rss_heavy: sample memory")))
+            except Exception as exc:  # noqa: BLE001 - one lost sample must not end a billed ten-minute run
+                sample_errors.append(f"{type(exc).__name__}: {exc}")
+            rows = [turn.db(ctx.dsn, RECLAIM_SQL, (tid,)) for tid in tids]
+            closed = [bool(r and r[0][2] is not None) for r in rows]
+            open_ = [bool(r and r[0][1] is not None) and not c for r, c in zip(rows, closed)]
+            overlapped = overlapped or all(open_)
+            if all(closed):
+                break
+            if window_at is None and overlapped:
+                window_at, window_from = t, turn.one(ctx.dsn, PG_NOW_SQL, ())
+            due = window_at is not None and t - window_at >= HEAVY_WINDOW_S
+            if not stopping and (due or (all(o or c for o, c in zip(open_, closed)) and not overlapped)):
+                stopping = True
+                if window_at is not None:
+                    window_to = turn.one(ctx.dsn, PG_NOW_SQL, ())
+                for sid, still in zip(sessions, open_):
+                    if still:
+                        rep.session_id = sid
+                        pressed[sid] = press(ctx, client, rep)
+                limit = time.monotonic() + ctx.deadline_s
+            time.sleep(max(0.0, RSS_EVERY_S - (time.monotonic() - t)))
+        if window_at is not None and window_to is None:
+            window_to = turn.one(ctx.dsn, PG_NOW_SQL, ())
+        in_window = (int(turn.one(ctx.dsn, WINDOW_SUBAGENT_SQL, (tids, window_from, window_to)) or 0)
+                     if window_from is not None else 0)
+        rep.figures.update(rss_figures(samples))
+        rep.figures.update({"subagent_rows": int(turn.one(ctx.dsn, SUBAGENT_ROWS_SQL, (tids,)) or 0),
+                            "subagent_rows_in_window": in_window, "window_s": _secs(window_from, window_to),
+                            "stopped": sorted(pressed), "rss_sample_errors": len(sample_errors)})
+        if sample_errors:
+            rep.findings.append(f"{len(sample_errors)} memory sample(s) lost, first: {sample_errors[0][:300]}")
+        rep.checks += [("concurrent_rss_heavy: two projects seeded", len(set(projects)) == 2, f"projects={projects}"),
+                       ("concurrent_rss_heavy: both turns ran at once (else void)", overlapped,
+                        "never both claimed and open in one sample"),
+                       ("concurrent_rss_heavy: a subagent tool call ran inside the window (else void)", in_window > 0,
+                        f"subagent rows in the window={in_window}"),
+                       ("concurrent_rss_heavy: memory sampled", bool(samples), "no sample")]
+        for sid, tid, label in zip(sessions, tids, ("first", "second")):
+            rep.session_id = sid
+            done(ctx, client, rep, tid, since=pressed.get(sid), label=label)
+    finally:
+        for sid in sessions[:-1]:
+            running, _held = settle(ctx, client, sid)
+            rep.checks.append((f"concurrent_rss_heavy: no turn left running on {sid}", not running,
+                               f"running={running}"))
+        if sessions:
+            rep.session_id = sessions[-1]
+
+
 CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "precli": case_precli,
     "stop_main": case_stop_main,
@@ -1757,6 +1851,7 @@ CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "kill_refresh": case_kill_refresh,
     "idle_watch": case_idle_watch,
     "concurrent_rss": case_concurrent_rss,
+    "concurrent_rss_heavy": case_concurrent_rss_heavy,
 }
 SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe_resume", "kill_hold"})
 # Cases a deployed target cannot run yet, and why.
@@ -1765,7 +1860,8 @@ COMPOSE_ONLY = {
 }
 # Cases only a deployed target runs (U13): they signal or firewall the Beanstalk worker.
 DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill",
-                           "kill_hold", "kill_refresh", "idle_watch", "concurrent_rss"})
+                           "kill_hold", "kill_refresh", "idle_watch", "concurrent_rss",
+                           "concurrent_rss_heavy"})
 
 
 def run_case(ctx: Ctx, name: str) -> Report:

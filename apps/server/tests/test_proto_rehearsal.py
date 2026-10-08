@@ -28,6 +28,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -943,7 +944,50 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "idle_session_60s"}
+        "refresh_age_0", "cap_1usd", "nudges_3", "no_telemetry", "idle_session_60s"}
+
+
+def test_every_case_has_a_row_in_the_readme_probe_table():
+    text = (REHEARSAL_DIR / "README.md").read_text(encoding="utf-8")
+    table = text.split("## Probe cases", 1)[1].split("\n## ", 1)[0]
+    rows = [line.split("|")[1] for line in table.splitlines() if line.startswith("| `")]
+    named = {n for cell in rows for n in re.findall(r"`([a-z0-9_]+)`", cell)}
+    assert named == set(rh.CASES)
+
+
+@pytest.mark.parametrize("case, tier, name, value", [
+    ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
+    ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
+])
+def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
+    """Neither name is in up's API layer, so the restore removes it: on web the template's
+    AUTONOMOUS_MAX_NUDGES=60 (01-web.config) applies again; the worker template sets neither."""
+    assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
+    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "60"
+    assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
+    env, fake, _ = stack
+    env_name = rh.ENV_NAMES[tier]
+    assert (rh.ENV_NS, name) not in rh.options_map(json.loads(
+        (env["work"] / "options" / f"{env_name}.json").read_text(encoding="utf-8")))
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", case, "--hold-s", "0")
+    assert rc == 0
+    apply, restore = _updates(fake, env_name)
+    assert fake.file_of(apply, "--option-settings") == [rh.opt(rh.ENV_NS, name, value)]
+    assert "--option-settings" not in restore
+    assert fake.file_of(restore, "--options-to-remove") == [{"Namespace": rh.ENV_NS, "OptionName": name}]
+    assert (rh.ENV_NS, name) not in fake.env_settings[env_name]
+
+
+def test_the_worker_hands_no_telemetry_to_the_cli():
+    """The SDK starts the CLI with the worker's environment overlaid with options.env, and
+    cli_env_blanks blanks every inherited name outside CLI_ENV_KEEP; a blanked name would
+    leave no_telemetry applied on Beanstalk and void."""
+    sys.path.insert(0, str(REPO / "apps" / "server"))
+    from proto.worker import options
+
+    for _, name, value in rh.CASES["no_telemetry"]["ops"]["worker"]:
+        assert options.cli_env_blanks({name: value, "PG_DSN": "x"}) == {"PG_DSN": ""}, name
 
 
 # ── probe cases ───────────────────────────────────────────────────────────────────────
