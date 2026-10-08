@@ -216,7 +216,9 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
 
 def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
     """`route-shortcut-guard.json` stubs one paired name that ships as both a
-    skill and an agent; its compliant spawn must keep running.
+    skill and an agent; a name that is still a skill is not stubbed at its
+    spawn, so its agent half can run. (That fixture now ends at its first
+    stubbed hand-off anyway: `stop_at_stub`.)
 
     `proof-conclusion` (issue #2822) and `person-evidence` (issue #2821) were
     paired too until each lost its skill half, so both now take the
