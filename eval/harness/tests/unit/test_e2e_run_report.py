@@ -321,3 +321,14 @@ def test_a_helper_without_its_own_duration_takes_the_call_trailer():
     assert agent_call_durations(log) == {"acf71bd2e7482395e": 33.256}
     assert "33 s summed over 1 launch(es)" in render(log, "r.json", graded=False)
 
+
+def test_a_helper_type_with_an_unpriced_launch_shows_no_type_total(tmp_path):
+    """One priced and one unpriced record-extractor: the by-type row must not
+    print the priced one's cost as if it were the whole type's."""
+    log = _priced_log(_helper("claude-sonnet-4-6"), _helper("claude-unknown-9"))
+    path = tmp_path / "run-x.json"
+    path.write_text(json.dumps(log), encoding="utf-8")
+    text = render(log, path.name, graded=False, per_agent=collect([path])[0])
+    row = next(line for line in text.split("by helper type")[1].splitlines()
+               if line.strip().startswith("record-extractor"))
+    assert row.split()[2] == "--"

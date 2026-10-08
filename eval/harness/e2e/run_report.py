@@ -369,7 +369,8 @@ def render(
         out.append("")
         out.append(f"  {'by helper type':<26} {'launches':>8} {'cost':>12} {'time':>10}")
         for kind, b in sorted(per_agent.items(), key=lambda kv: -sum(kv[1]["costs"])):
-            cost = _money(sum(b["costs"])) if b["costs"] else "--"
+            # Partly unpriced: the sum of the rest is not this type's cost.
+            cost = _money(sum(b["costs"])) if b["costs"] and not b["unpriced"] else "--"
             secs = seconds_by_type.get(kind)
             out.append(f"  {kind:<26} {b['spawns']:>8} {cost:>12} {_secs(sum(secs)) if secs else '--':>10}")
 
