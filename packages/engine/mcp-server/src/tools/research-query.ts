@@ -25,6 +25,7 @@
 
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
+import { placeSegments } from "../utils/place-resolver.js";
 
 const MAX_ITEMS = 50;
 
@@ -272,7 +273,7 @@ const FILTER_KEYS: FilterKey[] = [
 /** "Venango, Pennsylvania, United States" -> itself, "Pennsylvania, United States",
  *  "United States": a county's lookup also reaches its state's rows. */
 function placeAndEnclosing(place: string): string[] {
-  const parts = place.split(",").map((p) => p.trim()).filter((p) => p !== "");
+  const parts = placeSegments(place);
   return parts.map((_, i) => parts.slice(i).join(", "));
 }
 
@@ -357,6 +358,9 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
           `'${key}' is not a supported filter for section '${section}'` +
             (supported.length > 0 ? ` (supported: ${supported.join(", ")})` : " (this section takes no filters)"),
         );
+      }
+      if ((rule.mode === "place-or-enclosing" || rule.mode === "contains-substring-ci") && typeof value !== "string") {
+        throw new ResearchQueryError(`'${key}' must be a string (got ${JSON.stringify(value)})`);
       }
       activeFilters.push({ key, rule, value });
     }

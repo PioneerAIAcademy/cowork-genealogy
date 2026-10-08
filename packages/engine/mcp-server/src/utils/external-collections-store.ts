@@ -85,7 +85,9 @@ function byTuple(a: RawCollectionRow, b: RawCollectionRow): number {
   return 0;
 }
 
-const NON_SCOPING_PARAM = /^(utm_.*|tr_.*|s|h|dbid|fbclid|gclid|ref)$/i;
+// Tracking and collection-id parameters, including the legacy Ancestry `db.aspx`
+// form's `htx`, `o_*` and `geo_*`.
+const NON_SCOPING_PARAM = /^(utm_.*|tr_.*|o_.*|geo_.*|htx|s|h|dbid|fbclid|gclid|ref)$/i;
 
 /** A query parameter other than tracking or a collection id: one that narrows the
  *  site's search, e.g. Ancestry's `arrival=_pennsylvania-usa_41`. */
@@ -102,7 +104,7 @@ function hasScopingQuery(url: string): boolean {
     });
 }
 
-function yearNum(y: string | undefined): number | null {
+export function yearNum(y: string | undefined): number | null {
   if (!y) return null;
   const n = Number.parseInt(y, 10);
   return Number.isFinite(n) ? n : null;
@@ -115,8 +117,9 @@ function yearNum(y: string | undefined): number | null {
  * candidates are sorted by their full field tuple; the text fields come from the
  * first; the years are the hull of every candidate's range, or undated when any
  * candidate is undated, so a year filter includes the merged row whenever it would
- * have included one of its copies; a URL whose query scopes the search to the
- * place (`?arrival=…`) wins over one without — tracking parameters do not count. A row with no `place` is filed under
+ * have included one of its copies; an `https` URL wins over an `http` one, and
+ * among those a URL whose query scopes the search to the place (`?arrival=…`) wins
+ * over one without — tracking parameters do not count. A row with no `place` is filed under
  * `fallbackPlace` (the queried place).
  */
 export function dedupeCollections(raw: RawCollectionRow[], fallbackPlace = ""): StoredCollectionRow[] {
@@ -132,7 +135,9 @@ export function dedupeCollections(raw: RawCollectionRow[], fallbackPlace = ""): 
   for (const [id, group] of groups) {
     group.sort(byTuple);
     const first = group[0];
-    const urls = [...new Set(group.map((r) => r.url))].sort(cmp);
+    const all = [...new Set(group.map((r) => r.url))].sort(cmp);
+    const secure = all.filter((u) => /^https:/i.test(u));
+    const urls = secure.length > 0 ? secure : all;
     const url = urls.find(hasScopingQuery) ?? urls[0];
     // A copy with no year at all keeps the merged row undated: the year filter then
     // includes it, as it would have included that copy. Otherwise the span is the

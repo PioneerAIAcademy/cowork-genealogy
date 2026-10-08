@@ -12,6 +12,7 @@ import {
   dedupeCollections,
   recordExternalCollections,
   EXTERNAL_COLLECTIONS_FILE,
+  yearNum,
   type StoredCollectionRow,
 } from "../utils/external-collections-store.js";
 import type {
@@ -44,12 +45,6 @@ const FETCH_COUNT = 1000;
 // sidecar every year-filtered row; `inlineCapped` says when this cut the inline copy.
 const INLINE_CAP = 200;
 
-function parseYear(raw: string | undefined): number | null {
-  if (!raw) return null;
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : null;
-}
-
 // An undated resource (no start and no end year) is always included, regardless
 // of the year filter. A dated resource is included when its range overlaps
 // [userStart, userEnd]. Missing user bounds widen to ±Infinity, so passing only
@@ -59,8 +54,8 @@ function includeCollection(
   userStart: number,
   userEnd: number
 ): boolean {
-  const cStart = parseYear(collection.startYear);
-  const cEnd = parseYear(collection.endYear);
+  const cStart = yearNum(collection.startYear);
+  const cEnd = yearNum(collection.endYear);
   if (cStart === null && cEnd === null) return true;
   const effectiveStart = cStart ?? (cEnd as number);
   const effectiveEnd = cEnd ?? (cStart as number);

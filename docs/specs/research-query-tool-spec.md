@@ -190,7 +190,7 @@ every fetched place, `total: 0` included.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: ten named parameters across twelve sections, not an arbitrary path
+  scope: twelve named parameters across thirteen sections, not an arbitrary path
   language.
 - **No filter on `localities`, deliberately.** None of the ten existing
   filter keys maps onto a locality field, so a filter would mean a new MCP

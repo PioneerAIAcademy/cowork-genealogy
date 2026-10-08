@@ -17,7 +17,11 @@ vi.stubGlobal("fetch", mockFetch);
 const mockResolve = vi.hoisted(() => vi.fn());
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const real = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
-  return { resolveStandardPlaceToPlaceId: mockResolve, ambiguousPlaceError: real.ambiguousPlaceError };
+  return {
+    resolveStandardPlaceToPlaceId: mockResolve,
+    ambiguousPlaceError: real.ambiguousPlaceError,
+    placeSegments: real.placeSegments,
+  };
 });
 
 const PA = "Pennsylvania, United States";
@@ -89,6 +93,14 @@ describe("collection keys and dedupe", () => {
     expect(rows).toHaveLength(3);
   });
 
+  it("takes the earliest start and latest end across copies, whichever copy sorts first", () => {
+    const [row] = dedupeCollections([
+      { url: "https://x.org/a", linkText: "A", place: PA, startYear: "1900", endYear: "1910" },
+      { url: "https://x.org/a", linkText: "B", place: PA, startYear: "1850", endYear: "1920" },
+    ]);
+    expect([row.start_year, row.end_year]).toEqual(["1850", "1920"]);
+  });
+
   it("counts a one-sided copy as that single year in the span", () => {
     const [row] = dedupeCollections([
       { url: "https://x.org/a", place: PA, startYear: "1900", endYear: "" },
@@ -103,6 +115,13 @@ describe("collection keys and dedupe", () => {
       { url: "https://www.myheritage.com/research/collection-1/x?s=218489221&utm_source=b", place: PA },
     ]);
     expect(mh.url).toBe("https://www.myheritage.com/research/collection-1/x");
+    // Ancestry's legacy db.aspx parameters do not scope either: the bare URL, first
+    // in code-unit order, is kept.
+    const [anc] = dedupeCollections([
+      { url: "https://search.ancestry.com/search/db.aspx?htx=List&dbid=1061&o_iid=41&geo_a=r", place: PA },
+      { url: "https://search.ancestry.com/cgi-bin/sse.dll?dbid=1061", place: PA },
+    ]);
+    expect(anc.url).toBe("https://search.ancestry.com/cgi-bin/sse.dll?dbid=1061");
   });
 
   it("keeps the URL that scopes the search to the place over a bare one", () => {
@@ -112,6 +131,15 @@ describe("collection keys and dedupe", () => {
     ]);
     expect(rows).toHaveLength(1);
     expect(rows[0].url).toBe("https://www.ancestry.com/search/collections/7488?arrival=_pennsylvania-usa_41");
+  });
+
+  it("keeps an https copy over an http one, even when the http one carries legacy Ancestry parameters", () => {
+    const [row] = dedupeCollections([
+      { url: "http://search.ancestry.com/search/db.aspx?htx=List&dbid=1061&o_iid=41&geo_a=r", place: PA },
+      { url: "https://www.ancestry.com/search/collections/1061/", place: PA },
+    ]);
+    expect(row.key).toBe("ancestry:1061");
+    expect(row.url).toBe("https://www.ancestry.com/search/collections/1061/");
   });
 
   it("is independent of the API's row order", () => {
@@ -161,6 +189,20 @@ describe("external_links_search stores the full list in external-collections.jso
     await externalLinksSearchTool({ standardPlace: VENANGO, projectPath: project });
     mockFetch.mockResolvedValueOnce(response([...paRows, ...schuylkillOnly]));
     await externalLinksSearchTool({ standardPlace: SCHUYLKILL, projectPath: project });
+    const doc = await stored();
+    expect(Object.keys(doc.places)).toEqual([PA, SCHUYLKILL, VENANGO]);
+    expect(doc.places[PA].rows).toHaveLength(3);
+    expect(doc.places[SCHUYLKILL].rows).toHaveLength(2);
+    expect(doc.places[VENANGO].rows).toEqual([]);
+  });
+
+  it("keeps both counties when two fetches in one project run at once", async () => {
+    mockFetch.mockResolvedValueOnce(response([...paRows, ...schuylkillOnly]));
+    mockFetch.mockResolvedValueOnce(response(paRows));
+    await Promise.all([
+      externalLinksSearchTool({ standardPlace: SCHUYLKILL, projectPath: project }),
+      externalLinksSearchTool({ standardPlace: VENANGO, projectPath: project }),
+    ]);
     const doc = await stored();
     expect(Object.keys(doc.places)).toEqual([PA, SCHUYLKILL, VENANGO]);
     expect(doc.places[PA].rows).toHaveLength(3);
@@ -279,6 +321,14 @@ describe("research_query section external_collections", () => {
       expect(q).toMatchObject({ ok: false, reason: "no_project" });
     } finally {
       await rm(plain, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a place or recordType that is not a string", async () => {
+    for (const bad of [{ place: 5 }, { recordType: ["Probate"] }]) {
+      const q = await researchQuery({ projectPath: project, section: "external_collections", ...bad } as never);
+      expect(q.ok).toBe(false);
+      expect(!q.ok && q.errors.join(" ")).toMatch(/must be a string/);
     }
   });
 

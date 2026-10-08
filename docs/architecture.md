@@ -1166,7 +1166,8 @@ the file-write tools, because two of the three rules act on `research_append`
 itself:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
-   `research.json` and `tree.gedcomx.json` (`PROTECTED_PROJECT_FILES`), matched
+   `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
+   `external-collections.json` (`PROTECTED_PROJECT_FILES`), matched
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves

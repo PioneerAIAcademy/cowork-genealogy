@@ -87,6 +87,7 @@ Examples:
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory; serialized before `results`. Contract and rationale: `record-search-tool-spec-v2.md`. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied and the **pre-filter** link set was empty. Keyed on the pre-filter set deliberately: `results` below is host-filtered and capped, so a `host:` search whose links all sit on other hosts returns an empty `results` with a non-null `staged` — claiming a nil there would order a negative finding for a place that has records. |
 | `results` | `{ url, linkText }[]` | URLs FS curates for this place, deduplicated, year-filtered when years are given, host-filtered when `host` is given, and capped at 200. |
+| `returned` | number | How many links `results` holds, after the year and host filters and the 200 cap. |
 | `inlineCapped` | `true` \| undefined | Present when the 200 cap cut `results`. The stored list and the staged sidecar hold the full set. |
 | `stored` | `{ file, places }` \| undefined | Present when `projectPath` names a project: `external-collections.json` and the places whose entries this fetch wrote. See "Stored list". |
 | `collectionsError` | string \| undefined | Why the stored list was not written — a write failure, or a `projectPath` that is not a project folder. The search itself succeeded. |
@@ -122,8 +123,9 @@ differently from `volume_search`'s post-filter `totalResults`). It is
 reported so the LLM can distinguish "place has no data" (`totalForPlace:
 0`) from "place has data but nothing in this window" (`results: [],
 totalForPlace: 12` reads as "resources exist here, just not in your
-years"). The matched count is simply `results.length` — there is no
-separate field for it, and there is no `totalResults` field.
+years"). `returned` counts what `results` holds after the filters and the
+200 cap; `inlineCapped` says when the cap cut it. There is no
+`totalResults` field.
 
 **Dedupe.** FS returns the same collection many times, once per category,
 with link text, cost and years that disagree between copies and in a different
@@ -368,7 +370,9 @@ project convention:
 | HTTP 429 | Retried by `fetchWithRetry` (up to 3 attempts, 10s budget). If still 429 after exhaustion, throw: `"FamilySearch rate limit reached and did not clear within the retry budget. Wait 60 seconds and retry once. If it persists, surface this to the user."` |
 | Other non-2xx | Throw: `"FamilySearch external-links API error: ${status} ${statusText}."` |
 | Invalid JSON in response | Throw: `"FamilySearch returned a response that was not valid JSON. Retry once; if it persists, surface this to the user."` |
-| Empty page mid-pagination | Stop the internal loop. Return what we have. |
+| No numeric `totalResults` | Throw: completeness cannot be told; nothing is stored. Retry once, then surface to the user. |
+| `totalResults` > 1000 | Throw, naming a smaller scope (a state or county, not a whole country); nothing is stored. |
+| `totalResults` > rows returned | Throw: the list is partial; nothing is stored. Retry once, then surface to the user. |
 | Zero matches after filter | Return `results: []` (with the place's `totalForPlace`). Not an error. |
 
 ---
@@ -389,12 +393,13 @@ input type `ExternalLinksSearchInput`.
   partial list, dedupe, store, filter by overlap, map to `{ url, linkText }`.
 - `fetchAll(placeId)` — the one HTTP call (`offset=0&count=1000`) with
   model-actionable error mapping.
+- Internal helpers: `includeCollection` (the overlap rule), `includeRow`.
 
 ### `packages/engine/mcp-server/src/utils/external-collections-store.ts`
 
 `collectionKey`, `dedupeCollections`, `readExternalCollections`,
-`recordExternalCollections` — the stored list (see "Stored list").
-- Internal helpers: `parseYear`, `includeCollection` (the overlap rule), `includeRow`.
+`recordExternalCollections` — the stored list (see "Stored list") — and
+`yearNum`, the year parser both files use.
 
 ### `packages/engine/mcp-server/src/index.ts`
 
