@@ -1,0 +1,52 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "William Honeyman (Hunneman) of Hutton Rudby, the weaver buried at Rudby in March 1783, was baptised at Hutton Rudby, Yorkshire, on 5 April 1719 as the son of William Hunneman.",
+      "details": {
+        "subject_person": "William Honeyman (Hunneman), d. 1783 Hutton Rudby",
+        "fact_type": "Christening",
+        "date": "5 April 1719",
+        "place": "Hutton Rudby, Yorkshire, England"
+      },
+      "supporting_sources": [
+        "Hutton Rudby parish register: baptism of William son of William Hunnyman, 5 Apr 1719, between the baptisms of siblings Ralph (25 May 1717) and Eliz. (1 Jan 1720/21)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "The Edinburgh baptism of 2 December 1716 (a William, son of William Honniman and Elizabeth Duncan) is rejected as belonging to a different child, not the Hutton Rudby William, and the rejection rests on records rather than on the tree's own notes.",
+      "details": {
+        "subject_person": "William Honeyman (Hunneman), d. 1783 Hutton Rudby",
+        "fact_type": "Christening",
+        "rejected_date": "2 December 1716",
+        "rejected_place": "Edinburgh, Midlothian, Scotland",
+        "rejected_parents": "William Honniman and Elizabeth Duncan"
+      },
+      "supporting_sources": [
+        "Scotland baptism index: William, son of William Honniman and Elizabeth Duncan, Edinburgh, 2 Dec 1716",
+        "Hutton Rudby parish register: sibling Ralph baptised 25 May 1717, five months later, to the same Hutton Rudby father"
+      ],
+      "required": true
+    },
+    {
+      "id": "f3",
+      "type": "fact",
+      "description": "The father's origin in Fife, including the tree's christening at Scoonie on 8 May 1692, is left as not proved rather than concluded, with the reason stated (no record names his origin, the Scoonie christening is not found, or it conflicts with his other facts).",
+      "details": {
+        "subject_person": "William Honeyman (Hunneman), d. 1783 Hutton Rudby",
+        "father": "William Hunneman, d. 1737 Hutton Rudby",
+        "claim": "Christened Scoonie, Fife, Scotland, 8 May 1692",
+        "expected_status": "not proved"
+      },
+      "supporting_sources": [
+        "Scotland baptism indexes searched for William Honeyman c. 1670–1695: no Scoonie 1692 entry",
+        "Scoonie baptisms 1724–1729 of children of a William Honeyman and Janet Blyth, while the Hutton Rudby father was living in Yorkshire"
+      ],
+      "required": true
+    }
+  ]
+}
