@@ -984,7 +984,7 @@ describe("project_create — hand-built tree (no personReadRef)", () => {
 
 describe("project_create — the old-extension message init-project keys on (#2944)", () => {
   it("is produced only by a build that ignores personReadRef, never by this one", async () => {
-    // init-project/SKILL.md tells the model that this exact refusal means the
+    // agents/init-project.md tells the model that this exact refusal means the
     // extension predates personReadRef. A build that ignores the ref sees an
     // empty tree and a PID subject, so it produces it:
     const dir = await mkdtemp(join(tmpdir(), "project-create-skew-"));
@@ -1055,7 +1055,7 @@ describe("project_create — hand-entered places are standardized by the tool", 
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
     expect(result.validation.warnings.join(" ")).toContain(
-      "standard_place 'Boston, Massachusetts, United States' for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
+      "standard_place \"Boston, Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
     );
   });
 
@@ -1072,7 +1072,7 @@ describe("project_create — hand-entered places are standardized by the tool", 
     const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).toContain("standard_place 'Ballyowen, Ireland' for 'Ballyowen' was not kept");
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept");
   });
 
   it("standardizes a relationship's own fact too", async () => {
@@ -1084,5 +1084,43 @@ describe("project_create — hand-entered places are standardized by the tool", 
     const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
     expect(result.ok).toBe(true);
     expect((await readTree()).relationships[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+  });
+
+  it("leaves a malformed person or facts entry for the validator to refuse, not a crash", async () => {
+    for (const persons of [[null], [{ ...person([]), facts: { type: "Birth", place: "Boston" } }], [person([null, "x"])]]) {
+      const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons, relationships: [null], sources: [] } as any });
+      expect(result.ok).toBe(false);
+      expect(result.errors.join(" ")).not.toMatch(/Cannot read properties|is not iterable|TypeError/);
+    }
+  });
+
+  it("drops a typed standard_place on a fact with no place, and says so", async () => {
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      subjectPersonIds: ["I1"],
+      tree: { persons: [{ ...person([]), facts: [{ type: "Birth", date: "1850", standard_place: "Atlantis" }] }], relationships: [], sources: [] } as any,
+    });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Atlantis\" on a Birth fact with no place was not kept");
+  });
+
+  it("standardizes an addition's place in ref mode, as hand-entered", async () => {
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      personReadRef: staged!.resultsRef,
+      tree: {
+        persons: [{ id: "A1", gender: "Female", names: [{ given: "Mary", surname: "Kelly" }],
+          facts: [{ type: "Birth", place: "boston ", standard_place: "Boston, Massachusetts" }] }],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const added = (await readTree()).persons.find((p: any) => p.id === result.idMap.additions.A1);
+    expect(added.facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.placesFilled).toContainEqual({ place: "boston ", standardPlace: "Boston, Suffolk, Massachusetts, United States" });
+    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Boston, Massachusetts\" for 'boston ' was replaced");
   });
 });

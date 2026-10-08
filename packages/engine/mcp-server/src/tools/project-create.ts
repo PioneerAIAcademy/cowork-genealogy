@@ -48,16 +48,17 @@ import {
   formatIssues,
 } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
-import { collectFacts } from "../utils/gedcomx-convert.js";
 import { checkStagedResults, resolveStagedRef, stagedRefCorrectionWarning } from "../utils/results-staging.js";
 import {
   TreeBuildError,
   buildFromStagedRead,
+  factsOf,
   normalizeHandBuilt,
   retryUnresolvedPlaces,
   type IdMap,
   type FilledPlace,
 } from "../utils/person-read-tree.js";
+import type { SimplifiedFact } from "../types/gedcomx.js";
 
 /** The sections a new project starts with, all empty. `researcher_profile` and
  *  `known_holdings` are deliberately absent: both are written after the fact,
@@ -219,7 +220,9 @@ export async function projectCreate(
     let tree: { persons: unknown[]; relationships: unknown[]; sources: unknown[] };
     let idMap: IdMap;
     let subjectPersonIds: unknown = input.subjectPersonIds;
-    let fillPlaces: () => Promise<FilledPlace[]> = async () => [];
+    let fillPlaces: (extra?: SimplifiedFact[]) => Promise<FilledPlace[]> = (extra = []) =>
+      retryUnresolvedPlaces(extra);
+    let handFacts: Record<string, unknown>[];
     const refWarnings: string[] = [];
     try {
       if (input.personReadRef !== undefined) {
@@ -234,41 +237,46 @@ export async function projectCreate(
         idMap = built.idMap;
         subjectPersonIds = built.subjectPersonIds;
         fillPlaces = built.fillPlaces;
+        handFacts = built.additionFacts;
       } else {
         ({ tree, idMap } = normalizeHandBuilt(given, now, input.subjectPersonIds));
-        // A hand-entered place is standardized here, by the resolver person_read
-        // and tree_edit use, never taken from the caller: a value no place
-        // authority returned is a claim FamilySearch did not make, and a model
-        // told to call place_search first skipped it often enough to invent one.
-        const handFacts = collectFacts(tree as never).filter(
-          (f) => f && typeof f === "object" && typeof f.place === "string" && f.place.trim() !== "",
-        );
-        const supplied = new Map<object, string>();
-        for (const f of handFacts) {
-          if (typeof f.standard_place === "string") supplied.set(f, f.standard_place);
-          delete f.standard_place;
-        }
-        fillPlaces = async () => {
-          const filled = await retryUnresolvedPlaces(handFacts);
-          for (const [f, was] of supplied) {
-            const resolved = (f as { standard_place?: string }).standard_place;
-            if (resolved !== was) {
-              refWarnings.push(
-                resolved === undefined
-                  ? `standard_place '${was}' for '${(f as { place: string }).place}' was not kept: ` +
-                      "project_create standardizes hand-entered places itself, and this one did not resolve"
-                  : `standard_place '${was}' for '${(f as { place: string }).place}' was replaced by '${resolved}': ` +
-                      "project_create standardizes hand-entered places itself",
-              );
-            }
-          }
-          return filled;
-        };
+        handFacts = factsOf(tree);
       }
     } catch (e) {
       if (e instanceof TreeBuildError) throw new ProjectCreateError(e.message);
       throw e;
     }
+    // A hand-entered place is standardized here, by the resolver person_read
+    // and tree_edit use, never taken from the caller: a value no place
+    // authority returned is a claim FamilySearch did not make, and a model
+    // told to call place_search first skipped it often enough to invent one.
+    // Cleared on every hand-entered fact, not only those with a place: one with
+    // no place has nothing to resolve, so a value there could only be invented.
+    const hasPlace = (f: Record<string, unknown>) => typeof f.place === "string" && f.place.trim() !== "";
+    const placed = handFacts.filter(hasPlace) as unknown as SimplifiedFact[];
+    const supplied = new Map<Record<string, unknown>, unknown>();
+    for (const f of handFacts) {
+      if ("standard_place" in f) supplied.set(f, f.standard_place);
+      delete f.standard_place;
+    }
+    const fillAll = async () => {
+      const filled = await fillPlaces(placed);
+      for (const [f, was] of supplied) {
+        const resolved = f.standard_place;
+        if (resolved === was) continue;
+        refWarnings.push(
+          !hasPlace(f)
+            ? `standard_place ${JSON.stringify(was)} on a ${String(f.type ?? "")} fact with no place was ` +
+                "not kept: project_create standardizes a hand-entered place itself, from the fact's place"
+            : resolved === undefined
+              ? `standard_place ${JSON.stringify(was)} for '${f.place}' was not kept: project_create ` +
+                  "standardizes hand-entered places itself, and could not standardize this one"
+              : `standard_place ${JSON.stringify(was)} for '${f.place}' was replaced by '${resolved}': ` +
+                  "project_create standardizes hand-entered places itself",
+        );
+      }
+      return filled;
+    };
 
     // `assertion_id` is stamped by `materialize_facts`, never supplied. This
     // tool writes the caller's facts as given (staged or added), and the document validator type-
@@ -304,7 +312,8 @@ export async function projectCreate(
     };
     const forged: string[] = [];
     for (const holder of [...tree.persons, ...tree.relationships]) {
-      for (const fact of (holder as { facts?: unknown[] })?.facts ?? []) {
+      const facts = (holder as { facts?: unknown })?.facts;
+      for (const fact of Array.isArray(facts) ? facts : []) {
         if (fact && typeof fact === "object" && "assertion_id" in fact) {
           forged.push(describe(holder as Record<string, unknown>));
         }
@@ -348,7 +357,7 @@ export async function projectCreate(
     // Last, so no refusal above ever waits on it. It only adds a
     // `standard_place` string to a fact that had none, which validation
     // already admits.
-    const placesFilled = await fillPlaces();
+    const placesFilled = await fillAll();
     // The fill can take seconds, so check again that no other create landed
     // while it ran: create never overwrites.
     for (const ref of ["research.json", "tree.gedcomx.json"]) {
@@ -455,13 +464,17 @@ export const projectCreateSchema = {
     "statements imply (e.g. a maiden name's parent), whose ids are labels; a relationship " +
     "names a person from the read by FamilySearch ID. `subjectPersonIds` takes FamilySearch " +
     "IDs too, and defaults to the person read. The result's `idMap` gives the tree ids " +
-    "assigned, and `placesFilled` any place this create standardized that the read had not; " +
-    "tell the researcher about those.\n" +
+    "assigned.\n" +
     "\n" +
     "With no FamilySearch person, pass the whole starting tree in the SIMPLIFIED GedcomX " +
     "shape (local `I` ids for persons); missing name/fact/relationship ids are assigned, and " +
     "anything without a source is cited to the researcher's statement. `subjectPersonIds` " +
     "names persons in that tree.\n" +
+    "\n" +
+    "Places: enter every hand-entered place (the whole tree here, or an addition) as the " +
+    "researcher stated it and never write `standard_place`; this tool standardizes them " +
+    "itself, and replaces or drops any value supplied. `placesFilled` lists each place it " +
+    "standardized; tell the researcher about those.\n" +
     "\n" +
     "Refuses if either file already exists; it never overwrites a project. It does NOT " +
     "write `researcher_profile` or `known_holdings` — write those afterwards with " +
