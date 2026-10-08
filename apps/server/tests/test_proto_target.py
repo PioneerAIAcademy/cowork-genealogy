@@ -899,3 +899,21 @@ def test_events_until_looks_once_on_compose(monkeypatch):
     monkeypatch.setattr(bounds, "worker_events", lambda: calls.append(1) or [])
     assert bounds.events_until("t1", bounds.closing_lines) == []
     assert len(calls) <= 2, "compose has no log lag to poll for"
+
+
+def test_outage_held_terminates_before_it_posts_the_held_message(monkeypatch):
+    """Posted first, the held message handed the turn over at its next tool call before the
+    terminate landed, so the attempt closed queued and never saw the outage (U13, 2026-10-08)."""
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    monkeypatch.setattr(bounds, "post", lambda ctx, client, rep, text:
+                        order.append("post held" if text == bounds.turn.TEXT_KILL else "post first") or {"turn_id": "t1"})
+    monkeypatch.setattr(bounds, "sdk_of", lambda ctx, s: "sdk")
+    monkeypatch.setattr(bounds, "max_entry", lambda ctx, sdk: 1)
+    monkeypatch.setattr(bounds.turn, "db", lambda dsn, sql, params: order.append("terminate") or [(True,)]
+                        if sql == bounds.TERMINATE_SQL else [(2, "now")])
+    monkeypatch.setattr(bounds, "entries", lambda ctx, sdk, a, b: [])
+    monkeypatch.setattr(bounds, "tools_log_lines", lambda ctx, a, b: [])
+    monkeypatch.setattr(bounds, "done", lambda *a, **k: False)
+    bounds.case_outage_held(_ctx(), None, bounds.Report(case="outage_held"))
+    assert order.index("post first") < order.index("terminate") < order.index("post held"), order

@@ -939,10 +939,12 @@ def _outage(ctx: Ctx, client: httpx.Client, rep: Report, *, condition: str) -> N
         press(ctx, client, rep)
     elif condition == "cap":
         inject(ctx, rep, sdk)
-    else:
-        reply = post(ctx, client, rep, turn.TEXT_KILL)
     mark1, t_out = max_entry(ctx, sdk), utc_now()
     terminated = sum(1 for (ok,) in turn.db(ctx.dsn, TERMINATE_SQL, (f"turn:{tid}",)) if ok)
+    if condition == "held":
+        # Posted after the outage, not before: a held message hands the turn over at its next
+        # tool call, and over the rehearsal's forward that call came before the terminate (U13).
+        reply = post(ctx, client, rep, turn.TEXT_KILL)
     # Attempt 1 ends when the redelivery claims the turn (receive_count moves) or it closes.
     t0 = time.monotonic()
     while time.monotonic() - t0 < ctx.deadline_s:
