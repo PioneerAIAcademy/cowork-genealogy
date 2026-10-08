@@ -151,8 +151,8 @@ to research-plan or search-records.
 ### Moved from research-exhaustiveness (issue #2738)
 
 - **ut_research_018** (`negative-next-question.json`): near-miss negative — user asks "what should I research next?" (→ question-selection). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
-- **ut_research_019** (`negative-research-plan-exhaustiveness.json`): near-miss negative — user asks to plan more searches (→ research-plan). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
+- **ut_research_024** (`negative-research-plan-exhaustiveness.json`): near-miss negative — user asks to plan more searches (→ research-plan). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
 
-**Future hazard:** ut_research_019 names `correct_skill: ["research-plan"]`; when issue #2116 deletes that skill directory the test will abort at `runnability.py`'s `correct_skill` check. ut_research_018 names `correct_skill: ["question-selection"]`, which is already an agent (not a skill) and remains runnable because the check accepts agent names — but if the agent is ever renamed or deleted, the test aborts the same way.
+**Future hazard:** ut_research_024 names `correct_skill: ["research-plan"]`; when issue #2116 deletes that skill directory the test will abort at `runnability.py`'s `correct_skill` check. ut_research_018 names `correct_skill: ["question-selection"]`, which is already an agent (not a skill) and remains runnable because the check accepts agent names — but if the agent is ever renamed or deleted, the test aborts the same way.
 
 A live `make e2e-run` remains the only end-to-end instrument.

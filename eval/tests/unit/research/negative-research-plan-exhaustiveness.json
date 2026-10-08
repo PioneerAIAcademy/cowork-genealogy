@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_research_019",
+    "id": "ut_research_024",
     "skill": "research",
     "name": "Plan-more-searches request should not trigger research-exhaustiveness",
     "type": "negative",
