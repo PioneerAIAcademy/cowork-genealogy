@@ -848,6 +848,39 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
+.PHONY: unit-relay-fidelity
+unit-relay-fidelity: ## How much of an agent's return survives the main thread's relay — offline report over committed unit run logs, never a gate
+	# NOT replay-check above, which is one letter away and replays e2e runs.
+	# Report only: the direct block measures the HARNESS DISPATCHER, not
+	# production, so nothing here gates a build or reaches the judge (#3188).
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py
+
+.PHONY: replay-sizes
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
+	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
+	# local-state read tools (research_query, project_context, person_warnings,
+	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
+	# to the BASE build (default: merge-base with origin/main, built once into a
+	# cached sparse worktree under $$TMPDIR/genealogy-replay-builds/; remove with
+	# `git worktree remove <dir>`) and to the working-tree build, over
+	# research.json rebuilt as of each call (harness/replay.py) and the run's
+	# FINAL tree (approximate). The headline is candidate - base, never vs the
+	# recorded size. FamilySearch/wiki tools are listed as NOT REPLAYED (T1.4c).
+	# Exit 2: selection, usage or build error. Exit 3: the replay is not
+	# measuring what it claims (rebase broke, state errors over the margin, a
+	# read wrote files, a network call) — it refuses to print a misleading 0%.
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+
+.PHONY: replay-collapse
+replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
+	# Proves the replacement returns EXACTLY the walk's question's entries (an
+	# oracle computed from the rebuilt notes), and that the walk it is compared
+	# against is the real one: each replayed walk call's count must equal the
+	# count the run recorded, else exit 3. Reports N walk calls -> M replacement
+	# calls. Exit 1 = the candidate lacks the filter; exit 2 = nothing comparable
+	# (e.g. every group unverifiable after a capture strip); exit 3 = integrity.
+	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its

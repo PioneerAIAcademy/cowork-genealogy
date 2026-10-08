@@ -64,11 +64,12 @@ Anchoring that deadline at *hydration* entry would be the mistake
 budget was 40 s on top of whatever the read had already used … could put the
 call past 60 s and lose everything, which is the one outcome this exists to
 prevent."* Everything before hydration is unbudgeted otherwise:
-`standardPlaceToRepId` goes through `withRetry`, which has **3 attempts and no
-wall-clock budget**, over `fetchWithTimeout` at the 30 s default; and
-`fetchWithRetry`'s first attempt always runs its full `timeoutMs` whatever the
-10 s retry budget says. Worst case that is ~90 s of place resolution plus 30 s
-of search before a hydration clock would even start.
+`standardPlaceToRepId`'s Places fetches go through `fetchWithRetry` at the
+30 s default timeout, and a resolution can make more than one of them (a dated
+search, then an undated fallback). `fetchWithRetry`'s first attempt always runs
+its full `timeoutMs` whatever the 10 s retry budget says, so place resolution
+has no wall-clock budget of its own, and the search adds 30 s more before a
+hydration clock would even start.
 
 So: **a 50 s deadline taken at `catalogSearchTool` entry**. It bounds
 **hydration**: place resolution and the search spend from it, hydration gets
