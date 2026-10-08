@@ -178,10 +178,20 @@ question. Places agree when every component of the less specific one prefix-matc
 a component of the other, comparing the raw and standardized spellings separately
 and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
 England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
-On the committed corpus (2026-10-07: 391 question entries across the scenarios and
-206 e2e final states) it fires on 12 e2e question-runs; all 12, spot-checked, are
-real disagreements (one borderline: a village against its municipality). It fires on no
-scenario except `research-unregistered-census-conflicts`, mined to need it.
+On the committed corpus it fires on 11 e2e question-runs. An earlier count
+(2026-10-07, 12 hits over 206 final states, file selection not recorded) was
+spot-checked hit by hit and every one was a real disagreement (one borderline: a
+village against its municipality). It fires on no scenario
+except `research-unregistered-census-conflicts`, mined to need it.
+
+**How these figures are counted** (2026-10-08, `npx tsx
+dev/measure-question-state-signals.ts`, `--list` for every hit): the corpus is
+every scenario `research.json` plus every e2e `run-<ts>.final-research.json`
+(developer `scratch_` runs left out), each with its sibling tree, run through the
+shipped `questionStates`. That is 394 question entries — 151 across 110 scenarios
+and 243 across 203 e2e final states — and a hit is one question entry whose signal
+is non-empty. Comparing bounded dates as spans and counting only birth parents
+changed no hit on this corpus.
 
 `competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
 a person in scope — the project's `subject_person_ids` plus every person this
@@ -189,7 +199,7 @@ question's assertions are linked to — who is the child of more than two birth-
 `ParentChild` relationships (no `subtype`, or `Biological` in any casing; `Step`,
 `Adoptive`, `Foster` and `Guardian` do not count), while fewer than two hypotheses list this question in
 `related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
-fires on 6 e2e question-runs (the two spot-checked are real: one father with two
+fires on 5 e2e question-runs (the two spot-checked are real: one father with two
 different mothers; two same-named mothers).
 Both fields stay advisory: nothing refuses a write because of them.
 
