@@ -61,13 +61,15 @@ def test_settings_that_moved_are_named(tmp_path):
     assert "$5.00 -> $4.00" in text and "-20%" in text
 
 
-def test_a_real_committed_comparison_shows_helper_time_and_both_grades():
+def test_a_real_committed_comparison_shows_cost_and_both_grades():
     before = REAL_DIR / "run-2026-09-30_07-29-52.json"
     after = REAL_DIR / "run-2026-10-05_16-07-18.json"
     text = compare(json.loads(before.read_text(encoding="utf-8")), before,
                    json.loads(after.read_text(encoding="utf-8")), after)
-    assert "29.1 min -> 57.4 min" in text
-    assert "$14.58 -> $15.66" in text
+    assert "120.4 min -> 107.1 min" in text
+    # Before is an aborted run's estimate, after is the SDK's figure: no % change.
+    assert "$14.58 -> $15.66" in text and "+7%" not in text
+    assert "not comparable" in text
     assert "partial -> pass" in text  # both runs graded, so the grade shows
     # A fraction keeps its decimals: 0.75 -> 1.0 printed as "1 -> 1 +33%" once.
     assert "0.75 -> 1.00" in text
@@ -94,3 +96,22 @@ def test_main_writes_the_next_numbered_file_and_prints_it(tmp_path, capsys):
     saved = tmp_path / "fx" / "comparison" / "01_comparison.txt"
     assert saved.exists()
     assert "$5.00 -> $4.00" in capsys.readouterr().out
+
+
+def test_a_multi_query_run_shows_no_turns_change_and_a_resumed_one_no_cost_change(tmp_path):
+    after = _log(4.0)
+    after["usage"].update(num_turns=1, resumes=1, timeline=[[0.0, "system:init"], [9.0, "system:init"]])
+    b, a = _pair(tmp_path, _log(5.0), after)
+    text = compare(_log(5.0), b, after, a)
+    assert "multi-query run (after)" in text and "-90%" not in text
+    assert "resumed run (after)" in text and "-20%" not in text
+
+
+def test_helper_time_is_summed_per_run(tmp_path):
+    def sub(seconds):
+        return {"agent_type": "record-extractor", "num_assistant_turns": 3,
+                "usage": {"input_tokens": 1, "output_tokens": 10}, "duration_seconds": seconds}
+    before = _log(5.0, subagents=[sub(60.0), sub(120.0)], subagent_capture_status="captured")
+    after = _log(4.0, subagents=[sub(90.0)], subagent_capture_status="captured")
+    b, a = _pair(tmp_path, before, after)
+    assert "3.0 min -> 1.5 min" in compare(before, b, after, a)
