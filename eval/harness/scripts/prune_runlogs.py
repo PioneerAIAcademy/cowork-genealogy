@@ -54,6 +54,7 @@ from harness.snapshot import (  # noqa: E402
     normalize,
 )
 from harness.versioning import DEFAULT_KEEP_CANDIDATES, prunable_candidates  # noqa: E402
+from harness.skill_invocation import STALE_JUSTIFICATION_MARKER  # noqa: E402
 
 REPO_ROOT = HARNESS_DIR.parents[1]
 RUNLOGS_UNIT = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -377,10 +378,24 @@ def replay_remnant(response_summary: Any) -> str | None:
     # this is here to keep. (Caught by its own test, which is the only reason
     # this is not still a silent hole.)
     has_no_project = "no_project" in str(response_summary or "")
+    has_unjustified = "unjustified_warnings" in str(response_summary or "")
+    # The stale-justification answer carries the SAME `reason`, and the live
+    # predicate tells the two apart only by this marker. Dropping it here makes
+    # every aged log replay a correct stale round-trip as an abandoned refusal,
+    # inflating the fire rate the promotion decision reads -- and stripping is
+    # irreversible, so the exclusion would silently revert itself on a 14-day
+    # delay rather than failing anywhere visible.
+    has_stale = STALE_JUSTIFICATION_MARKER in str(response_summary or "")
     parsed = parse_tool_result(response_summary) or {}
     ids = parsed.get("ids") or []
     full_length = parsed.get("full_length")
-    if not ids and full_length is None and parsed.get("ok") is None and not has_no_project:
+    if (
+        not ids
+        and full_length is None
+        and parsed.get("ok") is None
+        and not has_no_project
+        and not has_unjustified
+    ):
         return None
     remnant: dict[str, Any] = {"ok": parsed.get("ok")}
     if ids:
@@ -392,17 +407,38 @@ def replay_remnant(response_summary: Any) -> str | None:
     # `no_project` inside this field, and that answer deliberately carries no
     # `is_error` — so losing the marker makes a write that never happened look
     # landed. The polarity is what makes it dangerous rather than merely lossy:
-    # in `find_relationship_writes_without_warnings_check` the same marker
-    # decides whether a `person_warnings` call SUCCEEDED, so a lost one credits a
-    # call that did nothing and the check silently undercounts.
+    # in `unresolved_warning_refusal` the same marker decides whether a later
+    # tree-writer call LANDED, so a lost one credits a call that did nothing as
+    # the success resolving a refusal, and the check silently undercounts.
     #
     # Latent today — no committed run carries a visible `no_project` response —
     # which is exactly why it is worth closing while the remnant is being
     # written rather than after a run trips it. Matched and re-emitted as the
     # bare name, per `did_not_land`: the quoted-key form never appears in the
     # verbatim envelope the summarizer passes through.
+    # BOTH markers, never one overwriting the other. `reason` was assigned twice
+    # in sequence, so a payload carrying both lost `no_project` -- and that loses
+    # in the dangerous direction: `did_not_land` would stop recognising a call
+    # that never landed, and `find_unguarded_protected_writes` uses it to SKIP,
+    # so the loss manufactures a violation rather than missing one.
+    reasons = []
     if has_no_project:
-        remnant["reason"] = "no_project"
+        reasons.append("no_project")
+    # The warning-gate refusal marker, for the same polarity reason and with a
+    # sharper consequence: `unresolved_warning_refusal` keys on
+    # `unjustified_warnings` and NOTHING ELSE, so dropping it does not merely
+    # bias the check -- it makes a stripped run structurally unable to report a
+    # refusal at all, while the run still counts toward the denominator unless
+    # the replay skips it. Stripping is irreversible, so a marker not kept here
+    # is gone from the corpus permanently.
+    if has_unjustified:
+        reasons.append("unjustified_warnings")
+    if reasons:
+        remnant["reason"] = reasons[0] if len(reasons) == 1 else reasons
+    if has_stale:
+        # Re-emitted verbatim: the predicate matches the bare marker, so it
+        # survives the escaped envelope the summarizer passes through.
+        remnant["message"] = STALE_JUSTIFICATION_MARKER
     return json.dumps(remnant)
 
 

@@ -8,22 +8,44 @@ decay.
 ## Test naming
 
 - `ut_research_001` – `ut_research_010`: trigger tests (phase 1a). Positive
-  and negative tests for whether the router skill activates at all. Only 005
-  and 008 remain.
+  and negative tests for whether the router skill activates at all. 001, 004,
+  005 and 008 remain.
 - `ut_research_011`+: routing tests (phase 2). Positive tests that assert
   which callee the router hands off to first, given a specific research.json
   state. Each uses `execution.stub_skills` so the callee is denied at the
   `PreToolUse` hook, whether the router reaches it by a `Skill` call or, for a
   callee converted to an agent, by a spawn.
 
-## Deleted activation tests (issue #2984)
+## Restored activation tests (issue #3119)
 
-`ut_research_001`, `002`, `003`, `004`, `012`, `013` and `014` were deleted on
-2026-10-01 (`015` too; see "Paired rows"). All seven were `xfail` for one defect: `research` and
-`project-status` both match a "drive the workflow forward" request, so the
-orchestrator is skipped about half the time (issue #2927). Under single-run
-grading that made each one a coin flip on every `research` run. Issue #2927
-needs new acceptance tests when it lands; git history has the old files.
+`ut_research_001`, `004`, `012`, `013`, `014` and `015` were deleted on
+2026-10-01 (issue #2984) and are restored without their `xfail` markers. The
+first five were `xfail` for one defect: `research` and `project-status` both matched a
+"drive the workflow forward" request, so the orchestrator was skipped about half
+the time (issue #2927). `project-status`'s description now tells it not to drive
+the research workflow forward (#3092). `015`'s marker named a router shortcut
+instead; see "Paired rows". Each restored test was measured three times, on a
+branch rebased onto main, before it came back (#3119). `015` and `004` each
+needed one more change to pass.
+
+`004` (`investigate-person.json`) needed a change to `research`'s description.
+With #3092 in place it still missed, before any skill loaded: the main thread
+judged Patrick Flynn too common a name to start on and asked the user, with
+`AskUserQuestion`, for details such as his birth year, which the project already
+records. The description now says to start `research` rather than first ask the
+user about the person, since it reads what the project records. On a copy of 004
+that ends at its first hand-off, the main thread asked first on 5 of 30 runs
+before that sentence and on none of 30 after it, and 004 itself then started
+`research` on all 21 of its runs. The sentence moved nothing it should not:
+`ut_research_008`, with no project, still asks which person; init-project's own
+tests still start init-project; and `ut_init_project_009` picks init-project
+first as often as before. The runs are on #3119.
+
+Not restored:
+
+- `ut_research_002` (`slash-research-question.json`), which issue #3116 owns.
+- `ut_research_003` (`find-relative.json`), which is not part of #2927's removal
+  condition.
 
 ## Routing tests — tag convention
 
@@ -36,7 +58,9 @@ means the router should finish without handing off at all.
 A `stub_skills` entry may name an agent with no skill directory. That is how a
 routing test keeps working when its callee is converted from a skill to an
 agent: the hook denies the spawn exactly as it denies a `Skill` call. A name
-that is still a skill is stubbed at its `Skill` call only.
+that is still a skill is stubbed at its `Skill` call only, except on a test that
+sets `execution.stop_at_stub`, such as `ut_research_015` below: there a spawn of
+any stubbed name is denied too and ends the run.
 
 ## What is NOT covered (and why)
 
@@ -51,24 +75,43 @@ Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
 
 ## Paired rows
 
-`research-exhaustiveness`, `proof-conclusion` and `person-evidence` are routed
-by an `Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075). A
-`routes-to:` tag now observes a spawned row, because the validator reads
-`handoffs`.
+The router's `@plugin:` callees are its paired rows: each is routed by an
+`Agent` spawn of `@plugin:<name>`, not by a `Skill` call (#2075), and
+`_paired_names()` in `validators/test_research.py` derives the set from
+`research/SKILL.md`. A `routes-to:` tag observes a spawned row, because the
+validator reads `handoffs`.
 
-`ut_research_015` (`route-shortcut-guard.json`) was the only test tagged
-`no-shortcut`, and it was deleted on 2026-10-01 (issue #2984): it failed 9 of 19
-committed runs on a real router defect, spawning `person-evidence` and
-`research-exhaustiveness` directly instead of walking the table from the top
-(recorded on issue #2927; the test's old note cited #2272, a closed
-person-evidence card). `test_no_paired_skill_shortcut`
-(`validators/test_research.py`) is still correct and still runs, but **no test
-exercises it now**. A replacement test is needed before anyone can claim the
-shortcut is fixed; git history has the old file, including why it kept the paired agents in `stub_skills`.
+`ut_research_015` (`route-shortcut-guard.json`) is the only test tagged
+`no-shortcut`, so it is the one test `test_no_paired_skill_shortcut` runs on.
+The user names a downstream destination ("through to a proof conclusion") on a
+project that has only an objective, so the first hand-off must be row 1,
+question-selection. Its `execution.stop_at_stub: true` makes the harness end the
+run with the turn of that first hand-off, and the runnability gate requires it on
+a `no-shortcut` test. Without the stop the test cannot pass reliably:
+`research/SKILL.md` tells the router to drive the table forward to the named
+destination, so after question-selection it walks on down the table. The stubs
+write nothing, so nothing it hands to ever lands: one measured walk ran on until
+the turn cap, and another came back to the first row. The test's failures
+committed to main were mostly the activation defect above, then that walk. One
+more (`v1_2026-08-25_20-14-29.json`), from when the test asked to "write the
+conclusion", went straight to proof-conclusion, and research never ran, and one
+(`v1_2026-08-26_20-01-53.json`) made no hand-off at all. In every 015 run
+committed to main, person-evidence, research-exhaustiveness and
+proof-conclusion were reached by `Skill` calls, which is why a count of agent
+spawns alone finds none there; runs committed only to unmerged branches do spawn
+person-evidence and research-exhaustiveness. The test keeps the paired agents in
+`stub_skills`: a
+denied spawn is still recorded, so a shortcut fails the validator rather than
+running.
 
 That validator is not redundant with `test_routes_to_expected_skill`, which
-asserts only the first hand-off. A router that calls `Skill(question-selection)`
-first and *then* spawns `@plugin:proof-conclusion` passes it green.
+asserts only the first hand-off. A router that spawns question-selection and
+`@plugin:proof-conclusion` in the same turn passes the routing check. The stop
+waits for the end of that turn, so it denies and records both, and this
+validator fails the run. That is all it now sees: a paired hand-off made in the
+same turn as the first one. A shortcut in a later turn is cut off by the stop and
+passes, and a shortcut as the first hand-off already fails
+`test_routes_to_expected_skill`.
 
 ## Bounded requests (issue #2813)
 
@@ -110,7 +153,10 @@ every predicate key be present (`harness/fixtures.py:93`), so a router omitting 
 optional argument would have matched nothing and been refused — the wrong failure for
 a test about whether the router looks before it searches.
 
-`ut_research_022` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
+`ut_research_022` (`candidates-not-verdicts.json`) covers item 6. It is deleted until
+#2813 restores it: #3124 measured it failing about two runs in three, on that branch's
+`research/SKILL.md` and on main's alike, and its fix belongs to #2813. Its Driscoll
+fixture stays for that. It is **judge-graded
 on purpose** — which is a different thing from 020's accident. Every part of that rule
 is a property of the reply: whether a name match was presented as an answer, whether
 match strength and search scope were given, and whether the closing offer is to research

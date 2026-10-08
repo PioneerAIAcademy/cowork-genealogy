@@ -132,8 +132,8 @@ function parseTypeSuffix(
  * +date:+999 and +date:+10000 and +date:+-44 all 400, +date:+1000 returns 204,
  * +date:+9999 returns 200. That range is reachable through the same fudge
  * offsets `earliestYear` applies ("abt 1000" -> 999, "44 BC" -> -44), and a 400
- * would throw inside searchPlace, burn all three withRetry attempts, and leave
- * the place blank and uncached so the next call burns them again. The
+ * would throw inside searchPlace (a 400 is not retried) and leave the place
+ * blank and uncached, so the next call throws again. The
  * empty-result fallback in getSearchEntries does not cover a throw. Out-of-range
  * years therefore degrade to an undated query rather than being sent.
  */
@@ -154,16 +154,13 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Retry an idempotent async call with exponential backoff + jitter. Used for
- * place standardization, where a transient network / 429 / 5xx blip shouldn't
- * drop a place. Re-throws the last error after `attempts` tries so the caller
- * can decide (the resolver fns swallow it and return null WITHOUT caching, so
- * the failed lookup retries on a later call).
+ * Retry an idempotent async call with exponential backoff + jitter. Used around
+ * match-engine scoring (rank_search_matches, same_person). Place lookups no
+ * longer go through it: their fetchers retry transient failures at the HTTP
+ * call (place-api.ts, via fetchWithRetry). Re-throws the last error after
+ * `attempts` tries so the caller can decide.
  *
- * NOTE: the underlying fetchers throw a generic Error on any non-2xx, so this
- * retries all thrown errors (not just 5xx). That is harmless for these
- * idempotent GETs; finer transient-only classification will land when the raw
- * fetch moves into this module (see file header TODO).
+ * NOTE: this retries every thrown error, not just transient ones.
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
@@ -256,9 +253,9 @@ export function deriveContextName(text: string): string | undefined {
  * matches (better to return extra candidates than zero). When the caller passes
  * no explicit contextName, one is derived from the input text itself
  * (see deriveContextName) so every resolver path — including the five write
- * paths that persist standard_place — disambiguates same-name places. Wrapped
- * in withRetry; a successful empty result IS cached (definitive), a thrown
- * error is not.
+ * paths that persist standard_place — disambiguates same-name places. Each
+ * fetch retries transient failures itself (place-api.ts, via fetchWithRetry);
+ * a successful empty result IS cached (definitive), a thrown error is not.
  */
 async function getSearchEntries(
   name: string,
@@ -274,7 +271,7 @@ async function getSearchEntries(
   const cached = searchEntriesCache.get(key);
   if (cached) return cached;
 
-  let entries = await withRetry(() => searchPlace(name, { date: year }));
+  let entries = await searchPlace(name, { date: year });
 
   // `+date:` is a hard filter, not a preference: when no place representation
   // records coverage for that year FamilySearch returns nothing at all, even
@@ -285,7 +282,7 @@ async function getSearchEntries(
   // query makes the qualifier strictly additive — it can sharpen an answer but
   // never turns one into a blank. See dev/probe-place-date-disagreement.ts.
   if (year !== undefined && entries.length === 0) {
-    entries = await withRetry(() => searchPlace(name));
+    entries = await searchPlace(name);
   }
 
   const context = effectiveContext?.trim().toLowerCase();
@@ -719,7 +716,7 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   if (repInfoCache.has(repId)) return repInfoCache.get(repId) ?? null;
   let place: Awaited<ReturnType<typeof getPlaceById>>;
   try {
-    place = await withRetry(() => getPlaceById(repId));
+    place = await getPlaceById(repId);
   } catch {
     return null; // transient — do not cache
   }
@@ -879,7 +876,7 @@ export async function placeIdToRepIds(placeId: string): Promise<string[]> {
   if (cached) return cached;
   let reps: string[];
   try {
-    reps = await withRetry(() => getPlaceRepIds(placeId));
+    reps = await getPlaceRepIds(placeId);
   } catch {
     return [];
   }
