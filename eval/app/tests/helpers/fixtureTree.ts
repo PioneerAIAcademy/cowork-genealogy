@@ -165,7 +165,7 @@ export function buildRunLog(opts: {
   snapshot?: Record<string, string>;
   tests?: Array<{
     test_id: string;
-    outcome?: 'pass' | 'partial' | 'fail' | 'aborted' | 'xfail' | 'xpass';
+    outcome?: 'pass' | 'partial' | 'fail' | 'aborted';
     dimensions?: Array<{
       source: 'base' | 'rubric';
       name: string;

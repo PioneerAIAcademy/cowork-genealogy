@@ -452,7 +452,7 @@ do next), thrown as `Error` objects.
 | `gedcomx1` or `gedcomx2` is missing entirely | MCP schema validation rejects the call before the function runs (the four params are `required`). |
 | `gedcomx1.persons` or `gedcomx2.persons` is missing or empty | **Runtime check** inside `validateInput()` — the JSON schema for `type: "object"` won't catch a missing nested array. Throws: `"same_person: <side> has no persons[] array."` |
 | API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen (the API always returns ≥1 entry; see Evidence Trail). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
-| `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${error.message}."` |
+| `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(error)}."` |
 
 ---
 
@@ -889,7 +889,6 @@ export const samePersonSchema = {
 - **Tree-merge use case.** The platform endpoint `api.familysearch.org/platform/tree/persons/matches` is a different operation (find merge candidates for a tree person). If we eventually want that, it's a separate tool.
 - **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modification is appending one `sourceDescription` for the primary anchor.
 - **Deduplicating ids across `gedcomx1` and `gedcomx2`.** The two documents live in separate `entries[]` items in the API request, so they don't share an id namespace. Both sides may use `"I1"` independently with no problem. The tool does NOT rewrite ids to make them unique across sides.
-- **Companion plan doc** (`docs/plan/match-two-examples-tool.md`) and **testing guide** (`docs/testing-guides/match-two-examples-tool-testing-guide.md`). Per CLAUDE.md convention these should exist alongside the tool — they'll be added during the implementation PR, not in the spec PR.
 
 ---
 

@@ -5,10 +5,10 @@
     "name": "Post-transition Gregorian date — no conversion needed",
     "type": "positive",
     "description": "User asks to convert a clearly post-transition date that's already Gregorian. The skill should respond that no conversion is needed and explain why, rather than silently applying an offset and producing a wrong answer. Tests refusal-to-convert when conversion isn't appropriate.",
-    "tags": ["no-op", "post-transition", "england", "refusal-to-convert"]
+    "tags": ["no-op", "post-transition", "england", "refusal-to-convert", "direct-arm"]
   },
   "input": {
-    "user_message": "Convert this English birth record date to the Gregorian calendar: '15 March 1850, London'.",
+    "delegation": "Convert this English birth record date to the Gregorian calendar: '15 March 1850, London'.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

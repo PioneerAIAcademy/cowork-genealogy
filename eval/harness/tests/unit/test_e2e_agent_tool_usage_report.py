@@ -110,7 +110,7 @@ def test_scan_tolerates_malformed_shapes_without_killing_the_report(tmp_path: Pa
 
 def test_scan_try_catches_a_shape_the_guards_do_not_cover(tmp_path: Path):
     """The try is the backstop for a shape the in-line guards miss — a turn that
-    is not a dict makes `_tools_from_capture` raise `AttributeError`. It must skip
+    is not a dict makes `tools_from_capture` raise `AttributeError`. It must skip
     one file and land in `problems`, not abort. `TypeError` is in the `except`
     for the same reason `corpus_report` includes it."""
     good = _write(tmp_path, "run-1.json", {"subagents": [_capture("gps-mentor", ["x"])]})

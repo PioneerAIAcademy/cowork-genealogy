@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "user_message": "Look for Patrick Flynn in pre-1850 Schuylkill County, Pennsylvania probate records. Construct ONE full-text query that combines required-term operators with a wildcard so we cover the common surname transcription variants (Flynn, Flinn, Flyn, Flynne) in a single search — don't run separate per-variant queries.",
+    "delegation": "Look for Patrick Flynn in pre-1850 Schuylkill County, Pennsylvania probate records. Construct ONE full-text query that combines required-term operators with a wildcard so we cover the common surname transcription variants (Flynn, Flinn, Flyn, Flynne) in a single search — don't run separate per-variant queries.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -25,6 +25,7 @@
     "wiki-search-any"
   ],
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should construct one Lucene query that combines required-term (+Patrick) with a wildcard on the surname that ACTUALLY covers all four variants the prompt lists (Flynn, Flinn, Flyn, Flynne). The reference pattern is `+Patrick +Fl?n*` — `?` matches a single character (covers Flynn/Flinn), and the trailing `*` matches zero-or-more (covers Flyn with no trailing chars AND Flynne with 'ne' trailing)",
     "Should NOT submit a `+Fl?nn` or `+Fl*nn` query as the SINGLE-query answer — those patterns are 5-or-more chars ending in 'nn' and miss both Flyn (4 chars, single n) and Flynne (ends in 'e'). The judge should note this in scoring: a `Fl?nn`/`Fl*nn`-only answer satisfies the operator-combination demonstration but FAILS the prompt's explicit 'cover all variants in one query' requirement",
     "Should NOT issue one query per spelling variant (`+Patrick +Flynn` then `+Patrick +Flinn` then `+Patrick +Flyn`) — the prompt explicitly asks for a single wildcard query that covers all variants",

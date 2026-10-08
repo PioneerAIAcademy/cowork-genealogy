@@ -153,7 +153,11 @@ def writer_sets(
         if plane not in (row.get("enforceableAt") or []):
             continue
         section = row["section"]
-        callers = row.get("callers") or []
+        callers = (
+            list(row.get("callers") or [])
+            + list(row.get("hookCallers") or [])
+            + list(row.get("unitCallers") or [])
+        )
         resolved = set()
         for c in callers:
             name = skill_name(c)

@@ -81,3 +81,35 @@ describe("sanitizeCandidate — record-only field stripping", () => {
     expect(candidate.sources?.[0]?.resource_type).toBe("DigitalArtifact");
   });
 });
+
+describe("sanitizeCandidate — person-level source refs (#2696)", () => {
+  const run = (sources: unknown) =>
+    sanitizeCandidate({
+      persons: [{ id: "P1", gender: "Male", names: [{ given: "A", surname: "B" }], sources } as any],
+      sources: [{ id: "S1", title: "Census" }],
+    });
+
+  it("keeps a well-formed ref that names a candidate source, with no warning", () => {
+    const { candidate, warnings } = run([{ ref: "S1", page: "p. 3", quality: 2 }]);
+    expect(candidate.persons![0].sources).toEqual([{ ref: "S1", page: "p. 3", quality: 2 }]);
+    expect(warnings).toEqual([]);
+  });
+
+  it.each([
+    ["a dangling ref", [{ ref: "S9" }]],
+    ["an {id, title} entry (hand-written record_read fixtures)", [{ id: "S1", title: "Census" }]],
+    ["a ref carrying tags", [{ ref: "S1", tags: ["Name"] }]],
+    ["a string quality", [{ ref: "S1", quality: "2" }]],
+    ["a non-array value", "S1"],
+  ])("drops %s with a counted warning, never rejecting the candidate", (_label, sources) => {
+    const { candidate, warnings } = run(sources);
+    expect("sources" in candidate.persons![0]).toBe(false);
+    expect(warnings.some((w) => /dropped 1 person-level source reference/.test(w))).toBe(true);
+  });
+
+  it("keeps the good refs and drops only the bad ones in a mixed list", () => {
+    const { candidate, warnings } = run([{ ref: "S1" }, { ref: "S9" }]);
+    expect(candidate.persons![0].sources).toEqual([{ ref: "S1" }]);
+    expect(warnings.some((w) => /dropped 1 person-level/.test(w))).toBe(true);
+  });
+});

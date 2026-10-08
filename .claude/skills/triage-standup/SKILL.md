@@ -380,8 +380,19 @@ routes by whoever happens to pick it up. If the lane is genuinely undecided,
 leave it unlabeled **and say so in the body**, so the missing label reads as a
 decision rather than an oversight.
 
-Then verify placement with `gh project item-list 1 --owner PioneerAIAcademy` —
-every card you filed should read `Backlog`.
+Then verify placement per issue — every card you filed should read `Backlog`:
+
+```sh
+for n in <each issue you filed>; do
+  printf '%s ' "$n"; gh issue view "$n" --json projectItems -q '[.projectItems[].status.name] | join(",")'
+done
+```
+
+An empty line means the add-to-project workflow has not run yet; re-check once
+before reporting it. Do not read the whole board for this: `gh project
+item-list` defaults to 30 rows and truncates silently at any `--limit` below the
+board's size (1,394 items on 2026-09-25), so a card missing from it proves
+nothing.
 
 Write issue bodies so a fresh session can act with no other context: the
 evidence, the file paths, the sequencing constraint, and what *not* to re-derive.

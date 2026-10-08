@@ -40,6 +40,7 @@ require build/index.js
 require build/build-info.json
 require config/familysearch.json
 require config/given-name-variants.json
+require config/name-variants-given.json
 require node_modules/@modelcontextprotocol/sdk
 
 forbid src

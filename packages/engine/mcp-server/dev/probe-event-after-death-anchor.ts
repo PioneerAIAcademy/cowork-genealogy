@@ -2,7 +2,7 @@
  * Probe — evidence trail behind the death-like anchor's suppression corollary
  * in docs/specs/person-warnings-tool-spec.md ("Four consequences a reader has
  * to hold", consequence 4) and behind the `hasEventAfterDeath1` cause guidance
- * in packages/engine/plugin/skills/check-warnings/.
+ * in packages/engine/plugin/agents/check-warnings.md.
  *
  * It exists because a live case was misdiagnosed on hand arithmetic. Issue
  * #2210 came from alpha feedback #2167: a widow's pension filed 11 Jul 1890

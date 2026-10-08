@@ -12,11 +12,10 @@
       "pennsylvania",
       "famine",
       "research-relevant",
-      "topical-fixture-required"
-    ]
+      "topical-fixture-required", "direct-arm"]
   },
   "input": {
-    "user_message": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
+    "delegation": "What historical context should I know about Irish immigration to Schuylkill County, Pennsylvania in the 1840s?",
     "scenario": null
   },
   "mcp_fixtures": [

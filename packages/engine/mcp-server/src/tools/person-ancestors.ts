@@ -1,9 +1,8 @@
 import type { Principal } from "../auth/principal.js";
 import { dropDanglingEdges, describeDroppedEdges } from "../utils/tree-graph.js";
-import { getValidToken } from "../auth/refresh.js";
 import { toSimplifiedStandardized } from "../utils/gedcomx-convert.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import type { GedcomX, SimplifiedRelationship } from "../types/gedcomx.js";
 import type {
   AncestorPerson,
@@ -87,13 +86,12 @@ export async function personAncestorsTool(
   principal: Principal,
 ): Promise<PersonAncestorsResult> {
   validateInput(input);
-  const token = await getValidToken(principal);
   // Resolve the root: the supplied personId, or the logged-in user's own
   // tree person when it's omitted/empty.
   const provided =
     typeof input.personId === "string" ? input.personId.trim() : "";
-  const pid = provided !== "" ? provided : await getCurrentUserPersonId(token);
-  return fetchAndMap(token, input, pid, 0);
+  const pid = provided !== "" ? provided : await getCurrentUserPersonId(principal);
+  return fetchAndMap(principal, input, pid, 0);
 }
 
 function validateInput(input: PersonAncestorsInput): void {
@@ -115,10 +113,9 @@ function validateInput(input: PersonAncestorsInput): void {
 // account PII (helperAccessPin, birthDate, ...) the endpoint also returns.
 // Inline here for the single caller; promote to src/auth/ if a second tool
 // needs it.
-async function getCurrentUserPersonId(token: string): Promise<string> {
-  const res = await fetchWithRetry(FS_CURRENT_USER_URL, {
+async function getCurrentUserPersonId(principal: Principal): Promise<string> {
+  const res = await fsFetch(principal, FS_CURRENT_USER_URL, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
     },
   });
@@ -148,15 +145,14 @@ async function getCurrentUserPersonId(token: string): Promise<string> {
 // ─── Fetch + status handling (mirrors person_read's host contract) ─────────
 
 async function fetchAndMap(
-  token: string,
+  principal: Principal,
   input: PersonAncestorsInput,
   pid: string,
   redirectsFollowed: number,
 ): Promise<PersonAncestorsResult> {
   const url = buildUrl(input, pid);
-  const res = await fetchWithRetry(url, {
+  const res = await fsFetch(principal, url, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
     },
     redirect: "manual",
@@ -181,7 +177,7 @@ async function fetchAndMap(
         `FamilySearch ancestry API error: 301 redirect missing Location header for ${pid}.`,
       );
     }
-    return fetchAndMap(token, input, newId, redirectsFollowed + 1);
+    return fetchAndMap(principal, input, newId, redirectsFollowed + 1);
   }
 
   if (res.status === 401) {

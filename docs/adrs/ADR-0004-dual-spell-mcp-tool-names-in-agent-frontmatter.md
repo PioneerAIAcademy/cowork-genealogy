@@ -130,8 +130,10 @@ Three corollaries:
   it would hand a read-only agent shell access to the host.
 - **Never hardcode a qualified name in a `ToolSearch` query.** Search by bare
   name (`query: "+research_append"`), which matches whatever prefix the session
-  exposes. Cowork defers tool schemas past a size threshold and offers no control
-  over it, so `ToolSearch` is the real load path there — and
+  exposes. Cowork defers tool schemas past a size threshold, so `ToolSearch` is
+  the real load path there. (Claude Code exempts a tool whose `_meta` carries
+  `anthropic/alwaysLoad`, the `ALWAYS_LOAD` set in `tool-schemas.ts`; whether
+  Cowork does is unverified.) And
   `select:mcp__genealogy__…` resolves to nothing under either Cowork spelling —
   bridged or bare.
 - **Built-in tools (`Read`) stay bare**, and skill `allowed-tools` stays bare

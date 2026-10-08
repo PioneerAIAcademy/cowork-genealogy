@@ -41,6 +41,14 @@
 // Neither client waits on a stalled host forever: `CONNECT_TIMEOUT_MS` bounds a
 // Postgres connection (and a wait for a free pool slot) and an S3 TCP connect;
 // `S3_REQUEST_TIMEOUT_MS` bounds one S3 request end to end, body included.
+//
+// Readiness (`PgS3Backend.checkReady`, the hosted `/healthz`) probes both stores
+// under one `READY_TIMEOUT_MS` deadline, on clients of its own: a short-lived
+// `pg.Client` rather than the pool (a busy pool would read as a down database)
+// and a one-attempt S3 client with its own socket pool, sharing the process
+// client's credentials (a failing probe on the process client would drain its
+// retry quota, and its sockets can all be held by long transfers). It never
+// throws; its report carries short labels only, never an error message.
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, randomUUID } from "node:crypto";
@@ -49,8 +57,10 @@ import type { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   PutObjectCommand,
   S3Client,
+  type S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { AsyncMutex } from "./async-mutex.js";
@@ -71,6 +81,58 @@ export const CONNECT_TIMEOUT_MS = 10_000;
 /** How long one S3 request (headers and body, a multi-MB scan included) may
  *  take end to end. */
 export const S3_REQUEST_TIMEOUT_MS = 90_000;
+/** The whole readiness probe's deadline: under the image HEALTHCHECK's 3 s and
+ *  `make engine-smoke-http`'s final 2 s curl. */
+export const READY_TIMEOUT_MS = 1_500;
+/** The tables every store method queries; a missing one fails readiness. */
+export const STORE_TABLES = ["documents", "blobs", "staging", "projects"] as const;
+
+/** One store check's outcome. `error` is a short label (an error code or name),
+ *  never a message: `/healthz` is unauthenticated and messages can carry the
+ *  host, the user name or the bucket. */
+export interface ReadyCheck {
+  ok: boolean;
+  error?: string;
+}
+
+export interface PgS3ReadyReport {
+  ok: boolean;
+  checks: { postgres: ReadyCheck; s3: ReadyCheck };
+}
+
+/** A readiness failure whose label is not an error code or name. */
+class ReadyCheckError extends Error {
+  constructor(
+    readonly label: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** The label a failed check reports: never `message`. */
+function readyLabel(e: unknown): string {
+  if (e instanceof ReadyCheckError) return e.label;
+  const err = e as { code?: unknown; name?: unknown };
+  if (typeof err?.code === "string" && err.code) return err.code;
+  if (typeof err?.name === "string" && err.name) return err.name;
+  return "Error";
+}
+
+/** `work` raced against one timer: a `TimeoutError` when the timer wins. The
+ *  loser is left to settle in the background, its rejection swallowed. */
+function withDeadline(work: Promise<void>, ms: number, what: string): Promise<void> {
+  work.catch(() => {});
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const e = new Error(`${what} did not answer within ${ms} ms`);
+      e.name = "TimeoutError";
+      reject(e);
+    }, ms);
+  });
+  return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
+}
 
 // ─── Backend: the shared connections ─────────────────────────────────────────
 
@@ -78,13 +140,21 @@ export interface PgS3BackendOptions {
   /** Postgres connection string, e.g. `postgresql://postgres:proto@localhost:5434/proto`. */
   dsn: string;
   s3: {
-    endpoint: string;
+    /** An S3-compatible endpoint such as MinIO. Absent (or empty): the SDK's
+     *  regional AWS endpoint for `region`. */
+    endpoint?: string;
     bucket: string;
-    accessKeyId: string;
-    secretAccessKey: string;
-    /** The SDK insists on one even for MinIO; defaults to `us-east-1`. */
+    /** Static credentials, as a pair: both or neither. Neither (or empty):
+     *  the client gets no `credentials`, so the AWS SDK default chain (the
+     *  environment, `~/.aws` shared config/SSO, web identity, then ECS/EC2
+     *  instance metadata) supplies them. */
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    /** The SDK insists on one even for MinIO; defaults to `us-east-1`. With no
+     *  endpoint it also picks the AWS host. */
     region?: string;
-    /** `true` for MinIO and every other endpoint that is not AWS's own. */
+    /** `true` for MinIO without virtual-hosted DNS; `false` for AWS's own
+     *  virtual-hosted style. */
     forcePathStyle: boolean;
   };
   /** Override the module's timeout constants (tests point them at a silent
@@ -129,10 +199,19 @@ export class PgS3Backend {
   // lock, which is what stops N queued writers from draining N connections.
   private readonly queues = new Map<string, AsyncMutex>();
 
+  // The one in-flight readiness probe, shared by concurrent callers and
+  // cleared once its raced report settles; each check's last outcome, for the
+  // transition log.
+  private readyFlight: Promise<PgS3ReadyReport> | undefined;
+  private readonly lastReady = new Map<"postgres" | "s3", boolean>();
+
   constructor(
     readonly pool: Pool,
     readonly s3: S3Client,
     readonly bucket: string,
+    /** What readiness needs beyond the shared clients: the DSN its own
+     *  `pg.Client` connects with, and a one-attempt S3 client. */
+    private readonly probe: { dsn: string; s3: S3Client },
   ) {}
 
   queue(projectId: string): AsyncMutex {
@@ -152,40 +231,143 @@ export class PgS3Backend {
     }
   }
 
-  /** Drain the pool and drop the S3 client. Call once, when the process is done. */
+  /**
+   * Whether both stores can serve a tool call: a fresh Postgres connection that
+   * sees every store table, and `HeadBucket` on the bucket, raced against one
+   * `timeoutMs` deadline. Concurrent calls share one probe. Never throws; logs
+   * one stderr line per check when its outcome changes (and on the first probe).
+   */
+  checkReady(timeoutMs: number = READY_TIMEOUT_MS): Promise<PgS3ReadyReport> {
+    if (!this.readyFlight) {
+      this.readyFlight = this.probeReady(timeoutMs).finally(() => {
+        this.readyFlight = undefined;
+      });
+    }
+    return this.readyFlight;
+  }
+
+  private async probeReady(timeoutMs: number): Promise<PgS3ReadyReport> {
+    const [postgres, s3] = await Promise.all([
+      this.settleCheck("postgres", withDeadline(this.checkPostgres(timeoutMs), timeoutMs, "postgres")),
+      this.settleCheck(
+        "s3",
+        withDeadline(
+          (async () => {
+            await this.probe.s3.send(new HeadBucketCommand({ Bucket: this.bucket }), {
+              abortSignal: AbortSignal.timeout(timeoutMs),
+            });
+          })(),
+          timeoutMs,
+          "s3",
+        ),
+      ),
+    ]);
+    return { ok: postgres.ok && s3.ok, checks: { postgres, s3 } };
+  }
+
+  private async settleCheck(name: "postgres" | "s3", check: Promise<void>): Promise<ReadyCheck> {
+    let result: ReadyCheck;
+    let detail = "";
+    try {
+      await check;
+      result = { ok: true };
+    } catch (e) {
+      result = { ok: false, error: readyLabel(e) };
+      detail = e instanceof Error ? e.message : String(e);
+    }
+    if (this.lastReady.get(name) !== result.ok) {
+      this.lastReady.set(name, result.ok);
+      process.stderr.write(
+        result.ok ? `readiness: ${name} ok\n` : `readiness: ${name} failing (${result.error}): ${detail}\n`,
+      );
+    }
+    return result;
+  }
+
+  private async checkPostgres(timeoutMs: number): Promise<void> {
+    const client = new pg.Client({
+      connectionString: this.probe.dsn,
+      connectionTimeoutMillis: timeoutMs,
+      query_timeout: timeoutMs,
+    });
+    // A socket that dies after connect emits 'error' as well as rejecting the
+    // query; unheard, that emit is an uncaught exception.
+    client.on("error", () => {});
+    try {
+      await client.connect();
+      const missing = await client.query<{ t: string }>(
+        "SELECT t FROM unnest($1::text[]) t WHERE to_regclass(t) IS NULL",
+        [STORE_TABLES],
+      );
+      if (missing.rows.length > 0) {
+        const names = missing.rows.map((r) => r.t).join(",");
+        throw new ReadyCheckError(`schema: missing ${names}`, `store tables missing: ${names}`);
+      }
+    } finally {
+      // end() waits on a goodbye a silent host never acknowledges.
+      await Promise.race([client.end().catch(() => {}), new Promise((r) => setTimeout(r, 200).unref())]);
+      (client as unknown as { connection?: { stream?: { destroy?: () => void } } }).connection?.stream?.destroy?.();
+    }
+  }
+
+  /** Drain the pool and drop the S3 clients. Call once, when the process is done. */
   async close(): Promise<void> {
     await this.pool.end();
     this.s3.destroy();
+    this.probe.s3.destroy();
   }
 }
 
-/** Build a backend from connection options. Neither client connects until first use. */
+/** Build a backend from connection options. Neither client connects until
+ *  first use, and keyless credentials resolve on the first S3 call. Throws on
+ *  exactly one of the two keys. */
 export function createPgS3Backend(options: PgS3BackendOptions): PgS3Backend {
   const connectMs = options.timeouts?.connectMs ?? CONNECT_TIMEOUT_MS;
   const s3RequestMs = options.timeouts?.s3RequestMs ?? S3_REQUEST_TIMEOUT_MS;
+  const { endpoint, accessKeyId, secretAccessKey } = options.s3;
+  // `""` counts as absent: the SDK signs with empty keys rather than falling
+  // through to the default chain, and resolves an empty endpoint to real AWS.
+  if (!accessKeyId !== !secretAccessKey) {
+    throw new Error("createPgS3Backend: accessKeyId and secretAccessKey must be set together or not at all");
+  }
   const pool = new pg.Pool({ connectionString: options.dsn, connectionTimeoutMillis: connectMs });
-  const s3 = new S3Client({
-    endpoint: options.s3.endpoint,
+  // pg discards a pooled client whose idle connection dies and emits 'error' on
+  // the pool; unheard, that emit would take the process down with the database.
+  pool.on("error", (e) => {
+    process.stderr.write(`pg pool: idle client error: ${readyLabel(e)}\n`);
+  });
+  // `requestTimeout` on its own only logs a warning when it fires; the flag
+  // is what turns it into a rejection. A factory, not one instance: each
+  // client gets its own socket pool, so a probe never queues behind the
+  // process client's in-flight transfers.
+  const requestHandler = () =>
+    new NodeHttpHandler({
+      connectionTimeout: connectMs,
+      requestTimeout: s3RequestMs,
+      throwOnRequestTimeout: true,
+    });
+  const s3Config: S3ClientConfig = {
+    ...(endpoint ? { endpoint } : {}),
     region: options.s3.region ?? "us-east-1",
-    credentials: {
-      accessKeyId: options.s3.accessKeyId,
-      secretAccessKey: options.s3.secretAccessKey,
-    },
+    ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
     forcePathStyle: options.s3.forcePathStyle,
     // Only the checksums the S3 API itself mandates: the SDK's default
     // opportunistic CRC trailers are an AWS-only feature that S3-compatible
     // stores reject or ignore.
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
-    // `requestTimeout` on its own only logs a warning when it fires; the flag
-    // is what turns it into a rejection.
-    requestHandler: new NodeHttpHandler({
-      connectionTimeout: connectMs,
-      requestTimeout: s3RequestMs,
-      throwOnRequestTimeout: true,
-    }),
+  };
+  const s3 = new S3Client({ ...s3Config, requestHandler: requestHandler() });
+  // One attempt, so a failing probe every few seconds spends nothing from the
+  // process client's retry quota; the same credential provider, so keyless
+  // credentials resolve (and cache) once for both.
+  const probeS3 = new S3Client({
+    ...s3Config,
+    requestHandler: requestHandler(),
+    maxAttempts: 1,
+    credentials: s3.config.credentials,
   });
-  return new PgS3Backend(pool, s3, options.s3.bucket);
+  return new PgS3Backend(pool, s3, options.s3.bucket, { dsn: options.dsn, s3: probeS3 });
 }
 
 // ─── Ref routing ─────────────────────────────────────────────────────────────

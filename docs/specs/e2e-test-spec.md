@@ -182,7 +182,7 @@ matters when hand-authoring:
   "researcher_profile": {
     "experience_level": "novice",
     "subscriptions": [],
-    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
   },
   "questions": [], "plans": [], "log": [], "sources": [],
   "assertions": [], "person_evidence": [], "conflicts": [],
@@ -669,10 +669,11 @@ the `max_cost_usd` note in §6 step 5.
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Final cost > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
+   | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
+   | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
 
    The `caps.*` values default to those in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`), which a fixture may
@@ -742,6 +743,25 @@ the `max_cost_usd` note in §6 step 5.
    claude.ai connectors, which routinely report `needs-auth`. Thresholds and
    their calibration against the incident: `e2e/mcp_health.py`.
 
+   **`host_slept` retention: committed, ungraded, rate-excluded** (lead ruling
+   2026-09-29). Unlike `mcp_unavailable`, a slept run *is* committed
+   — the `run-` prefix, so the operator can see why a run dropped out of the
+   rates — but the judge is skipped (`verdict: "skipped"`), so it costs no opus
+   call and books no genealogical grade. It is excluded from outcome rates the
+   same way every `skipped` run is (it sits in the `skipped` recall/gate bucket,
+   out of pass/fail); `corpus_report.py` additionally names how many of those
+   skips were `host_slept` so a slept host is not read as that many agent
+   crashes. Why relabel rather than rescue: on Windows `time.monotonic()`
+   advances through Modern Standby, so the sleep is billed against the wall-clock
+   cap and the run is cut mid-standby with only a fraction of its budget spent on
+   real work — grading it would measure the power settings, not the agent.
+   Extending the cap and resuming was rejected: surviving a long standby is
+   unverified, and it rewrites the wait loop. The caps and watchdogs stay on raw
+   monotonic; only the *label* changes, decided by the pure `sleep_relabel`
+   helper (`orchestrator.py`) so the stop decision is unit-testable without the
+   SDK loop. **Nothing checks the live behaviour** — no CI job sleeps a Windows
+   machine; the guarantee rests on the injected-clock unit tests alone.
+
    **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run has *already finished* and the money
@@ -782,31 +802,34 @@ the `max_cost_usd` note in §6 step 5.
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
-   `project.status == "completed"`. `/research` is *meant* to yield at every step
-   boundary — it names the next step and asks whether to do it — and
-   **in an e2e run the harness is the user**, so a yield is not by itself a defect.
-   A `Stop` hook intercepts the voluntary yield and classifies the agent's closing
-   words (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) into three
-   classes. The class is the FORM; the key counted in `usage.hand_back_classes` is the
-   OUTCOME, and for a completion claim the two differ — no run log ever carries a
+   `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
+   that with **one** reply, the prototype worker's `CONTINUE_REASON`
+   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
+   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
+   the copy). Before replying, the hook classifies the agent's closing words
+   (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
+   class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
+   for a completion claim the two differ — no run log ever carries a
    `completion_claim` key:
 
-   | class | form | counted as | harness reply |
-   |---|---|---|---|
-   | `step` | ends with the literal `Next: <step>. Continue?` | `step` | **"Yes."** — the researcher's answer |
-   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed | if `project.status != "completed"`, says so and asks the agent to verify with `research_query` and continue |
-   | `silent` | anything else | `silent` | the procedural resume instruction |
+   | class | form | counted as |
+   |---|---|---|
+   | `step` | ends with the literal `Next: <step>. Continue?` — the agent asking the patron | `step` |
+   | `completion_claim` | ends with the literal `Research complete.` | `false_completion`, or `terminal_completed` when the project really is completed |
+   | `silent` | anything else | `silent` |
+
+   Runs from 2026-09-20 until U17 answered a `step` with **"Yes."** and a false
+   completion with a request to verify with `research_query`; their
+   `continue_nudges` count those replies too.
 
    **Hand-back form.** A fixed closing line (lead ruling, 2026-09-07), matched
    literally and nothing else. Free-prose matching was set aside: the predicate it
-   replaced caught 15 of 41 real yields. `step` reads **0** for as long as no skill that
-   closes the main thread's turn emits that closing line — `init-project` and
-   `question-selection` already emit it as their final line; `research/SKILL.md`
-   does not yet — so a zero is the correct result, not a broken classifier, and a
-   non-zero before `research/SKILL.md` carries the line is a sub-skill's final line
-   ending the turn, not a loosened pattern. Do not loosen the pattern to make it
-   non-zero, and note that markdown emphasis around the line
-   (`**Research complete.**`) does not match.
+   replaced caught 15 of 41 real yields. On 2026-09-27 the line was retired
+   from every prompt (`test_every_shipped_hand_back_literal_classifies`
+   requires zero), so `step` should read **0** on runs since then and a non-zero is
+   the model asking anyway; earlier runs carry it from `init-project` and
+   `question-selection`. Do not loosen the pattern, and note that markdown emphasis
+   around the line (`**Research complete.**`) does not match.
 
    **A declared blocker reads as `silent`.** `research/SKILL.md` names a genuine
    logged blocker as a third legitimate autonomous stop, but it names no next step,
@@ -857,12 +880,49 @@ the `max_cost_usd` note in §6 step 5.
    a resume can't double-apply a non-idempotent write. Resumes are recorded in
    `usage.resumes`; the captured `usage.session_id` is what resume reloads.
 
-   **Clocks.** The wall-clock cap, the inactivity/progress timers, and the
-   reported `usage.wall_clock_seconds` all use `time.monotonic()`, which on
-   macOS/Linux does **not** advance while the machine sleeps — so a sleeping
-   laptop can't masquerade as a stall and can't inflate the metric. The literal
-   elapsed `time.time()` is recorded separately as `usage.real_clock_seconds`,
-   and their gap as `usage.slept_seconds` (≈ time asleep). See eval/README.md
+   **Clocks.** The wall-clock cap and the inactivity/progress timers use
+   `time.monotonic()`. On macOS/Linux it does **not** advance while the machine
+   sleeps, so there a sleeping laptop can't masquerade as a stall and can't
+   inflate the metric. On Windows it **does** advance through Modern Standby
+   (S0 low-power idle), so there the caps and timers count standby: a sleep would
+   otherwise end a run as `timeout`, or as `inactivity` / a resumed stall. The
+   caps and timers still run on raw monotonic, but a run whose heartbeat counted
+   `>= caps.inactivity_seconds` of sleep is **relabeled `host_slept`** (§6.5) at
+   the abort — and, at the inactivity/progress resume decision, is stopped rather
+   than resumed-as-a-stall. So the failure this section once warned
+   was undecided — a slept laptop booked as a capability `timeout`/`inactivity`,
+   or resumed as if it had stalled — no longer happens: it becomes an ungraded,
+   rate-excluded `host_slept` instead.
+
+   Detection is a heartbeat. While `_consume()` runs, a task ticks
+   every 5 s and reads `time.monotonic()`. A gap between ticks above 60 s is
+   sleep monotonic counted (the Windows case), and `gap - 5 s` of it is added to
+   `usage.counted_sleep_seconds`, so one late tick adds nothing. Sleep monotonic
+   left out (macOS/Linux) shows no such gap and is measured instead by the
+   difference between the literal elapsed `time.time()`, recorded as
+   `usage.real_clock_seconds`, and the monotonic elapsed. So:
+
+   - `usage.slept_seconds` = `(real - monotonic) + counted_sleep_seconds`
+     (≈ time asleep, on every platform);
+   - `usage.wall_clock_seconds` = `monotonic - counted_sleep_seconds`, active
+     time on every platform.
+
+   A heartbeat was chosen over a third OS clock. `QueryUnbiasedInterruptTime`
+   through `ctypes` is Windows-only, and whether it pauses in Modern Standby
+   rather than only in S3 is unverified. The Kernel-Power 506/507 standby events
+   need a subprocess and parsing, and are Windows-only too. The heartbeat is
+   stdlib-only and OS-independent, and is unit-tested with injected clocks.
+
+   Limits. A blocked event loop produces the same gap as a sleep, and no
+   heartbeat can tell them apart; the guarantee is structural instead: the
+   heartbeat starts with `_consume()` and is cancelled before `_run_agent`
+   returns, and nothing inside `_consume()` or the SDK hooks it drives blocks
+   for anywhere near 60 s. The one blocking wait there is the MCP-unavailable
+   abort's stderr read (`read_mcp_stderr_lines`, up to nine 0.3 s `time.sleep`
+   retries), which ends the run anyway. A longer blocking call added there later
+   would be counted as sleep. And on Windows a standby **outside**
+   `_consume()`, during workspace build or the judge call, is not detected: it
+   still inflates `wall_clock_seconds` and `judge_seconds`. See eval/README.md
    "Keep the machine awake during a run".
 
 6. **Regardless of which signal fired**, the harness reads the final
@@ -905,17 +965,8 @@ The agent must recover everything through **records** (`record_search`,
 because they don't surface the answer off the subject: `record_person_matches`
 / `record_record_matches` (keyed off a *record* the agent already found),
 `source_attachments` (confirms a found record's attachment — real GPS
-work), and `person_warnings` **without** `live` (it then reads the *local*
-stripped tree).
-
-**`person_warnings` with `live: true` IS blocked**, and the block is
-argument-aware rather than name-only — `LIVE_TREE_ARG_TOOLS` in
-`e2e/orchestrator.py`, consulted by `is_blocked_tree_tool`. Live mode fetches
-the subject plus parents, spouses and children from the live tree, and each
-warning carries `personId`, `personName` and `relatedPersonId`, so on a parents
-fixture it hands back a stripped relative's name and PID — exactly the read
-`person_read` heads this list for. The tool is on both lists for different
-argument shapes, which is why the block cannot be a bare name match.
+work), and `person_warnings` (reads the local stripped tree only — no live
+mode; lead ruling 2026-09-27).
 
 > **The block is necessary but not sufficient.** Records that prove the
 > answer may *already be attached* to the live subject, so `record_search`
@@ -1405,6 +1456,9 @@ A human grade is a per-run annotation committed **beside the run log it grades**
 }
 ```
 
+A prototype run has no run log; its grade sits beside the `run-<ts>.final-*` files
+copied from its export (`/grade-e2e-run`, "Grading a prototype run").
+
 | Field | Required | Notes |
 |-------|----------|-------|
 | `per_finding` | yes | `true` / `partial` / `false` per fixture finding id — the recall gate. For an `avoid` finding, `true` = correctly avoided (§3.4.1). |
@@ -1441,8 +1495,9 @@ Four integrity rules make the agreement number trustworthy:
 
   It distinguishes a judge that raised (quoting the judge's own error
   text)
-  from an agent that produced no final tree, from `--skip-judge`; none of those
-  is a genealogical conclusion, and the presence of an error says nothing about
+  from an agent that produced no final tree, from a host that slept past the
+  inactivity cap (`host_slept`, whose tree is intact), from `--skip-judge`; none
+  of those is a genealogical conclusion, and the presence of an error says nothing about
   what the agent recovered. It exists because the previous single fixed string
   printed the same words for all three, directly beneath
   `stop_reason: completed`, so a judge crash read as "this run succeeded and
@@ -1676,31 +1731,36 @@ referenced sources here, across 50 of the same 159 runs**. This one is shadow
 too, and deliberately not graduated: part of that 111 is
 legitimately-not-yet-uploaded evidence only a genealogist can price.
 
-**A fifth check runs in shadow mode only: a conclusion relies on a resolved
-conflict that was never persisted.** `find_unpersisted_conflict_resolutions` (in
-`harness/skill_invocation.py`) reads the final `research.json` and, for each
-written `proof_summaries` conclusion, flags a question whose
-`exhaustive_declaration.stop_criteria.conflict_resolution` asserts a resolution
-(positive resolution language, not merely the absence of "no conflict" wording —
-a required field that is always populated would otherwise default to firing) that
-**no resolved `conflicts[]` entry is *linked* to the conclusion** — neither cited
-on the proof_summary's `resolved_conflict_ids`, nor naming the question in a
-resolved conflict's `blocks_question_ids`, nor named by its `c_` id in the
-stop-criterion prose (and, when the prose names no `c_` id, no resolved entry
-exists at all). A resolved conflict that exists but is linked to nothing fires
-only when the stop-criterion names a `c_` id that is not resolved; when it names
-no id, an existing resolved entry silences the check. So read the count as **"no
-resolved conflict backs this conclusion"** — every firing on the committed corpus
-today has an empty `conflicts[]`. The alpha-tester case is that same shape: the
-viewer's Conflicts section stayed blank because nothing structured was persisted.
-Gated on a written conclusion so an honest partial run does not fire. Like the citation-nulling check it **logs to
-`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
-entries carry `kind: "conflict_unpersisted"` for their own bucket
-(`make e2e-guardrail-shadow`). The reliance signal is a text heuristic on one
-structured field, so it ships shadow-first; **promotion to a hard check — or to a
-`proof-conclusion` decline-and-route nudge so a conflict entry actually gets
-written — is gated on reading the fire rate across the corpus first**, not decided
-here.
+**A fifth check reports here, and is enforced at the writer tool: a conclusion
+relies on a resolved conflict that was never persisted.**
+`find_unpersisted_conflict_resolutions` (in `harness/skill_invocation.py`) reads
+the final `research.json` and, for each written `proof_summaries` conclusion,
+flags a question whose `exhaustive_declaration.stop_criteria.conflict_resolution`
+asserts a resolution (positive resolution language, not merely the absence of "no
+conflict" wording — a required field that is always populated would otherwise
+default to firing) while `conflicts[]` holds no record of it: the array is empty,
+or it does not hold the `c_` id the stop-criterion names. A settled (`resolved`
+or `moot`) conflict cited on the summary or blocking the question also backs it.
+The check asks whether the conflict was **persisted**, not whether it was
+resolved: a recorded but open conflict does not fire, because `proof-conclusion`
+is told to write a `not_proved` summary in exactly that state. The alpha-tester
+case is the empty-array shape: the viewer's Conflicts section stayed blank
+because nothing structured was persisted. Gated on a written conclusion, so an
+honest partial run does not fire.
+
+It **graduated on 2026-09-28**: `research_append` now refuses the
+`proof_summaries` write itself (`unpersistedConflictResolutionInvariants`,
+`guardrail-enforcement-spec.md` §5), and in the e2e harness the detector stays
+as the document-plane reading. It logs to `guardrail_shadow_violations` and never
+touches `compliance`/`outcome`; its entries carry `kind: "conflict_unpersisted"`
+and a `proof_summary_id` for their own bucket (`make e2e-guardrail-shadow`). The
+two planes share one labelled case file,
+`packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`,
+and must agree on every case in it. A live run now hits the refusal before the
+summary lands, so a stored entry from a run after the graduation means one of
+two things: a document the writer tool never checked, or the one ordering the
+refusal cannot see — a resolution claim written to the question after the
+summary.
 
 **A sixth check runs in shadow mode only: the warnings guardrail was never
 consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
@@ -1708,8 +1768,8 @@ consulted before a parentage write.** `find_relationship_writes_without_warnings
 `ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
 relationships do not count) for which `person_warnings` — the cheapest, LLM-free
 guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` skill, so it
-catches a direct-tool path and a skill that launches but fails before reaching the
+**tool** across all server spellings, not the `check-warnings` agent, so it
+catches a direct-tool path and an agent that launches but fails before reaching the
 tool. Like the citation-nulling check it **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
 entries carry `kind: "warnings_unchecked"` for its own bucket
@@ -1845,17 +1905,17 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `harness_schema_version` | Which shape this log is. Branch on it; see §7.2.1. |
 | `stop_reason` | Why the run ended. §6.5. |
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
-| `tool_calls[]` | Every tool call attempted, in order — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. See 8.1.1. |
+| `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
 | `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`extraction_append`, `image_read` — §6.1.1), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }`, `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
-| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative) or `streamed_fallback` (it did not). |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
-| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, including a well-formed `step` answered "Yes.". The weak-signal reading belongs to `silent` plus `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is 0 until the skill emits the hand-back line. See the Continue-nudge note in §6. |
-| `wall_clock_seconds` | Active/monotonic — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `judge_seconds`. |
+| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` for the two gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
+| `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
 | `subagent_model_override` | Non-null when `--agent-model` forced every staged subagent off its own `.md` pin. Null = each used its pin. |
@@ -1866,8 +1926,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
-| `timeline[]` | Per-message `[elapsed_seconds, kind]`, plus the `caps` used. |
-| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
+| `timeline[]` | Per-message `[elapsed_seconds, kind, tool_names, wall_ts, message_id]`, plus the `caps` used. Five columns since 2026-10-02; rows written before that are three wide and the earliest are two, so **index, never unpack**. `wall_ts` is ISO-8601 UTC with milliseconds (`2026-09-18T06:52:42.431Z`), matching byte-for-byte what a subagent transcript record and the copied `.session.jsonl` write, so lining a row up against either is a match rather than a conversion. It is derived as `run_started_wall + (now - run_started)` so column 0 keeps its monotonic clock, which cannot jump backwards over an NTP correction mid-run. `message_id` is the SDK's own id on an assistant row and `null` on every other kind. **Neither join target is committed** — the session transcript is gitignored and the subagent cache is ephemeral — so on a committed run log these two columns join to a locally held artifact or to nothing. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |
+| `subagents[]` | One summary per plugin subagent from the SDK's ephemeral cache: `agent_type`, `usage` (the four token fields, see §8.1.5), per-turn `stop_reason` / `output_tokens` / block shape, and `runaway_thinking` (a turn that hit `max_tokens` on thinking alone with no tool call). The runlog stores no subagent transcript, so this is what makes a subagent freeze diagnosable from the committed log rather than only from `subagent_capture.py`'s local cache. **Read `subagent_capture_status` before concluding anything from an empty list.** |
 | `subagent_capture_status` | Why `subagents[]` is empty, so `[]` stops meaning three distinct things. `captured` — at least one transcript summarized. `matched_no_transcripts` — the directory resolved but held no subagent transcript. **This is the ordinary "no subagent ran" value**: a session that started always leaves its own parent transcript in that directory, so the directory exists whether or not any subagent was dispatched. It also covers a transcript that is present but unusable. `no_cache_dir` — no candidate spelling of the cache directory exists at all; the cache was cleaned, or the run never reached the agent. `error` — the lookup itself failed; recorded, never raised, because capture must not cost a completed run its log. `unknown` — nobody recorded one; the default, and not a claim that capture succeeded. The field is absent altogether on runs logged before it existed. |
 | `git_sha` | `git rev-parse HEAD` at run start, or `null` outside a checkout. The tree the run started from — check it out to reproduce. §8.1.3. |
 | `skills_hash` | One sha256 over the sorted `{path: hash}` of every skill + agent **source** file the run stages. Ties the run to the prompt that produced it — and unlike `git_sha` catches an **uncommitted** SKILL.md edit. Does not move with `--agent-model` (read `subagent_model_override` alongside it). §8.1.3. |
@@ -1893,6 +1953,26 @@ exemptions (`_RUNLOG_EXEMPT_KEYS`) can bypass the per-string and backstop caps
 for specific (tool, response_key) pairs — `image_transcribe`'s `transcription`
 is the first exemption.
 
+**Background subagents are the one exception to that join.** A subagent spawned
+in the background ("Async agent launched") runs in its own sub-session, so its
+calls never reach the main message stream the keys above are joined from. They
+are instead recovered at run end from the subagent's transcript
+(`backfill_background_tool_calls`, the same `agent-<id>.jsonl`
+`subagent_capture.collect_subagents` reads) and **appended after** the
+main-stream entries — which is why the array is not chronological across agents
+(§8 row). Their provenance differs: `agent_id` comes from the transcript
+filename, `agent_type` from its `meta.json`, and `is_error` from the transcript's
+own `tool_result` — so a backfilled entry carries `agent_id`/`agent_type` **even
+when its result never arrived**, unlike the main-stream "result never came" case
+above. Only agents the log announced as background (an `Agent`/`Task` result
+reading "Async agent launched … agentId: `<id>`") are backfilled, so a
+synchronous subagent is never backfilled, even when its stream entries carry no
+`agent_id` — which they do not when its result never arrived or its call was
+refused before the hook ran. These entries are **recorded, not
+re-scored** — the guardrail and `same_person` scanners run before the backfill,
+so a background subagent's calls land in `tool_calls` but were (and remain)
+invisible to compliance grading.
+
 A PreToolUse **deny** does reach this array: the denied call appears with the
 deny reason as its `response_summary` and `is_error: true`. `blocked_tree_reads`
 is the parallel structured record, not the only one — which is why an
@@ -1907,6 +1987,67 @@ list is where the fire-rate measurement is read from, so a second copy would
 have to be excluded from every count anyway. A reader looking for it should
 filter `guardrail_shadow_violations` on that `kind`, not scan the `blocked_*`
 lists.
+
+#### 8.1.5 `usage.whole_run_usage` — the main thread plus its subagents
+
+`usage.usage` counts the **main thread only**. Subagent turns run in their own SDK
+sub-session and never enter it, so until the fields below existed an agent's cost
+could only be inferred as total-minus-main — a residual, not a measurement. One
+published claim over this corpus turned out to be nothing but that gap restated,
+and is retracted in `docs/plan/cost-latency-10x.md` appendix A3.
+
+Two sibling fields now carry the whole-run figure:
+
+| field | what |
+|---|---|
+| `usage.whole_run_usage` | The four priced token fields, `usage.usage` plus the sum of every `subagents[].usage`. Carries exactly those four keys — the unsummable siblings (`server_tool_use`, `service_tier`, `cache_creation`, `iterations`) are dropped. |
+| `usage.whole_run_cost_usd_estimated` | `pricing.estimate_cost_usd` over that block. **Corpus basis** — a flat Sonnet table with cache writes at the 1-hour rate. The production (5-minute) basis is about 8% lower. State the basis next to any figure lifted from it. |
+
+**`usage.usage` is deliberately left alone.** It is what `corpus_report`'s spend
+tally and the cost calibration read, so widening it in place would have moved every
+historical comparison underneath them.
+
+Both fields are `null`, never a plausible substitute, in four cases:
+
+- **`usage_source` is `streamed_fallback`.** That path's `output_tokens` is a
+  start-of-message snapshot, and since commit `76bc0655b` its accumulator already
+  holds subagent messages that surfaced on the main stream — so adding subagent
+  totals would double-count them on top of a field that is already wrong. Null
+  follows the precedent §8.1.2 sets.
+- **Any `subagents[]` entry carries no `usage` object.** Every run committed before
+  this change is that shape. Do **not** fall back to summing `subagents[].turns[]`:
+  those are one entry per content *block*, each repeating its message's totals, so
+  the sum roughly doubles cache reads. Unknown is unknown.
+- **No main-thread token block at all.**
+- **The run had more than one query.** The SDK's `ResultMessage` reports `usage`,
+  `num_turns` and `duration_ms` for the last query of a session, and a query starts
+  at each `system:init` row in `usage.timeline`: a stall-resume starts one, and so
+  does a background subagent's `task_notification` followed by a fresh
+  `system:init` (compaction emits `system:compact_boundary`, so a long run is still
+  one query). On such a run `usage.usage`, `num_turns` and `duration_ms` describe
+  the last query only. `total_cost_usd` and `duration_api_ms` are per CLI process:
+  they span the run when `resumes` is 0, and cover only the last process when it
+  is not, because a stall-resume starts a new one. The test is
+  `result_message_covers_last_query_only` in `e2e/result.py`. `make e2e-latency`
+  (its whole-run summary and Markdown table), `make e2e-cache-window` and the cost
+  calibration exclude these runs by name (`multi-query`), and `make e2e-corpus`
+  says its `recorded` spend is a floor when a resumed run is in it.
+
+A single-query run with no subagents, and one whose capture failed
+(`subagent_capture_status` non-ok, which yields an empty list), both merge to
+exactly `usage.usage`.
+
+**Why `subagents[].usage` is counted per message, not per record.** Claude Code
+writes one record per content block and every one repeats its message's usage, so
+`subagent_usage` keys on `message["id"]` and lets the last write win — the same
+rule `_accumulate_usage` already applies on the main thread, where the docstring
+records a naive sum reporting 358,610 output tokens against a true 106,661.
+`turns[]` stays one entry per record, because the runaway readers and
+`max_output_tokens` need per-record shape.
+
+`make e2e-agent-spend` reads these fields and reports spend per agent. It counts a
+spawn with no `usage` object as uncovered rather than as zero, and prints no table
+at all when nothing in the corpus is priced.
 
 #### 8.1.2 `usage` when the `ResultMessage` never arrived
 
@@ -2049,7 +2190,9 @@ omitted to preserve blind grading (§7.4):
 ```
 
 The compliance line is always printed — a silent compliance line puts us back
-to one number meaning two things (§7.2.1). Verdict-bearing totals (recall,
+to one number meaning two things (§7.2.1). When a run resumed after a stall, a
+note under the cost line says the figures are a floor: its cost covers the last
+CLI process only (§8.1.5). Verdict-bearing totals (recall,
 gate, by-tag) are available via `make e2e-corpus` (below), which reads
 committed run logs and is not part of the grading path.
 
@@ -2101,7 +2244,8 @@ prevent.
 **Spend, and recomputed violations.** The report always prints a `spend:` line —
 recorded cost, estimated cost, and the count of runs with neither — as three
 numbers, never one blend: abort-path cost is estimated (§8.1.2) and must not be
-folded into the authoritative recorded total. Beside the estimate is its
+folded into the recorded total. When a recorded run resumed after a stall, one
+more line says `recorded` is a floor (§8.1.5). Beside the estimate is its
 measured accuracy (median estimated/recorded); `CALIBRATE=1`
 (`--calibrate-cost`) adds the full median + range. `RECOMPUTE=1` (`--recompute`)
 additionally re-derives violations from each run's committed `tool_calls` +

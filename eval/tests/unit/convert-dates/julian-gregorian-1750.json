@@ -5,10 +5,10 @@
     "name": "Julian-to-Gregorian conversion for a pre-1752 English date",
     "type": "positive",
     "description": "Convert a date from the English Julian calendar (pre-September 1752) to the Gregorian. Tests jurisdiction-specific awareness: the offset is 11 days for England in 1750 (would be 10 days for Catholic Europe in 1582, 13 days for Russia in 1900). Also tests dual-dating for dates in Jan-Mar pre-1752, when the year transition is involved.",
-    "tags": ["julian-gregorian", "pre-1752", "england", "dual-dating", "calendar-transition", "requires-tool-conversion"]
+    "tags": ["julian-gregorian", "pre-1752", "england", "dual-dating", "calendar-transition", "requires-tool-conversion", "direct-arm"]
   },
   "input": {
-    "user_message": "Convert this English date to the modern Gregorian calendar: '15 February 1749/50'.",
+    "delegation": "Convert this English date to the modern Gregorian calendar: '15 February 1749/50'.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

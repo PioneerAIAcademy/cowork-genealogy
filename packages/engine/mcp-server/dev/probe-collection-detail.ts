@@ -172,7 +172,7 @@ async function main(): Promise<void> {
   console.log("================================================================");
   console.log("SECTION 0 — Already-cached record for this ID (list endpoint)");
   console.log("================================================================");
-  const list = await fetchAllCollections(token);
+  const list = await fetchAllCollections(token, LOCAL);
   const match = (list.entries ?? [])
     .map((e) => e.content?.gedcomx?.collections?.[0])
     .filter((c): c is NonNullable<typeof c> => c?.id === id);

@@ -2,7 +2,7 @@ import styles from './StatusBadge.module.css'
 
 type BadgeColor = 'green' | 'amber' | 'red' | 'blue' | 'gray' | 'purple'
 
-const statusColorMap: Record<string, BadgeColor> = {
+export const statusColorMap: Record<string, BadgeColor> = {
   // Question status
   open: 'gray',
   in_progress: 'amber',
@@ -62,15 +62,30 @@ const statusColorMap: Record<string, BadgeColor> = {
   // Priority
   high: 'red',
   medium: 'amber',
-  low: 'gray'
+  low: 'gray',
+  // gps-mentor verdicts (#1223). Without these every verdict renders gray, so
+  // "this proof needs work before it stands" looks the same as "looks solid".
+  looks_solid: 'green',
+  consider_addressing: 'amber',
+  address_first: 'red',
+  refused: 'gray',
+  // Known-holding confidence (confident reuses the green above). Carried even
+  // though no section here renders it yet: the map is keyed on the stored
+  // value, not on the section, and the parity test against viewer-ui's copy
+  // compares the whole map.
+  unsure: 'amber'
 }
 
 interface StatusBadgeProps {
-  value: string
+  /** Nullable: ScenarioViewer casts raw run-log JSON and promises that schema
+   *  drift degrades to blank fields rather than a crash. An evaluations[] entry
+   *  with no `verdict` used to throw inside render and blank the whole panel. */
+  value?: string | null
   color?: BadgeColor
 }
 
-export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element {
+export default function StatusBadge({ value, color }: StatusBadgeProps): React.JSX.Element | null {
+  if (value == null) return null
   const resolvedColor = color ?? statusColorMap[value] ?? 'gray'
   return (
     <span className={`${styles.badge} ${styles[resolvedColor]}`}>{value.replace(/_/g, ' ')}</span>

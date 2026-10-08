@@ -380,7 +380,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
           "type": "string",
           "enum": ["pass", "xfail"],
           "default": "pass",
-          "description": "Expected aggregated outcome. `xfail` marks a known-failing test so its failures aggregate to `outcome: xfail` rather than `fail` (not a regression). A test marked xfail that starts passing is reported as `xpass` — investigate before flipping to `pass`. Matches pytest convention."
+          "description": "Expected aggregated outcome. `xfail` marks a known-failing test: its `outcome` stays `fail`, but readers treat that failure as suppressed (not a regression) rather than a distinct outcome value. A test marked xfail that starts passing (`outcome: pass` beside an `xfail` marker) is an unexpected pass — investigate before flipping the marker to `pass`. Matches pytest convention."
         },
         "xfail_reason": {
           "type": "string",
@@ -564,7 +564,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
 | `tags` | string[] | yes | Freeform tags for filtering and grouping. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`) |
 | `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
-| `expected_outcome` | string | no | `"pass"` (default) or `"xfail"`. Marks a known-failing test. xfail tests still run; their failures aggregate to `outcome: xfail` (expected, not a regression). If an xfail test starts passing, the run reports `outcome: xpass` so the marker can be removed |
+| `expected_outcome` | string | no | **Retired (lead, 2026-10-06): add no new `"xfail"`.** `check_runlogs.py` rule 10 blocks any PR that touches a skill still carrying one, so the committed markers go when their skill is next edited, and rule 6 no longer suppresses a marked failure. That PR makes the test pass. If its fix belongs to another open issue, delete the test file instead (keep its scenario and MCP fixtures) and add "restore `<test id>` from git (deleted in PR #N) and make it pass 3 of 3" to that issue's done-when, naming any validator the deletion leaves with no test (lead, 2026-10-06). `"pass"` (default) or `"xfail"`; `run_tests.py` alone still reads a marked failure as suppressed in its exit code. |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on <issue link>; remove when fixed") |
 
 **`holdout` and the gate.** `gate-skill` (`docs/skill-lifecycle.md` §6) once re-ran a
@@ -653,6 +653,46 @@ and the validator that gates on it, and only the input changes. A negative
 *without* `grade_on_invariant` has no defined outcome path on the direct arm and
 must be deleted or re-shaped, not converted.
 
+**An out-of-scope negative (`correct_skill: []`) converts as a direct
+`grade_on_invariant` negative.** `ut_search_wikipedia_008` is the worked case:
+the off-topic prompt moves into `input.delegation`, the `negative` block keeps
+`grade_on_invariant: true`, and the test gains `scope-decline` beside
+`direct-arm`. Its verdict is the tag-gated no-harm validator **alone**
+(`test_no_wiki_no_write`: no `wikipedia_search` call and no new file of any
+kind) -- `_compute_outcome` returns on `grade_on_invariant` before a judge
+dimension is read, so the base scores are diagnostic and gate nothing. As a *routed* negative it would abort `skill not found` the
+moment the skill directory is deleted.
+
+**Do not re-shape a decline into a positive test.** A positive direct test is
+graded on `activated`, which `derive_activated` takes from the spawn plus a
+**substantive** reply (`_is_substantive`), and a correct decline fails that
+twice over:
+
+- `_is_substantive` requires at least two sentences and ten words, so a
+  one-sentence decline leaves `activated` false. Measured on
+  `v1_2026-09-27_22-55-04`: `ut_search_wikipedia_008` failed on activation with
+  every judge dimension at 3 or null.
+- Under `_SUBSTANTIVE_MIN_WORDS_LONG` (30 words) it scans the reply for a
+  **shipped skill name written as a name** -- backticked, slash-prefixed, or
+  followed by "skill"/"agent", optionally through closing markup -- and
+  classifies that as routing. A hyphenated name still counts bare. It used to
+  match a one-word name anywhere, which is the bug measured on
+  `v1_2026-09-28_09-49-04`: a correct 25-word decline reading "This agent
+  handles genealogy **research** tasks …" scored `activated: false` because
+  `research` is a skill directory. Padding a decline past 30 words to clear the
+  scan would be writing prose to satisfy a heuristic.
+
+An agent's return contract does not rescue it either: a decline path bypasses
+the contract, and `search-wikipedia` carries none (see the PENDING list in
+`tests/packaging/agent-return-contract.test.ts`). The lead's 2026-09-24 ruling
+that made `_008` a positive test predates both measurements.
+
+Because the test is a negative, every validator gated on `type == "positive"`
+skips it, including `test_only_wikipedia_search_called` and
+`test_reply_does_not_narrate_pending_step`. The judge's base dimensions still
+run on the decline, but they are **diagnostic only**: `grade_on_invariant`
+decides the outcome before they are read.
+
 On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
@@ -664,7 +704,49 @@ On a direct test the harness:
 - decides the positive-test outcome on `agents_spawned` instead of
   `skills_invoked`, which is empty by construction (§7);
 - fills the judge's `{user_message}` slot with the delegation and its
-  `{skills_invoked}` slot with the spawned agent.
+  `{skills_invoked}` slot with the spawned agent;
+- grades the reply on **`output.agent_returns`**, the agent's own return, not on
+  `text_response`.
+
+**`text_response` is the MAIN THREAD's text, and on this arm the main thread is
+a dispatcher relaying someone else's work.** It paraphrases, and the paraphrase
+is not the subject under test, so any reply-shape rule read off it grades the
+dispatcher. Measured on search-wikipedia run `v1_2026-09-28_09-49-04` (a
+local run, never committed): six of ten tests
+failed on reply shape while **every** deterministic validator passed 10/10, and
+two replies opened "The subagent has completed the task" / "The subagent has
+looked up …" — wording no agent body produces about itself. A live capture of
+`ut_search_wikipedia_002` the same day shows both texts from one run:
+
+    agent:       Saved the Wikipedia summary to `albert-einstein.md`.
+    main thread: The subagent has completed the task. It looked up **Albert
+                 Einstein** on Wikipedia and saved the article summary to a
+                 file named **`albert-einstein.md`** in the working folder.
+
+The agent obeyed its one-line contract and the suite was failing the
+dispatcher. `agent_returns` (`[{subagent_type, text, is_error?}]`) is collected
+off the message stream — the `PreToolUse` hook that fills `builtin_tool_calls`
+fires *before* a tool runs and structurally cannot carry a result — and the
+runtime's own trailers (`agentId: …`, `<usage>…</usage>`) are stripped at
+capture by `strip_agent_return_trailer`, since a grader reading them raw sees
+extra lines and fails a one-line return.
+
+The judge reads it on every direct test. **Validators do not yet, uniformly.**
+`search-wikipedia`'s narration check reads it (via
+`skill_runner.agent_return_text`, the same call the judge makes) and falls back
+to `text_response`, so a **routed** test -- whose reply genuinely is the
+subject's -- is unaffected. `research-exhaustiveness`'s
+`test_refusal_names_the_blocking_plan_item` still reads `text_response`
+directly, so on that suite's direct tests it grades the dispatcher's relay. It
+is named here rather than fixed because it belongs to that suite's eval slot;
+any validator grading reply shape on a direct test should move to
+`agent_return_text`.
+
+**The dispatcher prompt cannot be constrained from a test.** `DIRECT_DISPATCH_PROMPT`
+is harness-owned precisely so "no test can weaken the relay instruction", so
+tightening the agent body, the delegation or the rubric cannot fix a
+dispatcher-shaped reply. Reading the agent's own return is the only fix
+available to a conversion card.
 
 **What `test.skill` names.** A skill directory under
 `packages/engine/plugin/skills/`, **or** a plugin-agent file of that name under
@@ -737,18 +819,12 @@ the verbatim assertion on both sides.
 never write a live rate into the test file.** Measuring the first five twins
 (2026-09-11) took ten runs to settle: three held at 4/4, and the two that moved
 each reversed on a later run — one twin that had failed four straight scratch
-runs went on to `xpass` its first graded run, while two routed originals that had
-never failed both failed once. A single red twin is not yet a finding and a
+runs unexpectedly passed its first graded run (an xfail-marked pass), while two
+routed originals that had never failed both failed once. A single red twin is not yet a finding and a
 single green one is not yet a proof.
 
 Two consequences worth inheriting rather than rediscovering:
 
-- **`xfail_reason` is snapshot-tracked** (only `name` and `description`
-  are stripped), so a measured rate written into it is falsified by the very run
-  log that ships beside it, and correcting it buys a fresh full-skill run. Cite a
-  dated scratch measurement that later runs cannot move, say plainly that the
-  failure is flaky rather than deterministic so an `xpass` is expected, and give
-  the removal condition. `ut_research_exhaustiveness_d3c` is the worked example.
 - **A twin and its routed original can fail the same validator at different
   rates**, which is the finding — not that one fails and the other does not.
   Report the split.
@@ -838,7 +914,8 @@ on coverage which already exists. Naming it here makes the PreToolUse hook
 deny the launch and let the run **continue** — so the caller still finishes its
 own logging and summary. A `Skill` call is also recorded in `skills_invoked`; a
 stubbed agent's spawn is recorded in `builtin_tool_calls` only, so assert either
-with `handoffs`. (This
+with `handoffs`. The judge's `{skills_invoked}` slot lists the spawn too, as
+`<name> (agent)` (§7, "Judge prompt template"). (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
 test still has work left.)
@@ -923,7 +1000,7 @@ name that is still a skill is stubbed at its `Skill` call only.
 
 ### 5.8 `intentionally_invalid`
 
-Optional boolean (default `false`). Set it on a test whose scenario files are **broken on purpose** — the case of a validator/guardrail skill (`validate-schema`) whose whole job is to detect invalid input. Every other skill operates on valid project state, so the harness assumes scenarios are schema-valid and gates on it in three places; this flag is the opt-out for the one skill that must see invalid input:
+Optional boolean (default `false`). Set it on a test whose scenario files are **broken on purpose** — the case of a validator/guardrail agent (`validate-schema`) whose whole job is to detect invalid input. Every other subject operates on valid project state, so the harness assumes scenarios are schema-valid and gates on it in three places; this flag is the opt-out for the one subject that must see invalid input:
 
 - the **runnability gate** (Section 9) skips schema validation of the scenario instead of aborting the test as `not_runnable`;
 - the **post-run file-validity validators** (`test_research_json_validates_schema`, `test_tree_gedcomx_json_validates_schema`, `test_id_references_resolve`, `test_project_files_pass_full_validation`, `test_no_duplicate_tree_ids`) are not counted against the test — the invalid state is expected. Behavioural validators (allowlist, append-only, …) still apply;
@@ -1054,7 +1131,7 @@ Every skill's SKILL.md has "Do NOT use when" clauses that name confusable skills
 | search-records | record-extraction | record data in context vs not |
 | question-selection | research-plan | "what question next" vs "how to answer this question" |
 | conflict-resolution | record-extraction | conflicting facts vs classifying evidence type (classification is owned by record-extraction since the assertion-classification merge, 2026-07-11) |
-| proof-conclusion | project-status | "write the proof" vs "where are we" |
+| proof-conclusion | project-status (an agent, not a skill — its side of the pair is reached by auto-delegation from its own `description`, not by a routing row) | "write the proof" vs "where are we" |
 
 For each confusable pair, create tests from both directions: a test in skill A's directory with `correct_skill: ["B"]`, and a corresponding test in skill B's directory with `correct_skill: ["A"]`.
 
@@ -1071,7 +1148,7 @@ For each confusable pair, create tests from both directions: a test in skill A's
 
 **A negative test whose `user_message` is a near-verbatim quote of a sentence in the skill under test's `SKILL.md` cannot distinguish learned routing from recall.** If the skill body says "e.g. 'one census says Ireland, the death cert says County Cork — flag that mismatch'" and the fixture's `user_message` is "One census says he was born in Ireland, the death cert says County Cork — flag that mismatch", the model may route correctly simply because it recognises the sentence it read one turn earlier in its own instructions — not because it has learned the routing rule. A pass on such a fixture proves nothing.
 
-The fix is to use a concrete example that is **not** quoted from the skill body. For a routing-boundary test, the example should be drawn from the same category as the one in `SKILL.md` but must be a different instance (e.g. if the body uses one pair of county names, the fixture uses a different pair). Leave a comment in the test's `description` naming this constraint when the example was deliberately chosen to differ from the body's. This rule was added after `ut_check_warnings_011` was found to quote `SKILL.md:43` verbatim.
+The fix is to use a concrete example that is **not** quoted from the skill body. For a routing-boundary test, the example should be drawn from the same category as the one in `SKILL.md` but must be a different instance (e.g. if the body uses one pair of county names, the fixture uses a different pair). Leave a comment in the test's `description` naming this constraint when the example was deliberately chosen to differ from the body's. This rule was added after `ut_check_warnings_011` was found to quote a sentence of the check-warnings `SKILL.md` verbatim.
 
 ### Activation: the `activated` field
 
@@ -1081,11 +1158,13 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
-3. **Substantive response.** The skill produced a response that is either (a) ≥10 words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
+3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
 
 **Why `skills_invoked` is required:** Activation derivation has access to file changes, tool calls, and text responses, but no per-side-effect attribution to a specific skill. `skills_invoked` is the harness's authoritative per-skill signal. Tool-call evidence is intentionally NOT used as a corroboration channel: shared tools (notably `validate_research_schema`, present in 14 of 23 skill allowlists) appear in many skills' `allowed-tools`; treating them as corroboration would mis-attribute a correctly-routed sibling skill's tool calls and file writes to the skill under test on negative tests. Prior versions of this spec included a fourth rule ("characteristic tool call activates") and a corroboration variant ("char tool unlocks file-change attribution"); both were removed because they produced false positives on negative tests where the routed-to skill calls a shared tool and writes to `research.json`.
 
 **Known limitation:** The Agent SDK can occasionally fail to report a skill in `skills_invoked` even when it ran. The harness accepts this false-negative — re-runs typically clear it. (v1.5 introduced the skill-name-aware substantive-response heuristic for stateless skills that produce one-word outputs.)
+
+**Known limitation — a slash entry is recorded as *registered and staged*, not as *expanded*.** Nothing in the SDK stream witnesses the expansion: it carries no `<command-name>` envelope, no `Base directory for this skill` meta message, and `UserMessage` exposes neither `isMeta` nor `sourceToolUseID`. Those are CLI session-transcript fields that do not survive into the stream (measured against the SDK, CLI 2.1.250). So the harness records that the CLI **registered** the command and that the skill was **staged** into the workspace — the command therefore *would* expand — rather than observing that it *did*. The gap is narrow, because expansion is deterministic once a command is registered, but it is real: a run in which the CLI registered `/research` and then failed to expand it would still be recorded as activated.
 
 What does **not** count as activation:
 
@@ -1250,7 +1329,7 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 {judge_context}                     — bullet list from the test JSON
 {scenario_readme}                   — scenario README.md, or "(stateless test)"
 {user_message}                      — verbatim from the test; on a direct-agent test, the `delegation` under a one-line harness label (§5.2.1)
-{skills_invoked}                    — list of skills Claude actually invoked; on a direct-agent test, the agent that was spawned (no skill runs)
+{skills_invoked}                    — list of skills Claude actually invoked, with each agent the main thread spawned inserted in call order as `<name> (agent)`; on a direct-agent test, the agent that was spawned (no skill runs)
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
@@ -1275,7 +1354,7 @@ guard (`_TOOL_CALLS_MAX_CHARS`), which drops whole oldest calls with a stated
 marker; per-string and depth caps still apply inside each result. A larger array
 cap was rejected — it only moves the cliff.
 
-`{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran.
+`{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.
 
 The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.
 
@@ -1317,7 +1396,7 @@ Per-dimension scores at every layer (judge tool_use, run log, `.ann` file, CRUD 
 
 `.ann` file format: [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json).
 
-(The run-log-level `outcome` field — `pass | partial | fail | aborted | xfail | xpass` — is a different concept and remains a string enum. It aggregates per-run outcomes for dashboard reporting; per-dimension scores aggregate to it via the rules in "Per-run outcome" below.)
+(The run-log-level `outcome` field — `pass | partial | fail | aborted` — is a different concept and remains a string enum. It aggregates per-run outcomes for dashboard reporting; per-dimension scores aggregate to it via the rules in "Per-run outcome" below. Suppression of a declared-xfail failure is read from the `expected_outcome` marker beside it, not from a distinct outcome value.)
 
 ### Per-run outcome
 
@@ -1330,7 +1409,7 @@ Each individual run of a test resolves to one of four outcomes:
 | `fail` | Any validator failed, OR any judge dimension scored `1` (fail), OR a positive test invoked the wrong skill, OR a negative test invoked the skill under test. **A validator failure also dominates a deterministic-cap abort** (`max_wall_clock_seconds`, `max_turns`, `max_tool_calls`): a run that failed a validator and then hit one of those caps is `fail`, not `aborted` — the defect is real and must not be filed under a timeout |
 | `aborted` | Execution exceeded a budget guardrail (Section 15) **and no validator failed** (a concurrent validator failure demotes the three deterministic caps to `fail`, per the `fail` row). The judge is not run. Not a fail — flagged separately so it doesn't count as a quality regression. `aborted_reason` is still recorded on the run even when the outcome is demoted to `fail` |
 
-`expected_outcome: xfail` (Section 5.1) reframes the outcome to match pytest convention: an xfail-marked test that resolves to `fail` is reported as `xfail` (expected failure — does not count as a regression on the dashboard), and one that resolves to `pass` is reported as `xpass` (unexpected pass — investigate whether the bug is fixed and the marker can be removed).
+`expected_outcome: xfail` (Section 5.1) changes how the outcome is read, matching pytest convention: an xfail-marked test that resolves to `fail` is a suppressed failure (does not count as a regression on the dashboard), and one that resolves to `pass` is an unexpected pass (investigate whether the bug is fixed and the marker can be removed). The `outcome` field keeps its real value in both cases; the marker beside it carries the suppression.
 
 **Why `partial` is its own bucket.** A skill that's mostly correct but loses a single rubric dimension is not equivalent to one that violated the schema. Partial outcomes are visible separately so dashboards can show "correctness regressions" distinct from "quality drift." For PR gating, treat partial as fail by default; for trend tracking, keep them separate.
 
@@ -1373,7 +1452,7 @@ The harness executes the test N times (one for N=1, three for N=3, etc.) and sto
 
 This composition cleanly handles all edge cases:
 
-- **xfail tests:** xfail reframes `outcome` (a `fail` becomes `xfail`, a `pass` becomes `xpass`) but does not affect `flaky`. An xfail test that's also flaky stays flaky.
+- **xfail tests:** an xfail marker changes how `outcome` is read (a `fail` is a suppressed failure, a `pass` an unexpected pass) but leaves the `outcome` value itself alone and does not affect `flaky`. An xfail test that's also flaky stays flaky.
 - **Dashboard semantics:** "pass rate" excludes flaky tests by default (they aren't a stable signal either way); "flake rate" is reported alongside. **`flaky: true` is a defect to fix, not a caution light to read past.** A flaky test is not a weaker pass; it is a test that has stopped answering the question it was written to ask. Fix it or retire it — a suite with a nonzero flake rate is not green, whatever its pass rate says.
 
 **Per-run aggregation of judge dimensions.** Within a single run, the judge produces one integer score per dimension. Across N runs the aggregated dimension score is the modal value (most common); ties resolve toward the lower score (`1` < `2` < `3`). The aggregated rationale is the rationale from the modal run. Dimension aggregation and outcome aggregation are independent — a `flaky: true, outcome: pass` test can have all-`3` aggregated dimensions, because flaky measures run-to-run *stability* and dimensions measure *per-run consensus on individual rubric items*. The reviewer-facing display should show both: "this test passed 2/3 runs; the dimensions that fired all scored `3`."
@@ -1395,7 +1474,7 @@ At `temperature=0`, Sonnet is documented as not fully deterministic — tool sel
 
 **No regression threshold will be pinned, and none is coming.** Setting one (e.g. "pass rate drop > X% on a skill counts as a regression vs noise") needs an empirical noise characterization, which needs repeated golden-set passes. Nothing prevents running those by hand — the `runs_per_test` pin constrains a test definition, not how often you invoke the suite — and that is exactly why this is a cost decision rather than a mechanical one: five golden-set passes is a standing bill nobody is going to pay for a number that changes with every model, rubric and harness bump. The three things this section once promised — a per-skill pass-rate noise band, a regression threshold derived from it, and a monthly N=5 stability run — are not coming, and should not be planned for.
 
-**None of that scopes a per-test bar, and one now exists.** The refusal above is about a *statistical threshold over pass rates* — a number needing a noise characterization nobody will fund. `check_runlogs.py`'s rule 6 needs no threshold and no baseline: it asks, of each test in a run log the PR adds, whether that test resolved to `fail` or `aborted`. That is a per-test question with a yes/no answer, so the cost argument above does not reach it. It is scoped to the fields that exist today: it reads `runs[].outcome`, whose enum already excludes `xfail`/`xpass`, and consults `expected_outcome` as the suppression field, so it never meets the aggregate remap and needs no schema change, no `eval/app` change and no migration. Retiring the `xfail`/`xpass` enum values is a separate, larger job — roughly 25 edits across 45 files — and is not a precondition for the bar.
+**None of that scopes a per-test bar, and one now exists.** The refusal above is about a *statistical threshold over pass rates* — a number needing a noise characterization nobody will fund. `check_runlogs.py`'s rule 6 needs no threshold and no baseline: it asks, of each test in a run log the PR adds, whether that test resolved to `fail` or `aborted`. That is a per-test question with a yes/no answer, so the cost argument above does not reach it. It reads `runs[].outcome` and consults `expected_outcome` as the suppression field. The aggregate `outcome` enum no longer carries `xfail`/`xpass` at all: suppression is read everywhere from the `expected_outcome` marker beside the outcome, so rule 6 and every other reader decide the same way from one place.
 
 What that leaves for *pass rates* is the rule already in force: **treat any pass-rate drop as a signal to investigate manually.** There is no band to fall inside of, so "probably noise" is never an available conclusion — either you found a real regression, or you found a test that flaps, and both get fixed. Rule 6 sits underneath that as the mechanical floor: a red test in a run log the PR adds blocks outright, with no carry list and no exemption. Zero reds, not zero new reds — a suite carrying reds cannot answer whether a refactor broke something, which is the one question it exists to answer.
 
@@ -1479,6 +1558,7 @@ vacuous — none does today, and nothing checks for one.
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
+- Every opt-in gate tag `tag_gated_validator_tags` reports (the literal `"<tag>" not in tags` form) must be carried by a test in its suite (any suite, for `test_universal.py`) or listed with a reason in `DORMANT` in `eval/harness/tests/unit/test_tag_gate_coverage.py`, which fails otherwise
 - Tier-1 validators are plain Python functions with the `test_` prefix; tier-2 validators use the `report_` prefix. Both raise `AssertionError` to signal a finding and take arguments from the same pool.
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
 - Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`. Both tiers are collected: `python_functions` in `eval/harness/pyproject.toml` lists `report_*` alongside `test_*`, without which every tier-2 validator is silently skipped by that command.
@@ -1510,7 +1590,7 @@ def report_example_pattern(text_response):
 - `tool_calls` (list) — every MCP tool call made by the skill, with the shape `{"tool": "mcp__genealogy__record_search", "args": {...}, "matched": {...}, "response_fixture": "...", "response": {...}}` (Section 10). `response` is present for `live` and unmatched (`none`) calls, and for a fixture-matched response the mock enriched — see Section 10.
 - `skill_frontmatter` (dict) — the parsed YAML frontmatter of the skill under test's SKILL.md (also available inside `before_state`/`after_state`).
 - `test` (dict) — the parsed test JSON dict, including `test.type`, `test.tags`, and any validator-facing blocks the orchestrator threads in.
-- `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order.
+- `skills_invoked` (list[str]) — every skill invoked through the SDK's `Skill` tool, in call order, **plus a skill loaded by a slash-command expansion at entry**, which is recorded first. See "Capturing `skills_invoked`: the PreToolUse hook, and slash entry" below for what the slash case can and cannot show.
 - `blocked_context_calls` (list) — main-thread calls to subagent-only tools denied by the PreToolUse hook.
 - `blocked_protected_writes` (list) — raw writes to protected project files denied by the hook.
 - `blocked_owned_section_writes` (list) — `research_append` ops the shipped ownership rule refused, denied by the hook, as `{"tool", "args", "section", "rule", "caller"}`. Empty is the healthy case; `test_no_out_of_lane_section_writes` gates on it.
@@ -1585,17 +1665,18 @@ The CRUD UI ([`eval-crud-ui-spec.md`](eval-crud-ui-spec.md)) surfaces non-runnab
 When the harness executes a unit test, it writes a run log to:
 
 ```
-eval/runlogs/unit/<skill-name>/<model-version>/YYYY-MM-DDTHH-MM-SSZ.json
+eval/runlogs/unit/<skill-name>/v{N}_YYYY-MM-DD_HH-MM-SS.json   # candidate (full skill run)
+eval/runlogs/unit/<skill-name>/v{N}.json                        # released
 ```
 
 The timestamp is UTC second-resolution, filename-safe (no colons). Same-second collisions raise `RunlogCollisionError` rather than overwriting the prior log; v1 serial execution makes collisions rare, so the operator simply waits a second and re-runs.
 
-Including the model version in the path makes it easy to compare runs across model versions.
+The scheme (released, candidate, and gitignored `scratch_` runs) is in `eval/harness/harness/versioning.py`.
 
 **Annotations** use the per-PR convention defined in `docs/per-pr-review-workflow.md` §2.3 and the schema at [`docs/specs/schemas/ann.schema.json`](schemas/ann.schema.json):
 
 ```
-YYYY-MM-DDTHH-MM-SSZ.ann.json    # team's corrected grades for this run
+<run log name>.ann.json    # team's corrected grades for this run, e.g. v1_2026-09-29_08-50-54.ann.json
 ```
 
 One `.ann` file per run log per PR, written by the team submitting the PR. Senior feedback flows through GitHub PR comments — there is no separate `.adj` adjudication file.
@@ -1629,7 +1710,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   "scenario": "string or null (scenario directory name)",
   "mcp_fixtures": ["string (fixture file names used)"],
 
-  "outcome": "string (pass | partial | fail | aborted | xfail | xpass)",
+  "outcome": "string (pass | partial | fail | aborted)",
   "flaky": "boolean (true when per-run outcomes are not unanimous)",
   "grading_mode": "string (dimensions | invariant | routing | trigger) — what decided this outcome; OPTIONAL, absent on run logs written before this field existed",
   "dimensions_gate_outcome": "boolean — whether the judge dimensions could change this outcome; false on `invariant`, `routing` and `trigger` tests, where they are diagnostic only. OPTIONAL, same reason",
@@ -1675,7 +1756,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "output": {
         "text_response": "string (Claude's full response text — reasoning, explanations, instructions)",
         "activated": "boolean (derived from Section 6 rules — true if the skill under test substantively activated)",
-        "skills_invoked": ["string (skill directory names invoked during this run, in order)"],
+        "skills_invoked": ["string (skill directory names invoked during this run, in order; a slash-command entry is recorded first)"],
         "file_changes": {
           "research.json": {
             "sections_modified": ["string (section names that changed)"],
@@ -1753,7 +1834,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 
 **Field details:**
 
-- **`outcome`** — aggregated across runs per Section 7. `xfail` means an `xfail`-marked test failed (the bug is still there, as expected — not a regression). `xpass` means an xfail-marked test passed (investigate — the marker may be stale). Matches pytest convention.
+- **`outcome`** — the real aggregate across runs per Section 7 (`pass | partial | fail | aborted`). Suppression is read from the `expected_outcome` marker beside it: a `fail` on an `xfail`-marked test is a suppressed failure (the bug is still there, as expected — not a regression), and a `pass` on one is an unexpected pass (investigate — the marker may be stale). Matches pytest convention.
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
@@ -1829,7 +1910,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
   **Stratified scoring.** Each dimension carries `source: base | rubric`. The base dimensions are a fixed set (3, though Tool Arguments may be N/A), but the number of `rubric` dimensions varies per skill, so suite-level pass rates are only apples-to-apples within a single `source` bucket. Dashboards should compute and track `base_pass_rate` and `rubric_pass_rate` separately for each skill — combining them into a single rate makes the denominator drift as rubric counts change across skills. (`judge_context` is not scored, so it produces no dimensions and no pass-rate bucket.)
 
 - **`runs[].output.activated`** — derived boolean from Section 6's `activated` definition. Positive tests pass when `activated: true`; negative tests pass when `activated: false`. Having it as a derived field keeps Section 7's outcome formulas simple and prevents drift between activation logic and grading logic.
-- **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
+- **`runs[].output.skills_invoked`** — the skill(s) Claude actually invoked, whether through a `Skill` call or a slash-command entry. Combined with `activated`, drives the wrong-skill check for positive tests and the `correct_skill` array match for negative tests (Section 6).
 - **`runs[].output.tool_calls[].matched`** — distinguishes calls that hit a fixture (`kind: "predicate"`) from unmatched calls (`kind: "none"`, which returned a `fixture_not_found` error to the skill). Any unmatched call aborts the run with `aborted_reason: unmatched_tool_call` (Section 15) — the skill ran against an error response, so the run isn't scored.
 - **`runs[].output.builtin_tool_calls`** — every non-MCP tool call the run made (`Read`, `Write`, `Grep`, `Skill`, `Task`, …), in call order. Optional and **omitted entirely when the run made none**, so historical run logs stay valid and an unchanged run writes unchanged output. MCP calls are excluded — they are already in `tool_calls` and `attempted_mcp_calls`. `agent_id` is present only when the call came from inside a Task-spawned subagent and absent on the main thread, which is what distinguishes "the record-extractor agent read the reference file" from "the router read it". Argument values are stringified and truncated to 200 characters, so a `Write` cannot carry a whole file body into the committed corpus; the truncation is silent, with no marker. Telemetry only — nothing grades, gates, or aborts on it, and it does not count toward `max_tool_calls`.
 - **`runs[].output.tool_calls[].expected_args`** — the matched fixture's `args` block (the canonical expected args), copied so the trace view and judge prompt can render expected/actual side-by-side without re-reading the fixture file. Null when no fixture matched.
@@ -1955,7 +2036,10 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
 }
 ```
 
-### 13.3 Positive test: search-wikipedia (stateless skill)
+### 13.3 Positive test: search-wikipedia (stateless, direct-agent)
+
+`search-wikipedia` became an agent on 2026-09-27, so `test.skill` names
+`agents/search-wikipedia.md` and the input is a `delegation` (§5.2.1).
 
 ```json
 {
@@ -1965,18 +2049,20 @@ Junior genealogists create tests via the CRUD UI. Senior genealogists review a s
     "name": "Simple topic lookup",
     "type": "positive",
     "description": "Basic Wikipedia lookup for a genealogically relevant topic.",
-    "tags": ["wikipedia", "simple"]
+    "tags": ["wikipedia", "simple", "direct-arm"]
   },
 
   "input": {
-    "user_message": "Look up Schuylkill County, Pennsylvania on Wikipedia",
+    "delegation": "Look up Schuylkill County, Pennsylvania on Wikipedia
+
+topic: Schuylkill County, Pennsylvania",
     "scenario": null
   },
 
   "mcp_fixtures": ["wikipedia-search-schuylkill-county"],
 
   "judge_context": [
-    "Should save the summary to a file in the user's working folder, not just display it"
+    "Should save the summary to a file in the working folder, not just display it"
   ]
 }
 ```
@@ -2083,9 +2169,8 @@ Unit tests and e2e tests are complementary (see `e2e-test-spec.md`):
 |-----------|-----------|-----------|
 | ID prefix | `ut_` | `e2e_` |
 | Location | `eval/tests/unit/` | `eval/tests/e2e/` |
-| Run logs | `eval/runlogs/unit/<skill>/<model>/<timestamp>.json` | `eval/runlogs/e2e/<slug>/<model>/<timestamp>.json` |
-| Annotations | `.ann.<username>.json` | `.ann.<username>.json` |
-| Adjudications | `.adj.<username>.json` | `.adj.<username>.json` |
+| Run logs | `eval/runlogs/unit/<skill>/v1_<timestamp>.json` | `eval/runlogs/e2e/<slug>/run-<timestamp>.json` |
+| Annotations | `<run log name>.ann.json` | `run-<timestamp>.ann.json` |
 | MCP data | Mocked via fixtures | Live API calls |
 | Grading layers | Deterministic + LLM judge + human | Deterministic + LLM judge + human |
 
@@ -2117,7 +2202,7 @@ For stateless tests (`scenario: null`), the temp directory contains only `.claud
 
 Triggering correctness is a first-class evaluation target (Section 1, Section 6). A positive test must verify that Claude actually chose the skill under test from the full registry; a negative test must verify that Claude chose a *different* skill — or no skill at all — per the `negative.correct_skill` array. If only the skill under test were loaded, triggering would be trivially correct for positives and unobservable for negatives.
 
-The harness records which skill(s) Claude invoked. The run log includes this under `output.skills_invoked` (Section 10) so positive tests can fail if the wrong skill was used, and negative tests can verify the `correct_skill` array (including the empty-array "no skill should fire" case).
+The harness records which skill(s) Claude invoked, through a `Skill` call or a slash-command entry. The run log includes this under `output.skills_invoked` (Section 10) so positive tests can fail if the wrong skill was used, and negative tests can verify the `correct_skill` array (including the empty-array "no skill should fire" case).
 
 ### Why copy skills, not symlink
 
@@ -2151,7 +2236,7 @@ Key settings:
 - `allowed_tools` — the filesystem baseline plus every registered MCP tool (see below). No per-skill narrowing: `allowed-tools` frontmatter is a grant, not a restriction, and the `test_tool_allowlist` validator reports undeclared calls after the fact.
 - `model` — pinned to a specific version for reproducibility across runs.
 - `temperature=0` — deterministic decoding within a single run. **v1.5 implementation note:** the installed `claude-agent-sdk` does not currently expose a `temperature` field on `ClaudeAgentOptions` — the harness relies on the underlying Claude Code CLI's default decoding behaviour. Variance is acknowledged in `harness/skill_runner.py` and captured by bumping `runs_per_test` when needed.
-- `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (used to populate `skills_invoked`) and MCP calls (used to populate `tool_calls` and route to the mock server).
+- `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (one of the two paths that populate `skills_invoked`; a slash entry is the other, and fires no hook) and MCP calls (used to populate `tool_calls` and route to the mock server).
 
 ### Deriving `allowed_tools` per skill
 
@@ -2183,7 +2268,7 @@ should be updated.
 
 The guard fires only when all three hold: the tool is in `SUBAGENT_ONLY_TOOLS`, the call is on the main thread, and the skill did **not** declare the tool in its own `allowed-tools`. That last clause is what separates a violation from a legitimate direct call — a skill that declares a guarded tool for itself may call it directly, while `record-extraction` holds `image_read` only through `@plugin:image-reader` and must delegate. **No skill declares either guarded tool today**, so that clause is currently unreachable: `search-images` used to declare `image_read` directly and moved to delegating via `@plugin:image-reader` (2026-07-17), and `extraction_append` — the set's second member — has only ever lived on `agents/record-extractor.md`. The exemption mechanism stays available for a skill that legitimately needs it; both facts are pinned by tests in `harness/tests/unit/test_context_policy.py`. `declared_skill_tools()` (above) returns the pre-union set the check needs; `compute_allowed_tools` is the wrong input because it already contains the union. See `harness/context_policy.py` and `docs/plan/image-read-context-policy.md` §4.1. The universal validator `test_no_main_thread_subagent_only_calls` fails any run that breaks it, so routing is graded deterministically rather than by the judge (§5.10's pattern, applied to routing).
 
-### Capturing `skills_invoked` via PreToolUse
+### Capturing `skills_invoked`: the PreToolUse hook, and slash entry
 
 The Agent SDK fires a `PreToolUse` hook before every tool call. The harness uses it to observe `Skill` invocations:
 
@@ -2196,7 +2281,11 @@ async def skills_invoked_hook(call):
     return None  # let the call proceed
 ```
 
-The same hook mechanism intercepts MCP tool calls — but those go through the in-process mock server (see below) rather than being captured here. `skills_invoked` is therefore the authoritative record of which skill(s) Claude chose, not which MCP tools fired.
+The same hook mechanism intercepts MCP tool calls — but those go through the in-process mock server (see below) rather than being captured here.
+
+**There are two capture paths, not one.** A slash-command entry (`/research …`) is expanded by the CLI rather than called as a tool, so the `PreToolUse` hook never fires for it and the hook alone left the entry point production uses ungradable. The second path is `slash_skill_from_entry`, which records the skill when three conditions all hold: the message begins `/<name>`, `<name>` is in the init `SystemMessage`'s `slash_commands`, and `.claude/skills/<name>/` was staged. It is inserted at index 0, because `derive_activated` and the outcome computation test membership and the judge's slot and the routing validators read position. The `slash_commands` condition is what keeps it from being a prefix rule that would pass every slash test by default.
+
+Between them, `skills_invoked` is the authoritative record of which skill(s) Claude chose, not which MCP tools fired.
 
 ### File diff algorithm
 
@@ -2373,7 +2462,7 @@ After the skill executes and output is captured:
    Inputs: scenario README, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
-3. Write run log to eval/runlogs/unit/<skill>/<model>/<timestamp>.json
+3. Write run log to eval/runlogs/unit/<skill>/v1_<timestamp>.json
    Contains: all three outputs + validator results + judge scores
 ```
 

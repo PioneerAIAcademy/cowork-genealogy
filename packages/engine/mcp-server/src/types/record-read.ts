@@ -32,6 +32,9 @@ export type RecordReadResult = SimplifiedGedcomX & {
    *  Callers pass this to `image_read` / `image_transcribe` rather than
    *  deriving an image ARK from a record ARK. */
   imageArk?: string;
+  /** FamilySearch viewer URL for the page image, built from `imageArk`.
+   *  Present only when `imageArk` is present (issue #2854). */
+  viewerUrl?: string;
   /** Present iff `projectPath` was given on a live read: the record retained
    *  as a one-element `results[]` envelope under results/.staging/, readable
    *  back with `record_read({ recordId, resultsRef })` and finalized by

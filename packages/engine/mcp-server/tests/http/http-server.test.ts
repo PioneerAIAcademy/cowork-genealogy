@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -33,7 +33,7 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { startHttpServer } from "../../src/http-server.js";
+import { HEALTHZ_TIMEOUT_MS, startHttpServer, type ReadyReport } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
 import type { ProjectStore } from "../../src/store/project-store.js";
@@ -262,10 +262,50 @@ describe("tool server over Streamable HTTP", () => {
     }
   });
 
+  it("4b. the image cap is counted per project: A's 21st image refuses without fetching, B's is fetched (#3010)", async () => {
+    const idA = `capa-${randomUUID()}`;
+    const idB = `capb-${randomUUID()}`;
+    const [a, b] = await Promise.all([
+      connect({ [PROJECT_HEADER]: idA, Authorization: "Bearer tok-A" }),
+      connect({ [PROJECT_HEADER]: idB, Authorization: "Bearer tok-B" }),
+    ]);
+    for (const [client, given] of [[a, "Alpha"], [b, "Beta"]] as const) {
+      const created = await client.callTool({ name: "project_create", arguments: createArgs(given) });
+      expect(created.isError, textOf(created)).not.toBe(true);
+    }
+    // A has already read 20 distinct images from the group, in its own log.
+    const group = "004261111";
+    const lines = Array.from({ length: 20 }, (_, i) =>
+      JSON.stringify({ image_group: group, image_id: `${group}_${String(i + 1).padStart(5, "0")}`, tool: "image_read", at: "2026-10-01T00:00:00Z" }),
+    );
+    await mkdir(join(root, idA, "results"), { recursive: true });
+    await writeFile(join(root, idA, "results", "image-browse.jsonl"), lines.join("\n") + "\n");
+
+    upstream.calls.length = 0;
+    const next = `${group}_00021`;
+    const refusedA = await a.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
+    expect(refusedA.isError).toBe(true);
+    expect(textOf(refusedA)).toMatch(/Image cap reached/);
+    // No projectPath: still counted against A's bound project, through its anchorPath.
+    const refusedBare = await a.callTool({ name: "image_read", arguments: { imageId: next } });
+    expect(textOf(refusedBare)).toMatch(/Image cap reached/);
+    expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-A")).toHaveLength(0);
+
+    const fetchedB = await b.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
+    expect(textOf(fetchedB)).not.toMatch(/Image cap reached/);
+    expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-B").length).toBeGreaterThan(0);
+    // B's bare call on a new image: counted against B's own project, never A's full group.
+    const bareB = await b.callTool({ name: "image_read", arguments: { imageId: `${group}_00022` } });
+    expect(textOf(bareB)).not.toMatch(/Image cap reached/);
+  });
+
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
     const health = await fetch(`${base}/healthz`);
     expect(health.status).toBe(200);
-    expect(await health.json()).toEqual({ ok: true, tools: allToolSchemas.length });
+    const healthBody = await health.json();
+    expect(healthBody).toMatchObject({ ok: true, tools: allToolSchemas.length });
+    // No checkReady option: nothing was probed, so nothing is reported.
+    expect(healthBody).not.toHaveProperty("checks");
 
     // A bare GET would get the SDK transport's 406 and prove nothing about the
     // entrypoint's guard; with the SSE accept header the transport would hold
@@ -286,6 +326,69 @@ describe("tool server over Streamable HTTP", () => {
     const missing = await fetch(`${base}/nope`);
     expect(missing.status).toBe(404);
   });
+
+  it("5b. with checkReady, /healthz answers 200 or 503 from the report, and 503 (never 500) on a probe that rejects or never settles", async () => {
+    let probe: () => Promise<ReadyReport> = async () => ({ ok: true, checks: {} });
+    const ready = await startHttpServer({
+      host: "127.0.0.1",
+      port: 0,
+      baseConfig: {},
+      bindStore,
+      checkReady: () => probe(),
+    });
+    const address = ready.address();
+    if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+    const url = `http://127.0.0.1:${address.port}`;
+    const healthz = async (): Promise<{ status: number; body: Record<string, unknown> }> => {
+      const res = await fetch(`${url}/healthz`);
+      return { status: res.status, body: (await res.json()) as Record<string, unknown> };
+    };
+    const up = { ok: true };
+    const down = { ok: false, error: "ECONNREFUSED" };
+    try {
+      probe = async () => ({ ok: true, checks: { postgres: up, s3: up } });
+      expect(await healthz()).toEqual({
+        status: 200,
+        body: { ok: true, tools: allToolSchemas.length, checks: { postgres: up, s3: up } },
+      });
+
+      // A slow probe inside the deadline is still a 200.
+      probe = () =>
+        new Promise((resolve) => setTimeout(() => resolve({ ok: true, checks: { postgres: up, s3: up } }), 300));
+      expect((await healthz()).status).toBe(200);
+
+      for (const failing of ["postgres", "s3"] as const) {
+        const checks = { postgres: up, s3: up, [failing]: down };
+        probe = async () => ({ ok: false, checks });
+        const r = await healthz();
+        expect(r.status, failing).toBe(503);
+        expect(r.body, failing).toEqual({ ok: false, tools: allToolSchemas.length, checks });
+      }
+
+      // fail → ok: the next probe's answer, not a cached one.
+      probe = async () => ({ ok: true, checks: { postgres: up, s3: up } });
+      expect((await healthz()).status).toBe(200);
+
+      probe = async () => {
+        throw new Error("postgresql://u:p@db.internal/x exploded");
+      };
+      const rejected = await healthz();
+      expect(rejected.status).toBe(503);
+      expect(rejected.body).toEqual({ ok: false, tools: allToolSchemas.length });
+
+      probe = () => new Promise<ReadyReport>(() => {});
+      const t0 = Date.now();
+      const [hung, other] = await Promise.all([healthz(), fetch(`${url}/nope`)]);
+      expect(Date.now() - t0).toBeLessThan(HEALTHZ_TIMEOUT_MS + 500);
+      expect(hung.status).toBe(503);
+      expect(hung.body).toEqual({ ok: false, tools: allToolSchemas.length });
+      // The other routes are not held behind the probe.
+      expect(other.status).toBe(404);
+    } finally {
+      ready.closeAllConnections();
+      await new Promise<void>((resolve) => ready.close(() => resolve()));
+    }
+  }, 10_000);
 
   it("6. a client that disconnects mid-call aborts its store's signal; one that reads its response does not", async () => {
     // The store's first call blocks on `gate`, holding the tool mid-flight the

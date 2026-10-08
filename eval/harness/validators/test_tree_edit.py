@@ -1,4 +1,4 @@
-"""Skill-specific validators for the tree-edit skill.
+"""Validators for the tree-edit agent (a skill until issue #2805).
 
 tree-edit applies direct edits to tree.gedcomx.json — adding facts,
 correcting values, creating persons and relationships, and merging
@@ -112,12 +112,42 @@ def test_tree_edit_noop(before_state, after_state, test):
 
 # --- Post-edit check-warnings (deep dive #1657, Finding F) ------------
 
+_HAND_BACK_LINE = re.compile(r"^\s*[*_>`-]*\s*Hand-back:\s*`?check-warnings\b", re.I | re.M)
+_NEGATION = re.compile(r"\bnot\b|n't\b|\bnever\b|\bskip\w*|\bwithout\b|\bunable\b|\bcannot\b", re.I)
+
+
+def _names_check_warnings(reply: str) -> bool:
+    """A `Hand-back: check-warnings` line, or any other sentence naming it
+    that does not negate it ("I did not run check-warnings" is not a hand-back).
+    The hand-back line passes even beside a negation elsewhere in the reply --
+    "I can't run it myself. Hand-back: check-warnings I1" is the compliant
+    shape, since the agent holds no Agent tool."""
+    if _HAND_BACK_LINE.search(reply):
+        return True
+    for line in reply.splitlines():
+        for unit in re.split(r"(?<=[.;!?])\s+", line):
+            if "check-warnings" in unit.lower() and not _NEGATION.search(unit):
+                return True
+    return False
+
+
 def test_check_warnings_runs_after_any_tree_write(
-    before_state, after_state, skills_invoked, builtin_tool_calls=None
+    before_state, after_state, skills_invoked, test,
+    builtin_tool_calls=None, agent_returns=None, text_response=None,
 ):
-    """SKILL.md § Validation: "After ANY edit or merge, run check-warnings
-    to catch genealogical impossibilities the structural validator cannot"
-    -- unconditional, no carve-out for a single-field correction. Deep dive
+    """Agent body § Validation: every edit or merge ends with a caller-facing
+    `Hand-back: check-warnings <person ids>` line -- unconditional, no carve-out
+    for a single-field correction. Since issue #2805 tree-edit is an agent that
+    holds no Agent tool, so it cannot spawn check-warnings; the hand-back names
+    it for the main thread to run (lead ruling 2026-09-23 on that issue).
+
+    Passes when `handoffs` shows a check-warnings spawn -- the routed-caller
+    fallback, dead on the direct arm, whose dispatcher may call no other tool --
+    or when the SUBJECT's reply names it (`subject_reply_text`: on a direct
+    test the agent's own return only, never the relay, so a silent agent fails
+    however the dispatcher words its relay; review of issue #2805, 2026-09-30).
+
+    History: before the conversion this required the spawn itself. Deep dive
     #1657 finding F: across the 5 committed run logs, this fired in at most
     2 of 5 runs for any one edit test, and 0 of 5 for three of them
     (`ut_tree_edit_006`, `_008`, `_009`) -- including the currently-active
@@ -137,13 +167,17 @@ def test_check_warnings_runs_after_any_tree_write(
     after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
     if before_tree is None or after_tree is None:
         pytest.skip("missing tree.gedcomx.json on one side")
-    from harness.skill_runner import handoffs
+    from harness.skill_runner import handoffs, subject_reply_text
 
     if before_tree == after_tree:
         pytest.skip("tree.gedcomx.json unchanged -- no edit to validate")
-    assert "check-warnings" in handoffs(skills_invoked, builtin_tool_calls), (
-        "tree.gedcomx.json changed but check-warnings was never invoked -- "
-        "SKILL.md § Validation requires it after ANY edit or merge"
+    if not test.get("delegation") and "check-warnings" in handoffs(skills_invoked, builtin_tool_calls):
+        return
+    reply = subject_reply_text(agent_returns, text_response, "tree-edit", test)
+    assert _names_check_warnings(reply), (
+        "tree.gedcomx.json changed but the reply never hands back to "
+        "check-warnings -- the agent body requires a caller-facing "
+        "`Hand-back: check-warnings <person ids>` line after ANY edit or merge"
     )
 
 
@@ -156,6 +190,12 @@ _LEAD_MARKER = re.compile(
 )
 _UNCLE = re.compile(r"uncle", re.I)
 _STEP = re.compile(r"step", re.I)
+_CONDITIONAL_BRANCH = re.compile(
+    r"^[\s*_>-]*(?:if|should|were|assuming)\b[^,.;:!?|→]*"
+    r"\b(?:maiden|married|widow\w*|prior)\b",
+    re.I,
+)
+_SENTENCE_END = re.compile(r"[.;!?](?=\s|$)")
 
 
 def _weighting_units(text: str):
@@ -176,12 +216,38 @@ def _weighting_units(text: str):
         if line[:1] in "|-*":
             yield line
             continue
-        for sentence in re.split(r"(?<=[.;:!?])\s+", line):
-            if sentence.strip():
-                yield sentence.strip()
+        sentences = [s.strip() for s in re.split(r"(?<=[.;:!?])\s+", line) if s.strip()]
+        i = 0
+        while i < len(sentences):
+            s = sentences[i]
+            if (s.endswith(":") and i + 1 < len(sentences)
+                    and _CONDITIONAL_BRANCH.match(s)):
+                s = f"{s} {sentences[i + 1]}"
+                i += 1
+            yield s
+            i += 1
 
 
-def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
+def _verdict_units(text: str):
+    """`_weighting_units` minus the surname-branch sentences.
+
+    A unit opening with a condition on the surname premise ("If Watts was
+    her maiden name, ...") is exempt only up to its first sentence end;
+    whatever follows it in the same bullet is split and checked like prose.
+    Table rows are never exempt.
+    """
+    for u in _weighting_units(text):
+        if not _CONDITIONAL_BRANCH.match(u):
+            yield u
+            continue
+        end = _SENTENCE_END.search(u)
+        rest = u[end.end():] if end else ""
+        for s in re.split(r"(?<=[.;:!?])\s+", rest):
+            if s.strip():
+                yield s.strip()
+
+
+def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test, agent_returns=None):
     """`references/relationship-accuracy.md`, "Guardianship shortly after a
     remarriage": when the record does not say whether the wife's shared
     surname is her maiden or a prior married name, the STEP reading leads
@@ -210,13 +276,25 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     committed runs plus three scratch runs of 2026-09-22 -- this fires on
     exactly the one inverted run and is clean on the other seven, including
     the two that failed for the unrelated `Tool Arguments` reason.
+
+    A sentence conditioned on the surname premise is a hypothesis branch,
+    not a verdict: "If Watts was her maiden name, the children are more
+    likely her brother's orphans" says what follows from the premise, not
+    which premise leads. Scratch run `scratch_2026-09-28_11-00-31` run 2
+    wrote its step and uncle branches as two such bullets, led with step in
+    prose, and was red on the uncle bullet alone (issue #2449). The opener
+    must name the premise (maiden, married, widow, prior) before its first
+    comma, so "If so, the uncle reading is favoured" -- the premise settled
+    in the sentence before -- is still a verdict.
     """
     if "guardianship" not in (test.get("tags") or []):
         pytest.skip("only applies to guardianship tests")
+    from harness.skill_runner import subject_reply_text
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
     if not (text_response or "").strip():
         pytest.skip("no reply to weigh")
     offenders = [
-        u for u in _weighting_units(text_response)
+        u for u in _verdict_units(text_response)
         if _LEAD_MARKER.search(u) and _UNCLE.search(u) and not _STEP.search(u)
     ]
     assert not offenders, (
@@ -229,7 +307,7 @@ def test_step_reading_leads_when_the_surname_is_unresolved(text_response, test):
     )
 
 
-def test_uncle_reading_is_named_at_all(text_response, test):
+def test_uncle_reading_is_named_at_all(text_response, test, agent_returns=None):
     """The other half of the same sentence in
     `references/relationship-accuracy.md`: "Lead with the step reading, name
     the uncle-by-marriage reading as unresolved, and say what would settle
@@ -252,6 +330,8 @@ def test_uncle_reading_is_named_at_all(text_response, test):
     """
     if "guardianship" not in (test.get("tags") or []):
         pytest.skip("only applies to guardianship tests")
+    from harness.skill_runner import subject_reply_text
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
     if not (text_response or "").strip():
         pytest.skip("no reply to weigh")
     assert _UNCLE.search(text_response), (

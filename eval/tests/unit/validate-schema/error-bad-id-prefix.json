@@ -6,10 +6,10 @@
     "type": "positive",
     "holdout": true,
     "description": "Run schema validation against mid-research-flynn-bad-id-prefix, the clean scenario with one mutation: a person_evidence entry has id 'x_001' instead of the required 'pe_' prefix. The validator emits one error. Exercises the checkIdPrefix path.",
-    "tags": ["validation", "error-path", "id-prefix", "explain-and-suggest"]
+    "tags": ["validation", "error-path", "id-prefix", "explain-and-suggest", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-bad-id-prefix"
   },
   "intentionally_invalid": true,

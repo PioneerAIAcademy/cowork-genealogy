@@ -7,9 +7,12 @@ timeline is hand-computed so the tool-vs-non-tool split is checkable by eye.
 
 from __future__ import annotations
 
+import pytest
+
 from e2e.latency_report import (
     LatencyBreakdown,
     analyze_result,
+    exclusion_reason,
     format_breakdown,
     format_markdown_table,
     format_skill_phases,
@@ -211,3 +214,177 @@ def test_format_skill_phases_no_data_message_for_legacy_run():
     text = format_skill_phases(bd)
     assert "no skill-phase data" in text
     assert "kenneth-quass-death" in text
+
+
+# --- a Windows-slept run (issue #2983): timeline offsets include standby -----
+
+
+def _windows_slept():
+    # Timeline 0 -> 50 s on the raw monotonic clock, 30 s of which was standby
+    # the heartbeat counted, so the persisted active wall-clock is 60 - 30.
+    return _result(
+        usage={
+            **_result()["usage"],
+            "timeline": _SKILL_TIMELINE,
+            "wall_clock_seconds": 30.0,
+            "counted_sleep_seconds": 30.0,
+        }
+    )
+
+
+def test_windows_slept_stall_is_measured_on_the_timeline_clock():
+    bd = analyze_result(_windows_slept())
+    assert bd.counted_sleep_s == 30.0
+    assert bd.timeline_clock_s == 60.0
+    # 60 on the timeline's clock minus a 50 s span, not max(0, 30 - 50) = 0.
+    assert bd.stall_s == 10.0
+
+
+def test_windows_slept_phase_share_never_exceeds_the_run():
+    text = format_skill_phases(analyze_result(_windows_slept()))
+    # person-evidence ran 30 of 60 s on the timeline's clock: 50%, not 100%.
+    assert "50% of wall-clock" in text
+    assert "100% of wall-clock" not in text
+
+
+def test_windows_slept_breakdown_names_the_host_sleep_without_placing_it():
+    text = format_breakdown(analyze_result(_windows_slept()))
+    assert "host sleep:      0.5m" in text
+    # Only a total is persisted: the line must not claim which bucket holds it.
+    host = next(line for line in text.splitlines() if "host sleep" in line)
+    assert "counted in non-tool" not in host
+    assert "tool, non-tool or stall/idle" in host
+    assert "host sleep" not in format_breakdown(analyze_result(_result()))
+
+
+def test_windows_slept_standby_during_a_tool_call_is_not_called_non_tool():
+    # 1200 s standby while record_search was pending: the gap ends at a
+    # tool_result, so the timeline puts it in TOOL time.
+    timeline = [
+        [0.0, "system:init", []],
+        [10.0, "assistant", ["Skill:research"]],
+        [20.0, "assistant", ["record_search"]],
+        [1220.0, "tool_result", []],
+        [1250.0, "assistant", []],
+        [1260.0, "result", []],
+    ]
+    bd = analyze_result(
+        _result(
+            usage={
+                **_result()["usage"],
+                "timeline": timeline,
+                "wall_clock_seconds": 60.0,
+                "counted_sleep_seconds": 1200.0,
+            }
+        )
+    )
+    assert bd.tool_time_s == 1200.0
+    text = format_breakdown(bd)
+    assert "host sleep:      20.0m" in text
+    assert "counted in non-tool" not in text
+
+
+def test_windows_slept_phase_block_names_its_denominator():
+    text = format_skill_phases(analyze_result(_windows_slept()))
+    assert "wall-clock plus 0.5m host sleep" in text
+    assert "host sleep" not in format_skill_phases(
+        analyze_result(_result(usage={**_result()["usage"], "timeline": _SKILL_TIMELINE}))
+    )
+
+
+def test_a_counted_sleep_under_a_minute_is_still_shown():
+    # The detector's floor is gap - tick, about 55 s; the line must not hide it.
+    bd = analyze_result(_windows_slept())
+    bd.counted_sleep_s = 55.0
+    assert "host sleep:      0.9m" in format_breakdown(bd)
+
+
+# ---------------------------------------------------------------------------
+# Multi-query runs (#3128): their ResultMessage figures cover the last query
+# only, so the summary and the table name them instead of printing them. The
+# per-skill phases read the timeline and wall clock, which are whole-run.
+# ---------------------------------------------------------------------------
+
+
+def _multi_query_result(**overrides):
+    """`_result()` with a second query: a background subagent's notification and
+    then a fresh `system:init`, the anders-monsen-ancestry 2026-09-24 shape."""
+    usage = {
+        **_result()["usage"],
+        "num_turns": 3,
+        "timeline": [
+            [0.0, "system:init", []],
+            [8.0, "assistant", ["Skill:question-selection"]],
+            [10.0, "tool_result", ["Skill"]],
+            [12.0, "system:task_notification", []],
+            [12.5, "system:init", []],
+            [20.0, "assistant", []],
+        ],
+    }
+    return _result(usage=usage, test_id="anders-monsen-ancestry", **overrides)
+
+
+def test_exclusion_reason_names_a_multi_query_run():
+    assert exclusion_reason(_multi_query_result()) == "multi-query"
+
+
+def test_exclusion_reason_is_none_for_a_one_query_run_and_for_no_usage():
+    assert exclusion_reason(_result()) is None
+    assert exclusion_reason({"fixture": "found-slug"}) is None
+
+
+def _write(tmp_path, name, result):
+    import json
+
+    p = tmp_path / name
+    p.write_text(json.dumps(result), encoding="utf-8")
+    return p
+
+
+@pytest.mark.parametrize("mode", [[], ["--markdown"]])
+def test_summary_and_table_name_a_multi_query_run_instead_of_printing_it(
+    mode, tmp_path, capsys
+):
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    assert latency_report.main([*mode, str(flagged)]) == 0
+    out = capsys.readouterr().out
+    assert "excluded (multi-query)" in out
+    assert str(flagged) in out
+    assert "anders-monsen-ancestry" not in out.replace(str(flagged), "")
+
+
+def test_markdown_separates_the_exclusion_from_the_table(tmp_path, capsys):
+    """A line straight after a GFM table reads as another row, so `MD=1 > table.md`
+    would carry the exclusion inside the table."""
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    clean = _write(tmp_path, "run-2026-09-25_00-00-00.json", _result())
+    assert latency_report.main(["--markdown", str(clean), str(flagged)]) == 0
+    lines = capsys.readouterr().out.splitlines()
+    at = next(i for i, line in enumerate(lines) if "excluded (multi-query)" in line)
+    assert lines[at - 1] == ""
+    assert lines[at - 2].startswith("| kenneth-quass-death |")
+
+
+def test_a_clean_run_still_prints_beside_an_excluded_one(tmp_path, capsys):
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    clean = _write(tmp_path, "run-2026-09-25_00-00-00.json", _result())
+    assert latency_report.main([str(flagged), str(clean)]) == 0
+    out = capsys.readouterr().out
+    assert "=== kenneth-quass-death" in out
+    assert "excluded (multi-query)" in out
+
+
+def test_by_skill_still_prints_a_multi_query_runs_phases(tmp_path, capsys):
+    from e2e import latency_report
+
+    flagged = _write(tmp_path, "run-2026-09-24_07-23-44.json", _multi_query_result())
+    assert latency_report.main(["--by-skill", str(flagged)]) == 0
+    out = capsys.readouterr().out
+    assert "anders-monsen-ancestry — per-skill phase breakdown" in out
+    assert "excluded" not in out

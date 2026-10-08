@@ -8,7 +8,7 @@
     "tags": ["person-evidence", "same-person", "score-variant"]
   },
   "input": {
-    "user_message": "Link assertion a_003 — the 1850 census record for 'Patrick Flinn' — to the right person in the tree.",
+    "delegation": "Link assertion a_003 — the 1850 census record for 'Patrick Flinn' — to the right person in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": ["same-person-flynn-variant"],

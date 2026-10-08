@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-10-01_04-20-27.json",
+  "annotator": "edesonchristopher@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The reply called the cluster consistent with a merge and went straight to a timeline rebuild, but one wrong fact (the F2 death date) explains the cluster and should be checked first. Main's own runs show the same partial, so it predates this PR."
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The reply called the cluster consistent with a merge and went straight to a timeline rebuild, but one wrong fact (the F2 death date) explains the cluster and should be checked first. Main's own runs show the same partial, so it predates this PR."
+    }
+  ]
+}

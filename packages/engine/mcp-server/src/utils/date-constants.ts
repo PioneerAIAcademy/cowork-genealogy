@@ -1,11 +1,13 @@
 /**
  * Constants for genealogical date standardization.
- * Month names (11 languages), modifier synonyms, accent normalization, and lookup tables.
+ * Month names (14 languages), modifier synonyms, accent normalization, and lookup tables.
  */
 
-/** Strip diacritics using Unicode NFD decomposition */
+/** Strip diacritics using Unicode NFD decomposition. `ł`/`Ł` have no NFD
+ *  decomposition, so they are folded explicitly: without it `około` tokenized as
+ *  `oko` + `o` and never matched `okolo`. */
 export function normalizeAccents(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').replace(/Ł/g, 'L');
 }
 
 /**
@@ -74,6 +76,31 @@ export const MONTHS: Map<string, string> = new Map([
   ['yanvar', 'Jan'], ['fevral', 'Feb'], ['mart', 'Mar'], ['aprel', 'Apr'],
   ['iyun', 'Jun'], ['iyul', 'Jul'], ['avgust', 'Aug'],
   ['sentyabr', 'Sep'], ['oktyabr', 'Oct'], ['noyabr', 'Nov'], ['dekabr', 'Dec'],
+  // Hungarian (accent-normalized). januar, februar, oktober, november and
+  // december already resolve through other languages' entries.
+  ['marcius', 'Mar'], ['aprilis', 'Apr'], ['majus', 'May'], ['junius', 'Jun'],
+  ['julius', 'Jul'], ['augusztus', 'Aug'], ['szeptember', 'Sep'],
+  ['febr', 'Feb'], ['marc', 'Mar'], ['szept', 'Sep'],
+
+  // Czech (accent-normalized), nominative and genitive: a date writes the
+  // genitive ("13. brezna 1784"). listopad is shared with Polish above.
+  ['leden', 'Jan'], ['ledna', 'Jan'], ['unor', 'Feb'], ['unora', 'Feb'],
+  ['brezen', 'Mar'], ['brezna', 'Mar'], ['duben', 'Apr'], ['dubna', 'Apr'],
+  ['kveten', 'May'], ['kvetna', 'May'], ['cerven', 'Jun'], ['cervna', 'Jun'],
+  ['cervenec', 'Jul'], ['cervence', 'Jul'], ['srpen', 'Aug'], ['srpna', 'Aug'],
+  ['zari', 'Sep'], ['rijen', 'Oct'], ['rijna', 'Oct'], ['listopadu', 'Nov'],
+  ['prosinec', 'Dec'], ['prosince', 'Dec'],
+
+  // Spanish and Portuguese abbreviations
+  ['ene', 'Jan'], ['abr', 'Apr'], ['ago', 'Aug'], ['dic', 'Dec'], ['set', 'Sep'],
+
+  // Danish
+  ['marts', 'Mar'],
+
+  // Common abbreviations in languages above. Not Portuguese 'out' (October),
+  // which is an English word. Not 'listopada' (Polish November, Croatian October).
+  ['mrt', 'Mar'], ['janv', 'Jan'], ['fevr', 'Feb'], ['avr', 'Apr'],
+  ['gen', 'Jan'], ['mag', 'May'], ['giu', 'Jun'], ['lug', 'Jul'], ['ott', 'Oct'],
 ]);
 
 /** Maps 3-letter abbreviations to month numbers (1-12) */
@@ -106,6 +133,8 @@ export const MODIFIERS: Map<string, string> = new Map([
   // Non-English about
   ['vers', 'Abt'], ['omstreeks', 'Abt'], ['omstr', 'Abt'],
   ['omkring', 'Abt'], ['omk', 'Abt'],
+  // German 'um', Polish 'okolo' (from 'około', see normalizeAccents)
+  ['um', 'Abt'], ['okolo', 'Abt'],
 
   // Cal
   ['cal', 'Cal'], ['calculated', 'Cal'], ['calc', 'Cal'], ['calcd', 'Cal'],
@@ -117,7 +146,7 @@ export const MODIFIERS: Map<string, string> = new Map([
 
   // Bef
   ['bef', 'Bef'], ['before', 'Bef'], ['bfr', 'Bef'], ['by', 'Bef'],
-  ['voor', 'Bef'], ['avant', 'Bef'],
+  ['voor', 'Bef'], ['avant', 'Bef'], ['antes', 'Bef'],
   ['<', 'Bef'],
 
   // Aft
@@ -128,8 +157,8 @@ export const MODIFIERS: Map<string, string> = new Map([
   ['bet', 'Bet'], ['between', 'Bet'], ['btw', 'Bet'],
 
   // From / To (preserved as distinct)
-  ['from', 'From'], ['frm', 'From'], ['van', 'From'],
-  ['to', 'To'], ['until', 'To'], ['tot', 'To'],
+  ['from', 'From'], ['frm', 'From'], ['van', 'From'], ['von', 'From'],
+  ['to', 'To'], ['until', 'To'], ['tot', 'To'], ['bis', 'To'],
 
   // Conjunctions
   ['and', 'and'], ['&', 'and'], ['also', 'and'],
@@ -137,6 +166,20 @@ export const MODIFIERS: Map<string, string> = new Map([
 ]);
 
 export const QUARTER_WORDS: Set<string> = new Set(['quarter', 'qtr', 'qrt', 'q']);
+
+/** Words that carry no date meaning and parse as nothing, so the whole-input
+ *  vocabulary check in stdDate accepts them. English `of`/`the`/`day`/`on`,
+ *  Spanish/Portuguese `de`
+ *  ("22 de abril de 1838"), Polish `r` (rok, "21.06.1827 r."), and weekday
+ *  names. Deliberately NOT `da` ("from") or `do` ("until"): treating them as
+ *  filler would turn `do 1850` into an exact 1850. */
+export const FILLER_WORDS: Set<string> = new Set([
+  'de', 'r',
+  // English: "3rd of March 1850", "the 5th day of June 1850", "on 4 July 1776"
+  'of', 'the', 'day', 'on',
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  'mon', 'tue', 'tues', 'wed', 'weds', 'thu', 'thur', 'thurs', 'fri', 'sat', 'sun',
+]);
 
 export const UNKNOWN_PHRASES: Set<string> = new Set([
   'unknown', 'date unknown', 'unk', 'unknow', 'not known',

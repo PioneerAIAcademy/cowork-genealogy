@@ -1,6 +1,6 @@
 import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { mkdtemp, rm, readFile } from "fs/promises";
+import { mkdtemp, rm, readFile, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -16,6 +16,7 @@ import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -36,6 +37,7 @@ function mockImageResponse(bytes?: Uint8Array) {
 }
 
 beforeEach(() => {
+  __clearImageBrowseMemoryForTests();
   mockFetch.mockReset();
   mockedGetValidToken.mockReset();
   mockedGetValidToken.mockResolvedValue("test-token");
@@ -59,6 +61,9 @@ describe("imageReadTool — imageId input", () => {
     expect(result.metadata.url).toBe(
       "https://familysearch.org/das/v2/dgs:004884748_02613/dist.jpg"
     );
+    expect(result.metadata.viewerUrl).toBe(
+      "https://www.familysearch.org/search/film/004884748?i=2612"
+    );
     expect(result.metadata.mimeType).toBe("image/jpeg");
   });
 
@@ -68,8 +73,8 @@ describe("imageReadTool — imageId input", () => {
     await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    const headers = init.headers as Record<string, string>;
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
+    const headers = new Headers(init.headers as HeadersInit);
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
   });
 
   it("rejects an image that exceeds the inline size cap", async () => {
@@ -169,6 +174,7 @@ describe("imageReadTool — ark input", () => {
     const [url] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(ark);
     expect(result.metadata.url).toBe(ark);
+    expect(result.metadata.viewerUrl).toBeUndefined();
   });
 
   it("fetches a DGS distribution URL directly", async () => {
@@ -184,10 +190,13 @@ describe("imageReadTool — ark input", () => {
   it("expands a canonical document-image ARK (3:1:) to a resolver URL", async () => {
     mockImageResponse();
 
-    await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL);
+    const result = await imageReadTool({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" }, LOCAL);
 
     const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(fetchedUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
+    );
+    expect(result.metadata.viewerUrl).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
     );
   });
@@ -268,6 +277,22 @@ describe("imageReadTool — ark input", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
+  it("rejects a persona-shaped unprefixed id without fetching", async () => {
+    await expect(imageReadTool({ ark: "QPRC-WPBZ" }, LOCAL)).rejects.toThrow(
+      /exactly as the user gave it/
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("fetches an unprefixed XXXX-XXXX-XXXX-X id as 3:1:", async () => {
+    mockImageResponse();
+
+    await imageReadTool({ ark: "3QS7-89Q6-89S6-Y" }, LOCAL);
+
+    const [fetchedUrl] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(fetchedUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y");
+  });
+
   it("surfaces a non-image resolver response as an error rather than misinterpreting it", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -313,9 +338,14 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
     mockImageResponse();
     await imageReadTool({ memoryArtifactUrl: ART }, LOCAL);
     expect(mockedGetValidToken).not.toHaveBeenCalled();
-    const headers = (mockFetch.mock.calls[0][1]?.headers ?? {}) as Record<string, string>;
-    const names = Object.keys(headers).map((h) => h.toLowerCase());
-    expect(names).not.toContain("authorization");
+    const headers = new Headers(mockFetch.mock.calls[0][1]?.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBeNull();
+  });
+
+  it("omits viewerUrl for memory artifact input (issue #2854)", async () => {
+    mockImageResponse();
+    const result = await imageReadTool({ memoryArtifactUrl: ART }, LOCAL);
+    expect(result.metadata.viewerUrl).toBeUndefined();
   });
 
   it("still sends the bearer for an ordinary imageId, so the flag is not stuck on", async () => {
@@ -324,9 +354,8 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
     mockImageResponse();
     await imageReadTool({ imageId: "004884748_02613" }, LOCAL);
     expect(mockedGetValidToken).toHaveBeenCalled();
-    const headers = (mockFetch.mock.calls[0][1]?.headers ?? {}) as Record<string, string>;
-    const auth = Object.entries(headers).find(([k]) => k.toLowerCase() === "authorization");
-    expect(auth?.[1]).toBe("Bearer test-token");
+    const headers = new Headers(mockFetch.mock.calls[0][1]?.headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
   });
 
   it("refuses an artifact URL on any other host", async () => {
@@ -334,5 +363,65 @@ describe("imageReadTool — memoryArtifactUrl input", () => {
       imageReadTool({ memoryArtifactUrl: "https://evil.example.com/a/dist.jpg" }, LOCAL),
     ).rejects.toThrow(/Unrecognized memoryArtifactUrl/);
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)", () => {
+  const GROUP = "004884748";
+  const img = (seq: number) => `${GROUP}_${String(seq).padStart(5, "0")}`;
+  let project: string;
+
+  beforeEach(async () => {
+    project = await mkdtemp(join(tmpdir(), "imgr-cap-"));
+    await writeFile(join(project, "research.json"), "{}");
+  });
+
+  afterEach(async () => {
+    await rm(project, { recursive: true, force: true });
+  });
+
+  async function readTwenty() {
+    for (let i = 1; i <= 20; i++) {
+      mockImageResponse();
+      await imageReadTool({ imageId: img(i), projectPath: project }, LOCAL);
+    }
+  }
+
+  it("refuses the 21st distinct image in a group without fetching it", async () => {
+    await readTwenty();
+    mockFetch.mockClear();
+    await expect(imageReadTool({ imageId: img(21), projectPath: project }, LOCAL)).rejects.toThrow(
+      /Image cap reached: 20 distinct images from image group 004884748/,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("re-reading one of the first 20 still works", async () => {
+    await readTwenty();
+    mockImageResponse();
+    const again = await imageReadTool({ imageId: img(3), projectPath: project }, LOCAL);
+    expect(again.metadata.sizeBytes).toBe(4);
+  });
+
+  it("counts a DGS distribution URL passed as ark", async () => {
+    await readTwenty();
+    mockFetch.mockClear();
+    await expect(
+      imageReadTool({ ark: `https://familysearch.org/das/v2/dgs:${img(21)}/dist.jpg`, projectPath: project }, LOCAL),
+    ).rejects.toThrow(/Image cap reached/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("a failed fetch does not advance the count", async () => {
+    for (let i = 1; i <= 19; i++) {
+      mockImageResponse();
+      await imageReadTool({ imageId: img(i), projectPath: project }, LOCAL);
+    }
+    mockFetch.mockResolvedValue({ ok: false, status: 404, statusText: "Not Found", headers: { get: () => null } });
+    await expect(imageReadTool({ imageId: img(20), projectPath: project }, LOCAL)).rejects.toThrow();
+    mockFetch.mockReset();
+    mockImageResponse();
+    const r = await imageReadTool({ imageId: img(21), projectPath: project }, LOCAL);
+    expect(r.metadata.sizeBytes).toBe(4);
   });
 });

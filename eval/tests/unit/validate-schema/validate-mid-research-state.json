@@ -5,10 +5,10 @@
     "name": "Validate clean mid-research project files (no errors expected)",
     "type": "positive",
     "description": "Run schema validation against the mid-research-flynn project files. Both files are well-formed and should pass cleanly. This tests the false-positive-rate dimension: a useful validator doesn't flag valid patterns (null optional fields, empty arrays, valid open enum values) as errors.",
-    "tags": ["validation", "clean-data", "false-positive-avoidance", "no-op-validation"]
+    "tags": ["validation", "clean-data", "false-positive-avoidance", "no-op-validation", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

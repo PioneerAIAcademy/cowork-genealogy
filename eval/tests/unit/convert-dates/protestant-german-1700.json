@@ -5,10 +5,10 @@
     "name": "Protestant German states Julian-to-Gregorian 1700 (10-day shift)",
     "type": "positive",
     "description": "Convert a Protestant German date from 1699 — before the Protestant German states adopted the Gregorian calendar in February/March 1700. The shift for this jurisdiction-and-era is 10 days. Tests the middle band of Gregorian adoption — between Catholic Europe (1582) and Britain (1752).",
-    "tags": ["julian-gregorian", "1700", "germany", "protestant", "10-day-shift", "requires-tool-conversion"]
+    "tags": ["julian-gregorian", "1700", "germany", "protestant", "10-day-shift", "requires-tool-conversion", "direct-arm"]
   },
   "input": {
-    "user_message": "Convert this Württemberg birth record date to the modern Gregorian calendar: '15 January 1699'.",
+    "delegation": "Convert this Württemberg birth record date to the modern Gregorian calendar: '15 January 1699'.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

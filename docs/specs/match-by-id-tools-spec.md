@@ -334,7 +334,7 @@ Mapped output:
 | Upstream 400 (bad ARK)                   | Re-throws as "FamilySearch rejected the id `<value>` as a malformed ARK."                     |
 | Upstream non-2xx                         | Re-throws as "FamilySearch match API error: `<status> <statusText>`."                         |
 | Upstream 200 carrying a `not-found` link | Throws "FamilySearch has no record persona / tree person at `<ark>` …" — see "Unresolvable ids" |
-| Network error                            | Re-throws as "Could not reach FamilySearch match API: `<message>`."                           |
+| Network error                            | Re-throws as "Could not reach FamilySearch match API: `<cause>`." (`<cause>` from `describeFetchError`, `src/utils/http.ts`)                           |
 | Response not JSON / missing entries      | Throws "FamilySearch match API returned an unexpected response body."                          |
 
 No retries — single attempt per call. Callers can retry if they hit

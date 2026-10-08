@@ -1,4 +1,4 @@
-"""Skill-specific validators for the proof-conclusion skill.
+"""Validators for the proof-conclusion agent (its routing skill was deleted, issue #2822).
 
 proof-conclusion keeps its `rubric.md` — all three dimensions (Tier
 justification, Narrative standalone, Evidence completeness) are GPS
@@ -143,22 +143,17 @@ def test_q001_possible_tier(after_state, test):
     """Tagged `tier-possible-q001`: the proof summary for q_001 must have
     tier == 'possible' EXACTLY — neither a higher tier nor a lower one.
 
-    The assertion is shared; what makes it bind differs per fixture, which is
-    why the tag carries it rather than the scenario name.
+    This tag now binds only `possible-tier-thin-evidence` (_004): a single
+    uncorroborated indirect co-residence (the 1850 census alone) is a credible
+    lead but cannot support 'probable'; it still leans toward Thomas, so it is
+    stronger than 'not_proved'.
 
-    `possible-tier-thin-evidence` (_004): a single uncorroborated indirect
-    co-residence (the 1850 census alone) is a credible lead but cannot support
-    'probable'; it still leans toward Thomas, so it is stronger than
-    'not_proved'.
-
-    `bounded-death-encoded-not-collapsed` (_018): a reachable, unsearched 1880
-    census would halve the bracket, and a gap that NARROWS the answer is a
-    Component 1 failure rather than a corroboration gap (genealogist ruling,
-    2026-08-21). `test_bounded_conclusion_is_tiered_and_encoded`'s ACCEPTED set
-    is a FLOOR — it keeps the finding off `not_proved` and deliberately admits
-    `probable` — so it cannot express this ceiling. This does. Added 2026-09-22
-    after a run wrote `probable` + `shortfall: gap` and passed every
-    deterministic check while failing the key (issue #2604)."""
+    `bounded-death-encoded-not-collapsed` (_018) formerly carried this tag,
+    pinning its bounded death to `possible` (the 2026-08-21 ceiling); issue
+    #2930 relaxed it to accept `possible` OR `probable` — the tier flips
+    between the two run-to-run even on neutral wording — so 018 dropped the tag and
+    is now guarded by `test_bounded_conclusion_is_tiered_and_encoded`'s floor
+    (off `not_proved`, Death fact encoded) instead."""
     if "tier-possible-q001" not in test.get("tags", []):
         pytest.skip("not a tier-possible-q001 scenario")
     ps = _proof_summary_for_question(after_state, "q_001")
@@ -385,13 +380,10 @@ def test_bounded_conclusion_is_tiered_and_encoded(after_state, test):
     not do is collapse to `not_proved` because the exact value is unreachable,
     or reach a tier and never touch the tree.
 
-    `possible` is the expected tier for the committed fixture, and for a reason
-    worth keeping: a reachable, unsearched 1880 census would halve its bracket,
-    which is a Component 1 failure rather than a corroboration gap. A bracket
-    with a named record that would narrow it is not reasonably exhaustive.
-
-    Deterministic on purpose — both halves were judge-graded before, and the
-    test failed on 2026-08-19 with a rationale that misread its own fixture.
+    `possible` or `probable` are both accepted; the committed run used
+    `possible`, but the tier may vary between runs. The `tier-possible-q001`
+    ceiling was removed from 018 on 2026-09-30, so this floor is now its only
+    tier guard.
     """
     if "bounded-conclusion" not in test.get("tags", []):
         pytest.skip("not a bounded-conclusion scenario")

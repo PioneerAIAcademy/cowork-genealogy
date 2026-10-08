@@ -10,11 +10,12 @@
       "slug",
       "regression",
       "irish",
-      "slug-great-famine-ireland"
+      "slug-great-famine-ireland",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Look up the potato famine on Wikipedia",
+    "delegation": "Look up the potato famine on Wikipedia\n\ntopic: the potato famine",
     "scenario": null
   },
   "mcp_fixtures": [

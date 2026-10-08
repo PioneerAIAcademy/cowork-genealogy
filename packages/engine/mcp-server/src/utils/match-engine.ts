@@ -14,8 +14,10 @@
 //
 // Spec: docs/specs/rank-search-matches-tool-spec.md (Files §).
 
+import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "./http.js";
+import { fsFetchWithTimeout } from "./fs-fetch.js";
+import { describeFetchError } from "./http.js";
 import { toGedcomX } from "./gedcomx-convert.js";
 import { isFamilySearchPersonId } from "./fs-id.js";
 import { toArk } from "./ark.js";
@@ -41,17 +43,16 @@ export async function scorePair(
   id1: string,
   gedcomx2: SimplifiedGedcomX,
   id2: string,
-  token: string,
+  principal: Principal,
 ): Promise<SamePersonResult> {
   const raw1 = buildRawWithAnchor(gedcomx1, id1);
   const raw2 = buildRawWithAnchor(gedcomx2, id2);
 
   let response: Response;
   try {
-    response = await fetchWithTimeout(URL, {
+    response = await fsFetchWithTimeout(principal, URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: "application/json",
         "Content-Type": "application/json",
         "User-Agent": BROWSER_USER_AGENT,
@@ -64,9 +65,8 @@ export async function scorePair(
       }),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Could not reach FamilySearch matchTwoExamples API: ${message}.`,
+      `Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(err)}.`,
     );
   }
 

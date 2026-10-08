@@ -1,0 +1,166 @@
+{
+  "run_log": "v2_2026-10-01_06-58-14.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked against flynn-multi-conflict: c_001 (birthplace) and c_002 (identity, two Patrick Flynns in 1850 at dwellings 84 and 197) are both unresolved and block q_001. Choosing c_002 first is sound genealogy. If the wrong Patrick is linked to Thomas's household, the birthplace discrepancy is moot, so identity is the prerequiChecked against flynn-multi-conflict: c_001 (birthplace) and c_002 (identity, two Patrick Flynns in 1850 at dwellings 84 and 197) are both unresolved and block q_001. Choosing c_002 first is sound genealogy. If the wrong Patrick is linked to Thomas's household, the birthplace discrepancy is moot, so identity is the prerequisite.\n\n"
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Recognized both blocking conflicts, chose one with reasoning, set unblocks q_001 (which is what lets the new research_append rule accept a question while pli_006 is in progress), set selection_basis unresolved_conflict, and persisted it with a rationale. Nothing required is missing."
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls well-formed and successful. One small judge slip that doesn't change the score: it says five MCP calls, but there were six (project_context, four research_query and research_append)."
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A confirm-or-refute question is the sanctioned exception to \"ask for information\": it tests a disputed identity assertion already on the tree. It names both men, both dates and the county, and a researcher can design the search directly (trace either Patrick forward from 1850 through 1860–1900 censuses, marriage and land records)."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No new question is correct. q_001 already covers the objective at its scope, pli_001 is planned rather than in progress, and the reply never proposes research on Serena Deacon or Samuel Jesse Purnell (0 mentions). Scope held"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Six valid calls. Small judge slip: Completeness claims it examined assertions, but no assertions query was made."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked flynn-fan-pivot: q_001 is declared exhaustive, both plans (pl_001, pl_002) are completed, and q_002 is resolved, so the direct evidence is exhausted and a FAN pivot is the right methodological step. The question is grounded in Thomas Flynn's documented 1850/1860 census presence."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "selection_basis is fan_pivot, depends_on is non-empty (q_001, whose research identified Thomas Flynn), unblocks names q_001 (FAN evidence would advance the parentage question), and the rationale explains why. All required elements are present."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; research_append carried every required field."
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It asks for information, not confirmation (\"Who were the neighbors and associates…\"), and names the person, county and census years. A search plan follows directly: adjacent households on the 1850/1860 census pages, then land and church records."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "q_001 (father) is resolved and the objective is both parents, so the mother is the remaining gap. The question is appended with depends_on q_001 (it builds on Thomas Flynn's identified household), and the rationale points to the 1850/1860 Thomas Flynn households as the efficient starting point, as required."
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; research_append carried every required field"
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Asks for the value, not a confirmation, and targets exactly the missing fact. A minor improvement would be to add identifiers (\"b. ~1845, PA; d. 1908, Schuylkill Co.\"), since Patrick Flynn is a common name, but the test accepts this wording."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked flynn-unsourced-tree: the tree holds a Thomas→Patrick ParentChild relationship backed only by an unsourced Ancestry Member Tree, recorded as active hypothesis h_001. The agent refused to build on it and wrote a question that tests it. Correct handling of an unsound premise."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A verification question, a rationale citing the compiled/unsourced source as the reason, and links in the right direction (unblocks q_001, depends_on empty). Nothing missing."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; research_append carried every required field."
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Confirm-or-refute is the sanctioned form for a disputed identity claim already on the tree. It names both men with birth estimates and places, and points directly to original records (census, vital, church, probate)."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Decision and analysis complete, but the presentation note isn't met. The researcher-facing text after the final --- starts with the caller line (q_001, pli_001, in_progress), runs to three paragraphs instead of two, and ends by naming 'the researcher-plan or search skill'. The researcher should get the next step in plain language."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No question was written, which is correct, so this doesn't apply."
+    }
+  ]
+}

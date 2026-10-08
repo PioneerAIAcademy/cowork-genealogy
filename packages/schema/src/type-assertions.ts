@@ -34,9 +34,11 @@ type Expect<T extends true> = T
  * Widening `Plan['items']` back to `PlanItem[]` makes `[]` assignable, which
  * flips this to `Expect<false>` and fails `tsc --noEmit`. Nothing else would
  * notice: the schema-mirror drift test compares `required` against `?`, not
- * arrayness. Note the eval CRUD UI keeps its own hand-written `Plan` in
- * `eval/app/components/scenario/lib/schema.ts`; it is npm-managed, outside this
- * workspace's typecheck, and deliberately left alone.
+ * arrayness. The eval CRUD UI used to keep its own hand-written `Plan` in
+ * `eval/app/components/scenario/lib/schema.ts`, npm-managed and outside this
+ * workspace's typecheck; #1488 made it a workspace member and collapsed that
+ * file to a re-export, so it consumes this tuple type and `pnpm turbo run
+ * typecheck` compiles it.
  */
 export type _EmptyPlanItemsStayRejected = Expect<
   ([] extends Plan['items'] ? true : false) extends false ? true : false

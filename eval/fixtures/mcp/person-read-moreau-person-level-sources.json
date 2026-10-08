@@ -1,13 +1,15 @@
 {
   "tool": "person_read",
-  "description": "FamilySearch tree person read for Jean Baptiste Moreau WITH relatives and source descriptions. Regression fixture for issue #1901: the top-level `sources` array carries 6 attached source descriptions, but NOT ONE fact on ANY person carries a fact-level `sources` ref — mirroring the real-world FamilySearch pattern of sources attached at the person level without being linked to a specific claim. This is the exact shape that caused a live agent to report 'zero sources' for a person who had 52 attached: it conflated the (correctly empty) fact-level sources with the top-level array.",
-  "args": { "personId": "MRQ1-JBM", "relatives": true, "sourceDescriptions": true },
+  "description": "FamilySearch tree person read for Jean Baptiste Moreau WITH relatives and source descriptions. Regression fixture for issue #1901: the top-level `sources` array carries 6 attached source descriptions, but NOT ONE fact on ANY person carries a fact-level `sources` ref — mirroring the real-world FamilySearch pattern of sources attached at the person level without being linked to a specific claim. This is the exact shape that caused a live agent to report 'zero sources' for a person who had 52 attached: it conflated the (correctly empty) fact-level sources with the top-level array. Each person also carries person-level `sources` refs into that array (issue #2696): the attribution FamilySearch sends, which person_read now keeps. init-project must carry them into the tree, re-pointed at the tree's own source ids.",
+  "args": { "personId": "MRQ1-JBM" },
   "response": {
     "persons": [
       {
         "id": "MRQ1-JBM",
+        "ark": "ark:/61903/4:1:MRQ1-JBM",
         "gender": "Male",
         "living": false,
+        "sources": [{ "ref": "SD01-AAA" }, { "ref": "SD01-BBB" }, { "ref": "SD01-CCC" }],
         "names": [
           { "given": "Jean Baptiste", "surname": "Moreau" }
         ],
@@ -30,8 +32,10 @@
       },
       {
         "id": "MRQ1-K2N",
+        "ark": "ark:/61903/4:1:MRQ1-K2N",
         "gender": "Female",
         "living": false,
+        "sources": [{ "ref": "SD01-DDD" }],
         "names": [
           { "given": "Marie", "surname": "Dubois" }
         ],
@@ -47,8 +51,10 @@
       },
       {
         "id": "MRQ1-P8R",
+        "ark": "ark:/61903/4:1:MRQ1-P8R",
         "gender": "Male",
         "living": false,
+        "sources": [{ "ref": "SD01-EEE" }],
         "names": [
           { "given": "Henri", "surname": "Moreau" }
         ],
@@ -64,8 +70,10 @@
       },
       {
         "id": "MRQ1-T4W",
+        "ark": "ark:/61903/4:1:MRQ1-T4W",
         "gender": "Female",
         "living": false,
+        "sources": [{ "ref": "SD01-FFF" }],
         "names": [
           { "given": "Josephine", "surname": "Moreau" }
         ],

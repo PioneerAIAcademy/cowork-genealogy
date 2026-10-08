@@ -58,8 +58,9 @@ says "the tests pass", is itself a finding.
 `additions + deletions` and `changedFiles` size the passes below. `author` and
 `isCrossRepository` say whether this is a teammate's branch or a fork — a fork
 cannot be checked out as a local branch, see §2. `labels` carry this repo's
-routing (`developer` / `genealogist`, and `eval-cosmetic-skip`, which relaxes the
-run-log gate, is senior-only, and is worth a second look when present).
+routing (`developer` / `genealogist`, and `eval-cosmetic-skip:<skill>`, one per
+waived skill, which relax the run-log gate, are senior-only, and are worth a
+second look when present).
 
 **A red or missing check outranks anything you find by reading.** The required
 ones are `pytest`, `runlogs`, `e2e-fixtures`, `vitest`, `lockfile-drift`, `scan`.
@@ -263,8 +264,10 @@ Read the whole diff first. Do not flag anything the diff already fixes.
 **Stop and go to the lead** — these are not yours to approve, whatever the diff
 looks like. Say so in the report and name which one:
 
-- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change.
+- Changes `research.json` or simplified-GedcomX **schema** — a required field, a
+  new section, a new value on a closed enum, or a renamed or removed field. A new
+  optional field on an existing section is a senior's to approve: check it is in
+  every site `CLAUDE.md` lists for a new field.
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a
   credential.
 - Reverses something in `docs/adrs/` or contradicts a `CLAUDE.md` rule.

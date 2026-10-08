@@ -321,13 +321,23 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     dimensions are the ONLY outcome signal because "no skill fired" holds
     whether the model declined cleanly or answered the request itself.
 
-    ut_search_wikipedia_008 is the corpus's only such test, and passing
-    means no skill acted — so making zero MCP tool calls is its correct
-    behaviour, and it has made zero in all 8 of its historical run logs.
-    Tool Arguments drew null in every one, so this flip has no instances;
-    it is pinned because a single 1 there would silently turn `fail` into
-    `pass` on the one test whose job is catching a skill that answered
-    something it should have ignored.
+    **The corpus no longer carries such a test.** `ut_search_wikipedia_008`
+    was the only one. Issue #2795 made it a DIRECT test when the skill it
+    belonged to became an agent, and it stayed a `negative` carrying
+    `grade_on_invariant` (Richard's ruling, 2026-09-28) — so its outcome is
+    decided by the tag-gated validator before any dimension is read, and this
+    NA-coercion gate no longer fires on it. The gate is now pinned
+    synthetically, by the spec built below, and by nothing in the corpus. That
+    is the reason to keep it: a gate with no instance is exactly the one an
+    edit can silently retire.
+
+    The behaviour it pins is unchanged. On an out-of-scope negative, making
+    zero MCP tool calls is correct, which coerces Tool Arguments to null; a
+    single 1 there would silently turn `fail` into `pass` on the one shape
+    whose job is catching a skill that answered something it should have
+    ignored. `ut_search_wikipedia_008` made zero calls in all 8 of its
+    historical run logs and drew null every time, so the flip had no
+    instances even while the test existed.
     """
     from harness.orchestrator import _compute_outcome
 
@@ -338,7 +348,7 @@ def test_na_rule_coercion_flips_an_out_of_scope_negative_outcome():
     assert warnings[0]["score"] == 1
 
     spec = _outcome_spec(
-        type="negative", skill="search-wikipedia",
+        type="negative", skill="record-extraction",
         negative={"correct_skill": []},
     )
     kw = dict(
@@ -1832,6 +1842,23 @@ def test_render_prompt_parts_leaves_no_unsubstituted_slot(sample_rubric):
         f"unsubstituted slot(s) survived rendering: {leftovers} — is the "
         f"split_marker in render_prompt_parts below one of them?"
     )
+
+
+def test_render_prompt_frames_tool_calls_as_claudes_wording_vs_a_tools(sample_rubric):
+    """The attribution rule sits between the MCP tool calls heading and the
+    rendered calls, and carries the exception for output the harness cut."""
+    prompt = judge.render_prompt(**_prompt_parts_kwargs(sample_rubric))
+    heading_at = prompt.index("## MCP tool calls")
+    rule_at = prompt.index("Claude's own wording, not a tool's")
+    calls_at = prompt.index("(none)", rule_at)
+    assert heading_at < rule_at < calls_at < prompt.index("## Deterministic validators")
+    block = prompt[heading_at:calls_at]
+    # Attribution only: an unsupported fact is still a Correctness deduction.
+    assert "This is about attribution, not support" in block
+    assert "Attribute it to Claude." in block
+    assert "is not by itself a grounding failure, so do not deduct" in block
+    for marker in ("[truncated by harness for prompt size;", "_truncated_for_depth", "_dropped_for_size"):
+        assert marker in block
 
 
 def test_render_prompt_puts_per_test_context_last(sample_rubric):

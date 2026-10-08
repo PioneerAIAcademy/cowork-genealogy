@@ -82,8 +82,8 @@ Behavior:
 4. On 404 → throw `No wiki page found for "<slug>". The page may not
    exist in the corpus.` (matches today's wording).
 5. On 5xx → `wiki-query-api error: {status}`.
-6. On network failure → `Could not reach wiki-query-api at {base}. Is
-   the server running?`.
+6. On network failure → `Could not reach wiki-query-api at {base}
+   ({cause}).`
 
 ### `wiki_place_page` (`src/tools/wiki-place-page.ts`)
 
@@ -115,7 +115,7 @@ place-resolver fallback to `getPlaceCandidateNames`, and the
 |---|---|
 | Missing `wikiApiUrl` | Bubble up the LLM-instruction error from `getWikiApiUrl(principal)` |
 | 5xx from API | Throw: `wiki-query-api error: {status}` |
-| Network failure | Throw: `Could not reach wiki-query-api at {url}. Is the server running?` |
+| Network failure | Throw: `Could not reach wiki-query-api at {url} ({cause}).` — `{cause}` is `describeFetchError`'s walk of the error's `.cause` chain (`src/utils/http.ts`), so the socket code (ETIMEDOUT, ENOTFOUND, …) is named rather than a bare "fetch failed" |
 | 404 (`wiki_read`) | Throw: `No wiki page found for "<slug>". The page may not exist in the corpus.` |
 | 404 on every candidate (`wiki_place_page`) | Throw: `No wiki page found for "<standardPlace>".` |
 | Missing or out-of-set `section` (`wiki_place_page`) | Throw, before any network call: `section is required and must be one of 'home', 'getting_started', 'online_records', 'research_tips'.` — the values come from `VALIDATOR_ENUMS.locality_page_section`, the same set the input schema advertises and `validate_research_schema` enforces on `pages_read[].section` |

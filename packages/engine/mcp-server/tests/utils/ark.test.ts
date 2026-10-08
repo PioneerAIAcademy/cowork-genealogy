@@ -5,6 +5,7 @@ import {
   arkToBareId,
   isDocumentImageArk,
   findDocumentImageArk,
+  imageViewerUrl,
 } from "../../src/utils/ark.js";
 
 describe("toArk", () => {
@@ -133,5 +134,86 @@ describe("isDocumentImageArk / findDocumentImageArk", () => {
     expect(
       findDocumentImageArk("https://www.familysearch.org/ark:/61903/1:1:QVS9-DHDB"),
     ).toBeUndefined();
+  });
+});
+
+// Issue #2854: build a FamilySearch viewer URL from an image tool's input.
+describe("imageViewerUrl", () => {
+  it("builds a film-viewer URL from a DGS imageId (zero-indexed i=)", () => {
+    expect(imageViewerUrl({ imageId: "004528077_00697" })).toBe(
+      "https://www.familysearch.org/search/film/004528077?i=696",
+    );
+  });
+
+  it("handles DGS image number 00001 as i=0", () => {
+    expect(imageViewerUrl({ imageId: "004884748_00001" })).toBe(
+      "https://www.familysearch.org/search/film/004884748?i=0",
+    );
+  });
+
+  it("builds a resolver URL from a canonical document-image ARK", () => {
+    expect(imageViewerUrl({ ark: "ark:/61903/3:1:3Q9M-CSNL-S98H-M" })).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M",
+    );
+  });
+
+  it("builds a resolver URL from a bare 3:1: id", () => {
+    expect(imageViewerUrl({ ark: "3:1:3Q9M-CSNL-S98H-M" })).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M",
+    );
+  });
+
+  it("preserves i=/cc=/groupId= context params from a full URL", () => {
+    const extractQ = (raw: string) => {
+      try {
+        const u = new URL(raw);
+        const p = new URLSearchParams();
+        for (const k of ["i", "cc", "groupId"] as const) {
+          const v = u.searchParams.get(k);
+          if (v !== null) p.set(k, v);
+        }
+        const qs = p.toString();
+        return qs ? `?${qs}` : "";
+      } catch { return ""; }
+    };
+    const url =
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?lang=en&i=999&cc=1858355&groupId=1858355";
+    expect(imageViewerUrl({ ark: url }, extractQ)).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9392-9ZVZ-X?i=999&cc=1858355&groupId=1858355",
+    );
+  });
+
+  it("returns undefined when neither imageId nor ark is given", () => {
+    expect(imageViewerUrl({})).toBeUndefined();
+  });
+
+  it("returns undefined for a non-document-image ARK (1:1:)", () => {
+    expect(imageViewerUrl({ ark: "ark:/61903/1:1:QVS9-DHDB" })).toBeUndefined();
+  });
+
+  it("returns undefined for an invalid imageId", () => {
+    expect(imageViewerUrl({ imageId: "not-a-dgs" })).toBeUndefined();
+  });
+
+  it("returns undefined for DGS image number 00000 (defensive)", () => {
+    expect(imageViewerUrl({ imageId: "004528077_00000" })).toBeUndefined();
+  });
+
+  it("builds a viewer URL from an unprefixed XXXX-XXXX-XXXX-X image id (treated as 3:1:)", () => {
+    expect(imageViewerUrl({ ark: "3QS7-89Q6-89S6-Y" })).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:3QS7-89Q6-89S6-Y",
+    );
+  });
+
+  it("builds a film-viewer URL from a DGS distribution URL passed as ark", () => {
+    expect(
+      imageViewerUrl({ ark: "https://familysearch.org/das/v2/dgs:004528077_00697/dist.jpg" }),
+    ).toBe("https://www.familysearch.org/search/film/004528077?i=696");
+  });
+
+  it("builds a film-viewer URL from a www DGS distribution URL", () => {
+    expect(
+      imageViewerUrl({ ark: "https://www.familysearch.org/das/v2/dgs:004884748_02613/dist.jpg" }),
+    ).toBe("https://www.familysearch.org/search/film/004884748?i=2612");
   });
 });

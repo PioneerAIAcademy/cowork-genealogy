@@ -1,7 +1,7 @@
 {
   "tool": "person_read",
   "description": "FamilySearch tree person read for Thomas Doyle WITH relatives and source descriptions. Wife Bridget Doyle carries a genuine timeline impossibility on her own record -- a Death fact in 1875 and a Residence fact (1880 census, listing her as head of household) four years later -- for issue #1827: init-project must invoke check-warnings on every imported relative, not just the subject, and this is the fixture that gives check-warnings a real hasEventAfterDeath1 to find on a non-subject person. Children John and Kate carry no impossibility; only Bridget does, so the test can isolate which person the finding belongs to.",
-  "args": { "personId": "MKVT-7XR", "relatives": true, "sourceDescriptions": true },
+  "args": { "personId": "MKVT-7XR" },
   "response": {
     "persons": [
       {

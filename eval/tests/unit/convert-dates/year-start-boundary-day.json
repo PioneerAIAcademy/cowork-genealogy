@@ -5,10 +5,10 @@
     "name": "Double date on the year-start boundary day — 25 March",
     "type": "positive",
     "description": "User supplies '25 March 1750/1'. 25 March is the day the Old-Style year increments (24 March 1750 is followed by 25 March 1751), so it sits outside the 1 January - 24 March window where double-dating applies, and on that date the Old-Style and New-Style year numbers agree. A slash written there is anomalous, not routine: the entry may be 1751 (the register had rolled over) or 1750 (the scribe was still recording the outgoing year). The skill must flag the ambiguity and give both readings with a way to settle it, rather than resolving to the later year as if the date were inside the window. Exercises Ambiguity handling on a genuinely ambiguous input.",
-    "tags": ["dual-dating", "old-style-new-style", "england", "slash-notation", "year-start-boundary", "ambiguous-input"]
+    "tags": ["dual-dating", "old-style-new-style", "england", "slash-notation", "year-start-boundary", "ambiguous-input", "direct-arm"]
   },
   "input": {
-    "user_message": "What does '25 March 1750/1' mean on this English marriage record? Which year do I use in my research notes?",
+    "delegation": "What does '25 March 1750/1' mean on this English marriage record? Which year do I use in my research notes?\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

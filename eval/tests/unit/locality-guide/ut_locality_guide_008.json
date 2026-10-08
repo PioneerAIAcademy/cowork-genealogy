@@ -12,11 +12,12 @@
       "probate records",
       "archives",
       " jurisdiction-awareness",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?",
+    "delegation": "I'm researching ancestors in New York City during the 1700s colonial period. What records or repositories would help trace families in that locality and time?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -25,6 +26,7 @@
   },
   "mcp_fixtures": [
     "place-search-new-york-city",
+    "place-search-any",
     "collections-search-new-york",
     "wikipedia-search-new-york-city",
     "wikipedia-search-new-york-colonial",

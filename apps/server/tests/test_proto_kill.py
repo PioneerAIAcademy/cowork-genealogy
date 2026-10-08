@@ -6,11 +6,14 @@ kill is timed on, the evidence block rendered from canned rows, and the arm's ow
 
 from __future__ import annotations
 
+import contextlib
+
 import re
 import subprocess
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
 
 from proto import demo, turn
@@ -135,6 +138,42 @@ def test_each_check_reads_its_row():
     assert failed(_rows(reply="Somewhere else")) == ["kill: the reply names Nauvoo"]
 
 
+def test_expect_grant_refresh_adds_the_three_checks():
+    """U3's Done-when on the kill arm: the grant moved in the kill gap, and neither the
+    summaries nor the full results carry the reconnect instruction. Off, nothing is added."""
+    spec = turn.KillSpec(expect_grant_refresh=True)
+    ok = _rows(grant_refreshed=True)
+    names = [name for name, _, _ in turn.kill_checks(ok, spec)]
+    assert len(names) == len(turn.kill_checks(ok, turn.KillSpec())) + 3
+    assert names[-3:] == ["kill: grant refreshed between attempts", "kill: reauth_hits=0 since the user_msg",
+                          "kill: reauth_entry_hits=0 (full tool results)"]
+    assert all(passed for _, passed, _ in turn.kill_checks(ok, spec))
+
+    def failed(rows):
+        return [name for name, passed, _ in turn.kill_checks(rows, spec) if not passed]
+
+    assert failed(_rows(grant_refreshed=False)) == ["kill: grant refreshed between attempts"]
+    assert failed(_rows(grant_refreshed=None)) == ["kill: grant refreshed between attempts"]
+    assert failed(_rows(grant_refreshed=True, reauth_hits=["Call the login tool"])) == \
+        ["kill: reauth_hits=0 since the user_msg"]
+    assert failed(_rows(grant_refreshed=True, reauth_entry_hits=["Reconnect FamilySearch"])) == \
+        ["kill: reauth_entry_hits=0 (full tool results)"]
+    assert turn.kill_spec(_args("--expect-grant-refresh")).expect_grant_refresh is True
+    with pytest.raises(ValueError, match="kill-signal kill"):
+        turn.kill_spec(_args("--expect-grant-refresh", "--kill-signal", "term"))
+
+
+def test_the_grant_refresh_wait_sits_between_the_kill_and_the_start(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    monkeypatch.setattr(turn, "wait_grant_refresh",
+                        lambda dsn, project_id, before, *a: order.append(f"wait_grant_refresh {before}") or True)
+    spec = turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", container="w", expect_grant_refresh=True)
+    checks, figures = turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order[order.index("docker kill w") + 1:][:2] == ["wait_grant_refresh v", "docker start w"], order
+    assert figures["grant_refreshed"] is True
+
+
 # ── the kill-on match, by bare name ─────────────────────────────────────────────────
 
 
@@ -186,11 +225,16 @@ def test_run_kill_uses_the_input_selector_when_one_is_given(monkeypatch):
 
     import httpx
 
+    posts: list[str] = []
+
     class _Client:
         def __enter__(self): return self
         def __exit__(self, *a): return False
-        def post(self, *a, **k): raise AssertionError("session creation should not be reached")
-    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+        def post(self, url, *a, **k):
+            # Only the miss's Stop may post: a session is given, so none is created.
+            posts.append(url)
+            return httpx.Response(202, json={}, request=httpx.Request("POST", url))
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
 
     # With a selector -> the input waiter.
     turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(
@@ -201,6 +245,7 @@ def test_run_kill_uses_the_input_selector_when_one_is_given(monkeypatch):
     used.clear()
     turn.run_kill("http://x", "dsn", 1.0, turn.KillSpec(session_id="sess-1"))
     assert used == ["by-name"], used
+    assert posts == ["http://x/api/sessions/sess-1/interrupt"] * 2, "each miss Stops the turn it posted"
 
 
 def test_the_evidence_block_names_the_call_the_probe_actually_waited_for(monkeypatch):
@@ -215,7 +260,7 @@ def test_the_evidence_block_names_the_call_the_probe_actually_waited_for(monkeyp
     class _Client:
         def __enter__(self): return self
         def __exit__(self, *a): return False
-    monkeypatch.setattr(httpx, "Client", lambda **kw: _Client())
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
 
     spec = turn.KillSpec(kill_on="Agent", kill_on_input={"run_in_background": True},
                          session_id="sess-1")
@@ -241,8 +286,81 @@ def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     for worked in ("ok", "completed", "queued", "stopped", "budget", "decision", "mcp_unavailable"):
         assert outcome_check(worked) is True, worked
     assert outcome_check("no_progress") is False, "a dead resume is the one thing this probe catches"
+    assert outcome_check("retries_exhausted") is False, "U5: a turn closed for running out of receives never resumed"
+    assert outcome_check("transcript_lost") is False, "U10: a turn whose transcript was lost did not resume"
+    assert outcome_check("signin_required") is False, "U3: a turn with no usable grant never ran"
     assert outcome_check(None) is False, "no outcome at all is not a completed turn"
-    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress"})
+    assert turn.RESUMED_FAILED_OUTCOMES == frozenset({"no_progress", "retries_exhausted", "transcript_lost",
+                                                      "signin_required"})
+
+
+# ── the two-turn run (proto-turn): its outcome checks ───────────────────────────────
+
+
+def test_outcome_check_is_the_kill_arms_deny_set():
+    for worked in ("ok", "completed", "budget", "decision", "a-value-added-later"):
+        assert turn.outcome_check("turn 1", worked)[1] is True, worked
+    for failed in sorted(turn.RESUMED_FAILED_OUTCOMES) + [None]:
+        assert turn.outcome_check("turn 1", failed)[1] is False, failed
+    name, _, detail = turn.outcome_check("turn 2", "no_progress")
+    assert name.startswith("turn 2: ") and "no_progress" in name and detail == "outcome=no_progress"
+
+
+def _fake_run(monkeypatch, outcomes: dict[str, str | None]):
+    """``turn.run`` against canned rows: turn_1 and turn_2 complete with cost, tokens,
+    growing entries and a 1751 reply, so only ``outcomes`` decides the outcome checks."""
+    entries = iter([7, 12])
+
+    def db(dsn, sql, params):
+        if "count(*) FROM session_entries" in sql:
+            return [(next(entries),)]
+        if "count(*)" in sql:
+            return [(1,)]
+        if "sdk_session_id FROM sessions" in sql:
+            return [("sdk-1",)]
+        if "completed_at, outcome, cost_usd" in sql:
+            return [("2026-10-01T10:00:00+00:00", outcomes[params[0]], 0.05, 2, 900)]
+        if "entries_seq_before" in sql:
+            return [({"turn_1": 0, "turn_2": 7}[params[0]],)]
+        if sql.startswith(f"SELECT {', '.join(turn.TOKEN_COLUMNS)}"):
+            return [(10, 0, 0, 5)]
+        if sql == turn.SESSION_OUTPUT_SQL:
+            return [(100,)]
+        if "max(seq)" in sql:
+            return [(4,)]
+        if "payload->>'text'" in sql:
+            return [("15 April 1751",)]
+        raise AssertionError(f"unexpected query: {sql}")
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def post(self, *a, **k):
+            return httpx.Response(200, json={"id": "sess-1"}, request=httpx.Request("POST", "http://x"))
+
+    texts = {turn.TEXT_1: "turn_1", turn.TEXT_2: "turn_2"}
+    monkeypatch.setattr(turn, "db", db)
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
+    monkeypatch.setattr(turn, "post_and_wait", lambda client, base, sid, text, dl: (texts[text], 1, 1.0))
+    checks, figures = turn.run("http://x", "dsn", 1.0)
+    return [name for name, ok, _ in checks if not ok], [name for name, _, _ in checks], figures
+
+
+def test_run_checks_both_turns_outcomes(monkeypatch):
+    """A turn the worker closed itself (no_progress, a project-less lookup the Stop hook
+    vetoed) reaches turn_done with completed_at set, so only these two checks see it."""
+    failed, names, figures = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "ok"})
+    assert failed == [], failed
+    assert [n for n in names if "turns.outcome" in n] == [
+        turn.outcome_check("turn 1", "ok")[0], turn.outcome_check("turn 2", "ok")[0]]
+    assert figures["turn1"]["outcome"] == figures["turn2"]["outcome"] == "ok"
+
+    failed, _, _ = _fake_run(monkeypatch, {"turn_1": "no_progress", "turn_2": "ok"})
+    assert failed == [turn.outcome_check("turn 1", "x")[0]], failed
+    failed, _, _ = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "no_progress"})
+    assert failed == [turn.outcome_check("turn 2", "x")[0]], failed
+    failed, _, _ = _fake_run(monkeypatch, {"turn_1": "ok", "turn_2": "budget"})
+    assert failed == [], "a deny-set: an outcome outside it passes"
 
 
 # ── 0a: the input selector (--kill-on-input) ────────────────────────────────────────
@@ -457,6 +575,8 @@ def _fake_stack(monkeypatch, order: list[str], wait_outcome: str = "seen") -> No
     turn_done wait times out, so the arm returns at its 'not reached turn_done' branch."""
     monkeypatch.setattr(turn, "one", lambda dsn, sql, params: 7 if "count(*)" in sql else "v")
     monkeypatch.setattr(turn, "post_message", lambda client, base, session_id, text: "turn_x")
+    # U2: the arm signs in before it posts; nothing here may reach a tier.
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: contextlib.nullcontext())
 
     def wait_for_tool_call(dsn, turn_id, tool, deadline_s):
         order.append(f"wait_for_tool_call {tool} deadline={deadline_s}")
@@ -480,6 +600,7 @@ def _fake_stack(monkeypatch, order: list[str], wait_outcome: str = "seen") -> No
     monkeypatch.setattr(turn, "docker", lambda *args: order.append("docker " + " ".join(args)))
     monkeypatch.setattr(turn, "wait_turn_done", wait_turn_done)
     monkeypatch.setattr(turn, "gather_evidence", gather_evidence)
+    monkeypatch.setattr(turn, "interrupt", lambda client, base, session_id: order.append(f"interrupt {session_id}"))
 
 
 def test_run_kill_waits_the_whole_deadline_for_the_kill_on_row_and_kills_nothing_without_it(monkeypatch):
@@ -487,7 +608,8 @@ def test_run_kill_waits_the_whole_deadline_for_the_kill_on_row_and_kills_nothing
     _fake_stack(monkeypatch, order, wait_outcome="timeout")
     spec = turn.KillSpec(kill_on="Agent", kill_after_s=15.0, text="x", session_id="sess_1")
     checks, figures = turn.run_kill("http://x", "dsn", 4321.0, spec)
-    assert order == ["wait_for_tool_call Agent deadline=4321.0"], "the full --deadline-s, then no sleep, marks or kill"
+    assert order == ["wait_for_tool_call Agent deadline=4321.0", "interrupt sess_1"], \
+        "the full --deadline-s, then no sleep, marks or kill -- and Stop, so the missed turn does not run on billed"
     assert checks == [("kill: the turn reached its first Agent call", False, "no tool_calls row in time")]
     assert figures == {"session_id": "sess_1", "turn_id": "turn_x"}
 
@@ -499,10 +621,152 @@ def test_run_kill_sleeps_kill_after_s_then_takes_its_marks_before_the_kill(monke
     spec = turn.KillSpec(kill_on="Agent", kill_after_s=kill_after_s, text="x", session_id="sess_1", container="w")
     checks, figures = turn.run_kill("http://x", "dsn", 100.0, spec)
     assert order == ["wait_for_tool_call Agent deadline=100.0", *sleeps, "take_marks", "docker kill w", "docker start w",
-                     "wait_turn_done", "gather_evidence"]
+                     "wait_turn_done", "interrupt sess_1", "gather_evidence"]
     assert [ok for _, ok, _ in checks] == [True, False]
     assert figures["kill_after_s"] == kill_after_s and figures["entries_at_kill"] == 7
     assert "-- evidence: the turns row" in capsys.readouterr().out, "the evidence block prints even without turn_done"
+
+
+def test_the_kill_signal_defaults_to_kill_and_term_reaches_the_spec():
+    assert _args().kill_signal == "kill" and turn.kill_spec(_args()).kill_signal == "kill"
+    assert turn.kill_spec(_args("--kill-signal", "term")).kill_signal == "term"
+    with pytest.raises(SystemExit):
+        _args("--kill-signal", "hup")
+
+
+def test_kill_signal_term_runs_docker_restart_with_a_30s_grace(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.kill_spec(_args("--kill-on", "Agent", "--session", "sess_1", "--worker-container", "w",
+                                "--kill-signal", "term", "--text", "x"))
+    checks, figures = turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order == ["wait_for_tool_call Agent deadline=100.0", "take_marks", "docker restart -t 30 w",
+                     "wait_turn_done", "interrupt sess_1", "gather_evidence"]
+    assert figures["kill_signal"] == "term"
+
+
+def test_the_default_kill_signal_still_kills_and_starts(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.kill_spec(_args("--kill-on", "Agent", "--session", "sess_1", "--worker-container", "w", "--text", "x"))
+    turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert "docker kill w" in order and "docker start w" in order
+    assert not any(o.startswith("docker restart") for o in order)
+
+
+class _RecordingTarget:
+    def __init__(self, order: list[str]):
+        self.order = order
+
+    def signal(self, tier: str, action: str) -> None:
+        self.order.append(f"deployed {action} {tier}")
+
+
+@pytest.mark.parametrize("signal, expected", [
+    ("kill", ["deployed kill worker", "deployed start worker"]),
+    ("term", ["deployed term worker"]),
+])
+def test_a_deployed_kill_signals_over_the_target_and_never_runs_docker(monkeypatch, capsys, signal, expected):
+    """U13: on Beanstalk the kill goes over SSM (target.DeployedTarget); docker is never run."""
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    spec = turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", kill_signal=signal,
+                         deployed=_RecordingTarget(order))
+    turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order[order.index("take_marks") + 1:][:len(expected)] == expected, order
+    assert not any(o.startswith("docker") for o in order), order
+
+
+# ── U23: no billed turn is left running on a path that gives up ─────────────────────
+
+
+def test_a_failed_docker_call_stops_the_turn_and_still_raises(monkeypatch):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+
+    def docker(*args):
+        order.append("docker " + " ".join(args))
+        raise subprocess.CalledProcessError(1, ["docker", *args])
+
+    monkeypatch.setattr(turn, "docker", docker)
+    with pytest.raises(subprocess.CalledProcessError):
+        turn.run_kill("http://x", "dsn", 100.0, turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", container="w"))
+    assert order[-2:] == ["docker kill w", "interrupt sess_1"], order
+
+
+def _raise(exc: BaseException, order: list[str], name: str):
+    def boom(*a, **k):
+        order.append(name)
+        raise exc
+    return boom
+
+
+@pytest.mark.parametrize("site, signal, exc", [
+    ("wait_for_tool_call", "kill", KeyboardInterrupt()),        # ^C while it polls for the first call
+    ("take_marks", "kill", RuntimeError("server closed the connection")),  # a DB read before the kill
+    ("docker", "term", KeyboardInterrupt()),                    # ^C during the 30 s restart
+    ("wait_turn_done", "kill", KeyboardInterrupt()),            # ^C while it waits for the resume
+], ids=["poll", "marks", "restart", "resume"])
+def test_any_exit_before_turn_done_stops_the_turn_once_and_still_raises(monkeypatch, site, signal, exc):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    monkeypatch.setattr(turn, site, _raise(exc, order, site))
+    spec = turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", container="w", kill_signal=signal)
+    with pytest.raises(type(exc)):
+        turn.run_kill("http://x", "dsn", 100.0, spec)
+    assert order[-2:] == [site, "interrupt sess_1"] and order.count("interrupt sess_1") == 1, order
+
+
+@pytest.mark.parametrize("which", [1, 2])
+def test_run_stops_a_turn_the_operator_interrupts(monkeypatch, which):
+    """^C is not a FAIL check (the except Exception arm), but it must still Stop the turn."""
+    order: list[str] = []
+
+    class _Client:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def post(self, *a, **k):
+            return httpx.Response(200, json={"id": "sess-1"}, request=httpx.Request("POST", "http://x"))
+
+    def post_and_wait(client, base, sid, text, dl):
+        if text == (turn.TEXT_1 if which == 1 else turn.TEXT_2):
+            raise KeyboardInterrupt
+        return "turn_1", 1, 1.0
+
+    monkeypatch.setattr(turn, "signed_in_client", lambda base, email, **kw: _Client())
+    monkeypatch.setattr(turn, "post_and_wait", post_and_wait)
+    monkeypatch.setattr(turn, "interrupt", lambda client, base, sid: order.append(f"interrupt {sid}"))
+    monkeypatch.setattr(turn, "one", lambda dsn, sql, params: 1)
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [])
+    with pytest.raises(KeyboardInterrupt):
+        turn.run("http://x", "dsn", 1.0)
+    assert order == ["interrupt sess-1"]
+
+
+def test_a_finished_kill_run_does_not_press_stop(monkeypatch, capsys):
+    order: list[str] = []
+    _fake_stack(monkeypatch, order)
+    monkeypatch.setattr(turn, "wait_turn_done", lambda *a: order.append("wait_turn_done") or (9, 1.0))
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [])
+    turn.run_kill("http://x", "dsn", 100.0, turn.KillSpec(kill_on="Agent", text="x", session_id="sess_1", container="w"))
+    assert "wait_turn_done" in order and not any(o.startswith("interrupt") for o in order), order
+
+
+@pytest.mark.parametrize("respond, expected", [
+    (lambda request: httpx.Response(202, json={"ok": True}), None),
+    (lambda request: httpx.Response(404, json={}), "HTTP 404"),
+    (lambda request: (_ for _ in ()).throw(httpx.ConnectError("refused")), "ConnectError: refused"),
+])
+def test_interrupt_posts_stop_and_never_raises(respond, expected):
+    seen: list[tuple[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((request.method, request.url.path))
+        return respond(request)
+
+    with httpx.Client(transport=httpx.MockTransport(handler)) as client:
+        assert turn.interrupt(client, "http://tier", "sess_1") == expected
+    assert seen == [("POST", "/api/sessions/sess_1/interrupt")]
 
 
 # ── the script runs standalone ──────────────────────────────────────────────────────
@@ -531,3 +795,35 @@ def test_proto_kill_target_passes_args_through_to_the_arm():
     body = "\n".join(_recipe("proto-kill"))
     assert re.search(r'\$\(MAKE\) proto-turn ARGS="--kill .*\$\(ARGS\)"', body), body
     assert re.search(r"\$\(if \$\(SESSION\),\s*--session \$\(SESSION\),\s*\)", body), body
+
+
+def test_signed_in_client_works_inside_with_and_carries_the_cookie():
+    """Every other test here replaces signed_in_client, so the real one was first run
+    against a live stack -- where `with signed_in_client(...)` raised "Cannot open a client
+    instance more than once" because the login had already opened it."""
+    import httpx
+
+    seen: list[tuple[str, str | None]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append((request.url.path, request.headers.get("cookie")))
+        if request.url.path == "/auth/dev-login":
+            return httpx.Response(200, json={"id": "usr_1"}, headers={"set-cookie": "wb_session=abc; Path=/"})
+        return httpx.Response(200, json=[])
+
+    transport = httpx.MockTransport(handler)
+    with turn.signed_in_client("http://tier", "a@x.org", transport=transport) as client:
+        client.get("http://tier/api/sessions")  # absolute, as turn.py's callers write it
+        client.get("/api/sessions")              # relative, as drive.py writes it
+    assert seen == [("/auth/dev-login", None), ("/api/sessions", "wb_session=abc"), ("/api/sessions", "wb_session=abc")]
+    unentered = turn.signed_in_client("http://tier", transport=transport)
+    assert unentered.get("/api/sessions").status_code == 200
+    unentered.close()
+
+
+def test_signed_in_client_names_the_override_when_dev_login_is_off():
+    import httpx
+
+    transport = httpx.MockTransport(lambda request: httpx.Response(403, json={"detail": "off"}))
+    with pytest.raises(RuntimeError, match="fs-signin"):
+        turn.signed_in_client("http://tier", transport=transport)

@@ -10,11 +10,12 @@
       "value-correction",
       "typo-fix",
       "edit-minimality",
-      "real-mutation"
+      "real-mutation",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "tree-edit: change birth year — actually, fix this date. Patrick Flynn's death fact F2 currently shows `1908-03-21` in the tree, but the death certificate (S3, cert. no. 4521) records 12 March 1908. The tree has a day-swap typo. Correct F2.date to `1908-03-12` and leave everything else alone.",
+    "delegation": "change birth year — actually, fix this date. Patrick Flynn's death fact F2 currently shows `1908-03-21` in the tree, but the death certificate (S3, cert. no. 4521) records 12 March 1908. The tree has a day-swap typo. Correct F2.date to `1908-03-12` and leave everything else alone.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-typo"
   },
   "judge_context": [
@@ -24,15 +25,9 @@
     "Should NOT 'normalize' adjacent fields opportunistically (e.g., re-resolving F2.place via place_search when only the date was wrong)",
     "Source-grounding requirement (per evidence-grounded-edits.md): the correction must be tied to S3 — the user cited it explicitly. The skill should reflect that in the explanation",
     "Should report what was changed and confirm post-edit schema validity in the response",
-    "Should invoke `Skill(\"check-warnings\")` after this edit — SKILL.md § Validation requires it after ANY edit or merge. This is stubbed via `execution.stub_skills` (the callee has its own unit suite), so the launch is what's graded, not a real check-warnings run — score on whether the skill actually called it (visible in `skills_invoked`), not on the canned response's content."
+    "Should end its return with a caller-facing `Hand-back: check-warnings <person ids>` line naming every person this edit touched — the agent body requires it after ANY edit or merge. The agent cannot spawn check-warnings itself (it holds no Agent tool), so check-warnings not running is correct and MUST NOT be scored down; score only on whether the return names it for the touched persons."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "check-warnings",
-        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
-      }
-    ]
+    "max_wall_clock_seconds": 600
   }
 }

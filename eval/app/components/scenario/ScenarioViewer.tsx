@@ -5,6 +5,7 @@ import { ScenarioDataProvider } from './ScenarioDataProvider';
 import ProjectOverview from './components/sections/ProjectOverview';
 import QuestionsSection from './components/sections/QuestionsSection';
 import PlansSection from './components/sections/PlansSection';
+import LocalitiesSection from './components/sections/LocalitiesSection';
 import ResearchLogSection from './components/sections/ResearchLogSection';
 import SourcesSection from './components/sections/SourcesSection';
 import AssertionsSection from './components/sections/AssertionsSection';
@@ -13,6 +14,7 @@ import ConflictsSection from './components/sections/ConflictsSection';
 import HypothesesSection from './components/sections/HypothesesSection';
 import TimelinesSection from './components/sections/TimelinesSection';
 import ProofSummariesSection from './components/sections/ProofSummariesSection';
+import EvaluationsSection from './components/sections/EvaluationsSection';
 import tokenStyles from './scenario-tokens.module.css';
 
 /**
@@ -41,6 +43,7 @@ export function ScenarioViewer({
         <ProjectOverview />
         <QuestionsSection />
         <PlansSection />
+        <LocalitiesSection />
         <ResearchLogSection />
         <SourcesSection />
         <AssertionsSection />
@@ -49,6 +52,7 @@ export function ScenarioViewer({
         <HypothesesSection />
         <TimelinesSection />
         <ProofSummariesSection />
+        <EvaluationsSection />
       </ScenarioDataProvider>
     </div>
   );

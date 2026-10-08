@@ -31,7 +31,7 @@ relationship factless.
   `TREE_OWNERSHIP_TABLE`, person-evidence does **not** own the
   `relationships` section — the Couple relationship and its marriage fact
   are written later by proof-conclusion → tree-edit. See
-  `skills/person-evidence/SKILL.md` §5/§7 and
+  `agents/person-evidence.md` §5/§7 and
   `skills/tree-edit/references/relationship-accuracy.md`.
 
 Copied from `flynn-couple-marriage`: `research.json` and the `results/`

@@ -85,7 +85,7 @@ flagged. (One row below is the exception, and says so.)
 | `plan_status` | `active`, `completed`, `superseded` | plans |
 | `plan_item_status` | `planned`, `in_progress`, `completed`, `skipped` | plan items |
 | `log_outcome` | `positive`, `negative`, `partial`, `error` | log |
-| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
+| `external_site` | `ancestry`, `myheritage`, `findmypast`, `familysearch_web`, `findagrave`, `newspapers`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula` | log entries' `external_site.site` — the sites supported by the generate-click-capture-analyze workflow (Section 5.4) |
 | `source_classification` | `original`, `derivative`, `authored` | sources |
 | `information_quality` | `primary`, `secondary`, `indeterminate` | assertions |
 | `record_basis` | `stated`, `inferred`, `absent` | assertions |
@@ -241,16 +241,17 @@ described under "Who actually writes a row" below.
 | `known_holdings` | init-project (survey at creation) | question-selection, research-plan, all | Mutable (`promoted` flag); never delete. Written after the tree persons exist — `relates_to_person_ids` names them, and the validator rejects a reference to a person that does not yet exist |
 | `questions` | question-selection (new questions); research-exhaustiveness (`status` up through `exhaustive_declared`, `exhaustive_declaration`); proof-conclusion (`status` → `resolved`, `resolved` date, `resolution_assertion_ids` on the question being concluded) | research-plan, all downstream | Mutable; never delete. **A question is never retired** — `question_status` has no supersede value, so `status` only advances through the transitions in the Written-by column. An overtaken question stays as it is. A `resolved` write is additionally refused by `research_append` unless a proof summary already references the question. Two further `research_append` preconditions guard the exhaustiveness pair: `status: "exhaustive_declared"` requires `exhaustive_declaration.declared === true` (checked from either side, on the post-merge entry), and `declared: true` is refused while an item on the question's **active** plan is `in_progress` (checked against the pre-call snapshot, since plan-item completion is the search work's step — a superseded or completed plan's items never block, or a re-planned question could never be declared). Items still `planned` do not block |
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, record-extraction (`items[].status`) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search and extraction skills update only an item's `status` after executing or extracting from it |
-| `log` | search-records, search-full-text, search-external-sites, search-images, record-extraction (all embed research-log-protocol) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
+| `log` | search-records, search-full-text, search-external-sites, search-images, record-extraction (each carries its own logging rules inline; the shared `references/research-log-protocol.md` copies are all deleted) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | record-extraction, citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
 | `assertions` | record-extraction | timeline, conflict-resolution, proof-conclusion, question-selection | Mutable (classification fields, date fields); never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence | all downstream | Mutable (confidence, rationale); never delete, use superseded_by |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
-| `hypotheses` | hypothesis-tracking | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
+| `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
 | `timelines` | timeline | question-selection, conflict-resolution | Regeneratable; replaced wholesale when regenerated |
 | `proof_summaries` | proof-conclusion | (terminal) | Mutable (tier, narrative can be revised) |
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name — so this row cannot be enforced there, and is declared unenforceable rather than left to look covered |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
+| `warning_justifications` | (none — writer-tool only) | gps-mentor (audit trail) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
 | `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
@@ -374,11 +375,25 @@ name wide. Every other non-owner agent goes in `agentCallers` or
 `hookCallers`. The owner is the other exception — `gps-mentor` on
 `evaluations` — because a row must list its own owner among its callers.
 
-**`agentCallers` records who wrote; it does not widen who may.** Nothing reads it
-as a permission: `writer_sets` reads `callers` only and must keep doing so. That
-is what makes the field free — the unit plane already authorizes an agent's write
-through the skill whose run it happens inside, so naming the agent costs that
-plane nothing.
+When a thin-skill pair converts to direct delegation (the skill directory is
+deleted, the agent becomes the direct entry point), ownership rows are updated
+per-field rather than a simple prefix swap. For the `person_evidence`
+research.json row the `callers` entry (`skill:person-evidence`) is dropped and
+`hookCallers` gets `agent:person-evidence` — signalling that the agent
+authorizes only via `research_append`, not all writerTools. For tree.gedcomx.json
+rows (`persons`, `relationships`) the `callers` entry is dropped and a new
+`unitCallers` field carries `agent:person-evidence` — unit-plane authorization
+only; `listed_writers` (e2e attribution) does not read `unitCallers`, so e2e
+enforcement is unaffected. `writer_sets` reads all three fields (`callers`,
+`hookCallers`, `unitCallers`) and resolves an `agent:X` entry to `X` when `X`
+is the suite subject. `agent:person-evidence` on `person_evidence`, `persons`,
+and `relationships` is the first instance of this pattern.
+
+**`agentCallers` records who wrote; it does not widen who may.** Nothing reads
+it as a permission grant: `writer_sets` reads `callers`, `hookCallers`, and
+`unitCallers` — not `agentCallers`. That is what makes the field free: you can
+name an agent in `agentCallers` for attribution without authorizing it at the
+unit plane, because the loader never reaches that field.
 
 Two alternatives were weighed when this landed (lead ruling 2026-09-18). A
 blocking guard with a waiver table was rejected because it would put the known
@@ -565,7 +580,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `date_range` | string | yes | Target date range (e.g., "1840", "1830-1850") |
 | `repository` | `repository` | yes | Where to search (see open enums in Section 2) |
 | `rationale` | string | yes | Why this record set for this question |
-| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for, or null |
+| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for — an item of the same plan — or null. `validate_research_schema` rejects any other value, so every writer does. |
 | `status` | `plan_item_status` | yes | Current status |
 
 ### 5.4 `log`
@@ -588,11 +603,11 @@ Array of log entry objects. **Append-only — entries are never modified or dele
 
 **`external_site`** — Present only when the search was conducted via the generate-click-capture-analyze workflow.
 
-Not every site here is commercial. `chronicling_america`, `digital_newspaper_archive` and `library_archives_canada` are **free to search**, and are in this workflow for a different reason: all three sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. (`library_archives_canada` was reclassified on 2026-09-15: its collection-search host answers 403 with a Cloudflare challenge.) `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors` (subscription may still gate full results) and `italian_genealogy` are also free to search, with no fetch barrier at all — they are in this workflow only because it never fetches any site directly, not because of bot protection. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
+Not every site here is commercial. `chronicling_america`, `digital_newspaper_archive` and `library_archives_canada` are **free to search**, and are in this workflow for a different reason: all three sit behind bot protection (Cloudflare) that blocks automated fetch from the host as firmly as from the sandbox, so the agent cannot retrieve them itself and the user's browser supplies the access. (`library_archives_canada` was reclassified on 2026-09-15: its collection-search host answers 403 with a Cloudflare challenge.) `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors` (subscription may still gate full results) and `italian_genealogy` are also free to search, with no fetch barrier at all — they are in this workflow only because it never fetches any site directly, not because of bot protection. `archion` (German Protestant church books, whose scans need a paid pass) and `matricula` (Catholic church books, free) are *browse* sites: `url_generated` is the parish page, and the user pages parish → register → volume → image. Do not read `external_site` as "paywalled" — read it as "the agent could not fetch this directly".
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, or `italian_genealogy`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
+| `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, or `matricula`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the results reached the agent. A capture need not be a file: page content already present in the conversation is a capture that arrived without one, and is recorded `true` with `capture_filename` null |
 | `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file |
@@ -792,6 +807,8 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 
 `independence_analysis` and `weighing_analysis` are kept as separate fields because source independence is a distinct analytical step from evidence weighing per the GPS.
 
+**Uncertain-preference invariant.** `preferred_assertion_id` may not name an assertion whose `value` contains `[?]` (the structural doubt marker) unless a corroborating assertion exists. Corroboration requires all four conditions: (1) the corroborator's own `value` carries no `[?]`; (2) it is on a different record, compared as `record_id ?? source_id`; (3) it has the same `fact_type` and its `value` equals the preferred value once `[?]` is removed, whitespace is collapsed and case is folded; (4) it is tied to the same person — it is in the conflict's `competing_assertion_ids`, or a live `person_evidence` row (no `superseded_by`) links it to a `person_id` that a live row also links the preferred assertion to. A null `preferred_assertion_id` (deferral) is always legal.
+
 ### 5.9 `hypotheses`
 
 Array of hypothesis objects.
@@ -867,7 +884,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 
 Timelines have **no** `impossibilities` field. Detecting a single
 person's logical impossibilities — an event after death, an impossible
-age — is the check-warnings skill's job, done deterministically via
+age — is the check-warnings agent's job, done deterministically via
 `person_warnings`; the timeline skill surfaces such a contradiction in
 its chat reply and recommends a data-integrity check rather than
 persisting it. (Geographic/travel infeasibility, which depends on
@@ -919,6 +936,26 @@ two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which
 `claims` now covers without forcing a split.
 
+**Display labels — what the researcher reads.** Stored values never change; the viewer
+maps them to these labels (`statusLabelMap` in `packages/viewer-ui/src/components/shared/StatusBadge.tsx`,
+keyed on the value). A value with no row renders with underscores as spaces. No
+viewer label, badge or heading says "proof", "proved", "GPS" or "exhaustive" (lead
+ruling 2026-09-14). Agent-written text the viewer shows verbatim
+(`narrative_markdown`, `exhaustive_search_summary`, question text) and the chat
+are outside this table. **A proof summary is a *finding* below `proved`,
+`disproved` included, and a *conclusion* at `proved`**. "Conclusion" is reserved
+to the top tier, and the section is titled Findings.
+
+| stored value | shown |
+|---|---|
+| `proved` / `probable` / `possible` / `not_proved` / `disproved` | well established / likely / tentative / not established / ruled out |
+| `probable` as a `person_evidence_confidence` | likely (the map is keyed on the value) |
+| `original` / `derivative` / `authored` (`source_classification`) | Record image / Index or transcript / Compiled work |
+| `exhaustive_declared` (question status), and a declared `exhaustive_declaration` | all reachable searched |
+| `ceiling` / `gap` / `conflict` (`shortfall`) | limit of online records / evidence missing / conflicting evidence |
+| `none` (`shortfall`) | no badge |
+| `proof_summaries` (section) | Findings |
+
 ### 5.12 `evaluations`
 
 Array of evaluation pointer records — a lightweight index of mentor reviews performed in the project. The full verdict content lives in `evaluations/<file>.json` on the filesystem; the entry here is a pointer, not a duplicate. Written exclusively by the `gps-mentor` plugin agent (see `docs/specs/gps-mentor-agent-spec.md`); never edited by any other skill.
@@ -941,7 +978,7 @@ Array of evaluation pointer records — a lightweight index of mentor reviews pe
 ### 5.13 `localities`
 
 Array of place/locale research records — the durable knowledge base for "how to find
-records in a place." Written exclusively by the `locality-guide` skill (which reads
+records in a place." Written exclusively by the `locality-guide` agent (which reads
 the FamilySearch Research Wiki place pages plus `place_search_all` /
 `collections_search`), and read by `research-plan` (to stage searches) and the
 Research Viewer. `search-records` does **not** read this section — `research-plan`
@@ -1083,7 +1120,7 @@ rejected_links
 
 **Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution skill to actually perform both steps rather than folding independence into general weighing prose.
 
-**Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — entries are superseded with status fields.
+**Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — a `person_evidence` revision sets `superseded_by` on the old entry, and a re-plan sets the old plan's `status` to `superseded`.
 
 **Why `source_classification` is on sources but `information_quality` is on assertions.** A single original source can contain both primary and secondary information. A death certificate is an original source; the death date reported by the attending physician is primary information, but the birth date reported by a son-in-law is secondary information. Classifying the source at the source level and the information at the assertion level prevents the common error of labeling an entire source as "primary."
 

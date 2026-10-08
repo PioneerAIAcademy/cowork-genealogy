@@ -6,8 +6,10 @@ Selection modes (mutually exclusive except --tag, which repeats):
   --tag <name>    Repeat to AND-filter; selects across the whole corpus
 
 Exit codes:
-  0  every selected test resolved to pass / partial / xfail
-  1  the harness itself crashed, OR any test resolved to fail or xpass.
+  0  every selected test resolved to pass / partial, or was a declared-xfail
+     test that failed as declared (`expected_outcome: "xfail"` + `fail`).
+  1  the harness itself crashed, OR any test resolved to fail (that was not
+     a declared xfail), OR a declared-xfail test that unexpectedly passed.
      On a crash, submission stops but every still-running test is allowed to
      finish, and the completed tests are saved as a partial `scratch_<ts>.json`
      run log per skill.
@@ -57,6 +59,8 @@ from harness.orchestrator import (
 from harness.runlog import (
     build_run_log,
     promote_partial_to_scratch,
+    suppressed_failure,
+    unexpected_pass,
     write_partial_runlog,
     write_run_log,
 )
@@ -549,10 +553,10 @@ def _print_summary(rows: list[dict]) -> None:
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
-# `harness/runlog.py`. Enumerated rather than spot-checked: a four-value tally
-# (pass/partial/fail/aborted) silently under-sums a suite containing an
-# xfail/xpass test.
-_OUTCOMES = ("pass", "partial", "fail", "aborted", "xfail", "xpass")
+# `harness/runlog.py`. Suppression (a declared xfail) is read from the
+# `expected_outcome` marker beside the outcome, not from a distinct outcome
+# value — see `suppressed_failure` / `unexpected_pass`.
+_OUTCOMES = ("pass", "partial", "fail", "aborted")
 
 
 def _print_outcome_counts(rows: list[dict]) -> None:
@@ -838,7 +842,7 @@ def main(argv: list[str] | None = None) -> int:
     rows: list[dict] = []
     saw_corpus_issue = False
     saw_exec_abort = False
-    saw_fail_or_xpass = False
+    saw_regression = False
     saw_budget_skip = False
 
     suite_start = time.perf_counter()
@@ -1068,6 +1072,7 @@ def main(argv: list[str] | None = None) -> int:
 
                     done_n += 1
                     outcome = entry["outcome"]
+                    expected_outcome = entry.get("expected_outcome")
                     this_cost = float(entry["totals"].get("total_cost_usd") or 0.0)
                     cumulative_cost += this_cost
                     recent_costs.append(this_cost)
@@ -1131,11 +1136,29 @@ def main(argv: list[str] | None = None) -> int:
                                         file=sys.stderr,
                                         flush=True,
                                     )
-                    elif outcome in {"fail", "xpass"}:
-                        saw_fail_or_xpass = True
+                    elif (
+                        outcome == "fail" and expected_outcome != "xfail"
+                    ) or unexpected_pass(outcome, expected_outcome):
+                        # A real fail that wasn't declared xfail, or a declared
+                        # xfail that passed (a stale marker) — both exit 1.
+                        saw_regression = True
 
                     dur = float(entry["totals"].get("duration_ms") or 0.0) / 1000.0
-                    mark = "✓" if outcome in {"pass", "partial", "xfail"} else "✗"
+                    # ✓ for a pass/partial, or a declared xfail that failed as
+                    # declared; ✗ for a real fail, an aborted run, or an
+                    # unexpected pass on an xfail-marked test.
+                    mark = (
+                        "✓"
+                        if (
+                            outcome in {"pass", "partial"}
+                            and not unexpected_pass(outcome, expected_outcome)
+                        )
+                        or suppressed_failure(outcome, expected_outcome)
+                        else "✗"
+                    )
+                    # An xfail marker changes what the bare outcome means, so name
+                    # it inline — otherwise a suppressed `fail` reads as a red.
+                    marker = " (xfail-marked)" if expected_outcome == "xfail" else ""
                     # Name the abort reason inline. This is the line an operator
                     # actually watches during a long suite, and a bare "aborted"
                     # here is what made issue #1245's 19 of 20 unexplainable
@@ -1149,7 +1172,7 @@ def main(argv: list[str] | None = None) -> int:
                         why = f" [{r0}]" if outcome == "aborted" else f" [hit {r0}]"
                     print(
                         f"  {mark} [{done_n}/{total}] {spec.id} ({spec.skill}) "
-                        f"— {outcome}{why} ({dur:.0f}s skill)",
+                        f"— {outcome}{marker}{why} ({dur:.0f}s skill)",
                         flush=True,
                     )
                 # Persist everything finished so far before blocking on the
@@ -1338,11 +1361,11 @@ def main(argv: list[str] | None = None) -> int:
         pp.unlink(missing_ok=True)
 
     # Precedence: harness crashes already returned above. Among test-level
-    # outcomes, surface the most actionable signal: fail/xpass first
-    # (regressions and stale xfail markers), then corpus issues
-    # (not_runnable), then exec aborts (infrastructure issue). Multiple
+    # outcomes, surface the most actionable signal: regressions first (a real
+    # fail, or a declared xfail that passed on a now-stale marker), then corpus
+    # issues (not_runnable), then exec aborts (infrastructure issue). Multiple
     # categories can hold simultaneously; we pick the strongest exit code.
-    if saw_fail_or_xpass:
+    if saw_regression:
         return 1
     if saw_corpus_issue:
         return 2

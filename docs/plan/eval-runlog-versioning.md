@@ -531,11 +531,12 @@ every later skill unchecked.
 resolves to `fail` or `aborted`.
 
 Each test is resolved from `runs[].outcome` — whose enum is
-`pass|partial|fail|aborted`, so it never meets the aggregate's `xfail`/`xpass`
-remap — and aggregated by `harness.outcomes.aggregate_per_run_outcome`, the same
-function the runner uses, so the gate and `run_tests.py` cannot drift. `partial`
-never blocks (lead ruling 2026-09-18: "tests must pass, or partial,
-consistently").
+`pass|partial|fail|aborted` — and aggregated by
+`harness.outcomes.aggregate_per_run_outcome`, the same function the runner uses,
+so the gate and `run_tests.py` cannot drift. The aggregate `outcome` shares that
+enum (issue #2842 retired the `xfail`/`xpass` values); suppression is read from
+the `expected_outcome` marker beside it. `partial` never blocks (lead ruling
+2026-09-18: "tests must pass, or partial, consistently").
 
 An `expected_outcome: "xfail"` marker declares a known **failure**, so it
 suppresses `fail` only. A suppressed test that **aborts** blocks — an abort is an

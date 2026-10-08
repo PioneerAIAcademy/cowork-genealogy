@@ -10,8 +10,8 @@
 // so a year fix lands before the Quaker roll-over and the day offset operate on it.
 
 export interface ConvertCalendarDate {
-  year: number;
-  month?: number; // 1–12 calendar month, OR the Quaker ordinal when quakerMonth is requested
+  year: number | string; // number for most corrections; string accepted under frenchRepublican (Roman I–XIV, optional "an " prefix)
+  month?: number | string; // 1–12 calendar month, OR the Quaker ordinal when quakerMonth is requested, OR 1–13/month name under frenchRepublican
   day?: number; // 1–31
   doubleYear?: number; // the "/N" of a double-dated year, e.g. 1 for "1750/1"
 }
@@ -21,6 +21,7 @@ export interface ConvertCalendarCorrections {
   osNsYear?: boolean;
   quakerMonth?: { era: "pre_1752" | "post_1752" };
   julianToGregorianDay?: boolean;
+  frenchRepublican?: boolean;
 }
 
 export interface ConvertCalendarInput {
@@ -37,7 +38,7 @@ export interface ConvertCalendarInput {
 }
 
 interface AppliedCorrection {
-  correction: "doubleDatedYear" | "osNsYear" | "quakerMonth" | "julianToGregorianDay";
+  correction: "doubleDatedYear" | "osNsYear" | "quakerMonth" | "julianToGregorianDay" | "frenchRepublican";
   rule: string;
   offsetDays?: number;
   monthShift?: number;
@@ -93,6 +94,119 @@ function gregorianFromJDN(jdn: number): { year: number; month: number; day: numb
   const month = m + 3 - 12 * Math.floor(m / 10);
   const year = 100 * b + d - 4800 + Math.floor(m / 10);
   return { year, month, day };
+}
+
+// ─── French Republican calendar ───────────────────────────────────────────────
+// Epoch: 1 Vendémiaire an I = 22 September 1792 (Gregorian).
+// 12 months of 30 days each + 5 (or 6 in sextile years) complementary days.
+// Sextile years (historically observed, not the Romme rule): III, VII, XI.
+// Calendar abolished after 10 Nivôse an XIV (31 December 1805).
+
+const FR_EPOCH_JDN = gregorianToJDN(1792, 9, 22);
+const FR_LAST_JDN = gregorianToJDN(1805, 12, 31); // 10 Nivôse XIV
+
+const FR_SEXTILE_YEARS = new Set([3, 7, 11]);
+
+const FR_MONTH_NAMES: ReadonlyMap<string, number> = new Map([
+  ["vendemiaire", 1], ["brumaire", 2], ["frimaire", 3],
+  ["nivose", 4], ["pluviose", 5], ["ventose", 6],
+  ["germinal", 7], ["floreal", 8], ["prairial", 9],
+  ["messidor", 10], ["thermidor", 11], ["fructidor", 12],
+]);
+
+const FR_COMP_DAY_NAMES = new Set([
+  "jours complementaires", "complementaires",
+  "sansculottides", "sans-culottides",
+]);
+
+const FR_ROMAN_NUMERALS: ReadonlyMap<string, number> = new Map([
+  ["i", 1], ["ii", 2], ["iii", 3], ["iv", 4], ["v", 5],
+  ["vi", 6], ["vii", 7], ["viii", 8], ["ix", 9], ["x", 10],
+  ["xi", 11], ["xii", 12], ["xiii", 13], ["xiv", 14],
+]);
+
+function stripAccents(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function parseFrYear(raw: number | string): number | null {
+  if (typeof raw === "number") {
+    return Number.isInteger(raw) && raw >= 1 && raw <= 14 ? raw : null;
+  }
+  let s = raw.trim().toLowerCase();
+  s = s.replace(/^(l')?an\s+/i, "");
+  const n = Number(s);
+  if (Number.isInteger(n) && n >= 1 && n <= 14) return n;
+  return FR_ROMAN_NUMERALS.get(s) ?? null;
+}
+
+function parseFrMonth(raw: number | string): number | null {
+  if (typeof raw === "number") {
+    return Number.isInteger(raw) && raw >= 1 && raw <= 13 ? raw : null;
+  }
+  const s = stripAccents(raw.trim().toLowerCase());
+  const n = Number(s);
+  if (Number.isInteger(n) && n >= 1 && n <= 13) return n;
+  const m = FR_MONTH_NAMES.get(s);
+  if (m !== undefined) return m;
+  if (FR_COMP_DAY_NAMES.has(s)) return 13;
+  return null;
+}
+
+function isFrSextile(year: number): boolean {
+  return FR_SEXTILE_YEARS.has(year);
+}
+
+function frenchRepublicanToGregorian(
+  yearRaw: number | string,
+  monthRaw: number | string,
+  day: number,
+): { ok: true; year: number; month: number; day: number } | { ok: false; error: string } {
+  const year = parseFrYear(yearRaw);
+  if (year === null) {
+    return {
+      ok: false,
+      error: `frenchRepublican: year ${JSON.stringify(yearRaw)} is not valid — ` +
+        `pass 1–14 or a Roman numeral I–XIV (optional "an " or "l'an " prefix)`,
+    };
+  }
+  const month = parseFrMonth(monthRaw);
+  if (month === null) {
+    return {
+      ok: false,
+      error: `frenchRepublican: month ${JSON.stringify(monthRaw)} is not valid — ` +
+        `pass 1–13, a month name (Vendémiaire–Fructidor), or a complementary-day alias ` +
+        `(jours complémentaires, complémentaires, sansculottides, sans-culottides)`,
+    };
+  }
+
+  const maxDay = month <= 12 ? 30 : isFrSextile(year) ? 6 : 5;
+  if (!Number.isInteger(day) || day < 1 || day > maxDay) {
+    const label = month <= 12
+      ? `month ${month}`
+      : `the complementary days of year ${year}${isFrSextile(year) ? " (sextile)" : ""}`;
+    return {
+      ok: false,
+      error: `frenchRepublican: day ${day} is out of range for ${label} (1–${maxDay})`,
+    };
+  }
+
+  let daysSinceEpoch = 0;
+  for (let y = 1; y < year; y++) {
+    daysSinceEpoch += isFrSextile(y) ? 366 : 365;
+  }
+  daysSinceEpoch += (month - 1) * 30 + (day - 1);
+  const jdn = FR_EPOCH_JDN + daysSinceEpoch;
+
+  if (jdn > FR_LAST_JDN) {
+    return {
+      ok: false,
+      error: `frenchRepublican: the date falls after 10 Nivôse XIV ` +
+        `(31 December 1805), when the calendar was abolished — later dates are not valid`,
+    };
+  }
+
+  return { ok: true, ...gregorianFromJDN(jdn) };
 }
 
 // ─── Tool ────────────────────────────────────────────────────────────────────
@@ -477,21 +591,99 @@ function regimeAt(j: Jurisdiction, at: Ymd): DayReckoning {
 
 export function convertCalendar(input: ConvertCalendarInput): ConvertCalendarResult {
   const { date, corrections } = input ?? {};
-  if (!date || !Number.isInteger(date.year)) {
+  const c = corrections ?? {};
+
+  // ── French Republican early-return branch (issue #1621) ────────────────
+  // When frenchRepublican is set, parse year and month to numbers and convert
+  // in a separate function, before the existing pipeline. The flag is exclusive:
+  // its output is already Gregorian, so the other corrections have nothing to
+  // act on.
+  if (c.frenchRepublican) {
+    const otherRequested =
+      Number(!!c.doubleDatedYear) +
+      Number(!!c.osNsYear) +
+      Number(!!c.quakerMonth) +
+      Number(!!c.julianToGregorianDay);
+    if (otherRequested > 0) {
+      return {
+        ok: false,
+        errors: [
+          "frenchRepublican cannot be combined with other corrections — " +
+          "its output is already Gregorian, so the other corrections have nothing to act on",
+        ],
+      };
+    }
+    if (!date || date.year === undefined || date.year === null) {
+      return { ok: false, errors: ["date.year is required"] };
+    }
+    if (date.month === undefined || date.month === null) {
+      return { ok: false, errors: ["frenchRepublican requires date.month (1–13 or a month name)"] };
+    }
+    if (date.day === undefined || date.day === null) {
+      return { ok: false, errors: ["frenchRepublican requires date.day"] };
+    }
+
+    const result = frenchRepublicanToGregorian(date.year, date.month, date.day);
+    if (!result.ok) {
+      return { ok: false, errors: [result.error] };
+    }
+
+    const notes: string[] = [];
+    if (input.jurisdiction !== undefined) {
+      notes.push(
+        `jurisdiction ${JSON.stringify(input.jurisdiction)} was supplied but is not used — ` +
+        "the French Republican calendar was a single national system, not a jurisdiction-specific reckoning",
+      );
+    }
+
+    return {
+      ok: true,
+      original: { ...date },
+      converted: { year: result.year, month: result.month, day: result.day },
+      applied: [{
+        correction: "frenchRepublican" as const,
+        rule: `French Republican → Gregorian`,
+      }],
+      notes,
+    };
+  }
+
+  // ── String year/month rejected outside frenchRepublican ────────────────
+  if (!date || typeof date.year === "string" || !Number.isInteger(date.year)) {
+    if (date && typeof date.year === "string") {
+      return {
+        ok: false,
+        errors: [
+          "date.year as a string is only valid under corrections.frenchRepublican — " +
+          "pass a numeric year for other corrections",
+        ],
+      };
+    }
     return { ok: false, errors: ["date.year is required and must be an integer"] };
   }
-  if (date.month !== undefined && (date.month < 1 || date.month > 12)) {
-    return { ok: false, errors: ["date.month must be 1–12"] };
+  if (date.month !== undefined) {
+    if (typeof date.month === "string") {
+      return {
+        ok: false,
+        errors: [
+          "date.month as a string is only valid under corrections.frenchRepublican — " +
+          "pass a numeric month (1–12) for other corrections",
+        ],
+      };
+    }
+    if (date.month < 1 || date.month > 12) {
+      return { ok: false, errors: ["date.month must be 1–12"] };
+    }
   }
   if (date.day !== undefined && (date.day < 1 || date.day > 31)) {
     return { ok: false, errors: ["date.day must be 1–31"] };
   }
-  const c = corrections ?? {};
   const requested =
     Number(!!c.doubleDatedYear) +
     Number(!!c.osNsYear) +
     Number(!!c.quakerMonth) +
-    Number(!!c.julianToGregorianDay);
+    Number(!!c.julianToGregorianDay) +
+    Number(!!c.frenchRepublican);
   if (requested === 0) {
     return { ok: false, errors: ["corrections must request at least one conversion"] };
   }
@@ -773,20 +965,24 @@ export const convertCalendarSchema = {
   name: "convert_calendar",
   description:
     "Convert a date between historical calendar systems — Old Style→New Style " +
-    "year, Julian→Gregorian day offset, and Quaker numbered-month resolution. Use " +
-    "when a genealogist asks to convert a date, when a double-dated year (e.g. " +
-    "'1750/1') or a Quaker numbered month appears, or when a date seems off by a " +
-    "year/days because of a calendar transition.\n" +
+    "year, Julian→Gregorian day offset, Quaker numbered-month resolution, and " +
+    "French Republican→Gregorian conversion. Use when a genealogist asks to " +
+    "convert a date, when a double-dated year (e.g. '1750/1'), a Quaker numbered " +
+    "month, or a French Republican date (Vendémiaire, Brumaire, an VIII) appears, " +
+    "or when a date seems off by a year/days because of a calendar transition.\n" +
     "\n" +
     "Pass `jurisdiction` whenever the record names a place and the tool identifies " +
     "the regime for you — which calendar was in force, where the civil year began, " +
-    "and whether a requested correction applies at all. You still decide WHICH " +
-    "question to ask: request ONLY the correction(s) the user asked for via `corrections` — the " +
-    "tool does just those, in a fixed order, and never bundles a correction you " +
-    "didn't request. Pass `date` as structured year/month/day; `month` is the " +
-    "Quaker ordinal when you request `quakerMonth`. Returns the converted date, the " +
-    "rule(s) applied (with the day offset), and notes. It writes nothing — present " +
-    "the original date alongside the conversion.",
+    "and whether a requested correction applies at all (not used under " +
+    "`frenchRepublican`). You still decide WHICH question to ask: request ONLY the " +
+    "correction(s) the user asked for via `corrections` — the tool does just those, " +
+    "in a fixed order, and never bundles a correction you didn't request. " +
+    "`frenchRepublican` is exclusive and cannot be combined with other corrections. " +
+    "Pass `date` as structured year/month/day; `month` is the Quaker ordinal when " +
+    "you request `quakerMonth`, or a French Republican month name/number (1–13) " +
+    "under `frenchRepublican`. Returns the converted date, the rule(s) applied " +
+    "(with the day offset), and notes. It writes nothing — present the original " +
+    "date alongside the conversion.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -794,11 +990,14 @@ export const convertCalendarSchema = {
         type: "object",
         description: "The recorded date, as structured fields.",
         properties: {
-          year: { type: "number", description: "The year as recorded." },
+          year: {
+            type: ["number", "string"],
+            description: "The year as recorded. A string is accepted only under frenchRepublican (Roman numeral I–XIV, optional 'an ' prefix).",
+          },
           month: {
-            type: "number",
+            type: ["number", "string"],
             description:
-              "Calendar month 1–12 — EXCEPT when requesting quakerMonth, where this is the Quaker ordinal 1–12. Required for the day offset and Quaker conversions.",
+              "Calendar month 1–12 — EXCEPT when requesting quakerMonth, where this is the Quaker ordinal 1–12, or under frenchRepublican, where this is 1–13 or a month name (Vendémiaire–Fructidor, jours complémentaires, sansculottides). Required for the day offset, Quaker, and French Republican conversions.",
           },
           day: { type: "number", description: "Day of month 1–31. Required for the day offset." },
           doubleYear: {
@@ -836,6 +1035,11 @@ export const convertCalendarSchema = {
           julianToGregorianDay: {
             type: "boolean",
             description: "Add the era-appropriate Julian→Gregorian day offset (10/11/12/13).",
+          },
+          frenchRepublican: {
+            type: "boolean",
+            description:
+              "Interpret date as a French Republican calendar date (Vendémiaire–Fructidor, years I–XIV, 22 Sep 1792 – 31 Dec 1805) and convert to Gregorian. Cannot be combined with any other correction. Both month and day are required.",
           },
         },
       },

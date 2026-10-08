@@ -16,8 +16,8 @@ HAND_BACK_RE = re.compile(HAND_BACK_PATTERN)
 
 RESEARCH_COMPLETE = "Research complete."
 
-# What the runner sends as the researcher's answer — the same text the e2e
-# harness answers with.
+# What the runner sends as the researcher's answer. The e2e harness answered the
+# same until handoff U17; it now vetoes every stop with continue_policy.CONTINUE_REASON.
 AUTO_CONTINUE_TEXT = "Yes."
 
 

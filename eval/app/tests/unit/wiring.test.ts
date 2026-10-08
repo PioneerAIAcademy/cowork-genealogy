@@ -229,7 +229,7 @@ describe('the control is actually wired', () => {
     // address plus a launcher on 0.0.0.0 passed both.
     //
     // The PORT is the other half of the address, and it was a literal 3000 with
-    // nothing tying it to the script. `Start.bat` runs `npm run dev`, so adding
+    // nothing tying it to the script. `Start.bat` runs the dev script, so adding
     // `--port 4000` there left this green while the launcher opened a dead port
     // — the same pairing failure the host half exists to prevent. Derived from
     // the script now, over both spellings of the flag.
@@ -238,7 +238,7 @@ describe('the control is actually wired', () => {
     ) as { scripts: Record<string, string> }
     const port = pkg.scripts.dev.match(/(?:--port|-p)[=\s]*(\d+)/)?.[1] ?? '3000'
     const bat = fs.readFileSync(path.resolve(__dirname, '../../../Start.bat'), 'utf8')
-    expect(bat, `Start.bat must open the port \`npm run dev\` serves (${port})`).toMatch(
+    expect(bat, `Start.bat must open the port the dev script serves (${port})`).toMatch(
       new RegExp(String.raw`^start http://127\.0\.0\.1:${port}\s*$`, 'm'),
     )
   })

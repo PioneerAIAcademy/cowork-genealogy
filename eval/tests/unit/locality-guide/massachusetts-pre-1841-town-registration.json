@@ -13,11 +13,12 @@
       "registration-level",
       "adjoining-jurisdictions",
       "wiki-citation",
-      "issue-1321"
+      "issue-1321",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I'm researching a family who lived in Berkshire County, Massachusetts between 1820 and 1850. Their town is close to both the New York and Vermont lines. What records are available for births, marriages, and deaths in that period, and where should I look?",
+    "delegation": "I'm researching a family who lived in Berkshire County, Massachusetts between 1820 and 1850. Their town is close to both the New York and Vermont lines. What records are available for births, marriages, and deaths in that period, and where should I look?",
     "scenario": null
   },
   "execution": {
@@ -30,6 +31,7 @@
     "place-search-rensselaer-county-ny",
     "place-search-washington-county-ny",
     "place-search-bennington-county-vt",
+    "place-search-any",
     "collections-search-massachusetts",
     "collections-search-any",
     "volume-search-berkshire",

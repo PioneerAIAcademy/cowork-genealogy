@@ -1,20 +1,21 @@
 // The tool server: one `Server` carrying the ListTools handler and the whole
-// CallTool dispatch chain, built for a given principal. Three entrypoints share
+// CallTool dispatch chain, built for a given principal. Two entrypoints share
 // it — src/index.ts (the shipped .mcpb: stdio, one desktop user per process,
-// binds LOCAL), src/hosted-stdio.ts (the search-agent prototype's per-turn
-// tool server, which binds the bearer the worker hands it) and src/http.ts
-// (the prototype's Streamable HTTP tool server: one Server per POST, bound to
-// that request's bearer — src/http-server.ts). A new tool's dispatch arm goes
+// binds LOCAL) and src/http.ts (the search-agent prototype's Streamable HTTP
+// tool server: one Server per POST, bound to that request's bearer —
+// src/http-server.ts). A new tool's dispatch arm goes
 // here, in the chain below, never in an entrypoint.
 
+import { catalogSearchTool } from "./tools/catalog-search.js";
+import type { CatalogSearchInput } from "./types/catalog-search.js";
 import type { Principal } from "./auth/principal.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
-import { researchDelivered, type ResearchDeliveredInput } from "./tools/research-delivered.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
+import { researchDelivered, type ResearchDeliveredInput } from "./tools/research-delivered.js";
 import {
   placeSearchTool,
   placeSearchAllTool,
@@ -31,7 +32,9 @@ import { populationTool, type PopulationToolInput } from "./tools/place-populati
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeTool } from "./tools/image-transcribe.js";
+import { volumeBisectTool } from "./tools/volume-bisect.js";
 import type { ImageTranscribeInput } from "./types/image-transcribe.js";
+import type { VolumeBisectInput } from "./types/volume-bisect.js";
 import { recordSearchTool } from "./tools/record-search.js";
 import type { RecordSearchInput } from "./types/record-search.js";
 import { personSearchTool, type PersonSearchInput } from "./tools/person-search.js";
@@ -86,8 +89,8 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import {
-  buildExternalSearchUrl,
-  type BuildExternalSearchUrlInput,
+  buildExternalSearchUrlTool,
+  type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
@@ -114,6 +117,7 @@ import {
   type ProjectCreateInput,
 } from "./tools/project-create.js";
 import { sidecarRead, type SidecarReadInput } from "./tools/sidecar-read.js";
+import { getNameVariants, type GetNameVariantsInput } from "./tools/name-variants.js";
 import { allToolSchemas } from "./tool-schemas.js";
 // Tools that report failure by RETURNING `{ ok: false }` rather than throwing
 // need `isError` set explicitly — the catch arms below cannot see them.
@@ -144,18 +148,47 @@ export function createServer(principal: Principal): Server {
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (request.params.name === "research_delivered") {
-      // A signal, not an action: the hosted PreToolUse hook ends the turn on this
-      // tool's NAME before it executes, so this arm runs only where no hook binds.
-      const args = request.params.arguments as unknown as ResearchDeliveredInput;
-      return {
-        content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
-      };
+      // A pure signal: no network, no auth, no project write. On BOTH hosted planes a
+      // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
+      // arm runs only where no such hook binds (Cowork, the e2e harness).
+      //
+      // The try/catch is not decoration: the server does NOT validate `inputSchema`, so
+      // a non-string `summary` reaches the body and `.trim()` throws. Every other arm
+      // here returns `isError` with a readable message; without this one, that throw
+      // escapes as a protocol-level MCP error instead.
+      try {
+        const args = request.params.arguments as unknown as ResearchDeliveredInput;
+        return {
+          content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
     }
 
     if (request.params.name === "wikipedia_search") {
       try {
         const args = request.params.arguments as unknown as WikipediaSearchInput;
         const result = await wikipediaSearch(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "catalog_search") {
+      try {
+        const args = request.params.arguments as unknown as CatalogSearchInput;
+        const result = await catalogSearchTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };
@@ -335,6 +368,20 @@ export function createServer(principal: Principal): Server {
         };
       }
     }
+    if (request.params.name === "volume_bisect") {
+      try {
+        const args = request.params.arguments as unknown as VolumeBisectInput;
+        const result = await volumeBisectTool(args, principal);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true,
+        };
+      }
+    }
+
     if (request.params.name === "image_transcribe") {
       try {
         const args = request.params.arguments as unknown as ImageTranscribeInput;
@@ -573,7 +620,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "person_warnings") {
       try {
         const args = request.params.arguments as unknown as PersonWarningsInput;
-        const result = await personWarningsTool(args, principal);
+        const result = await personWarningsTool(args);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -652,8 +699,8 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "build_external_search_url") {
       try {
-        const args = request.params.arguments as unknown as BuildExternalSearchUrlInput;
-        const result = buildExternalSearchUrl(args);
+        const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
+        const result = await buildExternalSearchUrlTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -757,6 +804,16 @@ export function createServer(principal: Principal): Server {
         const args = request.params.arguments as unknown as SidecarReadInput;
         const result = await sidecarRead(args);
         return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
+    if (request.params.name === "get_name_variants") {
+      try {
+        const args = request.params.arguments as unknown as GetNameVariantsInput;
+        const result = await getNameVariants(args);
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };

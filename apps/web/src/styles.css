@@ -712,6 +712,7 @@ button {
 }
 .msgText code {
   background: var(--bg-code);
+  color: var(--text-primary);
   padding: 1px 4px;
   border-radius: 4px;
   font-family: var(--font-mono);
@@ -736,6 +737,7 @@ button {
 }
 .msgText th {
   background: var(--bg-code);
+  color: var(--text-primary);
   font-weight: 600;
 }
 /* Reveals the model's reasoning blocks, hidden by default. */

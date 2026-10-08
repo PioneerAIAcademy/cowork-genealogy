@@ -25,31 +25,59 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
   never a third); a FIRST delivery is never re-queried -- neither a fresh turn's nor one
   whose session already holds entries, where the continue prompt would discard the
   patron's new message; and every guard above binds on the re-query too;
-- the option set: cwd, setting_sources=[], agents=, the tool server's per-turn env in a
-  0600 mcp.json (never argv) under ``env -u ANTHROPIC_API_KEY``, session_id/resume
-  exactly one, the eager store flush, the model pin per provider; the ``TOOL_SERVER=http``
-  arm's two per-turn headers (project id always, bearer only when there is a token);
+- the option set: cwd, setting_sources=[], agents=, the http tool server entry in a
+  0600 mcp.json (never argv), session_id/resume exactly one, the eager store flush, the
+  model pin per provider (an unknown provider refused); the entry's two per-turn headers
+  (project id and the grant's bearer; an empty bearer refused, never shipped);
 - the container: tmpfs for TMPDIR, the key passed through (never a literal, never baked
-  into the image), /project present, no tokens.json, optional deps kept, the SDK
-  pinned, 004 additive only;
+  into the image), /project present, no tokens.json, no Node, no engine and no store
+  credentials, the SDK pinned, 004 additive only;
 - D18's Stop hook: ``should_continue_run`` on the harness's own truth table, the hook's
   block with the harness's reason text verbatim (read off orchestrator.py), its cap, its
   no-progress arm, that it never raises; the ``Stop`` matcher bound only when a hook is
-  given; run_turn wiring it only when AUTONOMOUS_MAX_NUDGES > 0 and writing ``nudges``.
+  given; run_turn wiring it only when the turn's cap > 0 (the body's ``max_nudges``, which
+  the web tier stamps on every message, else the worker's AUTONOMOUS_MAX_NUDGES) and
+  writing ``nudges``;
+- U5: the last-receive close (200 ``retries_exhausted``, one release) and every way it
+  must NOT fire; ``complete(only_if_open=True)`` and the close race; the guarded release;
+  the sweep's statement and its off-unless-configured rule; and SIGTERM in-process -- the
+  500 before the cancel, the 503 after, the last-receive close with its release deferred,
+  and the wait for a reply still inside ``claim()``. The real signal and exit code are
+  test_proto_shutdown.py's.
+- U10: ``/healthz`` as readiness -- a refused and a silent Postgres each 503 inside the
+  deadline, concurrent probes share one connection, labels never messages, each local
+  check named; the schema thread's retry; the ``TMPDIR`` write test; a model turn that
+  appended nothing closes ``transcript_lost`` and answers 500, its redelivery 200; the
+  ``halt()`` clause that stops it early; the ``Decimal`` spend sum. The real start
+  order and exit code are test_proto_worker_start.py's.
+- U3: the bearer is the turn's project owner's grant, read per attempt and never the
+  message's; no usable grant closes the turn ``signin_required`` with no CLI; a grant wait
+  that times out is a 500; the lock outlives the CLI; ``acquire_grant`` locks before it
+  reads and holds nothing while it waits; a lost lock halts the next tool call and answers
+  500; no token reaches a log line or a row. The locks themselves: test_proto_grants_pg.py.
 """
 
 from __future__ import annotations
 
 import ast
 import asyncio
+import contextlib
+import errno
+import http.client
+import inspect
 import json
 import pathlib
 import re
 import shutil
+import socket
 import stat
 import sys
 import tempfile
+import threading
+import time
 import uuid
+from decimal import Decimal
+from http.server import ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -58,7 +86,6 @@ import pytest
 import yaml
 from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage, SystemMessage, TextBlock
 
-from app.agent.continue_policy import TERMINAL_DECISION
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
 
@@ -77,7 +104,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"citation", "gps-mentor", "image-reader", "person-evidence", "proof-conclusion", "record-extractor", "research-exhaustiveness", "search-images"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -86,6 +113,7 @@ AGENTS = {"citation", "gps-mentor", "image-reader", "person-evidence", "proof-co
 class FakeCursor:
     def __init__(self, conn: "FakeConn") -> None:
         self.conn = conn
+        self.rowcount = -1
 
     def __enter__(self) -> "FakeCursor":
         return self
@@ -96,8 +124,16 @@ class FakeCursor:
     def execute(self, sql: str, params: tuple = ()) -> None:
         flat = re.sub(r"\s+", " ", sql).strip()
         self.conn.executed.append((flat, params))
+        self.conn.in_tx.append(self.conn.transactions > self.conn.transaction_exits)
         if "SET zero_progress_attempts = 0" in flat:
             self.conn.zero_progress_attempts = 0
+        if flat.startswith("UPDATE turns SET completed_at"):
+            # complete()'s close: a redelivery on this connection then sees the turn closed,
+            # with the outcome it was closed with (U10).
+            self.conn.completed_at = "2026-10-01T00:00:00+00:00"
+            self.conn.outcome = params[0]
+        if flat.startswith("UPDATE turns SET outcome = %s WHERE turn_id"):  # the 1b put-back
+            self.rowcount = 1 if params[-1] == self.conn.claimed_at else 0
 
     def fetchone(self) -> tuple | None:
         sql, params = self.conn.executed[-1]
@@ -106,6 +142,8 @@ class FakeCursor:
             return (self.conn.seq,)
         if "SELECT completed_at FROM turns" in sql:
             return (self.conn.completed_at,)
+        if "SELECT outcome FROM turns" in sql:
+            return (self.conn.outcome,)
         if "RETURNING sdk_session_id" in sql:
             # COALESCE(sdk_session_id, candidate): the row's id wins, else the candidate lands.
             if self.conn.sdk_session_id is None:
@@ -120,8 +158,20 @@ class FakeCursor:
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
+        if "RETURNING turns.message" in sql:  # U4: the claim of the web tier's row
+            if self.conn.turn_row is None:
+                return None
+            _, _, turn_id, session_id, project_id = params
+            return ({"turn_id": turn_id, "session_id": session_id, "project_id": project_id,
+                     **self.conn.turn_row},)
         if "RETURNING message" in sql:  # the 1b claim
-            return (self.conn.queued_body,) if self.conn.queued_body is not None else None
+            return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
+        if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
+            return (self.conn.turn_active,)
+        if "SELECT sdk_session_id FROM sessions" in sql:
+            return (self.conn.sdk_session_id,)
+        if "FROM turns t LEFT JOIN sessions s" in sql:  # the sweep's candidate
+            return self.conn.sweep_rows.pop(0) if self.conn.sweep_rows else None
         return None
 
 
@@ -140,16 +190,24 @@ class FakeConn:
     def __init__(
         self, *, completed_at: Any = None, sdk_session_id: str | None = None,
         usage: tuple = (None, None, None, None), zero_progress_attempts: int = 0,
-        queued_body: dict | None = None,
+        queued_body: dict | None = None, turn_row: dict | None = ...,
     ) -> None:
-        # The held message `take_queued_turn`'s claim returns, or None for "nothing held".
+        # The turns row the web tier wrote, as the claim's RETURNING reads it back: its
+        # message fields beyond the three ids, or None for "no row matches" (U4).
+        self.turn_row = {"text": "hello", "enqueued_at": "2026-09-18T12:00:00+00:00"} \
+            if turn_row is ... else turn_row
+        # The held message `take_queued_turn`'s claim returns, or None for "nothing held",
+        # and the claimed_at it stamps (what the put-back matches; a worker's claim moves it).
         self.queued_body = queued_body
+        self.claimed_at = "2026-10-05T12:00:00.000001+00:00"
         self.executed: list[tuple[str, tuple]] = []
+        self.in_tx: list[bool] = []  # per executed statement: inside a transaction() block
         self.commits = 0
         self.transactions = 0
         self.transaction_exits = 0
         self.seq = 0
         self.completed_at = completed_at
+        self.outcome: str | None = None  # turns.outcome, for a close that lost the race
         self.sdk_session_id = sdk_session_id
         self.usage = usage
         self.research: dict | None = None  # the documents row the Stop hook reads
@@ -157,6 +215,8 @@ class FakeConn:
         # turns.zero_progress_attempts (005_resume_guard.sql): bumped by the RETURNING
         # update, and zeroed by the reset the first tool call of an attempt issues.
         self.zero_progress_attempts = zero_progress_attempts
+        self.turn_active = False  # TURN_ACTIVE_SQL's answer: a non-held turn is open
+        self.sweep_rows: list[tuple] = []  # what the sweep's SELECT returns, in order
 
     def cursor(self) -> FakeCursor:
         return FakeCursor(self)
@@ -189,23 +249,103 @@ TURN = {
 # ── claim / complete / idempotent completion ─────────────────────────────────────
 
 
-def test_claim_upserts_sessions_and_turns_with_the_receive_count():
+def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
+    """U4: the web tier wrote the sessions and turns rows before it sent the message, so
+    the claim is one UPDATE matched on the turn, its session and that session's project."""
     conn = FakeConn()
-    worker.claim(conn, TURN, 3)
-    sqls = [s for s, _ in conn.executed]
-    assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
-    assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
-    assert conn.executed[1][1][-1] == 3
+    assert worker.claim(conn, TURN, 3) == TURN["message"]
+    [(sql, params)] = conn.executed
+    assert sql.startswith("UPDATE turns SET claimed_at = now(), receive_count = %s")
+    assert ("FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
+            "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id") in sql
+    assert sql.endswith("RETURNING turns.message")
+    assert params == (3, "queued", "turn-1", "sess-1", "proj-1")
     assert conn.commits == 1
+
+
+def test_a_real_claim_with_no_matching_row_is_refused():
+    conn = FakeConn(turn_row=None)
+    assert worker.claim(conn, TURN, 1) is None
+    assert not any(s.startswith("INSERT") for s, _ in conn.executed), "a forged message writes no row"
+
+
+def test_a_real_claim_runs_the_row_s_message_not_the_body():
+    """The body is whatever the sender wrote; the row is what the patron posted."""
+    conn = FakeConn(turn_row={"text": "what the patron typed"})
+    forged = {**TURN, "message": {**TURN["message"], "text": "something else"}}
+    assert worker.claim(conn, forged, 1)["text"] == "what the patron typed"
+
+
+@pytest.mark.parametrize("dev", [True, False], ids=["dev-paths", "no-dev-paths"])
+def test_only_a_stub_under_dev_paths_upserts_its_rows(monkeypatch, dev):
+    """The dev tooling (``make proto-send``, ``make proto-smoke``) enqueues stubs with no
+    row. Without DEV_PATHS -- unreachable through the Handler, which refuses the stub
+    first -- the claim is the real turn's."""
+    if not dev:
+        monkeypatch.delenv("DEV_PATHS")
+    conn = FakeConn(turn_row=None)
+    stub = {**TURN, "message": {"behaviour": "ok"}}
+    assert worker.claim(conn, stub, 3) == ({"behaviour": "ok"} if dev else None)
+    sqls = [s for s, _ in conn.executed]
+    if dev:
+        assert sqls[0].startswith("INSERT INTO sessions") and "ON CONFLICT (session_id) DO NOTHING" in sqls[0]
+        assert sqls[1].startswith("INSERT INTO turns") and "receive_count = EXCLUDED.receive_count" in sqls[1]
+        assert conn.executed[1][1][-2:] == (3, "queued")
+    else:
+        assert [s.split(" ", 2)[:2] for s in sqls] == [["UPDATE", "turns"]]
+
+
+@pytest.mark.parametrize("message", [TURN["message"], {"behaviour": "ok"}], ids=["real", "stub"])
+def test_the_claim_unmarks_a_held_row_that_is_running(message):
+    """U23 D10: a message delivered after a put-back whose send had landed runs on a row
+    still marked held, invisible to TURN_ACTIVE_SQL. test_proto_queue_pg.py runs it."""
+    conn = FakeConn()
+    worker.claim(conn, {**TURN, "message": message}, 1)
+    assert ("outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
+            "ELSE turns.outcome END") in conn.executed[-1][0]
 
 
 def test_claim_takes_the_entries_high_water_mark_on_the_first_claim_only():
     conn = FakeConn()
     worker.claim(conn, TURN, 1)
+    sql = conn.executed[0][0]
+    assert "entries_seq_before = COALESCE(turns.entries_seq_before, " \
+           "(SELECT COALESCE(max(seq), 0) FROM session_entries))" in sql, \
+        "a redelivery must not move the mark past the killed attempt's entries"
+    conn = FakeConn()
+    worker.claim(conn, {**TURN, "message": {"behaviour": "ok"}}, 1)
     sql = conn.executed[1][0]
     assert "entries_seq_before" in sql and "(SELECT COALESCE(max(seq), 0) FROM session_entries)" in sql
-    assert "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)" in sql, \
-        "a redelivery must not move the mark past the killed attempt's entries"
+    assert "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before)" in sql
+
+
+def test_a_message_naming_no_row_is_400_and_runs_nothing():
+    """U4: a body with a real turn's ids and another patron's project_id -- or a turn the
+    web tier never wrote -- is refused before the grant is read or a session id minted."""
+    conn = FakeConn(turn_row=None)
+    status, body = worker.serve_real_turn(
+        {**TURN, "project_id": "someone-elses"}, 1, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert (status, body) == (400, {"ok": False, "turn_id": "turn-1", "error": worker.UNKNOWN_TURN_ERROR})
+    assert [s.split(" ", 2)[:2] for s, _ in conn.executed] == [["UPDATE", "turns"]], "nothing past the claim"
+
+
+def test_the_run_gets_the_row_s_message():
+    conn = FakeConn(turn_row={"text": "what the patron typed"})
+    seen: list[str] = []
+    worker.serve_real_turn({**TURN, "message": {**TURN["message"], "text": "something else"}}, 1,
+                           connect=lambda dsn: conn, run=lambda turn, rc, sid: seen.append(turn["message"]["text"]) or {})
+    assert seen == ["what the patron typed"]
+
+
+def test_a_last_receive_after_shutdown_naming_no_row_closes_nothing(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    released = _released(monkeypatch)
+    worker.SHUTDOWN.set()
+    conn = FakeConn(turn_row=None)
+    status, _ = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 400
+    assert [s.split(" ", 2)[:2] for s, _ in conn.executed] == [["UPDATE", "turns"]], "no close, no turn_done"
+    assert released == [] and worker.deferred_sessions() == []
 
 
 TOKENS = (10, 18498, 142229, 1881)
@@ -254,7 +394,7 @@ def test_complete_writes_the_nudge_count_with_coalesce_like_the_other_figures():
     conn = FakeConn()
     worker.complete(conn, TURN, 1, nudges=3)
     sql, params = conn.executed[2]
-    assert "nudges = COALESCE(%s, nudges)" in sql and params[-2:] == (3, "turn-1") and params[0] == "ok"
+    assert "nudges = COALESCE(%s, nudges, 0)" in sql and params[-2:] == (3, "turn-1") and params[0] == "ok"
     conn = FakeConn()
     worker.complete(conn, TURN, 1, nudges=0)
     assert conn.executed[2][1][-2] == 0, "zero is a figure (the arm was off or never vetoed), not an absence"
@@ -273,7 +413,7 @@ def test_a_redelivered_completed_turn_answers_200_without_running(monkeypatch):
     )
     assert status == 200 and body["already_completed"] is True and body["ok"] is True
     assert ran == [], "a finished turn must not be run again"
-    assert any(s.startswith("INSERT INTO turns") for s, _ in conn.executed), "the claim is still recorded"
+    assert any(s.startswith("UPDATE turns SET claimed_at") for s, _ in conn.executed), "the claim is still recorded"
     assert not any("RETURNING sdk_session_id" in s for s, _ in conn.executed), "no session id is minted for it"
 
 
@@ -454,6 +594,96 @@ def test_the_tool_results_spill_under_the_config_root_is_allowed(tmp_path):
     assert deny.project_read_denied("Read", {"file_path": str(cfg / "projects" / "-project" / "sess.jsonl")}, **kw) is None, "outside the anchor anyway"
 
 
+# U3: each turn's CLI runs as its own slot user, so the kernel keeps it out of other turns'
+# files and the worker's /proc/<pid>. It cannot keep a process from itself: /proc/self holds
+# the model key the CLI needs, and /dev/fd leads back to any open file -- the hook's job.
+
+
+def _host_kw(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    return dict(cwd=str(root), project_root=str(root))
+
+
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "/proc/self/environ"}),
+    ("Read", {"file_path": "/proc/self/task/1/environ"}),
+    ("Read", {"file_path": "/proc/1/environ"}),
+    ("Read", {"file_path": "/dev/fd/3"}),
+    ("Read", {"file_path": "/dev/stdin"}),
+    ("Read", {"file_path": "{up}proc/self/environ"}),
+    ("Grep", {"pattern": "ANTHROPIC", "path": "/proc/self"}),
+    ("Grep", {"pattern": "x", "path": "/"}),
+    ("Glob", {"pattern": "/proc/*/environ"}),
+    ("Glob", {"pattern": "**/environ", "path": "/"}),
+    ("Glob", {"pattern": "*/../../proc/x"}),
+    ("Write", {"file_path": "/proc/self/oom_score_adj", "content": "1000"}),
+    ("Edit", {"file_path": "/dev/fd/1", "old_string": "a", "new_string": "b"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_turns_own_proc_and_dev_are_denied(tmp_path, tool_name, tool_input):
+    kw = _host_kw(tmp_path)
+    up = "../" * len(Path(kw["cwd"]).parts)  # a relative climb from cwd to /
+    tool_input = {k: v.format(up=up) for k, v in tool_input.items()}
+    reason = deny.host_path_denied(tool_name, tool_input, **kw)
+    assert reason and "disabled in this run" in reason, (tool_name, tool_input)
+
+
+@pytest.mark.parametrize("tool_name,tool_input", [
+    # Another turn's files are the kernel's to refuse (a different slot user), not the hook's.
+    ("Read", {"file_path": "/tmp/worker-cfg-other/mcp.json"}),
+    ("Grep", {"pattern": "Bearer", "path": "/tmp"}),
+    ("Read", {"file_path": "/tmp/worker-cfg-mine/projects/-project/sess/tool-results/r1.txt"}),
+    ("Read", {"file_path": "/etc/hosts"}),
+    ("Grep", {"pattern": "x", "path": "/etc"}),
+    ("Glob", {"pattern": "/opt/plugin/skills/*/SKILL.md"}),
+    ("Write", {"file_path": "/srv/notes.md", "content": "x"}),
+    ("Read", {"file_path": "{project}/.claude/agents/x.md"}),
+    ("mcp__genealogy__research_query", {"projectPath": "/proc"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_paths_outside_proc_and_dev_are_left_to_the_kernel(tmp_path, tool_name, tool_input):
+    kw = _host_kw(tmp_path)
+    tool_input = {k: v.format(project=kw["project_root"]) for k, v in tool_input.items()}
+    assert deny.host_path_denied(tool_name, tool_input, **kw) is None, (tool_name, tool_input)
+
+
+def test_a_symlink_is_judged_by_both_its_spelling_and_its_target(tmp_path, monkeypatch):
+    """/dev/fd/3 resolves to whatever descriptor 3 is, so the spelling is judged; a link
+    into /proc is judged by where it resolves. The roots are faked so the test can make
+    links on both sides of them."""
+    fake_proc = tmp_path / "proc"
+    (fake_proc / "self").mkdir(parents=True)
+    (fake_proc / "self" / "environ").write_text("K=v", encoding="utf-8")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "notes.md").write_text("x", encoding="utf-8")
+    monkeypatch.setattr(deny, "SYSTEM_ROOTS", (str(fake_proc),))
+    kw = _host_kw(tmp_path)
+    into = tmp_path / "link-into-proc"
+    into.symlink_to(fake_proc / "self", target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(into / "environ")}, **kw), "only the resolved pass sees it"
+    out = fake_proc / "fd"
+    out.symlink_to(outside, target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(out / "notes.md")}, **kw), "only the spelled pass sees it"
+    plain = tmp_path / "link-to-outside"
+    plain.symlink_to(outside, target_is_directory=True)
+    assert deny.host_path_denied("Read", {"file_path": str(plain / "notes.md")}, **kw) is None
+
+
+def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
+    root = tmp_path / "project"
+    root.mkdir()
+    own = tmp_path / "cfg"
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=str(root), config_root=str(own),
+                                     record=rows.append)
+    for tool_input in ({"file_path": "/proc/self/environ"}, {"file_path": "/proc/1/task/1/environ"}):
+        out = _call(hook, {"tool_name": "Read", "tool_input": tool_input})
+        assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert rows[-1]["decision"] == "deny"
+    spill = own / "projects" / "-project" / "sess" / "tool-results" / "r1.txt"
+    assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
+
+
 def test_read_route_chooser():
     assert deny.read_route("/project/results/x.json", "/project") == "record_read({recordId, resultsRef})"
     assert deny.read_route("/project/evaluations/x.json", "/project") == "sidecar_read({projectPath, ref})"
@@ -485,8 +715,7 @@ def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
                        "tool_use_id": "tu-1", "session_id": "sdk-sid"})
     assert out == {}
     assert rows == [{"turn_id": "turn-1", "session_id": "sess-1", "agent_id": None, "agent_type": None,
-                     "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "wrote": None,
-                     "decision": "allow",
+                     "tool_name": "mcp__genealogy__convert_calendar", "input_path": None, "decision": "allow",
                      "tool_use_id": "tu-1"}]
 
 
@@ -510,12 +739,20 @@ def test_a_background_delegation_is_forced_to_the_foreground_and_still_logged(tm
 
 @pytest.mark.parametrize("tool_input", [
     {"subagent_type": "x", "prompt": "p"},
-    {"subagent_type": "x", "prompt": "p", "run_in_background": False},
     {"subagent_type": "x", "prompt": "p", "run_in_background": "true"},
-], ids=["absent", "false", "a string is not the flag"])
-def test_a_foreground_delegation_passes_untouched(tmp_path, tool_input):
+    {"subagent_type": "x", "prompt": "p", "run_in_background": None},
+], ids=["absent: the CLI backgrounds it by default", "a string", "null"])
+def test_a_delegation_not_explicitly_foreground_is_rewritten(tmp_path, tool_input):
     rows: list[dict] = []
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    out = _call(hook, {"tool_name": "Agent", "tool_input": tool_input})
+    assert out["hookSpecificOutput"]["updatedInput"] == {**tool_input, "run_in_background": False}
+
+
+def test_an_explicitly_foreground_delegation_passes_untouched(tmp_path):
+    rows: list[dict] = []
+    hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    tool_input = {"subagent_type": "x", "prompt": "p", "run_in_background": False}
     assert _call(hook, {"tool_name": "Agent", "tool_input": tool_input}) == {}
 
 
@@ -547,7 +784,7 @@ def test_raw_writes_on_the_project_files_are_denied_and_logged(tmp_path):
     assert rows[-1]["decision"] == "deny" and rows[-1]["input_path"] == "/anywhere/research.json"
     out = _call(hook, {"tool_name": "Edit", "tool_input": {"file_path": "tree.gedcomx.json", "old_string": "a", "new_string": "b"}})
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
-    out = _call(hook, {"tool_name": "Write", "tool_input": {"file_path": "/tmp/notes.md", "content": "x"}})
+    out = _call(hook, {"tool_name": "Write", "tool_input": {"file_path": "/srv/notes.md", "content": "x"}})
     assert out == {} and rows[-1]["decision"] == "allow"
 
 
@@ -593,33 +830,18 @@ def test_blocked_tools_are_denied_by_bare_name_under_any_server_spelling(tmp_pat
     assert open_rows[-1]["decision"] == "allow"
 
 
-def test_the_block_denies_a_live_person_warnings_and_allows_a_local_one(tmp_path):
-    # person_warnings is local by default and reads the live tree only with `live: true`,
-    # which hands back the stripped relatives' names and PIDs; the harness denies that
-    # mode by argument (LIVE_TREE_ARG_TOOLS), so the worker must too while the block is on.
+def test_person_warnings_is_allowed_while_block_is_on(tmp_path):
+    # person_warnings reads the local stripped tree only (no live mode — lead
+    # ruling 2026-09-27, reverses issue #2225 D1). Always allowed.
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path / "cfg"),
         record=rows.append, blocked=options.parse_blocked_tools("person_read"),
     )
-    for name in ("mcp__genealogy__person_warnings", "mcp__Genealogy_Research__person_warnings"):
-        out = _call(hook, {"tool_name": name, "tool_input": {"personId": "97XW-7VN", "live": True}})
-        assert out["hookSpecificOutput"]["permissionDecision"] == "deny", name
-    for tool_input in ({"personId": "97XW-7VN"}, {"personId": "97XW-7VN", "live": False}):
-        assert _call(hook, {"tool_name": "mcp__genealogy__person_warnings", "tool_input": tool_input}) == {}, \
-            "the local mode reads the stripped project tree: legitimate research"
-    assert [r["decision"] for r in rows] == ["deny", "deny", "allow", "allow"]
-    # BLOCKED_TOOLS= lifts the whole block, the live mode with it.
-    assert _call(_hook([], str(tmp_path), str(tmp_path / "cfg")),
-                 {"tool_name": "mcp__genealogy__person_warnings", "tool_input": {"live": True}}) == {}
-    # Held equal to the harness's table, read off its source.
-    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
-    harness = [
-        ast.literal_eval(node.value) for node in ast.walk(tree)
-        if isinstance(node, ast.Assign)
-        and any(isinstance(t, ast.Name) and t.id == "LIVE_TREE_ARG_TOOLS" for t in node.targets)
-    ]
-    assert harness == [options.LIVE_TREE_ARG_TOOLS], "re-sync with orchestrator.py's LIVE_TREE_ARG_TOOLS"
+    assert _call(hook, {"tool_name": "mcp__genealogy__person_warnings",
+                        "tool_input": {"projectPath": "/w", "personId": "97XW-7VN"}}) == {}, \
+        "person_warnings reads the local tree: always allowed"
+    assert rows[-1]["decision"] == "allow"
 
 
 def test_the_hook_never_raises(tmp_path):
@@ -661,27 +883,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 27, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=27) == []
+    assert options.check_registration(_info(AGENTS, 9, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=9) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=27)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 9, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=9)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 26), expected_agents=AGENTS, expected_skills=27)
-    assert problems == ["26 genealogy-research:* commands registered, expected 27"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=27)
+    problems = options.check_registration(_info(AGENTS, 8), expected_agents=AGENTS, expected_skills=9)
+    assert problems == ["8 genealogy-research:* commands registered, expected 9"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=9)
 
 
-def test_the_plugin_ships_eight_agents_and_twenty_seven_skills():
+def test_the_plugin_ships_twenty_four_agents_and_nine_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 27
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 9
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 27\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 9\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -704,7 +926,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "six agents must not become the expectation"
+    assert agents is None, "twenty-one agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -716,24 +938,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Eight agents and 27 skills registered: clean. Seven, or 26: the miss, whatever loaded --
+    # Twenty-four agents and 9 skills registered: clean. Twenty-three, or 8: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 27)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 27, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 9)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 9, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 26)) == ["26 genealogy-research:* commands registered, expected 27"]
+    assert worker.registration_problems(_info(AGENTS, 8)) == ["8 genealogy-research:* commands registered, expected 9"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 26, and a count of that same copy would have expected 26.
+    # registers 8, and a count of that same copy would have expected 8.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 26
+    assert worker.count_skills(str(copy)) == 8
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "26 genealogy-research:* commands registered, expected 27"
+        "8 genealogy-research:* commands registered, expected 9"
     ]
 
 
@@ -741,27 +963,20 @@ def test_registration_problems_compares_against_the_constants_not_the_loaded_set
 
 
 WORKER_ENV = {
+    "MODEL_PROVIDER": "anthropic",
     "ANTHROPIC_API_KEY": "sk-test",
-    "GENEALOGY_PG_DSN": "postgresql://postgres:proto@postgres:5432/proto",
-    "GENEALOGY_S3_ENDPOINT": "http://minio:9000",
-    "GENEALOGY_S3_BUCKET": "projects",
-    "GENEALOGY_S3_ACCESS_KEY": "proto",
-    "GENEALOGY_S3_SECRET_KEY": "protoproto",
-    "GENEALOGY_ANCHOR_PATH": "/project",
-    "FS_ACCESS_TOKEN": "env-token",
-    "WIKI_API_URL": "http://wiki:8000",
     "TMPDIR": "/tmp",
-    "UNRELATED": "x",
+    "TOOL_SERVER_URL": "http://tools:8787/mcp",
 }
 
 
 def _options(**overrides):
     kwargs = dict(
-        project_id="proj-1", cwd="/project", engine_dir="/opt/genealogy/engine",
+        project_id="proj-1", cwd="/project",
         plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {},
-        worker_env=WORKER_ENV,
+        worker_env=WORKER_ENV, bearer="grant-token",
     )
     kwargs.update(overrides)
     return options.build_worker_options(**kwargs)
@@ -793,58 +1008,52 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert "projectPath '/project'" in opts.system_prompt["append"]
 
 
-def test_the_tool_server_is_hosted_stdio_with_a_per_turn_env_in_a_0600_file_not_argv(tmp_path):
-    # The stdio fork is the named opt-out since 2026-09-20; this is its shape.
-    opts = _options(config_dir=str(tmp_path), fs_access_token="turn-token",
-                    worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"})
+def test_the_tool_server_entry_is_in_a_0600_file_not_argv(tmp_path):
+    opts = _options(config_dir=str(tmp_path), bearer="turn-token")
     # A str is handed to the CLI as `--mcp-config <path>`; a dict would be json.dumps'd
-    # onto argv, where the bearer and the S3 secret are visible in `ps`.
+    # onto argv, where the bearer is visible in `ps`.
     assert isinstance(opts.mcp_servers, str) and opts.mcp_servers == str(tmp_path / "mcp.json")
     if POSIX_MODES:
         assert stat.S_IMODE(Path(opts.mcp_servers).stat().st_mode) == 0o600
     server = _server(opts)
-    assert server["type"] == "stdio"
-    assert server["command"] == "env", "the fork strips the model key the CLI holds"
-    assert server["args"] == ["-u", "ANTHROPIC_API_KEY", "node", "/opt/genealogy/engine/build/hosted-stdio.js"]
-    env = server["env"]
-    assert env["GENEALOGY_PROJECT_ID"] == "proj-1"
-    assert env["FS_ACCESS_TOKEN"] == "turn-token", "the message's token beats the worker env's"
-    assert all(env[k] == WORKER_ENV[k] for k in options.STORE_ENV_KEYS)
-    assert env["WIKI_API_URL"] == "http://wiki:8000" and "POP_STATS_URL" not in env
-    assert "UNRELATED" not in env and "ANTHROPIC_API_KEY" not in env
+    assert server["type"] == "http"
+    assert server["headers"]["Authorization"] == "Bearer turn-token", "the grant's token"
 
 
 def test_the_mcp_config_is_rewritten_0600_even_over_a_wider_file(tmp_path):
     path = tmp_path / "mcp.json"
     path.write_text("{}", encoding="utf-8")
     path.chmod(0o644)
-    assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "stdio"}}) == str(path)
+    assert options.write_mcp_config(str(tmp_path), {"genealogy": {"type": "http"}}) == str(path)
     if POSIX_MODES:
         assert stat.S_IMODE(path.stat().st_mode) == 0o600
-    assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "stdio"}}}
+    assert json.loads(path.read_text(encoding="utf-8")) == {"mcpServers": {"genealogy": {"type": "http"}}}
 
 
-def test_the_token_file_is_read_per_turn_and_beats_the_env(tmp_path):
-    token_file = tmp_path / "fs-token"
-    token_file.write_text("file-token\n", encoding="utf-8")
-    env = {**WORKER_ENV, "FS_ACCESS_TOKEN_FILE": str(token_file)}
-    assert options.bearer_token(env, None) == "file-token"
-    token_file.write_text("refreshed", encoding="utf-8")  # rewritten under a running worker
-    assert options.bearer_token(env, None) == "refreshed"
-    assert options.bearer_token(env, "message-token") == "message-token", "the message's token wins"
-    assert options.bearer_token(env, "") == "", "an explicit empty token is empty, not the file"
-    assert options.bearer_token({**env, "FS_ACCESS_TOKEN_FILE": str(tmp_path / "missing")}, None) == "env-token"
-    token_file.write_text("", encoding="utf-8")
-    assert options.bearer_token(env, None) == "", "an empty file is no token, not the env's"
+def test_an_empty_bearer_is_refused():
+    """U3: the bearer is the grant's, required, and never empty. An empty one used to ship
+    as a project-only header, which the tool server reads as an empty principal and answers
+    with HOSTED_REAUTH_INSTRUCTION -- an expired-session message for a token that never
+    existed. There is no worker-env fallback to fall to."""
+    with pytest.raises(ValueError, match="empty bearer"):
+        _options(bearer="")
+    with pytest.raises(TypeError):
+        options.build_worker_options(**{k: v for k, v in dict(
+            project_id="p", cwd="/project", plugin_dir="/p", agents={}, store=object(),
+            config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
+            posttool_hook=lambda *a: {}, worker_env=WORKER_ENV).items()})
+    env = {**WORKER_ENV, "FS_ACCESS_TOKEN": "env-token", "FS_ACCESS_TOKEN_FILE": "/run/fs-token"}
+    assert _server(_options(worker_env=env))["headers"]["Authorization"] == "Bearer grant-token", \
+        "the old fallbacks are inert"
+    assert not hasattr(options, "bearer_token")
 
 
-def test_the_token_falls_back_to_the_worker_env_then_empty():
-    """The stdio fork carries the token in its env; the http arm's same fallback is
-    asserted as `Authorization: Bearer env-token` in the http test below."""
-    stdio = {**WORKER_ENV, "TOOL_SERVER": "stdio"}
-    assert _server(_options(worker_env=stdio))["env"]["FS_ACCESS_TOKEN"] == "env-token"
-    env = {k: v for k, v in stdio.items() if k != "FS_ACCESS_TOKEN"}
-    assert _server(_options(worker_env=env))["env"]["FS_ACCESS_TOKEN"] == ""
+def test_the_cli_does_not_inherit_the_grant_key():
+    """The CLI inherits the worker's environment; with FS_TOKEN_ENC_KEY and PG_DSN it could
+    decrypt every patron's grant. Blank, not absent, like the static SQS keys."""
+    opts = _options(worker_env={**WORKER_ENV, "FS_TOKEN_ENC_KEY": "k" * 32})
+    assert opts.env["FS_TOKEN_ENC_KEY"] == ""
+    assert "FS_TOKEN_ENC_KEY" not in _options().env, "nothing to blank when the worker has none"
 
 
 def test_resume_is_set_only_when_given():
@@ -862,15 +1071,10 @@ def test_session_id_and_resume_are_exactly_one():
         _options(resume=sid, session_id=sid)
 
 
-def test_bedrock_pins_the_model_and_the_cache_flag_explicitly():
-    opts = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "bedrock"})
-    assert opts.model is None
-    assert opts.env["CLAUDE_CODE_USE_BEDROCK"] == "1"
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]"
-    assert opts.env["ENABLE_PROMPT_CACHING_1H_BEDROCK"] == "1"
-    assert "ANTHROPIC_API_KEY" not in opts.env
-    with pytest.raises(ValueError):
-        _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "vertex"})
+@pytest.mark.parametrize("provider", ["vertex", "bedrock"])
+def test_an_unknown_provider_is_refused(provider):
+    with pytest.raises(ValueError, match="anthropic or gateway"):
+        _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": provider})
 
 
 GATEWAY_ENV = {**WORKER_ENV, "MODEL_PROVIDER": "gateway",
@@ -884,7 +1088,7 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
     assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window, as on Bedrock"
+    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
     on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
@@ -911,9 +1115,8 @@ def test_gateway_maps_every_agent_model_to_its_bedrock_id():
         "unset": None,
     }
     assert got["record-extractor"].prompt == "p", "only the model changes"
-    for provider in ("anthropic", "bedrock"):
-        kept = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": provider}, agents=agents()).agents
-        assert kept["record-extractor"].model == "claude-sonnet-4-6", provider
+    kept = _options(worker_env={**WORKER_ENV, "MODEL_PROVIDER": "anthropic"}, agents=agents()).agents
+    assert kept["record-extractor"].model == "claude-sonnet-4-6"
 
 
 def test_every_shipped_agent_model_has_a_gateway_id():
@@ -945,7 +1148,10 @@ def test_worker_build_context_is_the_repo_root():
     build = _compose()["services"]["worker"]["build"]
     assert build == {"context": "../../..", "dockerfile": "apps/server/proto/worker/Dockerfile"}
     ignore = (SERVER.parents[1] / ".dockerignore").read_text(encoding="utf-8").splitlines()
-    assert "**/node_modules" in ignore and not any(line.strip() == "**/build" for line in ignore)
+    assert "**/node_modules" in ignore
+    assert not any(line.strip() == "**/build" for line in ignore), (
+        "e2b.Dockerfile COPYs packages/engine/mcp-server/build"
+    )
 
 
 def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
@@ -955,73 +1161,82 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     env = _env(svc)
     assert any(env["TMPDIR"] == m or env["TMPDIR"].startswith(m.rstrip("/") + "/") for m in mounts)
     assert env["ANTHROPIC_API_KEY"].startswith("${ANTHROPIC_API_KEY"), "never a literal in the compose file"
-    assert env["OPENROUTER_API_KEY"].startswith("${OPENROUTER_API_KEY"), "image_transcribe's key, passed through like the model key"
     assert env["MODEL_PROVIDER"].startswith("${MODEL_PROVIDER")
     for key in ("GATEWAY_BASE_URL", "GATEWAY_API_KEY", "GATEWAY_TOOL_SEARCH"):
         assert env[key].startswith("${" + key), f"{key} is passed through, never a literal"
-    # The FS token is a file read per turn, never a literal or a build arg. The FILE stays
-    # primary -- `bearer_token` tries it first, and it is what `make proto-token` refreshes
-    # under a running worker.
-    assert env["FS_ACCESS_TOKEN_FILE"] == "/run/fs-token"
-    # `FS_ACCESS_TOKEN` is permitted, but ONLY as a passthrough. It is the fallback
-    # `bearer_token` documents and compose did not supply, and without it the token reaches
-    # the engine on exactly one condition: that the invoking user's uid equals the
-    # container's 1001. It does not under rootless docker, where the container uid is
-    # mapped through the caller's subuid range, and the mount is mode 600 -- so the read
-    # fails with EPERM, bearer_token returns "", and getValidToken reports a LIVE token as
-    # an expired session. Three billed demo runs were lost to exactly that.
-    #
-    # The original assertion was `"FS_ACCESS_TOKEN" not in env`, which forbade the variable
-    # outright rather than forbidding a LITERAL -- banning the one thing that makes the
-    # token arrive when the uids differ.
-    if "FS_ACCESS_TOKEN" in env:
-        assert env["FS_ACCESS_TOKEN"].startswith("${FS_ACCESS_TOKEN"), (
-            f"a passthrough, never a literal secret in the compose file: "
-            f"{env['FS_ACCESS_TOKEN']!r}"
-        )
     assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
-    assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the nudge cap is the caller's (proto-demo-auto), off by default"
-    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means off, not the arm's default"
-    assert "./.fs-token:/run/fs-token:ro" in (svc.get("volumes") or [])
-    assert "apps/server/proto/.fs-token" in (SERVER.parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
-    assert env["GENEALOGY_PG_DSN"].startswith("postgresql://") and "@postgres:5432" in env["GENEALOGY_PG_DSN"]
-    assert env["GENEALOGY_S3_ENDPOINT"] == "http://minio:9000"
-    assert env["WORKER_CWD"] == "/project" == env["GENEALOGY_ANCHOR_PATH"]
-    assert svc["depends_on"]["minio"] == {"condition": "service_healthy"}
+    # The worker's own cap governs only a message without max_nudges; the web tier stamps
+    # its own on every message it enqueues, so this 0 does not turn the hook off there.
+    assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the fallback cap is the caller's"
+    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means no hook for an unstamped message, not the arm's default"
+    assert env["WORKER_CWD"] == "/project"
+    # The tools are the `tools` service's: the store credentials and image_transcribe's
+    # key stay out of the process that runs the agent loop.
+    assert not [k for k in env if k.startswith("GENEALOGY_")], "the worker holds no store credentials"
+    assert "OPENROUTER_API_KEY" not in env
+    assert env["TOOL_SERVER_URL"] == "http://tools:8787/mcp", "required: the worker has no default"
+    assert env["DEV_PATHS"] == "true", "compose is the dev deployment; no image or template sets it"
+    assert "minio" not in svc["depends_on"]
+
+
+def test_worker_service_has_no_token_fallbacks_and_passes_the_grant_key():
+    """U3: the bearer is the patron's grant, read from Postgres each attempt, so the worker
+    has no other source: no FS_ACCESS_TOKEN or FS_ACCESS_TOKEN_FILE (any spelling), no
+    operator token file mounted. It decrypts the grant, so it gets the web tier's key --
+    passed through, never a literal. The stale file stays out of every build context."""
+    svc = _compose()["services"]["worker"]
+    env = _env(svc)
+    assert not [k for k in env if k.startswith("FS_ACCESS_TOKEN")], f"a token fallback: {sorted(env)}"
+    assert not any("fs-token" in str(v) for v in (svc.get("volumes") or [])), svc.get("volumes")
+    assert "/run/fs-token" not in COMPOSE.read_text(encoding="utf-8")
+    assert re.fullmatch(r"\$\{FS_TOKEN_ENC_KEY:?-\}", env["FS_TOKEN_ENC_KEY"]), env["FS_TOKEN_ENC_KEY"]
+    assert env["FS_TOKEN_ENC_KEY"] == _env(_compose()["services"]["web"])["FS_TOKEN_ENC_KEY"], \
+        "one key: what the web tier encrypts with is what the worker decrypts with"
+    ignore = (SERVER.parents[1] / ".dockerignore").read_text(encoding="utf-8").splitlines()
+    assert "apps/server/proto/.fs-token" in ignore, "a stale operator token must not ride the build context"
 
 
 def test_worker_dockerfile_shape():
     text = DOCKERFILE.read_text(encoding="utf-8")
     body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     assert re.search(r"^FROM ubuntu:24\.04", body, re.M)
-    assert "claude-agent-sdk==0.2.128" in body and "psycopg[binary]" in body
-    assert re.search(r"npm ci --omit=dev", body) and "--omit=optional" not in body, "hosted-stdio.js needs pg and the S3 client"
-    assert re.search(r"^COPY packages/engine/mcp-server/build\s", body, re.M)
+    # U12: the pins are the proto-worker group's export from uv.lock, installed in hash
+    # mode (test_proto_config checks the export is current and the install shape).
+    assert re.search(r"^COPY apps/server/proto/worker/requirements\.txt\s", body, re.M)
+    requirements = (PROTO / "worker" / "requirements.txt").read_text(encoding="utf-8")
+    assert re.search(r"^claude-agent-sdk==0\.2\.128 ", requirements, re.M)
+    assert re.search(r"^psycopg==", requirements, re.M) and re.search(r"^psycopg-binary==", requirements, re.M)
+    # The tools are the `tools` service; the SDK wheel's CLI is a native binary.
+    assert not re.search(r"\b(node|nodejs|npm)\b", body), "the worker image carries no Node"
+    assert "packages/engine/mcp-server" not in body, "the worker image carries no engine"
     assert re.search(r"^COPY packages/engine/plugin\s", body, re.M)
     assert re.search(r"^COPY apps/server/app\s", body, re.M) and re.search(r"^COPY apps/server/proto/sql\s", body, re.M)
-    # 1b's handover imports `proto.enqueue` inside the image. The Dockerfile copies
-    # proto/ SELECTIVELY, so a module not named here simply is not there -- and
-    # release_queued_turn swallows the ImportError, so the only symptom is a held
-    # message that is never released, in production only. Reverting this COPY broke no
-    # test until this line existed.
-    assert re.search(r"^COPY apps/server/proto/enqueue\.py\s", body, re.M), \
-        "the worker releases held messages through proto/enqueue.py; the image must carry it"
-    source = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
-    assert "from proto import enqueue" in source, "and that is the module it imports"
+    # Every proto module the worker imports (enqueue.py, grants.py, migrate.py) must be
+    # COPYed: the image copies proto/ selectively. test_proto_config's
+    # test_images_and_bundles_carry_every_proto_module_they_import is that guard, for both
+    # images and both bundles.
+    # U7: enqueue.py imports botocore at module scope to sign. Without it in the requirements
+    # the worker exits at start with QUEUE_URL set; the venv has it, so nothing else sees.
+    assert re.search(r"^botocore==[0-9.]+ ", requirements, re.M), \
+        "the worker image must install botocore (enqueue.py signs with it)"
     assert re.search(r"mkdir -p /project", body)
     assert "tokens.json" not in body
     # The one place a key becomes an image layer: compose interpolates it at run time,
     # the Dockerfile must never carry it as an ENV/ARG or a literal.
     assert not re.search(r"^\s*(ENV|ARG)\s+ANTHROPIC_API_KEY", body, re.M), "the key is passed at run time, never baked"
     assert "sk-ant-" not in body
-    assert '{"hosted": true}' in body and ".familysearch-mcp/config.json" in body
     assert re.search(r"^ENV PYTHONPATH=/opt/genealogy/server", body, re.M)
     assert "--break-system-packages" in body
     # The CLI refuses bypassPermissions as root ("--dangerously-skip-permissions cannot
-    # be used with root/sudo privileges"): the first image ran as root and every turn
-    # died on spawn.
+    # be used with root/sudo privileges"): the first image ran it as root and every turn
+    # died on spawn. U3: the worker is root so each CLI runs as a slot user instead, which
+    # needs the pool in the image and named in its environment.
     user = re.search(r"^USER (\S+)", body, re.M)
-    assert user and user.group(1) != "root", "the worker must run unprivileged"
+    assert user is None or user.group(1) == "root", "the worker launches each CLI as its slot user"
+    pool = re.search(r"^ENV WORKER_TURN_USERS=(\S+)", body, re.M)
+    assert pool, "the image names its slot users, or every turn would run the CLI as root"
+    for name in pool.group(1).split(","):
+        assert re.search(rf"useradd [^\n]*--gid genealogy-turn {re.escape(name)}\b", body), f"{name} is never created"
 
 
 def test_004_worker_only_adds_nullable_columns():
@@ -1044,29 +1259,27 @@ def test_004_worker_only_adds_nullable_columns():
 def test_tool_server_http_sends_the_bearer_and_the_project_id_as_headers(tmp_path):
     # The shared server's contract is two per-request headers: `Authorization: Bearer
     # <patron token>` -> principal, `X-Genealogy-Project-Id` -> the request's store. The
-    # project header is always sent; the default URL is the compose `tools` service.
-    env = {**WORKER_ENV, "TOOL_SERVER": "http"}
-    server = _server(_options(config_dir=str(tmp_path), fs_access_token="turn-token", worker_env=env))
+    # project header is always sent; the URL is TOOL_SERVER_URL's, with no default.
+    env = WORKER_ENV
+    server = _server(_options(config_dir=str(tmp_path), bearer="turn-token", worker_env=env))
     assert server == {
         "type": "http",
         "url": "http://tools:8787/mcp",
         "headers": {"Authorization": "Bearer turn-token", "X-Genealogy-Project-Id": "proj-1"},
         "timeout": 1_800_000,
     }
-    # CLI 2.1.220 cuts an http MCP call at 60 s without a per-server timeout; the stdio
-    # entry needs none, its own idle limit is already the 1,800,000 ms this matches.
-    stdio = _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))
-    assert "timeout" not in stdio
+    # CLI 2.1.220 cuts an http MCP call at 60 s without a per-server timeout.
     custom = _server(_options(
-        config_dir=str(tmp_path), fs_access_token="", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
+        config_dir=str(tmp_path), bearer="t", worker_env={**env, "TOOL_SERVER_URL": "http://127.0.0.1:8787/mcp"}
     ))
     assert custom["url"] == "http://127.0.0.1:8787/mcp"
-    assert custom["headers"] == {"X-Genealogy-Project-Id": "proj-1"}, \
-        "an empty bearer sends only the project header, not a malformed `Bearer `"
-    fallback = _server(_options(config_dir=str(tmp_path), worker_env=env))
-    assert fallback["headers"] == {"Authorization": "Bearer env-token", "X-Genealogy-Project-Id": "proj-1"}, \
-        "the worker env's token when the message has none"
-    other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", fs_access_token="t", worker_env=env))
+    for unset in ({k: v for k, v in env.items() if k != "TOOL_SERVER_URL"}, {**env, "TOOL_SERVER_URL": " "}):
+        with pytest.raises(ValueError, match="TOOL_SERVER_URL"):
+            _options(config_dir=str(tmp_path), bearer="t", worker_env=unset)
+    assert not hasattr(options, "TOOL_SERVER_DEFAULT_URL"), "a guessed host would get the bearer"
+    with pytest.raises(ValueError):  # an empty bearer is refused, never a project-only header
+        _options(config_dir=str(tmp_path), bearer="", worker_env=env)
+    other = _server(_options(config_dir=str(tmp_path), project_id="proj-2", bearer="t", worker_env=env))
     assert other["headers"]["X-Genealogy-Project-Id"] == "proj-2", "the header is the turn's id, not a constant"
     assert "GENEALOGY_PROJECT_ID" not in json.dumps(server), "over http the id travels as a header, never as env"
 
@@ -1075,31 +1288,26 @@ def test_tool_server_headers_require_a_project_id():
     # The keyword is required so no caller can build the http entry without the id and
     # ship a request the server binds to no store.
     with pytest.raises(TypeError):
-        options.tool_server_headers(WORKER_ENV, fs_access_token="t")  # type: ignore[call-arg]
-    assert options.tool_server_headers({}, fs_access_token=None, project_id="p") == {"X-Genealogy-Project-Id": "p"}
-
-
-def test_tool_server_defaults_to_http_and_refuses_an_unknown_mode(tmp_path):
-    # The lead's call, 2026-09-20: the shared `tools` service is what production runs, so
-    # it is what an unqualified worker runs. stdio is the named opt-out, and an empty
-    # value is "unset", not a third mode.
-    assert options.TOOL_SERVER_DEFAULT == "http"
-    assert _server(_options(config_dir=str(tmp_path)))["type"] == "http"
-    assert _server(_options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": ""}))["type"] == "http"
-    assert _server(_options(config_dir=str(tmp_path),
-                            worker_env={**WORKER_ENV, "TOOL_SERVER": "stdio"}))["type"] == "stdio"
-    with pytest.raises(ValueError, match="stdio or http"):
-        _options(config_dir=str(tmp_path), worker_env={**WORKER_ENV, "TOOL_SERVER": "grpc"})
+        options.tool_server_headers(bearer="t")  # type: ignore[call-arg]
+    with pytest.raises(ValueError):
+        options.tool_server_headers(project_id="p", bearer="")
+    assert options.tool_server_headers(project_id="p", bearer="t") == {
+        "X-Genealogy-Project-Id": "p", "Authorization": "Bearer t"}
 
 
 # ── run_turn: every guard seen firing, on a fake client ──────────────────────────
 
 
 class FakeSessionStore:
-    def __init__(self, entries: bool) -> None:
+    def __init__(self, entries: bool, appended: int = 1, attempted: int | None = None) -> None:
         # The real PgSessionStore's counter names. The SDK drives these, not run_turn, so a
         # test sets them the way a resume would and reads them back off the summary.
-        self.calls = {"entries_appended": 0, "list_subkeys": 0, "subkeys_returned": 0}
+        # ``appended`` defaults to 1: a model turn with nothing appended is U10's
+        # transcript_lost, so 0 is what a test of that asks for. ``attempted`` is
+        # ``append`` (counted on entry); by default an append was made iff one landed.
+        attempted = (1 if appended else 0) if attempted is None else attempted
+        self.calls = {"append": attempted, "entries_appended": appended,
+                      "list_subkeys": 0, "subkeys_returned": 0}
         self._entries = entries
 
     async def has_entries(self, sdk_session_id: str) -> bool:
@@ -1153,6 +1361,8 @@ class FakeClient:
 
     async def disconnect(self) -> None:
         self.disconnected = True
+        if self.env is not None:
+            self.env.setdefault("events", []).append("disconnect")
 
     async def get_server_info(self) -> dict | None:
         return self.info
@@ -1197,15 +1407,44 @@ def _good() -> list[Any]:
     return [_init(), _text("4 April 1751"), _result()]
 
 
+class FakeHeld(worker.HeldGrant):
+    """A HeldGrant without Postgres: ``held_on`` reads ``state["lock_held"]`` (a bool, or a
+    callable of how many times it has been asked) and ``close`` records itself."""
+
+    def __init__(self, state: dict, token: str = "grant-token", user_id: str = "usr_owner") -> None:
+        super().__init__(conn=None, user_id=user_id, token=token, pid=4242)
+        self.state = state
+        self.asked = 0
+
+    def held_on(self, other: Any) -> bool:
+        self.asked += 1
+        held = self.state["lock_held"]
+        return held(self.asked) if callable(held) else bool(held)
+
+    def close(self) -> None:
+        self.state["events"].append("held.close")
+
+
 @pytest.fixture
 def turn_env(monkeypatch, tmp_path):
     """run_turn offline: a fake connection, session store, client and option builder; the
-    anchor under tmp. ``state`` is what the test reads back."""
+    anchor under tmp. ``state`` is what the test reads back. The grant is a FakeHeld
+    (``state["grant"]``: a HeldGrant, a NoGrant, or a callable returning one or raising)."""
     import claude_agent_sdk
 
-    state: dict[str, Any] = {"conn": FakeConn(usage=(10, 0, 0, 5)), "client": None, "options": None, "entries": False}
+    state: dict[str, Any] = {"conn": FakeConn(usage=(10, 0, 0, 5)), "client": None, "options": None, "entries": False,
+                             "appended": 1, "lock_held": True, "events": [], "acquired": []}
+    state["grant"] = lambda: FakeHeld(state)
+
+    async def acquire(project_id, **kw):
+        state["acquired"].append(project_id)
+        grant = state["grant"]
+        return grant() if callable(grant) else grant
+
+    monkeypatch.setattr(worker, "acquire_grant", acquire)
     monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: state["conn"])
-    monkeypatch.setattr(worker, "PgSessionStore", lambda dsn, project_id: FakeSessionStore(state["entries"]))
+    monkeypatch.setattr(worker, "PgSessionStore",
+                        lambda dsn, project_id: FakeSessionStore(state["entries"], state["appended"]))
     monkeypatch.setattr(worker, "WORKER_CWD", str(tmp_path / "project"))
 
     def build(**kwargs):
@@ -1218,12 +1457,18 @@ def turn_env(monkeypatch, tmp_path):
 
 
 def _run(state: dict, messages: list[Any], info: dict | None = None, *, receive_count: int = 1) -> dict:
-    state["client"] = FakeClient(messages, _info(AGENTS, 27) if info is None else info, state)
+    state["client"] = FakeClient(messages, _info(AGENTS, worker.EXPECTED_SKILLS) if info is None else info, state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
 def _turn_done_written(conn: FakeConn) -> bool:
     return any("'turn_done'" in sql for sql, _ in conn.executed)
+
+
+def _mid_run(monkeypatch) -> None:
+    """The bound a test sets is reached AFTER the CLI started -- Stop pressed, or the cap
+    crossed, mid-run -- so the in-run halt is what meets it, not U23's pre-CLI close."""
+    monkeypatch.setattr(worker, "bound_before_cli", lambda *a, **k: None)
 
 
 def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
@@ -1275,7 +1520,7 @@ def test_the_turn_summary_carries_the_store_counters_the_d17_criterion_reads(tur
 
 def test_run_turn_refuses_to_bill_when_the_registration_is_short(turn_env):
     with pytest.raises(worker.RegistrationError, match="gps-mentor"):
-        _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 28))
+        _run(turn_env, _good(), info=_info(AGENTS - {"gps-mentor"}, 21))
     assert turn_env["client"].queried == [], "nothing sent to the model"
     assert turn_env["client"].disconnected and not _turn_done_written(turn_env["conn"])
 
@@ -1318,7 +1563,7 @@ def _run_passes(
     ``receive_count`` > 1 (the shim redelivered this message); the default is the D17
     shape, a second delivery of a resumed turn."""
     state["entries"] = entries
-    state["client"] = TwoPassClient(streams, _info(AGENTS, 27), state)
+    state["client"] = TwoPassClient(streams, _info(AGENTS, worker.EXPECTED_SKILLS), state)
     return asyncio.run(worker.run_turn(TURN, receive_count, SID, agents={"gps-mentor": object()}))
 
 
@@ -1558,7 +1803,8 @@ def test_releasing_a_held_message_clears_the_stop_flag():
     next message is enqueued ... a flag that outlived the turn would wedge the session."
     """
     conn = FakeConn(queued_body={"turn_id": "turn-2", "text": "also the 1881 census"})
-    assert worker.take_queued_turn(conn, "sess_1") == {"turn_id": "turn-2", "text": "also the 1881 census"}
+    assert worker.take_queued_turn(conn, "sess_1") == ({"turn_id": "turn-2", "text": "also the 1881 census"},
+                                                       conn.claimed_at)
     cleared = [p for sql, p in conn.executed if "stop_requested_at = NULL" in sql]
     assert cleared == [("sess_1",)], \
         "claiming a held message IS enqueuing the session's next message"
@@ -1613,130 +1859,6 @@ def test_the_pending_message_lookup_only_sees_a_live_held_row():
     assert "outcome = %s" in src
 
 
-# ── Before phase 2: the "I need you" exit ────────────────────────────────────────
-
-
-def test_ask_user_question_ends_the_turn_as_a_decision():
-    """The fourth stop condition ("say exactly what you need … then stop") and the
-    genuine-blocker stop are both VOLUNTARY YIELDS, and phase 1's hook vetoes those. So today
-    an agent that needs the researcher is told to carry on, and the run ends `no_progress` --
-    rendering as the agent failing under its own question.
-
-    The carrier is the model's own `AskUserQuestion`, not a new tool, because the model already
-    reaches for it unprompted: 15 calls across 6 skills in the committed unit corpus
-    (research, research-plan, question-selection, person-evidence, tree-edit, citation), with
-    arguments exactly this shape -- "Who is the person whose parents you want to research?",
-    "Which record has two Patrick Flynns competing for it?". It is granted by omission from
-    DISALLOWED_TOOLS and handled nowhere, and on Cowork it renders natively as a question, which
-    is what the plan requires of an uninter­cepted carrier.
-
-    Decisions are asynchronous: a person answers hours later and an attempt is capped at
-    1,800 s, so the turn ENDS and the answer arrives as the next message."""
-    calls: list[dict] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=calls.append, halt=lambda: None,
-    )
-    out = asyncio.run(hook(
-        {"tool_name": "AskUserQuestion",
-         "tool_input": {"questions": [{"question": "Which Patrick Flynn?", "header": "Person"}]},
-         "tool_use_id": "tu_1"},
-        None, None,
-    ))
-    # `continue_`, the SDK's spelling, which `_halt` uses. Asserted against the helper's own
-    # output rather than a literal so the two cannot drift.
-    assert out == options._halt(options.DECISION_REASON), (
-        "an ask must END the turn with the halt fields: the answer arrives as the next "
-        "message, and a run that carries on answers its own question"
-    )
-    assert options.DECISION_REASON in out.get("stopReason", ""), out
-    assert any(c.get("decision") == "decision" for c in calls), \
-        "the ask is recorded like any other decision, so the turn's outcome can read it"
-
-
-def test_the_exit_sets_the_turns_outcome_to_decision():
-    """Halting is half the job. Without a callback into the worker's `terminal` dict the run
-    ends on the hook's reason but records `no_progress` -- the very outcome the exit exists to
-    stop the researcher seeing. `on_decision` mirrors the `on_allow` callback the Stop hook
-    already uses."""
-    seen: list[str] = []
-    calls: list[dict] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=calls.append, halt=lambda: None, on_decision=lambda: seen.append("decision"),
-    )
-    asyncio.run(hook(
-        {"tool_name": "AskUserQuestion", "tool_input": {"questions": []}, "tool_use_id": "tu"},
-        None, None,
-    ))
-    assert seen == ["decision"], "the worker must be told, or the turn records no_progress"
-
-
-def test_a_turn_that_asks_the_researcher_is_recorded_as_a_decision(turn_env):
-    """End to end through the REAL hook, because the hook-level tests above cannot see the
-    worker's closure: a break test that set the closure's outcome to `no_progress` left all of
-    them green. This is the assertion that the researcher sees "waiting on you" rather than
-    "the agent stopped making progress"."""
-    summary = _run(turn_env, [
-        _init(), ToolCall("mcp__genealogy__research_query"),
-        ToolCall("AskUserQuestion"),
-        _result(num_turns=2),
-    ])
-    assert summary["outcome"] == TERMINAL_DECISION, (
-        f"a turn that asked the researcher recorded {summary['outcome']!r}; `no_progress` here "
-        f"renders as the agent failing under its own question"
-    )
-    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
-                     if sql.startswith("UPDATE turns SET completed_at"))
-    assert params[0] == TERMINAL_DECISION, "and the row says so too"
-
-
-def test_the_exit_callback_never_fails_the_call_it_is_reporting():
-    """This hook runs on every tool call and is not the restraint. A raising callback must not
-    turn an ask into an errored tool call -- the same rule the tool_calls write already follows."""
-    def boom() -> None:
-        raise RuntimeError("control plane went away")
-
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda c: None, halt=lambda: None, on_decision=boom,
-    )
-    out = asyncio.run(hook(
-        {"tool_name": "AskUserQuestion", "tool_input": {}, "tool_use_id": "tu"}, None, None))
-    assert out == options._halt(options.DECISION_REASON), \
-        "the turn still ends cleanly even when the callback fails"
-
-
-def test_a_decision_outranks_the_spend_and_handover_halts_but_not_stop():
-    """Clause order is semantics. Stop is the researcher's own instruction and wins over
-    everything. A decision must outrank the spend cap and the handover, or an agent that asks
-    on its last nudge is recorded as having run out of budget rather than having asked."""
-    calls: list[dict] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=calls.append, halt=lambda: options.STOP_REASON,
-    )
-    out = asyncio.run(hook(
-        {"tool_name": "AskUserQuestion", "tool_input": {"questions": []}, "tool_use_id": "tu_2"},
-        None, None,
-    ))
-    assert options.STOP_REASON in out.get("stopReason", ""), \
-        "Stop is the researcher's instruction and outranks the agent's own ask"
-
-
-def test_every_other_tool_is_untouched_by_the_exit():
-    """The exit must not change any other call. This is the hook that runs on EVERY tool call."""
-    calls: list[dict] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=calls.append, halt=lambda: None,
-    )
-    for tool in ("mcp__genealogy__record_search", "Read", "Skill", "Agent"):
-        out = asyncio.run(hook(
-            {"tool_name": tool, "tool_input": {}, "tool_use_id": "x"}, None, None))
-        assert out.get("continue_") is not False, f"{tool} must not be halted by the exit"
-
-
 def test_the_stop_and_queue_schema_is_additive_and_applied():
     """006 was UNPINNED by the mutation check: deleting it broke no test, and the only
     thing that would notice is a live stack -- `stop_requested_at` missing makes every
@@ -1747,8 +1869,8 @@ def test_the_stop_and_queue_schema_is_additive_and_applied():
     assert statements == [
         "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS stop_requested_at timestamptz;",
         "CREATE INDEX IF NOT EXISTS turns_queued_idx ON turns (session_id) WHERE outcome = 'queued';",
-    ], "006 must stay additive and idempotent: the worker and the web tier both apply it at start"
-    # Both appliers glob the directory, so the file only works if it sorts after the
+    ], "006 must stay additive and idempotent: an unledgered database re-runs every file once"
+    # migrate.py runs the files in name order, so the file only works if it sorts after the
     # tables it alters.
     names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
     assert names.index("006_stop_and_queue.sql") > names.index("001_schema.sql")
@@ -1770,10 +1892,10 @@ def test_the_live_spend_cap_has_an_index_it_can_actually_use():
     assert [x for x in statements if x] == [
         "CREATE INDEX IF NOT EXISTS session_entries_session_seq_idx "
         "ON session_entries (session_id, seq);"
-    ], "007 must stay one additive, idempotent index: both tiers apply it at start"
+    ], "007 must stay one additive, idempotent index: an unledgered database re-runs every file once"
     names = sorted(p.name for p in (PROTO / "sql").glob("*.sql"))
     assert names.index("007_session_usage_index.sql") > names.index("001_schema.sql"), \
-        "both appliers glob the directory, so it must sort after the table it indexes"
+        "migrate.py runs the files in name order, so it must sort after the table it indexes"
 
     # And it has to match how the queries actually filter. All three scan by session_id
     # and order by seq; the leading column is the one Postgres needs.
@@ -1788,8 +1910,8 @@ def test_the_live_spend_cap_has_an_index_it_can_actually_use():
 def test_the_cap_is_a_turns_column_and_not_receive_count():
     """receive_count counts a healthy ceiling crossing and a deterministic failure with the
     same number, and per 0b a healthy run crosses it two to three times -- so the cap needs
-    its own column. 005 is additive and idempotent like 004, because the worker applies it
-    at start against a volume that predates it."""
+    its own column. 005 is additive and idempotent like 004, because migrate.py re-runs
+    every file once against an unledgered volume that predates it."""
     body = SQL_RESUME_GUARD.read_text(encoding="utf-8")
     statements = [line.split("--", 1)[0].strip() for line in body.splitlines()]
     statements = [x for x in statements if x]
@@ -1858,11 +1980,7 @@ def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row(
     worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
                                    "tool_use_id": "toolu_9"})
     sql, params = conn.executed[-1]
-    # By meaning, not position: `wrote` was appended after tool_use_id, and a
-    # positional assertion silently follows whichever column happens to be last.
-    assert "tool_use_id" in sql and "toolu_9" in params
-    assert "wrote" in sql, "a change review needs what the call wrote"
-    assert params[-1] is None, "a Read wrote nothing, so the column stays sparse"
+    assert "tool_use_id" in sql and params[-1] == "toolu_9"
     worker.finish_tool_call(conn, "t", "toolu_9")
     sql, params = conn.executed[-1]
     assert sql.startswith("UPDATE tool_calls SET duration_ms") and "now() - ts" in sql
@@ -1932,18 +2050,22 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
                                 and research is None and nudges < cap), (kw, research, nudges, cap, cont, reason)
 
 
-def test_the_halt_returns_the_sdks_stop_fields_not_a_permission_deny(tmp_path):
-    """1c. `_deny` returns permissionDecision: "deny" -- a tool RESULT the model reads
-    and argues with, then routes around. The SDK's halt fields are separate, and only
-    they end the turn."""
+def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
+    """1c. `_deny` alone is a tool RESULT the model reads and routes around; only the
+    SDK's halt fields end the turn. But they end it after the call runs (U3's live
+    lost-lock run, 2026-10-03: the halted record_search executed on a revoked token), so
+    the halt carries both: the deny keeps this call from running."""
     rows: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
         record=rows.append, halt=lambda: "Stopped by the researcher.",
     )
     out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
-    assert out == {"continue_": False, "stopReason": "Stopped by the researcher."}
-    assert "hookSpecificOutput" not in out and "permissionDecision" not in json.dumps(out)
+    assert out["continue_"] is False and out["stopReason"] == "Stopped by the researcher."
+    assert out["hookSpecificOutput"] == {
+        "hookEventName": "PreToolUse", "permissionDecision": "deny",
+        "permissionDecisionReason": "Stopped by the researcher.",
+    }
     assert [r["decision"] for r in rows] == ["halt"], "the audit trail shows where the turn was cut"
 
 
@@ -1961,16 +2083,34 @@ def test_the_halt_is_checked_before_every_other_decision(tmp_path):
         assert _call(hook, {"tool_name": tool, "tool_input": tool_input})["continue_"] is False
 
 
-def test_a_halt_predicate_that_raises_lets_the_call_through(tmp_path):
-    """The house rule for every hook here: an exception must not fail a call the patron
-    was entitled to make. A Stop that cannot be read is a Stop that has not been pressed."""
+def test_a_halt_predicate_that_raises_halts_the_call(tmp_path):
+    """U23 reverses the house rule for this one predicate. "A call the patron was entitled to
+    make" fails as a premise once Stop is pressed or the cap crossed, and allowing here is
+    what let both fail open, silently, during an outage. The halt is loud and reported."""
     rows: list[dict] = []
+    logged: list[dict] = []
+    failed: list[str] = []
     hook = options.make_pretool_hook(
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
-        record=rows.append, halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        record=rows.append, log=lambda **f: logged.append(f),
+        halt=lambda: (_ for _ in ()).throw(RuntimeError("pg is down")),
+        on_halt_failed=lambda: failed.append("x"),
     )
-    assert _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}}) == {}
-    assert [r["decision"] for r in rows] == ["allow"]
+    out = _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}})
+    assert out == options._halt(options.STORE_UNAVAILABLE_REASON)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [r["decision"] for r in rows] == ["halt"]
+    assert failed == ["x"], "the worker learns the halt failed, so the attempt answers 500"
+    [bad] = [f for f in logged if f.get("ev") == "halt_failed"]
+    assert bad["error"] == "RuntimeError: pg is down"
+
+
+def test_a_halt_failure_callback_that_raises_still_halts(tmp_path):
+    hook = options.make_pretool_hook(
+        turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path),
+        record=lambda r: None, halt=lambda: 1 / 0, on_halt_failed=lambda: 1 / 0,
+    )
+    assert _call(hook, {"tool_name": "Read", "tool_input": {}})["continue_"] is False
 
 
 def test_no_halt_predicate_is_the_old_behaviour_exactly(tmp_path):
@@ -2024,6 +2164,7 @@ def test_run_turn_halts_on_the_stop_flag_and_answers_200_with_a_stopped_outcome(
     answers any raise 500, decide.py requeues every non-2xx, and elasticmq has no redrive
     policy, so a stop reported as a failure re-runs the model forever -- and the row must
     say `stopped` rather than 'ok'."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     summary = _run(turn_env, _good())
     assert summary["outcome"] == "stopped"
@@ -2037,7 +2178,7 @@ def test_run_turn_halts_on_the_stop_flag_and_answers_200_with_a_stopped_outcome(
 def test_run_turn_releases_a_held_message_when_the_turn_ends(turn_env, monkeypatch):
     released: list[str] = []
     monkeypatch.setattr(worker, "release_queued_turn",
-                        lambda conn, sid: released.append(sid) or "msg-9")
+                        lambda conn, sid, **kw: released.append(sid) or "msg-9")
     summary = _run(turn_env, _good())
     assert released == ["sess-1"] and summary["released_turn"] == "msg-9"
 
@@ -2045,9 +2186,10 @@ def test_run_turn_releases_a_held_message_when_the_turn_ends(turn_env, monkeypat
 def test_the_handover_runs_for_every_ending_including_a_stopped_one(turn_env, monkeypatch):
     """A held message is the patron's own words. A turn that was stopped, or capped, still
     hands it over -- dropping it would lose input the UI already showed as accepted."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     released: list[str] = []
-    monkeypatch.setattr(worker, "release_queued_turn", lambda conn, sid: released.append(sid) or "m")
+    monkeypatch.setattr(worker, "release_queued_turn", lambda conn, sid, **kw: released.append(sid) or "m")
     assert _run(turn_env, _good())["outcome"] == "stopped"
     assert released == ["sess-1"]
 
@@ -2067,14 +2209,16 @@ def test_the_release_actually_enqueues_on_the_configured_queue(monkeypatch):
     So count the call and check what it was handed."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q.example:9324/000000000000/turns")
     body = {"turn_id": "held-1", "text": "also the 1881 census"}
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: dict(body))
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: (dict(body), "t0"))
     calls: list[tuple] = []
 
-    def fake_sqs(endpoint, action, params):
+    def fake_sqs(endpoint, action, params, *, timeout):
+        assert timeout == 30, "an ordinary release keeps sqs_call's own 30 s"
         calls.append((endpoint, action, params))
         return "<SendMessageResponse><MessageId>msg-7</MessageId></SendMessageResponse>"
 
     import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", fake_sqs)
     conn = FakeConn()
     assert worker.release_queued_turn(conn, "sess-1") == "msg-7"
@@ -2092,16 +2236,312 @@ def test_a_failed_release_puts_the_message_back_rather_than_losing_it(monkeypatc
     """Losing the patron's words is worse than releasing them late: the next turn's
     completion tries again."""
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
-    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid: {"turn_id": "held-1"})
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: ({"turn_id": "held-1"}, "t0"))
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
     conn = FakeConn()
+    conn.claimed_at = "t0"
     assert worker.release_queued_turn(conn, "sess-1") is None
-    assert any("SET outcome = %s" in sql and p[:2] == ("queued", "held-1")
+    assert any("SET outcome = %s" in sql and p == ("queued", "held-1", "t0")
                for sql, p in conn.executed), conn.executed
     assert [f["ev"] for f in logged] == ["queued_release_failed"]
+
+
+@pytest.mark.parametrize("failure", ["no_credentials", "raises"])
+def test_a_release_with_no_sqs_credentials_never_claims_the_message(monkeypatch, failure):
+    """U7: the credentials are resolved BEFORE the claim. A worker that cannot sign must
+    leave the held row exactly as it was -- not claim it and put it back -- and say why
+    under its own event, since there may have been nothing held at all."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    claimed: list[str] = []
+    monkeypatch.setattr(worker, "take_queued_turn",
+                        lambda conn, sid, **kw: claimed.append(sid) or ({"turn_id": "h"}, "t0"))
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    import proto.enqueue as enq
+
+    def ready(timeout=None):
+        if failure == "raises":
+            raise RuntimeError("botocore went away")
+        return False
+
+    monkeypatch.setattr(enq, "credentials_ready", ready)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: pytest.fail("sent without credentials"))
+    conn = FakeConn()
+    assert worker.release_queued_turn(conn, "sess-1") is None
+    assert claimed == [], "the message was claimed by a worker that cannot send it"
+    assert conn.executed == [], "no SQL at all"
+    [ev] = logged
+    assert ev["ev"] == "sqs_credentials_unavailable" and ev["session_id"] == "sess-1"
+    assert ("botocore went away" in ev["reason"]) if failure == "raises" else ev["reason"] == "no AWS credentials"
+
+
+# ── U7: SQS credentials at start ─────────────────────────────────────────────────
+
+
+class _PrepareRan(Exception):
+    pass
+
+
+def _start_env(monkeypatch):
+    """What every start needs (U11), with DEV_PATHS left as conftest sets it."""
+    monkeypatch.setenv("WORKER_TURN_USERS", "none")
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    monkeypatch.setenv("TOOL_SERVER_URL", "http://tools:8787/mcp")
+
+
+def _stop_at_prepare(monkeypatch):
+    _start_env(monkeypatch)
+
+    def prepare():
+        raise _PrepareRan("ran past the check")
+    monkeypatch.setattr(worker, "prepare", prepare)
+
+
+def test_queue_startup_fields_exits_2_and_ignores_stray_keys_without_a_queue(monkeypatch, capsys):
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTRAY")
+    _stop_at_prepare(monkeypatch)
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://elasticmq:9324/000000000000/turns")
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and err[0].startswith("worker: ") and "GENEALOGY_SQS_SECRET_KEY" in err[0], err
+    assert "AKIASTRAY" not in err[0]
+
+    monkeypatch.setattr(worker, "QUEUE_URL", "")
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert worker.queue_startup_fields({"GENEALOGY_SQS_ACCESS_KEY": "AKIASTRAY"}) == {}
+
+    # And the check runs before prepare() -- which parses agents.
+    tree = ast.parse(inspect.getsource(worker.main))
+    calls = [n.func.id for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
+    assert "queue_startup_fields" in calls and "prepare" in calls
+    lines = {name: min(n.lineno for n in ast.walk(tree) if isinstance(n, ast.Call)
+                       and isinstance(n.func, ast.Name) and n.func.id == name)
+             for name in ("queue_startup_fields", "prepare")}
+    assert lines["queue_startup_fields"] < lines["prepare"]
+
+
+def _start_only(monkeypatch):
+    """main() up to ev=start, with nothing real started."""
+    _start_env(monkeypatch)
+    monkeypatch.setattr(worker, "prepare", lambda: None)
+
+    class Server:
+        server_address = ("0.0.0.0", 8080)
+
+        def __init__(self, *a, **k):
+            pass
+
+        def serve_forever(self):
+            return None
+
+        def server_close(self):
+            return None
+
+    monkeypatch.setattr(worker, "ThreadingHTTPServer", Server)
+    monkeypatch.setattr(worker, "start_sweep", lambda *a, **k: None)
+    monkeypatch.setattr(worker, "start_schema_thread", lambda *a, **k: None)
+    monkeypatch.setattr(worker, "install_signal_handlers", lambda server: None)
+    monkeypatch.setattr(worker, "_SHUTDOWN_THREAD", None)
+
+
+def _start_event(out: str) -> dict:
+    [ev] = [json.loads(line) for line in out.splitlines() if line.startswith("{") and '"ev":"start"' in line]
+    return ev
+
+
+def test_ev_start_carries_sqs_mode_and_region_never_a_key(monkeypatch, capsys):
+    import proto.enqueue as enq
+
+    _start_only(monkeypatch)
+    prewarmed: list[int] = []
+    real_prewarm = enq.prewarm
+    monkeypatch.setattr(enq, "prewarm", lambda: prewarmed.append(1) or real_prewarm())
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIAWORKERSTART")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "worker-start-secret")
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://elasticmq:9324/000000000000/turns")
+    worker.main()
+    out = capsys.readouterr().out
+    ev = _start_event(out)
+    assert ev["sqs_credentials"] == "static keys" and ev["sqs_region"] == "us-east-1"
+    assert "worker-start-secret" not in out and "AKIAWORKERSTART" not in out
+    assert prewarmed == [1], "credentials are warmed at start, before the first release needs them"
+
+    monkeypatch.setattr(worker, "QUEUE_URL", "")
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert "sqs_credentials" not in ev and "sqs_region" not in ev
+    assert prewarmed == [1]
+
+
+def test_cli_env_blanks_static_sqs_keys():
+    sqs = {"GENEALOGY_SQS_ACCESS_KEY": "AKIACLI", "GENEALOGY_SQS_SECRET_KEY": "cli-secret"}
+    for provider_env in ({}, {"MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": "http://gw"}):
+        opts = _options(worker_env={**WORKER_ENV, **provider_env, **sqs})
+        assert opts.env["GENEALOGY_SQS_ACCESS_KEY"] == "" and opts.env["GENEALOGY_SQS_SECRET_KEY"] == "", provider_env
+    opts = _options()
+    assert "GENEALOGY_SQS_ACCESS_KEY" not in opts.env, "nothing to blank, nothing added"
+
+
+def test_a_release_with_static_sqs_keys_claims_and_sends(monkeypatch):
+    """The real ``credentials_ready`` (not a stub), with the static pair configured."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: ({"turn_id": "h"}, "t0"))
+    import proto.enqueue as enq
+
+    enq.configure({"GENEALOGY_SQS_ACCESS_KEY": "AKIDX", "GENEALOGY_SQS_SECRET_KEY": "sx"}, worker.QUEUE_URL)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m-s</MessageId></R>")
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m-s"
+
+
+def test_the_credentials_cap_reaches_credentials_ready(monkeypatch):
+    """The deadline check counts RELEASE_CREDENTIALS_TIMEOUT_S, so the cap must arrive at
+    ``credentials_ready`` itself: dropped there, a shutdown release blocks on an uncapped
+    IMDS refresh and overruns the stop grace period. An ordinary release passes none."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    monkeypatch.setattr(worker, "take_queued_turn", lambda conn, sid, **kw: ({"turn_id": "h"}, "t0"))
+    import proto.enqueue as enq
+
+    given: list = []
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: given.append(timeout) or True)
+    monkeypatch.setattr(enq, "sqs_call", lambda *a, **k: "<R><MessageId>m</MessageId></R>")
+
+    assert worker.release_queued_turn(FakeConn(), "sess-1") == "m"
+    assert worker.release_queued_turn(
+        FakeConn(), "sess-1", credentials_timeout=worker.RELEASE_CREDENTIALS_TIMEOUT_S) == "m"
+    assert given == [None, worker.RELEASE_CREDENTIALS_TIMEOUT_S]
+
+    given.clear()
+    worker.defer_release("sess-2", "turn-2")
+    worker.run_deferred_releases(connect=lambda dsn, **kw: FakeConn(), deadline=time.monotonic() + 60)
+    assert given == [worker.RELEASE_CREDENTIALS_TIMEOUT_S], "the shutdown path, deadline to credentials_ready"
+
+
+# ── U23 D8/D9: the release under the queue lock, and loud ─────────────────────────
+
+
+def test_the_take_checks_and_claims_under_the_session_queue_lock():
+    """U23 D8. The running-turn check and the claim ran as two autocommit statements, so a
+    message the web tier admitted between them went straight out beside the one claimed
+    here. test_proto_queue_pg.py proves the interleaving; this pins the order."""
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    assert worker.take_queued_turn(conn, "sess-1") == ({"turn_id": "held-1"}, conn.claimed_at)
+    sqls = [s for s, _ in conn.executed]
+    assert conn.executed[0] == (worker.grants.QUEUE_LOCK_TIMEOUT_SQL, ("5000ms",)), \
+        "the lock wait is bounded, set first in the same transaction"
+    assert sqls[1] == " ".join(worker.grants.QUEUE_LOCK_SQL.split())
+    assert tuple(conn.executed[1][1]) == (worker.grants.QUEUE_LOCK_NS, "sess-1")
+    assert sqls[2] == " ".join(worker.TURN_ACTIVE_SQL.split()) and "RETURNING message, claimed_at" in sqls[3]
+    assert sqls[4] == worker.CLEAR_STOP_SQL
+    assert all(conn.in_tx) and conn.transactions == conn.transaction_exits == 1, \
+        "the xact lock is held only inside an explicit transaction on an autocommit connection"
+    assert conn.commits == 1, "the caller's open transaction ends first, or the block is a savepoint"
+
+
+def test_the_take_claims_nothing_beside_a_running_turn():
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    conn.turn_active = True
+    assert worker.take_queued_turn(conn, "sess-1") is None
+    assert not [s for s, _ in conn.executed if "RETURNING message" in s or s == worker.CLEAR_STOP_SQL]
+
+
+def _sending(monkeypatch, send=lambda *a, **k: "<R><MessageId>m-9</MessageId></R>") -> list[dict]:
+    """A configured queue that signs and answers ``send``; returns the log."""
+    monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
+    import proto.enqueue as enq
+    monkeypatch.setattr(enq, "credentials_ready", lambda timeout=None: True)
+    monkeypatch.setattr(enq, "sqs_call", send)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    return logged
+
+
+@pytest.mark.parametrize("error", [RuntimeError("bug"), worker.psycopg.OperationalError("server closed")])
+def test_a_put_back_that_fails_never_raises_and_says_the_message_is_lost(monkeypatch, error):
+    """U23 D9. The put-back ran bare in the except clause, so a dead connection raised out
+    of a release documented as never raising -- failing a turn that did its work -- and
+    nothing named the claimed-but-unsent message."""
+    logged = _sending(monkeypatch, send=lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
+
+    def put_back(conn, turn_id, claimed_at):
+        raise error
+
+    monkeypatch.setattr(worker, "hold_queued_turn", put_back)
+    assert worker.release_queued_turn(FakeConn(queued_body={"turn_id": "held-1"}), "sess-1") is None
+    assert [f["ev"] for f in logged] == ["queued_release_failed", "queued_release_lost"]
+    assert logged[1]["turn_id"] == "held-1" and type(error).__name__ in logged[1]["error"]
+
+
+def test_a_put_back_a_workers_claim_beat_leaves_the_running_turn_alone(monkeypatch):
+    """U23: a send that times out after it landed is delivered within a second, and the
+    worker that claims it stamps a later claimed_at. The put-back matches THIS release's
+    claimed_at, so it changes nothing and says so. test_proto_queue_pg.py runs it."""
+    logged = _sending(monkeypatch, send=lambda *a, **k: (_ for _ in ()).throw(TimeoutError("read timed out")))
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    stamped = conn.claimed_at
+    real_take = worker.take_queued_turn
+
+    def take_then_claimed_elsewhere(c, sid, **kw):
+        taken = real_take(c, sid, **kw)
+        c.claimed_at = "2026-10-05T12:00:00.900000+00:00"  # the delivered message's claim
+        return taken
+
+    monkeypatch.setattr(worker, "take_queued_turn", take_then_claimed_elsewhere)
+    assert worker.release_queued_turn(conn, "sess-1") is None
+    [(_, params)] = [(s, p) for s, p in conn.executed if s.startswith("UPDATE turns SET outcome = %s")]
+    assert params == ("queued", "held-1", stamped), "the put-back names the claim it is undoing"
+    assert [f["ev"] for f in logged] == ["queued_release_failed", "queued_release_raced"]
+
+
+def test_the_put_back_runs_in_a_transaction_of_its_own(monkeypatch):
+    """On a non-autocommit connection a bare UPDATE would sit uncommitted until the
+    caller's connection closed -- and roll back with it."""
+    _sending(monkeypatch, send=lambda *a, **k: (_ for _ in ()).throw(RuntimeError("queue down")))
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    worker.release_queued_turn(conn, "sess-1")
+    [(i, _)] = [(i, p) for i, (s, p) in enumerate(conn.executed) if "SET outcome = %s" in s]
+    assert conn.in_tx[i] and conn.transactions == 2
+
+
+def _close_turn(conn):
+    worker.close_turn(conn, TURN, 1, cause="sweep", sdk_session_id=None)
+
+
+def _release_guarded(conn):
+    worker.release_guarded(lambda dsn: conn, "sess-1", "turn-1")
+
+
+def _deferred(conn):
+    worker.defer_release("sess-1", "turn-1")
+    worker.run_deferred_releases(connect=lambda dsn, **kw: conn, deadline=None)
+
+
+def _already_completed(conn):
+    conn.completed_at = "2026-09-30T10:00:00+00:00"
+    worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+
+
+@pytest.mark.parametrize("path", [_close_turn, _release_guarded, _deferred, _already_completed])
+def test_every_release_path_logs_the_released_turn_and_its_message_id(monkeypatch, path):
+    """U23 D9: ``released_turn`` reached only the attempt's own summary, so the release a
+    close, a guarded retry, a deferred shutdown release or an already_completed redelivery
+    made was invisible -- and U23's held_release case could not tie a delivered msgid to
+    the held turn. The held turn's id, not the closing turn's."""
+    logged = _sending(monkeypatch)
+    path(FakeConn(queued_body={"turn_id": "held-1", "text": "and his will"}))
+    assert [(f["turn_id"], f["message_id"]) for f in logged if f["ev"] == "released"] == [("held-1", "m-9")]
+
+
+def test_nothing_released_logs_no_release(monkeypatch):
+    logged = _sending(monkeypatch)
+    worker.release_next_held(FakeConn(queued_body=None), "sess-1")
+    assert not [f for f in logged if f["ev"] == "released"]
 
 
 # ── 1e: the per-session spend bound ──────────────────────────────────────────────
@@ -2165,16 +2605,27 @@ def test_the_price_vector_tracks_the_costs_the_corpus_actually_recorded():
     subagent transcripts.
 
     The band is what makes this fail: a price change, or a model swap, moves the median
-    out of it and this goes red rather than the cap quietly firing at the wrong dollar."""
+    out of it and this goes red rather than the cap quietly firing at the wrong dollar.
+
+    The corpus ran on a subscription, where the CLI writes 1-HOUR cache entries, so its
+    cache writes are priced here at the 1-hour rate (2x input), not the worker's 5-minute
+    one: this calibrates the three rates the two share, and the 1-hour write. The worker's
+    5-minute write is pinned to input by
+    `test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl`."""
     rows = _corpus_costs()
     assert len(rows) >= 100, f"only {len(rows)} runs readable; the calibration needs the corpus"
-    ratios = sorted(worker.price_usd(tok) / cost for tok, cost in rows)
+    rates = dict(worker.PRICE_PER_MTOK, cache_write=2 * worker.PRICE_PER_MTOK["input"])
+
+    def corpus_usd(tok):
+        return sum((t or 0) / 1_000_000 * rates[name] for name, t in zip(("input", "cache_write", "cache_read", "output"), tok))
+
+    ratios = sorted(corpus_usd(tok) / cost for tok, cost in rows)
     median = ratios[len(ratios) // 2]
     # The band is sized to catch a wrong price on ANY of the four token classes, measured
     # against this corpus on 2026-09-23: output 15 -> 30 lands at 1.089 and 15 -> 7.5 at
-    # 0.750; cache write 6 -> 3.75 at 0.746; cache read 0.30 -> 0.60 at 1.172. A looser
-    # band passes a vector that would fire the cap at the wrong dollar, which is the whole
-    # thing this protects.
+    # 0.750; a 1-hour cache write of 3.75 instead of 6 at 0.746; cache read 0.30 -> 0.60
+    # at 1.172. A looser band passes a vector that would fire the cap at the wrong dollar,
+    # which is the whole thing this protects.
     assert 0.80 <= median <= 0.95, (
         f"the price vector predicts a median {median:.3f}x of recorded cost; it was 0.866x "
         f"on 2026-09-23 over {len(rows)} runs. A price change, a model swap or a grown "
@@ -2192,7 +2643,7 @@ def test_the_price_vector_tracks_the_costs_the_corpus_actually_recorded():
     )
 
 
-def test_the_two_price_tables_are_the_same_four_rates():
+def test_the_two_price_tables_share_three_rates_and_differ_by_cache_ttl():
     """There are TWO copies of this rate table and there have to be: the worker image does
     not copy `eval/` (a test in test_continue_policy_parity.py asserts the two trees never
     import each other), and `pricing.py` is deliberately stdlib-only so `corpus_report`
@@ -2203,7 +2654,13 @@ def test_the_two_price_tables_are_the_same_four_rates():
     `--calibrate-cost` and moves a rate; the worker's copy does not move; and the LIVE
     SPEND CAP silently starts cutting runs off at a different dollar figure than the one
     the corpus reports. Nothing else compares them -- the field names differ, so no grep
-    finds the pair."""
+    finds the pair.
+
+    Input, cache read and output are the same rates. Cache WRITES are not, because the two
+    write different entries: the harness runs on a subscription, where the CLI writes
+    1-hour entries (2x input), and the worker on an API key or the gateway, where every
+    entry is 5-minute (1.25x input; spend.py says why). Each write rate is pinned to the
+    shared input rate by its own multiplier, so a model swap that moves input moves both."""
     import importlib.util
 
     path = pathlib.Path(__file__).resolve().parents[3] / "eval/harness/e2e/pricing.py"
@@ -2211,28 +2668,38 @@ def test_the_two_price_tables_are_the_same_four_rates():
     pricing = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pricing)
 
-    # The names differ by tree; the RATES must not.
-    same = {
+    names = {
         "input": "input_tokens",
         "cache_write": "cache_creation_input_tokens",
         "cache_read": "cache_read_input_tokens",
         "output": "output_tokens",
     }
-    assert set(same.values()) == set(pricing._PER_MTOK), \
+    assert set(names.values()) == set(pricing._PER_MTOK), \
         "the harness table gained or lost a token class; the worker's cap prices the old set"
-    for mine, theirs in same.items():
+    for mine in ("input", "cache_read", "output"):
+        theirs = names[mine]
         assert worker.PRICE_PER_MTOK[mine] == pricing._PER_MTOK[theirs], (
             f"{mine} is ${worker.PRICE_PER_MTOK[mine]}/MTok in the worker and "
             f"${pricing._PER_MTOK[theirs]}/MTok in the harness: the live spend cap and the "
             f"corpus report now disagree about what a run costs"
         )
-    # And the same tokens must come to the same dollars through both estimators.
+    base = worker.PRICE_PER_MTOK["input"]
+    assert worker.PRICE_PER_MTOK["cache_write"] == pytest.approx(1.25 * base), (
+        f"the worker's cache write is ${worker.PRICE_PER_MTOK['cache_write']}/MTok, not the "
+        f"5-minute 1.25 x ${base}: every write the worker meters is 5-minute"
+    )
+    assert pricing._PER_MTOK["cache_creation_input_tokens"] == pytest.approx(2 * base), (
+        f"the harness's cache write is ${pricing._PER_MTOK['cache_creation_input_tokens']}/MTok, "
+        f"not the 1-hour 2 x ${base} its corpus calibrates to"
+    )
+    # The same tokens come to the same dollars through both estimators, but for the
+    # write-rate difference.
     tokens = (1_234_567, 89_012, 3_456_789, 45_678)
     theirs = pricing.estimate_cost_usd(dict(zip(
         ("input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens"),
         tokens,
     )))
-    assert worker.price_usd(tokens) == pytest.approx(theirs)
+    assert worker.price_usd(tokens) == pytest.approx(theirs - tokens[1] / 1_000_000 * 0.75 * base)
 
 
 def test_price_usd_is_linear_and_reads_the_four_token_classes_in_order():
@@ -2321,6 +2788,7 @@ def test_stop_outranks_a_waiting_message(turn_env, monkeypatch):
     """Both end the turn, but only one of them means "do not carry on". A Stop reported as
     a handover would show the run resuming on the queued message, which is the opposite of
     what the patron asked for."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     assert _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])["outcome"] == "stopped"
@@ -2369,8 +2837,48 @@ def test_completing_an_attempt_that_vetoed_nothing_does_not_erase_the_turns_coun
         f"complete() passed {params[-2]!r} for nudges; COALESCE then keeps the row's "
         f"value only if this is None"
     )
-    assert "nudges = COALESCE(%s, nudges)" in next(
+    assert "nudges = COALESCE(%s, nudges, 0)" in next(
         sql for sql, _ in conn.executed if sql.startswith("UPDATE turns SET completed_at"))
+
+
+def _replay_nudge_writes(*steps: tuple[str, Any]) -> Any:
+    """Run the SQL record_nudge and complete() actually emit against a real turns row
+    (stdlib sqlite: GREATEST is spelled max(), now() CURRENT_TIMESTAMP) and return the
+    row's nudges. Each step is ("record", cumulative) or ("complete", nudges)."""
+    import sqlite3
+
+    db = sqlite3.connect(":memory:")
+    db.execute("CREATE TABLE turns (turn_id text, completed_at text, outcome text, cost_usd real,"
+               " num_turns int, duration_ms int, input_tokens int, cache_creation_tokens int,"
+               " cache_read_tokens int, output_tokens int, nudges int)")
+    db.execute("INSERT INTO turns (turn_id) VALUES ('turn-1')")
+    for kind, value in steps:
+        conn = FakeConn()
+        if kind == "record":
+            worker.record_nudge(conn, "turn-1", value)
+        else:
+            worker.complete(conn, TURN, 1, nudges=value)
+        for sql, params in conn.executed:
+            if sql.startswith("UPDATE turns"):
+                db.execute(sql.replace("%s", "?").replace("GREATEST(", "max(")
+                           .replace("now()", "CURRENT_TIMESTAMP"), params)
+    return db.execute("SELECT nudges FROM turns WHERE turn_id = 'turn-1'").fetchone()[0]
+
+
+@pytest.mark.parametrize("steps, expected", [
+    ((), None),                                            # open, never vetoed
+    ((("complete", None),), 0),                            # closed, no attempt vetoed
+    ((("complete", 0),), 0),
+    ((("record", 2), ("complete", 2)), 2),                 # one attempt, two vetoes
+    ((("record", 5), ("complete", None)), 5),              # attempt 1's five survive attempt 2
+    ((("record", 5), ("record", 3), ("complete", None)), 5),  # a slower attempt cannot walk it back
+])
+def test_turns_nudges_is_0_on_a_turn_nothing_vetoed_and_keeps_an_earlier_attempts_count(steps, expected):
+    """004_worker.sql's contract for turns.nudges, on the statements themselves rather
+    than their text: a turn the worker closed without a veto reads 0 (demo.py prints
+    "0 (cap off)", not "?"), and a later attempt that vetoed nothing (run_turn passes
+    None) leaves the cumulative count record_nudge wrote."""
+    assert _replay_nudge_writes(*steps) == expected
 
 
 def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, monkeypatch):
@@ -2378,6 +2886,7 @@ def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, mon
     exactly the synthetic zero-turn result 0a keys on, and with no tool call halt() never
     fires -- so without this the attempt raises ResumeFailure, answers 500, decide.py
     requeues it, and the model is re-run and BILLED after the patron pressed Stop."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
@@ -2395,6 +2904,7 @@ def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, mon
 def test_a_stopped_turn_at_the_cap_is_still_reported_as_stopped(turn_env, monkeypatch):
     """The other half: at the cap the branch used to overwrite the outcome, so the person
     who pressed Stop was told 'the agent stopped making progress'."""
+    _mid_run(monkeypatch)
     conn = FakeConn(usage=(10, 0, 0, 5), zero_progress_attempts=worker.ZERO_PROGRESS_CAP - 1)
     turn_env["conn"] = conn
     monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: conn)
@@ -2426,6 +2936,7 @@ def test_the_bound_halts_the_turn_and_says_how_to_carry_on(turn_env, monkeypatch
     """1e's acceptance: it stops within seconds (the PreToolUse hook fires every few
     seconds, where a yield-gated check fires about once a run), it is visibly different
     from a completed run, and it says how to continue."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 35.01)
     logged: list[dict] = []
@@ -2454,6 +2965,7 @@ def test_a_stop_dispatch_after_a_halt_cannot_veto_the_halt(turn_env, monkeypatch
 
     So the hook reads the turn's own halt decision, not just the row, and this drives the
     Stop hook directly to prove it."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
@@ -2486,6 +2998,7 @@ def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env
     overwrote the reason, a turn that hit the patron's spend cap would be recorded and
     rendered as "you pressed Stop", and the sentence telling them to start a new session
     would never appear."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
@@ -2512,6 +3025,7 @@ def test_a_stop_dispatch_with_nothing_wrong_vetoes_and_keeps_the_run_going(turn_
 def test_the_stop_hooks_verdict_never_overwrites_a_halt_reason(turn_env, monkeypatch):
     """A halted turn recorded as `no_progress` would tell the patron the opposite of what
     happened: that the agent ran out of things to do, rather than that it hit their cap."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
@@ -2548,6 +3062,7 @@ def test_stop_outranks_the_spend_bound(turn_env, monkeypatch):
     The stream MUST carry a ToolCall: halt() runs only on a PreToolUse dispatch, and
     without one this passed on the unrelated completion-time fallback while the ordering
     inside halt() went untested entirely."""
+    _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 999.0)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
@@ -2619,13 +3134,10 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
     hook = _stop(state, nudged=nudged)
     assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
     assert nudged == [1]
-    # The reason is the orchestrator's, read off its source: among the dict literals
-    # whose "decision" is "block", the one whose "reason" is a literal string is the
-    # silent-stop fallback the worker mirrors. Since 2026-09-20 a second such dict
-    # carries the "Yes." reply to a well-formed hand-back, whose reason is a NAME
-    # (`reply`) rather than a constant, so it is skipped here by shape and named in
-    # CONTINUE_REASON's comment — if that branch ever spells a literal too, this
-    # collects two and fails, which is the re-sync this test exists to force.
+    # The reason is the orchestrator's, read off its source: every dict literal whose
+    # "decision" is "block" must carry this one literal reason. A second reply, or one
+    # computed rather than spelled, is a Stop policy the worker does not run (U17);
+    # test_continue_policy_parity.py pins the computed case.
     tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
     blocks = [
         node for node in ast.walk(tree)
@@ -2643,7 +3155,7 @@ def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim()
         if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant)
     ]
     assert reasons == [options.CONTINUE_REASON], \
-        "the worker's reason text must stay the harness's silent-stop fallback, verbatim"
+        "the worker's reason text must stay the harness's veto text, verbatim"
 
 
 def test_the_stop_hook_counts_nudges_and_allows_once_the_cap_is_spent():
@@ -2725,7 +3237,6 @@ def test_prepare_logs_a_bad_cap_and_runs_with_the_hook_off_instead_of_dying(monk
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
-    monkeypatch.setattr(worker, "apply_schema", lambda dsn: [])
     monkeypatch.setattr(worker, "load_plugin_agents", lambda plugin_dir: ({}, None))
     for name in ("_AGENTS", "_AGENTS_ERROR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
         monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
@@ -2770,7 +3281,7 @@ def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(me
 def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 27), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert callable(turn_env["options"]["stop_hook"]), \
         "the browser's turn arms the Stop hook even though the worker's own cap is 0"
@@ -2781,7 +3292,7 @@ def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_en
     # container and the value rides the message.
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, 27), turn_env)
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
     assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
 
@@ -2815,7 +3326,7 @@ def test_run_turn_wires_the_stop_hook_only_on_the_autonomous_arm_and_records_nud
     assert callable(turn_env["options"]["stop_hook"]) and summary["nudges"] == 0
     assert completed[-1]["nudges"] is None
     update = next(sql for sql, _ in turn_env["conn"].executed if sql.startswith("UPDATE turns SET completed_at"))
-    assert "nudges = COALESCE(%s, nudges)" in update
+    assert "nudges = COALESCE(%s, nudges, 0)" in update
 
 
 def test_the_wired_stop_hook_reads_research_and_the_tool_count_off_the_turns_connection(turn_env, monkeypatch):
@@ -2858,11 +3369,11 @@ class NudgingClient(FakeClient):
 
 def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, 27), turn_env)
+    turn_env["client"] = NudgingClient(_info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert summary["nudges"] == 2
     sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
-    assert "nudges = COALESCE(%s, nudges)" in sql and params[-2] == 2, params
+    assert "nudges = COALESCE(%s, nudges, 0)" in sql and params[-2] == 2, params
 
 
 def test_read_research_and_count_tool_calls_read_the_rows():
@@ -2878,218 +3389,1181 @@ def test_read_research_and_count_tool_calls_read_the_rows():
 
 
 
-# --- R1: router re-entry rides the per-turn system prompt, not the Stop hook ---
+# ── U5: the last-receive close, the close race, the sweep, SIGTERM ───────────────
+
+
+@pytest.fixture(autouse=True)
+def _fresh_shutdown_state():
+    """SHUTDOWN, the in-flight registry and U10's readiness state are process state; no
+    test may leak them."""
+    def reset() -> None:
+        worker.SHUTDOWN.clear()
+        with worker._INFLIGHT_LOCK:
+            worker._INFLIGHT.clear()
+            worker._ANSWERED.clear()
+            worker._DEFERRED_RELEASES.clear()
+        worker._SCHEMA_ERROR = "pending"
+        worker._TRANSCRIPT_ERROR = None
+        with worker._READY_LOCK:
+            worker._READY_LAST.clear()
+            worker._READY_FLIGHT = None
+
+    reset()
+    yield
+    reset()
+
+
+def _turn_done_payloads(conn: FakeConn) -> list[dict]:
+    return [p[2].obj for s, p in conn.executed if s.startswith("INSERT INTO session_events") and "'turn_done'" in s]
+
+
+def _released(monkeypatch) -> list[str]:
+    released: list[str] = []
+    monkeypatch.setattr(worker, "release_queued_turn", lambda conn, sid, **kw: released.append(sid) or "msg-held")
+    return released
+
+
+def _boom(turn, rc, sid):
+    raise RuntimeError("ResultMessage is_error (error_during_execution, api 529): overloaded")
+
+
+STUB_TURN = {"turn_id": "turn-s", "session_id": "sess-1", "project_id": "proj-1",
+             "message": {"behaviour": "fail"}}
+
+
+def test_last_receive_error_closes_retries_exhausted_and_releases(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 3)
+    released = _released(monkeypatch)
+    conn = FakeConn()
+    status, body = worker.serve_real_turn(TURN, 3, connect=lambda dsn: conn, run=_boom)
+    assert status == 200, "a 500 on the last receive dead-letters the turn and wedges the session"
+    assert body["outcome"] == worker.RETRIES_EXHAUSTED_OUTCOME == "retries_exhausted"
+    assert body["cause"] == "error"
+    assert any(s == "SELECT completed_at FROM turns WHERE turn_id = %s FOR UPDATE" for s, _ in conn.executed), \
+        "the close is complete(only_if_open=True)"
+    update = next(s for s, _ in conn.executed if s.startswith("UPDATE turns SET completed_at"))
+    assert update.endswith("AND completed_at IS NULL")
+    [payload] = _turn_done_payloads(conn)
+    assert payload["outcome"] == "retries_exhausted" and payload["cause"] == "error"
+    assert "529" not in json.dumps(payload), "error text stays in the log, never in the patron's frame"
+    assert released == ["sess-1"], "exactly one release, by the closer"
+
+
+def test_the_fail_stub_on_its_last_receive_closes_too(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 1)
+    released = _released(monkeypatch)
+    conn = FakeConn()
+    status, body = worker.serve_stub_turn(STUB_TURN, 1, "fail", 0, connect=lambda dsn: conn)
+    assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "error"
+    assert [p["cause"] for p in _turn_done_payloads(conn)] == ["error"]
+    assert released == ["sess-1"]
+
+
+def test_error_below_max_retries_still_answers_500(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 3)
+    released = _released(monkeypatch)
+    conn = FakeConn()
+    status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=_boom)
+    assert status == 500 and "529" in body["error"]
+    stub_status, _ = worker.serve_stub_turn(STUB_TURN, 2, "fail", 0, connect=lambda dsn: conn)
+    assert stub_status == 500
+    assert not _turn_done_payloads(conn) and released == [], "receive 2 of 3 is redelivered, not closed"
+
+
+def test_max_retries_unset_never_closes(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 0)
+    conn = FakeConn()
+    assert not worker.is_last_receive(10_000)
+    status, _ = worker.serve_real_turn(TURN, 99, connect=lambda dsn: conn, run=_boom)
+    assert status == 500 and not _turn_done_payloads(conn), \
+        "0 means unlimited retries (base compose): a late receive is not a last one"
+
+
+def test_close_failure_still_answers_500(monkeypatch):
+    import psycopg
+
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    first = FakeConn()
+    calls: list[int] = []
+
+    def connect(dsn):
+        calls.append(1)
+        if len(calls) == 1:
+            return first
+        raise psycopg.OperationalError("connection refused")
+
+    status, body = worker.serve_real_turn(TURN, 2, connect=connect, run=_boom)
+    assert status == 500 and "529" in body["error"], "the original error, not the close's"
+    assert len(calls) == 2, "the close was attempted"
+
+
+def test_only_if_open_close_skips_a_completed_turn():
+    done = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    assert worker.complete(done, TURN, 3, outcome="retries_exhausted", only_if_open=True) is None
+    sqls = [s for s, _ in done.executed]
+    assert sqls == ["SELECT completed_at FROM turns WHERE turn_id = %s FOR UPDATE"], \
+        "no seq taken, no turn_done, no UPDATE on a row someone else closed"
+    open_ = FakeConn()
+    assert worker.complete(open_, TURN, 3, only_if_open=True) == 1
+    assert _turn_done_payloads(open_) and open_.executed[-1][0].endswith("AND completed_at IS NULL")
+    assert worker.complete(FakeConn(), TURN, 1) is not None, "the default is unchanged"
+
+
+def test_losing_the_close_race_does_not_release(monkeypatch):
+    released = _released(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    done = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    assert worker.close_turn(done, TURN, 3, cause="shutdown", sdk_session_id=None) is None
+    assert released == [] and not [f for f in logged if f.get("ev") == "close"], \
+        "two closers releasing would put two held messages on one session"
+    won = FakeConn()
+    assert worker.close_turn(won, TURN, 3, cause="shutdown", sdk_session_id=SID) == 1
+    assert released == ["sess-1"]
+    [close] = [f for f in logged if f.get("ev") == "close"]
+    assert (close["turn_id"], close["outcome"], close["cause"], close["receive_count"]) == \
+        ("turn-1", "retries_exhausted", "shutdown", 3)
+    assert any(s.startswith("SELECT sum((u->>'input_tokens')") and p == (SID, "turn-1") for s, p in won.executed), \
+        "the closed row's token columns are summed like any other close"
+
+
+def test_attempt_completing_after_a_last_receive_close_writes_nothing(turn_env, monkeypatch):
+    released = _released(monkeypatch)
+    turn_env["conn"] = FakeConn(completed_at="2026-09-30T10:00:00+00:00", usage=(10, 0, 0, 5))
+    summary = _run(turn_env, _good())
+    assert summary["seq"] is None and summary["released_turn"] is None
+    assert not _turn_done_written(turn_env["conn"]), "no second turn_done over retries_exhausted"
+    assert not any(s.startswith("UPDATE turns SET completed_at") for s, _ in turn_env["conn"].executed)
+    assert released == []
+
+
+def test_release_next_held_refuses_beside_an_active_turn(monkeypatch):
+    released = _released(monkeypatch)
+    busy = FakeConn()
+    busy.turn_active = True
+    assert worker.release_next_held(busy, "sess-1") is None and released == []
+    assert busy.executed == [(" ".join(worker.TURN_ACTIVE_SQL.split()), ("sess-1", "queued"))]
+    assert worker.release_next_held(FakeConn(), "sess-1") == "msg-held" and released == ["sess-1"]
+
+
+def test_the_two_turn_active_statements_match():
+    """The guard is the web tier's own "a turn is running" predicate; if they drift, the
+    worker releases beside a turn the browser still shows as working, or the reverse."""
+    tree = ast.parse((PROTO / "web" / "app.py").read_text(encoding="utf-8"))
+    [web] = [ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign)
+             and any(isinstance(t, ast.Name) and t.id == "TURN_ACTIVE_SQL" for t in n.targets)]
+    assert worker.TURN_ACTIVE_SQL == web
+
+
+def test_already_completed_releases_a_stranded_held_turn(monkeypatch):
+    released = _released(monkeypatch)
+    conn = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 200 and body["already_completed"] is True
+    assert released == ["sess-1"], "the redelivery of a turn whose release failed releases it"
+
+
+def test_already_completed_does_not_release_beside_an_active_turn(monkeypatch):
+    released = _released(monkeypatch)
+    conn = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    conn.turn_active = True
+    status, _ = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 200 and released == [], "a released held turn is already running"
+
+
+def test_sweep_sql_selects_exhausted_and_expired_turns_only(monkeypatch):
+    sql, params = worker.sweep_query(5, 36300, 345600, ["turn-live"])
+    flat = " ".join(sql.split())
+    assert "WHERE t.completed_at IS NULL AND t.outcome IS DISTINCT FROM %s" in flat, \
+        "open turns only, and never a held message"
+    assert "AND NOT (t.turn_id = ANY(%s::text[]))" in flat, "this process's in-flight turns are skipped"
+    assert "(t.receive_count >= %s AND t.claimed_at < now() - make_interval(secs => %s))" in flat
+    assert "COALESCE(t.claimed_at, t.enqueued_at) < now() - make_interval(secs => %s)" in flat
+    assert ") OR COALESCE(" in flat, "either path qualifies a row"
+    assert "LEFT JOIN sessions s ON s.session_id = t.session_id" in flat and "s.sdk_session_id" in flat
+    assert flat.endswith("FOR UPDATE OF t SKIP LOCKED"), "a second instance cannot close a row twice"
+    assert params == ("queued", ["turn-live"], 5, 36300 + 60, 345600)
+    fast, fast_params = worker.sweep_query(1, 30, 0, [])
+    assert "COALESCE(t.claimed_at" not in fast and fast_params == ("queued", [], 1, 90)
+    backstop, backstop_params = worker.sweep_query(0, 36300, 345600, [])
+    assert "t.receive_count >=" not in backstop and backstop_params == ("queued", [], 345600)
+
+    released = _released(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    conn = FakeConn()
+    conn.sweep_rows = [("turn-dead", "sess-9", "proj-9", 5, SID, 3)]
+    with worker.track("turn-live"):
+        assert worker.sweep_once(connect=lambda dsn: conn, max_retries=5, visibility_s=36300,
+                                 retention_s=345600) == ["turn-dead"]
+    selects = [p for s, p in conn.executed if "FROM turns t LEFT JOIN sessions s" in s]
+    assert selects[0][1] == ["turn-live"]
+    [payload] = _turn_done_payloads(conn)
+    assert payload == {"turn_id": "turn-dead", "receive_count": 5, "outcome": "retries_exhausted", "cause": "sweep"}
+    assert any(s.startswith("SELECT sum((u->>'input_tokens')") and p == (SID, "turn-dead") for s, p in conn.executed), \
+        "sdk_session_id from the sessions join, so the token columns are summed"
+    assert released == ["sess-9"]
+    assert [f["closed"] for f in logged if f.get("ev") == "sweep"] == [["turn-dead"]]
+    logged.clear()
+    assert worker.sweep_once(connect=lambda dsn: FakeConn(), max_retries=5, visibility_s=30, retention_s=0) == []
+    assert not [f for f in logged if f.get("ev") == "sweep"], "ev=sweep only when something closed"
+
+
+def test_sweep_is_off_unless_configured():
+    assert worker.sweep_query(0, 36300, 0, []) is None
+    assert worker.start_sweep(interval=0, max_retries=5, retention_s=345600) is None, "SWEEP_INTERVAL_S=0"
+    assert worker.start_sweep(interval=300, max_retries=0, retention_s=0) is None, \
+        "base compose sets neither path: the dev database's leftovers are never swept"
+    worker.SHUTDOWN.set()  # the thread's loop exits at once
+    for max_retries, retention in ((5, 0), (0, 345600)):
+        thread = worker.start_sweep(interval=300, max_retries=max_retries, retention_s=retention)
+        assert thread is not None and thread.daemon
+        thread.join(2)
+        assert not thread.is_alive(), "the sweep stops on SHUTDOWN"
+
+
+class FakeServer:
+    def __init__(self, probe=None) -> None:
+        self.stopped = False
+        self.probe = probe or (lambda: None)
+        self.seen: Any = None
+
+    def shutdown(self) -> None:
+        self.seen = self.probe()
+        self.stopped = True
+
+
+def _blocking_attempt(monkeypatch, started: threading.Event, cleanup) -> None:
+    async def body(turn, rc, sid, *, agents=None):
+        started.set()
+        try:
+            await asyncio.sleep(60)
+        finally:
+            cleanup()
+
+    monkeypatch.setattr(worker, "_run_turn", body)
+
+
+def _serve_in_thread(fn) -> tuple[threading.Thread, dict, threading.Event]:
+    out: dict[str, Any] = {}
+    returned = threading.Event()
+
+    def target() -> None:
+        out["reply"] = fn()
+        returned.set()
+
+    thread = threading.Thread(target=target, daemon=True)
+    thread.start()
+    return thread, out, returned
+
+
+def test_shutdown_answers_500_then_cancels_the_attempt(monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    started, cleaned = threading.Event(), threading.Event()
+    order: list[str] = []
+
+    def cleanup() -> None:
+        order.append("replied" if returned.wait(5) else "cleanup-first")
+        cleaned.set()
+
+    _blocking_attempt(monkeypatch, started, cleanup)
+    conn = FakeConn()
+    thread, out, returned = _serve_in_thread(
+        lambda: worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn, run=worker.run_turn_sync))
+    assert started.wait(5), "the attempt is running"
+    server = FakeServer(probe=cleaned.is_set)
+    worker.shutdown(server, grace=5)
+    thread.join(5)
+    status, body = out["reply"]
+    assert status == 500 and body == {"ok": False, "turn_id": "turn-1", "error": "worker shutting down",
+                                      "shutdown": True}
+    assert order == ["replied"], "the 500 does not wait behind the CLI's cleanup"
+    assert cleaned.is_set() and server.seen is True, \
+        "the anyio scope was cancelled, and its finally ran before the server stopped"
+    [ev] = [f for f in logged if f.get("ev") == "shutdown"]
+    assert ev["answered"] == ["turn-1"] and ev["drained"] is True
+    assert not _turn_done_payloads(conn), "the turn stays open for the redelivery"
+
+
+def test_shutdown_on_last_receive_closes_instead(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 1)
+    released = _released(monkeypatch)
+    started = threading.Event()
+    at_cleanup: list[list[str]] = []
+    _blocking_attempt(monkeypatch, started, lambda: at_cleanup.append(list(released)))
+    conn = FakeConn()
+    thread, out, _ = _serve_in_thread(
+        lambda: worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn, run=worker.run_turn_sync))
+    assert started.wait(5)
+    server = FakeServer(probe=lambda: list(released))
+    worker.shutdown(server, grace=5, connect=lambda dsn, **kw: conn)
+    thread.join(5)
+    status, body = out["reply"]
+    assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "shutdown", \
+        "a 500 on the last receive would dead-letter the turn for the 10 h sweep"
+    assert [p["cause"] for p in _turn_done_payloads(conn)] == ["shutdown"]
+    assert at_cleanup == [[]], "the held turn must not start while the old CLI is still alive"
+    assert server.seen == ["sess-1"], "released after the attempt's cleanup, before the exit"
+    assert worker._ANSWERED == [], "answered lists the 500s only; this turn was closed with a 200"
+
+
+def test_post_after_shutdown_answers_503(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 5)
+    worker.SHUTDOWN.set()
+    conn = FakeConn()
+    status, body = worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 503 and body["shutdown"] is True
+    stub_status, _ = worker.serve_stub_turn(STUB_TURN, 1, "ok", 0, connect=lambda dsn: conn)
+    assert stub_status == 503
+    assert conn.executed == [], "nothing claimed: the receive is not spent on a row"
+
+
+def test_post_after_shutdown_on_last_receive_closes(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    released = _released(monkeypatch)
+    worker.SHUTDOWN.set()
+    conn = FakeConn(sdk_session_id=SID)
+    status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran"))
+    assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "shutdown"
+    assert any(s.startswith("UPDATE turns SET claimed_at") for s, _ in conn.executed), "the receive is recorded"
+    assert [p["cause"] for p in _turn_done_payloads(conn)] == ["shutdown"]
+    assert released == [] and worker.deferred_sessions() == ["sess-1"], "the release waits for the shutdown thread"
+
+
+def test_shutdown_waits_for_replies_before_exit(monkeypatch):
+    gate, in_claim = threading.Event(), threading.Event()
+
+    class ClaimBlocks(FakeConn):
+        def cursor(self) -> FakeCursor:
+            in_claim.set()
+            gate.wait(5)
+            return super().cursor()
+
+    conn = ClaimBlocks()
+    thread, out, returned = _serve_in_thread(
+        lambda: worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn, run=lambda *a: pytest.fail("ran")))
+    assert in_claim.wait(5), "the POST is inside claim()"
+    server = FakeServer(probe=returned.is_set)
+    stopper = threading.Thread(target=worker.shutdown, args=(server,), kwargs={"grace": 5}, daemon=True)
+    stopper.start()
+    time.sleep(0.3)
+    assert not server.stopped, "the server must not stop while a reply is unwritten"
+    gate.set()
+    stopper.join(5)
+    thread.join(5)
+    assert server.stopped and server.seen is True, "stopped only after the reply was written"
+    status, body = out["reply"]
+    assert status == 500 and body["shutdown"] is True, "SHUTDOWN is re-checked after claim()"
+
+
+def test_shutdown_answers_a_sleeping_stub_500(monkeypatch):
+    """The compose ``sigterm`` case sends a ``sleep`` stub; it must answer like a real turn."""
+    conn = FakeConn()
+    turn = {**STUB_TURN, "message": {"behaviour": "sleep", "seconds": 60}}
+    thread, out, _ = _serve_in_thread(
+        lambda: worker.serve_stub_turn(turn, 1, "sleep", 60, connect=lambda dsn: conn))
+    deadline = time.monotonic() + 5
+    while not worker.inflight_turn_ids() and time.monotonic() < deadline:
+        time.sleep(0.01)
+    started = time.monotonic()
+    server = FakeServer()
+    worker.shutdown(server, grace=5)
+    thread.join(5)
+    assert out["reply"][0] == 500 and out["reply"][1]["shutdown"] is True
+    assert time.monotonic() - started < 2, "the sleep is interrupted, not waited out"
+    assert server.stopped and not _turn_done_payloads(conn)
+
+
+# ── U5 review fixes: shutdown ordering, the close race's release, the sweep ──────
+
+
+def test_a_post_accepted_while_the_server_stops_is_waited_for_and_released(monkeypatch):
+    """serve_forever keeps accepting until it sees the stop request, so a last-receive POST
+    can land after the first drain. Its reply and its deferred release still happen."""
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    released = _released(monkeypatch)
+    late = {**TURN, "turn_id": "turn-late", "session_id": "sess-late"}
+    in_claim = threading.Event()
+
+    class SlowClaim(FakeConn):
+        slowed = False
+
+        def cursor(self) -> FakeCursor:
+            if not self.slowed:
+                self.slowed = True
+                in_claim.set()
+                time.sleep(0.3)
+            return super().cursor()
+
+    late_conn = SlowClaim(sdk_session_id=SID)
+    posts: list[tuple[dict, threading.Event]] = []
+
+    class AcceptingServer(FakeServer):
+        def shutdown(self) -> None:
+            _, out, returned = _serve_in_thread(lambda: worker.serve_real_turn(
+                late, 2, connect=lambda dsn, **kw: late_conn, run=lambda *a: pytest.fail("ran")))
+            assert in_claim.wait(5)
+            posts.append((out, returned))
+            super().shutdown()
+
+    worker.shutdown(AcceptingServer(), grace=5, connect=lambda dsn, **kw: FakeConn())
+    [(out, returned)] = posts
+    assert returned.is_set(), "the shutdown returned before the late POST's reply was written"
+    status, body = out["reply"]
+    assert status == 200 and body["cause"] == "shutdown"
+    assert released == ["sess-late"], "the late close's deferred release was never run"
+    assert worker.deferred_sessions() == []
+
+
+def test_a_deferred_release_whose_attempt_outlives_the_grace_is_skipped(monkeypatch):
+    """The held turn must not start beside the old CLI: an attempt still in its cleanup at
+    the end of the shutdown keeps the row held, for the web tier's rescue."""
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 1)
+    released = _released(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    started, gate = threading.Event(), threading.Event()
+    _blocking_attempt(monkeypatch, started, lambda: gate.wait(10))
+    conn = FakeConn()
+    thread, out, _ = _serve_in_thread(
+        lambda: worker.serve_real_turn(TURN, 1, connect=lambda dsn, **kw: conn, run=worker.run_turn_sync))
+    try:
+        assert started.wait(5)
+        worker.shutdown(FakeServer(), grace=0.3, connect=lambda dsn, **kw: conn)
+        thread.join(5)
+        status, body = out["reply"]
+        assert status == 200 and body["outcome"] == "retries_exhausted"
+        assert released == [], "released while the old attempt was still running"
+        skips = [f for f in logged if f.get("ev") == "deferred_release_skipped"]
+        assert skips == [{"ev": "deferred_release_skipped", "session_id": "sess-1", "turn_id": "turn-1",
+                          "reason": "attempt_running"}]
+        [ev] = [f for f in logged if f.get("ev") == "shutdown"]
+        assert ev["drained"] is False
+    finally:
+        gate.set()
+
+
+def test_deferred_releases_are_bounded_by_their_deadline(monkeypatch):
+    released = _released(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    kwargs: list[dict] = []
+
+    def connect(dsn, **kw):
+        kwargs.append(kw)
+        return FakeConn()
+
+    worker.defer_release("sess-1", "turn-1")
+    worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + 1)
+    assert released == [] and kwargs == [], "a release that cannot finish by the deadline never starts"
+    assert [(f["session_id"], f["reason"]) for f in logged if f.get("ev") == "deferred_release_skipped"] == \
+        [("sess-1", "deadline")]
+
+    seen: list[dict] = []
+    monkeypatch.setattr(worker, "release_queued_turn", lambda conn, sid, **kw: seen.append(kw) or "m")
+    worker.defer_release("sess-2", "turn-2")
+    worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + 60)
+    assert kwargs == [{"connect_timeout": worker.RELEASE_CONNECT_TIMEOUT_S}]
+    # U7: resolving the SQS credentials (an IMDS refresh, at worst) is capped and counted;
+    # U23: so is the queue-lock wait.
+    assert seen == [{"sqs_timeout": worker.RELEASE_SQS_TIMEOUT_S,
+                     "credentials_timeout": worker.RELEASE_CREDENTIALS_TIMEOUT_S,
+                     "lock_timeout": worker.RELEASE_LOCK_TIMEOUT_S}]
+    assert (worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_CREDENTIALS_TIMEOUT_S
+            + worker.RELEASE_LOCK_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S < worker.RELEASE_BUDGET_S), \
+        "otherwise every release after a timed-out drain is skipped"
+
+    for sid, uncounted in (("sess-3", worker.RELEASE_CREDENTIALS_TIMEOUT_S),
+                           ("sess-4", worker.RELEASE_LOCK_TIMEOUT_S)):
+        worker.defer_release(sid, sid)
+        caps = (worker.RELEASE_CONNECT_TIMEOUT_S + worker.RELEASE_CREDENTIALS_TIMEOUT_S
+                + worker.RELEASE_LOCK_TIMEOUT_S + worker.RELEASE_SQS_TIMEOUT_S)
+        worker.run_deferred_releases(connect=connect, deadline=time.monotonic() + caps - uncounted + 0.01)
+    assert [f["session_id"] for f in logged if f.get("ev") == "deferred_release_skipped"] == \
+        ["sess-1", "sess-3", "sess-4"], "the deadline check counts the credentials and lock caps too"
+
+
+def test_an_attempt_stopped_by_shutdown_answers_as_a_shutdown(monkeypatch):
+    """SHUTDOWN can be seen by the attempt's own re-check before request_shutdown wakes the
+    handler; the handler then gets ('error', WorkerShutdown), which is still a shutdown."""
+    def stopped(turn, rc, sid):
+        raise worker.WorkerShutdown("worker shutting down before the attempt started")
+
+    status, body = worker.serve_real_turn(TURN, 1, connect=lambda dsn: FakeConn(), run=stopped)
+    assert (status, body) == (500, worker._shutdown_body("turn-1"))
+    assert worker._ANSWERED == ["turn-1"]
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 1)
+    released = _released(monkeypatch)
+    conn = FakeConn()
+    status, body = worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn, run=stopped)
+    assert status == 200 and body["cause"] == "shutdown"
+    assert [p["cause"] for p in _turn_done_payloads(conn)] == ["shutdown"]
+    assert released == [] and worker.deferred_sessions() == ["sess-1"]
+
+
+def test_shutdown_before_the_attempt_body_starts_spawns_nothing(monkeypatch):
+    entered: list[int] = []
+
+    async def body(turn, rc, sid, *, agents=None):
+        entered.append(1)
+        return {}
+
+    monkeypatch.setattr(worker, "_run_turn", body)
+    worker.SHUTDOWN.set()
+    entry = worker.Inflight("turn-1")
+    kind, value = worker.await_attempt(entry, lambda: worker.run_turn_sync(TURN, 1, SID))
+    assert kind == "error" and isinstance(value, worker.WorkerShutdown)
+    assert "before the attempt started" in str(value)
+    assert entered == [], "the CLI would spawn after the handler already answered"
+    assert entry.cancel is not None, "the scope is registered before SHUTDOWN is checked"
+
+
+def test_the_last_receive_close_that_loses_the_race_still_releases(monkeypatch):
+    """The attempt closed the row, then its release raised: no redelivery follows a last
+    receive, so this one releases -- and does not claim a retries_exhausted it never wrote."""
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 5)
+    released = _released(monkeypatch)
+    conn = FakeConn()
+
+    def closed_then_raised(turn, rc, sid):
+        conn.completed_at, conn.outcome = "2026-09-30T10:00:00+00:00", "ok"
+        raise RuntimeError("release connection refused")
+
+    status, body = worker.serve_real_turn(TURN, 5, connect=lambda dsn: conn, run=closed_then_raised)
+    assert status == 200 and body["already_completed"] is True
+    assert body["outcome"] == "ok", "the row's own outcome, not retries_exhausted"
+    assert not _turn_done_payloads(conn)
+    assert released == ["sess-1"]
+
+
+def test_a_race_lost_or_completed_last_receive_after_shutdown_defers_the_release(monkeypatch):
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    released = _released(monkeypatch)
+    worker.SHUTDOWN.set()
+    done = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: done, run=lambda *a: pytest.fail("ran"))
+    assert status == 200 and body["already_completed"] is True
+    assert released == [] and worker.deferred_sessions() == ["sess-1"]
+    with worker._INFLIGHT_LOCK:
+        worker._DEFERRED_RELEASES.clear()
+    lost = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    lost.outcome = "ok"
+    status, body = worker.close_on_last_receive(TURN, 2, connect=lambda dsn: lost, cause="shutdown",
+                                                sdk_session_id=None, defer=True)
+    assert status == 200 and body["already_completed"] is True and body["outcome"] == "ok"
+    assert worker.deferred_sessions() == ["sess-1"] and worker._ANSWERED == []
+
+
+def test_the_release_claim_dates_the_row_for_the_retention_backstop():
+    """A message held for days, released by a sweep close, must not look expired to the
+    next sweep_query: the claim stamps claimed_at, which the backstop reads first."""
+    conn = FakeConn(queued_body={"turn_id": "held-1"})
+    worker.take_queued_turn(conn, "sess-1")
+    [claim] = [s for s, _ in conn.executed if "RETURNING message" in s]
+    assert claim.startswith("UPDATE turns SET outcome = NULL, claimed_at = now() WHERE turn_id = (")
+    backstop, _ = worker.sweep_query(0, 0, 345600, [])
+    assert "COALESCE(t.claimed_at, t.enqueued_at) < now()" in " ".join(backstop.split())
+
+
+def test_the_sweep_leaves_an_unclaimed_turns_tokens_alone(monkeypatch):
+    """No claim, no high-water mark: TURN_USAGE_SQL would sum the whole session onto it."""
+    _released(monkeypatch)
+    conn = FakeConn(usage=(10, 0, 0, 5))
+    conn.sweep_rows = [("turn-never", "sess-9", "proj-9", 0, SID, None)]
+    assert worker.sweep_once(connect=lambda dsn: conn, max_retries=0, visibility_s=0,
+                             retention_s=345600) == ["turn-never"]
+    assert not any(s.startswith("SELECT sum((u->>'input_tokens')") for s, _ in conn.executed)
+    [(_, params)] = [(s, p) for s, p in conn.executed if s.startswith("UPDATE turns SET completed_at")]
+    assert params[4:8] == (None, None, None, None), "the token columns stay NULL"
+    assert "t.entries_seq_before" in worker.SWEEP_SELECT
+
+
+def test_release_queued_turn_is_reached_only_through_release_next_held():
+    """D3: every release site goes through the one guarded helper. A site that called
+    release_queued_turn directly would enqueue beside a running turn."""
+    tree = ast.parse(Path(worker.__file__).read_text(encoding="utf-8"))
+    parents: dict[ast.AST, ast.AST] = {}
+    for node in ast.walk(tree):
+        for child in ast.iter_child_nodes(node):
+            parents[child] = node
+
+    def enclosing(node: ast.AST) -> str | None:
+        while node in parents:
+            node = parents[node]
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                return node.name
+        return None
+
+    uses = [enclosing(n) for n in ast.walk(tree)
+            if (isinstance(n, ast.Name) and n.id == "release_queued_turn")
+            or (isinstance(n, ast.Attribute) and n.attr == "release_queued_turn")]
+    assert uses == ["release_next_held"], f"release_queued_turn referenced from {uses}"
+
+
+def test_a_redelivered_stub_ok_on_a_completed_turn_writes_no_second_turn_done():
+    conn = FakeConn(completed_at="2026-09-30T10:00:00+00:00")
+    status, body = worker.serve_stub_turn(STUB_TURN, 2, "ok", 0, connect=lambda dsn: conn)
+    assert status == 200 and body["seq"] is None
+    assert _turn_done_payloads(conn) == []
+    assert not any(s.startswith("UPDATE turns SET completed_at") for s, _ in conn.executed)
+
+
+def test_the_sweep_thread_runs_sweep_once_with_the_configured_paths(monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    calls: list[dict] = []
+    signature = inspect.signature(worker.sweep_once)
+
+    def recorder(**kw):
+        signature.bind(**kw)  # a call the real sweep_once would refuse fails here too
+        calls.append(kw)
+        worker.SHUTDOWN.set()
+        return []
+
+    monkeypatch.setattr(worker, "sweep_once", recorder)
+    thread = worker.start_sweep(interval=0.01, max_retries=5, retention_s=345600)
+    try:
+        thread.join(5)
+        assert not [f for f in logged if f.get("ev") == "sweep_failed"], logged
+        [kw] = calls
+        assert (kw.get("max_retries"), kw.get("retention_s")) == (5, 345600)
+        assert kw.get("visibility_s") is None, \
+            "visibility_s falls back to SQSD_VISIBILITY_TIMEOUT_S; nothing overrides it"
+        assert kw.get("connect") is None
+    finally:
+        worker.SHUTDOWN.set()
+        thread.join(1)
+
+
+# ── U10: readiness, the schema thread, TMPDIR, transcript_lost ───────────────────
+
+
+class SilentPostgres:
+    """A local listener that accepts and never answers: a blackholed Postgres, no
+    network. ``accepted`` counts the connections the probes opened."""
+
+    hang_up = False
+
+    def __init__(self) -> None:
+        self.sock = socket.socket()
+        self.sock.bind(("127.0.0.1", 0))
+        self.sock.listen(16)
+        self.sock.settimeout(0.05)
+        self.port = self.sock.getsockname()[1]
+        self.accepted: list[socket.socket] = []
+        self.stopped = threading.Event()
+        threading.Thread(target=self._accept, daemon=True).start()
+
+    def _accept(self) -> None:
+        while not self.stopped.is_set():
+            try:
+                conn, _ = self.sock.accept()
+            except (TimeoutError, socket.timeout):
+                continue
+            except OSError:
+                return
+            if self.hang_up:
+                conn.close()
+            else:
+                self.accepted.append(conn)
+
+    @property
+    def dsn(self) -> str:
+        return f"postgresql://probeuser:secretpw@127.0.0.1:{self.port}/proto"
+
+    def close(self) -> None:
+        self.stopped.set()
+        self.sock.close()
+        for conn in self.accepted:
+            conn.close()
+
+
+@pytest.fixture
+def silent_pg():
+    pg = SilentPostgres()
+    yield pg
+    pg.close()
+
+
+class RefusingPostgres(SilentPostgres):
+    """A local listener that hangs up on every connection at once: a Postgres that is down
+    and says so fast on every OS. Port 1 is not that on Windows, which retries a refused
+    loopback connect for about two seconds, past ``READY_TIMEOUT_S``."""
+
+    hang_up = True
+
+
+@pytest.fixture
+def refused_pg():
+    pg = RefusingPostgres()
+    yield pg
+    pg.close()
+
+
+
+@contextlib.contextmanager
+def _serving():
+    """The worker's real Handler on a ThreadingHTTPServer, port 0."""
+    server = ThreadingHTTPServer(("127.0.0.1", 0), worker.Handler)
+    # serve_forever's default 0.5 s poll is what shutdown() waits out on every exit.
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True)
+    thread.start()
+    try:
+        yield server.server_address[1]
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def _get_healthz(port: int) -> tuple[int, dict, str]:
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    try:
+        conn.request("GET", "/healthz")
+        response = conn.getresponse()
+        raw = response.read().decode("utf-8")
+    finally:
+        conn.close()
+    return response.status, json.loads(raw), raw
+
+
+def _healthz() -> tuple[int, dict, str]:
+    with _serving() as port:
+        return _get_healthz(port)
+
+
+LOCAL_CHECKS = ("schema", "agents", "cwd", "tmpdir", "transcript")
+
+
+def _ready(monkeypatch, tmp_path, *, postgres_ok: bool = True) -> None:
+    """Every check but the one under test passing. ``TMPDIR`` is left as the run has it."""
+    monkeypatch.setattr(worker, "_AGENTS", {"gps-mentor": object()})
+    monkeypatch.setattr(worker, "_AGENTS_ERROR", None)
+    monkeypatch.setattr(worker, "_SCHEMA_ERROR", None)
+    monkeypatch.setattr(worker, "_TRANSCRIPT_ERROR", None)
+    cwd = tmp_path / "project"
+    cwd.mkdir(exist_ok=True)
+    monkeypatch.setattr(worker, "WORKER_CWD", str(cwd))
+    if postgres_ok:
+        monkeypatch.setattr(worker, "probe_postgres", lambda dsn, timeout_s=None: {"ok": True})
+
+
+def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path, refused_pg):
+    _ready(monkeypatch, tmp_path, postgres_ok=False)
+    monkeypatch.setattr(worker, "PG_DSN", refused_pg.dsn)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    status, body, raw = _healthz()
+    assert status == 503 and body["ok"] is False
+    assert body["checks"]["postgres"] == {"ok": False, "error": "OperationalError"}
+    assert all(body["checks"][name] == {"ok": True} for name in LOCAL_CHECKS), body
+    for secret in ("127.0.0.1", "probeuser", "secretpw"):
+        assert secret not in raw, f"{secret} leaked into the unauthenticated body"
+    [line] = [f for f in logged if f.get("ev") == "health" and f.get("check") == "postgres"]
+    assert line["ok"] is False and "secretpw" not in line["error"] and "probeuser" not in line["error"]
+
+
+def test_healthz_is_503_within_the_deadline_against_a_silent_postgres(monkeypatch, tmp_path, silent_pg):
+    _ready(monkeypatch, tmp_path, postgres_ok=False)
+    monkeypatch.setattr(worker, "PG_DSN", silent_pg.dsn)
+    monkeypatch.setattr(worker, "READY_TIMEOUT_S", 0.3)
+    with _serving() as port:
+        started = time.monotonic()
+        status, body, _ = _get_healthz(port)
+        elapsed = time.monotonic() - started
+    assert status == 503 and body["checks"]["postgres"] == {"ok": False, "error": "TimeoutError"}
+    assert elapsed < 0.8, f"{elapsed:.2f}s: psycopg's own connect_timeout decided, not the race"
+
+
+def test_concurrent_healthz_share_one_probe(monkeypatch, tmp_path, silent_pg):
+    _ready(monkeypatch, tmp_path, postgres_ok=False)
+    monkeypatch.setattr(worker, "PG_DSN", silent_pg.dsn)
+    monkeypatch.setattr(worker, "READY_TIMEOUT_S", 0.3)
+    results: list[tuple[int, dict, str]] = []
+    with _serving() as port:
+        threads = [threading.Thread(target=lambda: results.append(_get_healthz(port))) for _ in range(3)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(5)
+        accepted = len(silent_pg.accepted)
+    assert [r[0] for r in results] == [503, 503, 503]
+    assert all(r[1]["checks"]["postgres"]["error"] == "TimeoutError" for r in results)
+    assert accepted == 1, f"{accepted} connections: a stalled host must cost one, not one per probe"
+
+
+def test_a_probe_stuck_after_the_handshake_holds_the_one_slot(monkeypatch):
+    """A host that goes silent after the handshake (failover, partition) leaves the loser
+    blocked in recv past the race; later /healthz calls must not open a connection each."""
+    monkeypatch.setattr(worker, "log", lambda **f: None)
+    release = threading.Event()
+    entered: list[int] = []
+
+    def stuck(dsn):
+        entered.append(1)
+        release.wait(10)
+
+    monkeypatch.setattr(worker, "_probe_postgres_once", stuck)
+    for _ in range(3):
+        started = time.monotonic()
+        assert worker.probe_postgres("dsn", timeout_s=0.1) == {"ok": False, "error": "TimeoutError"}
+        assert time.monotonic() - started < 0.5
+    assert len(entered) == 1, f"{len(entered)} probes: a stuck one must hold the slot"
+    release.set()
+    deadline = time.monotonic() + 5
+    while worker._READY_FLIGHT is not None and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert worker._READY_FLIGHT is None, "the slot frees once the stuck thread exits"
+    assert worker.probe_postgres("dsn", timeout_s=1) == {"ok": True}
+    assert len(entered) == 2
+
+
+def test_the_probe_connection_bounds_a_silent_host_after_the_handshake(monkeypatch):
+    seen: dict = {}
+
+    class Refused(Exception):
+        pass
+
+    def connect(dsn, **kwargs):
+        seen.update(kwargs)
+        raise Refused("stop here")
+
+    monkeypatch.setattr(worker.psycopg, "connect", connect)
+    with pytest.raises(Refused):
+        worker._probe_postgres_once("dsn")
+    assert seen.get("tcp_user_timeout") and seen.get("keepalives") == 1, seen
+
+
+def _break_agents(monkeypatch, tmp_path):
+    monkeypatch.setattr(worker, "_AGENTS", None)
+    monkeypatch.setattr(worker, "_AGENTS_ERROR", "plugin agents ['gps-mentor'] missing under /x/agents")
+
+
+@pytest.mark.parametrize("name, apply, label", [
+    ("agents", _break_agents, "mismatch"),
+    ("cwd", lambda mp, tp: mp.setattr(worker, "WORKER_CWD", str(tp / "missing")), "ENOENT"),
+    ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "pending"), "pending"),
+    ("schema", lambda mp, tp: mp.setattr(worker, "_SCHEMA_ERROR", "schema: behind 009_grant_session.sql"),
+     "schema: behind 009_grant_session.sql"),
+    ("tmpdir", lambda mp, tp: mp.setenv("TMPDIR", str(tp / "missing")), "ENOENT"),
+    ("transcript", lambda mp, tp: mp.setattr(worker, "_TRANSCRIPT_ERROR", "no_entries"), "no_entries"),
+], ids=["agents-none", "cwd-missing", "schema-pending", "schema-behind", "tmpdir-missing", "transcript-lost"])
+def test_healthz_is_503_when_prepare_failed(monkeypatch, tmp_path, name, apply, label):
+    _ready(monkeypatch, tmp_path)
+    apply(monkeypatch, tmp_path)
+    status, body, _ = _healthz()
+    assert status == 503 and body["ok"] is False
+    assert body["checks"][name] == {"ok": False, "error": label}
+    others = {k: v for k, v in body["checks"].items() if k != name}
+    assert set(others) | {name} == {"postgres", *LOCAL_CHECKS}
+    assert all(v == {"ok": True} for v in others.values()), body
+
+
+@pytest.mark.parametrize("transient", [
+    lambda: worker.psycopg.OperationalError("connection refused"),
+], ids=["refused"])
+def test_schema_thread_retries_until_postgres_answers(monkeypatch, tmp_path, transient):
+    _ready(monkeypatch, tmp_path)
+    monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
+    monkeypatch.setattr(worker, "SCHEMA_BACKOFF_FIRST_S", 0.0)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    seen: list[str | None] = []
+
+    def flaky(dsn, **kw):
+        seen.append(worker._SCHEMA_ERROR)
+        assert kw.get("connect_timeout"), "an attempt inside connect must be bounded"
+        if len(seen) < 3:
+            raise transient()
+        return ["001_schema.sql"]
+
+    monkeypatch.setattr(worker, "_verify_schema_once", flaky)
+    worker.schema_loop("postgresql://x@127.0.0.1:1/p")
+    assert seen == ["pending", "pending", "pending"] and worker._SCHEMA_ERROR is None
+    assert [f.get("retrying") for f in logged] == [True, None], "one line per change"
+    status, body, _ = _healthz()
+    assert status == 200 and body["checks"]["schema"] == {"ok": True}
+
+    # A role that cannot read the ledger (or a database not migrated yet) is reported and
+    # checked again: the check is a read, so it heals once someone grants or migrates.
+    monkeypatch.setattr(worker, "_SCHEMA_ERROR", "pending")
+    logged.clear()
+    calls: list[str | None] = []
+    during: list[tuple[int, dict]] = []
+
+    def denied(dsn, **kw):
+        calls.append(worker._SCHEMA_ERROR)
+        if len(calls) > 5:
+            worker.SHUTDOWN.set()  # a loop that never succeeds ends here, so the assert fails
+        if len(calls) < 3:
+            raise worker.psycopg.errors.InsufficientPrivilege("permission denied for table schema_migrations")
+        status, body, _ = _healthz()
+        during.append((status, body["checks"]["schema"]))
+        return ["001_schema.sql"]
+
+    monkeypatch.setattr(worker, "_verify_schema_once", denied)
+    worker.schema_loop("postgresql://x@127.0.0.1:1/p")
+    assert calls == ["pending", "42501", "42501"], "a failing check keeps checking"
+    assert during == [(503, {"ok": False, "error": "42501"})], "the label is visible while it retries"
+    assert worker._SCHEMA_ERROR is None
+    assert [f.get("retrying") for f in logged if f.get("step") == "schema"] == [True, None], \
+        "one line per change"
+
+
+def test_the_schema_thread_stops_backing_off_on_shutdown(monkeypatch):
+    monkeypatch.setattr(worker, "log", lambda **f: None)
+    monkeypatch.setattr(worker, "SCHEMA_BACKOFF_FIRST_S", 30.0)
+    monkeypatch.setattr(worker, "_verify_schema_once",
+                        lambda dsn, **kw: (_ for _ in ()).throw(worker.psycopg.OperationalError("refused")))
+    thread = worker.start_schema_thread()
+    worker.SHUTDOWN.set()
+    thread.join(2)
+    assert not thread.is_alive(), "the backoff is SHUTDOWN.wait, not time.sleep"
+    assert thread.daemon, "a thread retrying a down Postgres must not hold the interpreter open"
+    assert worker._SCHEMA_ERROR == "pending"
+
+
+def test_check_tmpdir_writes_rather_than_asks(monkeypatch, tmp_path):
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+
+    def full(*a, **k):
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+    monkeypatch.setattr(tempfile, "mkdtemp", full)
+    assert worker.os.access(str(tmp_path), worker.os.W_OK), "os.access says yes here"
+    assert worker.check_tmpdir() == "ENOSPC"
+
+
+@pytest.mark.parametrize("trailing", ["", "/"], ids=["plain", "trailing-slash"])
+def test_check_tmpdir_passes_a_writable_tmpdir(monkeypatch, tmp_path, trailing):
+    monkeypatch.setenv("TMPDIR", str(tmp_path) + trailing)
+    monkeypatch.setattr(tempfile, "tempdir", None)  # Python's choice, recomputed from TMPDIR
+    assert worker.check_tmpdir() is None
+    assert list(tmp_path.iterdir()) == [], "the probe directory is removed"
+
+
+def test_check_tmpdir_labels_each_bad_value(monkeypatch, tmp_path):
+    a_file = tmp_path / "file"
+    a_file.write_text("x", encoding="utf-8")
+    for value, label in (("relative/dir", "not_absolute"), (str(tmp_path / "missing"), "ENOENT"),
+                         (str(a_file), "ENOTDIR")):
+        monkeypatch.setenv("TMPDIR", value)
+        assert worker.check_tmpdir() == label, value
+
+
+def test_healthz_is_200_when_every_check_passes(monkeypatch, tmp_path):
+    _ready(monkeypatch, tmp_path)
+    status, body, _ = _healthz()
+    assert status == 200 and body == {"ok": True, "checks": {n: {"ok": True} for n in ("postgres", *LOCAL_CHECKS)}}
+    # fail -> ok: the next probe that succeeds answers 200 again; one log line per change.
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    answers = iter([{"ok": False, "error": "OperationalError"}, {"ok": True}])
+
+    def flapping(dsn, timeout_s=None):
+        check = next(answers)
+        worker.note_check("postgres", check)
+        return check
+
+    monkeypatch.setattr(worker, "probe_postgres", flapping)
+    assert _healthz()[0] == 503 and _healthz()[0] == 200
+    changes = [(f["check"], f["ok"]) for f in logged if f.get("ev") == "health"]
+    assert changes == [("postgres", False), ("postgres", True)], "unchanged checks write nothing"
+
+
+def test_healthz_never_answers_500(monkeypatch):
+    monkeypatch.setattr(worker, "readiness", lambda: 1 / 0)
+    monkeypatch.setattr(worker, "log", lambda **f: None)
+    status, body, _ = _healthz()
+    assert status == 503 and body == {"ok": False}
+
+
+def test_a_model_turn_that_appended_nothing_closes_transcript_lost(turn_env, monkeypatch, tmp_path):
+    released = _released(monkeypatch)
+    turn_env["appended"] = 0
+    with pytest.raises(worker.TranscriptLost) as exc:
+        _run(turn_env, _good())
+    [done] = _turn_done_payloads(turn_env["conn"])
+    assert done["outcome"] == "transcript_lost" and exc.value.summary["outcome"] == "transcript_lost"
+    assert exc.value.summary["seq"] is not None and exc.value.summary["entries_appended"] == 0
+    assert turn_env["conn"].outcome == "transcript_lost", "closed before it fails"
+    assert released == ["sess-1"], "a held message is released through release_next_held"
+    assert worker._TRANSCRIPT_ERROR == "no_entries"
+    _ready(monkeypatch, tmp_path)
+    monkeypatch.setattr(worker, "_TRANSCRIPT_ERROR", "no_entries")
+    assert worker.readiness()["checks"]["transcript"] == {"ok": False, "error": "no_entries"}
+    # The next model turn that appends entries clears it.
+    turn_env["appended"], turn_env["conn"] = 1, FakeConn(usage=(10, 0, 0, 5))
+    _run(turn_env, _good())
+    assert worker._TRANSCRIPT_ERROR is None
+
+
+def _tool_call_decisions(conn: FakeConn) -> list[str]:
+    return [p[6] for s, p in conn.executed if s.startswith("INSERT INTO tool_calls")]
+
+
+def _four_calls() -> list[Any]:
+    calls = [ToolCall() for _ in range(worker.TRANSCRIPT_LOST_AFTER_TOOL_CALLS + 1)]
+    return [_init(), *calls, _text("x"), _result(num_turns=2)]
+
+
+def test_halt_denies_the_fourth_tool_call_when_nothing_was_appended(turn_env, monkeypatch):
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    turn_env["appended"] = 0
+    with pytest.raises(worker.TranscriptLost) as exc:
+        _run(turn_env, _four_calls())
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow", "allow", "allow", "halt"]
+    assert exc.value.summary["outcome"] == "transcript_lost"
+    assert _turn_done_payloads(turn_env["conn"])[0]["outcome"] == "transcript_lost"
+    [halt] = [f for f in logged if f.get("ev") == "halt"]
+    assert halt["reason"] == worker.TRANSCRIPT_LOST_REASON
+
+    turn_env["appended"], turn_env["conn"] = 1, FakeConn(usage=(10, 0, 0, 5))
+    summary = _run(turn_env, _four_calls())
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow"] * 4 and summary["outcome"] == "ok"
+
+
+def test_the_transcript_halt_sits_before_a_spend_clause_that_raises(turn_env, monkeypatch):
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+
+    def raising(conn, sid):
+        raise TypeError("unsupported operand type(s) for *: 'decimal.Decimal' and 'float'")
+
+    monkeypatch.setattr(worker, "session_spend_usd", raising)
+    turn_env["appended"] = 0
+    with pytest.raises(worker.TranscriptLost):
+        _run(turn_env, _four_calls())
+    assert _tool_call_decisions(turn_env["conn"])[-1] == "halt"
+
+
+class LateAppend:
+    """A sentinel: the store's append lands now, after the fourth call, before the result."""
+
+
+def _late_append_turn(turn_env, monkeypatch, store: FakeSessionStore) -> tuple[int, dict, FakeConn]:
+    monkeypatch.setattr(worker, "PgSessionStore", lambda dsn, project_id: store)
+
+    class LateAppendClient(FakeClient):
+        async def receive_response(self):
+            async for m in super().receive_response():
+                if isinstance(m, LateAppend):
+                    store.calls["append"] = max(store.calls["append"], 1)
+                    store.calls["entries_appended"] = 1
+                    continue
+                yield m
+
+    calls = [ToolCall() for _ in range(worker.TRANSCRIPT_LOST_AFTER_TOOL_CALLS + 1)]
+    stream = [_init(), *calls, LateAppend(), _text("x"), _result(num_turns=2)]
+    conn = turn_env["conn"]
+    conn.sdk_session_id = SID
+    turn_env["client"] = LateAppendClient(stream, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    monkeypatch.setattr(worker, "_AGENTS", {"gps-mentor": object()})
+    status, body = worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn, run=worker.run_turn_sync)
+    return status, body, conn
+
+
+def test_a_halt_whose_entries_land_later_still_closes_transcript_lost(turn_env, monkeypatch):
+    store = FakeSessionStore(entries=False, appended=0)
+    status, body, conn = _late_append_turn(turn_env, monkeypatch, store)
+    assert _tool_call_decisions(conn)[-1] == "halt"
+    assert status == 500 and body["error"] == body["outcome"] == "transcript_lost"
+    assert store.calls["entries_appended"] == 1, "the append landed; the halt's reason still decides"
+    assert _turn_done_payloads(conn)[0]["outcome"] == "transcript_lost"
+    assert worker._TRANSCRIPT_ERROR == "no_entries"
+
+
+def test_an_append_still_in_flight_does_not_halt_the_turn(turn_env, monkeypatch):
+    store = FakeSessionStore(entries=False, appended=0, attempted=1)
+    status, body, conn = _late_append_turn(turn_env, monkeypatch, store)
+    assert _tool_call_decisions(conn) == ["allow"] * 4, "a slow append is not a lost transcript"
+    assert status == 200 and body["outcome"] != "transcript_lost", body
+    assert _turn_done_payloads(conn)[0]["outcome"] != "transcript_lost"
+    assert worker._TRANSCRIPT_ERROR is None
+
+
+def _lost_turn(turn_env, monkeypatch) -> FakeConn:
+    monkeypatch.setattr(worker, "_AGENTS", {"gps-mentor": object()})
+    turn_env["appended"] = 0
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    conn = turn_env["conn"]
+    conn.sdk_session_id = SID
+    return conn
+
+
+def test_serve_real_turn_answers_500_transcript_lost_and_the_redelivery_200(turn_env, monkeypatch):
+    conn = _lost_turn(turn_env, monkeypatch)
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 0)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    status, body = worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn)
+    assert status == 500 and body["ok"] is False
+    assert body["error"] == body["outcome"] == "transcript_lost" and body["turn_id"] == "turn-1"
+    lines = [f for f in logged if f.get("ev") == "turn" and f.get("status") == 500]
+    assert [f["error"] for f in lines] == ["transcript_lost"], lines
+    assert conn.completed_at is not None, "closed by the attempt, so the redelivery cannot re-run it"
+    status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: conn)
+    assert status == 200 and body["already_completed"] is True
+    assert turn_env["client"].queried == ["hello"], "the redelivery ran no model"
+
+
+def test_transcript_lost_on_the_last_receive_answers_200_already_completed(turn_env, monkeypatch):
+    conn = _lost_turn(turn_env, monkeypatch)
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 1)
+    status, body = worker.serve_real_turn(TURN, 1, connect=lambda dsn: conn)
+    assert status == 200 and body["already_completed"] is True and body["outcome"] == "transcript_lost"
+
+
+def test_a_synthetic_zero_turn_result_is_not_transcript_lost(turn_env):
+    turn_env["appended"] = 0
+    with pytest.raises(worker.ResumeFailure):
+        _run_passes(turn_env, [
+            [_init(), _result(num_turns=0, text=SYNTHETIC)],
+            [_result(num_turns=0, text=SYNTHETIC)],
+        ], receive_count=2)
+    assert worker._TRANSCRIPT_ERROR is None, "0a's case, not D6's"
+
+
+def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
+    """Postgres sums ``bigint`` to ``numeric``; psycopg hands that back as ``Decimal``."""
+    _mid_run(monkeypatch)
+    sums = (Decimal(1_000_000), Decimal(0), Decimal(0), Decimal(1_000_000))
+    spent = worker.session_spend_usd(FakeConn(usage=sums), "sdk-1")
+    assert isinstance(spent, float)
+    assert spent == pytest.approx(worker.PRICE_PER_MTOK["input"] + worker.PRICE_PER_MTOK["output"])
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", spent / 2)
+    turn_env["conn"] = FakeConn(usage=sums)
+    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == options.TERMINAL_BUDGET and summary["limit"] == "spend"
+    [halt] = [f for f in logged if f.get("ev") == "halt"]
+    assert halt["reason"] == options.SPEND_CAP_REASON.format(cap=spent / 2)
+    assert not [f for f in logged if f.get("ev") == "spend_estimate_failed"]
+
+
+# ── the `delivered` exit ──────────────────────────────────────────────────────────
 #
-# CONTINUE_REASON says "invoke the next GPS sub-skill now", never names the router,
-# and rides the Stop hook -- which fires only at a voluntary yield. Derived from the
-# committed e2e corpus (`make e2e-narration-figures`): 31.6% of runs (61 of 193)
-# NEVER yield, so a contract on that carrier is undelivered in a third of runs.
-# `build_worker_options` is rebuilt per attempt, so an append here reaches every turn.
-
-def test_a_resumed_turn_carries_the_router_instruction(tmp_path):
-    opts = _options(config_dir=str(tmp_path), resume="sess-1")
-    assert options.ROUTER_REENTRY in opts.system_prompt["append"]
+# A bounded request -- "create a plan but leave it at that", a single lookup, "where are
+# we?" -- must stop at its deliverable rather than running on to the proof, the nudge cap
+# or the spend bound. `delivered` is how a turn says it did the thing that was asked and
+# stopped on purpose. It is a NEW value, not `ok`: `ok` means "ended with no terminal
+# reason" and chatEvents renders it as nothing, while a delivery has something to report.
 
 
-def test_the_opening_turn_does_not_carry_it(tmp_path):
-    """The web tier prefixes a session's FIRST message with OPENING_TURN so
-    init-project runs and consumes the objective. There is no project to route yet,
-    and a routing instruction there is a second, competing 'what to do first' on
-    turn 1 of every web session. `resume is None` is that turn."""
-    opts = _options(config_dir=str(tmp_path))
-    assert opts.resume is None
-    assert options.ROUTER_REENTRY not in opts.system_prompt["append"]
-
-
-def test_the_instruction_bounds_itself_to_research_requests(tmp_path):
-    """Without the scope clause this makes every message a job -- the parent plan
-    pins it: "'Where are we?' is a bounded request whose deliverable is the answer.
-    Whatever re-enters the router must respect this, or every question becomes a
-    job." The clause ships now because the WORDING reaches 100% of turns now, even
-    though the enforcement arm is deferred."""
-    lowered = options.ROUTER_REENTRY.lower()
-    assert "research" in lowered
-    assert "status question" in lowered and "not re-routed" in lowered
-    assert "bounded" in lowered
-
-
-def test_the_standing_project_note_survives_the_append(tmp_path):
-    """The router instruction is added to the platform note, not instead of it."""
-    append = _options(config_dir=str(tmp_path), resume="sess-1").system_prompt["append"]
-    assert "projectPath '/project'" in append and "narration_guidance" in append
-    assert append.index("projectPath") < append.index(options.ROUTER_REENTRY[:24])
-
-
-# --- R1 acceptance: which callee a Skill/Task row names ---
-#
-# "The router entered" was unrecordable. The tool_calls row carries tool_name,
-# input_path, decision, tool_use_id, and input_path() read only file-path keys, so
-# every skill invocation was an indistinguishable tool_name='Skill' row and no
-# corpus predicate could tell a routed run from an unrouted one.
-
-def test_a_skill_call_records_which_skill():
-    assert options.input_path("Skill", {"skill": "research"}, cwd="/w") == "research"
-
-
-def test_a_skill_call_falls_back_to_name():
-    """The SDK has spelled this key both ways; skill_runner.py already codifies the
-    fallback. A moved key silently yielding None is the invisible failure it
-    documents."""
-    assert options.input_path("Skill", {"name": "research"}, cwd="/w") == "research"
-
-
-def test_an_agent_spawn_records_its_subagent_type():
-    assert options.input_path("Task", {"subagent_type": "record-extractor"}, cwd="/w") == "record-extractor"
-    assert options.input_path("Agent", {"subagent_type": "gps-mentor"}, cwd="/w") == "gps-mentor"
-
-
-def test_a_skill_call_naming_nothing_is_none_not_a_guess():
-    assert options.input_path("Skill", {}, cwd="/w") is None
-    assert options.input_path("Skill", {"skill": ""}, cwd="/w") is None
-    assert options.input_path("Skill", {"skill": 7}, cwd="/w") is None
-
-
-def test_the_callee_keys_do_not_leak_into_other_tools():
-    """`name` is a common key. Only Skill/Task/Agent may read it, or an unrelated
-    tool carrying a `name` argument starts writing a bogus path into the ledger."""
-    assert options.input_path("Read", {"name": "research"}, cwd="/w") is None
-    assert options.input_path("Bash", {"skill": "research"}, cwd="/w") is None
-
-
-def test_a_file_path_still_wins_for_file_tools():
-    assert options.input_path("Read", {"file_path": "/a/b.txt"}, cwd="/w") == "/a/b.txt"
-    assert options.input_path("Grep", {"pattern": "x"}, cwd="/w") == "/w"
-
-
-# --- R4: the `delivered` exit (ruled 2026-09-29: a second dedicated tool) ---
-#
-# The hook vetoes every stop until project.status is 'completed', so a bounded
-# request -- "create a plan but leave it at that" (#2932), a single christening
-# lookup (#2921), "where are we?" -- runs to the proof, the nudge cap or $35.
-# `delivered` is how a turn says it did the thing that was asked and stopped on
-# purpose. It is a NEW value, not `ok`: `ok` means "a turn ended with no terminal
-# reason" and chatEvents renders it as nothing, while a delivery has something to
-# report.
-
-def test_a_delivered_turn_does_not_continue():
-    from app.agent.continue_policy import should_continue_run
-    assert should_continue_run(
-        research={"project": {"status": "active"}}, nudges_used=0, max_nudges=60,
-        tool_count=1, tool_count_at_last_nudge=0, delivered=True,
-    ) is False
-
-
-def test_delivered_is_the_reason_and_sits_after_decision_before_completed():
-    """Clause position is semantics, not detail. A delivery arriving with a patron
-    message already QUEUED reads as `queued` -- the researcher moved on -- and a
-    delivery on a COMPLETED project still reads as delivered, because the request
-    was met before the project finished."""
-    from app.agent.continue_policy import (
-        TERMINAL_DELIVERED, TERMINAL_DECISION, TERMINAL_QUEUED, terminal_reason,
-    )
-    done = {"project": {"status": "completed"}}
-    active = {"project": {"status": "active"}}
-    assert terminal_reason(research=active, nudges_used=0, max_nudges=60,
-                           delivered=True) == TERMINAL_DELIVERED
-    # queued and decision both outrank it
-    assert terminal_reason(research=active, nudges_used=0, max_nudges=60,
-                           delivered=True, pending_user_message=True) == TERMINAL_QUEUED
-    assert terminal_reason(research=active, nudges_used=0, max_nudges=60,
-                           delivered=True, pending_decision=True) == TERMINAL_DECISION
-    # ...and it outranks completion
-    assert terminal_reason(research=done, nudges_used=0, max_nudges=60,
-                           delivered=True) == TERMINAL_DELIVERED
-
-
-def test_an_ordinary_turn_is_untouched_by_the_new_clause():
-    """The arm that is easy to skip: not calling the tool must change nothing, or
-    an ordinary run is quietly re-routed through a new exit."""
-    from app.agent.continue_policy import should_continue_run, TERMINAL_BUDGET, terminal_reason
-    assert should_continue_run(
-        research={"project": {"status": "active"}}, nudges_used=0, max_nudges=60,
-        tool_count=1, tool_count_at_last_nudge=0,
-    ) is True
-    assert terminal_reason(research={"project": {"status": "active"}}, nudges_used=60,
-                           max_nudges=60) == TERMINAL_BUDGET
 
 
 def test_the_delivered_tool_name_is_pinned():
     assert options.DELIVERED_TOOL == "mcp__genealogy__research_delivered"
 
 
-def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
-    """End to end through the REAL hook, for the same reason the decision test is:
-    the hook-level tests cannot see the worker's closure, and a break test that sets
-    the closure to the wrong outcome leaves them all green. This is the assertion
-    that a bounded request reads as 'done, that's what you asked for' rather than
-    running on to the proof, the nudge cap or $35."""
-    from app.agent.continue_policy import TERMINAL_DELIVERED
-    summary = _run(turn_env, [
-        _init(), ToolCall("mcp__genealogy__research_query"),
-        ToolCall(options.DELIVERED_TOOL),
-        _result(num_turns=2),
-    ])
-    assert summary["outcome"] == TERMINAL_DELIVERED, (
-        f"a turn that delivered recorded {summary['outcome']!r}"
-    )
-    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
-                     if sql.startswith("UPDATE turns SET completed_at"))
-    assert params[0] == TERMINAL_DELIVERED, "and the row says so too"
-
-
-def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
-    """The arm that is easy to skip. Adding an exit must not re-route the ordinary
-    run through it."""
-    from app.agent.continue_policy import TERMINAL_DELIVERED
-    summary = _run(turn_env, [
-        _init(), ToolCall("mcp__genealogy__research_query"),
-        ToolCall("mcp__genealogy__record_read"),
-        _result(num_turns=2),
-    ])
-    assert summary["outcome"] != TERMINAL_DELIVERED
-
-
-def test_a_stop_outranks_a_delivery(turn_env):
-    """Same precedence the decision exit follows: the researcher's own stop wins."""
-    from app.agent.continue_policy import TERMINAL_DELIVERED
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, halt=lambda: "stopped",
-    )
-    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
-    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
-    assert TERMINAL_DELIVERED not in str(out)
-
-
-# --- Teaching the agent WHEN to deliver (the enforcement half's prose) ---
-#
-# This rides the same per-turn system prompt as ROUTER_REENTRY, NOT 27 skill
-# bodies. The hook that makes `research_delivered` end a turn exists only in the
-# hosted worker: nothing in packages/engine/plugin/hooks/ or eval/harness/ reads
-# DELIVERED_TOOL. A skill-body instruction would teach skills to call a tool that
-# is inert in the environment where those skills are graded, cost a paid eval run
-# each, and edit the exact closing region that regressed three tests this week.
-
 def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
-    opts = _options(config_dir=str(tmp_path), resume="sess-1")
-    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
-
-
-def test_the_delivery_instruction_is_on_the_opening_turn_TOO(tmp_path):
-    """NOT exempted like the router instruction, and the difference matters.
-
-    The router exemption is justified by there being no project to route on turn 1
-    -- the opener forces init-project. That reasoning does NOT carry to delivering:
-    "start a project on X and just give me a plan" is a legitimate turn-1 bounded
-    request, and #2932's complaint is precisely a run that would not stop when asked.
-    Binding both to `resume is not None` was over-application, found by trying to
-    test the scenario."""
+    """The ONLY check that the guidance reaches the model at all. Every other test here
+    drives `make_pretool_hook` directly and never touches `build_worker_options`, so
+    without this the wiring could be dropped and the tool would ship advertised but
+    inert, with nothing instructing the model to call it."""
     opts = _options(config_dir=str(tmp_path))
-    assert opts.resume is None
     assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
-    assert options.ROUTER_REENTRY not in opts.system_prompt["append"], (
-        "the ROUTER instruction keeps its turn-1 exemption"
-    )
 
 
 def test_the_instruction_names_the_tool_it_is_about():
@@ -3100,80 +4574,1033 @@ def test_the_instruction_names_the_tool_it_is_about():
 
 
 def test_the_instruction_draws_both_boundaries():
-    """Two ways this misfires, and both must be excluded in the text itself: calling
-    it when the whole objective is finished (that is `completed`, and the run ends on
-    its own), and calling it instead of asking a question (an ask waits for an
-    answer; a delivery waits for nothing)."""
+    """Two ways this misfires, and both must be excluded in the text itself: calling it
+    when the whole objective is finished (that is `completed`, and the run ends on its
+    own), and calling it instead of asking a question (an ask waits for an answer; a
+    delivery waits for nothing)."""
     lowered = options.DELIVERY_GUIDANCE.lower()
     assert "objective" in lowered, "must exclude the project-complete case"
-    assert "question" in lowered or "ask" in lowered, "must exclude the ask case"
+    # NOT `"question" in lowered or "ask" in lowered`: "ask" lives inside "asked" and
+    # "question" inside "status question", BOTH in the guidance's positive half, so that
+    # assertion cannot fail. Same collision shape as the "search"/"re-SEARCH" one above.
+    assert "in place of asking" in lowered, "must exclude the ask case"
 
 
-def test_the_instruction_says_what_a_bounded_request_looks_like():
-    """Without an example this is abstract advice. The three shapes are the ones
-    users actually complained about (#2932, #2921, and 'where are we?')."""
+def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
+    """End to end through the REAL hook: the hook-level tests cannot see the worker's
+    closure, and a break test that sets the closure to the wrong outcome leaves them all
+    green."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall(options.DELIVERED_TOOL),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] == "delivered", (
+        f"a turn that delivered recorded {summary['outcome']!r}"
+    )
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == "delivered", "and the row says so too"
+
+
+def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
+    """The arm that is easy to skip. Adding an exit must not re-route the ordinary run
+    through it."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_query"),
+        ToolCall("mcp__genealogy__record_read"),
+        _result(num_turns=2),
+    ])
+    assert summary["outcome"] != "delivered"
+
+
+def test_a_stop_outranks_a_delivery():
+    """The researcher's own stop wins: the halt check runs before the delivered arm."""
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, halt=lambda: "stopped",
+    )
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
+    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
+
+
+def test_a_subagent_cannot_end_the_main_turn_with_a_delivery():
+    """The arm matches on tool NAME, and a subagent holds the session's tool set -- so
+    without a caller check a record-extractor saying "delivered" ends the researcher's
+    whole turn.
+
+    `agent_id` is tested for MEMBERSHIP, not truthiness: it is absent as a KEY on the
+    main thread, and `agent_type` alone is not sufficient because it is present on the
+    main thread of a session started with `--agent`. Same discriminator the shipped
+    plugin hook uses (`owner_denied`, hooks/guard_project_files.py)."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": "ag_1", "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, "a subagent's delivery must not halt the turn"
+    assert halted == [], "and must not fire the delivered exit"
+
+
+def test_the_main_thread_still_delivers_with_agent_type_present():
+    """The other direction, and the reason `agent_type` alone cannot be the test: a
+    session started with `--agent` carries agent_type on its MAIN thread. Keying on it
+    would silently stop the feature working for those sessions."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_type": "research"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is False, "the main thread must still deliver"
+    assert halted == ["x"]
+
+
+def test_the_guidance_says_to_search_for_the_deferred_schema():
+    """ENABLE_TOOL_SEARCH is on and `research_delivered` is not in ALWAYS_LOAD, so its
+    schema is deferred. The one tool the system prompt names has to be findable, and
+    the short bounded turns this feature exists for are the ones holding the fewest
+    schemas."""
+    # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
+    # "researcher" and "research_delivered", so that assertion can never fail. This is
+    # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
+    # break-testing this very test, which stayed green with the clause deleted.
     lowered = options.DELIVERY_GUIDANCE.lower()
-    assert "plan" in lowered and ("status" in lowered or "where are we" in lowered)
+    assert "deferred" in lowered, "the guidance must say the schema is deferred"
+    assert "search for it" in lowered, "and must tell the model to search for it"
 
 
-# --- Phase 3 item 1: the model marks its recommendation (R9's missing half) ---
-#
-# R9 rules that *not sure* continues on the option the agent RECOMMENDED. The ruling
-# could not be honoured: AskUserQuestion carries no recommendation field, and across
-# the committed unit corpus all 15 unprompted calls mark nothing at all.
-#
-# The tool's own contract already says where a recommendation goes -- first in the
-# list, with "(Recommended)" on the label -- so this asks for the convention the
-# reader looks for, rather than inventing a parallel one.
-
-def test_the_turn_prompt_asks_for_a_marked_recommendation(tmp_path):
-    opts = _options(config_dir=str(tmp_path), resume="sess-1")
-    assert options.DECISION_GUIDANCE in opts.system_prompt["append"]
-
-
-def test_it_is_present_on_the_opening_turn_too(tmp_path):
-    """A turn-1 question is as real as any other; the router exemption does not
-    apply here."""
-    opts = _options(config_dir=str(tmp_path))
-    assert options.DECISION_GUIDANCE in opts.system_prompt["append"]
-
-
-def test_the_guidance_names_the_exact_marker_the_client_reads():
-    """A different spelling would leave the reader falling back to first-position
-    forever, which looks like it works and silently ignores the agent's judgement."""
-    assert "(Recommended)" in options.DECISION_GUIDANCE
-    assert "first" in options.DECISION_GUIDANCE.lower()
-
-
-def test_the_guidance_does_not_encourage_asking_more_often():
-    """The exit is deliberately rare. Guidance on HOW to ask must not become a nudge
-    to ask -- it says to mark a recommendation WHEN asking, not to ask."""
-    lowered = options.DECISION_GUIDANCE.lower()
-    assert "when you ask" in lowered or "when asking" in lowered
-
-
-def test_a_write_records_what_it_wrote_in_the_tool_calls_row():
-    """The WIRING, not the recorder. `writer_record` being correct is worth nothing if
-    the hook never calls it -- a correct function nothing invokes looks identical to a
-    working feature, which is how an unguarded hunk shipped earlier on this branch."""
-    rows: list[dict] = []
+def test_the_delivery_summary_reaches_a_human():
+    """The one field the researcher-facing contract is built on, and the hook halts
+    BEFORE the tool body runs -- so if it is not captured here it reaches nobody:
+    `input_path` is None for this tool, the tool_calls row has no column for it, and the
+    browser renders a fixed string from chatEvents. It must survive in the stop reason
+    and in the log event."""
+    events: list[dict] = []
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=rows.append,
+        record=lambda row: None,
+        log=lambda **kw: events.append(kw),
     )
-    asyncio.run(hook({
-        "tool_name": "mcp__genealogy__research_append",
-        "tool_input": {"section": "questions", "op": "append", "entry": {"id": "q_001"}},
-    }, "u1", None))
-    assert rows and rows[-1]["wrote"] == {"section": "questions", "op": "append", "ids": ["q_001"]}
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL,
+         "tool_input": {"summary": "the Mogan marriage record, 1874"}},
+        "u1", None,
+    ))
+    # startswith, not `in`: containment passes even when the summary is appended
+    # AFTER the reason, which is the ordering the chip cut makes load-bearing.
+    # With `in`, a reorder in the shared helper failed the alpha only.
+    assert out["stopReason"].startswith("Delivered: the Mogan marriage record, 1874"), (
+        "the summary must survive into the text the model is handed"
+    )
+    delivered = [e for e in events if e.get("ev") == "delivered"]
+    assert delivered and delivered[0]["summary"] == "the Mogan marriage record, 1874"
 
 
-def test_a_read_leaves_the_wrote_column_empty():
-    """Sparse by design: most calls are reads, and recording them would bury the diff."""
-    rows: list[dict] = []
+def test_an_empty_summary_does_not_corrupt_the_stop_reason():
+    """`summary` is declared required but NOTHING enforces it: the hook halts before the
+    body, and the server does not validate inputSchema. An argument-free call must still
+    produce a clean reason rather than a dangling 'Delivered: '."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=rows.append,
+        record=lambda row: None,
     )
-    asyncio.run(hook({"tool_name": "mcp__genealogy__research_query", "tool_input": {}}, "u1", None))
-    assert rows and rows[-1]["wrote"] is None
+    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL}, "u1", None))
+    assert out["stopReason"] == options.DELIVERED_REASON
+    assert "Delivered:" not in out["stopReason"]
+
+# ── U3: the attempt bears its owner's current grant ──────────────────────────────
+
+
+def _serve(turn_env, monkeypatch, receive_count: int = 1, turn: dict | None = None) -> tuple[int, dict]:
+    """serve_real_turn through the real run_turn, on the fixture's fakes."""
+    monkeypatch.setattr(worker, "_AGENTS", {"gps-mentor": object()})
+    conn = turn_env["conn"]
+    conn.sdk_session_id = SID  # the id the fake CLI declares
+    return worker.serve_real_turn(turn or TURN, receive_count, connect=lambda dsn: conn)
+
+
+def test_run_turn_bears_the_grant_not_the_message(turn_env):
+    """The queue body persists in turns.message and the DLQ and anyone who can enqueue writes
+    it, so a token in it is both a leak and an impersonation. The bearer is the grant's."""
+    turn = {**TURN, "message": {**TURN["message"], "fs_access_token": "attacker"}}
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    assert turn_env["options"]["bearer"] == "grant-token"
+    assert "fs_access_token" not in turn_env["options"]
+    assert turn_env["acquired"] == ["proj-1"], "the grant of the turn's project's owner"
+
+
+def test_an_attempt_runs_its_cli_as_a_slot_user_and_leaves_the_slot_clean(turn_env, monkeypatch):
+    """U3: with a pool, the attempt takes a slot, owns its home and config dir to it (after
+    mcp.json is written), runs the CLI as it, and before the slot goes back kills whatever
+    the slot left running -- all before the grant lock is released."""
+    from proto.worker import turn_users
+
+    slot = turn_users.Slot("genealogy-turn-0", 901, 900)
+    pool = turn_users.Pool([slot])
+    owned: list[str] = []
+    monkeypatch.setattr(worker, "TURN_POOL", pool)
+    monkeypatch.setattr(worker.turn_users, "chown_tree", lambda path, s: owned.append(path) or (s == slot) or 1 / 0)
+    monkeypatch.setattr(worker.turn_users, "kill_uid", lambda uid: turn_env["events"].append(f"kill {uid}") or [])
+    monkeypatch.setattr(worker.turn_users, "purge_uid_files",
+                        lambda uid, roots: turn_env["events"].append(f"purge {uid}") or [])
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    opts = turn_env["options"]
+    assert opts["turn_user"] == "genealogy-turn-0"
+    home = opts["turn_home"]
+    assert Path(home).name.startswith("turn-home-") and not Path(home).exists(), "made, then removed"
+    assert owned == [home, opts["config_dir"]], "home first; the config dir once mcp.json is in it"
+    events = turn_env["events"]
+    assert events.index("kill 901") < events.index("purge 901") < events.index("held.close"), \
+        "nothing of the slot -- process or file -- outlives the lock"
+    assert pool.acquire() == slot, "the slot is back"
+
+
+def test_no_free_slot_answers_500_and_still_releases_the_grant(turn_env, monkeypatch):
+    from proto.worker import turn_users
+
+    monkeypatch.setattr(worker, "TURN_POOL", turn_users.Pool([]))
+    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(turn_users.NoTurnUser):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert "held.close" in turn_env["events"]
+    assert turn_env["options"] is None, "no CLI was configured"
+
+
+def test_a_redelivered_attempt_bears_the_grant_refreshed_between_attempts(turn_env):
+    """A refresh between attempts revokes the first attempt's token, so the redelivery must
+    read the grant again -- not reuse the body, which is identical across receives."""
+    bodies, bearers = [], []
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-A")
+    turn_env["client"] = FakeClient([_init(), _text("x")], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)  # killed: no result
+    with pytest.raises(RuntimeError, match="without a ResultMessage"):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    bodies.append(json.dumps(TURN["message"], sort_keys=True))
+    bearers.append(turn_env["options"]["bearer"])
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token="token-A-prime")  # the web tier refreshed
+    turn_env["entries"] = True
+    turn_env["client"] = FakeClient([_init(), ToolCall(), _text("x"), _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    bodies.append(json.dumps(TURN["message"], sort_keys=True))
+    bearers.append(turn_env["options"]["bearer"])
+    assert bearers == ["token-A", "token-A-prime"] and bodies[0] == bodies[1]
+    assert turn_env["acquired"] == ["proj-1", "proj-1"], "read per attempt"
+
+
+@pytest.mark.parametrize("cause, reason", [
+    ("no_owner", None), ("no_grant", None), ("refused", "invalid_grant"),
+    ("no_refresh_token", None), ("undecryptable", None),
+])
+def test_no_usable_grant_closes_the_turn_signin_required_without_spawning_the_cli(
+    turn_env, monkeypatch, cause, reason,
+):
+    """Fails loudly and bills nothing: the turn closes with a named outcome the SPA shows,
+    the message is deleted (200, so it is not redelivered into the same refusal), and the
+    session's next held message is released."""
+    import claude_agent_sdk
+
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient",
+                        lambda options: (_ for _ in ()).throw(AssertionError("a CLI was spawned")))
+    released = _released(monkeypatch)
+    turn_env["grant"] = worker.NoGrant(cause, reason)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 200 and body["outcome"] == worker.SIGNIN_REQUIRED_OUTCOME == "signin_required"
+    assert body["cause"] == cause and body["resumed"] is False
+    [payload] = _turn_done_payloads(turn_env["conn"])
+    assert payload["outcome"] == "signin_required" and payload["cause"] == cause
+    assert payload.get("reason") == reason
+    assert turn_env["options"] is None, "no options built, so no bearer anywhere"
+    assert released == ["sess-1"] and body["released_turn"] == "msg-held"
+    assert turn_env["conn"].completed_at is not None
+
+
+def test_grant_wait_timeout_answers_500_and_closes_on_the_last_receive(turn_env, monkeypatch):
+    def timed_out():
+        raise worker.GrantWaitTimeout("the grant of usr_owner was not usable within 300s (session_age)")
+
+    turn_env["grant"] = timed_out
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 3)
+    released = _released(monkeypatch)
+    status, body = _serve(turn_env, monkeypatch, receive_count=2)
+    assert status == 500 and "GrantWaitTimeout" in body["error"]
+    assert not _turn_done_payloads(turn_env["conn"]) and released == []
+    status, body = _serve(turn_env, monkeypatch, receive_count=3)
+    assert status == 200 and body["outcome"] == "retries_exhausted" and body["cause"] == "error"
+    assert released == ["sess-1"]
+
+
+@pytest.mark.parametrize("messages", [_good(), [_init(), _text("x")]], ids=["completed", "failed"])
+def test_the_grant_lock_outlives_the_cli(turn_env, messages):
+    """The lock is released only once client.disconnect() has killed the CLI bearing the
+    token: released earlier, a refresh could revoke it under a CLI still running."""
+    turn_env["client"] = FakeClient(messages, _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with contextlib.suppress(RuntimeError):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert turn_env["events"] == ["disconnect", "held.close"]
+
+
+class ScriptedSyncConn:
+    """A sync psycopg connection: records statements, answers fetchone from ``answer``."""
+
+    def __init__(self, answer) -> None:
+        self.answer = answer
+        self.executed: list[tuple[str, tuple]] = []
+        self.closed = False
+        self.kwargs: dict[str, Any] = {}
+
+    def cursor(self):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def execute(self, sql, params=()):
+        self.executed.append((sql, params))
+
+    def fetchone(self):
+        return self.answer(self.executed[-1][0])
+
+    def close(self):
+        self.closed = True
+
+
+def _grant_row(age_s: float, *, pending: bool = False, refused: bool = False, reason=None,
+               refresh: str | None = "enc-refresh", token: str = "tok-1") -> tuple:
+    from proto import grants
+
+    return ("usr_a", grants.encrypt(token, grants.enc_key({})), refresh, age_s, pending, refused, reason)
+
+
+def _acquire_conn(rows: list[tuple], owner: str | None = "usr_a") -> ScriptedSyncConn:
+    from proto import grants
+
+    def answer(sql):
+        if sql == grants.OWNER_SQL:
+            return (owner,) if owner else None
+        if sql == "SELECT pg_backend_pid()":
+            return (77,)
+        if sql == grants.GRANT_SQL:
+            return rows.pop(0) if len(rows) > 1 else rows[0]
+        return None
+    return ScriptedSyncConn(answer)
+
+
+def _acquire(conn: ScriptedSyncConn, **kw):
+    def connect(dsn, **kwargs):
+        conn.kwargs = kwargs
+        return conn
+    kw.setdefault("max_start_age_s", 26400)
+    kw.setdefault("wait_s", 300)
+    return asyncio.run(worker.acquire_grant("proj-1", connect=connect, **kw))
+
+
+def test_acquire_takes_the_lock_before_reading_the_grant(monkeypatch):
+    """Lock, then read: a refresh between a read and a later lock would revoke the token the
+    attempt is about to bear (interleaving I3). The lock stays held on the returned grant."""
+    from proto import grants
+
+    monkeypatch.delenv("FS_TOKEN_ENC_KEY", raising=False)
+    conn = _acquire_conn([_grant_row(10)])
+    held = _acquire(conn)
+    assert isinstance(held, worker.HeldGrant) and held.token == "tok-1" and held.pid == 77
+    assert held.user_id == "usr_a" and held.conn is conn and not conn.closed
+    sql = [s for s, _ in conn.executed]
+    assert sql == [grants.OWNER_SQL, "SELECT pg_backend_pid()", grants.ATTEMPT_LOCK_SQL, grants.GRANT_SQL]
+    assert conn.executed[2][1] == (grants.ATTEMPT_LOCK_NS, "usr_a"), "the owner's attempt key, shared"
+    assert "pg_advisory_lock_shared(%s::int4" in grants.ATTEMPT_LOCK_SQL
+
+
+def test_acquire_releases_the_lock_while_it_waits(monkeypatch):
+    from proto import grants
+
+    monkeypatch.delenv("FS_TOKEN_ENC_KEY", raising=False)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    sleeps: list[float] = []
+
+    async def sleep(s):
+        sleeps.append(s)
+        conn.executed.append(("sleep", ()))
+
+    conn = _acquire_conn([_grant_row(30000), _grant_row(5, pending=True), _grant_row(5)])
+    held = _acquire(conn, sleep=sleep, poll_s=5)
+    assert isinstance(held, worker.HeldGrant)
+    sql = [s for s, _ in conn.executed][2:]
+    lock, grant, unlock = grants.ATTEMPT_LOCK_SQL, grants.GRANT_SQL, grants.ATTEMPT_UNLOCK_SQL
+    assert sql == [lock, grant, unlock, "sleep", lock, grant, unlock, "sleep", lock, grant], \
+        "no lock is held across a sleep, so the refresher gets its window"
+    assert sleeps == [5, 5]
+    assert [f["reason"] for f in logged if f.get("ev") == "grant_wait"] == ["session_age"], "logged once"
+
+    conn = _acquire_conn([_grant_row(30000)])
+    with pytest.raises(worker.GrantWaitTimeout, match="session_age"):
+        _acquire(conn, wait_s=0, sleep=sleep)
+    assert conn.closed and conn.executed[-1][0] == unlock
+
+    conn = _acquire_conn([_grant_row(10, refused=True, reason="invalid_grant")])
+    got = _acquire(conn)
+    assert got == worker.NoGrant("refused", "invalid_grant") and conn.closed
+    assert [s for s, _ in conn.executed][-1] == unlock
+    conn = _acquire_conn([_grant_row(10)], owner=None)
+    assert _acquire(conn) == worker.NoGrant("no_owner") and conn.closed
+    assert grants.ATTEMPT_LOCK_SQL not in [s for s, _ in conn.executed], "no owner, no lock"
+
+
+def test_grant_connection_sets_lock_timeout_and_keepalives(monkeypatch):
+    """The lock connection is idle for the whole attempt. lock_timeout bounds the wait behind
+    a refresher; idle_session_timeout=0 stops a server default from ending it (and so
+    releasing the lock) mid-attempt; the keepalives end a vanished host's backend."""
+    from proto import grants
+
+    options_text = worker.GRANT_CONN_KWARGS["options"]
+    for setting in (f"lock_timeout={grants.ATTEMPT_LOCK_TIMEOUT_S}s", "idle_session_timeout=0",
+                    "tcp_keepalives_idle=60", "tcp_keepalives_interval=10", "tcp_keepalives_count=6",
+                    "tcp_user_timeout=30000"):
+        assert f"-c {setting}" in options_text, setting
+    assert worker.GRANT_CONN_KWARGS["autocommit"] is True and worker.GRANT_CONN_KWARGS["keepalives"] == 1
+    monkeypatch.delenv("FS_TOKEN_ENC_KEY", raising=False)
+    conn = _acquire_conn([_grant_row(10)])
+    _acquire(conn)
+    assert conn.kwargs == worker.GRANT_CONN_KWARGS, "acquire_grant connects with them"
+
+
+def test_a_lost_lock_halts_before_the_next_tool_call_and_the_attempt_answers_500(turn_env, monkeypatch):
+    """A lock connection that died released the lock while the CLI still bears the token.
+    halt() checks first, on the attempt's main connection, before every call: the call after
+    the loss is halted, nothing completes the turn, and the attempt answers 500 so the
+    redelivery takes the lock again."""
+    turn_env["lock_held"] = lambda asked: asked < 2
+    turn_env["client"] = FakeClient([_init(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=2)],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 0)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 500 and "GrantLockLost" in body["error"]
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow", "halt"]
+    assert not _turn_done_payloads(turn_env["conn"]), "the turn stays open for the redelivery"
+    assert turn_env["events"] == ["disconnect", "held.close"]
+
+
+def test_no_token_reaches_the_logs_or_the_rows(turn_env, monkeypatch, capsys):
+    secret = "grant-secret-token-u3"
+    turn_env["grant"] = lambda: FakeHeld(turn_env, token=secret)
+    turn_env["client"] = FakeClient([_init(), ToolCall(), _text("x"), _result(num_turns=2)],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 200 and turn_env["options"]["bearer"] == secret
+    assert secret not in capsys.readouterr().out and secret not in json.dumps(body, default=str)
+    for sql, params in turn_env["conn"].executed:
+        flat = json.dumps([getattr(p, "obj", p) for p in params], default=str)
+        assert secret not in sql and secret not in flat, sql
+
+
+def test_worker_tables_include_the_grant_tables():
+    """acquire_grant reads projects.owner_id and familysearch_tokens; /healthz must fail on a
+    database missing either rather than every turn failing at its first attempt."""
+    assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)
+
+
+def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, monkeypatch):
+    """`terminal["halted"] = True` in on_delivered is what lets the Stop hook ALLOW the
+    stop after a delivery instead of vetoing it. Deleting that line leaves every other
+    worker test green, so it needs its own.
+
+    Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
+    that delivered would be recorded and rendered as "you pressed Stop"."""
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
+    summary = _run(turn_env, [
+        _init(), ToolCall(options.DELIVERED_TOOL), StopDispatch(), _text("x"),
+        _result(num_turns=2),
+    ])
+    assert turn_env["client"].stops == [{}], "the Stop hook vetoed instead of allowing the stop"
+    assert summary["outcome"] == "delivered"
+    row = next(p for sql, p in turn_env["conn"].executed
+               if sql.startswith("UPDATE turns SET completed_at"))
+    assert row[0] == "delivered", "the row keeps the delivery's own reason"
+
+
+def test_the_main_thread_gate_is_membership_not_truthiness():
+    """The comment on that gate calls the membership test load-bearing, and it is: a
+    subagent whose `agent_id` is falsy (None, "") is still a subagent. A truthiness test
+    (`not data.get("agent_id")`) passes the whole existing suite, so this pins the rule
+    with the one shape that separates them."""
+    halted: list[str] = []
+    hook = options.make_pretool_hook(
+        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
+        record=lambda row: None, on_delivered=lambda: halted.append("x"),
+    )
+    out = asyncio.run(hook(
+        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
+         "agent_id": None, "agent_type": "record-extractor"},
+        "u1", None,
+    ))
+    assert out.get("continue_") is not False, (
+        "agent_id present but falsy is STILL a subagent -- a truthiness test lets it "
+        "end the researcher's turn"
+    )
+    assert halted == []
+
+
+# ── U11: the dev-only paths ──────────────────────────────────────────────────────
+
+IDS = {"turn_id": "turn-u11", "session_id": "sess-u11", "project_id": "proj-u11"}
+
+
+class _ExitCalled(Exception):
+    pass
+
+
+def _post_turn(port: int, body: dict) -> tuple[int, dict] | None:
+    """POST /turn; None when the handler died without replying (a patched ``_exit``)."""
+    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+    try:
+        conn.request("POST", "/turn", body=json.dumps(body),
+                     headers={"Content-Type": "application/json", "X-Aws-Sqsd-Receive-Count": "1"})
+        response = conn.getresponse()
+        return response.status, json.loads(response.read().decode("utf-8"))
+    except (http.client.RemoteDisconnected, ConnectionResetError):
+        return None
+    finally:
+        conn.close()
+
+
+@pytest.fixture
+def post_env(monkeypatch):
+    """The real Handler with every road past the gate recorded: ``claim`` and ``_exit``
+    (which raises, so no process dies), and the two serve functions when replaced."""
+    calls: dict[str, list] = {"claim": [], "exit": [], "real": [], "stub": []}
+    monkeypatch.setattr(worker, "claim",
+                        lambda conn, turn, rc, **kw: calls["claim"].append(turn["turn_id"]) or turn["message"])
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn())
+
+    def _exit(code):
+        calls["exit"].append(code)
+        raise _ExitCalled(code)
+    monkeypatch.setattr(worker.os, "_exit", _exit)
+    monkeypatch.setattr(worker, "log", lambda **f: calls.setdefault("log", []).append(f))
+    return calls
+
+
+def _record_serves(monkeypatch, calls) -> None:
+    monkeypatch.setattr(worker, "serve_real_turn", lambda turn, rc, **kw: calls["real"].append(turn) or (200, {"ok": True}))
+    monkeypatch.setattr(worker, "serve_stub_turn",
+                        lambda turn, rc, behaviour, seconds, **kw: calls["stub"].append((behaviour, seconds)) or (200, {"ok": True}))
+
+
+@pytest.mark.parametrize("body", [
+    {"behaviour": "crash"}, {"behaviour": "ok"}, {"behaviour": "sleep", "seconds": "x"}, {}, {"text": "\x1c"},
+], ids=["crash", "ok", "bad-seconds", "empty", "unstrippable-text"])
+def test_a_stub_turn_without_dev_paths_is_400_before_any_claim(monkeypatch, post_env, body):
+    monkeypatch.delenv("DEV_PATHS")
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, **body})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": "stub turns are disabled"})
+    assert post_env["claim"] == [] and post_env["exit"] == [], "os._exit must be unreachable"
+    [line] = [f for f in post_env["log"] if f.get("ev") == "turn"]
+    assert line["status"] == 400 and line["error"] == "stub turns are disabled"
+
+
+@pytest.mark.parametrize("value", ["false", "1", "yes", "", "truthy"])
+def test_dev_paths_is_on_only_for_true(monkeypatch, post_env, value):
+    assert options.dev_paths({"DEV_PATHS": value}) is False
+    monkeypatch.setenv("DEV_PATHS", value)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "behaviour": "crash"})[0] == 400
+    assert post_env["exit"] == []
+
+
+@pytest.mark.parametrize("value", ["true", "TRUE", " True "])
+def test_dev_paths_reaches_the_crash_arm(monkeypatch, post_env, value):
+    assert options.dev_paths({"DEV_PATHS": value}) is True
+    monkeypatch.setenv("DEV_PATHS", value)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "behaviour": "crash"}) is None, "the crash arm never replies"
+    assert post_env["claim"] == ["turn-u11"] and post_env["exit"] == [1], "smoke's crash needs a real death"
+    assert options.dev_paths({}) is False
+
+
+def test_a_real_turn_runs_without_dev_paths(monkeypatch, post_env):
+    monkeypatch.delenv("DEV_PATHS")
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, "text": "hello"}) == (200, {"ok": True})
+    assert [t["turn_id"] for t in post_env["real"]] == ["turn-u11"] and post_env["stub"] == []
+
+
+@pytest.mark.parametrize("body, error", [
+    ({}, "unknown behaviour None"),
+    ({"behaviour": "OK"}, "unknown behaviour 'OK'"),
+    ({"behaviour": "sleep", "seconds": "x"}, "seconds must be a number >= 0, not 'x'"),
+    ({"behaviour": "sleep", "seconds": -1}, "seconds must be a number >= 0, not -1"),
+    ({"behaviour": "sleep", "seconds": "nan"}, "seconds must be a number >= 0, not 'nan'"),
+    ({"behaviour": "sleep", "seconds": "inf"}, "seconds must be a number >= 0, not 'inf'"),
+    ({"behaviour": "sleep", "seconds": [1]}, "seconds must be a number >= 0, not [1]"),
+    ({"behaviour": "sleep", "seconds": True}, "seconds must be a number >= 0, not True"),
+], ids=["no-behaviour", "unknown", "non-numeric", "negative", "nan", "inf", "list", "bool"])
+def test_a_malformed_stub_turn_is_400_even_with_dev_paths(monkeypatch, post_env, body, error):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, **body})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": error})
+    assert post_env["claim"] == [] and post_env["stub"] == [], "no claim, no stub arm"
+
+
+@pytest.mark.parametrize("body, ran", [
+    ({"behaviour": "ok"}, ("ok", 0.0)),
+    ({"behaviour": "sleep", "seconds": "1.5"}, ("sleep", 1.5)),
+    ({"behaviour": "sleep", "seconds": 2}, ("sleep", 2.0)),
+    ({"behaviour": "sleep", "seconds": 0}, ("sleep", 0.0)),
+    ({"behaviour": "fail", "seconds": None}, ("fail", 0.0)),
+])
+def test_a_well_formed_stub_turn_still_runs_with_dev_paths(monkeypatch, post_env, body, ran):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        assert _post_turn(port, {**IDS, **body}) == (200, {"ok": True})
+    assert post_env["stub"] == [ran]
+
+
+@pytest.mark.parametrize("field", ["turn_id", "session_id", "project_id"])
+@pytest.mark.parametrize("value", [None, "", "   ", 7, ["turn"]], ids=["missing", "empty", "blank", "int", "list"])
+@pytest.mark.parametrize("kind", [{"behaviour": "ok"}, {"text": "hello"}], ids=["stub", "real"])
+def test_a_turn_without_its_ids_is_400_naming_the_field(monkeypatch, post_env, field, value, kind):
+    _record_serves(monkeypatch, post_env)
+    body = {**IDS, **kind}
+    if value is None:
+        del body[field]
+    else:
+        body[field] = value
+    with _serving() as port:
+        reply = _post_turn(port, body)
+    assert reply == (400, {"ok": False, "error": f"{field} must be a non-empty string"})
+    assert post_env["claim"] == [] and post_env["real"] == [] and post_env["stub"] == [], "no stand-in id is claimed"
+
+
+def test_the_ids_are_the_message_s_own(monkeypatch, post_env):
+    _record_serves(monkeypatch, post_env)
+    with _serving() as port:
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
+        conn.request("POST", "/turn", body=json.dumps({**IDS, "text": "hello"}),
+                     headers={"X-Aws-Sqsd-Msgid": "msg-1", "Content-Type": "application/json"})
+        assert conn.getresponse().status == 200
+        conn.close()
+    [turn] = post_env["real"]
+    assert {k: turn[k] for k in IDS} == IDS, "msgid is a log field, never the turn id"
+
+
+
+def test_a_real_turn_naming_no_row_is_400_through_the_handler(monkeypatch):
+    """U4 end to end: the message is well-formed, so only the claim can refuse it."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: FakeConn(turn_row=None))
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    with _serving() as port:
+        reply = _post_turn(port, {**IDS, "text": "hello"})
+    assert reply == (400, {"ok": False, "turn_id": "turn-u11", "error": worker.UNKNOWN_TURN_ERROR})
+    [line] = [f for f in logged if f.get("ev") == "turn"]
+    assert line["project_id"] == "proj-u11" and line["status"] == 400, "the forged ids are the evidence"
+
+# U11 start refusals: one ev=prepare line, exit 2, before the hook interpreter (and so
+# before setup_turn_users and queue_startup_fields).
+
+PROD_START_ENV = {
+    "MODEL_PROVIDER": "anthropic", "TOOL_SERVER_URL": "http://tools.internal:8787/mcp",
+    "FS_TOKEN_ENC_KEY": "k" * 40,
+}
+
+
+def _refusal_env(monkeypatch, env: dict) -> list[dict]:
+    """``env`` as the whole start configuration, DEV_PATHS off unless it says so; the
+    hook interpreter check raises _PrepareRan, so a start that passes them all says so."""
+    for name in (*PROD_START_ENV, "DEV_PATHS", "BLOCKED_TOOLS", "GATEWAY_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in env.items():
+        if value is not None:
+            monkeypatch.setenv(name, value)
+    monkeypatch.setattr(worker, "QUEUE_URL", env.get("QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/000000000000/turns"))
+
+    def past(*a, **k):
+        raise _PrepareRan("past the start configuration")
+    monkeypatch.setattr(worker, "require_hook_python", past)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    return logged
+
+
+@pytest.mark.parametrize("change, step, error", [
+    ({"MODEL_PROVIDER": None}, "model_provider", "unset"),
+    ({"MODEL_PROVIDER": ""}, "model_provider", "unset"),
+    ({"MODEL_PROVIDER": " Bedrock "}, "model_provider", "unknown:bedrock"),
+    ({"MODEL_PROVIDER": "gateway"}, "model_provider", "gateway_needs_base_url"),
+    ({"MODEL_PROVIDER": "gateway", "GATEWAY_BASE_URL": " "}, "model_provider", "gateway_needs_base_url"),
+    ({"TOOL_SERVER_URL": None}, "tool_server_url", "unset"),
+    ({"TOOL_SERVER_URL": "  "}, "tool_server_url", "unset"),
+    ({"BLOCKED_TOOLS": "person_read"}, "blocked_tools", "needs_dev_paths"),
+    ({"QUEUE_URL": ""}, "queue_url", "unset"),
+    ({"QUEUE_URL": "  "}, "queue_url", "unset"),
+    ({"FS_TOKEN_ENC_KEY": None}, "fs_token_enc_key", "default"),
+    ({"FS_TOKEN_ENC_KEY": " "}, "fs_token_enc_key", "default"),
+    ({"FS_TOKEN_ENC_KEY": "dev-insecure-fs-token-key-change-me"}, "fs_token_enc_key", "default"),
+    ({"QUEUE_URL": "", "DEV_PATHS": "1"}, "queue_url", "unset"),
+])
+def test_start_refuses_a_dev_path_or_a_missing_setting(monkeypatch, change, step, error):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, **change})
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    assert [(f["ev"], f["step"], f["error"]) for f in logged] == [("prepare", step, error)]
+
+
+@pytest.mark.parametrize("change, dev", [
+    ({}, False),
+    ({"MODEL_PROVIDER": " Anthropic "}, False),
+    ({"MODEL_PROVIDER": "GATEWAY", "GATEWAY_BASE_URL": "http://gateway.invalid/bedrock"}, False),
+    ({"BLOCKED_TOOLS": " , "}, False),
+    ({"BLOCKED_TOOLS": "person_read"}, True),
+    ({"QUEUE_URL": ""}, True),
+    ({"FS_TOKEN_ENC_KEY": None}, True),
+    ({"BLOCKED_TOOLS": "person_read", "QUEUE_URL": "", "FS_TOKEN_ENC_KEY": None}, True),
+])
+def test_start_passes_with_the_setting_or_dev_paths(monkeypatch, change, dev):
+    env = {**PROD_START_ENV, **change, **({"DEV_PATHS": " TRUE "} if dev else {})}
+    logged = _refusal_env(monkeypatch, env)
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert not [f for f in logged if f.get("ev") == "prepare"], logged
+
+
+@pytest.mark.parametrize("change", [{"MODEL_PROVIDER": None}, {"TOOL_SERVER_URL": None}])
+def test_dev_paths_never_excuses_the_provider_or_the_tool_server(monkeypatch, change):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, **change, "DEV_PATHS": "true"})
+    with pytest.raises(SystemExit):
+        worker.main()
+    assert len(logged) == 1 and logged[0]["step"] in ("model_provider", "tool_server_url")
+
+
+def test_ev_start_logs_dev_paths_and_the_validated_provider(monkeypatch, capsys):
+    import proto.enqueue as enq
+
+    _start_only(monkeypatch)
+    monkeypatch.setenv("MODEL_PROVIDER", " Gateway ")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gateway.invalid/bedrock")
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert ev["provider"] == "gateway" and ev["dev_paths"] is True
+
+    monkeypatch.delenv("DEV_PATHS")
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 40)
+    monkeypatch.setenv("GENEALOGY_SQS_ACCESS_KEY", "AKIASTART")
+    monkeypatch.setenv("GENEALOGY_SQS_SECRET_KEY", "start-secret")
+    monkeypatch.setattr(worker, "QUEUE_URL", "https://sqs.us-east-1.amazonaws.com/000000000000/turns")
+    monkeypatch.setattr(enq, "prewarm", lambda: None)
+    worker.main()
+    ev = _start_event(capsys.readouterr().out)
+    assert ev["provider"] == "gateway" and ev["dev_paths"] is False
+
+
+def test_model_provider_labels_and_its_two_callers():
+    assert options.model_provider({"MODEL_PROVIDER": " Anthropic "}) == "anthropic"
+    for env, label in (({}, "unset"), ({"MODEL_PROVIDER": "vertex"}, "unknown:vertex"),
+                       ({"MODEL_PROVIDER": "gateway"}, "gateway_needs_base_url")):
+        with pytest.raises(options.ProviderError, match="anthropic or gateway|GATEWAY_BASE_URL") as exc:
+            options.model_provider(env)
+        assert exc.value.label == label
+        with pytest.raises(ValueError):
+            options.provider_env(env)
+    with pytest.raises(options.ProviderError):
+        _options(worker_env={k: v for k, v in WORKER_ENV.items() if k != "MODEL_PROVIDER"})
+    assert not hasattr(options, "LIVE_TREE_ARG_TOOLS"), "an empty table with a dead branch"
+
+
+def test_the_agent_count_literals_are_the_pinned_set():
+    from dev.p1 import plugin_agents as p1_agents
+    from proto.worker import plugin_agents
+
+    assert plugin_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
+    assert p1_agents.EXPECTED_AGENT_COUNT == len(worker.EXPECTED_AGENTS)
+
+
+# ── U23: fail closed on a store outage; a bound reached before the CLI ─────────────
+#
+# The halt clauses read Postgres before every tool call. They used to swallow every
+# error and allow the call, so during an outage Stop, the handover and the spend cap
+# failed open, silently. A store error now halts the attempt and answers 500; any other
+# error is logged and the next clause still runs.
+
+
+def _outage(exc: BaseException, *, after: int = 1, value: Any = False):
+    """A clause predicate that answers ``value`` ``after`` times, then raises ``exc``."""
+    calls: list[int] = []
+
+    def predicate(*_a: Any) -> Any:
+        calls.append(1)
+        if len(calls) > after:
+            raise exc
+        return value
+
+    predicate.calls = calls  # type: ignore[attr-defined]
+    return predicate
+
+
+def test_an_outage_with_stop_pressed_halts_and_the_attempt_answers_500(turn_env, monkeypatch):
+    """The Stop row cannot be read, so the call is halted rather than run on, nothing
+    completes the turn, and the redelivery reads Stop fresh."""
+    _mid_run(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested",
+                        _outage(worker.psycopg.OperationalError("server closed the connection unexpectedly")))
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 0)
+    turn_env["client"] = FakeClient([_init(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=2)],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 500 and "StoreUnavailable" in body["error"], body
+    assert not _turn_done_payloads(turn_env["conn"]), "the turn stays open for the redelivery"
+    [failed] = [f for f in logged if f.get("ev") == "halt_check_failed"]
+    assert failed["clause"] == "stop" and failed["store_down"] is True
+    assert failed["error"].startswith("OperationalError: ")
+    [halt] = [f for f in logged if f.get("ev") == "halt"]
+    assert halt["reason"] == options.STORE_UNAVAILABLE_REASON
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow"], "the halt row is not written to a down store"
+    assert turn_env["events"] == ["disconnect", "held.close"]
+
+
+@pytest.mark.parametrize("exc", [
+    worker.psycopg.OperationalError("terminating connection due to administrator command"),
+    worker.psycopg.InterfaceError("the connection is closed"),
+    worker.psycopg.errors.AdminShutdown("terminating connection due to administrator command"),
+], ids=["operational", "interface", "admin_shutdown"])
+def test_once_the_store_is_down_nothing_asks_postgres_again(turn_env, monkeypatch, exc):
+    """Sticky: after the first store error, halt(), record(), finish() and the Stop hook
+    leave Postgres alone, and the raise comes before the zero-progress count, the Stop
+    re-read and complete()."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    spend = _outage(RuntimeError("never reached"), after=99, value=1.0)
+    monkeypatch.setattr(worker, "session_spend_usd", spend)
+    stop = _outage(exc)
+    monkeypatch.setattr(worker, "stop_requested", stop)
+    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
+    finished: list[str] = []
+    monkeypatch.setattr(worker, "finish_tool_call", lambda conn, tid, tuid: finished.append(tuid))
+    turn_env["entries"] = True
+    turn_env["client"] = FakeClient(
+        [_init(), ToolCall(), ToolCall(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=0)],
+        _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    hook = turn_env["options"]["posttool_hook"]
+    asyncio.run(hook({"tool_name": "x"}, "toolu_after", None))
+    assert finished == [], "finish() wrote to a down store"
+    assert len(stop.calls) == 2 and len(spend.calls) == 1, "halt() asked Postgres after the outage"
+    client = turn_env["client"]
+    assert client.tool_uses == 3 and client.stops == [{}], "the Stop hook allowed the stop"
+    assert len(client.queried) == 1, "no resume re-query after the outage"
+    sql = [s for s, _ in turn_env["conn"].executed]
+    assert sum(s.startswith("INSERT INTO tool_calls") for s in sql) == 1
+    for forbidden in ("SELECT count(*) FROM tool_calls", "SELECT doc FROM documents",
+                      "zero_progress_attempts + 1", "'turn_done'"):
+        assert not any(forbidden in s for s in sql), forbidden
+
+
+def test_a_bug_in_one_clause_still_reaches_the_spend_clause(turn_env, monkeypatch):
+    """Not an outage: logged, and the next clause runs -- an earlier raising clause once
+    skipped the spend clause on every call (the Decimal bug, price_usd)."""
+    _mid_run(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested", _outage(RuntimeError("a bug"), after=0))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 40.0)
+    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == "budget" and summary["limit"] == "spend"
+    assert [f for f in logged if f.get("ev") == "spend_cap"]
+    [failed] = [f for f in logged if f.get("ev") == "halt_check_failed"]
+    assert failed["clause"] == "stop" and failed["store_down"] is False
+
+
+def test_a_data_error_in_the_spend_clause_is_not_an_outage(turn_env, monkeypatch):
+    """Only a lost connection is an outage. A DataError is a psycopg error too, and the
+    store is answering: the call runs and the turn completes."""
+    _mid_run(monkeypatch)
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", _outage(worker.psycopg.DataError("numeric overflow"), after=0))
+    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == worker.OK_OUTCOME
+    assert _tool_call_decisions(turn_env["conn"]) == ["allow"]
+    [failed] = [f for f in logged if f.get("ev") == "halt_check_failed"]
+    assert failed["clause"] == "spend" and failed["store_down"] is False
+
+
+def test_a_broken_connection_is_an_outage_whatever_the_error(turn_env, monkeypatch):
+    _mid_run(monkeypatch)
+
+    def broken(conn, sid):
+        conn.broken = True
+        raise RuntimeError("an error psycopg wrapped oddly")
+
+    monkeypatch.setattr(worker, "stop_requested", broken)
+    with pytest.raises(worker.StoreUnavailable):
+        _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+
+
+def test_a_halt_that_raises_past_its_clauses_still_answers_500(turn_env, monkeypatch):
+    """_pretool's last-resort catch reaches the worker through on_halt_failed: the halt
+    stands AND the attempt answers 500, rather than completing a cut-off turn."""
+    _mid_run(monkeypatch)
+    seen: list[dict] = []
+
+    def log(**f):
+        seen.append(f)
+        if f.get("ev") == "halt_check_failed":
+            raise OSError("stdout is gone")
+
+    monkeypatch.setattr(worker, "log", log)
+    monkeypatch.setattr(worker, "stop_requested", _outage(RuntimeError("a bug"), after=0))
+    with pytest.raises(worker.StoreUnavailable):
+        _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert [f for f in seen if f.get("ev") == "halt_failed"]
+    assert not _turn_done_written(turn_env["conn"])
+
+
+def test_a_failed_tool_call_insert_still_counts_the_call(turn_env, monkeypatch):
+    """The handover clause waits for one call of this turn. A call whose row failed to
+    insert ran all the same, so it must count, or a held message waits one call longer --
+    and with every insert failing, forever."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "insert_tool_call", _outage(RuntimeError("insert failed"), after=0))
+    monkeypatch.setattr(worker, "pending_user_message", lambda conn, sid: True)
+    summary = _run(turn_env, [_init(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=2)])
+    assert summary["outcome"] == "queued" and summary["tool_calls"] == 2
+
+
+def test_a_stopped_session_closes_before_the_grant_and_the_cli(turn_env, monkeypatch):
+    """A redelivery after Stop, or a message reaching a stopped session: closed `stopped`,
+    nothing billed, and the next held message released (which clears the flag)."""
+    import claude_agent_sdk
+
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient",
+                        lambda options: (_ for _ in ()).throw(AssertionError("a CLI was spawned")))
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 999.0)
+    released = _released(monkeypatch)
+    status, body = _serve(turn_env, monkeypatch, receive_count=2)
+    assert status == 200 and body["outcome"] == "stopped" and body["cause"] == "before_cli"
+    assert "limit" not in body, "Stop outranks the cap, as in halt()"
+    [payload] = _turn_done_payloads(turn_env["conn"])
+    assert payload["outcome"] == "stopped" and payload["cause"] == "before_cli"
+    assert turn_env["acquired"] == [] and turn_env["options"] is None, "no grant read, no CLI built"
+    assert released == ["sess-1"] and body["released_turn"] == "msg-held"
+    [bound] = [f for f in logged if f.get("ev") == "bound_before_cli"]
+    assert bound["outcome"] == "stopped" and "spent_usd" not in bound
+
+
+def test_a_session_over_the_cap_closes_before_the_grant_and_the_cli(turn_env, monkeypatch):
+    import claude_agent_sdk
+
+    monkeypatch.setattr(claude_agent_sdk, "ClaudeSDKClient",
+                        lambda options: (_ for _ in ()).throw(AssertionError("a CLI was spawned")))
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 35.0)
+    released = _released(monkeypatch)
+    status, body = _serve(turn_env, monkeypatch)
+    assert status == 200 and body["outcome"] == "budget"
+    [payload] = _turn_done_payloads(turn_env["conn"])
+    assert (payload["limit"], payload["spent_usd"], payload["cause"]) == ("spend", 35.0, "before_cli"), \
+        "the SPA's 'start a new session' copy keys on limit=spend"
+    assert turn_env["acquired"] == [] and released == ["sess-1"]
+    [bound] = [f for f in logged if f.get("ev") == "bound_before_cli"]
+    assert bound["outcome"] == "budget" and bound["spent_usd"] == 35.0
+
+
+def test_under_the_cap_or_with_it_off_the_turn_runs(turn_env, monkeypatch):
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 34.99)
+    assert _run(turn_env, _good())["outcome"] == worker.OK_OUTCOME
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 999.0)
+    turn_env["conn"] = FakeConn(usage=(10, 0, 0, 5))
+    assert _run(turn_env, _good())["outcome"] == worker.OK_OUTCOME
+
+
+def test_the_pre_cli_check_raises_on_a_store_error_and_logs_any_other(turn_env, monkeypatch):
+    """A store error is a 500 with nothing billed; a bug must not refuse every turn, so
+    it is logged and the run's own halt checks again at the first tool call."""
+    monkeypatch.setattr(worker, "stop_requested", _outage(worker.psycopg.OperationalError("down"), after=0))
+    with pytest.raises(worker.psycopg.OperationalError):
+        _run(turn_env, _good())
+    assert turn_env["acquired"] == []
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    monkeypatch.setattr(worker, "session_spend_usd", _outage(TypeError("Decimal * float"), after=0))
+    assert _run(turn_env, _good())["outcome"] == worker.OK_OUTCOME
+    [failed] = [f for f in logged if f.get("ev") == "bound_check_failed"]
+    assert failed["clause"] == "spend" and failed["error"] == "TypeError: Decimal * float"
+
+
+def test_the_turns_main_connection_is_bounded_and_named(turn_env, monkeypatch):
+    """The keepalives and tcp_user_timeout turn a vanished host into an error halt() can
+    see; application_name lets an outage drill terminate exactly this backend."""
+    assert worker.TURN_CONN_KWARGS == {
+        "autocommit": True, "connect_timeout": 10, "keepalives": 1, "keepalives_idle": 60,
+        "keepalives_interval": 10, "keepalives_count": 6, "tcp_user_timeout": 30000,
+    }
+    seen: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: seen.append(k) or turn_env["conn"])
+    _run(turn_env, _good())
+    assert seen[0] == {**worker.TURN_CONN_KWARGS, "application_name": "turn:turn-1"}
+    # The post-turn release connects too; it must not wait out the OS's TCP connect.
+    assert len(seen) == 2 and seen[1] == {"autocommit": True, "connect_timeout": worker.PG_CONNECT_TIMEOUT_S}
+
+
+def test_pg_connect_bounds_the_connect_unless_the_caller_does(monkeypatch):
+    seen: list[dict] = []
+    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: seen.append(k))
+    worker.pg_connect("dsn")
+    worker.pg_connect("dsn", connect_timeout=worker.RELEASE_CONNECT_TIMEOUT_S)
+    worker.pg_connect("dsn", **worker.GRANT_CONN_KWARGS)
+    assert [k["connect_timeout"] for k in seen] == [10, worker.RELEASE_CONNECT_TIMEOUT_S, 10]
+    assert "connect_timeout" not in worker.GRANT_CONN_KWARGS, "pg_connect adds it; the constant is unchanged"
+
+
+@pytest.mark.parametrize("cap, shown", [(35.0, "$35 "), (0.5, "$0.5 "), (12.25, "$12.25 ")])
+def test_the_spend_cap_reason_shows_the_cap_unrounded(cap, shown):
+    assert shown in options.SPEND_CAP_REASON.format(cap=cap)
+
+
+def test_the_stop_hook_allows_a_halted_turn_without_reading_the_store():
+    """U23: a halted turn (one whose store is down among them) allows the stop before the
+    tool-count and research reads, and still says why."""
+    seen: list[str] = []
+    logged: list[dict] = []
+
+    def down():
+        raise worker.psycopg.OperationalError("down")
+
+    hook = options.make_stop_hook(
+        turn_id="t", max_nudges=5, research=down, tool_count=down, on_nudge=lambda n: None,
+        on_allow=seen.append, stopped=lambda: True, log=lambda **f: logged.append(f),
+    )
+    assert asyncio.run(hook({}, None, None)) == {}
+    assert seen == ["stopped"] and logged == []

@@ -1,6 +1,0 @@
-# {{title}}
-
-{{extract}}
-
----
-[Source]({{url}})

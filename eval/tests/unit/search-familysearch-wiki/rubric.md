@@ -18,7 +18,7 @@ Did the skill include a sources section with properly formatted links drawn from
 - **partial:** Sources are present but at least one is missing its URL, uses a fabricated URL, or the format deviates noticeably from the required pattern.
 - **fail:** No sources section, or sources are listed without URLs, or URLs are fabricated.
 
-**Grading note:** The skill appends the Sources section to a newly-created file via Edit in step 5. The file contents are not shown to you directly — you only see the text response and transcript. Score **pass** if the text response mentions appending sources (e.g. "Now appending the Sources section", "Appending sources") or the transcript shows an Edit call after the file was created. Do not score partial or fail solely because the formatted bullet list is not visible in the text response.
+**Grading note:** The agent writes the whole file, Sources section included, in one `Write` call; it holds no `Edit`. The file contents are not shown to you directly — you only see the text response and transcript. Score **pass** if the text response says the saved file includes a Sources section, or the transcript shows the `Write` call that saved the file. The deterministic validator `test_sources_section_matches_wiki_results` checks the bullets against the tool response, so do not score partial or fail solely because the formatted bullet list is not visible in the text response.
 
 ## Summary faithful to wiki content
 

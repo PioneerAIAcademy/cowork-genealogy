@@ -35,12 +35,13 @@ describe("sanitizeTree", () => {
 
   it("heals the legacy shapes main's own pipeline wrote, and the result validates", () => {
     // A composite of everything found in real run-produced trees: the old
-    // mergeNames' preferred:false, primary:false, person-level sources, the
+    // mergeNames' preferred:false, primary:false, a FamilySearch-style
+    // person-level `{id, title}` entry that names no source, the
     // old spec-mandated top-level places, agent-invented fact keys, a string
     // quality, and a fact with no id.
     const legacy: any = clean();
     legacy.places = [{ id: "P1", name: "Ogden, Utah" }];
-    legacy.persons[0].sources = [{ ref: "S1" }];
+    legacy.persons[0].sources = [{ id: "X1", title: "Some record" }];
     legacy.persons[0].names.push({
       id: "N2", preferred: false, given: "Jack", surname: "Smith",
     });
@@ -64,12 +65,39 @@ describe("sanitizeTree", () => {
 
     // One narratable warning per healed class.
     expect(warnings.some((w: string) => w.includes("places section"))).toBe(true);
-    expect(warnings.some((w: string) => w.includes("person-level source reference"))).toBe(true);
+    expect(warnings.some((w: string) => w.includes("person-level source reference(s) that named no source in the tree"))).toBe(true);
     expect(warnings.some((w: string) => w.includes("'preferred: false'"))).toBe(true);
     expect(warnings.some((w: string) => w.includes("'primary: false'"))).toBe(true);
     expect(warnings.some((w: string) => w.includes("'date_certainty'"))).toBe(true);
     expect(warnings.some((w: string) => w.includes("assigned F ids"))).toBe(true);
     expect(warnings.some((w: string) => w.includes("string quality"))).toBe(true);
+  });
+
+  it("keeps a valid person-level source ref untouched (#2696)", () => {
+    const tree0: any = clean();
+    tree0.persons[0].sources = [{ ref: "S1", page: "p. 4", quality: 3 }];
+    const { tree, warnings } = sanitizeTree(tree0) as any;
+    expect(warnings).toEqual([]);
+    expect(tree.persons[0].sources).toEqual([{ ref: "S1", page: "p. 4", quality: 3 }]);
+    expect(runtimeErrors(tree)).toEqual([]);
+  });
+
+  it("heals a person-level ref's shape and drops a dangling one, so the tree validates", () => {
+    const tree0: any = clean();
+    tree0.persons[0].sources = [{ ref: "S1", quality: "2", tags: ["Name"] }, { ref: "S9" }];
+    expect(runtimeErrors(tree0).length).toBeGreaterThan(0);
+    const { tree, warnings } = sanitizeTree(tree0) as any;
+    expect(tree.persons[0].sources).toEqual([{ ref: "S1", quality: 2 }]);
+    expect(warnings.some((w: string) => w.includes("dropped 1 person-level"))).toBe(true);
+    expect(runtimeErrors(tree)).toEqual([]);
+  });
+
+  it("still does not heal a dangling ref on a fact", () => {
+    const tree0: any = clean();
+    tree0.persons[0].facts[0].sources = [{ ref: "S9" }];
+    const { tree } = sanitizeTree(tree0) as any;
+    expect(tree.persons[0].facts[0].sources).toEqual([{ ref: "S9" }]);
+    expect(runtimeErrors(tree).some((e: any) => JSON.stringify(e).includes("S9"))).toBe(true);
   });
 
   it("drops quality values that are not QUAY integers 0-3", () => {

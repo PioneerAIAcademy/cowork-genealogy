@@ -1,7 +1,7 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
+import { describeFetchError } from "../utils/http.js";
 import { arkToUrl } from "../utils/ark.js";
 import type {
   SourceAttachmentsInput,
@@ -24,14 +24,13 @@ export const ATTACHMENTS_URI_CAP = 100;
 /** One POST. Callers must keep `apiUris` at or under the cap. */
 async function fetchAttachmentMap(
   apiUris: string[],
-  token: string,
+  principal: Principal,
 ): Promise<SourceAttachmentsApiResponse["attachedSourcesMap"]> {
   let response: Response;
   try {
-    response = await fetchWithRetry(URL, {
+    response = await fsFetch(principal, URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: "application/json",
         "Content-Type": "application/json",
         "User-Agent": BROWSER_USER_AGENT,
@@ -39,9 +38,8 @@ async function fetchAttachmentMap(
       body: JSON.stringify({ uris: apiUris }),
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Could not reach FamilySearch attachments API: ${message}.`,
+      `Could not reach FamilySearch attachments API: ${describeFetchError(err)}.`,
     );
   }
 
@@ -91,8 +89,6 @@ export async function sourceAttachmentsTool(
     throw new Error("uris array must not be empty.");
   }
 
-  const token = await getValidToken(principal);
-
   // Callers pass ARKs (canonical `ark:/61903/...`, the form record_search and
   // fulltext_search now emit) or full resolver URLs. The attachments API keys
   // on resolver URLs, so expand each input; keep the original→URL mapping so
@@ -110,7 +106,7 @@ export async function sourceAttachmentsTool(
   const map: SourceAttachmentsApiResponse["attachedSourcesMap"] = {};
   for (let i = 0; i < apiUris.length; i += ATTACHMENTS_URI_CAP) {
     const chunk = apiUris.slice(i, i + ATTACHMENTS_URI_CAP);
-    Object.assign(map, await fetchAttachmentMap(chunk, token));
+    Object.assign(map, await fetchAttachmentMap(chunk, principal));
   }
 
   const attachments: Record<string, AttachedPerson[]> = {};

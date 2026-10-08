@@ -65,7 +65,7 @@ Then lint and run:
 
 ```
 make e2e-validate TEST=census-household-merge   # stripping linter
-make e2e-run      TEST=census-household-merge   # live FS, ~20–60 min, $3–10
+make e2e-run      TEST=census-household-merge   # live FS, about an hour and single-digit dollars
 make e2e-validate                                # (omit TEST) all fixtures
 ```
 

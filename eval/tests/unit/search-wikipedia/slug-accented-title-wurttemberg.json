@@ -12,14 +12,17 @@
       "non-english",
       "unicode-extract",
       "german",
-      "slug-wurttemberg"
+      "slug-wurttemberg",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Look up Württemberg on Wikipedia — I'm tracing a family that left there in the 1840s",
+    "delegation": "Look up Württemberg on Wikipedia — I'm tracing a family that left there in the 1840s\n\ntopic: Württemberg",
     "scenario": null
   },
-  "mcp_fixtures": ["wikipedia-search-wurttemberg"],
+  "mcp_fixtures": [
+    "wikipedia-search-wurttemberg"
+  ],
   "judge_context": [
     "Slug should be 'wurttemberg' — the u-umlaut in the returned title 'Württemberg' becomes a plain 'u'. A filename of 'w-rttemberg.md' means the umlaut was treated as a non-alphanumeric character and collapsed to a hyphen, which SKILL.md step 4 rules out. Both readings are checked deterministically by test_slug_wurttemberg and test_slug_matches_returned_title; do not re-derive the slug yourself.",
     "The extract contains ü, ö and ß (Württemberg, Kirchenbücher, Familienregister, Auswanderungsakten) and long compound German nouns, all of which must be preserved byte-for-byte in the saved file. That is checked by test_saved_file_matches_template, not by you.",

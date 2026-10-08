@@ -301,13 +301,7 @@ export interface RunLogRun {
   [key: string]: unknown;
 }
 
-export type TestOutcome =
-  | 'pass'
-  | 'partial'
-  | 'fail'
-  | 'aborted'
-  | 'xfail'
-  | 'xpass';
+export type TestOutcome = 'pass' | 'partial' | 'fail' | 'aborted';
 
 export interface RunLogTotals {
   duration_ms: number;

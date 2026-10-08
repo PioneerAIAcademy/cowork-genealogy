@@ -294,10 +294,10 @@ describe("person_read + memories", () => {
     }
   });
 
-  it("makes NO memories call when sourceDescriptions is false", async () => {
+  it("still pages memories when sourceDescriptions is false (the flag is ignored)", async () => {
     routes({ pages: [[memory({ id: "d1", artifactMetadata: qualifier("Document") })]] });
     await personReadTool({ personId: PID, sourceDescriptions: false }, LOCAL);
-    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes("/memories"))).toHaveLength(0);
+    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes("/memories"))).toHaveLength(1);
   });
 
   it("makes NO memories call for a living person", async () => {

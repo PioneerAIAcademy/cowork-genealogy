@@ -277,28 +277,72 @@ _INACTIVE_LOG = {"snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n
 
 
 def test_rule2_blocks_without_cosmetic_skip(monkeypatch, capsys):
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
     assert "NOT active" in out
-    assert "eval-cosmetic-skip" in out  # tells the senior the escape hatch exists
+    # Tells the senior the exact per-skill label, and how to create it.
+    assert "`eval-cosmetic-skip:demo`" in out
+    assert "gh label create eval-cosmetic-skip:demo" in out
+    assert "waives nothing" not in out
 
 
-def test_rule2_bypassed_with_cosmetic_skip(monkeypatch, capsys):
-    monkeypatch.setenv("COSMETIC_SKIP", "1")
-    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
-    assert rc == 0
+def test_rule2_error_names_the_blocked_skills_own_label(monkeypatch, capsys):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    check_runlogs.rule2_active("research-plan", _INACTIVE_LOG, "v1.json")
     out = capsys.readouterr().out
-    assert "::warning" in out and "eval-cosmetic-skip" in out
+    assert "`eval-cosmetic-skip:research-plan`" in out
+    assert "eval-cosmetic-skip:demo" not in out
 
 
-def test_rule2_skip_zero_does_not_bypass(monkeypatch, capsys):
-    """Only COSMETIC_SKIP == '1' bypasses; '0' (label absent) still blocks."""
-    monkeypatch.setenv("COSMETIC_SKIP", "0")
+def test_rule2_other_namespaced_label_naming_the_skill_does_not_waive(monkeypatch, capsys):
+    """Only the eval-cosmetic-skip: namespace waives; `cluster:demo` or a bare
+    `demo` label must not."""
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "demo\ncluster:demo")
     rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
     assert rc == 1
     assert "NOT active" in capsys.readouterr().out
+
+
+def test_rule2_bypassed_by_its_own_skill_label(monkeypatch, capsys):
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "developer\neval-cosmetic-skip:demo\n")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out and "`eval-cosmetic-skip:demo`" in out
+
+
+def test_rule2_label_for_one_skill_does_not_waive_another(monkeypatch, capsys):
+    """The waiver is per skill. The legacy PR-wide COSMETIC_SKIP=1 is set too,
+    so this fails against the old code, which waived every touched skill."""
+    monkeypatch.setenv("COSMETIC_SKIP", "1")
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:other")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    assert "NOT active" in capsys.readouterr().out
+
+
+def test_rule2_label_for_a_longer_skill_name_does_not_waive_its_prefix(monkeypatch, capsys):
+    """`research` is a prefix of `research-plan`; the match must be exact."""
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:demo-two")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    assert "NOT active" in capsys.readouterr().out
+
+
+def test_rule2_bare_label_waives_nothing(monkeypatch, capsys):
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip")
+    rc = check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "`eval-cosmetic-skip:demo`" in out
+    assert "waives nothing" in out
+
+
+def test_rule2_label_list_tolerates_crlf_and_padding(monkeypatch):
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "  developer \r\n eval-cosmetic-skip:demo \r\n\r\n")
+    assert check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v1.json") == 0
 
 
 # --- Orchestrator-skill exemption (RUNLOG_GATE_EXEMPT_SKILLS) --------------
@@ -996,7 +1040,7 @@ def test_rule2_passes_on_hash_snapshot_when_disk_matches(tmp_path, monkeypatch, 
     would have blocked *every* skill in CI and the unit suite would have stayed
     green — the failure mode that motivated writing it.
     """
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     skill_md = tmp_path / "packages/engine/plugin/skills/s1/SKILL.md"
     skill_md.parent.mkdir(parents=True)
     skill_md.write_text("---\nname: s1\n---\nbody\n", encoding="utf-8")
@@ -1024,7 +1068,7 @@ def test_rule2_tolerates_a_cosmetic_name_description_edit(tmp_path, monkeypatch)
     every rename of a test's display name into a forced paid re-run, and
     nothing else in the suite composes build_snapshot with rule 2.
     """
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
     tests_dir = tmp_path / "eval/tests/unit/s1"
     tests_dir.mkdir(parents=True)
@@ -1055,7 +1099,7 @@ def test_rule2_treats_tag_edit_as_substantive(tmp_path, monkeypatch):
     A tag edit must invalidate the snapshot — unlike name/description, tags
     are NOT cosmetic.
     """
-    monkeypatch.delenv("COSMETIC_SKIP", raising=False)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
     (tmp_path / "packages/engine/plugin/skills/s1").mkdir(parents=True)
     tests_dir = tmp_path / "eval/tests/unit/s1"
     tests_dir.mkdir(parents=True)
@@ -1256,10 +1300,8 @@ def _t(test_id, outcomes, *, expected="pass"):
     }
 
 
-def _rule6(tests, closed=None, markers=None):
-    return check_runlogs.rule6_outcomes(
-        "s", {"tests": tests}, "v1.json", closed, markers
-    )
+def _rule6(tests):
+    return check_runlogs.rule6_outcomes("s", {"tests": tests}, "v1.json")
 
 
 def test_rule6_blocks_a_fail(capsys):
@@ -1288,27 +1330,15 @@ def test_rule6_uses_the_modal_aggregate_not_any_run(capsys):
     assert _rule6([_t("ut_s_1", ["pass", "fail", "pass"])]) == 0
 
 
-def test_rule6_suppressed_fail_does_not_block(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 0
+def test_rule6_an_xfail_marker_no_longer_suppresses_a_fail(capsys):
+    """Lead, 2026-10-06: "We no longer allow xfail." A marked fail is red."""
+    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail")]) == 1
+    assert "may not carry a red" in capsys.readouterr().out
 
 
-def test_rule6_suppressed_abort_blocks(capsys):
-    """A marker declares a known FAILURE; an abort is an ungraded run."""
-    assert _rule6([_t("ut_s_1", ["aborted"], expected="xfail")]) == 1
-    assert "but ABORTED" in capsys.readouterr().out
-
-
-def test_rule6_suppressed_pass_warns_but_does_not_block(capsys):
+def test_rule6_a_marked_test_that_passes_is_clean(capsys):
     assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")]) == 0
-    assert "but PASSED" in capsys.readouterr().out
-
-
-def test_rule6_names_a_closed_owner_on_a_stale_marker(capsys):
-    """A marker whose removal condition cites a closed issue can never be met.
-    Three of the five live markers are in that state."""
-    assert _rule6([_t("ut_s_1", ["pass"], expected="xfail")],
-                  closed={2173}, markers={"ut_s_1": 2173}) == 0
-    assert "issue #2173, which is CLOSED" in capsys.readouterr().out
+    assert capsys.readouterr().out == ""
 
 
 def test_rule6_a_test_with_no_runs_blocks(capsys):
@@ -1341,51 +1371,106 @@ def test_rule6_accepts_every_value_the_schema_allows(capsys):
         assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
 
 
-def test_rule6_an_all_suppressed_log_is_allowed(capsys):
-    assert _rule6([_t("ut_s_1", ["fail"], expected="xfail"),
-                   _t("ut_s_2", ["fail"], expected="xfail")]) == 0
-
-
 def test_rule6_an_empty_tests_array_is_allowed():
     """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
     second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
     assert _rule6([]) == 0
 
 
+# --- rule 9: aggregate outcome enum, corpus-wide (#2842) -------------------------
+
+
+def _write_runlog(dir_path, filename, outcomes):
+    """Write a minimal committed-shaped run log with the given aggregate
+    ``tests[].outcome`` values."""
+    d = dir_path / "some-skill"
+    d.mkdir(parents=True, exist_ok=True)
+    tests = [{"test_id": f"ut_s_{i}", "outcome": o} for i, o in enumerate(outcomes)]
+    (d / filename).write_text(json.dumps({"tests": tests}), encoding="utf-8")
+
+
+@pytest.mark.parametrize("retired", ["xfail", "xpass"])
+def test_rule9_blocks_a_retired_aggregate_outcome(tmp_path, retired, capsys):
+    """The straggler class: a committed run log whose aggregate `outcome` is a
+    retired value. Rule 6 cannot see it — it reads per-run outcomes and only on
+    PR-added logs — so this corpus-wide rule is what catches one landed by merge.
+    Break the enum narrowing (put xfail/xpass back on `_RUN_OUTCOMES`) and this
+    goes green: the falsifiability check."""
+    _write_runlog(tmp_path, "v1.json", ["pass", retired])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert retired in out and "v1.json" in out
+
+
+def test_rule9_accepts_every_value_the_schema_allows(tmp_path):
+    """The other direction — a log of legitimate aggregates must pass."""
+    _write_runlog(tmp_path, "v1.json", ["pass", "partial", "fail", "aborted"])
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+
+
+def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
+    """A retired value in a scratch log (gitignored, never committed) or inside an
+    `.ann.json` (a different shape) must NOT trip the rule — the reach guard, so
+    the check cannot be dodged by mislabelling and cannot false-flag an annotation."""
+    _write_runlog(tmp_path, "scratch_2026-09-28_10-00-00.json", ["xfail"])
+    d = tmp_path / "some-skill"
+    (d / "v1.ann.json").write_text(
+        json.dumps({"corrections": [{"outcome": "xpass"}]}), encoding="utf-8"
+    )
+    assert check_runlogs.rule9_outcome_enum(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
 # --- marker owners, read from the committed test corpus --------------------------
 
 
-def test_marker_owners_reads_the_issue_out_of_an_xfail_reason(tmp_path):
-    d = tmp_path / "some-skill"
-    d.mkdir()
-    (d / "t.json").write_text(json.dumps({"test": {
-        "id": "ut_x_1", "expected_outcome": "xfail",
-        "xfail_reason": "Remove this marker once #2173 lands.",
-    }}), encoding="utf-8")
-    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2173}
+def _write_test(dir_, name, test):
+    dir_.mkdir(parents=True, exist_ok=True)
+    (dir_ / name).write_text(json.dumps({"test": test}), encoding="utf-8")
 
 
-def test_marker_owners_ignores_unmarked_tests_and_reasonless_markers(tmp_path):
-    d = tmp_path / "some-skill"
-    d.mkdir()
-    (d / "a.json").write_text(json.dumps({"test": {
-        "id": "ut_x_1", "expected_outcome": "pass",
-        "xfail_reason": "mentions #999 but is not a marker"}}), encoding="utf-8")
-    (d / "b.json").write_text(json.dumps({"test": {
-        "id": "ut_x_2", "expected_outcome": "xfail",
-        "xfail_reason": "no issue cited, so nothing to check"}}), encoding="utf-8")
-    assert check_runlogs.marker_owners(tmp_path) == {}
+def test_rule10_blocks_a_touched_skill_that_carries_a_marker(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    _write_test(tmp_path, "a.json", {"id": "ut_x_1", "expected_outcome": "xfail",
+                                     "xfail_reason": "owned by #2030"})
+    _write_test(tmp_path, "b.json", {"id": "ut_x_2"})
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "ut_x_1" in out and "ut_x_2" not in out
 
 
-def test_marker_owners_survives_an_unreadable_file(tmp_path):
-    """It scans the whole corpus, so one bad file must not take the gate down."""
-    d = tmp_path / "some-skill"
-    d.mkdir()
-    (d / "bad.json").write_text("{ not json", encoding="utf-8")
-    (d / "good.json").write_text(json.dumps({"test": {
-        "id": "ut_x_1", "expected_outcome": "xfail",
-        "xfail_reason": "owned by #2030"}}), encoding="utf-8")
-    assert check_runlogs.marker_owners(tmp_path) == {"ut_x_1": 2030}
+def test_rule10_finds_a_marker_in_a_nested_dir(tmp_path, capsys, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    _write_test(tmp_path / "sub", "a.json", {"id": "ut_x_1", "expected_outcome": "xfail"})
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 1
+
+
+@pytest.mark.parametrize(
+    "test",
+    [{"id": "ut_x_1"}, {"id": "ut_x_1", "expected_outcome": "pass"}],
+    ids=["no-field", "explicit-pass"],
+)
+def test_rule10_accepts_an_unmarked_suite(tmp_path, test, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    _write_test(tmp_path, "a.json", test)
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 0
+
+
+def test_rule10_accepts_a_missing_suite_dir_and_unreadable_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path / "absent") == 0
+    tmp_path.joinpath("bad.json").write_text("{not json", encoding="utf-8")
+    tmp_path.joinpath("list.json").write_text("[]", encoding="utf-8")
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 0
+
+
+def test_rule10_only_warns_under_the_skills_cosmetic_skip_label(tmp_path, capsys, monkeypatch):
+    _write_test(tmp_path, "a.json", {"id": "ut_x_1", "expected_outcome": "xfail"})
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:x")
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 0
+    assert "::warning" in capsys.readouterr().out
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:other")
+    assert check_runlogs.rule10_no_xfail_markers("x", tmp_path) == 1
 
 
 def _clean_log(test_id="ut_ip_1", outcome="pass"):
@@ -1519,7 +1604,7 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
 )
 def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
     entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
-    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json", {}) == 1
+    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
     assert "outside the schema's" in capsys.readouterr().out
 
 

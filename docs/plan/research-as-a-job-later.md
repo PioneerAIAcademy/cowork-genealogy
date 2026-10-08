@@ -1,6 +1,8 @@
 # Research as a job — phases 2 to 5, at intent only
 
-> **Status:** NOT BUILT, and **deliberately not specified**. Phases 0 and 1 were built by
+> **Status:** PARTLY BUILT. *Before phase 2* and phases 2-5 are built on the
+> unmerged `research-as-a-job-phase2` branch; the `delivered` exit landed separately on
+> `main`. The rest is **deliberately not specified**. Phases 0 and 1 were built by
 > PR #2870, whose body lists each item (S2, 0a, 0b, 1a–1e); their plan is deleted. This file
 > records where that design goes next, at the level of what and why, with acceptance criteria
 > and nothing else.
@@ -31,7 +33,7 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
   only `project.status` and its own counters — never which skill is running or what the
   researcher asked for.
 - **`turns.outcome` says how a run ended**: `completed`, `stopped`, `queued`, `budget` (the
-  nudge cap, or the prototype's $35 spend bound), `no_progress`, `decision`,
+  nudge cap, or the prototype's $35 spend bound), `no_progress`, `decision`, `delivered`,
   `mcp_unavailable`. Each renders today as one line under the chat. `no_progress` covers
   three causes that should read differently: an agent that stalled, a resume that failed
   twice, and a tool surface that went away.
@@ -48,10 +50,16 @@ Facts the later passes build on, kept here because the plan for phases 0 and 1 i
 
 Phase 1 turned continuous work on for every hosted turn. These follow from that and come
 before any new surface. The nudge text and the body edits reach the alpha and Cowork too — one
-constant, one plugin — and only the exit's handler is prototype-only. The alpha's Stop hook
+constant, one plugin — and the exit's handler is now on both hosted planes (see below). ~~The alpha's Stop hook
 passes no decision clause, so it vetoes the exit like any yield and alpha testers keep phase 1's
-behaviour until the alpha is retired, with `auto_continue` as its switch (the alpha is not
-hardened, ruled 2026-09-25).
+behaviour until the alpha is retired~~ — **SUPERSEDED 2026-10-06** on the lead's own Done-when (a new browser session must end with
+the delivered outcome, and the default web transport is the alpha) and his 2026-10-06 comments
+asking for the duplicate-spawn fix. The struck ruling was his (496566c29). The
+alpha now halts on the delivered signal and forwards it as `should_continue_run(delivered=...)`,
+and it forces delegations to the foreground like the worker. The ruling above rested on nothing
+needing those signals there; the router's "Bounded request or job" section needed the first, and
+two live incident reports on issue #2813 needed the second, so the premise lapsed. `auto_continue`
+remains the switch (the alpha is not hardened, ruled 2026-09-25).
 
 **The default web path never enters the router.** The web client prefixes the first message
 so `init-project` runs; it hands to `question-selection` and `research-plan`, and nothing in
@@ -75,11 +83,15 @@ the nudge cap or $35. No approval gate still holds — this pushback is about sc
 per-step consent. The finish line belongs to the request that named it, not to the project:
 in issue #2932 "leave it at that" was the second message on an existing project, and the next
 "go ahead and research it" must not find a finish line already met. It lasts one turn and is
-void on the next message. The agent says it has delivered what was asked with the same call
-that carries *I need you* (below), and the turn ends with an outcome of its own — `completed`
+void on the next message. The agent says it has delivered what was asked by calling
+`research_delivered` — a tool SEPARATE from the *I need you* carrier below, because an ask
+waits for an answer and a delivery waits for nothing (ruled by the user 2026-09-29; the carriers were
+split, see `docs/specs/research-delivered-tool-spec.md`). **Landing on `main` separately**: the exit,
+the tool and the browser label ship independently of this plan. The turn ends with an
+outcome of its own — `completed`
 means the project is done and reads "Research complete.". "Where are we?" is a bounded request
 whose deliverable is the answer. Whatever re-enters the router must respect this, or every
-question becomes a job. Issue #2813's draft item 3, not yet approved, raises the same scope
+question becomes a job. Issue #2813's item 3, rewritten by the lead on 2026-10-04, raises the same scope
 question from the single-ask side; this section builds the finish line. Its offer to escalate
 at the end of a quick answer is compatible: the turn ends at the deliverable, so the offer is
 one the run waits for.
@@ -117,7 +129,7 @@ ends `decision` and the answer arrives as the next message. That narrows phase 3
 carried questions to one: which call means *I need you*. The worker's `PreToolUse` hook
 already reads control-plane rows on every call, so the choice is the model's own
 `AskUserQuestion`, intercepted, or one dedicated tool shaped like PR #2702's `hand_back`.
-Pick one; it also carries *delivered what was asked*. On Cowork nothing intercepts it, so it must
+Pick one. It does **not** also carry *delivered what was asked*: the user's 2026-09-29 ruling split the carriers, and `research_delivered` is shipping as its own tool, separately from this plan. On Cowork nothing intercepts it, so it must
 read sensibly there. `AskUserQuestion` is granted on the prototype, handled
 nowhere in `apps/`, and appears unprompted in 13 committed unit run logs, so first record what
 it does on a continuous hosted turn today. The card is phase 3; the exit is not.

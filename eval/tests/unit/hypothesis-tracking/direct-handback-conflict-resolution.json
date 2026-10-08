@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_hypothesis_tracking_018",
+    "skill": "hypothesis-tracking",
+    "name": "Fact-conflict delegation — hand back to conflict-resolution, write nothing",
+    "type": "negative",
+    "description": "The agent's Step 0 scope gate, reached by direct spawn. The delegation asks to weigh two birthplace assertions and decide which is correct — conflict-resolution's work, not a hypothesis. The agent must reply with the one-line hand-back naming conflict-resolution and make no write. Added in issue #2792 when the three description-routing negatives (_014-_016) were deleted: those graded which skill Cowork picked from a description, which never reached this gate; this test reaches the gate itself. A DIRECT negative graded on its invariant (unit-test-spec.md 5.2.1), gated by test_scope_handback_writes_nothing in eval/harness/validators/test_hypothesis_tracking.py.",
+    "tags": [
+      "scope-gate",
+      "scope-handback",
+      "handback-to-conflict-resolution",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Weigh a_002 against a_009 and decide which birthplace is correct for Patrick Flynn.\n\nassertionIds: a_002, a_009\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "validate-research-schema"
+  ],
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
+    "Weighing two assertions to decide which fact is correct is conflict-resolution's work. The correct, complete response is the one-line hand-back 'Hand-back: conflict-resolution — <clause>' with no analysis, no file reads and no writes. Do NOT penalize the agent for not weighing the evidence, not creating a hypothesis, or for the reply being one line.",
+    "The scope-handback invariant validator decides this test's outcome: no research_append call, research.json unchanged, and a Hand-back line naming conflict-resolution."
+  ],
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "grade_on_invariant": true,
+    "explanation": "A fact conflict belongs to conflict-resolution. On the direct arm there is no router whose choice could be graded, so the test is graded on the Step 0 invariant: the agent hands back by name and changes nothing."
+  }
+}

@@ -308,7 +308,7 @@ by hand.)
 
 ### `person-evidence` — **required** (primary consumer)
 
-`packages/engine/plugin/skills/person-evidence/SKILL.md`. Today it builds the
+`packages/engine/plugin/agents/person-evidence.md`. Today it builds the
 matching mob (Step 2) and calls `same_person` per persona for the **focus**
 match, then the **Cross-person consistency check** (added under Step 7) asks
 Claude to verify by hand that the household pairs cohere. Wire the new mode in:

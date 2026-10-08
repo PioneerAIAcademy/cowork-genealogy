@@ -3259,7 +3259,7 @@
         "external-links-search-massachusetts",
         "collections-search-massachusetts-census"
       ],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -9999,7 +9999,7 @@
         "external-links-search-schuylkill",
         "collections-search-schuylkill"
       ],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -12887,7 +12887,7 @@
         "place-search-schuylkill-by-place",
         "external-links-search-schuylkill"
       ],
-      "outcome": "xpass",
+      "outcome": "pass",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

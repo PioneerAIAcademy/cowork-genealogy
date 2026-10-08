@@ -1,5 +1,4 @@
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { selectRelativePairs } from "../utils/relatives.js";
 import { scorePair } from "../utils/match-engine.js";
@@ -50,16 +49,13 @@ export async function samePerson(
 
   validateInput(input);
 
-  // One OAuth token reused for the whole call (single pair or whole batch).
-  const token = await getValidToken(principal);
-
   if (input.matchRelatives) {
     return matchRelatives(
       input.gedcomx1,
       input.primaryId1,
       input.gedcomx2,
       input.primaryId2,
-      token,
+      principal,
     );
   }
 
@@ -68,7 +64,7 @@ export async function samePerson(
     input.primaryId1,
     input.gedcomx2,
     input.primaryId2,
-    token,
+    principal,
   );
 }
 
@@ -221,8 +217,6 @@ async function samePersonFromProject(
   const resolved = await resolveRecordSide(input, research, assertion, recordId, role, principal);
   const { gedcomx1, primaryId1, recordSource, personaId } = resolved;
 
-  const token = await getValidToken(principal);
-
   if (input.matchRelatives) {
     const hasRels = (gedcomx1.relationships ?? []).length > 0;
     if (!hasRels) {
@@ -236,10 +230,10 @@ async function samePersonFromProject(
           "explicitly if you have it.",
       };
     }
-    return matchRelatives(gedcomx1, primaryId1, gedcomx2, treePersonId, token);
+    return matchRelatives(gedcomx1, primaryId1, gedcomx2, treePersonId, principal);
   }
 
-  const result = await scorePair(gedcomx1, primaryId1, gedcomx2, treePersonId, token);
+  const result = await scorePair(gedcomx1, primaryId1, gedcomx2, treePersonId, principal);
 
   // ── step 2: record what was computed ──
   let recorded = false;
@@ -533,7 +527,7 @@ async function matchRelatives(
   primaryId1: string,
   gedcomx2: SimplifiedGedcomX,
   primaryId2: string,
-  token: string,
+  principal: Principal,
 ): Promise<SamePersonRelativesResult> {
   const { pairs, droppedForCap } = selectRelativePairs(
     gedcomx1,
@@ -554,7 +548,7 @@ async function matchRelatives(
           pair.target.id as string,
           gedcomx2,
           pair.candidate.id as string,
-          token,
+          principal,
         ),
       );
     } catch {

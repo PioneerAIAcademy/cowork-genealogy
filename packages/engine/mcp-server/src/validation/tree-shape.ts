@@ -6,7 +6,7 @@
 // truth so the two can never disagree about what the format is.
 
 export const TREE_TOP_LEVEL_FIELDS = new Set(["persons", "relationships", "sources"]);
-export const TREE_PERSON_FIELDS = new Set(["id", "ark", "living", "gender", "names", "facts"]);
+export const TREE_PERSON_FIELDS = new Set(["id", "ark", "living", "gender", "names", "facts", "sources"]);
 export const TREE_NAME_FIELDS = new Set([
   "id", "preferred", "given", "surname", "prefix", "suffix", "type", "sources",
 ]);

@@ -5,10 +5,10 @@
     "name": "Dangling intra-file reference is reported and explained",
     "type": "positive",
     "description": "Run schema validation against mid-research-flynn-dangling-ref, the clean scenario with one mutation: assertion a_001's source_id points to 'src_999', which does not exist in sources[]. The validator emits one error. Exercises the checkRefExists path (cross-reference integrity within research.json).",
-    "tags": ["validation", "error-path", "dangling-reference", "explain-and-suggest"]
+    "tags": ["validation", "error-path", "dangling-reference", "explain-and-suggest", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-dangling-ref"
   },
   "intentionally_invalid": true,

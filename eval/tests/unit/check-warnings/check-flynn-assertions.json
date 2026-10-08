@@ -5,10 +5,10 @@
     "name": "Confirm no impossibilities on a well-formed mid-research project",
     "type": "positive",
     "description": "Run warnings check on the Flynn project. The current data is internally consistent -- birth ~1845, censuses at ages 5 and 15, death 1908 all line up. The skill should confirm cleanly without false-positive warnings on this valid data. A useful negative result is part of this skill's value.",
-    "tags": ["warnings", "validation", "clean-data", "false-positive-avoidance"]
+    "tags": ["warnings", "validation", "clean-data", "false-positive-avoidance", "direct-arm"]
   },
   "input": {
-    "user_message": "Check Patrick Flynn's evidence for any impossibilities or warnings.",
+    "delegation": "Check Patrick Flynn's evidence for any impossibilities or warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["person-warnings-no-warnings"],

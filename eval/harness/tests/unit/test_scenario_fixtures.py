@@ -84,12 +84,12 @@ def _lintable_scenario_dirs() -> list[Path]:
     ones a test deliberately broke (`intentionally_invalid`).
 
     Those four `mid-research-flynn-*` fixtures are invalid on purpose so the
-    `validate-schema` skill tests (ut_validate_schema_004–007) can prove the
-    skill *detects* each error class. Linting them as "must be valid" would be
+    `validate-schema` agent tests (ut_validate_schema_004–007) can prove the
+    agent *detects* each error class. Linting them as "must be valid" would be
     wrong, and parametrizing-then-skipping them only adds noise to the run —
-    so they are excluded at collection time instead. The skill tests are what
+    so they are excluded at collection time instead. The agent tests are what
     keep them honest: if one accidentally became valid, those tests fail
-    (they assert the skill reports "validation FAILED"). The
+    (they assert the agent reports "validation FAILED"). The
     `intentionally_invalid` test flag remains the single source of truth for
     which scenarios are exempt; the fixture READMEs document the breakage.
     """

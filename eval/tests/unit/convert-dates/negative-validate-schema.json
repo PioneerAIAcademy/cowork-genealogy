@@ -5,21 +5,21 @@
     "name": "Schema-validity question must not trigger a calendar conversion",
     "type": "negative",
     "description": "User asks whether a date string is valid for a research.json field value. That is a schema question, not a calendar-conversion question. convert-dates performs mechanical calendar-system conversions; it must NOT perform one on a schema-validity question. The router often answers such questions directly (date fields are freeform strings, no format check); either routing to validate-schema or answering directly is acceptable so long as convert-dates does not perform a calendar shift.",
-    "tags": ["near-miss", "convert-dates-vs-validate-schema", "boundary", "no-spurious-conversion"]
+    "tags": ["near-miss", "convert-dates-vs-validate-schema", "boundary", "no-spurious-conversion", "direct-arm"]
   },
   "input": {
-    "user_message": "Is '15 Feb 1749/50' a valid value for a date field in research.json? Will the validator accept it?",
+    "delegation": "Is '15 Feb 1749/50' a valid value for a date field in research.json? Will the validator accept it?\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "negative": {
-    "correct_skill": ["validate-schema"],
+    "correct_skill": [],
     "grade_on_invariant": true,
-    "explanation": "The user wants to know whether the string '15 Feb 1749/50' will pass the research.json schema validator — not asking for a Julian-to-Gregorian conversion. Ideally the router picks validate-schema, but answering directly that date fields are freeform strings is equally acceptable. The routing-independent invariant this test actually enforces is the convert-dates-scoped one: convert-dates must NOT perform a calendar conversion on a schema question, gated deterministically by the tag-gated validator test_no_spurious_conversion (eval/harness/validators/test_convert_dates.py:49, no-spurious-conversion tag), which fails the run if convert_calendar is invoked. NOTE: this intentionally drops the original 'must route to validate-schema' assertion — that belongs to validate-schema's description/triggering, not to a convert-dates test."
+    "explanation": "The user wants to know whether the string '15 Feb 1749/50' will pass the research.json schema validator, not a Julian-to-Gregorian conversion. The agent hands the question back to validate-schema and must not perform a calendar conversion. Since #2790 this is a direct-agent test: the convert-dates agent is spawned with no router in front of it, so there is no routing decision left to grade. correct_skill is [] because runnability.py requires each entry to name a shipped skill directory, and validate-schema is being converted to an agent too (issue #2798). [] does not change the verdict: grade_on_invariant is set, and orchestrator._grading_mode reads that flag before routing or activation, so the outcome comes solely from the routing-independent validator test_no_spurious_conversion (eval/harness/validators/test_convert_dates.py, gated on the no-spurious-conversion tag), which fails the run if convert_calendar is invoked. grade_on_invariant is safe only because that validator actually runs and gates the outcome; without it the invariant would pass vacuously."
   },
   "judge_context": [
     "convert-dates should NOT perform a calendar conversion — this is a schema question, not a date to convert",
-    "Answering directly that date fields in research.json are freeform strings (no format check) is correct and acceptable",
-    "Routing to validate-schema is also acceptable",
+    "The agent hands the question back to validate-schema; if it also notes that date fields in research.json are freeform strings (no format check), do not deduct",
+    "Handing the question back to validate-schema without converting is also acceptable",
     "Should NOT introduce any Julian or Gregorian shift or convert '1749/50' to a single year"
   ]
 }

@@ -1,7 +1,6 @@
 import { decisiveness } from "../utils/person-search-decisiveness.js";
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import {
   toSimplified,
   standardizePlaces,
@@ -277,12 +276,10 @@ export async function personSearchTool(
 ): Promise<PersonSearchToolResponse> {
   validateInput(input);
 
-  const token = await getValidToken(principal);
   const url = buildSearchUrl(input);
 
-  const response = await fetchWithRetry(url, {
+  const response = await fsFetch(principal, url, {
     headers: {
-      Authorization: `Bearer ${token}`,
       Accept: ACCEPT_HEADER,
       "Accept-Language": "en",
     },
@@ -361,7 +358,7 @@ export const personSearchToolSchema = {
     "GedcomX (name + facts), so the user can pick which one to research. To " +
     "expand a chosen match into parents, siblings, spouses, and children, " +
     "call " +
-    "person_read with relatives: true. Requires authentication — call the " +
+    "person_read. Requires authentication — call the " +
     "login tool first if not logged in. For ambiguous place names, call the " +
     "place_search tool first. " +
     "EXACT-MATCH TOGGLES: without an `*Exact` flag a name field also matches " +

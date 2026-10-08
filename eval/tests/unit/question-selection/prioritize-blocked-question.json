@@ -5,10 +5,18 @@
     "name": "Select a question that addresses an unresolved conflict",
     "type": "positive",
     "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. The natural next question is one that gathers evidence to resolve them — not a question that ignores the conflicts and pursues new directions.",
-    "tags": ["question-selection", "conflict-driven", "blocked-questions", "selection-basis-unresolved-conflict", "new-question-exhaustive-declaration-unstarted", "unblocks-nonempty"]
+    "tags": [
+      "question-selection",
+      "conflict-driven",
+      "blocked-questions",
+      "selection-basis-unresolved-conflict",
+      "new-question-exhaustive-declaration-unstarted",
+      "unblocks-nonempty",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Pick the next research question to investigate.",
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
     "scenario": "flynn-multi-conflict"
   },
   "judge_context": [

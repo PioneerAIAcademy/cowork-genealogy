@@ -29,18 +29,25 @@ EVAL_ENV := $(CURDIR)/eval/.env
 ENGINE_DIR    := packages/engine/mcp-server
 ENGINE_BUILD  := $(ENGINE_DIR)/build/index.js
 ENGINE_DEPS   := $(ENGINE_DIR)/node_modules/.make-installed
-EVAL_APP_DEPS := eval/app/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
-# Root pnpm workspace (web, electron, viewer-ui, schema). Reinstall when the
+# Root pnpm workspace (web, electron, viewer-ui, schema, eval/app). Reinstall when the
 # root manifest, the lockfile, the member list, or ANY member's manifest
 # changes. A member's package.json is listed because it carries that member's
 # lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
 # to packages/schema and touched neither, so every existing checkout kept a
 # stamp newer than both prerequisites, never reinstalled, and never ran the
 # generator that postinstall exists to run.
-$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml \
+# eval/app/package.json is named explicitly rather than matched by a glob: it is
+# a member (#1488) but sits under eval/, which `packages/*`/`apps/*` do not
+# reach. Omitting it reproduces #1271 — every existing checkout keeps a stamp
+# newer than its prerequisites, never reinstalls, and never runs the gen-zod
+# postinstall the tests import.
+$(JS_DEPS): package.json pnpm-lock.yaml pnpm-workspace.yaml eval/app/package.json \
             $(wildcard packages/*/package.json apps/*/package.json)
+	@# Before pnpm, not as its preinstall hook: pnpm plans its linking first, so
+	@# a tree removed during preinstall leaves eval/app unlinked on that run.
+	node scripts/drop-npm-managed-trees.mjs
 	pnpm install
 	@touch $@
 
@@ -75,11 +82,6 @@ $(ENGINE_DEPS): $(ENGINE_DIR)/package.json $(ENGINE_DIR)/package-lock.json
 $(ENGINE_BUILD): $(ENGINE_DEPS) $(shell find $(ENGINE_DIR)/src -type f 2>/dev/null)
 	cd $(ENGINE_DIR) && npm run build
 
-# Eval CRUD UI deps.
-$(EVAL_APP_DEPS): eval/app/package.json
-	cd eval/app && npm install
-	@touch $@
-
 .PHONY: engine-build
 engine-build: $(ENGINE_BUILD) ## Build the genealogy engine (mcp-server) — real-agent local runs need it
 
@@ -90,7 +92,7 @@ help: ## Show this menu
 
 # ── Setup ────────────────────────────────────────────────────────
 .PHONY: install
-install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install EVERYTHING: pnpm workspace, server venv, engine build, eval-ui deps, git hooks
+install: $(JS_DEPS) server-install $(ENGINE_BUILD) ## Install EVERYTHING: pnpm workspace (incl. eval-ui), server venv, engine build, git hooks
 	@# Leading `-`: a clone whose hooks belong to other tooling makes install-hooks
 	@# exit 1 by design (it refuses to clobber). That must not fail the whole
 	@# install — it just means this clone opts out and uses `make worktree-link`
@@ -99,7 +101,7 @@ install: $(JS_DEPS) server-install $(ENGINE_BUILD) $(EVAL_APP_DEPS) ## Install E
 	@# positive test in a harness run fails on a judge error after the suite has
 	@# already been paid for.
 	-@$(MAKE) --no-print-directory install-hooks
-	@echo "✓ install complete (pnpm workspace + server venv + engine build + eval-ui deps + git hooks)"
+	@echo "✓ install complete (pnpm workspace incl. eval-ui + server venv + engine build + git hooks)"
 
 .PHONY: server-install
 server-install: ## Create the server venv and install FastAPI deps (uv)
@@ -272,19 +274,16 @@ typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
 	pnpm typecheck
 
 .PHONY: lint
-lint: $(JS_DEPS) $(EVAL_APP_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
+lint: $(JS_DEPS) ## ESLint — the two workspaces that have a config (apps/electron, eval/app)
 	# Not `pnpm -r lint`: only these two declare a lint script, and `-r` would
 	# report success for every workspace that simply has none. Named explicitly
 	# so adding a third config is a visible edit here rather than a silent
 	# no-op.
 	pnpm --filter @genealogy/electron lint
-	# eval/app is NOT a pnpm workspace member (same carve-out as the engine), so
-	# it is reached with npm from its own directory — exactly as eval-ui-test
-	# does. `pnpm --filter` matches no project here and exits non-zero.
-	cd eval/app && npm run lint
+	pnpm --filter cowork-genealogy-eval-app lint
 
 .PHONY: test-all
-test-all: ## Run EVERY check before a PR: typecheck + JS + server + engine + CRUD UI + eval harness. Alias for scripts/test.sh
+test-all: ## Run EVERY check before a PR: typecheck + JS (incl. CRUD UI) + server + engine + eval harness. Alias for scripts/test.sh
 	# One command, one contract. scripts/test.sh owns the implementation
 	# because it reports every failure instead of stopping at the first.
 	# Everything it runs is offline and deterministic — keep it that way; a
@@ -303,7 +302,7 @@ test: ## Quick loop: JS workspace + server tests (a subset of test-all)
 	$(MAKE) server-test
 
 .PHONY: test-js
-test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema (turbo)
+test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema, eval/app (turbo)
 	pnpm test
 
 .PHONY: server-test
@@ -457,65 +456,86 @@ probe-gateway-path: $(ENGINE_BUILD) ## P3b probe: the CLI behind a non-anthropic
 # exits 0 (Compose v5.1.4) and abandons the wait before the worker is healthy.
 PROTO_COMPOSE := docker compose -f apps/server/proto/docker-compose.yml
 
-# apps/server/proto/env.sh, sourced first, exports ANTHROPIC_API_KEY (the caller's, else
-# eval/.env) for the worker's environment and writes the FamilySearch token -- refreshed
-# from the desktop login through dev/fs-token.ts -- to apps/server/proto/.fs-token, which
-# the worker reads per turn. Neither value is ever echoed. A changed key recreates the
-# worker; a changed token does not.
+# apps/server/proto/env.sh, sourced first, exports the model keys only (ANTHROPIC_API_KEY
+# and OPENROUTER_API_KEY: the caller's, else eval/.env), never echoed; a changed key
+# recreates the worker. The FamilySearch grant is the dev-login patron's: `make
+# proto-grant` once per stack (U3), after which the web tier keeps it fresh.
 .PHONY: proto-up
-proto-up: $(ENGINE_BUILD) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model key and the FS token, and wait for health
+proto-up: $(ENGINE_DEPS) ## Prototype stack: build + start postgres/minio/elasticmq/worker/shim/web/tools with the model keys, and wait for health (then `make proto-grant` once per stack)
 	. apps/server/proto/env.sh && $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools
 
 # The D3 services only. proto-smoke never touches the web tier, so it must not be gated
-# on the web image building (a network pip install) or its healthcheck. Both `up`s
-# build the worker image, which copies the engine's build/ -- hence $(ENGINE_BUILD).
+# on the web image building (a network pip install) or its healthcheck.
 .PHONY: proto-up-core
-proto-up-core: $(ENGINE_BUILD) ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
-	@[ -f apps/server/proto/.fs-token ] || { rmdir apps/server/proto/.fs-token 2>/dev/null; : > apps/server/proto/.fs-token; }
+proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq/worker/shim
 	$(PROTO_COMPOSE) up -d --build postgres minio minio-init elasticmq worker shim
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
-proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-applies on the next up)
+proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
 	$(PROTO_COMPOSE) down -v
+
+# U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
+# postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
+# the ledger's level and runs no DDL (exit 3 when it is not current).
+.PHONY: proto-migrate
+proto-migrate: ## U9: apply the pending apps/server/proto/sql/*.sql to the compose postgres (ARGS=--status: report only, no DDL)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py $(ARGS)
 
 .PHONY: proto-logs
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
 	$(PROTO_COMPOSE) logs -f $(SERVICE)
 
+# U7: proto/enqueue.py signs SigV4. These host-venv recipes sign with a dummy static pair
+# (elasticmq ignores signatures), so they never read ~/.aws or probe IMDS.
+PROTO_SQS_ENV := GENEALOGY_SQS_ACCESS_KEY=x GENEALOGY_SQS_SECRET_KEY=x
+
 .PHONY: proto-send
 proto-send: ## D3 prototype: enqueue one turn on elasticmq: make proto-send ARGS="--behaviour ok"
-	cd apps/server && uv run python proto/enqueue.py $(ARGS)
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/enqueue.py $(ARGS)
 
 .PHONY: proto-smoke
 proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / ceiling turns through the shim
-	cd apps/server && uv run python proto/smoke.py
+	cd apps/server && $(PROTO_SQS_ENV) uv run python proto/smoke.py $(ARGS)
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+
+# U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
+# fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
+# ledger and its races. U23's held-message claim the same way: the worker's release against
+# admit_message on one session. A fresh database per test or module, dropped at teardown.
+# CI runs the same files against a postgres:16 container (server-tests.yml).
+.PHONY: proto-grants-test
+proto-grants-test: ## U3 + U9 + U23: the grant-lock interleavings, the migration runner and the held-message claim against the compose postgres (real advisory locks)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py
+
+# U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
+# dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
+# loopback listener on 127.0.0.1:1837, the dev key's only registered redirect. A second
+# sign-in, so it does not revoke the desktop login. Prints no token. After `make proto-up`
+# (its migrate one-shot applies 009), and again after a `proto-down -v`.
+.PHONY: proto-grant
+proto-grant: ## U3: sign in on the dev key and store the dev-login patron's grant (EMAIL=…); once per stack, after proto-up
+	cd apps/server && uv run python proto/grant.py $(if $(EMAIL),--email '$(EMAIL)',) --pg-dsn $(PROTO_PG_DSN)
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
-# refuses to run without a model key.
+# refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
+# unless the caller sets it non-empty): a lookup on a project-less session is never
+# "completed", so the hook would veto every stop and end the turn no_progress. `:-0`,
+# not `-0`: an empty value would reach compose's `:-60` on the web tier and turn it on.
 .PHONY: proto-turn
-proto-turn: $(ENGINE_BUILD) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
-	. apps/server/proto/env.sh && \
+proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
+	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-turn: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
-
-# The worker reads the FamilySearch token per turn from apps/server/proto/.fs-token;
-# run this between turns of a long run, never during one -- a FamilySearch refresh
-# revokes the previous access token, so the in-flight attempt's calls would 401. It FORCES a refresh when under 35 minutes are left (PROTO_TOKEN_MIN_LIFE, default
-# 30 -- the READ_TIMEOUT_S step ceiling in minutes, so the token outlives a full-length
-# turn -- plus the auth module's 5-minute expiry buffer); getValidToken hands back a token
-# that has not yet expired, so the same call at minute 52 was a no-op. Start the session
-# with `make e2e-login`: nothing here can renew a dead refresh token.
-.PHONY: proto-token
-proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker reads per turn (forced when under 35 min of life is left)
-	@. apps/server/proto/env.sh
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK
@@ -525,28 +545,79 @@ proto-token: $(ENGINE_DEPS) ## Refresh the FamilySearch token the running worker
 # Billed, one turn.
 .PHONY: proto-kill
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
-	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}" $(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
-# PR #2870 item 0a: the resume probe the guard was gated on. The 2026-09-20 run that
-# produced the synthetic result had been killed during a BACKGROUND delegation, and
-# `--kill-on Agent` alone lands on a foreground one, which resumes cleanly -- so this
-# selects on the call's INPUT (`run_in_background: true`), read out of session_entries
-# because tool_calls has no input column. Three things have to line up or it kills
-# nothing: the selector, a message that provokes two concurrent extractions
-# (proto/probes/background-delegation.txt), and AUTONOMOUS_MAX_NUDGES > 0, which
-# proto-kill otherwise leaves at 0 so the run ends before a delegation is reached.
-#
-# `run_in_background` is MODEL-CHOSEN -- 19 of 714 committed runs, none of the eight
-# bagley-father-1884 runs -- so this may simply not fire. Billed, roughly an hour a try.
-# Do not spend more than two attempts on it: the plan's accepted fallback is the unit
-# test `test_the_named_fallback_*` in apps/server/tests/test_proto_worker.py, which is
-# already green.
+# PR #2870 item 0a: the resume probe the guard was gated on, now proto-bounds' probe_resume
+# case (U23). The worker foregrounds every delegation, so a selector on the model's
+# `run_in_background` input can no longer pick a background one; the case kills the worker
+# KILL_AFTER_S (5-20, default 10) after the turn's first SUBAGENT tool_calls row
+# (agent_id IS NOT NULL) and records whether session_entries still holds the model's
+# original Agent input. It needs a delegation, so a seeded project (proto-seed first), the
+# message that provokes two (proto/probes/background-delegation.txt, named in bounds.py)
+# and AUTONOMOUS_MAX_NUDGES > 0 -- passed here as 40, which proto-bounds keeps over its 3.
+# Billed, roughly an hour a try.
 .PHONY: proto-probe-resume
-proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
+proto-probe-resume: ## 0a probe: kill a real turn inside a delegation and watch the resume (proto-bounds CASE=probe_resume) — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
-	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
-	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
+	  ARGS="--kill-after-s $${KILL_AFTER_S-10} --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+
+# U23: one live bound on compose per run -- Stop, the held-message release, the spend cap,
+# each mid-delegation and under a store outage, and the resume probe; the case list is
+# proto/bounds.py's docstring. Same `up` as proto-turn; refuses without a model key or a
+# CASE. The Stop hook is ON at 3 nudges (`:-3`), so SDK Q1 -- does a halt still dispatch
+# Stop? -- is observable without an hour-long run. SESSION_SPEND_CAP_USD reaches the
+# worker through compose (`:-35`, its default; CASE=cap_main_real wants it lowered, e.g.
+# 1). Every case POSTs /interrupt before it gives up on a turn. Billed, except CASE=precli.
+.PHONY: proto-bounds
+proto-bounds: $(ENGINE_DEPS) ## U23: record one live bound on compose — CASE=<case> [SESSION=<id>] [ARGS=…]; billed except CASE=precli (cases: proto/bounds.py)
+	@test -n "$(CASE)" || { echo "proto-bounds: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-3}"; \
+	  export SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-bounds: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
+	  cd apps/server && PROTO_COMPOSE="$(PROTO_COMPOSE)" uv run python proto/bounds.py --case '$(CASE)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
+
+# U13: the drivers against the rehearsal (apps/server/proto/eb-rehearsal) instead of
+# compose: no env.sh, no compose up, no tree-read block (the worker refuses BLOCKED_TOOLS
+# without DEV_PATHS, which a template never sets; put the block in --prompt instead).
+# BASE is the web tier (the 1837 forward or the ALB); PG_DSN the psycopg DSN through the
+# bastion's RDS forward, `host=<rds endpoint> hostaddr=127.0.0.1 port=15432 dbname=… user=…`
+# with the password only in PGPASSFILE (the DSN may hold no password and no sslmode); RDS_CA the bundle's certs/rds-global-bundle.pem; BUCKET
+# the data bucket; COOKIE_FILE the operator's signed-in wb_session (0600, never argv).
+# The seed's node-postgres takes NODE_PG_DSN, `postgresql://<user>@<rds endpoint>:15432/<db>`
+# (no password: it reads PGPASSFILE too), and needs a `127.0.0.1 <rds endpoint>` line in /etc/hosts and
+# `npm ci` in the engine (the optional pg and S3 packages). seed.py overwrites
+# PROTO_S3_ENDPOINT from --s3-endpoint, so both are set; the empty key pair sends the
+# store to the operator's default AWS credential chain.
+AWS_S3_ENDPOINT := https://s3.us-east-1.amazonaws.com
+PROTO_AWS_ENV = export PROTO_S3_ENDPOINT='$(AWS_S3_ENDPOINT)' PROTO_S3_BUCKET='$(BUCKET)' PROTO_S3_ACCESS_KEY= \
+	  PROTO_S3_SECRET_KEY= PROTO_SESSION_COOKIE_FILE='$(COOKIE_FILE)' PGSSLMODE=verify-full \
+	  PGSSLROOTCERT='$(RDS_CA)' NODE_EXTRA_CA_CERTS='$(RDS_CA)' PGPASSFILE='$(PGPASSFILE)' \
+	  PROTO_NODE_PG_DSN='$(NODE_PG_DSN)'
+proto_aws_require = $(foreach v,BASE PG_DSN NODE_PG_DSN BUCKET COOKIE_FILE RDS_CA EMAIL PGPASSFILE,$(if $($(v)),,$(error $(1): $(v)=… is required; see the U13 block above it in the Makefile)))$(if $(findstring password,$(PG_DSN))$(findstring sslmode,$(PG_DSN))$(findstring @,$(PG_DSN))$(findstring sslmode,$(NODE_PG_DSN))$(findstring password,$(NODE_PG_DSN))$(shell printf '%s' '$(NODE_PG_DSN)' | grep -E '://[^/@]*:[^/@]*@'),$(error $(1): PG_DSN or NODE_PG_DSN carries a password or sslmode; the password goes in PGPASSFILE and TLS in PGSSLMODE))
+
+.PHONY: proto-demo-aws
+proto-demo-aws: $(ENGINE_DEPS) ## U13: proto-demo against the rehearsal — BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [FIXTURE=] ARGS=…
+	$(call proto_aws_require,proto-demo-aws)
+	$(PROTO_AWS_ENV); cd apps/server && uv run python proto/demo.py --base '$(BASE)' --pg-dsn '$(PG_DSN)' \
+	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
+
+.PHONY: proto-audit-aws
+proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= [SESSION=]
+	@test -n "$(PG_DSN)" && test -n "$(RDS_CA)" || { echo "proto-audit-aws: PG_DSN=… and RDS_CA=… are required" >&2; exit 2; }
+	export PGSSLMODE=verify-full PGSSLROOTCERT='$(RDS_CA)'; cd apps/server && uv run python proto/audit.py \
+	  --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',)
+
+.PHONY: proto-bounds-aws
+proto-bounds-aws: $(ENGINE_DEPS) ## U13: proto-bounds against the rehearsal — CASE= BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [PROFILE=] [SESSION=] ARGS=…
+	@test -n "$(CASE)" || { echo "proto-bounds-aws: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
+	$(call proto_aws_require,proto-bounds-aws)
+	$(PROTO_AWS_ENV); cd apps/server && uv run python proto/bounds.py --target deployed \
+	  $(if $(PROFILE),--profile '$(PROFILE)',) --case '$(CASE)' --base '$(BASE)' --pg-dsn '$(PG_DSN)' \
+	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
 
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
 # through PgS3ProjectStore, and a web-tier session on that project. Prints the
@@ -570,10 +641,12 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # the harness's tree-read block (BLOCKED_TOOLS; `BLOCKED_TOOLS= make proto-demo` lifts it),
 # since every e2e fixture's answer still sits in the live tree. On a docker-compose-only
 # machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
+# The Stop hook is off unless the caller sets AUTONOMOUS_MAX_NUDGES non-empty -- `:-0`, as
+# in proto-turn, since an empty value would reach compose's `:-60` on the web tier.
 .PHONY: proto-demo
-proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
+proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality}"; \
-	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}"; \
+	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
@@ -600,7 +673,7 @@ proto-demo: $(ENGINE_BUILD) ## D19 demo: seed FIXTURE (default bagley-father-188
 # attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
 .PHONY: proto-demo-auto
 proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-40}"; \
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}"; \
 	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
 	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
@@ -643,9 +716,9 @@ proto-compare: $(ENGINE_DEPS) ## D18: one table — FIXTURE=<slug> SESSION=<id> 
 PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 
 .PHONY: proto-web
-proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
-	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
-	  uv run python proto/web/app.py
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns DEV_LOGIN=true \
+	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
 proto-drive: ## D13 acceptance: post, stream, drop mid-turn, resume on Last-Event-ID, miss nothing (embedded Postgres + seeder; BASE=http://localhost:8085 runs --worker against a stack)
@@ -660,41 +733,31 @@ web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype w
 # bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
 # proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
 # names the two long-running services; the suite creates the bucket itself if the
-# one-shot has not finished by the time it starts.
+# one-shot has not finished by the time it starts. The schema (U9: no initdb) comes from
+# migrate.py run from the host venv, so the worker image is never built for it.
 .PHONY: proto-up-store
-proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot), wait for health, and migrate the schema
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py
 
+# Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
+# AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys
+# as AWS_* and also as PROTO_S3_* (so a helper that stopped dropping them goes red), and
+# ~/.aws, SSO and instance metadata isolated, so the SDK default chain's environment
+# provider is the only way the store can sign.
 .PHONY: proto-store-test
 proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance + Postgres-specific cases against the compose postgres/minio
-	cd $(ENGINE_DIR) && PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
 	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
-
-# D9–10: the same offline calls as engine-smoke-stdio, driven through the prototype's
-# per-turn entrypoint (build/hosted-stdio.js) as a bearer principal against the
-# compose postgres/minio. One fresh project id per run; the psql count after the
-# smoke shows what landed for it (the projects row and the documents/blobs/staging
-# rows). The count prints even when the smoke fails, and the target's exit status
-# is the smoke's.
-.PHONY: engine-smoke-stdio-pg
-engine-smoke-stdio-pg: $(ENGINE_BUILD) proto-up-store ## D9–10: drive build/hosted-stdio.js over stdio against the compose postgres + minio (bearer principal, PgS3ProjectStore)
-	@id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; status=0; \
-	  echo "GENEALOGY_PROJECT_ID=$$id"; \
-	  ( cd $(ENGINE_DIR) && SMOKE_ENTRY=build/hosted-stdio.js SMOKE_PROJECT_PATH=/project \
-	    GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
-	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
-	    GENEALOGY_PROJECT_ID=$$id GENEALOGY_ANCHOR_PATH=/project \
-	    npx tsx dev/smoke-stdio.ts ) || status=$$?; \
-	  docker exec proto-postgres psql -U postgres proto -c \
-	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
-	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
-	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
-	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
-	  docker exec proto-postgres psql -U postgres proto -c \
-	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"; \
-	  exit $$status
+	cd $(ENGINE_DIR) && env -u AWS_PROFILE -u AWS_SESSION_TOKEN \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects \
+	  PROTO_S3_KEYLESS=1 PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  AWS_ACCESS_KEY_ID=proto AWS_SECRET_ACCESS_KEY=protoproto \
+	  AWS_SHARED_CREDENTIALS_FILE=/nonexistent AWS_CONFIG_FILE=/nonexistent AWS_EC2_METADATA_DISABLED=true \
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
@@ -709,12 +772,12 @@ engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and cal
 # X-Genealogy-Project-Id header, so both arms need the compose postgres + minio and the
 # smoke passes one fresh project id (SMOKE_PROJECT_ID overrides it) with the anchor
 # /project as every call's projectPath. Default: build/http.js on a free loopback port for
-# the duration of the run, killed by the trap on every exit path, with the same GENEALOGY_*
-# values engine-smoke-stdio-pg uses; its base config is this host's config.json, hence
+# the duration of the run, killed by the trap on every exit path, with the compose store's
+# GENEALOGY_* values; its base config is this host's config.json, hence
 # --host-config. BASE=http://127.0.0.1:8787 runs the same smoke against the compose `tools`
 # service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. Both
-# arms print the same per-table psql counts engine-smoke-stdio-pg prints, even when the
-# smoke fails; the target's exit status is the smoke's.
+# arms print the per-table psql counts for the project id, even when the smoke fails; the
+# target's exit status is the smoke's.
 SMOKE_PROJECT_ID ?=
 # One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
 # uuid would be fixed for the whole invocation, including `make -n`.
@@ -909,7 +972,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
-	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: about an hour and
+	# single-digit dollars, with a long tail.
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
@@ -1004,7 +1068,8 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
 	# (the stored field is a floor; pre-detector runs record none) and prints a
 	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
-	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	# reports the estimate's measured accuracy over runs carrying both, less the
+	# multi-query runs, whose tokens cover their last query only (#1484, #3128).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
 .PHONY: e2e-panel
@@ -1061,6 +1126,17 @@ e2e-agent-tools: ## Declared-but-never-called tools per plugin agent over commit
 	# binding probe. Windowed to 14 days like every reader; SINCE=all for the
 	# whole corpus. A report, not a gate (see its own "Limits" footer).
 	cd eval/harness && uv run python -m e2e.agent_tool_usage_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-rule-adherence
+e2e-rule-adherence: ## Per-instruction adherence over committed e2e runs (issue #2483): make e2e-rule-adherence | RULE=<id> | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis over committed run JSONs — no live run, no API.
+	#
+	# For each registered rule (an instruction in a shipped agent body), how
+	# many episodes obeyed it? Reports counts with denominators, never a rate.
+	# Seeded with two gps-mentor rules (project_context open, no research.json
+	# Read). Windowed to 14 days like every reader; SINCE=all for the whole
+	# corpus. A report, not a gate.
+	cd eval/harness && uv run python -m e2e.rule_adherence_report $(if $(RULE),--rule $(RULE),) $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-writer-attribution
 e2e-writer-attribution: ## Which subagent wrote a project document, and whether an ownership row says it may (issue #2575): make e2e-writer-attribution | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
@@ -1127,13 +1203,11 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# continue-nudge with the seam it sits on and its hand-back class --
 	# step / silent / completion_claim, per classify_hand_back.
 	#
-	# A yield is NOT a defect: /research is meant to yield at every step
-	# boundary and in an e2e run the harness is the user, so a well-formed
-	# hand-back gets answered "Yes." A silent stop and a false completion claim
-	# are the defects. `step` reads 0 until a skill ends a turn on the hand-back
-	# line -- init-project and question-selection emit it since PR #2649,
-	# research/SKILL.md will with issue #2292 -- a zero is the correct result,
-	# not a broken classifier.
+	# Every yield before project.status == completed is vetoed with the
+	# worker's continue text (handoff U17), so every class is a stall. `step`
+	# is the hand-back line issue #2292 retired (PR #2870, 2026-09-27): runs
+	# since then should read 0, and earlier runs carry it from init-project
+	# and question-selection (PR #2649).
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.
@@ -1216,6 +1290,20 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-compaction
+e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>
+	# Pure analysis, no API: reads committed run JSONs' subagents[].usage.
+	# Two columns per agent -- what it spends and whether it is in trouble --
+	# which is what Wave 4 of docs/plan/cost-latency-10x.md needs to decide
+	# which agent gets which model rung.
+	#
+	# Runs committed before #2582 carry no subagents[].usage. They are counted
+	# as UNCOVERED, never as zero: a $0.00 row would read as "this agent is
+	# free". A corpus with no priced spawn at all says so and prints no table.
+	#
+	# Guardrail violations are NOT joined in. `make e2e-corpus` tallies those by
+	# rule, not by agent; some rule names merely coincide with an agent name.
+	cd eval/harness && uv run python -m e2e.agent_spend_report $(if $(TEST),--test $(TEST),)
+
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
 	# tool_calls. A run is segmentable only from a run committed after
@@ -1305,17 +1393,21 @@ e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run
 	cd eval/harness && uv run python -m e2e.scratch --test $(TEST) --launch
 
 .PHONY: eval-ui
-eval-ui: $(EVAL_APP_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
-	cd eval/app && npm run dev
+eval-ui: $(JS_DEPS) ## Launch the Eval CRUD UI dev server — eval/app (Next.js, :3000)
+	pnpm --filter cowork-genealogy-eval-app dev
 
 .PHONY: eval-ui-test
-eval-ui-test: $(EVAL_APP_DEPS) ## Eval CRUD UI tests — eval/app (vitest)
-	cd eval/app && npm test
+eval-ui-test: $(JS_DEPS) ## Eval CRUD UI tests — eval/app (vitest + tsc)
+	# The typecheck is not the #1488 drift guard — `make typecheck` (turbo) now
+	# covers eval/app too. It is here so the standalone target compiles the app
+	# rather than only running its vitest, which it never did before.
+	pnpm --filter cowork-genealogy-eval-app typecheck
+	pnpm --filter cowork-genealogy-eval-app test
 
 .PHONY: eval-ui-e2e
-eval-ui-e2e: $(EVAL_APP_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
-	cd eval/app && npx playwright install --with-deps chromium
-	cd eval/app && npm run test:e2e
+eval-ui-e2e: $(JS_DEPS) ## Eval CRUD UI e2e tests — eval/app (Playwright, boots Next.js)
+	pnpm --filter cowork-genealogy-eval-app exec playwright install --with-deps chromium
+	pnpm --filter cowork-genealogy-eval-app test:e2e
 
 .PHONY: feedback-case
 feedback-case: ## Unpack a submitted alpha-feedback zip into a working project dir: make feedback-case ZIP=~/Downloads/feedback-….zip [DEST=~/feedback/<slug>] [FORCE=1]
@@ -1337,7 +1429,7 @@ feedback-reset: ## Reset a feedback case dir to its imported state between attem
 	@test -n "$(CASE)" || { echo "ERROR: set CASE, e.g. make feedback-reset CASE=~/feedback/feedback-2026-07-21T09-14-22Z" >&2; exit 1; }
 	bash scripts/reset-feedback-case.sh $(CASE)
 
-# ── Artifacts (the existing Cowork/desktop deliverables) ─────────
+# ── Artifacts (desktop/Cowork deliverables and the Beanstalk bundles) ─────────
 # The build scripts are cross-platform Node (no bash / no `zip`, so the Windows
 # BuildMcpb.bat / BuildPlugin.bat call them too) and self-install + self-build
 # the engine, so these stay thin wrappers (no hidden dep to surface here).
@@ -1365,6 +1457,38 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
 	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
+
+# The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),
+# every dependency vendored: releases/eb-{web,worker,tools}.zip + releases/eb-bundles.json. The
+# builder stages outside the repo and needs node >= 22 with the engine's npm, the pnpm workspace
+# installed, and the network (PyPI, npm, the RDS truststore). pip is the version the AL2023
+# Python 3.12 platform ships; pyyaml is apps/server/uv.lock's (test_eb_bundles checks it).
+# ARGS passes through to the builder only (make eb-bundles ARGS="--arch x86_64 --rds-ca FILE"); the
+# verifier always dry-runs both arches, so a single-arch build fails it.
+EB_PIP    := 26.2.1
+EB_PYYAML := 6.0.3
+EB_PLATFORM ?= linux/amd64
+EB_ZIPS   := releases/eb-web.zip releases/eb-worker.zip releases/eb-tools.zip
+
+.PHONY: eb-bundles
+eb-bundles: ## Build the three Beanstalk bundles (web, worker, tools) into releases/: make eb-bundles [ARGS="--arch x86_64"]
+	EB_CALLER_PATH="$$PATH" uv run --no-project --python 3.12 --with pip==$(EB_PIP) python scripts/eb_bundles/build.py $(ARGS)
+
+.PHONY: eb-bundles-verify
+eb-bundles-verify: ## Check releases/eb-*.zip: layout, Procfile/PORT, CA path, hook modes, offline pip dry-run per arch
+	uv run --no-project --python 3.12 --with pip==$(EB_PIP) --with pyyaml==$(EB_PYYAML) python scripts/eb_bundles/verify.py $(EB_ZIPS)
+
+.PHONY: eb-bundles-smoke
+eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim): make eb-bundles-smoke [EB_PLATFORM=linux/arm64]
+	uv run --no-project --python 3.12 --with pyyaml==$(EB_PYYAML) python scripts/eb_bundles/smoke.py --platform $(EB_PLATFORM)
+
+# Run from apps/server so the header uv writes matches the committed files. `--locked`, not
+# `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
+# exporting the stale lock.
+.PHONY: proto-requirements
+proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for

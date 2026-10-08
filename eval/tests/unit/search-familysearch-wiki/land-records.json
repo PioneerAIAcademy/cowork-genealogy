@@ -5,10 +5,10 @@
     "name": "FamilySearch wiki — land records Pennsylvania",
     "type": "positive",
     "description": "User asks how to find land records for ancestors in a specific state. Tests that the skill handles a place-scoped land record query.",
-    "tags": ["fs-wiki", "how-to", "land-records", "expects-file-pennsylvania-land-records"]
+    "tags": ["fs-wiki", "how-to", "land-records", "expects-file-pennsylvania-land-records", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for how to find land records for my ancestors in Pennsylvania",
+    "delegation": "Search the FamilySearch wiki for how to find land records for my ancestors in Pennsylvania",
     "scenario": null
   },
   "mcp_fixtures": ["wiki-search-land-records"],

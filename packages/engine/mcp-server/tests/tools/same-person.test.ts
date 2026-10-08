@@ -7,6 +7,7 @@ import { samePerson, buildRecordedScore } from "../../src/tools/same-person.js";
 import { notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -143,10 +144,11 @@ describe("samePerson", () => {
         "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
       );
       expect(opts.method).toBe("POST");
-      expect(opts.headers.Authorization).toBe("Bearer test-token");
-      expect(opts.headers.Accept).toBe("application/json");
-      expect(opts.headers["Content-Type"]).toBe("application/json");
-      expect(opts.headers["User-Agent"]).toContain("Mozilla");
+      const headers = new Headers(opts.headers as HeadersInit);
+      expect(headers.get("Authorization")).toBe("Bearer test-token");
+      expect(headers.get("Accept")).toBe("application/json");
+      expect(headers.get("Content-Type")).toBe("application/json");
+      expect(headers.get("User-Agent")).toContain("Mozilla");
     });
 
     it("appends a sourceDescription with about=#<primaryId> to each entry", async () => {
@@ -353,7 +355,7 @@ describe("samePerson", () => {
     });
 
     it("wraps a network failure with a helpful message", async () => {
-      mockFetch.mockRejectedValueOnce(new Error("ECONNREFUSED"));
+      mockFetch.mockRejectedValueOnce(socketFetchFailure());
 
       await expect(
         samePerson({
@@ -362,7 +364,7 @@ describe("samePerson", () => {
           gedcomx2: makeGedcomx("I1", CANDIDATE_ARK),
           primaryId2: "I1",
         }, LOCAL),
-      ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API/);
+      ).rejects.toThrow(/Could not reach FamilySearch matchTwoExamples API: fetch failed <- ETIMEDOUT/);
     });
   });
 

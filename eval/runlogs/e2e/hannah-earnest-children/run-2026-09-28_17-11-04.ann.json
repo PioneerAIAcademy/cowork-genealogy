@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "notes": {
+    "f1": "Lydia recovered as the sixth child of both parents (R18/R19, sourced to the 1881 census S3), correct surname and birthplace West Bromwich, plus a GRO Birth Registration Index entry specifically for Lydia Grice (S5). But birth recorded ~1879 (approximate, ~1 yr off the exact 10 Jul 1878) with no christening fact; recovered via census + birth index rather than the 1878 Staffordshire christening the fixture names. Right person and relationship, imprecise birth detail -> partial."
+  },
+  "annotator": "kofiatinka12",
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "f79d78a9bb1615cf8f0f20b8b599b98d371c3f7750ac0cbf21f38249b1e523fa"
+}

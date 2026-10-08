@@ -30,6 +30,23 @@
  * id-bearing objects, so that residual false-block is theoretical — the
  * tolerance is real for the cases that occur.
  *
+ * VALIDATES THE SERIALIZED FORM, not the in-memory object. The store persists
+ * `JSON.stringify(obj)` (`fs-project-store.ts`), which DROPS a key whose value
+ * is `undefined` and turns `NaN` into `null`; `checkRequired` tests `field in
+ * obj`, which `{field: undefined}` satisfies. So without this, a writer could
+ * report `valid: true` on an object that fails the moment it is read back — and
+ * from then on every later call would count that error as pre-existing, i.e. as
+ * somebody else's. Both documents are round-tripped, and the round-tripped
+ * objects are what `errorKey`/`normalizePath` see too, so paths and messages
+ * come from the same objects that were validated.
+ *
+ * `structuredClone` preserves `undefined` and `NaN`, so the caller's snapshot
+ * carries them in; the round-trip has to happen here.
+ *
+ * It also REMOVES one error class: an `undefined`-valued key outside the
+ * allow-list raises `unexpected property '…'` today and nothing afterwards.
+ * That is intended — the key never reaches disk.
+ *
  * Caller contract: a tool that mutates a document IN PLACE must pass a
  * pre-mutation deep clone (`structuredClone`) as `before` — never the same
  * reference it passes as `after`, which would make the diff empty and silently
@@ -87,6 +104,39 @@ function errorKey(e: ValidationError, research: unknown, tree: unknown): string 
   return `${normalizePath(e.path, research, tree)} ${e.message}`;
 }
 
+/** The document as the store will persist it.
+ *
+ *  Never throws, because `validateIntroduced` never throws today and its
+ *  callers rely on that: in `research-log-append.ts` a throw here would skip
+ *  `cleanupSidecars` and orphan a sidecar `applyLogAppendOp` already finalized
+ *  — "an orphan the next validate_research_schema hard-fails on, with no
+ *  recovery" (that file's own comment).
+ *
+ *  `JSON.stringify` throws on a circular reference or a BigInt, and
+ *  `JSON.parse(undefined)` is a SyntaxError. None is reachable — every call
+ *  site passes both documents, derived from `readProjectJson` (which
+ *  `JSON.parse`s) or `sanitizeTree` (which clones and deletes, never assigns
+ *  `undefined`), and there is no BigInt in src/ — but "it cannot happen" is the
+ *  claim a reviewer checks, so the catch is here and the unit suite pins it.
+ *
+ *  The catch is the WHOLE guard. An earlier draft also had an
+ *  `if (x === undefined) return x` fast path; it was removed because the catch
+ *  already produces the identical result (`JSON.parse(undefined)` throws, the
+ *  catch returns the original), so no test could distinguish its presence from
+ *  its absence — a line that cannot fail reads as coverage.
+ *
+ *  Falling back to the original is the right failure mode: the class this
+ *  closes is serializable by definition, so it never routes through the catch,
+ *  and a genuinely unserializable document still fails in the store's
+ *  `serialize` exactly as it does today. */
+function persistedForm(x: unknown): unknown {
+  try {
+    return JSON.parse(JSON.stringify(x));
+  } catch {
+    return x;
+  }
+}
+
 /**
  * Validate `after`, then demote to warnings every error that was already
  * present in `before`, so the returned result blocks only on errors this call
@@ -109,19 +159,34 @@ export async function validateIntroduced(
   after: ProjectState,
   options?: { projectPath?: string },
 ): Promise<ValidationResult> {
+  // Four separate applications, not a ProjectState-shaped wrapper: each site
+  // is independently revertible, and the unit suite names the test that reds
+  // for each. `before.tree` is the one with no other cover — research_log_append
+  // passes the SAME tree reference as both before and after, so leaving that
+  // one un-round-tripped makes every call on a tree-drifted project hard-fail
+  // on an error it did not introduce.
+  const beforeState: ProjectState = {
+    research: persistedForm(before.research),
+    tree: persistedForm(before.tree),
+  };
+  const afterState: ProjectState = {
+    research: persistedForm(after.research),
+    tree: persistedForm(after.tree),
+  };
+
   const [beforeRes, afterRes] = await Promise.all([
-    validateParsed(before.research, before.tree, options),
-    validateParsed(after.research, after.tree, options),
+    validateParsed(beforeState.research, beforeState.tree, options),
+    validateParsed(afterState.research, afterState.tree, options),
   ]);
 
   const preExistingKeys = new Set(
-    beforeRes.errors.map((e) => errorKey(e, before.research, before.tree)),
+    beforeRes.errors.map((e) => errorKey(e, beforeState.research, beforeState.tree)),
   );
 
   const introduced: ValidationError[] = [];
   let preExistingCount = 0;
   for (const e of afterRes.errors) {
-    if (preExistingKeys.has(errorKey(e, after.research, after.tree))) {
+    if (preExistingKeys.has(errorKey(e, afterState.research, afterState.tree))) {
       preExistingCount++;
     } else {
       introduced.push(e);

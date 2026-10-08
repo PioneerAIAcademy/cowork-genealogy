@@ -36,7 +36,7 @@ export default function LoginScreen(): React.JSX.Element {
         <div className="loginOrnament">Pioneer Academy</div>
         <h1 className="loginTitle">Genealogy Workbench</h1>
         <p className="loginSubtitle">
-          GPS-conformant research, in your browser. Chat with an agent while a live
+          Genealogy research in your browser. Chat with an agent while a live
           project viewer follows along.
         </p>
 

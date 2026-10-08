@@ -159,6 +159,17 @@ so `loginTool` likewise short-circuits to that instruction in hosted mode
 instead of starting a doomed flow. `isHostedMode(principal)` gates both; the desktop
 `.mcpb` never sets the flag, so its behavior is unchanged.
 
+**401 re-read.** `fsFetch` and `fsFetchWithTimeout`
+(`src/utils/fs-fetch.ts`) wrap `getValidToken` + the fetch layer. On a 401 under
+`LOCAL`, they call `getValidToken` once more — re-reading `tokens.json` from
+disk. If the token changed (the control plane pushed a fresh one via
+`push_token_to_live_sandboxes`), they retry once with the new token. If the token
+is unchanged, they return the original 401 so the tool's own handler can produce
+the right user-facing error. **They never call `refreshAccessToken` on a 401** —
+a refresh revokes every other holder's access token immediately and rotates the
+refresh token. Bearer principals skip the re-read entirely
+(the web tier owns the grant).
+
 ---
 
 ## Step 6: Login Flow (`src/auth/login.ts`)

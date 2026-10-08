@@ -2,6 +2,7 @@ import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { wikiSearch } from "../../src/tools/wiki-search.js";
 import type { WikiSearchAPIResponse } from "../../src/types/wiki-search.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -93,5 +94,15 @@ describe("wikiSearch", () => {
     await expect(wikiSearch({ query: "test" }, LOCAL)).rejects.toThrow(
       /Could not reach wiki-query-api/
     );
+  });
+
+  it("names the socket cause, not just \"fetch failed\"", async () => {
+    getWikiApiUrlMock.mockResolvedValueOnce("http://localhost:8000");
+    mockFetch.mockRejectedValue(socketFetchFailure());
+
+    const err = await wikiSearch({ query: "test" }, LOCAL).catch((e: Error) => e);
+    expect((err as Error).message).toMatch(/Could not reach wiki-query-api.*ETIMEDOUT/s);
+    expect((err as Error).message).toContain("http://localhost:8000");
+    expect((err as Error).message).not.toMatch(/Is the server running/);
   });
 });

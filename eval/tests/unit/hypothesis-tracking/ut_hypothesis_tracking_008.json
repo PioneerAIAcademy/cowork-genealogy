@@ -10,11 +10,12 @@
       "competing-hypotheses",
       "parentage",
       "third-candidate",
-      "claim-clarity"
+      "claim-clarity",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I found a reference to a James Flynn who lived in Carbon County, Pennsylvania in the 1840s and had a son named Patrick about the right age. Can you add him as a third father candidate alongside the two Thomas Flynns we're already tracking?",
+    "delegation": "I found a reference to a James Flynn who lived in Carbon County, Pennsylvania in the 1840s and had a son named Patrick about the right age. Can you add him as a third father candidate alongside the two Thomas Flynns we're already tracking?\n\nprojectPath: <workspace>",
     "scenario": "flynn-competing-fathers",
     "scenario_notes": null
   },

@@ -330,11 +330,12 @@ export async function nextTestId(skill: string): Promise<string> {
  *
  * `test.expected_outcome` / `test.xfail_reason` are included on the same
  * grounds: they survive normalization, and expected_outcome changes how
- * the harness labels the result (`fail` → `xfail`, `pass` → `xpass`), so
+ * a result is read — a `fail` beside an `xfail` marker is a suppressed
+ * (non-regressing) failure, and a `pass` beside it is an unexpected pass — so
  * a run log recorded under the old marking no longer describes the test.
  * Marking a test xfail therefore forces a re-run — that is correct, not a
- * wrinkle to design around: the re-run is what produces a log that reads
- * `xfail` instead of `fail`.
+ * wrinkle to design around: the re-run is what produces a log whose
+ * `expected_outcome` matches the test.
  */
 // Moved to ../gradingRelevance so the authoring UI (a 'use client' component
 // that cannot import this node:fs module) shares one definition instead of a

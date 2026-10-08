@@ -248,7 +248,7 @@ def test_an_agent_caller_counts_only_for_the_tools_its_entry_names():
     assert "agent:record-extractor" in listed["extraction_append"]
     assert "agent:record-extractor" not in listed["tree_forget"]
     # `callers` still counts for every writer tool on its row.
-    assert "skill:tree-edit" in listed["tree_forget"]
+    assert "skill:init-project" in listed["tree_forget"]
 
 
 def test_a_caller_named_on_one_row_its_tool_reaches_but_not_another_is_unlisted(monkeypatch):

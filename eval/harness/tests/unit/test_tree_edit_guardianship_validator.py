@@ -128,6 +128,80 @@ def test_fires_when_step_is_named_only_in_a_different_sentence():
         )
 
 
+# --- verbatim from scratch_2026-09-28_11-00-31 run 2 (a correct reply) ---
+# Leads with step in prose, but writes each surname branch as its own
+# "If ..." bullet. The uncle bullet carries "more likely" and no "step",
+# and was red on that alone before the conditional-branch exemption.
+REPLY_CONDITIONAL_BRANCHES = 'There\'s no active research project here, so I\'m answering as a standalone advisory question — nothing to write yet. The answer is governed directly by the "Guardianship shortly after a remarriage" section of the relationship-accuracy reference, which addresses this exact pattern. Here is the full reasoning.\n\n---\n\n## What to record, and why\n\n### The relationship type: ParentChild — four edges, Ridley as parent\n\nA guardianship bond is a legal document establishing Ridley Stribling\'s authority over the four Watts children\'s persons and property. That is a parent-surrogate role, and the GedcomX model for it is a **ParentChild** relationship — one edge per child, Ridley on the parent side, each Watts minor on the child side.\n\n### The subtype: **none — leave it empty**\n\nThis is the critical point. The reference is explicit:\n\n> "Write the parent-child edge with **no subtype at all** — a `Step` subtype on the bond-plus-marriage pair alone fails the threshold above."\n\nHere is why neither candidate subtype clears the bar:\n\n| Subtype | Why it fails here |\n|---|---|\n| **Biological** | Nothing in the record suggests Ridley is their biological father. He has a different surname. |\n| **Step** | Strongly suggested by timing, but the bond does not say it. |\n| **Adoptive / Foster** | No evidence of adoption or foster placement. |\n\nThe threshold for asserting a *specific* subtype is that the record (or a prior proof conclusion) actually states the nature of the connection. A guardianship bond combined with a recent marriage is *circumstantial* evidence pointing toward step-parentage — it is a hypothesis about the subtype, not evidence of it.\n\n---\n\n## The two competing hypotheses\n\nThe reference identifies exactly this fork:\n\n> "If the wife\'s shared surname is a **married** name, the children are most likely hers and the step reading leads. If it is her **maiden** name, they may instead be her brother\'s orphans — the same bond, with the guardian an uncle by marriage."\n\nNancy married Ridley Stribling in November 1820 using the name **Watts**. That name is ambiguous at the marriage record alone:\n\n- **If "Watts" was Nancy\'s prior married name** (she was a widow): John, Mary, Elizabeth, and Thomas are almost certainly her children by that prior husband → Ridley is their **stepfather**.\n- **If "Watts" was Nancy\'s maiden name** (she was never previously married): the children are more likely her deceased brother\'s orphans → Ridley is their **uncle by marriage**, appointed because he is the closest responsible male relative now connected to the Watts family.\n\nThe reference says the **step reading leads** because it explains the *timing* — the remarriage is the natural occasion for the new husband to take charge of property the children inherited from their deceased father. The uncle reading has to treat the guardianship and the marriage as coincidental. But "leads" is not "proved," which is why no subtype goes on the edge yet.\n\n---\n\n## What to write when you do make the edits\n\nFour `add_relationship` calls, all identical in structure:\n\n```\ntype: "ParentChild"\nparent: <Ridley Stribling\'s person id>\nchild: <each Watts child\'s person id>\n// no subtype field\nsourceAssertionId: <the parentchild or relationship assertion from the guardianship bond>\n```\n\nDo **not** add a corresponding Nancy → Watts-child edge unless you have a source that establishes her maternity. The reference is explicit:\n\n> "Do not compensate by asserting the **mother\'s** edge as Genetic either; her maternity rests on the same surname correspondence and gets the same treatment."\n\n---\n\n## What research would settle it\n\n1. **Nancy\'s prior marriage record** — if one exists, it names the husband and dates the marriage; a Watts surname from a prior marriage makes her the children\'s mother and the step reading conclusive.\n2. **The deceased father\'s estate or probate records** — a guardian is most often appointed over property the children inherited. The estate will name the father and confirm whether he was a Watts. It may also name the children\'s mother.\n3. **An earlier appearance of the Watts children** — a pre-1821 tax list or deed naming a Watts household with these children would identify the father directly.\n\nOnce any of those is found and extracted, return here and the correct subtype can be written.'
+
+
+def test_passes_a_reply_whose_uncle_branch_is_an_if_clause():
+    """GREEN direction, captured: a hypothesis branch is not a verdict."""
+    check_leads(REPLY_CONDITIONAL_BRANCHES, TAGS)
+
+
+def test_passes_a_prose_if_sentence_weighting_the_uncle_branch():
+    """The same exemption when the branch is a sentence, not a bullet."""
+    check_leads(
+        "If Watts was her maiden name, the uncle reading is more likely.",
+        TAGS,
+    )
+
+
+def test_fires_on_an_unconditional_uncle_verdict_beside_if_bullets():
+    """RED direction: the exemption is per unit, so an "If" bullet
+    elsewhere does not excuse a verdict that favours uncle outright."""
+    with pytest.raises(AssertionError, match="favoured"):
+        check_leads(
+            "- **If Watts was a married name**: Ridley is a stepfather.\n"
+            "- **If Watts was her maiden name**: Ridley is an uncle.\n\n"
+            "On balance the uncle reading is favoured.",
+            TAGS,
+        )
+
+
+def test_fires_when_if_appears_mid_unit_not_at_its_head():
+    """RED direction: only a unit that OPENS with "If" is a branch. A
+    verdict with a trailing conditional clause is still a verdict."""
+    with pytest.raises(AssertionError, match="favoured"):
+        check_leads(
+            "- The uncle reading is favoured, even if Watts was a married name.",
+            TAGS,
+        )
+
+
+@pytest.mark.parametrize("reply", [
+    # The premise settled in one sentence, the verdict hung on "If so".
+    "Nancy's maiden name is Watts. If so, the uncle reading is favoured.",
+    "If anything, the uncle-by-marriage reading is stronger.",
+    "If I had to choose, the uncle reading leads.",
+    # A bullet held whole: only its conditioned first sentence is exempt.
+    "- **If Watts was her maiden name**: Ridley is an uncle. The record "
+    "points that way, so the uncle reading is favoured.",
+    # Table rows are never exempt, whatever their first cell says.
+    "| If maiden name (our reading) | **Uncle by marriage** (favoured) |",
+])
+def test_fires_on_a_verdict_that_only_looks_conditional(reply):
+    """RED direction: an opener that does not condition on the surname
+    premise, or a verdict riding after a branch, is still a verdict."""
+    with pytest.raises(AssertionError, match="uncle-by-marriage"):
+        check_leads(reply, TAGS)
+
+
+@pytest.mark.parametrize("reply", [
+    "Should Watts be her maiden name, the uncle reading is more likely.",
+    "Were Watts her maiden name, the uncle reading would be stronger.",
+    "Assuming Watts is her maiden name, the uncle reading is more likely.",
+    "If Watts was her maiden name: the uncle reading is more likely.",
+    "If she was a widow, a stepfather; if never married, the uncle "
+    "reading is more likely.",
+])
+def test_passes_other_spellings_of_a_surname_branch(reply):
+    """GREEN direction: the same branch written without a bare leading
+    "If ...," must not fire, or the exemption gets widened by hand."""
+    check_leads(reply, TAGS)
+
+
 def test_skips_a_test_without_the_guardianship_tag():
     """Tag-gated: no other tree-edit test discusses either reading, so an
     ungated version would scan replies that cannot satisfy it."""
@@ -184,3 +258,15 @@ def test_uncle_arm_skips_an_empty_reply():
     with pytest.raises(BaseException) as exc:
         check_uncle("   ", TAGS)
     assert exc.typename == "Skipped"
+
+
+def test_uncle_gate_grades_the_agent_return_not_the_relay_on_the_direct_arm():
+    # A relay that adds "uncle" must not pass an agent whose own return never
+    # named the reading.
+    direct = {**TAGS, "delegation": "Record the guardianship.\n\nprojectPath: <workspace>"}
+    agent = [{"subagent_type": "tree-edit", "text": "The step reading leads: Nancy was a widow and these are her children."}]
+    relay = "The agent says step leads; the uncle-by-marriage reading is still open."
+    with pytest.raises(AssertionError):
+        check_uncle(relay, direct, agent)
+    check_uncle(relay + " x", {**TAGS}, None)  # routed arm: the reply IS the subject's
+

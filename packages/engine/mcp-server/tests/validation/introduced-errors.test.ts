@@ -368,3 +368,148 @@ describe("validateIntroduced — proof_summaries resolved_conflict_ids (V5)", ()
     expect(res.errors.some((e) => e.message.includes("not settled"))).toBe(true);
   });
 });
+
+// --- #2934: validate the form that will be PERSISTED, not the in-memory one ---
+//
+// The store writes `JSON.stringify(obj)`, which drops a key whose value is
+// `undefined`; `checkRequired` tests `field in obj`, which `{field: undefined}`
+// satisfies. So a writer could report valid on an object that fails the moment
+// it is read back, and every later call would then count that error as
+// pre-existing — somebody else's problem.
+//
+// Six cases, and each one names the piece of the fix it rules out, because the
+// obvious test set pins only half of it: an `after`-only round-trip passes (a),
+// (c), (e) while causing a FALSE BLOCK, and a research-only round-trip leaves
+// the tree side — five of the seven writer files — unprotected.
+
+const logEntry = (over: Record<string, unknown> = {}) => ({
+  id: "log_001",
+  plan_item_id: null,
+  performed: "2026-09-28",
+  tool: "record_search",
+  query: { surname: "Edwards" },
+  outcome: "negative",
+  results_examined: 0,
+  external_site: null,
+  ...over,
+});
+
+const withLog = (entries: unknown[]) => ({ ...minimalResearch, log: entries });
+const emptyTree = () => tree([]);
+
+/** The premise every field-based case rests on: the chosen shape must pass
+ *  validation as a live object and fail as the bytes the store would write. If
+ *  a future type check closes the field, this fails loudly and names why,
+ *  instead of the regression test quietly passing for a new reason. */
+async function assertExercisesTheGap(research: unknown, treeDoc: unknown) {
+  const raw = await validateParsed(research as any, treeDoc as any, {});
+  const round = await validateParsed(
+    JSON.parse(JSON.stringify(research)),
+    JSON.parse(JSON.stringify(treeDoc)),
+    {},
+  );
+  expect(raw.valid, "premise: the raw object must be VALID, or this proves nothing").toBe(true);
+  expect(round.valid, "premise: the serialized form must be INVALID").toBe(false);
+}
+
+describe("validateIntroduced validates the serialized form (#2934)", () => {
+  it("(a) blocks on a required key the call appended as undefined", async () => {
+    const after = withLog([logEntry({ external_site: undefined })]);
+    await assertExercisesTheGap(after, emptyTree());
+
+    const result = await validateIntroduced(
+      { research: minimalResearch, tree: emptyTree() },
+      { research: after, tree: emptyTree() },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((e) => e.message)).toContain("missing required field 'external_site'");
+    // Reverting: the `after.research` round-trip.
+  });
+
+  it("(b) still tolerates that same shape when it was already there", async () => {
+    // The case an `after`-only round-trip gets WRONG: it would report the
+    // pre-existing error as introduced and block a legitimate write — the
+    // #1572 false-deny this module exists to kill. (a)'s `before` is empty, so
+    // `preExistingCount` is 0 there and the warning assertion is vacuous; this
+    // is the non-vacuous version.
+    const drifted = logEntry({ id: "log_001", external_site: undefined });
+    const before = withLog([drifted]);
+    const after = withLog([drifted, logEntry({ id: "log_002" })]);
+    await assertExercisesTheGap(before, emptyTree());
+
+    const result = await validateIntroduced(
+      { research: before, tree: emptyTree() },
+      { research: after, tree: emptyTree() },
+    );
+    expect(result.valid, "a pre-existing serialized-form error must not block").toBe(true);
+    expect(result.warnings.map((w) => w.message).join(" ")).toMatch(/1 pre-existing schema error/);
+    // Reverting: the `before.research` round-trip.
+  });
+
+  it("(c) blocks on the TREE side too", async () => {
+    // Five of the seven writer files pass a tree as the mutated document, so a
+    // research-only fix would leave most call sites unprotected.
+    const person: any = { ...validPerson("I1", "Thomas", "Edwards"), id: undefined };
+    await assertExercisesTheGap(minimalResearch, tree([person]));
+
+    const result = await validateIntroduced(
+      { research: minimalResearch, tree: emptyTree() },
+      { research: minimalResearch, tree: tree([person]) },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((e) => e.message)).toContain("missing required field 'id'");
+    // Reverting: the `after.tree` round-trip.
+  });
+
+  it("(d) never throws on an unserializable document", async () => {
+    // `JSON.parse(JSON.stringify(undefined))` is a SyntaxError and a circular
+    // reference is a TypeError. A throw here would skip `cleanupSidecars` in
+    // research-log-append and orphan a sidecar with no recovery.
+    const undefinedTree = await validateIntroduced(
+      { research: minimalResearch, tree: undefined },
+      { research: minimalResearch, tree: undefined },
+    );
+    expect(undefinedTree.valid).toBeDefined();
+
+    const circular: any = { ...minimalResearch };
+    circular.self = circular;
+    const circularDoc = await validateIntroduced(
+      { research: circular, tree: emptyTree() },
+      { research: circular, tree: emptyTree() },
+    );
+    expect(circularDoc.valid).toBeDefined();
+    // Reverting: the `catch`. (A separate `x === undefined` fast path was
+    // dropped — the catch makes it unobservable, so no test could pin it.)
+  });
+
+  it("(e) is not specific to one field", async () => {
+    const after = withLog([logEntry({ query: undefined })]);
+    await assertExercisesTheGap(after, emptyTree());
+
+    const result = await validateIntroduced(
+      { research: minimalResearch, tree: emptyTree() },
+      { research: after, tree: emptyTree() },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((e) => e.message)).toContain("missing required field 'query'");
+  });
+
+  it("(f) tolerates pre-existing tree drift when before and after share the tree", async () => {
+    // The ONLY case that reds when the `before.tree` round-trip is reverted,
+    // and it is not hypothetical: research-log-append passes the same `tree`
+    // reference as both before and after
+    // (`{ research: beforeResearch, tree }, { research, tree }`), so without
+    // this every call on a tree-drifted project would hard-fail on an error it
+    // did not introduce.
+    const shared = tree([{ ...validPerson("I1", "Thomas", "Edwards"), id: undefined } as any]);
+    await assertExercisesTheGap(minimalResearch, shared);
+
+    const result = await validateIntroduced(
+      { research: minimalResearch, tree: shared },
+      { research: withLog([logEntry()]), tree: shared },
+    );
+    expect(result.valid, "a pre-existing TREE error must not block a research write").toBe(true);
+    expect(result.warnings.map((w) => w.message).join(" ")).toMatch(/1 pre-existing schema error/);
+    // Reverting: the `before.tree` round-trip.
+  });
+});

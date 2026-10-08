@@ -35,7 +35,6 @@ const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i
  * A tree person id as it appears in `/tree/person/<pid>` (e.g. `KW7C-X9P`).
  *
  * 4-hyphen-3, not `{3,4}`: `ark.ts` calls it "the bare 8-character persona/tree id",
- * `check-warnings/SKILL.md` spells it "four characters, a hyphen, three characters",
  * and every fixture agrees. Not a host bypass either way — the host is rebuilt from
  * `FS_BASE` regardless — but over-permissive against the documented format.
  */

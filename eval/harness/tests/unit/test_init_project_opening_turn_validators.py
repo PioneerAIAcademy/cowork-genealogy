@@ -22,12 +22,14 @@ from test_init_project import (  # noqa: E402
     _DEFAULT_OBJECTIVE,
     test_objective_default_verbatim as check_objective,
     test_profile_defaults_when_all_default as check_profile,
+    test_volunteered_subscriptions_normalized as check_volunteered,
 )
 
 
 OBJECTIVE_TAGGED = {"tags": ["objective-default"]}
 UNTAGGED = {"tags": []}
 PROFILE_TAGGED = {"tags": ["opening-turn-all-defaults"]}
+VOLUNTEERED_TAGGED = {"tags": ["volunteered-access"]}
 
 
 # --- test_objective_default_verbatim ------------------------------------
@@ -138,3 +140,67 @@ def test_defaulted_empty_subscriptions_fails():
             _research({"experience_level": "novice", "subscriptions": []}),
             PROFILE_TAGGED,
         )
+
+
+# --- test_volunteered_subscriptions_normalized --------------------------
+
+
+def _vol_research(subscriptions):
+    return {
+        "research_json": {
+            "project": {"objective": "Identify the parents of Patrick Flynn."},
+            "researcher_profile": {
+                "experience_level": "novice",
+                "subscriptions": subscriptions,
+            },
+        }
+    }
+
+
+def test_untagged_volunteered_test_is_skipped():
+    with pytest.raises(pytest.skip.Exception):
+        check_volunteered(_vol_research(["Ancestry", "LibraryAccess"]), UNTAGGED)
+
+
+def test_normalized_set_passes():
+    """The accept direction: the exact normalized set the scenario produces
+    (Ancestry + the family history centre as LibraryAccess) must pass, in any
+    order."""
+    check_volunteered(_vol_research(["Ancestry", "LibraryAccess"]), VOLUNTEERED_TAGGED)
+    check_volunteered(_vol_research(["LibraryAccess", "Ancestry"]), VOLUNTEERED_TAGGED)
+
+
+def test_familysearch_stored_fails():
+    """A bare FamilySearch account is the baseline, not an enum value — storing
+    it verbatim is the exact defect this test's name calls out."""
+    with pytest.raises(AssertionError, match="FamilySearch"):
+        check_volunteered(
+            _vol_research(["Ancestry", "LibraryAccess", "FamilySearch"]),
+            VOLUNTEERED_TAGGED,
+        )
+
+
+def test_family_history_centre_flattened_to_other_fails():
+    """The family history centre has its own enum value (LibraryAccess); mapping
+    it to `other` loses that and must fail."""
+    with pytest.raises(AssertionError, match="Ancestry|LibraryAccess|added or dropped"):
+        check_volunteered(_vol_research(["Ancestry", "other"]), VOLUNTEERED_TAGGED)
+
+
+def test_dropped_library_access_fails():
+    """Dropping a volunteered route (only Ancestry survives) is a departure from
+    the normalized set."""
+    with pytest.raises(AssertionError, match="added or dropped"):
+        check_volunteered(_vol_research(["Ancestry"]), VOLUNTEERED_TAGGED)
+
+
+def test_absent_subscriptions_fails_when_volunteered():
+    """The user volunteered access, so the field must be written — absence here is
+    the opposite defect to the all-defaults case, where absence is correct."""
+    with pytest.raises(AssertionError, match="must be written"):
+        check_volunteered(_vol_research(None), VOLUNTEERED_TAGGED)
+
+
+def test_missing_research_json_fails_volunteered():
+    with pytest.raises(AssertionError, match="volunteered-access requires"):
+        check_volunteered({"research_json": None}, VOLUNTEERED_TAGGED)

@@ -849,13 +849,13 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
-| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters-read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
+| `recordType`, `record_type` or `recordTypes` supplied instead of `recordTypeGroups` | Throw, naming the offending field and the valid groups. Three sibling tools take a singular `recordType` and `research.json` uses snake_case, so these are the names an LLM reaches for here, and the endpoint ignores unknown request fields silently — see [the warning box](#relationship-to-the-other-record-type-filters--read-before-naming-anything) for the reasoning and the exact guard. Scoped to this field's own spellings: the year inputs have live aliases elsewhere too (`yearFrom`/`yearTo`, `fromYear`/`toYear`), and catching those is the schema-wide `additionalProperties` question this spec puts out of scope |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
 | Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range and recordTypeGroups, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
 | Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ body, when non-empty }"` |
-| Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {message}."` |
+| Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
 | Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
 | **Full-text** check fails (after 3 retries) | Set `fulltextSearchable` to `null` for the batch; continue |
 
@@ -1127,7 +1127,7 @@ of them.
 
 **Unknown-field rejection happens in `validate()`, not the schema.** See the
 warning box under
-[Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters-read-before-naming-anything).
+[Relationship to the other record-type filters](#relationship-to-the-other-record-type-filters--read-before-naming-anything).
 A schema-level `additionalProperties: false` is unenforced server-side, so it would
 read as a guard without being one.
 

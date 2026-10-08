@@ -1,0 +1,342 @@
+{
+  "run_log": "v1_2026-09-29_10-55-50.json",
+  "annotator": "florencemashipei4@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "No-result handling (negative path)",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Sources cited correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "File saved correctly",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the response added unsupported details, including bounty land warrants and a four-step search strategy not found in the retrieved wiki results."
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it adds unsupported details about bounty land warrants and a specific four-step search strategy not found in the returned wiki content."
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary faithful to wiki content",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it adds an unsupported claim about records being viewable online and browsing image sets."
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "it adds the unsupported claim that many records are viewable online."
+    }
+  ]
+}

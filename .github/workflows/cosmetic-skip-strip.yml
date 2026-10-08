@@ -1,6 +1,7 @@
 name: cosmetic-skip-strip
 
-# Removes the `eval-cosmetic-skip` label from a PR when a new commit lands.
+# Removes every `eval-cosmetic-skip:<skill>` label (and a stray bare
+# `eval-cosmetic-skip`) from a PR when a new commit lands.
 #
 # THIS IS COSMETIC AND IS NOT WHAT ENFORCES THE RULE. The rule — "a new commit
 # voids the bypass" — is decided from the event inside check-runlogs.yml, which
@@ -19,7 +20,9 @@ name: cosmetic-skip-strip
 # and the half that writes runs no contributor code.
 #
 # Safe under `pull_request_target` for the usual two reasons: there is no
-# `actions/checkout` and the only PR input touched is the number, so nothing
+# `actions/checkout`, and the only PR inputs touched are the number and the
+# label names, which reach the shell through env (never `${{ }}` inside the
+# script) and can only be created by someone with Triage/Write, so nothing
 # fork-authored executes; and this file is read from the base branch, so a fork
 # cannot edit it in its own PR. Do not add a checkout here.
 #
@@ -46,16 +49,28 @@ jobs:
     # label. A push that races the senior's labelling is not a concern — the
     # bypass is already void for that commit either way (check-runlogs.yml
     # decides it from the event), and the next push strips the label.
-    if: contains(github.event.pull_request.labels.*.name, 'eval-cosmetic-skip')
+    # A substring match on the joined names: it catches every
+    # `eval-cosmetic-skip:<skill>` label, and the step below does the exact
+    # prefix check before removing anything.
+    if: contains(join(github.event.pull_request.labels.*.name, ','), 'eval-cosmetic-skip')
     runs-on: ubuntu-latest
     steps:
-      - name: Drop the stale cosmetic-skip label
+      - name: Drop the stale cosmetic-skip labels
         env:
           GH_TOKEN: ${{ github.token }}
+          # Label names from the event payload, as JSON, through env: no API
+          # call to list them, and no label text interpolated into the script.
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
           # `|| true`: a concurrent removal (or a senior pulling it by hand
           # first) makes this a no-op, and gh exits non-zero when the label is
           # already gone. Nothing here is load-bearing enough to fail a PR over.
-          gh pr edit "${{ github.event.pull_request.number }}" \
-            --repo "${{ github.repository }}" \
-            --remove-label "eval-cosmetic-skip" || true
+          printf '%s' "$LABELS_JSON" | jq -r '.[]' | while IFS= read -r label; do
+            case "$label" in
+              eval-cosmetic-skip|eval-cosmetic-skip:*)
+                gh pr edit "${{ github.event.pull_request.number }}" \
+                  --repo "${{ github.repository }}" \
+                  --remove-label "$label" || true
+                ;;
+            esac
+          done

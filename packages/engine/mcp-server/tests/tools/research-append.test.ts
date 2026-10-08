@@ -21,7 +21,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { researchAppend, countryConsistency } from "../../src/tools/research-append.js";
+import { researchAppend, countryConsistency, mintedFromThisRecord } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
@@ -1753,6 +1753,265 @@ describe("research_append (Phase 2)", () => {
     });
     expect(r.ok).toBe(true);
     expect((await readResearch()).conflicts[0].status).toBe("moot");
+  });
+
+  // ── Uncertain-preference guard (#2940) ─────────────────────────────
+  // A [?] assertion cannot win a conflict without corroboration from a
+  // different record, same fact_type/value/person, no [?] of its own.
+
+  it("refuses a conflict resolution preferring an uncorroborated [?] assertion", async () => {
+    const research = phase2Research();
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "OCR outweighs user reading",
+        resolution_rationale: "OCR is clearer",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+  });
+
+  it("accepts a [?] preference corroborated by another record", async () => {
+    const research = phase2Research();
+    research.sources.push(validSource("src_002"));
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+      { ...validAssertion("a_003", "src_002"), record_id: "rec2", value: "Jannetje van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002", "a_003"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "two records agree",
+        resolution_rationale: "corroborated by second record",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses [?] preference when corroborator is on the same record", async () => {
+    const research = phase2Research();
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+      // Same record as a_001 (both default to validAssertion's record_id) — must not count
+      { ...validAssertion("a_003"), value: "Jannetje van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002", "a_003"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "same record agrees",
+        resolution_rationale: "corroborated by same record",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+  });
+
+  it("accepts a non-[?] preference on a resolved conflict", async () => {
+    const research = phase2Research();
+    research.conflicts = [{ ...validConflict(), id: "c_001" }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "census outweighs",
+        resolution_rationale: "primary informant",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts an unresolved conflict with no preferred assertion", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "append",
+      entry: validConflict(),
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses [?] preference when corroborator belongs to a different person", async () => {
+    const research = phase2Research();
+    research.sources.push(validSource("src_002"));
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+      // a_003 is on a different record, same value, but NOT in competing_assertion_ids
+      // and not linked to the same person via person_evidence.
+      { ...validAssertion("a_003", "src_002"), record_id: "rec2", value: "Jannetje van Noord", fact_type: "birth" },
+    ];
+    // Link a_001 to person p_001 and a_003 to a different person p_002.
+    research.person_evidence = [
+      {
+        id: "pe_001", assertion_id: "a_001", person_id: "p_001",
+        confidence: "probable", superseded_by: null,
+      },
+      {
+        id: "pe_002", assertion_id: "a_003", person_id: "p_002",
+        confidence: "probable", superseded_by: null,
+      },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "one corroborator found",
+        resolution_rationale: "corroborated",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+  });
+
+  it("refuses [?] preference when the corroborator itself carries [?]", async () => {
+    const research = phase2Research();
+    research.sources.push(validSource("src_002"));
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+      { ...validAssertion("a_003", "src_002"), record_id: "rec2", value: "Jannetje [?] van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002", "a_003"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "resolved",
+        independence_analysis: "independent sources",
+        weighing_analysis: "two uncertain readings",
+        resolution_rationale: "both OCR passes agree",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/uncertain reading/);
+  });
+
+  it("accepts an update touching only description on a conflict with uncorroborated [?] preference", async () => {
+    const research = phase2Research();
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002"],
+      status: "resolved",
+      independence_analysis: "independent",
+      weighing_analysis: "OCR outweighs",
+      resolution_rationale: "OCR reading",
+      preferred_assertion_id: "a_001",
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: { description: "Updated description of the conflict" },
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it("refuses a moot conflict with a [?] preferred_assertion_id", async () => {
+    const research = phase2Research();
+    research.assertions = [
+      { ...validAssertion("a_001"), value: "Jannetje [?] van Noord", fact_type: "birth" },
+      { ...validAssertion("a_002"), value: "Tannetje van Noord", fact_type: "birth" },
+    ];
+    research.conflicts = [{
+      ...validConflict(),
+      id: "c_001",
+      competing_assertion_ids: ["a_001", "a_002"],
+    }];
+    await writeProject(research);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "conflicts",
+      op: "update",
+      entryId: "c_001",
+      fields: {
+        status: "moot",
+        resolution_rationale: "No longer relevant",
+        preferred_assertion_id: "a_001",
+      },
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/uncertain reading/);
   });
 
   it("rejects ruling out a hypothesis without a reason (validator)", async () => {
@@ -4532,6 +4791,88 @@ describe("research_append (batch ops)", () => {
     expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
   });
 
+  // ── No new question while research is running, bar the conflict exception ──
+  // Every way the exception could be claimed without holding is its own refuse
+  // case; the accept cases are the ones that keep the gate escapable.
+  const newQ = (fields: Record<string, unknown> = {}) => {
+    const { id: _i, created: _c, ...q } = validQuestion("x");
+    return { projectPath: dir, section: "questions", op: "append", entry: { ...q, ...fields } } as any;
+  };
+  const conflict = (status: string, blocks: string[]) => ({
+    id: "c_001",
+    conflict_type: "fact",
+    description: "Two birthplaces",
+    competing_assertion_ids: [],
+    status,
+    blocks_question_ids: blocks,
+  });
+  const running = (conflicts: any[] = []) => {
+    const r = attrResearch("in_progress", []);
+    (r as any).conflicts = conflicts;
+    return r;
+  };
+  const refusedFor = async (research: any, fields: Record<string, unknown>) => {
+    await writeProject(research);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await researchAppend(newQ(fields));
+    expect(r.ok).toBe(false);
+    expect((errorsOf(r) ?? []).join("\n")).toMatch(/still running: pli_001 \(on q_001\)/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  };
+
+  it("(in-flight) refuses the d01 shape: a question depending on the in-flight question", async () => {
+    await refusedFor(running(), { depends_on: ["q_001"] });
+  });
+  it("(in-flight) refuses an unrelated question", async () => {
+    await refusedFor(running(), { depends_on: [], unblocks: [] });
+  });
+  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ());
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/as it stood before the call/);
+    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
+  });
+  it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
+    await refusedFor(running(), { unblocks: ["q_001"] });
+  });
+  it("(in-flight) refuses when the blocking conflict is resolved or moot", async () => {
+    await refusedFor(running([conflict("resolved", ["q_001"])]), { unblocks: ["q_001"] });
+    await refusedFor(running([conflict("moot", ["q_001"])]), { unblocks: ["q_001"] });
+  });
+  it("(in-flight) refuses when a conflict blocks the question but unblocks does not name it", async () => {
+    await refusedFor(running([conflict("unresolved", ["q_001"])]), { unblocks: [] });
+    await refusedFor(running([conflict("unresolved", ["q_009"])]), { unblocks: ["q_001"] });
+  });
+
+  it("(in-flight) allows the conflict exception: an unresolved conflict blocks it and unblocks names it (ut_003)", async () => {
+    await writeProject(running([conflict("unresolved", ["q_001"])]));
+    expect((await researchAppend(newQ({ depends_on: [], unblocks: ["q_001"] }))).ok).toBe(true);
+  });
+  it("(in-flight) allows a new question when the items are only planned", async () => {
+    await writeProject(attrResearch("planned", []));
+    expect((await researchAppend(newQ({ depends_on: ["q_001"] }))).ok).toBe(true);
+  });
+  it("(in-flight) ignores an in_progress item on a superseded plan", async () => {
+    const research = attrResearch("in_progress", []);
+    research.plans[0].status = "superseded";
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(true);
+  });
+  it("(in-flight) ignores an in_progress item left on a resolved question's plan", async () => {
+    const research = attrResearch("in_progress", []);
+    research.questions[0].status = "resolved";
+    await writeProject(research);
+    expect((await researchAppend(newQ())).ok).toBe(true);
+  });
+  it("(in-flight) does not fire on an update to an existing question", async () => {
+    const research = attrResearch("in_progress", []);
+    research.questions = [{ ...validQuestion("q_001") }, { ...validQuestion("q_002"), depends_on: ["q_001"] }];
+    await writeProject(research);
+    const r = await researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_002", fields: { priority: "low" } } as any);
+    expect(r.ok).toBe(true);
+  });
+
   // BREAK IT MORE THAN ONE WAY. Each of these is a different shape of "no entry
   // names it", and each reaches the helper down a different path.
   it("(d4-logattr) refuses when log[] is empty", async () => {
@@ -5966,6 +6307,30 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].standard_place).toBe("Schuylkill, Pennsylvania, United States");
   });
 
+  it("resolves a bare place against the other places of its own record only", async () => {
+    // Genealogist ruling 2026-10-06, option C: the will's bare "Shenandoah" went
+    // to New Zealand with no context. Context is per record, never the batch.
+    await writeProject();
+    const a = (record_id: string, place: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: { ...noId(validAssertion("x", "src_001")), record_id, place },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("rec-A", "Shenandoah"),
+        a("rec-A", "Borough of Shenandoah, County of Schuylkill"),
+        a("rec-B", "Dublin, Ireland"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    });
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
+  });
+
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();
@@ -6995,6 +7360,178 @@ describe("research_append — detected core-identifier contradiction", () => {
   it("does NOT cap when the record states no place at all", async () => {
     await write({ place: null });
     expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+});
+
+// ─── The two-party arm of the detected contradiction (#2272) ────────────────
+//
+// A relationship assertion names two people, so by default it is out of scope:
+// linked to the FATHER, a child's baptism date is not his birth. But when the
+// same record party is also linked to the same person through a one-party
+// assertion, the link is about the assertion's own party. ut_person_evidence_024
+// (2026-09-29): a_003 (the christening, 1858) was capped at `speculative` on I1,
+// and a_001 (the same child's "son of Thomas and Bridget") persisted at
+// `confident` on that same I1.
+
+describe("research_append — detected contradiction, two-party assertions", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-two-party-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function write(existingLinks: any[] = []) {
+    const r = baseResearch();
+    const onRecord = {
+      record_id: "rec_bapt",
+      record_role: "child",
+      information_quality: "primary",
+      informant_proximity: "official_duty",
+    };
+    r.assertions = [
+      ...r.assertions,
+      { ...validAssertion("a_060"), ...onRecord, fact_type: "relationship",
+        value: "Patrick, son of Thomas Flynn and Bridget Doyle", date: null, place: null },
+      { ...validAssertion("a_061"), ...onRecord, fact_type: "christening",
+        value: "Christened 12 March 1858", date: "12 March 1858", place: null },
+    ] as any;
+    (r as any).person_evidence = [...((r as any).person_evidence ?? []), ...existingLinks];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    tree.persons.push({ id: "I2", gender: "Male", names: [{ id: "N2", given: "Thomas", surname: "Flynn" }],
+      facts: [{ id: "F2", type: "Birth", date: "~1818", place: "Ireland" }] });
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await attestEveryAssertion(dir);
+  }
+  const entry = (assertion_id: string, person_id: string, confidence: string) => ({
+    assertion_id, person_id, confidence,
+    rationale: "Name and parents match.", match_score: 0.85,
+    created: "2026-09-29", superseded_by: null,
+  });
+  const batch = (...entries: any[]) => ({
+    projectPath: dir,
+    ops: entries.map((e) => ({ section: "person_evidence", op: "append" as const, entry: e })),
+  });
+
+  it("refuses 'confident' on the relationship assertion when its christening links the same person", async () => {
+    await write();
+    const r = await researchAppend(batch(entry("a_061", "I1", "speculative"), entry("a_060", "I1", "confident")) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/christening in 1858/);
+  });
+
+  it("refuses it whichever order the batch carries the two links in", async () => {
+    await write();
+    const r = await researchAppend(batch(entry("a_060", "I1", "confident"), entry("a_061", "I1", "speculative")) as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses it when the one-party link was persisted by an earlier call", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    expect((await researchAppend(batch(entry("a_060", "I1", "confident")) as any)).ok).toBe(false);
+  });
+
+  it("allows 'speculative' on the relationship assertion", async () => {
+    await write();
+    const r = await researchAppend(batch(entry("a_061", "I1", "speculative"), entry("a_060", "I1", "speculative")) as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does NOT cap the relationship assertion linked to the OTHER party (the father)", async () => {
+    await write();
+    await attestEveryAssertion(dir, "I2");
+    const r = await researchAppend(batch(entry("a_061", "I1", "speculative"), entry("a_060", "I2", "confident")) as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("does NOT cap a relationship assertion with no one-party link to the same person", async () => {
+    await write();
+    expect((await researchAppend(batch(entry("a_060", "I1", "confident")) as any)).ok).toBe(true);
+  });
+
+  it("does NOT count a superseded one-party link", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative"), superseded_by: "pe_901" }]);
+    expect((await researchAppend(batch(entry("a_060", "I1", "confident")) as any)).ok).toBe(true);
+  });
+
+  // Code review, 2026-09-29. Each of these failed before its fix.
+
+  it("still lets a confident two-party link be RETIRED through the supersede pattern", async () => {
+    await write([
+      { id: "pe_900", ...entry("a_061", "I1", "speculative") },
+      { id: "pe_901", ...entry("a_060", "I1", "confident") },
+    ]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "speculative") },
+        { section: "person_evidence", op: "update", entryId: "pe_901", fields: { superseded_by: "pe_902" } },
+      ],
+    } as any);
+    expect(r.ok ? [] : failure(r).errors).toEqual([]);
+  });
+
+  // Self-review, 2026-09-30. The retirement exemption was keyed on the field,
+  // so an APPEND carrying an invented `superseded_by` skipped the gate on both
+  // arms. Main refused the one-party case; this branch had regressed it.
+
+  it("refuses a confident one-party link APPENDED already carrying superseded_by", async () => {
+    await write();
+    const r = await researchAppend(batch({ ...entry("a_061", "I1", "confident"), superseded_by: "pe_nope" }) as any);
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/christening in 1858/);
+  });
+
+  it("refuses a confident two-party link APPENDED already carrying superseded_by", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    const r = await researchAppend(batch({ ...entry("a_060", "I1", "confident"), superseded_by: "pe_nope" }) as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("does NOT pair with a one-party link the same call supersedes", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_999" } },
+        { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "confident") },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("DOES pair with a one-party link the same call re-points onto the person", async () => {
+    await write([{ id: "pe_900", ...entry("a_061", "I2", "speculative") }]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { person_id: "I1" } },
+        { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "confident") },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  it("refuses it when the christening assertion is appended AFTER the links in the same call", async () => {
+    await write();
+    // Rewrite the project without a_061, so this call must create it.
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    const christening = research.assertions.find((a: any) => a.id === "a_061");
+    research.assertions = research.assertions.filter((a: any) => a.id !== "a_061");
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    const { id: _drop, ...newAssertion } = christening;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "append", entry: entry("a_061", "I1", "speculative") },
+        { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "confident") },
+        { section: "assertions", op: "append", entry: newAssertion },
+      ],
+    } as any);
+    expect(r.ok).toBe(false);
   });
 });
 
@@ -9603,7 +10140,7 @@ describe("supported evidence floor (#2086)", () => {
   });
 
   it("refuses linking contradicting evidence an unresolved conflict names — the skill's own documented call", async () => {
-    // `hypothesis-tracking/SKILL.md` tells the agent that adding contradicting
+    // `agents/hypothesis-tracking.md` tells the agent that adding contradicting
     // evidence "does not automatically require a status downgrade — only link
     // the evidence and leave the status unchanged". That is this exact op, and
     // it reached no precondition under the narrow gate.
@@ -9752,4 +10289,242 @@ describe("supported evidence floor (#2086)", () => {
     expect(promote.ok).toBe(true);
   });
 
+});
+
+describe("research_append — a conflict resolved in prose must reach conflicts[] (#2494)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-2494-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const TESTER_CR =
+    "MET. The Henricks/Hendricks spelling across Peter Christensen's 1880 household is resolved as " +
+    "the enumerator's rendering of Hendricks. No formal conflicts are registered. No unresolved " +
+    "discrepancy blocks the conclusion.";
+
+  const declaration = (conflict_resolution: string) => ({
+    declared: true,
+    justification: "Census and vital records searched; the household is consistent.",
+    log_entry_ids: ["log_001"],
+    stop_criteria: {
+      goal_alignment: "Yes.",
+      repository_breadth: "Census and vital records.",
+      original_substitution: "Originals accessed.",
+      independent_verification: "Two independent informants.",
+      evidence_class: "1880 census, original.",
+      conflict_resolution,
+      overturn_risk: "Low.",
+    },
+  });
+
+  const state = (cr = TESTER_CR) => ({
+    project: { objective: "x" },
+    questions: [
+      { id: "q_001", question: "Who were Peter's parents?", status: "exhaustive_declared", exhaustive_declaration: declaration(cr) },
+      { id: "q_002", question: "Where was Peter born?", status: "open" },
+    ],
+    log: [
+      {
+        id: "log_001",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00.000Z",
+        tool: "record_search",
+        query: { surname: "Christensen" },
+        outcome: "positive",
+        results_examined: 2,
+        external_site: null,
+        results_ref: null,
+      },
+    ],
+    sources: [{ id: "src_001", citation: "1880 census" }, { id: "src_002", citation: "1885 baptism" }],
+    assertions: [
+      { id: "a_004", source_id: "src_001", value: "Henricks" },
+      { id: "a_005", source_id: "src_002", value: "Hendricks" },
+    ],
+    conflicts: [] as any[],
+    proof_summaries: [] as any[],
+  });
+
+  const summary = (question_id = "q_001", resolved_conflict_ids: string[] = []) => ({
+    question_id,
+    tier: "probable",
+    vehicle: "summary",
+    shortfall: "gap",
+    supporting_assertion_ids: ["a_004"],
+    resolved_conflict_ids,
+    exhaustive_search_summary: "census and vital records",
+    narrative_markdown: "## Conclusion\n...",
+  });
+
+  const resolvedConflict = {
+    id: "c_001",
+    conflict_type: "fact",
+    description: "Peter Christensen's surname: Henricks (1880 census) vs. Hendricks (1885 baptism)",
+    disputed_attribute: "surname spelling",
+    competing_assertion_ids: ["a_004", "a_005"],
+    status: "resolved",
+    independence_analysis: "The census and the baptism have different informants.",
+    weighing_analysis: "The baptism is an original record made at the event.",
+    resolution_rationale: "Henricks is the enumerator's spelling of Hendricks.",
+    preferred_assertion_id: "a_005",
+    blocks_question_ids: [],
+  };
+
+  async function writeProject(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  }
+  const raw = () => readFile(join(dir, "research.json"), "utf-8");
+
+  it("refuses the tester's shape: a summary relying on a prose-only resolution, with conflicts[] empty", async () => {
+    await writeProject(state());
+    const before = await raw();
+    const r = await researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry: summary() });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("question q_001");
+    expect(msg).toContain("Henricks/Hendricks spelling");
+    expect(msg).toContain("conflicts[] is empty");
+    expect(msg).toContain("conflict-resolution");
+    // The laundering path — reword the stop-criterion — is never offered.
+    expect(msg).not.toMatch(/reword|rephrase|change the stop/i);
+    expect(await raw()).toBe(before);
+  });
+
+  it("refuses a stop-criterion naming a c_ id conflicts[] does not hold", async () => {
+    const s = state("Surname conflict resolved (c_004).");
+    s.conflicts = [{ ...resolvedConflict, status: "unresolved", resolution_rationale: undefined }];
+    await writeProject(s);
+    const r = await researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry: summary() });
+    expect(failure(r).errors.join(" ")).toContain("it names c_004, which conflicts[] does not hold");
+  });
+
+  it("allows the write once conflict-resolution has recorded the conflict", async () => {
+    const s = state();
+    s.conflicts = [resolvedConflict];
+    await writeProject(s);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: summary("q_001", ["c_001"]),
+    });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("reads the live document: a conflict recorded earlier in the same batch satisfies it", async () => {
+    await writeProject(state());
+    const { id: _id, ...conflictEntry } = resolvedConflict;
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "conflicts", op: "append", entry: conflictEntry },
+        { section: "proof_summaries", op: "append", entry: summary("q_001", ["c_001"]) },
+      ],
+    });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("reads the reliance signal live: a same-batch questions update that claims a resolution is seen", async () => {
+    // q_002 carries no declaration before the call, so a pre-call snapshot would
+    // see no claim and let the summary through; the live read sees the one this
+    // batch writes first.
+    await writeProject(state());
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "questions",
+          op: "update",
+          entryId: "q_002",
+          fields: { status: "exhaustive_declared", exhaustive_declaration: declaration(TESTER_CR) },
+        },
+        { section: "proof_summaries", op: "append", entry: summary("q_002") },
+      ],
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toContain("question q_002");
+    expect(msg).toContain("conflicts[] is empty");
+  });
+
+  it("is scoped to the summary written: q_002's summary passes while q_001's violates", async () => {
+    const s = state();
+    s.proof_summaries = [{ id: "ps_001", ...summary() }];
+    await writeProject(s);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: summary("q_002"),
+    });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("refuses an update to the violating summary itself, not tier-gated", async () => {
+    const s = state();
+    s.proof_summaries = [{ id: "ps_001", ...summary() }];
+    await writeProject(s);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "update",
+      entryId: "ps_001",
+      fields: { narrative_markdown: "## Conclusion\nRevised." },
+    });
+    expect(failure(r).errors.join(" ")).toContain("proof_summaries ps_001");
+  });
+
+  it("leaves other sections alone in a project that holds a violating summary", async () => {
+    const s = state();
+    s.proof_summaries = [{ id: "ps_001", ...summary() }];
+    await writeProject(s);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_002",
+      fields: { question: "Where and when was Peter born?" },
+    } as any);
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+
+  it("allows a not_proved summary while the conflict is recorded but open", async () => {
+    const s = state("Conflict resolution not possible with the current records (c_001).");
+    s.conflicts = [{ ...resolvedConflict, status: "unresolved", resolution_rationale: undefined, preferred_assertion_id: undefined }];
+    await writeProject(s);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "proof_summaries",
+      op: "append",
+      entry: { ...summary(), tier: "not_proved" },
+    });
+    expect(r.ok, JSON.stringify(errorsOf(r))).toBe(true);
+  });
+});
+
+describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
+  const research = {
+    sources: [
+      { id: "src_1", gedcomx_source_description_id: "S1" },
+      { id: "src_2", gedcomx_source_description_id: "S2" },
+    ],
+    assertions: [
+      { source_id: "src_1", record_id: "REC-A" },
+      { source_id: "src_2", record_id: "REC-B" },
+    ],
+  };
+  const tree = (sources: unknown) => ({
+    persons: [{ id: "I9", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }], sources }],
+    sources: [{ id: "S1", title: "A" }, { id: "S2", title: "B" }],
+  });
+
+  it("a person whose only refs are person-level, all to this record, was minted from it", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }]))).toBe(true);
+  });
+
+  it("a person-level ref to another record means it was not minted from this one", () => {
+    expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
 });

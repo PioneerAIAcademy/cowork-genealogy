@@ -64,8 +64,8 @@ describe('resolveFamilySearchTarget — web copy', () => {
   })
 
   it('refuses a tree-person id that is not 4-3', () => {
-    // Every reference in the repo spells this 4-hyphen-3 — `ark.ts`,
-    // `check-warnings/SKILL.md`, and all ten `tree/person/` ids in the corpus.
+    // Every reference in the repo spells this 4-hyphen-3 — `ark.ts` and all
+    // ten `tree/person/` ids in the corpus.
     // The pattern accepted 4-4 until the #2049 review; loosening it back is
     // otherwise silent, and must stay in step with the Electron copy.
     expect(

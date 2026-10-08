@@ -93,7 +93,7 @@ Form fields mapped to the unit test JSON schema (see `docs/specs/unit-test-spec.
 | description | Text area | |
 | tags | Tag input (autocomplete from existing tags) | |
 | holdout | Switch | Reserves the test as a skill-improver generalization check (schema default `false`). Off by default; only persisted when on. See `docs/skill-lifecycle.md`. |
-| expected_outcome | Dropdown: pass / xfail | Schema default `pass`; only persisted when `xfail`. Marks a known-failing test so its failures report as `xfail` rather than `fail`, and a recovery reports as `xpass`. |
+| expected_outcome | Dropdown: pass / xfail | Schema default `pass`; only persisted when `xfail`. Marks a known-failing test: its `outcome` stays `fail` but is read as a suppressed (non-regressing) failure, and a recovery (`outcome: pass` beside the marker) is flagged as an unexpected pass. |
 | xfail_reason | Text area | Shown and **required** only when expected_outcome = `xfail` (the schema makes it conditionally required and nothing validates the file server-side, so the form is the enforcement point). Cleared from the file when the test goes back to `pass`. |
 | user_message | Text area | |
 | scenario | Dropdown + "Create new" button | Shows scenario README description on hover/select |
@@ -167,7 +167,7 @@ Per the per-PR review workflow (`docs/per-pr-review-workflow.md`), the team subm
 
 The Results section opens to a dashboard with two panels:
 
-- **Recent run logs widget.** Top 5–10 run logs across all skills, sorted by timestamp descending. Each row shows: skill, model, timestamp, weighted-mean score, annotation status (annotated / unannotated). Color-coded outcome (green = pass, yellow = partial, red = fail/aborted, gray = xfail, orange = xpass — xfail is neutral because it is a declared, non-regressing failure, and xpass is flagged because it means the marker is likely stale). Click a row to jump to the run detail view. This is the junior's primary "is there new work?" landing.
+- **Recent run logs widget.** Top 5–10 run logs across all skills, sorted by timestamp descending. Each row shows: skill, model, timestamp, weighted-mean score, annotation status (annotated / unannotated). Color-coded outcome (green = pass, yellow = partial, red = fail/aborted; a declared-xfail failure — a `fail` beside an `expected_outcome: xfail` marker — is gray, neutral because it is a declared, non-regressing failure, and an unexpected pass — a `pass` beside that marker — is orange, flagged because the marker is likely stale). Click a row to jump to the run detail view. This is the junior's primary "is there new work?" landing.
 - **Filter + full list** below the widget — same filters as before (skill, model version, date range, annotation status).
 
 **Refresh-on-focus.** When the browser tab regains focus (e.g., the junior alt-tabs from a terminal where `RunTests.bat` just finished), the Results section auto-refreshes its run-log list. Implemented via `visibilitychange` event listener — when the document becomes visible, refetch the run-log index. This closes the "did my run finish?" loop without polling.
@@ -243,9 +243,9 @@ because they navigate with `window.location.href`, a full document load that dis
 
 Three testing layers, each covering a different failure class:
 
-1. **Vitest (unit, `npm test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
+1. **Vitest (unit, `pnpm --filter cowork-genealogy-eval-app test`)** runs in Node with no DOM. Covers data-layer logic, API route behavior, snapshot normalization, and schema validation. Cannot render a component or detect layout issues.
 
-2. **Playwright (e2e, `npm run test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
+2. **Playwright (e2e, `pnpm --filter cowork-genealogy-eval-app test:e2e`)** runs in Chromium against a real Next.js dev server pointed at a temp fixture tree (`EVAL_DIR`). Covers layout/CSS bugs that are invisible to the other two layers. The fixture tree is created synchronously at config load time by `createFixtureSync` in `tests/e2e/create-fixture.ts`, before the web server starts, and removed by `globalTeardown`. It is built independently of `tests/helpers/fixtureTree.ts`, whose `makeFixtureTree` is async and so cannot run at config load. Tests never touch repository data.
 
 3. **Manual browser check** remains necessary for interaction flows (annotation save round-trip, keyboard shortcuts, drag-to-resize) that are not yet automated. One interaction flow is automated: `tests/e2e/holdout-persistence.spec.ts` saves, creates and deletes a test through the UI against the temp tree and asserts the list and edit page show the persisted value on their **first render** — by holding the list's refetch behind a 2 s route delay and asserting with a bounded 1 s timeout, since Playwright's `{ timeout: 0 }` means *no* deadline, not "now".
 

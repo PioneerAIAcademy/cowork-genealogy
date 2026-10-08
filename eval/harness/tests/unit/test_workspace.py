@@ -27,8 +27,12 @@ def test_stateless_workspace_has_no_research_json(tmp_path):
     assert ws == tmp_path
     assert not (ws / "research.json").exists()
     assert not (ws / "tree.gedcomx.json").exists()
-    # Skills always copied
-    assert (ws / ".claude/skills/search-wikipedia/SKILL.md").exists()
+    # Skills always copied. `record-extraction` rather than `search-wikipedia`:
+    # issue #2795 deleted the latter's directory, and the lead's 2026-09-22
+    # ruling names `research` and `record-extraction` as the two skills that
+    # never convert, so this assertion cannot rot out from under the next
+    # conversion card.
+    assert (ws / ".claude/skills/record-extraction/SKILL.md").exists()
 
 
 def test_workspace_stages_plugin_agents(tmp_path):
@@ -100,6 +104,29 @@ def test_scenario_workspace_copies_results_sidecars(tmp_path):
     sidecar = ws / "results" / "log_001.json"
     assert sidecar.exists()
     assert json.loads(sidecar.read_text(encoding="utf-8"))["log_id"] == "log_001"
+
+
+def test_scenario_starting_tree_is_staged_only_when_the_scenario_ships_one(tmp_path):
+    """research_append exempts starting-tree persons from its minted-from-this-
+    record check, so a scenario that ships the baseline must reach the workspace.
+    One that does not must NOT get tree.gedcomx.json copied in its place: that
+    would also exempt persons a mid-research fixture minted in an earlier session."""
+    scenarios = tmp_path / "scenarios"
+    tree = {"persons": [{"id": "I1"}]}
+    for name, ship in (("with-baseline", True), ("without-baseline", False)):
+        scen = scenarios / name
+        scen.mkdir(parents=True)
+        (scen / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+        (scen / "tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+        if ship:
+            (scen / "starting-tree.gedcomx.json").write_text(json.dumps(tree), encoding="utf-8")
+    for name, expected in (("with-baseline", True), ("without-baseline", False)):
+        target = tmp_path / f"ws-{name}"
+        target.mkdir()
+        ws = build_workspace(name, scenarios, PLUGIN_SKILLS, target_dir=target)
+        assert (ws / "starting-tree.gedcomx.json").exists() is expected, name
+    staged = json.loads((tmp_path / "ws-with-baseline" / "starting-tree.gedcomx.json").read_text(encoding="utf-8"))
+    assert staged == tree
 
 
 def test_missing_scenario_raises(tmp_path):
@@ -188,9 +215,10 @@ def test_workspace_isolated_per_call(tmp_path):
     ws2.mkdir()
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws1)
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, target_dir=ws2)
-    # Both have skills, neither has the other's state.
-    assert (ws1 / ".claude/skills/search-wikipedia").exists()
-    assert (ws2 / ".claude/skills/search-wikipedia").exists()
+    # Both have skills, neither has the other's state. See the note in
+    # test_stateless_workspace_has_no_research_json on the skill chosen.
+    assert (ws1 / ".claude/skills/record-extraction").exists()
+    assert (ws2 / ".claude/skills/record-extraction").exists()
     (ws1 / "marker.txt").write_text("a", encoding="utf-8")
     assert not (ws2 / "marker.txt").exists()
 

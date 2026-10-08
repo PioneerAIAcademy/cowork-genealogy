@@ -149,6 +149,10 @@ with no decision behind them, filed there deliberately; `/review-icebox` owns
 that pool and promotes one by removing the label, at which point it ranks here
 normally.
 
+**Exclude `label:contributor` from the Backlog and Ready when ranking and when
+counting the pools.** Those cards are reserved for the Contributors
+(`docs/contributor-program.md`); their mentors hand them out.
+
 **Exclude `label:needs-decision` from the Backlog when ranking**, senior or not.
 The lead answers them in `/make-decisions`; the label coming off is what makes
 the item rankable here.
@@ -191,7 +195,7 @@ the ranking. Report the mix; do not swap a card out to hit a number.
 # The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
 # downstream reads this file; do not fetch the board again until the rebuild.
 gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
-jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0) | .labels ]
+jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0 and ((.labels|index("contributor"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
                      senior: map(select((index("developer")) and index("senior")))|length,
                      high_priority: map(select((index("developer")) and index("high-priority")))|length },
@@ -619,6 +623,7 @@ simply does not appear.
 
 ```sh
 # /tmp/board.json is the cached snapshot from § 1 "Measure Ready depth" — not refetched
+git fetch origin main --quiet
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -637,6 +642,8 @@ change there moves both passes, so re-run each after editing it.
 | A concrete file never implies its directory | Two files in `src/tools/` are not a collision |
 | A bare directory pairs only if it is a snapshot path or a **unit dir** — never an ordinary container | Naming `src/tools/` means "I add a file here", not "I edit all 47". A skill dir, a scenario, an e2e fixture *is* the unit, so naming it does mean all of it |
 | A file named by more than 3 candidates is a hub, reported once | `docs/architecture.md` is the repo's map; everyone edits it, in different sections |
+
+**"Touches paths deleted on origin/main"** lists paths a card names that `main` deleted, for the statuses the run was given; a Backlog card is checked only when `Backlog` is among them. Fix that card's Touches line to name where the work lives now, unless the card restores the path.
 
 **Do not swap the unit/container test back for a size threshold.** Size is a
 proxy that misses in both directions: `apps/server/app/sandbox` is 5 files and a

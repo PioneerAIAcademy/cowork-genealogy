@@ -9,11 +9,12 @@
       "status",
       "dual-output",
       "both-summaries",
-      "invariant"
+      "invariant",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Catch me up on this project.",
+    "delegation": "Report where this research project stands: the user-friendly summary first, then the detailed GPS-state summary, with any integrity warnings surfaced above both, and the recommended next step.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

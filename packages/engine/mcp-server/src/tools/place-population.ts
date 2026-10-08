@@ -2,8 +2,8 @@ import type { Principal } from "../auth/principal.js";
 import type { PopulationResponse, PopulationToolInput } from "../types/place-population.js";
 export type { PopulationToolInput } from "../types/place-population.js";
 import { loadConfig } from "../auth/config.js";
-import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { resolveStandardPlaceToPlaceId, ambiguousPlaceError } from "../utils/place-resolver.js";
+import { describeFetchError, fetchWithRetry } from "../utils/http.js";
 
 const DEFAULT_POP_STATS_URL = "https://malachi.taild68f1b.ts.net/pop-stats";
 
@@ -15,13 +15,17 @@ export async function populationTool(
     throw new Error("standardPlace is required");
   }
 
-  const placeId = await standardPlaceToPlaceId(input.standardPlace);
-  if (!placeId) {
+  const resolution = await resolveStandardPlaceToPlaceId(input.standardPlace);
+  if (resolution.kind === "ambiguous") {
+    throw ambiguousPlaceError(input.standardPlace, resolution.candidates);
+  }
+  if (resolution.kind === "unresolved") {
     throw new Error(
       `Could not resolve "${input.standardPlace}" to a single FamilySearch place. ` +
         "Use place_search to get a standard place name first."
     );
   }
+  const placeId = resolution.placeId;
 
   const config = await loadConfig(principal);
   const baseUrl = config.popStatsUrl ?? DEFAULT_POP_STATS_URL;
@@ -39,9 +43,8 @@ export async function populationTool(
   try {
     response = await fetchWithRetry(url);
   } catch (err) {
-    const cause = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Population data service is unavailable. Is the Pop Stats API running? (${cause})`
+      `Population data service is unavailable at ${baseUrl} (${describeFetchError(err)}).`
     );
   }
 

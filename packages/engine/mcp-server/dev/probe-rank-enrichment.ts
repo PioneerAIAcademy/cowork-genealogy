@@ -119,7 +119,7 @@ async function scoreAll(
           r.primaryId as string,
           subjectDoc,
           subjectId,
-          token,
+          LOCAL,
         ),
       );
       return res.score ?? null;

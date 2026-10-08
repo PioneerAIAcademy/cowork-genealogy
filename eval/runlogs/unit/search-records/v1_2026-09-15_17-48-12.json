@@ -22927,7 +22927,7 @@
       "mcp_fixtures": [
         "record-search-whitfield-1850-household"
       ],
-      "outcome": "xfail",
+      "outcome": "fail",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [

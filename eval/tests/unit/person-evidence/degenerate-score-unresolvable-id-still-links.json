@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "user_message": "Link assertion a_001 — the clean 1850 census record for 'Patrick Flynn' — to the right person in the tree.",
+    "delegation": "Link assertion a_001 — the clean 1850 census record for 'Patrick Flynn' — to the right person in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [

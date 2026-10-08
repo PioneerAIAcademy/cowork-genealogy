@@ -1,0 +1,425 @@
+{
+ "e01": {
+  "key": "ciriaco-bardales-spouse/2026-09-18_12-52-26/ps_001",
+  "class": "CHI",
+  "subject": [
+   "I2"
+  ],
+  "target": "ParentChild(KNYF-2Z8->I2) + ParentChild(I1->I2) + bounded Couple(KNYF-2Z8,L6PW-W6G) marriage date",
+  "rel": [
+   [
+    "ParentChild",
+    "KNYF-2Z8",
+    "I2",
+    "proved"
+   ],
+   [
+    "ParentChild",
+    "I1",
+    "I2",
+    "proved"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "ParentChild",
+    "KNYF-2Z8",
+    "I3"
+   ],
+   [
+    "ParentChild",
+    "I1",
+    "I3"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [],
+  "facts_ctx": [
+   {
+    "p": "I2",
+    "t": "Birth",
+    "d": "1 August 1905",
+    "pl": "Guatemala City",
+    "va": [
+     "a_045"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Death",
+    "d": "12 Aug 1905",
+    "pl": "Guatemala City",
+    "va": []
+   }
+  ],
+  "facts_neg": [],
+  "cfacts": [
+   {
+    "c": [
+     "KNYF-2Z8",
+     "L6PW-W6G"
+    ],
+    "d": "after 13 Aug 1905",
+    "pl": "",
+    "tier": "probable",
+    "va": [],
+    "synth": true
+   }
+  ],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "I2"
+   ],
+   [
+    "src_003",
+    "I2"
+   ],
+   [
+    "src_003",
+    "KNYF-2Z8"
+   ],
+   [
+    "src_003",
+    "I1"
+   ],
+   [
+    "src_001",
+    "KNYF-2Z8"
+   ],
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_002",
+    "KNYF-2Z8"
+   ],
+   [
+    "src_002",
+    "I1"
+   ]
+  ],
+  "idn_neg": [],
+  "unmapped": [],
+  "multi": "",
+  "tier_note": "Narrative: compound question answered at probable (weaker half); parentage claim proved. Scalar=proved.",
+  "notes": "Only claims[] in corpus. Claim B 'pre-marital conception' (probable) is encoded as ParentChild(I1->I2), i.e. the maternity edge, although claim A already proves both parents; the real object of claim B is a bounded marriage date of Couple(KNYF-2Z8, L6PW-W6G), for which the schema has no claim kind. Sibling I3's parentage (src_002) is cited as independent corroboration, not concluded."
+ },
+ "e02": {
+  "key": "anna-macek-son/2026-07-30_19-43-58/ps_001",
+  "class": "CHI",
+  "subject": [
+   "PW34-KK8",
+   "PW3W-LJN"
+  ],
+  "target": "existence of a child Frantisek b.1867 of PW34-KK8 & PW3W-LJN (negative)",
+  "rel": [],
+  "rel_ctx": [],
+  "rel_neg": [],
+  "facts": [],
+  "facts_ctx": [],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [],
+  "idn": [],
+  "idn_neg": [],
+  "unmapped": [
+   "NEG: no son Frantisek baptized 1867 to Vaclav Jicinsky & Anna Macek (documented negative, probable); no tree person exists for the non-existent child",
+   "adjacent untiered finding: a son Frantisek baptized 9 Jan 1878 (no tree person)"
+  ],
+  "multi": "",
+  "tier_note": "",
+  "notes": "Zero supporting assertions; nothing to derive. A documented-negative conclusion about a non-existent person has no tree object to claim."
+ },
+ "e03": {
+  "key": "micaela-salgado-son/2026-07-31_15-33-42/ps_001",
+  "class": "CHI",
+  "subject": [
+   "I1"
+  ],
+  "target": "ParentChild(9XGG-PW4->I1) + I1 Christening",
+  "rel": [
+   [
+    "ParentChild",
+    "9XGG-PW4",
+    "I1",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "ParentChild",
+    "9XGG-PW4",
+    "PS4K-GN8"
+   ],
+   [
+    "ParentChild",
+    "9XGG-PW4",
+    "I2"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [
+   {
+    "p": "I1",
+    "t": "Christening",
+    "d": "20 Oct 1889",
+    "pl": "San Miguel, Tegucigalpa",
+    "tier": "probable",
+    "va": [
+     "a_003"
+    ]
+   }
+  ],
+  "facts_ctx": [
+   {
+    "p": "PS4K-GN8",
+    "t": "Birth",
+    "va": [
+     "a_010",
+     "a_011"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Birth",
+    "va": [
+     "a_024"
+    ]
+   },
+   {
+    "p": "PS4K-GN8",
+    "t": "Registration",
+    "va": [
+     "a_012"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "BirthRegistration",
+    "va": [
+     "a_025"
+    ]
+   }
+  ],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_001",
+    "9XGG-PW4"
+   ],
+   [
+    "src_002",
+    "9XGG-PW4"
+   ],
+   [
+    "src_003",
+    "9XGG-PW4"
+   ]
+  ],
+  "idn_neg": [],
+  "unmapped": [],
+  "multi": "",
+  "tier_note": "",
+  "notes": "Sisters' civil births (src_002, src_003) are cited to corroborate the MOTHER's identity; their own parentage and births are context. Question subject (the child I1) is not the project subject (the mother)."
+ },
+ "e04": {
+  "key": "isabel-carvajal-daughter/2026-07-30_02-26-06/ps_001",
+  "class": "CHI",
+  "subject": [
+   "I1"
+  ],
+  "target": "ParentChild(G5CM-DZW->I1) + ParentChild(LR2Y-X3H->I1)",
+  "rel": [
+   [
+    "ParentChild",
+    "G5CM-DZW",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LR2Y-X3H",
+    "I1",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "Couple",
+    "I1",
+    "I2"
+   ],
+   [
+    "Couple",
+    "G5CM-DZW",
+    "LR2Y-X3H"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [],
+  "facts_ctx": [],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [
+   {
+    "c": [
+     "I1",
+     "I2"
+    ],
+    "d": "9 Oct 1929",
+    "pl": "Matanza, Santander",
+    "va": [
+     "a_003",
+     "a_028"
+    ]
+   }
+  ],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_001",
+    "G5CM-DZW"
+   ],
+   [
+    "src_001",
+    "LR2Y-X3H"
+   ],
+   [
+    "src_002",
+    "I1"
+   ],
+   [
+    "src_002",
+    "G5CM-DZW"
+   ],
+   [
+    "src_002",
+    "LR2Y-X3H"
+   ]
+  ],
+  "idn_neg": [],
+  "unmapped": [],
+  "multi": "",
+  "tier_note": "",
+  "notes": "The 1929 marriage identifies Juana (question premise); the parents' identities are argued explicitly. Mother's given-name reading (Ysabel vs Eulalia) resolved as a name conclusion - not scored."
+ },
+ "e05": {
+  "key": "rafael-reyes-daughter/2026-08-04_06-37-39/ps_001",
+  "class": "CHI",
+  "subject": [
+   "I1"
+  ],
+  "target": "ParentChild(MTNY-RXQ->I1) + ParentChild(MTNY-RFX->I1); premise (1913 infant birth) refuted",
+  "rel": [
+   [
+    "ParentChild",
+    "MTNY-RXQ",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "MTNY-RFX",
+    "I1",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "Couple",
+    "MTNY-RFX",
+    "MTNY-RXQ"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [
+   {
+    "p": "I1",
+    "t": "Death",
+    "d": "January 1913",
+    "pl": "Santa Elena, Usulutan",
+    "tier": "probable",
+    "va": [
+     "a_004"
+    ]
+   }
+  ],
+  "facts_ctx": [
+   {
+    "p": "I1",
+    "t": "Burial",
+    "va": [
+     "a_013"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "MaritalStatus",
+    "va": [
+     "a_014"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "Occupation",
+    "va": [
+     "a_015"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "Residence",
+    "va": [
+     "a_016"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "DeathRegistration",
+    "va": [
+     "a_005"
+    ]
+   }
+  ],
+  "facts_neg": [
+   {
+    "p": "I1",
+    "t": "Birth",
+    "d": "January 1913"
+   }
+  ],
+  "cfacts": [],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_001",
+    "MTNY-RXQ"
+   ],
+   [
+    "src_001",
+    "MTNY-RFX"
+   ]
+  ],
+  "idn_neg": [],
+  "unmapped": [],
+  "multi": "",
+  "tier_note": "",
+  "notes": "a_017 (fact_type 'filiation', non-relational) is linked to the deceased AND both parents, so the persona-grain fact derivation hangs the deceased's burial/occupation/residence/marital status on both parents (wrong-person over-claims). Party key split: a_001-a_007 carry role p_293161675629, a_013-a_017 carry role 'deceased'."
+ }
+}

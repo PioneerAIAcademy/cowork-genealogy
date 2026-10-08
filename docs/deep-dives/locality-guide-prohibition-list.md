@@ -6,6 +6,10 @@ against a transcript**. Saved so the next auditor starts from this list rather
 than rebuilding it. Judgement-only rules ("apply topical breadth well") are out
 of scope; only transcript-checkable rules are listed.
 
+Issue #2117 folded that file, with its `references/`, into
+`packages/engine/plugin/agents/locality-guide.md`; line numbers below are to the
+pre-fold skill.
+
 Source run for this dive: `eval/runlogs/unit/locality-guide/v1_2026-08-20_14-20-01.json`
 (26 tests). Re-derived numbers: 2 of 6 dimensions non-discriminating
 (`Jurisdiction accuracy`, `Research strategy` — both always 3); `judge_context`

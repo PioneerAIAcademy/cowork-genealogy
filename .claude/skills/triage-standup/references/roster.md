@@ -57,9 +57,9 @@ the two who are not are listed under "Does not post standup" below.
 | precious | Precious Onotu | `clack391` | developer | **senior** |
 | edmund | Edmund Asante Oware | `EdmondOware` | genealogist | **senior** |
 | pascal | Pascal Okezie | `Gennecis` | developer | **senior** |
-| marc | Marc Mangum | `MMagnum` | developer | |
 | richard | Richard | `chesworthrm` | developer | **senior** |
 | praise | Praise Enato | `Praise-Enato` | developer | **senior** |
+| osasere | Osasere Ikponmwosa | `seregheik` | developer | |
 
 Two handles are not guessable from the name: **Pascal Okezie is `Gennecis`**,
 and **Precious Onotu is `clack391`**. Attributing their PRs by guessing at the

@@ -38,7 +38,7 @@ https://github.com/pioneeraiacademy/cowork-genealogy
 Pick a folder and click **Clone**. GitHub Desktop remembers the location —
 when we tell you there's an update to test, come back to this same window
 and click **Fetch origin** then **Pull origin** to pick it up, then repeat
-step 3 below to rebuild.
+steps 3 and 4 below to rebuild and reinstall.
 
 **macOS/Linux:** if you're comfortable in a terminal, plain
 [git](https://git-scm.com/downloads) is simplest:
@@ -68,24 +68,23 @@ That's it for one-time setup.
 
 ### 3. Build the MCP server and the Cowork plugin
 
-**Windows:** two double-click scripts, from the repo folder:
+**Windows:** double-click **`eval\CoworkInstall.bat`** in the repo folder.
+It builds both `releases\genealogy-mcp.mcpb` (the MCP server) and
+`releases\genealogy-plugin.zip` (the skills), then prints where to install
+each one.
 
-- **`eval\BuildMcpb.bat`** — compiles the MCP server and produces
-  `releases\genealogy-mcp.mcpb`.
-- **`eval\BuildPlugin.bat`** — packs the skills into
-  `releases\genealogy-plugin.zip`.
-
-**macOS/Linux:** the same two builds, run directly, from the repo folder:
+**macOS/Linux:** from the repo folder:
 
 ```bash
-node scripts/build-mcpb.mjs      # -> releases/genealogy-mcp.mcpb
-node scripts/package-plugin.mjs  # -> releases/genealogy-plugin.zip
+node scripts/build-mcpb.mjs && node scripts/package-plugin.mjs
 ```
 
-Both scripts install what they need automatically. Re-run whichever one
-after you pull a repo update (GitHub Desktop's **Fetch origin** / **Pull
-origin**, or `git pull` from a terminal), so you're always testing current
-code.
+Both build the two files, and both install what they need automatically.
+
+**After every update, rebuild and reinstall both.** Each time you pull (GitHub
+Desktop's **Fetch origin** / **Pull origin**, or `git pull` from a terminal),
+run this step again and then all of step 4. Updating only one of the two, or
+building without reinstalling, leaves Cowork running old code.
 
 ### 4. Install both in Claude Desktop
 
@@ -318,7 +317,7 @@ Being straight with you, so you don't waste time:
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
-| The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild the `.mcpb` (step 3), and reinstall it (step 4). |
+| The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild both (step 3), and reinstall both (step 4). |
 | The agent loses connection to its tools mid-session, or you see a tool `timed out after 60s` | Cowork's link between your computer and the tools — not anything you did. Say "continue"; it usually picks up on its own. If it keeps interrupting, fully quit and reopen Claude Desktop, then say "continue". If instead the **same** tool is missing every single time, that is the stale-extension case in the row above and rebuilding is the fix. But if the same tool keeps *timing out* on one large image or page, that scan may be too slow for the current limit — ask the agent to skip it and note it rather than rebuild. **The interrupted step's result is thrown away**, so a record or image the agent was reading when it dropped may not have been retried, whether it said so or just moved on to indexed records — name that record or image and ask it to try again. Please report it whenever it happens, and say what it was doing at the time. |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 

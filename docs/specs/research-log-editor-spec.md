@@ -60,12 +60,13 @@ update/delete (forbidden by Rule 3), and `tree.gedcomx.json`.
 
 | Fact | Source |
 |------|--------|
-| Append-only rule; nil searches still logged; outputs link back via `log_entry_id` | `search-records/references/research-log-protocol.md` |
+| Append-only rule; nil searches still logged | `search-records/SKILL.md` Step 5 (formerly `references/research-log-protocol.md`, now deleted) |
+| Outputs link back via `log_entry_id` | `agents/record-extractor.md` + `research-schema-spec.md` §`sources`/§`assertions`. Never `search-records`' rule: this skill writes the log entry, and the **extracting** agent stamps the back-reference onto each source and assertion |
 | Log entry fields + `external_site` shape | `docs/specs/research-schema-spec.md` §5.4 |
 | Sidecar shape `{ log_id, tool, retrieved, returned_count, payload }`; nil → no sidecar | `research-schema-spec.md` §5.4.1 |
 | Required log fields, `log_outcome` enum, `external_site` required when `tool==="external_site"`, `EXTERNAL_SITE_VALUES` | `validateResearch`'s log loop (`"tool is 'external_site' but external_site object is null"`, `EXTERNAL_SITE_VALUES`) |
 | Sidecar checks: `log_id`↔entry↔filename, `returned_count`==`payload.results.length`, orphan detection, path-traversal guard, D5 persona resolution | `validateSidecars` (`src/validation/validator.ts`) |
-| The protocol reference duplicated across the four writing skills | `*/references/research-log-protocol.md` (4 copies) |
+| The protocol reference formerly duplicated across the writing skills | `*/references/research-log-protocol.md` — **0 copies**; it ran 4 → 3 → 1 → 0, the last going when its analytical rules moved into the body. Citations to it elsewhere in this spec are historical: those rules are `search-records/SKILL.md` Step 5, and the mechanical half was always `research_log_append`'s |
 
 ---
 
@@ -76,6 +77,9 @@ research_log_append({
   projectPath: string,            // dir holding research.json + results/
   tool: string,                   // "record_search" | "fulltext_search" | "image_search"
                                   //   | "person_read" | "external_site" | ...
+                                  //   Omit it with a stagedResultsRef and the tool fills it from the
+                                  //   staged envelope. Missing required fields are refused together,
+                                  //   in one error, before any other check.
   query: object,                  // freeform — enough to reproduce the search; may not name a
                                   //   filter its staged search never sent (§8.3). Omit it with a
                                   //   stagedResultsRef and the tool fills it from the staged search
@@ -88,7 +92,7 @@ research_log_append({
     site: "ancestry" | "myheritage" | "findmypast" | "findagrave" | "newspapers" | "familysearch_web"
           | "chronicling_america" | "digital_newspaper_archive" | "archives_gov" | "archive_org"
           | "billiongraves" | "digitalarkivet" | "antenati" | "library_archives_canada"
-          | "american_ancestors" | "italian_genealogy",
+          | "american_ancestors" | "italian_genealogy" | "archion" | "matricula",
     urlGenerated: string,
     captureReceived: boolean,
     captureFilename?: string | null,
@@ -155,12 +159,22 @@ fail only in the schema validator downstream). `validate_research_schema`
 enforces the same bound on the persisted `results_examined` for every writer.
 
 **`external_links_search` outcome consistency.** An entry for that tool with
-`resultsExamined > 0` must carry `outcome: "positive"`: the entry grades the
+`resultsExamined > 0` is persisted as `outcome: "positive"`: the entry grades the
 curated-links FETCH, not whether any link fit the plan item (that goes in
-`notes`). Enforced mechanically because the prose instruction in SKILL.md was
-measured to be ignored often enough to need a hard gate: 4 of 66
-`external_links_search` entries across the five run logs this branch commits,
-in three tests and three of the five logs (measured 2026-09-10).
+`notes`). The prose instruction in SKILL.md was measured to be ignored often
+enough to need a mechanical rule: 4 of 66 `external_links_search` entries across
+the five run logs committed on 2026-09-10, in three tests and three of the five
+logs.
+
+The tool **corrects** a non-positive outcome rather than refusing the call. The
+right value is decidable from the call itself, so a refusal bought nothing but a
+retry — and, re-measured 2026-10-01, the Tool Arguments point in every partial
+run of three search-external-sites tests. The correction is never silent: the
+response carries a warning naming the outcome sent and the reason ("outcome set
+to 'positive' (was 'negative'): … this entry grades the fetch, not the search —
+put the record-type mismatch in 'notes'"). It is scoped to exactly this case:
+a zero-link `external_links_search` entry keeps the outcome the caller sent, and
+no other `tool` value is touched.
 
 **The tool assigns (caller never supplies):** the log entry `id` (next `log_`
 above the current max), `performed` (now, ISO 8601 + tz), `results_ref`
@@ -284,7 +298,7 @@ rule is no longer needed (under Option B it never applied).
 | `id`, `performed`, `results_ref` | `tool`, `query`, `outcome`, `results_examined` |
 | sidecar `log_id`, `retrieved`, `returned_count` | `results_available`, `notes`, `plan_item_id` |
 | camelCase→snake_case rename; append-only; atomic write + validate | `external_site` details; whether results were retained |
-| `query` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
+| `query` and `tool` when omitted with a staged handle (filled from the staged search) | the **values** in an explicit `query` |
 | no explicit `query` names a filter its staged search never sent (§8.3) | which descriptive, non-filter context to record |
 
 The caller still makes every analytical call (was the outcome negative? is this
@@ -338,9 +352,10 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `outcome` not in `{positive,negative,partial,error}` | input error |
 | `externalSite.urlGenerated` not an absolute `http(s)` URL | input error; write nothing |
 | `resultsExamined` not a non-negative integer (after coercing a numeric string) | input error; write nothing |
-| `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | input error; write nothing — the entry grades the fetch, not the search |
+| `tool === "external_links_search"`, `resultsExamined > 0`, `outcome !== "positive"` | written with `outcome: "positive"`, plus a warning naming the outcome sent — the entry grades the fetch, not the search |
 | Staged payload has no `results` array | input error — the integrity check and D5 require `payload.results` (`validateSidecars`, the `"payload has no 'results' array — cannot verify retrieval integrity"` check) |
 | `stagedResultsRef` given for a nil search (`results_examined: 0`, `outcome: negative`) | allowed but discouraged; the caller should omit results for nil searches per §5.4.1 |
+| `query` is prose rather than an object, on a read-style entry (`record_read`, `image_transcribe`, `image_read`) | **not reached** — the MCP input schema rejects it first. An ARK is dense with `:` and `/`, so a sentence containing one fails JSON parsing and the call is refused *before* the tool runs: nothing is logged and the turn is spent. This is why `search-records`' Step 5 prescribes a canonical key per read-style tool (`{"recordId": …}`, `{"recordIds": [...]}`, `{"imageArk": …}`). The mechanism belongs here rather than in the body, per CLAUDE.md's no-explanatory-prose rule; as of 2026-10-03 the body still restates it, and moving it out edits a snapshot input, so it waits on the next paid `search-records` eval release |
 | `projectPath` missing `research.json` / invalid JSON | input error; write nothing |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. This is the search-logging path, so it is the one that decides whether a standalone search says anything useful. A directory holding exactly one of the two files is a *broken* project and stays loud. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Appended entry introduces a project-validation error | **write nothing** (unlink the new sidecar; every staged file is kept); return `{ ok: false, errors }`. A pre-existing error the append did not introduce rides as a warning |
@@ -426,53 +441,185 @@ Scope, and why it is this narrow:
   The jurisdiction must touch the census token: most non-US words in real notes
   are birthplaces on a US schedule ("1850 US Census, Schuylkill County ... born
   Ireland"), which stays refused.
-- **Undecidable inputs keep the prior behaviour** rather than failing open: when
-  no year binds to a census at all, the whole-note test still applies.
+- **Undecidable inputs skip** rather than guessing: when no year binds to a
+  census at all, the note-only gate does not fire — the same behaviour as an
+  undocumented jurisdiction. What this gives up: an unhedged pre-1880 US census
+  note whose phrasing the adjacency patterns above do not cover (e.g. "The
+  federal census shows Daniel in one dwelling with Margaret and sons Thomas and
+  Stephen; marriage 1871, Adams County"). The staged-payload trigger still fires
+  for `record_search` entries. Decided (lead, 2026-09-29).
 - **The staged search decides when the note does not.** For a `record_search`
   entry with a `stagedResultsRef`, the check reads the staged rows'
   `collectionTitle` — FamilySearch's own words, which the caller does not author.
   When every titled row is a US federal census before 1880 (matched by title
   shape, never by the note's census patterns, which read an unqualified census as
   US and would take "Ecuador, Census, 1737-1990" for one), the note is judged
-  whatever word it uses, provided it binds no census year of its own and
-  contains one of those census years. A bound year keeps precedence, so no
-  note-only verdict moves. A mixed search (1850 and 1880 rows) does not decide,
-  because the note may describe the other row; nor does "the top-ranked row",
-  which is the best match only when ranking ran. The year in the note is what
-  ties it to that census: a parish-register note logged against an 1850 census
-  search is not refused for a household the census never showed. Other search
-  tools carry no collection title and keep the note-only rule.
+  whatever word it uses, provided it binds no census year of its own. A bound
+  year keeps precedence, so no note-only verdict moves. A mixed search (1850 and
+  1880 rows) does not decide, because the note may describe the other row; nor
+  does "the top-ranked row", which is the best match only when ranking ran.
+  Other search tools carry no collection title and keep the note-only rule.
+- **The note does not have to repeat the census year** (2026-10-02). Until then
+  the payload tie also required one of its years to appear in the note text,
+  which hid real misses: `ut_search_records_001` ("…in household of Thomas
+  Flynn") and `_017` ("…in household of William Mullen") each carry a *birth*
+  year and no census year, wrote flat, and were caught by the eval validator
+  after the write instead of refused at it. This is **not** the whole-note
+  fallback the lead declined on 2026-09-29, which read any
+  `18[0-7]\d` out of the note: this branch reads no year out of the note at all.
+- **A note ABOUT another record type is carved out, positionally.** The payload
+  cannot prove the note is about a census row — `stagedPre1880UsCensusYears`
+  counts only rows carrying a `collectionTitle`, so an untitled parish-register
+  row can share a staged payload with the titled 1850 rows that produced the
+  years. Where the note *names another source before the claim it qualifies*,
+  the payload stops deciding and the note must bind its own census year. The
+  order is what carries it: a note about a parish register leads with it, while
+  a census note that mentions one later ("…in the Household of Nancy Doss.
+  Cross-check the parish register next.") is still a census note. The carve-out
+  is a list of phrases that **name a record** (`will of`, never a bare `will`,
+  which the ordinary verb matched and which cancelled the gate outright), each
+  carrying its plural (`church records`, `marriage records`), and it is anchored
+  on the earliest of the household and kinship claims rather than on the
+  household word alone.
+- **A household word is not a household claim, and the test is grammatical.**
+  `household` and `dwelling` are ordinary nouns for the concept as much as for a
+  particular one, so one of them counts only in a relation that puts someone in
+  it: `household of ⟨X⟩`, `in … household`, `⟨X⟩'s household`, `household
+  includes`, `heads a household`, or a noun compound (`Thomas Flynn household`).
+  Without this the payload trigger refused notes that assert nothing:
+  `ut_search_records_027`'s "Spouse field absent in index — reading full record
+  to view household members and marriage indicator" only says what it is about
+  to read, and "no Stribling appeared as a household head on any readable page"
+  is a negative result. The relational phrases (`co-resident`, `enumerated
+  with`, `living with`) are exempt, because they predicate co-residence on their
+  own. A role labelling a named person — `Amos (head), Nancy (wife)` — counts on
+  the kinship side.
+
+  **Capitalisation is never the test.** The first version asked whether a
+  capital sat within 24 characters of the noun, which is not a test for a name
+  and failed in both directions at once: it missed `amos whitfield in household
+  of nancy doss` and `Amos in the doss household`, and it fired on `no household
+  found in Pike County` and `Bucks Co., PA household: no Whitfield found`. The
+  compound arm is the one clause that still reads case, and there it is one of
+  three conditions — the run must also name no place (`Co`, `County`, `Twp`, a
+  two-letter state abbreviation…), must survive having its leading
+  non-name tokens stripped (sentence-opening determiners, and the ordinary
+  words that start these notes' sentences: `Census`, `Federal`, `State`,
+  `Found`, `Reading`, `Result`), and the noun must carry no abstract complement
+  (`household records`, `household composition`).
+
+  **Every clause and guard goes red when it alone is removed**, which is
+  checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
+  than trusting this sentence: it takes each of the eighteen out in turn and
+  exits non-zero on any the suite does not notice. Two rounds of this card
+  shipped a mechanism no test exercised, each time because a note written for
+  one clause incidentally satisfied a neighbour, so reading the tests does not
+  substitute. A green row means the clause needs a test **or** is inert — one
+  was deleted on that finding rather than given a test it could not fail.
+
+  **The sweep proves it ran before it reports.** Its first version launched
+  vitest through `npx` and read any unparsable output as a red, so on Windows —
+  where `execFileSync("npx", …)` throws `ENOENT` — it printed "18 of 18 pinned"
+  and exited 0 having run no tests, in the script this paragraph tells you to
+  trust over the prose. It now runs the unmutated suite first and stops if that
+  cannot run or is already red, counts a mutation as red only on a parsed
+  failure count, treats anything else as an error, and launches vitest as plain
+  `node node_modules/vitest/vitest.mjs` so there is no `.cmd` to resolve. Those
+  guards are themselves broken five ways and each exit non-zero: an unrunnable
+  runner, a missing vitest, a baseline already red, an unpinned clause, and a
+  stale sweep entry whose substring no longer matches the source.
+
+  **Negation and intent are not read.** A note that names a household in one of
+  these relations is refused however it frames it: with a staged pre-1880
+  payload, "Searched Whitfield household in Dodge Precinct: nil", "plan to check
+  the Thomas Flynn household" and "no co-resident spouse found" are all refused,
+  and none asserts a household. The corpus nils pass only because they name
+  nobody ("No matching household found"), which is an accident of phrasing
+  rather than a rule. The refusal costs a turn and is actionable, so the limit
+  is tolerable where a silent miss would not be; closing it is a widening of a
+  deny and needs the corpus re-measure, not a keyword list.
+
+  **Relations are read sentence by sentence**, because one does not reach across
+  a full stop: in "…not indexed in FamilySearch. Rebecca's 1840 household cannot
+  be confirmed" the `in` belongs to the first sentence and the noun to the
+  second. The split is on a terminator followed by a space, so `Bucks Co., PA`
+  and `Sarah A. Mullen` are not cut at their abbreviating periods.
 - **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
   is in the eval-plane validator. Flagging a *name* as indexed is not.
+- **The hedge is accepted however it is hyphenated.** The refusal message spells
+  it "relationship-to-head column"; the hedge patterns accepted only spaces, so
+  a caller who hedged in the exact words they were handed was refused a second
+  time with no wording in the message that would clear it.
 
-Measured over the 3,882 distinct `notes` arguments in the committed run logs
-(measured at dc9766b15; re-derive with `dev/measure-census-hedge-refusals.ts`
-rather than quote — the corpus moves with every committed run, and shrinks as
-well as grows, because a re-run replaces a skill's run log), the note-only rule
-refuses 216 (5.6%). Against the rule before the staged-search trigger (the
-script's `--baseline` flag, given a copy of the earlier module), 4 notes
-are newly allowed, all by the "indexed" hedge, and none newly refused. Of the
-1,789 staged `record_search` entries with a note, 662 pair to the search
-response that staged them (e2e run logs keep only a truncated summary, so the
-rest cannot be paired); the staged search newly refuses 4 of those 662 and
-frees none. Two are the `ut_search_records_h4k` note quoted below and the other two
-are different notes of the same shape, a flat household claim with no census
-word. A census named before
-1800 is refused too, which the pre-binding whole-note year test (`18[0-7]\d`)
-could not see and which the rule is squarely for -- the 1790-1840 US schedules
-name only the head of household.
+Measured over the 4,322 distinct `notes` arguments in the committed run logs
+(2026-10-04; re-derive with
+`dev/measure-census-hedge-refusals.ts` rather than quote — the corpus moves with
+every committed run, and shrinks as well as grows, because a re-run replaces a
+skill's run log), the note-only rule refuses 146 (3.4%). Of the 1,998 staged
+`record_search` entries with a note, 861 pair to the search response that staged
+them (e2e run logs keep only a truncated summary, so the rest cannot be paired);
+the staged search refuses 29 of those 861 (3.4%), of which 7 are refused only
+because of the payload.
+
+Against `main` — the baseline that matters, since it is what ships today — the
+whole of this section's change newly refuses **0 notes and 3 payload ops**, and
+newly frees **41 distinct notes** — 41 on the note-only axis and 11 on the
+payload axis, every one of the 11 already among the 41, so they are repeats of
+the same strings rather than a separate population. All three newly refused are
+flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
+the rule exists for.
+
+Every one of the 41 freed was read, and the right summary is that **none is an
+unhedged claim** — not that none names anyone. Most are search plans, nil
+results, candidate lists and negative findings. Two groups are not, and both
+are deliberate:
+
+- **Four John Baker notes** list eight household members by name and are freed
+  because each ends "No relationship-to-head column in 1870 census". They were
+  refused before only because the hedge detector did not accept the hyphenated
+  spelling the refusal message itself prints.
+- **Three verbatim transcriptions** — the pasted Thomas Flynn 1850 listing, the
+  pasted Silas Kerrigan 1860 listing and the Josiah Barnes 1855 result — give a
+  household's members with ages, birthplaces and occupations and assert **no
+  relationship**: no "wife", no "son", and the brackets hold an age rather than
+  a role. On a pre-1880 schedule co-residence *is* stated and only kinship is
+  not, so recording the one without the other is the compliant shape, not a
+  violation of it.
+
+An earlier version of this round freed two more that **were** unhedged claims,
+and both are now refused: "wife is listed as Mary A. Ranny" on an 1870 schedule
+(a rejection note, which this spec's own §8.2 position says still writes the
+claim) and "children Thomas (b.1829), Mary (b.1830) … confirms Thomas and
+Elizabeth Young as a married couple" on an 1841 England schedule. The first
+needed a report verb between the role and the name, the second needed
+`children` in the kinship list.
+
+Two earlier versions of this test were measured and discarded, and both failures
+are worth keeping. Requiring a name of the *whole* anchor set freed "1860
+census: Elijah Wilkins … with Sarah Wilkins … as co-resident spouse. Children:
+Margaret E (1841)", a real violation — which is why the relational phrases are
+exempt. Dropping the noun-compound arm freed eleven more, including "Thomas
+Flynn household, Dwelling 84, Family 91" — which is why that arm exists despite
+being the one clause that still reads case. Both cases are pinned in
+`pre1880-census-hedge.test.ts`.
+
+Against the fallback-present baseline (before the 2026-09-29 change deleted the
+whole-note `18[0-7]\d` test), 46 notes were newly freed and 0 newly refused
+(note-only); 12 payload ops newly freed and 0 newly refused. A census
+named before 1800 is still refused — it is caught by the year-binding branch,
+not by the deleted fallback.
 
 The lead rejected a tool-boundary content gate on 2026-08-27 on three grounds:
 a 41% refusal rate, non-generalizability outside the US, and the signal being
 author-supplied and optional. `requirePre1880CensusHedge`'s docstring in
 `research-log-append.ts` carries the second verbatim, with the issue it was
 ruled on. The binding above answers the first two — the rate
-is 5.6% of notes, and non-US censuses that carry the column are excluded. The
+is 3.4% of notes, and non-US censuses that carry the column are excluded. The
 staged search answers most of the third for `record_search`: the census is read
-from FamilySearch's response, not from the caller. What still stands is the tie:
-a note that omits the census year is not refused, and neither is a note logged
-by any other tool or with no staged response. This narrows a common failure
-rather than closing a hole.
+from FamilySearch's response, not from the caller. What still stands is the
+reach: a note logged by any other tool, or with no staged response, is judged on
+its own text alone and keeps every limit above — chiefly that an unbound census
+year skips the rule. This narrows a common failure rather than closing a hole.
 
 The trigger word was the same hole, and more broadly. On note text alone the
 rule fires on `\bcensus\b`, so a note that describes a pre-1880 census household
@@ -493,7 +640,8 @@ and nothing is written. The ground truth is the staged payload's `query`, which
 `record_search` and `fulltext_search` fill with their own echo of the call's
 arguments (`search-result-staging-spec.md` §6), so the caller does not author it.
 Those two are the only producers judged: `external_links_search`,
-`image_transcribe` and `record_read` stage no echo of their arguments, and
+`image_transcribe`, `record_read` and `person_read` stage no `echoQuery` of
+their arguments, and
 `person_search` does not stage.
 
 A key is refused only when all four hold: it is an input parameter of the

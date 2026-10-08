@@ -5,13 +5,14 @@
     "name": "Translate a French civil birth record",
     "type": "positive",
     "description": "French civil registration (acte de naissance), post-1792. Tests French legal formulae, that names stay in original French form, and that the named parents are flagged as a parentage source. Different language and record type from the German baptism and Latin marriage tests.",
-    "tags": ["french", "civil-registration", "birth", "names", "parentage"]
+    "tags": ["french", "civil-registration", "birth", "names", "parentage", "direct-arm"]
   },
   "input": {
-    "user_message": "Translate this French civil birth record: 'L'an mil huit cent quarante-trois, le quinze mars, devant nous, maire et officier de l'état civil de la commune de Saint-Malo, a comparu Jean Baptiste Lefèvre, cultivateur, âgé de trente ans, lequel nous a présenté un enfant du sexe masculin, né hier à six heures du matin, de lui déclarant et de Marie Anne Dubois, son épouse, et auquel il a déclaré vouloir donner le prénom de Guillaume.'",
+    "delegation": "Translate this French civil birth record: 'L'an mil huit cent quarante-trois, le quinze mars, devant nous, maire et officier de l'état civil de la commune de Saint-Malo, a comparu Jean Baptiste Lefèvre, cultivateur, âgé de trente ans, lequel nous a présenté un enfant du sexe masculin, né hier à six heures du matin, de lui déclarant et de Marie Anne Dubois, son épouse, et auquel il a déclaré vouloir donner le prénom de Guillaume.'",
     "scenario": null
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should translate the structure: on 15 March 1843, before the mayor and civil registrar of the commune of Saint-Malo, Jean Baptiste Lefèvre (a farmer, aged 30) presented a male child born the previous day at 6 a.m., to himself (the declarant) and Marie Anne Dubois his wife, to be named Guillaume.",
     "Should keep names in their original French form (Jean Baptiste, Guillaume, Marie Anne Dubois) and note the English equivalents only if helpful, not silently anglicize them.",
     "Should explain the genealogically significant terms: `officier de l'état civil` (civil registrar, who is the recorder), `a comparu` (appeared before — the formulaic opening of a French civil act), `cultivateur` (farmer — the father's occupation), `son épouse` (his wife — establishes the marital relationship), `déclarant` (the declarant, here the father).",

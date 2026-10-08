@@ -313,6 +313,7 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
 
     for person in persons:
         pid = person.get("id", "?")
+        check_source_refs(person, f"person {pid}")
         for name in person.get("names") or []:
             if isinstance(name, dict):
                 check_source_refs(name, f"person {pid} name {name.get('id', '?')}")

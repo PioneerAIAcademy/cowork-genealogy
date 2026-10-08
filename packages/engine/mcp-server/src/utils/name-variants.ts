@@ -3,24 +3,27 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { normalizeString } from "./string-similarity.js";
 
-// Path resolves to mcp-server/config/given-name-variants.json in both dev
-// (tsx/vitest running from src/) and prod (compiled JS in build/) — same
-// ../../config pattern as BUNDLED_CLIENT_CONFIG_PATH in auth/config.ts.
-const VARIANTS_PATH = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  "../../config/given-name-variants.json"
-);
+// Paths resolve to mcp-server/config/*.json in both dev (tsx/vitest running
+// from src/) and prod (compiled JS in build/) — same ../../config pattern as
+// BUNDLED_CLIENT_CONFIG_PATH in auth/config.ts.
+const CONFIG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../config");
+
+/** The table behind image_transcribe's hidden expansion (expandLookingFor). */
+export const GIVEN_NAME_VARIANTS_PATH = resolve(CONFIG_DIR, "given-name-variants.json");
+
+/** The table behind get_name_variants (issue #2325). */
+export const NAME_VARIANTS_GIVEN_PATH = resolve(CONFIG_DIR, "name-variants-given.json");
 
 interface VariantEntry {
   form: string;
-  attested: boolean;
+  attested?: boolean;
   source?: string;
 }
 
 interface FormalEntry {
-  period: string;
-  region: string;
-  source: string;
+  period?: string;
+  region?: string;
+  source?: string;
   variants: VariantEntry[];
 }
 
@@ -39,31 +42,38 @@ interface NameExpansionResult {
   expansions: Record<string, string[]>;
 }
 
-// Bidirectional lookup: lowercased name → NameFamily (formal name + all forms).
-// Lazily built on first access, module-level cached (same pattern as
-// browseBudgetSeen in image-transcribe.ts).
-let lookupMap: Map<string, NameFamily> | null = null;
+interface LoadedTable {
+  // Bidirectional lookup: normalized name → NameFamily (formal name + all forms).
+  map: Map<string, NameFamily>;
+  // Why the table could not be used, or null. Only `strict` lookups see it.
+  error: string | null;
+}
 
-function ensureLoaded(): Map<string, NameFamily> {
-  if (lookupMap) return lookupMap;
-  lookupMap = new Map();
+// One lazily built table per path, module-level cached (same pattern as
+// seenInProcess in utils/browse-budget.ts).
+const tables = new Map<string, LoadedTable>();
+
+function buildTable(tablePath: string): LoadedTable {
+  const map = new Map<string, NameFamily>();
 
   let raw: string;
   try {
-    raw = readFileSync(VARIANTS_PATH, "utf-8");
+    raw = readFileSync(tablePath, "utf-8");
   } catch {
-    return lookupMap; // table missing or unreadable — degrade to no expansion
+    return { map, error: `name-variant table is missing or unreadable: ${tablePath}` };
   }
 
   let table: VariantTable;
   try {
     table = JSON.parse(raw);
   } catch {
-    return lookupMap; // corrupt JSON — degrade to no expansion
+    return { map, error: `name-variant table has invalid JSON syntax: ${tablePath}` };
   }
 
   const en = table.en as Record<string, FormalEntry> | undefined;
-  if (!en) return lookupMap;
+  if (!en || typeof en !== "object" || Array.isArray(en)) {
+    return { map, error: `name-variant table has no "en" object: ${tablePath}` };
+  }
 
   // Collect families, merging entries that share variant forms (e.g.
   // Catherine/Katherine both list Kate → they form one merged family).
@@ -73,6 +83,9 @@ function ensureLoaded(): Map<string, NameFamily> {
 
   const rawFamilies: { formal: string; forms: Set<string> }[] = [];
   for (const [formal, entry] of Object.entries(en)) {
+    if (!Array.isArray(entry?.variants)) {
+      return { map, error: `name-variant table entry "${formal}" has no variants array: ${tablePath}` };
+    }
     const forms = new Set<string>();
     forms.add(formal);
     for (const v of entry.variants) {
@@ -114,119 +127,131 @@ function ensureLoaded(): Map<string, NameFamily> {
     const allForms = [...family.forms];
     const entry: NameFamily = { formal: family.formal, allForms };
     for (const form of allForms) {
-      lookupMap.set(normalizeString(form), entry);
+      map.set(normalizeString(form), entry);
     }
   }
 
-  return lookupMap;
+  return { map, error: null };
 }
 
-/** Test-only reset — the Map is module-level and persists across `it()` blocks. */
+// Cached only once fully built, so a failed build never leaves a partial map.
+function ensureLoaded(tablePath: string): LoadedTable {
+  let loaded = tables.get(tablePath);
+  if (!loaded) {
+    loaded = buildTable(tablePath);
+    tables.set(tablePath, loaded);
+  }
+  return loaded;
+}
+
+/** Test-only reset — the cache is module-level and persists across `it()` blocks. */
 export function __clearVariantCacheForTests(): void {
-  lookupMap = null;
+  tables.clear();
+  nicknameTables.clear();
 }
 
 /**
  * Bidirectional lookup: given any name (formal or variant), returns the
- * family of equivalent names, or null if not in the table. Case-insensitive.
+ * family of equivalent names, or null if not in the table. Case- and
+ * diacritic-insensitive. A table that cannot be loaded degrades to null for
+ * every name — unless `strict`, which throws instead.
  */
-export function lookupNameFamily(name: string): NameFamily | null {
-  const map = ensureLoaded();
+export function lookupNameFamily(
+  name: string,
+  tablePath: string = GIVEN_NAME_VARIANTS_PATH,
+  opts: { strict?: boolean } = {}
+): NameFamily | null {
+  const { map, error } = ensureLoaded(tablePath);
+  if (error && opts.strict) throw new Error(error);
   return map.get(normalizeString(name)) ?? null;
 }
 
-// Tokens that start with an operator or contain special Lucene syntax
-// should not be expanded — the user chose explicit query syntax.
-function hasOperator(token: string): boolean {
-  return /^[+\-"]/.test(token) || token.includes("*") || token.includes('"');
+interface NicknameTable {
+  _meta: Record<string, unknown>;
+  groups: string[][];
 }
 
-// A form containing a period risks Lucene field-access parse errors inside
-// an unquoted OR group — exclude from fulltext expansion, keep for VLM.
-function hasPeriod(form: string): boolean {
-  return form.includes(".");
+interface LoadedNicknameTable {
+  // normalized name -> every other name sharing a group with it, in the
+  // table's own spelling, deduped, first-seen order. NOT transitive: two
+  // names never merge just because each shares a group with some third name.
+  map: Map<string, string[]>;
+  error: string | null;
 }
 
-/**
- * Given a full name string (e.g. "Elizabeth Martin"), expand the first
- * recognized given name into quoted-phrase variants for fulltext_search.
- *
- * FamilySearch's q.fullName does not support (A OR B) syntax — parentheses
- * and OR are treated as literal text. Instead, each variant is combined with
- * the remaining tokens as a separate quoted phrase:
- *   "Elizabeth Martin" "Betty Martin" "Bess Martin"
- *
- * Returns null if no expansion applies (no recognized given names, all
- * tokens use explicit operators, or the input contains double quotes).
- *
- * Only the first recognized given-name token is expanded — expanding
- * surname-position tokens dissolves the only discriminating half of the
- * query (e.g. "Mary Thomas" would fan "Thomas" to Thos, which is wrong).
- *
- * Period-containing forms (scribal abbreviations like "Eliz.") are excluded
- * to avoid Lucene parse errors.
- */
-export function expandNameForFulltext(name: string): NameExpansionResult | null {
-  // Bail if the input contains quotes — the caller chose explicit phrase
-  // syntax, and inserting our own quotes would corrupt it.
-  if (name.includes('"')) return null;
+// Separate cache: this table has no "formal name" concept (fully symmetric
+// groups), so it does not fit LoadedTable/NameFamily above.
+const nicknameTables = new Map<string, LoadedNicknameTable>();
 
-  const tokens = name.split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return null;
+function buildNicknameTable(tablePath: string): LoadedNicknameTable {
+  const map = new Map<string, string[]>();
 
-  // If any token uses an operator, bail entirely — the caller chose explicit
-  // query syntax and expansion would interfere.
-  if (tokens.some(hasOperator)) return null;
+  let raw: string;
+  try {
+    raw = readFileSync(tablePath, "utf-8");
+  } catch {
+    return { map, error: `name-variant table is missing or unreadable: ${tablePath}` };
+  }
 
-  // Find the first token that matches a name family.
-  let expandedIndex = -1;
-  let family: NameFamily | null = null;
-  for (let i = 0; i < tokens.length; i++) {
-    family = lookupNameFamily(tokens[i]);
-    if (family) {
-      expandedIndex = i;
-      break;
+  let table: NicknameTable;
+  try {
+    table = JSON.parse(raw);
+  } catch {
+    return { map, error: `name-variant table has invalid JSON syntax: ${tablePath}` };
+  }
+
+  if (!Array.isArray(table.groups)) {
+    return { map, error: `name-variant table has no "groups" array: ${tablePath}` };
+  }
+
+  for (const group of table.groups) {
+    if (!Array.isArray(group) || group.some((n) => typeof n !== "string" || n.length === 0)) {
+      return { map, error: `name-variant table has a malformed group: ${tablePath}` };
+    }
+    for (const name of group) {
+      const key = normalizeString(name);
+      let variants = map.get(key);
+      if (!variants) {
+        variants = [];
+        map.set(key, variants);
+      }
+      for (const other of group) {
+        if (normalizeString(other) === key) continue;
+        if (!variants.some((v) => normalizeString(v) === normalizeString(other))) {
+          variants.push(other);
+        }
+      }
     }
   }
 
-  if (expandedIndex === -1 || !family) return null;
+  return { map, error: null };
+}
 
-  const expandedToken = tokens[expandedIndex];
-  const forms = family.allForms.filter((f) => !hasPeriod(f));
-  if (forms.length <= 1) return null;
-
-  // Put the original token first, then the other variants.
-  const originalNorm = normalizeString(expandedToken);
-  const ordered = [
-    expandedToken,
-    ...forms.filter((f) => normalizeString(f) !== originalNorm),
-  ];
-
-  // Build one quoted phrase per variant, combining it with the unchanged
-  // remaining tokens. For a single-token name, emit unquoted variants
-  // (no surname context to phrase-wrap with).
-  const otherTokens = tokens.filter((_, i) => i !== expandedIndex);
-  let expanded: string;
-
-  if (otherTokens.length === 0) {
-    // Single token — space-separated variants, no quotes needed.
-    expanded = ordered.join(" ");
-  } else {
-    // Multi-token — each variant combined with the other tokens as a phrase.
-    const phrases = ordered.map((variant) => {
-      const parts = [...tokens];
-      parts[expandedIndex] = variant;
-      return `"${parts.join(" ")}"`;
-    });
-    expanded = phrases.join(" ");
+function ensureNicknameTableLoaded(tablePath: string): LoadedNicknameTable {
+  let loaded = nicknameTables.get(tablePath);
+  if (!loaded) {
+    loaded = buildNicknameTable(tablePath);
+    nicknameTables.set(tablePath, loaded);
   }
+  return loaded;
+}
 
-  const others = forms.filter((f) => normalizeString(f) !== originalNorm);
-  const expansions: Record<string, string[]> = {
-    [expandedToken]: others,
-  };
-
-  return { expanded, expansions };
+/**
+ * Row-co-occurrence lookup for `get_name_variants` (issue #2325): every name
+ * sharing a group with `name` in the table, unioned across every group it
+ * appears in, own form excluded. NOT transitive — two names sharing no group
+ * are never related, even if each relates to some third name. A table that
+ * cannot be loaded degrades to `[]` for every name — unless `strict`, which
+ * throws instead.
+ */
+export function lookupNameVariants(
+  name: string,
+  tablePath: string = NAME_VARIANTS_GIVEN_PATH,
+  opts: { strict?: boolean } = {}
+): string[] {
+  const { map, error } = ensureNicknameTableLoaded(tablePath);
+  if (error && opts.strict) throw new Error(error);
+  return map.get(normalizeString(name)) ?? [];
 }
 
 // Words that are both given-name variants and common English words.

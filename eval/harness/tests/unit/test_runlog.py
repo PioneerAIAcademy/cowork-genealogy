@@ -16,6 +16,8 @@ from harness.runlog import (
     assemble_test_entry,
     build_run_log,
     derive_activated,
+    suppressed_failure,
+    unexpected_pass,
     validate_run_log,
     write_run_log,
 )
@@ -131,19 +133,41 @@ def test_aborted_entry():
     assert entry["outcome"] == "aborted"
 
 
-def test_xfail_remap_failing_run_becomes_xfail():
+def test_xfail_marked_failing_run_keeps_fail_outcome():
+    # Issue #2842: an xfail marker no longer relabels the aggregate. `outcome`
+    # stays the real `fail`; suppression is read from `expected_outcome`.
     judge = JudgeResult(skipped=True, dimensions=[], judge_cost_usd=0.0)
     entry = _make_entry(
         expected_outcome="xfail",
         runs=[_stub_run(outcome="fail", validators_passed=False, judge=judge)],
     )
-    assert entry["outcome"] == "xfail"
+    assert entry["outcome"] == "fail"
+    assert entry["expected_outcome"] == "xfail"
     assert entry["outcome_summary"]["per_run_outcomes"] == ["fail"]
+    assert suppressed_failure(entry["outcome"], entry["expected_outcome"]) is True
+    assert unexpected_pass(entry["outcome"], entry["expected_outcome"]) is False
 
 
-def test_xfail_remap_passing_run_becomes_xpass():
+def test_xfail_marked_passing_run_keeps_pass_outcome():
+    # Issue #2842: a declared-xfail test that passes keeps `outcome: pass`; the
+    # marker beside it is what flags it as an unexpected pass.
     entry = _make_entry(expected_outcome="xfail")
-    assert entry["outcome"] == "xpass"
+    assert entry["outcome"] == "pass"
+    assert entry["expected_outcome"] == "xfail"
+    assert unexpected_pass(entry["outcome"], entry["expected_outcome"]) is True
+    assert suppressed_failure(entry["outcome"], entry["expected_outcome"]) is False
+
+
+def test_suppression_predicates_ignore_unmarked_tests():
+    # Without an xfail marker, neither predicate fires — an ordinary fail is a
+    # regression and an ordinary pass is clean.
+    assert suppressed_failure("fail", "pass") is False
+    assert suppressed_failure("fail", None) is False
+    assert unexpected_pass("pass", "pass") is False
+    assert unexpected_pass("pass", None) is False
+    # partial is never suppressed or an unexpected pass, even when marked.
+    assert suppressed_failure("partial", "xfail") is False
+    assert unexpected_pass("partial", "xfail") is False
 
 
 def test_xfail_does_not_remap_aborted_runs():
@@ -282,6 +306,20 @@ def test_envelope_scratch_run_validates():
     validate_run_log(log)
     assert log["version"] is None
     assert log["releasable"] is False
+
+
+@pytest.mark.parametrize("retired", ["xfail", "xpass"])
+def test_validate_rejects_retired_outcome_values(retired):
+    # Issue #2842: xfail/xpass are no longer valid `outcome` enum values. The
+    # harness validates every log it writes (runlog.py write path), so tightening
+    # the enum is enforced on write. Break the enum edit and this test goes green,
+    # which is the falsifiability check.
+    import jsonschema
+
+    log = _wrap_envelope(_make_entry())
+    log["tests"][0]["outcome"] = retired
+    with pytest.raises(jsonschema.ValidationError):
+        validate_run_log(log)
 
 
 def test_envelope_totals_sum_across_tests():
@@ -874,3 +912,49 @@ def test_as_dicts_output_satisfies_the_run_log_schema():
 
     emitted = log["tests"][0]["runs"][0]["validators"]["results"]
     assert [r["outcome"] for r in emitted] == ["passed", "failed", "skipped"]
+
+
+# --- one-word skill names: a name, not the English word ---------------------
+
+_OTHERS = {"research", "timeline", "record-extraction"}
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Verbatim from ut_search_wiki_004, v1_2026-09-21_18-16-58.
+        "I'm sorry, but I only handle genealogy research tasks — looking up "
+        "Albert Einstein on Wikipedia falls outside that scope.",
+        "This request is outside this toolkit's scope. I build a timeline of events.",
+        # The other direction for the markup arm: emphasis around an ordinary
+        # English use is still ordinary English. Widening the class until these
+        # matched would re-break the decline the arm exists to allow.
+        "This agent handles genealogy **research** tasks such as lookups.",
+        "She has good research skills and reads Latin.",
+    ],
+)
+def test_a_one_word_skill_name_used_as_english_is_not_routing(text):
+    from harness.runlog import _is_substantive
+
+    assert _is_substantive(text, other_skill_names=_OTHERS) is True
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Use the `research` skill for that.",
+        "Try /research instead.",
+        "That belongs to the research skill.",
+        "The timeline agent handles that one.",
+        "This is a record-extraction job.",
+        # Closing markup between the name and "skill". The suffix arm matched
+        # only an unadorned name, so these two -- the common way a decline names
+        # the lane it hands off to -- were scored substantive.
+        "That belongs to the **timeline** skill.",
+        'Try the "research" skill.',
+    ],
+)
+def test_a_skill_name_written_as_a_name_is_still_routing(text):
+    from harness.runlog import _is_substantive
+
+    assert _is_substantive(text, other_skill_names=_OTHERS) is False

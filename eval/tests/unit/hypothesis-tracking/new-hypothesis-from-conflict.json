@@ -4,11 +4,11 @@
     "skill": "hypothesis-tracking",
     "name": "Generate a new hypothesis to test against an identity conflict",
     "type": "positive",
-    "description": "The flynn-multi-conflict scenario has an unresolved identity conflict (c_002): which Patrick Flynn in 1850 Schuylkill County is the subject? A useful hypothesis-tracking move is to formulate the candidate identifications as alternative hypotheses, each testable against follow-up evidence. Tests whether the skill can create new hypotheses linked to identity conflicts.",
-    "tags": ["hypothesis", "identity-conflict", "new-hypothesis", "c_002"]
+    "description": "The flynn-multi-conflict scenario has an unresolved identity conflict (c_002): which Patrick Flynn in 1850 Schuylkill County is the subject? A useful hypothesis-tracking move is to formulate the candidate identifications as alternative hypotheses, each testable against follow-up evidence. Tests whether the agent can create new hypotheses linked to identity conflicts.",
+    "tags": ["hypothesis", "identity-conflict", "new-hypothesis", "c_002", "direct-arm"]
   },
   "input": {
-    "user_message": "Given the identity conflict c_002 about which Patrick Flynn in 1850 is the subject, can we formulate this as testable hypotheses?",
+    "delegation": "Given the identity conflict c_002 about which Patrick Flynn in 1850 is the subject, can we formulate this as testable hypotheses?\n\nprojectPath: <workspace>",
     "scenario": "flynn-multi-conflict"
   },
   "mcp_fixtures": ["validate-research-schema"],

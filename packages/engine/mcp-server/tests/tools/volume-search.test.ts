@@ -10,11 +10,15 @@ vi.mock("../../src/auth/refresh.js", () => ({
 const mockResolveStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
 const mockStandardPlaceToPlaceId = vi.hoisted(() => vi.fn());
 const mockPlaceIdToRepIds = vi.hoisted(() => vi.fn());
-vi.mock("../../src/utils/place-resolver.js", () => ({
-  resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
-  standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
-  placeIdToRepIds: mockPlaceIdToRepIds,
-}));
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const real = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return {
+    resolveStandardPlaceToPlaceId: mockResolveStandardPlaceToPlaceId,
+    standardPlaceToPlaceId: mockStandardPlaceToPlaceId,
+    placeIdToRepIds: mockPlaceIdToRepIds,
+    ambiguousPlaceError: real.ambiguousPlaceError,
+  };
+});
 
 import { volumeSearchTool } from "../../src/tools/volume-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
@@ -24,6 +28,7 @@ import type {
   MetadataRmsSearchResponse,
   MetadataRmsGroup,
 } from "../../src/types/volume-search.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -699,11 +704,10 @@ describe("volumeSearchTool", () => {
 
   // 18. Network error (retried by fetchWithRetry before surfacing)
   it("throws on network error", async () => {
-    mockFetch
-      .mockRejectedValue(new Error("ECONNREFUSED"));
+    mockFetch.mockRejectedValue(socketFetchFailure());
 
     await expect(volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL)).rejects.toThrow(
-      "Could not reach FamilySearch volume search API: ECONNREFUSED."
+      /Could not reach FamilySearch volume search API: fetch failed <- ETIMEDOUT/
     );
   });
 
@@ -714,11 +718,11 @@ describe("volumeSearchTool", () => {
     await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
 
     const searchCall = mockFetch.mock.calls[0];
-    const headers = searchCall[1].headers;
-    expect(headers["Authorization"]).toBe("Bearer test-token");
-    expect(headers["Content-Type"]).toBe("application/json");
-    expect(headers["User-Agent"]).toBe(BROWSER_USER_AGENT);
-    expect(headers["FS-User-Agent-Chain"]).toBe("chesworth");
+    const headers = new Headers(searchCall[1].headers as HeadersInit);
+    expect(headers.get("Authorization")).toBe("Bearer test-token");
+    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+    expect(headers.get("FS-User-Agent-Chain")).toBe("chesworth");
   });
 
   // Bonus: unresolvable place

@@ -1,5 +1,35 @@
-# Prototype web tier (apps/server/proto/web). Build context is apps/server/proto so the
-# image carries enqueue.py (the SQS client app.py imports) and sql/ (applied at start).
+# Prototype web tier (apps/server/proto/web). Build context is the REPO ROOT (as for the
+# tools image) so the image carries enqueue.py (the SQS client app.py imports), grants.py
+# (the grant custody it shares with the worker, U3), migrate.py and sql/ (U9: the start
+# reads the ledger against these files and runs no DDL; `python migrate.py` from /app is the
+# one applier), the engine's bundled FamilySearch client config, which web/auth.py
+# reads for sign-in -- that file is the client id's sole source (CLAUDE.md, auth) -- and
+# the SSE build of apps/web, which web/spa.py serves at /. Nothing from apps/server/app is
+# copied: web/auth.py and web/spa.py are vendored ports, not imports.
+
+# ── Stage 1: the SSE build of apps/web (U12) ─────────────────────────────────────
+FROM node:24-slim AS spa
+RUN corepack enable
+WORKDIR /repo
+
+# The install shape of deploy/Dockerfile's stage 1, which records why each line is there:
+# the root preinstall script and the whole of packages/schema (its postinstall generates
+# the gitignored enums) must be in place before the install.
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json .npmrc ./
+COPY scripts/drop-npm-managed-trees.mjs scripts/
+COPY packages/schema packages/schema
+COPY packages/viewer-ui/package.json packages/viewer-ui/
+COPY apps/web/package.json apps/web/
+COPY apps/electron/package.json apps/electron/
+RUN pnpm install --frozen-lockfile --filter web...
+
+COPY packages/viewer-ui packages/viewer-ui
+COPY apps/web apps/web
+COPY tsconfig.base.json ./
+RUN pnpm --filter @genealogy/schema run generate \
+  && VITE_SESSION_TRANSPORT=sse pnpm --filter web exec vite build --outDir /out --emptyOutDir
+
+# ── Stage 2: the tier ────────────────────────────────────────────────────────────
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1
@@ -7,15 +37,28 @@ ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# [binary] bundles libpq, so no apt step on -slim.
-# boto3 is for sidecar bodies only: `results/<log_id>.json` is an S3 object, and
-# without a client every search-result chip 404s and the viewer shows nothing.
-RUN pip install "fastapi>=0.115,<1" "uvicorn[standard]>=0.30,<1" "psycopg[binary]>=3.2,<4" \
-    "boto3>=1.34,<2"
+# uv.lock's proto-web closure (`make proto-requirements`) in hash mode: the versions the
+# suite tested, and a wheel whose hash is not the lock's fails the build.
+COPY apps/server/proto/web/requirements.txt ./requirements.txt
+RUN pip install --require-hashes -r requirements.txt
 
-COPY enqueue.py ./
-COPY sql ./sql
-COPY web ./web
+# boto3 is NOT in the hash-pinned closure above, and the web tier needs it: sidecar
+# bodies (`results/<log_id>.json`) are S3 objects, and without a client every
+# search-result chip 404s and the viewer shows nothing. Installed as its own layer
+# because --require-hashes admits no unpinned additions.
+# FOLLOW-UP: fold boto3 into uv.lock's proto-web closure and regenerate
+# requirements.txt (`make proto-requirements`), then delete this layer.
+RUN pip install "boto3>=1.34,<2"
+
+COPY apps/server/proto/enqueue.py ./
+COPY apps/server/proto/grants.py ./
+COPY apps/server/proto/migrate.py ./
+COPY apps/server/proto/sql ./sql
+COPY apps/server/proto/web ./web
+COPY packages/engine/mcp-server/config/familysearch.json ./config/familysearch.json
+COPY --from=spa /out ./web-dist
+# Relative, so it resolves against /app (web/'s parent): the value the bundle sets too.
+ENV WEB_DIST_DIR=web-dist
 
 EXPOSE 8085
 

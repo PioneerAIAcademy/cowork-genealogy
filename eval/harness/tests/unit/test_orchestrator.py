@@ -414,7 +414,7 @@ def test_judge_error_in_run_records_skip_with_error(tmp_path, monkeypatch):
         )
         return SkillRunResult(
             text_response="I saved the file.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[
                 # LIVE, so this test also covers the production wiring of
                 # #1000's two new fields — the retention rule keeps a live
@@ -491,7 +491,7 @@ def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
         # registered) — Type 2.
         return SkillRunResult(
             text_response="(produced from an error response)",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[],
             duration_ms=10.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -501,7 +501,7 @@ def test_uncovered_tool_call_continues_to_judge(tmp_path, monkeypatch):
             registered_mcp_tools={"wikipedia_search"},  # Tool exists, but call didn't match fixture
         )
 
-    # Stub validators to pass (search-wikipedia has validators that check for
+    # Stub validators to pass (the subject skill has validators that check for
     # output files, which we didn't create). We want to test the judge, not
     # validators, so make validators trivially pass.
     monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
@@ -561,7 +561,7 @@ def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatc
         )
         return SkillRunResult(
             text_response="I saved the file.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[
                 {"tool": "mcp__genealogy__wikipedia_search", "args": {"query": "X"},
                  "matched": {"kind": "predicate", "index": None},
@@ -617,7 +617,11 @@ def test_judge_dimension_warnings_flow_into_output_warnings(tmp_path, monkeypatc
     assert dropped[0]["name"] == "X"
 
 
-def _positive_spec(skill="search-wikipedia"):
+# `record-extraction` rather than `search-wikipedia`: issue #2795 deleted that
+# skill directory, and `check_runnable` refuses a ROUTED spec whose skill has
+# none. These specs are synthetic labels, so the name only has to be a skill
+# that still ships.
+def _positive_spec(skill="record-extraction"):
     return load_test_from_dict({
         "test": {"id": "ut_o_001", "skill": skill, "name": "n", "type": "positive",
                   "description": "x", "tags": []},
@@ -671,7 +675,7 @@ def test_positive_fails_when_validators_failed():
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
-        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
     ) == "fail"
 
 
@@ -679,7 +683,7 @@ def test_positive_fails_when_not_activated():
     spec = _positive_spec()
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
-        aborted_reason=None, activated=False, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=False, skills_invoked=["record-extraction"],
     ) == "fail"
 
 
@@ -704,7 +708,7 @@ def test_positive_passes_with_skill_invoked_and_all_dims_pass():
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
     ) == "pass"
 
 
@@ -716,7 +720,7 @@ def test_positive_partial_when_any_dim_partial():
     ]
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=True, skills_invoked=["search-wikipedia"],
+        aborted_reason=None, activated=True, skills_invoked=["record-extraction"],
     ) == "partial"
 
 
@@ -832,24 +836,114 @@ def test_negative_passes_when_judge_skipped_but_routing_correct():
     ) == "pass"
 
 
-def test_negative_judge_context_frames_decline_and_keeps_test_context():
-    """_negative_judge_context prepends negative-test framing (so the
-    base-only judge grades the decline, not the skill's craft task) and
-    appends the test's own judge_context unchanged."""
-    spec = load_test_from_dict({
+def _negative_ctx_spec(judge_context):
+    return load_test_from_dict({
         "test": {"id": "ut_o_003", "skill": "citation",
                   "name": "n", "type": "negative", "description": "x",
                   "tags": []},
         "input": {"user_message": "m", "scenario": None},
         "negative": {"correct_skill": ["record-extraction"],
                       "explanation": "x"},
-        "judge_context": ["Should explicitly name record-extraction"],
+        "judge_context": judge_context,
     })
-    ctx = _negative_judge_context(spec)
-    assert "NEGATIVE test" in ctx[0]
-    assert "record-extraction" in ctx[0]
-    assert "citation" in ctx[1]
-    assert ctx[-1] == "Should explicitly name record-extraction"
+
+
+def test_negative_judge_context_frames_decline_and_keeps_test_context():
+    """_negative_judge_context gives the negative-test framing (so the
+    base-only judge grades the decline, not the skill's craft task) and the
+    test's own judge_context unchanged, as two labeled groups."""
+    ctx = _negative_judge_context(_negative_ctx_spec(["Should explicitly name record-extraction"]))
+    assert len(ctx) == 2
+    harness, author = ctx
+    assert harness.startswith("Harness framing (")
+    assert "NEGATIVE test" in harness
+    assert "record-extraction" in harness
+    assert "citation" in harness
+    assert author.startswith("Test author's notes (")
+    assert author.endswith("\n  - Should explicitly name record-extraction")
+
+
+def test_negative_judge_context_keeps_machine_and_author_lines_apart():
+    """The harness's three lines sit only under the harness label, and the
+    author's lines only under the author label."""
+    harness, author = _negative_judge_context(
+        _negative_ctx_spec(["AUTHOR-NOTE-ONE", "AUTHOR-NOTE-TWO"])
+    )
+    assert harness.count("\n  - ") == 3
+    assert "AUTHOR-NOTE" not in harness
+    assert author.count("\n  - ") == 2
+    assert "NEGATIVE test" not in author
+    assert "AUTHOR-NOTE-ONE" in author and "AUTHOR-NOTE-TWO" in author
+
+
+def test_negative_judge_context_keeps_a_multi_line_note_inside_its_group():
+    _, author = _negative_judge_context(_negative_ctx_spec(["first line\nsecond line"]))
+    assert author.endswith("\n  - first line\n    second line")
+
+
+def test_run_judge_hands_a_negative_test_the_labeled_groups(monkeypatch):
+    """The wiring, not just the builder: a negative test's judge receives
+    the two labeled groups, not the test's raw judge_context."""
+    from harness import orchestrator
+    from harness.auth import AuthConfig
+    from harness.rubric import empty_rubric
+
+    seen = {}
+
+    def fake_grade(**kwargs):
+        seen.update(kwargs)
+        return "graded"
+
+    monkeypatch.setattr(orchestrator, "grade", fake_grade)
+    spec = _negative_ctx_spec(["AUTHOR-NOTE"])
+    result = SimpleNamespace(
+        text_response="t", skills_invoked=[], tool_calls=[],
+        builtin_tool_calls=[], agent_returns=[],
+    )
+    assert orchestrator._run_judge(
+        spec=spec, rubric=empty_rubric(spec.skill), scenario_readme="",
+        result=result, file_changes=[],
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        judge_model="stub",
+    ) == "graded"
+    ctx = seen["judge_context"]
+    assert ctx[0].startswith("Harness framing (")
+    assert ctx[1] == "Test author's notes (written for this test):\n  - AUTHOR-NOTE"
+
+
+def test_negative_judge_context_without_author_notes_has_no_author_group():
+    ctx = _negative_judge_context(_negative_ctx_spec([]))
+    assert len(ctx) == 1
+    assert ctx[0].startswith("Harness framing (")
+    assert "Test author's notes" not in ctx[0]
+
+
+def test_negative_judge_context_renders_as_two_nested_lists_in_the_judge_prompt():
+    """Through judge.py's real rendering: each label is one bullet and its
+    lines are nested bullets beneath it."""
+    from harness import judge
+    from harness.rubric import empty_rubric
+
+    prompt = judge.render_prompt(
+        rubric=empty_rubric("citation"),
+        judge_context=_negative_judge_context(_negative_ctx_spec(["AUTHOR-NOTE"])),
+        scenario_readme="r",
+        user_message="m",
+        skills_invoked=[],
+        text_response="t",
+        file_changes_summary="c",
+        tool_calls=[],
+    )
+    lines = prompt.splitlines()
+    lines = lines[lines.index(next(l for l in lines if l.startswith("- Harness framing ("))):]
+    assert lines[0] == (
+        "- Harness framing (written by the eval harness for every negative test, "
+        "not by this test's author):"
+    )
+    assert lines[1].startswith("  - This is a NEGATIVE test.")
+    author_at = lines.index("- Test author's notes (written for this test):")
+    assert lines[author_at + 1] == "  - AUTHOR-NOTE"
+    assert author_at == 4  # label + three harness lines precede it
 
 
 def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
@@ -1154,7 +1248,7 @@ def test_judge_skipped_after_passing_validators_fails():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
         judge_skipped=True,
     ) == "fail"
 
@@ -1165,7 +1259,7 @@ def test_judge_skipped_doesnt_override_aborted():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="max_turns", activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
         judge_skipped=True,
     ) == "aborted"
 
@@ -1182,7 +1276,7 @@ def test_judge_skipped_doesnt_override_validator_fail():
     assert _compute_outcome(
         spec=spec, validators_passed=False, judge_dimensions=[],
         aborted_reason=None, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
         judge_skipped=True,
     ) == "fail"
 
@@ -1192,7 +1286,7 @@ def test_aborted_dominates_everything():
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason="max_turns", activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
     ) == "aborted"
 
 
@@ -1228,7 +1322,7 @@ def test_commission_validator_failure_demotes_deterministic_cap_abort_to_fail(ca
         spec=spec, validators_passed=False,
         failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
         judge_dimensions=[], aborted_reason=cap, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
     ) == "fail"
 
 
@@ -1245,7 +1339,7 @@ def test_omission_only_validator_failure_under_cap_stays_aborted(cap):
         spec=spec, validators_passed=False,
         failed_validators=frozenset({_AN_OMISSION_VALIDATOR}),
         judge_dimensions=[], aborted_reason=cap, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
     ) == "aborted"
 
 
@@ -1257,7 +1351,7 @@ def test_clean_deterministic_cap_abort_stays_aborted(cap):
     assert _compute_outcome(
         spec=spec, validators_passed=True, failed_validators=frozenset(),
         judge_dimensions=[], aborted_reason=cap, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
     ) == "aborted"
 
 
@@ -1272,7 +1366,7 @@ def test_commission_failure_does_not_demote_non_cap_abort(reason):
         spec=spec, validators_passed=False,
         failed_validators=frozenset({_A_COMMISSION_VALIDATOR}),
         judge_dimensions=[], aborted_reason=reason, activated=True,
-        skills_invoked=["search-wikipedia"],
+        skills_invoked=["record-extraction"],
     ) == "aborted"
 
 
@@ -1330,7 +1424,7 @@ def test_type_1_unmatched_tool_call_aborts(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         return SkillRunResult(
             text_response="I tried to use a tool that doesn't exist.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[],  # No calls reached the mock
             duration_ms=100.0,
             usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
@@ -1371,7 +1465,7 @@ def test_type_2_unmatched_tool_call_continues_to_judge(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         return SkillRunResult(
             text_response="I searched but got an error.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[
                 {
                     "tool": "mcp__genealogy__place_search",
@@ -1389,7 +1483,7 @@ def test_type_2_unmatched_tool_call_continues_to_judge(tmp_path, monkeypatch):
             registered_mcp_tools={"place_search"},  # place_search exists
         )
 
-    # Stub validators to pass (search-wikipedia has validators that check for
+    # Stub validators to pass (the subject skill has validators that check for
     # output files, which we didn't create). We want to test the judge, not
     # validators, so make validators trivially pass.
     monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
@@ -1446,7 +1540,7 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         return SkillRunResult(
             text_response="Schema is valid.",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[
                 {
                     "tool": "mcp__genealogy__validate_research_schema",
@@ -1649,7 +1743,7 @@ def test_orchestrator_passes_text_response_to_validators(tmp_path, monkeypatch):
         from harness.skill_runner import SkillRunResult
         return SkillRunResult(
             text_response=reply,
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[],
             duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -1707,7 +1801,7 @@ def test_orchestrator_threads_refinement_targets_into_validators(tmp_path, monke
         from harness.skill_runner import SkillRunResult
         return SkillRunResult(
             text_response="done",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[],
             duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -1761,7 +1855,7 @@ def test_orchestrator_threads_index_error_source_into_validators(tmp_path, monke
         from harness.skill_runner import SkillRunResult
         return SkillRunResult(
             text_response="done",
-            skills_invoked=["search-wikipedia"],
+            skills_invoked=["record-extraction"],
             tool_calls=[],
             duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
@@ -1823,6 +1917,7 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
     # here and the assertion below would pass on the wrong value.
     spec.raw["input"].pop("user_message", None)
     spec.user_message = ""
+    spec.negative = {"correct_skill": ["NEGATIVE-SENTINEL"]}
     paths = OrchestratorPaths(runlogs_root=tmp_path)
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
 
@@ -1857,6 +1952,11 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
         timestamp="2026-08-22_00-00-00",
     ))
 
+    assert captured["test"].get("negative") == {"correct_skill": ["NEGATIVE-SENTINEL"]}, (
+        "orchestrator did not thread spec.negative into run_validators' test "
+        "dict; test_hand_back_names_its_owner reads its owner from it and fails "
+        "every compliant hand-back without it (issue #2118)"
+    )
     assert captured["test"].get("delegation") == "DELEGATION-SENTINEL", (
         "orchestrator did not thread spec.delegation into run_validators' test "
         "dict; all three direct-arm validators would skip on every direct test"
@@ -2018,14 +2118,18 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # A negative fixture with a non-empty `correct_skill` and NO
 # `grade_on_invariant`. That second condition is load-bearing and easy to get
 # wrong: `grade_on_invariant` is the FIRST guard in
-# flag_routing_negative_judge_fail, so both search-wikipedia negatives (both
-# of the ones with a non-empty correct_skill carry it; the third is
-# out-of-scope with `correct_skill: []`) are exempt from the coercion and would
-# make this test pass for the wrong reason. 81 of the committed negative
+# flag_routing_negative_judge_fail, so a fixture carrying it is exempt from the
+# coercion and would make this test pass for the wrong reason. (The example
+# this comment used to cite was search-wikipedia's three negatives; issue #2795
+# deleted two of them and made the third — `ut_search_wikipedia_008` — a DIRECT
+# negative that still carries `grade_on_invariant`, so it is exempt from the
+# coercion for that reason rather than for having ceased to be a negative.) 81 of the committed negative
 # fixtures qualify; this one is
-# picked because its scenario exists and OrchestratorPaths resolves it.
+# picked because its scenario exists and OrchestratorPaths resolves it, and it
+# sits in record-extraction's suite, which stays a skill (the check-warnings one
+# it replaced was deleted with that skill, issue #2118).
 NEGATIVE_TEST_PATH = (
-    REPO_ROOT / "eval/tests/unit/check-warnings/negative-project-status.json"
+    REPO_ROOT / "eval/tests/unit/record-extraction/negative-search-vs-extract.json"
 )
 
 
@@ -2071,7 +2175,7 @@ def test_a_failing_gating_validator_no_longer_skips_the_judge(tmp_path, monkeypa
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
         return SkillRunResult(
-            text_response="done", skills_invoked=["search-wikipedia"],
+            text_response="done", skills_invoked=["record-extraction"],
             tool_calls=[], duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
         )
@@ -2184,8 +2288,10 @@ def test_coercion_reaches_a_validator_failing_negative(tmp_path, monkeypatch):
     async def fake_run_skill(**kwargs):
         from harness.skill_runner import SkillRunResult
         # Correctly routed: the skill under test declined, the accepted skill ran.
+        # Read off the fixture, so repointing NEGATIVE_TEST_PATH cannot leave a
+        # stale name here that the fixture does not accept.
         return SkillRunResult(
-            text_response="", skills_invoked=["project-status"],
+            text_response="", skills_invoked=list(spec.negative["correct_skill"][:1]),
             tool_calls=[], duration_ms=1.0,
             usage={"total_cost_usd": 0.0, "usage": {}},
         )

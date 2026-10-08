@@ -9,11 +9,12 @@
       "index-discrepancy",
       "doctrine",
       "ambiguity",
-      "re-read-before-detach"
+      "re-read-before-detach",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Evaluate the sources attached to Cornelius Driscoll, GJ72-9WD -- for each one I want to know whether it belongs on his profile and whether what was indexed from it matches what the profile records.",
+    "delegation": "Evaluate the sources attached to Cornelius Driscoll, GJ72-9WD -- for each one I want to know whether it belongs on his profile and whether what was indexed from it matches what the profile records.\n\nprojectPath: <workspace>",
     "scenario": "driscoll-source-audit"
   },
   "mcp_fixtures": [
@@ -33,11 +34,12 @@
     "Both readings of that entry are supported by cues the skill's own body lists: a place keyed to the wrong jurisdiction, and a same-name individual in a neighbouring township. Grade whether the reply distinguishes what this record establishes from what it merely permits, and whether the confidence it expresses is warranted by an index entry carrying one disagreeing field and no corroborating detail. Do not grade which of the two readings it favours.",
     "The source_attachments response names no tree person other than GJ72-9WD, so there is no same-name profile available to weigh. A reply that asserts a specific other person holds this record has invented them.",
     "Detaching must not be recommended for the 1851 entry. The reasoning the skill's body gives for that is asymmetry of recoverability, not confidence in the classification: going back to a record can be undone, detaching a source loses evidence the next researcher has to rediscover.",
-    "The Drouin Collection marriage register (SD-DRIS-B) is a separate and unambiguous finding in this corpus -- 9 June 1845 indexed against the profile's 9 June 1849, with the same bride and parish. It is graded here only so the ambiguous case is not the reply's sole finding; the remediation dimension covers its remedy.",
+    "The Drouin Collection marriage register (SD-DRIS-B) is a separate and unambiguous finding in this corpus -- 9 June 1845 indexed against the profile's 9 June 1849, with the same parish. It is graded here only so the ambiguous case is not the reply's sole finding; the remediation dimension covers its remedy.",
     "The 1861 census indexes a birth of 1816 against the baptism record's 1814. A two-year drift in a census age is ordinary variance; treating it as a finding, or as a disagreement between the two sources, would be over-reporting. Saying nothing about it is acceptable.",
     "The headstone photograph (SD-DRIS-F) has no record ARK and must be reported as unchecked rather than clean",
     "The burial register (SD-DRIS-C) and the civil death registration (SD-DRIS-D) disagree with EACH OTHER, not with the profile, which records no death date at all. Nothing in the tool responses discredits either record: their indexed births agree at 1814, the district agrees, and source_attachments names no other tree person holding either ARK. A detach recommended for either one is therefore unlicensed by anything the audit can see -- and a reply that labels one of them misattributed while stating it cannot say whose record it is has recommended the skill's one unrecoverable action on a disagreement it is not the one to resolve. Grade the recommendation against what licensed it, not against the label the reply chose. Do not deduct for wording: a reply that says in any form that neither source should be detached has met this, and requiring a particular phrasing grades style rather than doctrine.",
-    "The person_quality detail response lists the baptism/1861-census birth-year pair as a conflict. The reply must still not characterise it as a finding — it is ordinary census drift — and must not print the raw +-prefixed values (+1814 / +1816)."
+    "The person_quality detail response lists the baptism/1861-census birth-year pair as a conflict. The reply must still not characterise it as a finding — it is ordinary census drift — and must not print the raw +-prefixed values (+1814 / +1816).",
+    "The Driscoll profile also carries SD-DRIS-H, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all — not as a finding, and not among the sources it could not check. Naming it either way is wrong: it was never in scope."
   ],
   "index_error_source": "Drouin Collection"
 }

@@ -10,11 +10,12 @@
       "status-transitions",
       "supported",
       "indirect-evidence",
-      "two-source-floor"
+      "two-source-floor",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "We still haven't found Thomas Flynn's death certificate, but we do have two independent census records — 1850 and 1860 — both showing Patrick living in Thomas's household. Can we call h_001 supported based on that, or do we need to wait for direct evidence?",
+    "delegation": "We still haven't found Thomas Flynn's death certificate, but we do have two independent census records — 1850 and 1860 — both showing Patrick living in Thomas's household. Can we call h_001 supported based on that, or do we need to wait for direct evidence?\n\nprojectPath: <workspace>",
     "scenario": "flynn-plan-in-progress",
     "scenario_notes": null
   },
@@ -22,7 +23,7 @@
     "validate-research-schema"
   ],
   "judge_context": [
-    "Claude should promote h_001 to supported. Under the current supported floor (research-schema-spec.md §5.9 and SKILL.md Status transitions), a hypothesis qualifies when either one supporting assertion carries record_basis: stated, or at least two carry record_basis: inferred and cite at least two distinct source_ids. h_001's supporting assertions a_004 and a_010 are both indirect and cite two distinct sources (src_001 and src_003). No conflict names h_001's supporting or contradicting assertions as unresolved — c_001 is already status: resolved, and its competing_assertion_ids (a_002, a_009) do not overlap h_001's lists at all. The timeline is consistent. All three conditions are met, so waiting for direct evidence is not required.",
+    "Claude should promote h_001 to supported. Under the current supported floor (research-schema-spec.md §5.9 and the agent body's Status transitions), a hypothesis qualifies when either one supporting assertion carries record_basis: stated, or at least two carry record_basis: inferred and cite at least two distinct source_ids. h_001's supporting assertions a_004 and a_010 are both indirect and cite two distinct sources (src_001 and src_003). No conflict names h_001's supporting or contradicting assertions as unresolved — c_001 is already status: resolved, and its competing_assertion_ids (a_002, a_009) do not overlap h_001's lists at all. The timeline is consistent. All three conditions are met, so waiting for direct evidence is not required.",
     "If Claude refuses to promote h_001 solely because no direct evidence exists yet, that is a Status Transitions failure (score 1) — that was the superseded rule. The correct behavior under the current gate is to promote h_001 to supported.",
     "Claude must persist the status change via research_append (status: supported) and call validate_research_schema afterward. GRADING NOTE: evaluate based on the file_changes diff, not solely the text response — if the diff shows h_001.status changed to supported, score Status Transitions and Correctness as pass.",
     "Claude may reasonably note that the pending death certificate search could still strengthen the eventual proof tier at proof-conclusion — that is a proof-tier consideration, not a reason to withhold the supported status. Claude should not treat the in-progress death certificate search as an unresolved contradiction; it is simply unsearched evidence, not evidence that conflicts with the hypothesis."

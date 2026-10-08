@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "user_message": "person-evidence: I've extracted Thomas Flynn's 1850 census household into research.json (assertions a_001-a_007). Thomas is already in the tree (I2), and his son Patrick (I1) is also in the tree but does not appear in this census. Link these assertions to persons and build out this household skeleton in the tree.",
+    "delegation": "person-evidence: I've extracted Thomas Flynn's 1850 census household into research.json (assertions a_001-a_007). Thomas is already in the tree (I2), and his son Patrick (I1) is also in the tree but does not appear in this census. Link these assertions to persons and build out this household skeleton in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-household-skeleton"
   },
   "judge_context": [

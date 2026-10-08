@@ -81,7 +81,7 @@ async def test_roundtrip_is_transparent():
     encrypt/decrypt code of its own."""
     with Session(get_engine()) as s:
         _persist_fs_token(s, "usr_rt", {
-            "access_token": "A-clear", "refresh_token": "R-clear", "expires_in": 3600,
+            "access_token": "A-clear", "refresh_token": "R-clear", "expires_in": 7200,
         })
         row = await fresh_fs_token(s, "usr_rt")
     assert row is not None
@@ -132,7 +132,7 @@ async def test_undecryptable_row_reads_as_expired_and_heals(caplog):
     # A re-login (persist) rewrites the row — now usable and ciphertext at rest.
     with Session(get_engine()) as s:
         _persist_fs_token(s, "usr_heal", {
-            "access_token": "HEALED", "refresh_token": "HEALED-r", "expires_in": 3600,
+            "access_token": "HEALED", "refresh_token": "HEALED-r", "expires_in": 7200,
         })
         healed = await fresh_fs_token(s, "usr_heal")
     assert healed is not None and healed.access_token == "HEALED"

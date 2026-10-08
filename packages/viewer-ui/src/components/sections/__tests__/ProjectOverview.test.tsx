@@ -65,7 +65,7 @@ describe('ProjectOverview — researcher profile', () => {
 
   // narration_guidance is the instruction the agent reads for its narration
   // style. It is never user content: the lay user must not see a model
-  // instruction on their Overview. The badge stays; the string does not.
+  // instruction on their Overview.
   it('never renders narration_guidance, with or without intended_audience', () => {
     mockResearch({
       researcher_profile: {
@@ -77,7 +77,15 @@ describe('ProjectOverview — researcher profile', () => {
     render(<ProjectOverview />)
     expect(screen.queryByText(/Skip the basics/)).toBeNull()
     expect(screen.getByText(/submission to NGSQ/)).toBeTruthy()
-    expect(screen.getByText('professional')).toBeTruthy()
+  })
+
+  // Every project is written as `novice`, so the label tells the researcher nothing,
+  // and a tester read it as a judgment about them.
+  it('never renders experience_level', () => {
+    mockResearch({ researcher_profile: { experience_level: 'novice', subscriptions: ['Ancestry'] } })
+    render(<ProjectOverview />)
+    expect(screen.queryByText(/novice/i)).toBeNull()
+    expect(screen.getByText(/Ancestry/)).toBeTruthy()
   })
 })
 

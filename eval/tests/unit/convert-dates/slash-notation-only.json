@@ -5,10 +5,10 @@
     "name": "Dual-dating notation — extract New Style year, no day shift requested",
     "type": "positive",
     "description": "User supplies a pre-1752 English date in slash notation ('15 February 1750/1') and asks which year to use in their records. The skill should explain that the LATER year is the New Style (modern) year and explicitly stop there — NOT silently apply the 11-day Julian-Gregorian shift the user didn't ask for. Tests restraint and exactly answering the question asked. The date sits inside the 1 January - 24 March double-dating window, where 'use the later year' is unambiguously correct; the boundary day itself is ut_convert_dates_016.",
-    "tags": ["dual-dating", "old-style-new-style", "england", "no-day-shift", "slash-notation"]
+    "tags": ["dual-dating", "old-style-new-style", "england", "no-day-shift", "slash-notation", "direct-arm"]
   },
   "input": {
-    "user_message": "What does '15 February 1750/1' mean on this English marriage record? Which year do I use in my research notes?",
+    "delegation": "What does '15 February 1750/1' mean on this English marriage record? Which year do I use in my research notes?\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "judge_context": [

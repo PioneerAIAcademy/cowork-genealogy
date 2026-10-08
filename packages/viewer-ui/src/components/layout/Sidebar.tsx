@@ -86,7 +86,7 @@ export default function Sidebar({
     { key: 'timelines', label: 'Timelines', countFn: () => research?.timelines?.length ?? 0 },
     {
       key: 'proof_summaries',
-      label: 'Proof Summaries',
+      label: 'Findings',
       countFn: () => research?.proof_summaries?.length ?? 0
     },
     {

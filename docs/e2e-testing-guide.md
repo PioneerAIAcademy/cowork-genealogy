@@ -66,9 +66,10 @@ time, n=147 for cost; re-derive both with one scan of
 run log skews the sample), reading `usage.wall_clock_seconds` for time and
 `usage.total_cost_usd` for cost — note that `make e2e-latency SINCE=all`
 reports one run per fixture and prints no median, so it will not reproduce
-these). Run one at a time — the orchestrator's own cap is
-`max_cost_usd = 15.0` (`eval/harness/e2e/orchestrator.py`), so a single run
-can still land near or past this section's median on its own.**
+these). Run one at a time. `max_cost_usd = 15.0`
+(`eval/harness/e2e/orchestrator.py`) is a reporting threshold, not a bound:
+nothing stops a run at $15, so a single run can cost well past this section's
+median on its own.**
 
 This is a capability benchmark, not a regression suite — per-PR regression
 coverage is the unit tests in `eval/tests/unit/`. The verdict measures *fact
@@ -430,7 +431,9 @@ The `check-e2e-fixtures` gate blocks any run log *added, or renamed into the
 corpus,* in your PR that produced a final tree but ships no `run-<ts>.ann.json`
 beside it — so promoting a run out of quarantine is caught too. (A treeless
 run — crashed or skipped before a final tree — is exempt; there's nothing to
-grade.)
+grade. So is a `host_slept` run: the machine slept, so the judge was skipped and
+the run is left out of the rates. Do not grade it; see the stop-reason table
+below.)
 
 The same gate also reds a run log whose `usage.betas` is non-empty — a run made
 with `--context-1m`. A 1M window is not corpus-comparable, so keep it in a
@@ -457,6 +460,9 @@ not count — run it after committing:
 BASE_SHA="$(git merge-base origin/main HEAD)" HEAD_SHA="$(git rev-parse HEAD)" \
   python3 eval/harness/scripts/check_e2e_fixtures.py
 ```
+
+Run it in Git Bash or WSL on Windows. `origin/main` must be the `main` you branched
+from: if `origin` is your fork, use `upstream/main`.
 
 With `BASE_SHA`/`HEAD_SHA` unset it prints `skipped` and exits 0 — **a run with
 no env set is not a pass.** If it cannot diff the two shas at all (an unfetched
@@ -518,8 +524,9 @@ re-graded) / `skipped` (the judge never ran).
 | `natural_end` | The agent thought it was done; GPS may or may not agree |
 | `inactivity` / `timeout` | It stalled — the last `narration` entry shows where |
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
-| `cost_cap` | Hit the per-run cost limit |
+| `cost_cap` | The final cost passed `caps.max_cost_usd`. A label, not a stop: the run had already ended |
 | `error` | SDK or harness exception; check `result.error` |
+| `host_slept` | **The machine slept for at least the inactivity cap: an environment failure, not your fixture.** The judge was skipped and the run is left out of the rates. Commit its three files with no `.ann.json`, keep the machine awake (`eval/README.md`, "Keep the machine awake during a run") and re-run |
 | `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |
 
 Full field reference: spec §8.
@@ -530,6 +537,9 @@ Read `narration[]` alongside `tool_calls[]` first — most failures are obvious
 from them. Each narration entry carries `tool_calls_before` — the number of
 tool calls that preceded it — so the two replay as one trace. If something needs fixing, fix it in **Step 4** (Cowork +
 Viewer) and re-run, rather than guessing blind.
+
+**Not for a panel run:** do not fix and re-run. Land the run at the verdict it
+earned; see [The standing panel](#the-standing-panel).
 
 **Rule out a tool failure before you blame the skill.** A search that returned
 little because it *failed* reads exactly like one the agent never pushed on,
@@ -579,6 +589,9 @@ answer isn't *in* the starting tree; only a run proves it's *recoverable from
 live FS*. If you fixed something in Step 8 and re-ran, the earlier run log is
 stale — commit the new one. Landing a fixture without a passing run is a
 judgment call you should be able to defend in review.
+
+**Not for a panel run:** land the run at whatever verdict it earned, not only a
+passing one; see [The standing panel](#the-standing-panel).
 
 > **Resolved a fixture to "the hint is wrong" (Step 1a)?** "Passing" means
 > something different there: there's no fact to recover, so what you're looking
@@ -668,9 +681,11 @@ one week instead and every fixture reports a single run, which is the small-samp
 window the panel exists to escape.
 
 A panel run is landed at whatever verdict it earned — `pass`, `partial` or `fail`
-— because the panel counts runs and a failed run is the data point; re-run only
-when the run wrote no files at all (`mcp_unavailable`, or an abort before any
-`run-<ts>.json`), which is an environment failure rather than a result.
+— because the panel counts runs and a failed run is the data point. Re-run only
+after an environment failure rather than a result: the run wrote no files at all
+(`mcp_unavailable`, or an abort before any `run-<ts>.json`), or it stopped on
+`host_slept`. A slept run is committed ungraded, as the harness prints, and lands
+with its re-run.
 
 The panel is **fixed**. Fixture difficulty varies enormously, so a month's
 aggregate is comparable to the next month's only when the mix is constant;

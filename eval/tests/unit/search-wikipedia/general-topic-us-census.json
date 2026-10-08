@@ -8,11 +8,12 @@
     "tags": [
       "wikipedia",
       "general-topic",
-      "slug-united-states-census"
+      "slug-united-states-census",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Save a Wikipedia summary about the United States census",
+    "delegation": "Save a Wikipedia summary about the United States census\n\ntopic: the United States census",
     "scenario": null
   },
   "mcp_fixtures": [

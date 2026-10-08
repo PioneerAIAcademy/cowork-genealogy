@@ -12,6 +12,7 @@ path issues the same signed session cookie.
 """
 from __future__ import annotations
 
+import asyncio
 import html
 import logging
 import re
@@ -115,10 +116,19 @@ def _persist_fs_token(session: Session, user_id: str, token_json: dict) -> Famil
     return row
 
 
-# Refresh when the access token has less than this left. The in-sandbox MCP
-# self-refreshes too, so anything comfortably live can be injected as-is; this
-# only has to cover the gap until the sandbox takes over.
-_FS_REFRESH_MARGIN = timedelta(minutes=10)
+# Refresh when the access token has less than this left. The sandbox holds only
+# an access token (no refresh token -- the control plane is the sole refresh
+# owner, issue #2887), so this margin must guarantee the injected token outlives
+# the sandbox's running window (_RUNNING_TIMEOUT_S = 3600 s in e2b.py).
+_FS_REFRESH_MARGIN = timedelta(seconds=3600)
+
+# Serialize concurrent refreshes for the same user. Two /connect calls landing
+# together can each find the token near-expiry and both spend the same refresh
+# token, revoking the first caller's freshly-minted access token.
+# An in-process asyncio.Lock per user_id is enough: production is one Fly
+# machine running one process (deploy/fly.toml, min_machines_running = 1).
+# A multi-machine deployment would need a DB-level lock taken off the event loop.
+_refresh_locks: dict[str, asyncio.Lock] = {}
 
 
 async def fresh_fs_token(session: Session, user_id: str) -> FamilySearchToken | None:
@@ -138,8 +148,7 @@ async def fresh_fs_token(session: Session, user_id: str) -> FamilySearchToken | 
         # Undecryptable at rest (legacy plaintext, or written under a different
         # FS_TOKEN_ENC_KEY) — EncryptedStr soft-fails to None. Treat as expired so
         # the user reconnects and the row is rewritten as ciphertext, rather than
-        # injecting an empty token into a sandbox. This guard is needed because the
-        # expiry check below runs before the token is otherwise looked at.
+        # injecting an empty token into a sandbox.
         logger.warning("undecryptable FS token for user_id=%s — treating as expired", user_id)
         return None
     expires_at = row.expires_at
@@ -149,10 +158,24 @@ async def fresh_fs_token(session: Session, user_id: str) -> FamilySearchToken | 
         return row
     if not row.refresh_token:
         return None
-    token_json = await fs_oauth.refresh_tokens(row.refresh_token)
-    if token_json is None:
-        return None
-    return _persist_fs_token(session, user_id, token_json)
+
+    # Serialize: only one caller per user refreshes; the rest wait and re-read.
+    lock = _refresh_locks.setdefault(user_id, asyncio.Lock())
+    async with lock:
+        # Re-read after acquiring — another caller may have refreshed already.
+        session.expire(row)
+        row = session.get(FamilySearchToken, user_id)
+        if row is None:
+            return None
+        expires_at = row.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at - _FS_REFRESH_MARGIN > datetime.now(timezone.utc):
+            return row
+        token_json = await fs_oauth.refresh_tokens(row.refresh_token)
+        if token_json is None:
+            return None
+        return _persist_fs_token(session, user_id, token_json)
 
 
 def decode_session_token(token: str | None) -> str | None:

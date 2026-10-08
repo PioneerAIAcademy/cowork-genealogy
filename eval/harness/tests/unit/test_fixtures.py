@@ -149,7 +149,9 @@ def test_load_multiple_fixtures_preserves_order():
 # `shapeRelationships`/`shapeSources`, which always assemble those three keys.
 
 _PERSON_READ_TOP_LEVEL = {"persons", "relationships", "sources"}
-# `notes[]` is emitted ONLY when endpoint closure dropped an edge, so it is
+# `notes[]` has TWO emitters: endpoint closure dropping an edge, and a relative
+    # whose attached sources could not be read (#1689 Half 3). The two mean
+    # opposite things about whether that person is in the tree, so it is
 # optional rather than part of the always-shape (#2593, @chesworthrm).
 _PERSON_READ_OPTIONAL = {"notes"}
 
@@ -258,6 +260,47 @@ def sidecar_problems(name, data):
                     f"{name}: {owner} {fact.get('type')} has {raw}, no {sidecar}"
                 )
     return problems
+
+
+def _is_tree_source_ref(ref) -> bool:
+    """Mirrors `isTreeSourceRef` in merge-shared.ts and the tree validator:
+    only ref/page/quality, `ref` a non-empty string, `page` a string, `quality`
+    a QUAY integer 0-3."""
+    if not isinstance(ref, dict) or not set(ref) <= {"ref", "page", "quality"}:
+        return False
+    if not isinstance(ref.get("ref"), str) or not ref["ref"]:
+        return False
+    if "page" in ref and not isinstance(ref["page"], str):
+        return False
+    q = ref.get("quality")
+    if "quality" in ref and (isinstance(q, bool) or not isinstance(q, int) or not 0 <= q <= 3):
+        return False
+    return True
+
+
+def test_person_read_fixture_person_refs_match_the_tool_contract():
+    """Person-level `sources` refs are `{ref, page?, quality?}` and every `ref`
+    names an id in the response's own `sources[]` (#2696): the tool drops any
+    ref that does not resolve, so a fixture carrying one describes a response
+    the tool cannot send."""
+    wrong = []
+    for name, data in _person_read_fixtures():
+        response = data.get("response") or {}
+        ids = {s.get("id") for s in response.get("sources") or [] if isinstance(s, dict) and s.get("id")}
+        for person in response.get("persons") or []:
+            refs = person.get("sources") if isinstance(person, dict) else None
+            if refs is None:
+                continue
+            if not isinstance(refs, list) or not refs:
+                # The tool omits the key rather than sending an empty list.
+                wrong.append(f"{name}: {person.get('id')} sources is not a non-empty list")
+                continue
+            for ref in refs:
+                if not _is_tree_source_ref(ref):
+                    wrong.append(f"{name}: {person.get('id')} ref {ref!r} is not {{ref, page?, quality?}}")
+                elif ref["ref"] not in ids:
+                    wrong.append(f"{name}: {person.get('id')} ref {ref['ref']!r} names no source")
+    assert not wrong, "; ".join(wrong)
 
 
 def test_person_read_fixture_facts_carry_both_standardized_sidecars():
@@ -453,3 +496,33 @@ def test_person_read_fixture_keys_are_snake_case():
         "person_read fixture keys must be snake_case -- the tool returns a "
         f"simplified-GedcomX shape: {offenders}"
     )
+
+
+_PERSON_READ_TS = REPO_ROOT / "packages/engine/mcp-server/src/tools/person-read.ts"
+
+
+def _person_read_ignored_params() -> set[str]:
+    """Parameters person_read's input schema describes as `Ignored:`, read from
+    the source so a newly ignored flag is covered without editing this file."""
+    text = _PERSON_READ_TS.read_text(encoding="utf-8")
+    return set(re.findall(r"(\w+):\s*\{\s*type:\s*\"\w+\",\s*description:\s*\"Ignored:", text))
+
+
+def test_person_read_fixtures_never_key_on_an_ignored_param():
+    """A predicate keyed on a flag the tool ignores matches only the calls that
+    still pass it. After #3066 made `relatives` and `sourceDescriptions`
+    ignored, models stopped passing them, and every call missed a fixture still
+    keyed on one: 8 of 10 source-evaluation tests read `fixture_not_found` on
+    `v1_2026-10-01_16-32-27`. #3066 fixed six such fixtures by hand and missed
+    two; this is the shared guard."""
+    ignored = _person_read_ignored_params()
+    assert ignored >= {"relatives", "sourceDescriptions"}, (
+        f"read no ignored params from {_PERSON_READ_TS.name} ({sorted(ignored)}); "
+        "the schema parse is broken, so this guard checks nothing"
+    )
+    wrong = [
+        f"{name}: {sorted(set(data.get('args') or {}) & ignored)}"
+        for name, data in _person_read_fixtures()
+        if set(data.get("args") or {}) & ignored
+    ]
+    assert not wrong, "person_read fixtures keyed on an ignored param: " + "; ".join(wrong)

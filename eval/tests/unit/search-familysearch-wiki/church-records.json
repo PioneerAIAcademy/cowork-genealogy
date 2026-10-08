@@ -5,10 +5,10 @@
     "name": "FamilySearch wiki — church records",
     "type": "positive",
     "description": "User asks how to find church records for Irish ancestors. Exercises the skill with a record type explicitly listed in the description.",
-    "tags": ["fs-wiki", "how-to", "church-records", "ireland", "expects-file-irish-church-records"]
+    "tags": ["fs-wiki", "how-to", "church-records", "ireland", "expects-file-irish-church-records", "direct-arm"]
   },
   "input": {
-    "user_message": "Search the FamilySearch wiki for how to find church records for my Irish ancestors",
+    "delegation": "Search the FamilySearch wiki for how to find church records for my Irish ancestors",
     "scenario": null
   },
   "mcp_fixtures": ["wiki-search-church-records"],

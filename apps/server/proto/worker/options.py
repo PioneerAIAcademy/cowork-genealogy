@@ -7,39 +7,40 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 - ``cwd`` is the empty anchor (``/project``); ``setting_sources=[]`` explicitly, so no
   ``CLAUDE.md`` or ``.claude/`` in any parent of cwd is loaded; no ``add_dirs``.
-- the plugin loads from disk for its skills; the six agents travel as ``agents=`` (bare
-  names, parsed once at worker start by ``plugin_agents.py``) -- never staged into cwd.
+- the plugin loads from disk for its skills; its agents (``worker.EXPECTED_AGENTS``) travel
+  as ``agents=`` (bare names, parsed once at worker start by ``plugin_agents.py``) -- never
+  staged into cwd.
 - the shell is removed with ``disallowed_tools`` -- the only lever that reaches the
   main thread; ``Write``/``Edit`` stay granted (denying them is whole-tool).
-- the tool server is ``build/hosted-stdio.js``, forked per turn, configured entirely
-  through the server entry's ``env``: the store variables from the worker's own
-  environment, ``GENEALOGY_PROJECT_ID`` from the turn, and the patron's
-  ``FS_ACCESS_TOKEN`` from the message -- per request, never process state. The entry
-  is written to a 0600 ``mcp.json`` under the per-turn config dir and passed as a
-  PATH (``--mcp-config <path>``): a dict is serialised onto the CLI's argv, where the
-  secret key and the bearer are ``ps``-visible to every process in the container. The
-  fork is ``env -u ANTHROPIC_API_KEY node …`` so the model key the CLI holds is not
-  inherited by a process that never reads it.
+- the tool server is the shared Streamable HTTP ``tools`` service at ``TOOL_SERVER_URL``;
+  the entry carries the patron's bearer as ``Authorization`` and the turn's project id as
+  ``X-Genealogy-Project-Id`` -- per request, never process state. The bearer is the turn's
+  project owner's grant, which the worker reads (and locks) at the start of every attempt
+  (U3, ``worker.acquire_grant``); there is no other source, and an empty one is refused
+  rather than shipped. The CLI inherits no worker variable (``CLI_ENV_KEEP``) and runs as
+  its turn's slot user, who alone can read the per-turn config dir. The entry is written
+  to a 0600 ``mcp.json`` under the per-turn config dir and passed as a PATH
+  (``--mcp-config <path>``): a dict is serialised onto the CLI's argv, where the bearer
+  is ``ps``-visible to every process in the container.
 - the transcript mirrors to ``PgSessionStore`` with ``session_store_flush="eager"`` so a
   mid-turn kill loses at most one frame; ``CLAUDE_CONFIG_DIR`` is a fresh directory
   under ``TMPDIR`` per turn (on a resumed turn the SDK repoints it to its own).
 - the SDK session id is the worker's choice: ``session_id=`` on a fresh session,
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
-- the model is pinned per ``MODEL_PROVIDER``: ``anthropic`` (default) is
-  ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``bedrock`` sets
-  ``CLAUDE_CODE_USE_BEDROCK``, ``ANTHROPIC_MODEL`` and the 1 h cache flag explicitly,
-  because an unpinned default is Opus and every cost figure is then wrong by several-fold;
-  ``gateway`` points the CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``,
-  ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
+- the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
+  ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
+  CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``), since a gateway passes unmapped ids through.
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
-denies a ``Read``/``Grep``/``Glob`` under the anchor (``deny.py``), and records EVERY
+denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write under ``/proc``
+or ``/dev``, the turn's own process (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
-It never raises: any exception allows the call. The turn's identifiers reach it through
-a closure, never a global.
+It never raises. An exception in the deny rules allows the call; one in ``halt()`` halts it
+(U23: an unreadable Stop or spend cap must not let the run carry on). The turn's
+identifiers reach it through a closure, never a global.
 """
 
 from __future__ import annotations
@@ -47,11 +48,17 @@ from __future__ import annotations
 import dataclasses
 import json
 import os
+import sys
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from proto.web.writer_record import writer_record
 from app.agent.continue_policy import (
+    DELEGATION_TOOLS,
+    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
+    delivered_stop_reason,
+    foreground_rewrite,
+    DELIVERY_GUIDANCE,
+    DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
     env_int,
@@ -71,15 +78,14 @@ from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
-from proto.worker.deny import project_read_denied
+from proto.worker.deny import host_path_denied, project_read_denied
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
 DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
 ANTHROPIC_MODEL = "claude-sonnet-4-6"
-BEDROCK_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
-# [1m] as on Bedrock: the CLI strips it, sends context-1m-2025-08-07 and sizes its window
-# (and so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+# [1m]: the CLI strips it, sends context-1m-2025-08-07 and sizes its window (and so its
+# compaction) at 1M; without it a gateway session gets 200k (plan P3j).
 GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
 GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 # Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
@@ -96,50 +102,21 @@ PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 MAX_BUFFER_BYTES = 8 * 1024 * 1024
 PRETOOL_TIMEOUT_S = 10.0
 MCP_CONFIG_NAME = "mcp.json"
-# Stripped from the tool server's inherited environment: the CLI holds the model key,
-# hosted-stdio.js never reads it.
-TOOL_SERVER_ENV_UNSET = ("ANTHROPIC_API_KEY",)
-
-# The store's configuration, copied from the worker's environment into the tool
-# server's; GENEALOGY_PROJECT_ID is per turn and deliberately absent here.
-STORE_ENV_KEYS = (
-    "GENEALOGY_PG_DSN",
-    "GENEALOGY_S3_ENDPOINT",
-    "GENEALOGY_S3_BUCKET",
-    "GENEALOGY_S3_ACCESS_KEY",
-    "GENEALOGY_S3_SECRET_KEY",
-    "GENEALOGY_ANCHOR_PATH",
-)
-# The per-user config the desktop reads from config.json; passed through when set.
-PER_USER_ENV_KEYS = ("WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL")
 
 # The e2e harness's tree-read block (eval/harness/e2e/orchestrator.py BLOCKED_TREE_TOOLS):
 # every e2e fixture's answer still sits in the live FamilySearch tree, so a fixture run
 # that may read the tree is a lookup, not the research workflow. The worker takes the
-# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block.
+# list from BLOCKED_TOOLS (bare MCP tool names, comma-separated); empty means no block. A
+# non-empty one refuses start unless DEV_PATHS=true (worker.require_start_config, U11).
 BLOCKED_DENY_REASON = (
     "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
     "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
 )
 
 
-# The harness's LIVE_TREE_ARG_TOOLS, held equal to it by an AST read in
-# tests/test_proto_worker.py: tools that read the live tree only when the named argument
-# is truthy (`person_warnings` with `live: true` returns the subject's relatives' names
-# and PIDs), so the bare name cannot decide them. Denied whenever BLOCKED_TOOLS is on.
-LIVE_TREE_ARG_TOOLS = {"person_warnings": "live"}
-
-
-def is_blocked_call(tool_name: str, tool_input: Mapping[str, Any], blocked: frozenset[str]) -> bool:
-    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``,
-    or, while the block is on, a LIVE_TREE_ARG_TOOLS call with its argument truthy."""
-    if not blocked or not tool_name.startswith("mcp__"):
-        return False
-    bare = bare_tool_name(tool_name)
-    if bare in blocked:
-        return True
-    arg = LIVE_TREE_ARG_TOOLS.get(bare)
-    return arg is not None and bool(tool_input.get(arg))
+def is_blocked_call(tool_name: str, blocked: frozenset[str]) -> bool:
+    """Whether the tree-read block denies this call: an MCP tool named in ``blocked``."""
+    return tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -162,36 +139,96 @@ WRITE_DENY_REASON = (
 )
 
 
+# U7 (proto/enqueue.py): the worker signs its held-message release with these when set.
+SQS_STATIC_KEY_VARS = ("GENEALOGY_SQS_ACCESS_KEY", "GENEALOGY_SQS_SECRET_KEY")
+# U3: the key the worker decrypts the patron's grant with (proto/grants.py).
+GRANT_KEY_VAR = "FS_TOKEN_ENC_KEY"
+
+# The only inherited variables the CLI keeps (U3). The SDK hands the CLI the worker's whole
+# environment overlaid with options.env, and a turn's agent can read its own process's
+# /proc/self/environ, so every other inherited key -- PG_DSN, QUEUE_URL, FS_TOKEN_ENC_KEY,
+# the SQS pair, AWS_*, GENEALOGY_* -- is set to "" there. What the CLI needs is set in
+# options.env, which this never blanks.
+CLI_ENV_KEEP = frozenset({
+    "PATH", "HOME", "TMPDIR", "LANG", "LANGUAGE", "TZ", "TERM",
+    "HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY", "http_proxy", "https_proxy", "no_proxy",
+    "SSL_CERT_FILE", "SSL_CERT_DIR", "NODE_EXTRA_CA_CERTS",
+})
+CLI_ENV_KEEP_PREFIXES = ("LC_", "CLAUDE_CODE_")
+
+
+def cli_env_blanks(worker_env: Mapping[str, str], set_by_options: Mapping[str, str] = {}) -> dict[str, str]:
+    """``{name: ""}`` for every inherited variable the CLI must not see (``CLI_ENV_KEEP``)."""
+    return {
+        name: "" for name in worker_env
+        if name not in set_by_options and name not in CLI_ENV_KEEP
+        and not name.startswith(CLI_ENV_KEEP_PREFIXES)
+    }
+
+
+def hook_path(exe_dir: str, path: str | None) -> str:
+    """The CLI child's ``PATH`` (U12 D27): the worker interpreter's directory first, so the
+    plugin hook's ``python3`` is the venv's 3.12 and not the platform's 3.9 (under which
+    ``guard_project_files.py`` fails open). An unset or empty ``PATH`` gets the prepend
+    alone; an empty ``exe_dir`` (no ``sys.executable``) prepends nothing."""
+    parts = [p for p in (exe_dir, path or "") if p]
+    return os.pathsep.join(parts)
+
+
+# U11: the compose-only paths -- the D3 stub arms, BLOCKED_TOOLS, no QUEUE_URL, the
+# default grant key -- are honoured only when this is ``true``. No image or Beanstalk
+# template sets it.
+DEV_PATHS_VAR = "DEV_PATHS"
+
+
+def dev_paths(env: Mapping[str, str]) -> bool:
+    """``DEV_PATHS`` is ``true``, case-insensitive after strip; anything else is off."""
+    return (env.get(DEV_PATHS_VAR) or "").strip().lower() == "true"
+
+
+MODEL_PROVIDERS = ("anthropic", "gateway")
+
+
+class ProviderError(ValueError):
+    """``MODEL_PROVIDER`` refused; ``label`` (``unset``, ``unknown:<v>``,
+    ``gateway_needs_base_url``) is what ``ev=prepare step=model_provider`` logs."""
+
+    def __init__(self, label: str, message: str) -> None:
+        super().__init__(message)
+        self.label = label
+
+
+def model_provider(worker_env: Mapping[str, str]) -> str:
+    """``MODEL_PROVIDER`` after strip/lower: ``anthropic`` or ``gateway`` (which needs
+    ``GATEWAY_BASE_URL``). There is no default; anything else raises ``ProviderError``."""
+    provider = (worker_env.get("MODEL_PROVIDER") or "").strip().lower()
+    if not provider:
+        raise ProviderError("unset", "MODEL_PROVIDER is unset: it must be anthropic or gateway")
+    if provider not in MODEL_PROVIDERS:
+        raise ProviderError(f"unknown:{provider}", f"MODEL_PROVIDER must be anthropic or gateway, not {provider!r}")
+    if provider == "gateway" and not (worker_env.get("GATEWAY_BASE_URL") or "").strip():
+        raise ProviderError("gateway_needs_base_url", "MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
+    return provider
+
+
 def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
-    that pin the provider. Bedrock's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
+    that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
     suffix is read off that string), so ``model`` is None there."""
-    provider = (worker_env.get("MODEL_PROVIDER") or "anthropic").strip().lower()
-    if provider == "anthropic":
+    if model_provider(worker_env) == "anthropic":
         return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
-    if provider == "bedrock":
-        return None, {
-            "CLAUDE_CODE_USE_BEDROCK": "1",
-            "ANTHROPIC_MODEL": BEDROCK_MODEL,
-            "ENABLE_PROMPT_CACHING_1H_BEDROCK": "1",
-        }
-    if provider == "gateway":
-        base_url = (worker_env.get("GATEWAY_BASE_URL") or "").strip()
-        if not base_url:
-            raise ValueError("MODEL_PROVIDER=gateway needs GATEWAY_BASE_URL")
-        return None, {
-            "ANTHROPIC_BASE_URL": base_url,
-            "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
-            # Blank, not absent: the CLI inherits the worker's environment, and an
-            # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
-            "ANTHROPIC_API_KEY": "",
-            "ANTHROPIC_MODEL": GATEWAY_MODEL,
-            "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
-            # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-            # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
-            "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
-        }
-    raise ValueError(f"MODEL_PROVIDER must be anthropic, bedrock or gateway, not {provider!r}")
+    return None, {
+        "ANTHROPIC_BASE_URL": worker_env["GATEWAY_BASE_URL"].strip(),
+        "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
+        # Blank, not absent: the CLI inherits the worker's environment, and an
+        # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
+        "ANTHROPIC_API_KEY": "",
+        "ANTHROPIC_MODEL": GATEWAY_MODEL,
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
+        # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
+        # its second turn (plan P3f); tap-agentgateway pins 1.5.0.
+        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+    }
 
 
 def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
@@ -206,46 +243,13 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
     return out
 
 
-def tool_server_env(
-    worker_env: Mapping[str, str], *, project_id: str, fs_access_token: str | None
-) -> dict[str, str]:
-    """The environment of the per-turn ``hosted-stdio.js`` fork."""
-    env = {k: worker_env[k] for k in STORE_ENV_KEYS if worker_env.get(k)}
-    env["GENEALOGY_PROJECT_ID"] = project_id
-    env["FS_ACCESS_TOKEN"] = bearer_token(worker_env, fs_access_token)
-    for key in PER_USER_ENV_KEYS:
-        if worker_env.get(key):
-            env[key] = worker_env[key]
-    return env
-
-
-def bearer_token(worker_env: Mapping[str, str], fs_access_token: str | None) -> str:
-    """The patron's FamilySearch token for this turn: the message's; else the file
-    ``FS_ACCESS_TOKEN_FILE`` names, read now -- per attempt -- so the operator can refresh
-    it between turns (proto/env.sh writes it; never refresh while a turn is in flight,
-    since a FamilySearch refresh revokes the previous access token); else the worker
-    env's ``FS_ACCESS_TOKEN``; else empty."""
-    if fs_access_token is not None:
-        return fs_access_token or ""
-    path = worker_env.get("FS_ACCESS_TOKEN_FILE")
-    if path:
-        try:
-            with open(path, encoding="utf-8") as f:
-                return f.read().strip()
-        except OSError:
-            pass
-    return worker_env.get("FS_ACCESS_TOKEN", "") or ""
-
-
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
 # contract is the two headers the entrypoint reads, both per request and never process
 # state: `Authorization: Bearer <patron token>` becomes the request's principal, and
-# `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore -- the same store the
-# stdio fork gets from GENEALOGY_PROJECT_ID. Missing, the project tools answer an
-# instruction naming the header; malformed, the request is a 400. No turn header. The CLI
-# opens the MCP session once per process, once per turn.
-TOOL_SERVER_DEFAULT = "http"
-TOOL_SERVER_DEFAULT_URL = "http://tools:8787/mcp"
+# `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore. Missing, the project
+# tools answer an instruction naming the header; malformed, the request is a 400. No turn
+# header. The CLI opens the MCP session once per process, once per turn. TOOL_SERVER_URL
+# has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 # The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
 # non-GET HTTP MCP request at 60 s, where the harness's stdio server is cut only by its
@@ -256,55 +260,39 @@ PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 MCP_HTTP_TIMEOUT_MS = 1_800_000
 
 
-def tool_server_headers(
-    worker_env: Mapping[str, str], *, fs_access_token: str | None, project_id: str
-) -> dict[str, str]:
-    """``X-Genealogy-Project-Id`` always; ``Authorization: Bearer <token>`` only when there
-    is a token (the server reads a missing header as an empty bearer, and a bare
-    ``Bearer `` would be malformed)."""
-    headers = {PROJECT_ID_HEADER: project_id}
-    token = bearer_token(worker_env, fs_access_token)
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    return headers
+def tool_server_url(worker_env: Mapping[str, str]) -> str:
+    """``TOOL_SERVER_URL``, stripped; unset or blank raises ValueError."""
+    url = (worker_env.get("TOOL_SERVER_URL") or "").strip()
+    if not url:
+        raise ValueError("TOOL_SERVER_URL is unset: the worker has no tool server to send the bearer to")
+    return url
+
+
+def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
+    """``Authorization: Bearer <grant token>`` and ``X-Genealogy-Project-Id``. An empty
+    bearer raises ValueError: the server reads it as an empty principal and answers every
+    FamilySearch call with the reconnect instruction, a sign-in problem the patron cannot
+    fix by signing in."""
+    if not bearer:
+        raise ValueError("refusing to build the tool server entry with an empty bearer")
+    return {"Authorization": f"Bearer {bearer}", PROJECT_ID_HEADER: project_id}
 
 
 def tool_server_entry(
-    engine_dir: str,
     worker_env: Mapping[str, str],
     *,
     project_id: str,
-    fs_access_token: str | None,
+    bearer: str,
 ) -> dict[str, Any]:
-    """The ``genealogy`` MCP server entry. ``TOOL_SERVER=http`` (the default since
-    2026-09-20, and what compose sets): the shared Streamable HTTP tool server, one
-    process for every turn. ``TOOL_SERVER=stdio``:
-    ``hosted-stdio.js`` under ``env -u`` for the model key, with the per-turn environment
-    of ``tool_server_env``. The http entry is ``TOOL_SERVER_URL`` with the bearer as
-    ``Authorization`` and the turn's project id as ``X-Genealogy-Project-Id``; its
-    per-user config is the ``tools`` service's own environment, not the request's."""
-    # One default, here and in compose, so a worker started without its environment does
-    # not quietly do something production never does. TOOL_SERVER_DEFAULT is the single
-    # source; test_proto_config reads compose against it.
-    mode = worker_env.get("TOOL_SERVER") or TOOL_SERVER_DEFAULT
-    if mode == "http":
-        return {
-            "type": "http",
-            "url": worker_env.get("TOOL_SERVER_URL") or TOOL_SERVER_DEFAULT_URL,
-            "headers": tool_server_headers(worker_env, fs_access_token=fs_access_token, project_id=project_id),
-            "timeout": MCP_HTTP_TIMEOUT_MS,
-        }
-    if mode != "stdio":
-        raise ValueError(f"TOOL_SERVER must be stdio or http, not {mode!r}")
+    """The ``genealogy`` MCP server entry: the shared Streamable HTTP tool server, one
+    process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``
+    and the turn's project id as ``X-Genealogy-Project-Id``. Its per-user config is the
+    ``tools`` service's own environment, not the request's."""
     return {
-        "type": "stdio",
-        "command": "env",
-        "args": [
-            *(flag for name in TOOL_SERVER_ENV_UNSET for flag in ("-u", name)),
-            "node",
-            os.path.join(engine_dir, "build", "hosted-stdio.js"),
-        ],
-        "env": tool_server_env(worker_env, project_id=project_id, fs_access_token=fs_access_token),
+        "type": "http",
+        "url": tool_server_url(worker_env),
+        "headers": tool_server_headers(project_id=project_id, bearer=bearer),
+        "timeout": MCP_HTTP_TIMEOUT_MS,
     }
 
 
@@ -319,35 +307,11 @@ def write_mcp_config(config_dir: str, servers: Mapping[str, Any]) -> str:
     return path
 
 
-# The tools whose ``tool_calls`` row names a CALLEE rather than a path. Kept a named
-# set so the arm in ``input_path`` cannot quietly widen to tools that merely carry a
-# ``name`` argument.
-CALLEE_TOOLS = frozenset({"Skill", "Task", "Agent"})
-
-
 def input_path(tool_name: str, tool_input: Mapping[str, Any] | None, *, cwd: str) -> str | None:
-    """What a call names, for the ``tool_calls`` row: ``file_path`` / ``path`` /
+    """The path a call names, for the ``tool_calls`` row: ``file_path`` / ``path`` /
     ``notebook_path`` when present; the working directory for a Grep/Glob that omits its
-    ``path`` (the tool's own default); for a ``Skill``/``Task``/``Agent`` call the CALLEE
-    it names; None otherwise.
-
-    The callee arm exists so a corpus can tell a routed run from an unrouted one (R1).
-    Without it every skill invocation is an indistinguishable ``tool_name='Skill'`` row
-    and "did this run enter the router" is recorded nowhere. It is read only for those
-    three tools: ``name`` is a common argument, and letting any tool supply it would
-    write a bogus path into the ledger for every call that happens to carry one.
-
-    Both ``skill`` and ``name`` are tried because the SDK has spelled it both ways --
-    the same fallback ``eval/harness/harness/skill_runner.py`` codifies. A key that
-    moves again yields None here, which the tests pin rather than leave invisible.
-    """
+    ``path`` (the tool's own default); None otherwise."""
     data = tool_input or {}
-    if tool_name in CALLEE_TOOLS:
-        for key in ("skill", "name", "subagent_type"):
-            value = data.get(key)
-            if isinstance(value, str) and value:
-                return value
-        return None
     for key in ("file_path", "path", "notebook_path"):
         value = data.get(key)
         if isinstance(value, str) and value:
@@ -367,10 +331,20 @@ def _deny(reason: str) -> dict[str, Any]:
     }
 
 
-# 1c. What Stop returns, and it is NOT `_deny`. A `permissionDecision: "deny"` is a tool
-# RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
-# fields are separate, and this is the pair that ends the turn.
+# 1c. What Stop returns, and it is NOT `_deny` alone. A `permissionDecision: "deny"` is a
+# tool RESULT: the model reads it, argues with it, and picks another tool. The SDK's halt
+# fields are separate, and this is the pair that ends the turn. But they end it AFTER the
+# call runs (CLI 2.1.220, U3 live lost-lock run 2026-10-03: the halted record_search
+# executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
+
+# U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
+# checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
+STORE_UNAVAILABLE_REASON = (
+    "A server problem is keeping this run from checking for a Stop or its spend limit, so "
+    "it is stopping here and will pick up again shortly. Findings already written to the "
+    "project are kept."
+)
 
 # 1b. The turn ends so the patron's message becomes the next one. Text the MODEL reads as
 # the turn closes, so the transcript says why it stopped rather than ending mid-thought.
@@ -383,10 +357,17 @@ HANDOVER_REASON = (
 # MODEL reads as the turn ends -- so the transcript says what happened rather than
 # stopping mid-thought.
 SPEND_CAP_REASON = (
-    "This session has reached its ${cap:.0f} spend limit and is stopping here. "
+    "This session has reached its ${cap:g} spend limit and is stopping here. "
     "Everything found so far is saved. Start a new session on the same project to carry on."
 )
 
+
+
+
+# NOTE: the DELIVERED_* and DELIVERY_GUIDANCE constants this branch defined here were
+# deduplicated into app/agent/continue_policy.py by PR #3187 and are imported above.
+# The DECISION_* exit below is this branch's and has no upstream home yet; it should
+# move to continue_policy.py the same way, so both planes share one definition.
 
 # The "I need you" exit. The router's fourth stop ("say exactly what you need … then stop")
 # and its genuine-blocker stop are both VOLUNTARY YIELDS, which phase 1's Stop hook vetoes --
@@ -411,71 +392,10 @@ DECISION_REASON = (
 # The tool the exit reads. One name, so the hook and its test cannot drift.
 DECISION_TOOL = "AskUserQuestion"
 
-# R4 (ruled 2026-09-29): the carrier for "I delivered what you asked". Deliberately NOT
-# AskUserQuestion -- an ask has `questions` and waits for an answer, a delivery waits for
-# nothing, and one tool carrying both leaves this hook with no discriminator. Unlike the
-# decision exit, which matches a BUILT-IN the model already has, this costs a real MCP tool.
-DELIVERED_TOOL = "mcp__genealogy__research_delivered"
-
-# When to reach for it. This rides the per-turn system prompt beside ROUTER_REENTRY,
-# NOT the skill bodies: the hook that makes this tool end a turn exists only here, so a
-# skill-body rule would teach 27 skills to call a tool that is inert in Cowork and in
-# the harness that grades them -- at a paid eval run each, in the closing region that
-# regressed three tests this week.
-#
-# Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would
-# report `delivered` where `completed` is true and the run ends on its own. Calling it
-# instead of asking would swallow a question nobody answers -- an ask waits, a delivery
-# does not, which is why they are separate tools.
-DELIVERY_GUIDANCE = (
-    "When this message asked for one bounded thing and you have produced it, call "
-    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
-    "asked you to stop after, a single record or lookup, or a status question such as "
-    "\"where are we?\". Do not call it when the project's research objective itself is "
-    "finished -- that run ends on its own -- and do not call it in place of asking the "
-    "researcher a question, which waits for their answer."
-)
-
-# Phase 3 item 1. R9 rules that *not sure* continues on the option the agent
-# RECOMMENDED -- and that ruling could not be honoured, because AskUserQuestion carries
-# no recommendation field and all 15 unprompted calls in the committed unit corpus mark
-# nothing. This asks for the convention the tool's OWN contract already defines, so the
-# client reader and the model are looking at the same place rather than at two.
-#
-# It says how to ask, never to ask more: the decision exit is deliberately rare, and a
-# 133-minute captured run asked nothing at all.
-DECISION_GUIDANCE = (
-    "When you ask the researcher to choose between options, put the one you recommend "
-    "first and end its label with \"(Recommended)\". Say in each option's description "
-    "what you will do if it is chosen. If the researcher answers that they are not "
-    "sure, carry on with the option you recommended rather than stopping."
-)
-
-DELIVERED_REASON = (
-    "You have delivered what this message asked for. Stopping here rather than carrying on: "
-    "the work is saved, and the researcher's next message picks up from it."
-)
-
 
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
-    return {"continue_": False, "stopReason": reason}
+    return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
-# Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
-# the main thread's ResultMessage and closes the CLI, so a background agent still running
-# then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
-# patron told their summaries would follow). Forcing the foreground keeps parallelism: several
-# Agent calls in one message still run concurrently. Lead ruling 2026-09-23.
-DELEGATION_TOOLS = frozenset({"Agent", "Task"})
-
-
-def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "allow",
-            "updatedInput": {**tool_input, "run_in_background": False},
-        },
-    }
 
 
 def make_pretool_hook(
@@ -490,6 +410,7 @@ def make_pretool_hook(
     halt: Callable[[], str | None] | None = None,
     on_decision: Callable[[], None] | None = None,
     on_delivered: Callable[[], None] | None = None,
+    on_halt_failed: Callable[[], None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -502,7 +423,12 @@ def make_pretool_hook(
     button wired to the Stop hook would take 53 minutes to answer.
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
-    ``halt``, so the audit trail shows where the turn was cut."""
+    ``halt``, so the audit trail shows where the turn was cut.
+
+    A ``halt()`` that raises HALTS with ``STORE_UNAVAILABLE_REASON``, logs
+    ``ev=halt_failed`` and calls ``on_halt_failed()`` (U23). The worker's halt classifies
+    each clause's error itself; this is the last resort, and allowing here is what let Stop
+    and the spend cap fail open during an outage."""
 
     async def _pretool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         decision, reason = "allow", None
@@ -514,8 +440,18 @@ def make_pretool_hook(
         try:
             if halt is not None:
                 stop_now = halt()
-        except Exception:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
-            stop_now = None
+        except Exception as exc:  # noqa: BLE001 - halts: the call may be one Stop or the cap forbids
+            stop_now = STORE_UNAVAILABLE_REASON
+            if log is not None:
+                log(ev="halt_failed", turn_id=turn_id, tool_name=tool_name,
+                    error=f"{type(exc).__name__}: {exc}")
+            if on_halt_failed is not None:
+                try:
+                    on_halt_failed()
+                except Exception as cb_exc:  # noqa: BLE001 - the halt stands either way
+                    if log is not None:
+                        log(ev="halt_failed_report_failed", turn_id=turn_id,
+                            error=f"{type(cb_exc).__name__}: {cb_exc}")
         if stop_now is not None:
             try:
                 record({
@@ -523,8 +459,6 @@ def make_pretool_hook(
                     "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
                     "tool_name": tool_name or "unknown",
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
-                    # The shape of what this call wrote, for change review (None for a read).
-                    "wrote": writer_record(tool_name, tool_input),
                     "decision": "halt", "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
             except Exception as exc:  # noqa: BLE001 - the log must not change the decision
@@ -535,10 +469,25 @@ def make_pretool_hook(
                 log(ev="halt", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id,
                     reason=stop_now)
             return _halt(stop_now)
+
+        # A bounded request that is met must not run on to the proof, the nudge cap or the
+        # spend bound. It sits AFTER the halt check, so the researcher's own stop still
+        # outranks it.
+        #
+        # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
+        # session's tool set, so without this a record-extractor saying "delivered" would
+        # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
+        # stop the parent, 3 of 3 on compose). `agent_id` is tested for
+        # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
+        # `agent_type` alone is not sufficient because it is present on the main thread of
+        # a session started with `--agent`. That is the discriminator the shipped plugin
+        # hook already uses (`owner_denied`, hooks/guard_project_files.py), reused rather
+        # than re-derived.
+        # A subagent's call falls through to ordinary handling, where the tool returns its
+        # harmless acknowledgement and the run carries on.
+
         # The exit, AFTER the halt check so Stop keeps precedence: Stop is the researcher's own
-        # instruction, and an ask cannot overrule it. Before the deny and the foreground rewrite
-        # for the same reason those sit after halt -- a turn that is ending should not rewrite a
-        # delegation's input or argue about a write it will never make.
+
         if tool_name == DECISION_TOOL:
             try:
                 record({
@@ -572,13 +521,14 @@ def make_pretool_hook(
         # R4: same shape as the decision arm above and for the same reason -- a bounded
         # request that is met must not run on to the proof, the nudge cap or $35. It sits
         # AFTER the halt check, so the researcher's own stop still outranks it.
-        if tool_name == DELIVERED_TOOL:
+
+        if tool_name == DELIVERED_TOOL and "agent_id" not in data:
             try:
                 record({
-                    "turn_id": turn_id, "session_id": session_id, "tool_name": tool_name,
+                    "turn_id": turn_id, "session_id": session_id,
+                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
+                    "tool_name": tool_name,
                     "input_path": input_path(tool_name, tool_input, cwd=cwd),
-                    # The shape of what this call wrote, for change review (None for a read).
-                    "wrote": writer_record(tool_name, tool_input),
                     "decision": "delivered",
                     "tool_use_id": tool_use_id or data.get("tool_use_id"),
                 })
@@ -593,21 +543,32 @@ def make_pretool_hook(
                     if log is not None:
                         log(ev="delivered_report_failed", turn_id=turn_id,
                             error=f"{type(exc).__name__}: {exc}")
+            # The summary is the one field the researcher-facing contract is built on,
+            # and the hook halts BEFORE the tool body runs -- so if it is not captured
+            # here it reaches nobody: `input_path` is None for this tool, the tool_calls
+            # row has no column for it, and the browser renders a fixed string. Logged,
+            # and appended to the stop reason so the text the model is handed names what
+            # it said it delivered.
+            summary = str((tool_input or {}).get("summary") or "").strip()
             if log is not None:
                 log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
-                    tool_use_id=tool_use_id)
-            return _halt(DELIVERED_REASON)
+                    tool_use_id=tool_use_id, summary=summary)
+            # Summary FIRST: the browser replaces the chip with the result text cut at
+            # 160 chars, and DELIVERED_REASON alone is 124 (re-measured 2026-10-06; the
+            # comment said 157). Appended rather than prepended, the reason eats most of
+            # the window and the summary is cut. What the researcher most needs leads.
+            return _halt(delivered_stop_reason(summary))
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
-            elif is_blocked_call(tool_name, tool_input, blocked):
+            elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
                 root = config_root() if callable(config_root) else config_root
                 reason = project_read_denied(
                     tool_name, tool_input, cwd=cwd, project_root=cwd, config_root=root
-                )
+                ) or host_path_denied(tool_name, tool_input, cwd=cwd, project_root=cwd)
                 if reason is not None:
                     decision = "deny"
         except Exception:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
@@ -620,8 +581,6 @@ def make_pretool_hook(
                 "agent_type": data.get("agent_type"),
                 "tool_name": tool_name or "unknown",
                 "input_path": input_path(tool_name, tool_input, cwd=cwd),
-                    # The shape of what this call wrote, for change review (None for a read).
-                    "wrote": writer_record(tool_name, tool_input),
                 "decision": decision,
                 "tool_use_id": tool_use_id or data.get("tool_use_id"),
             })
@@ -633,10 +592,13 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="deny", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id, reason=reason)
             return _deny(reason or "denied")
-        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is True:
+        # The PREDICATE lives in the shared helper too, not just the rewrite. Restating
+        # it here left the sharing half-done: removing the explicit-False exemption
+        # inside `foreground_rewrite` failed a test on the alpha and none here.
+        if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
             if log is not None:
                 log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
-            return _foregrounded(tool_input)
+            return rewritten
         return {}
 
     return _pretool
@@ -740,12 +702,19 @@ def make_stop_hook(
 
     async def _stop(_input_data: Any, _tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         try:
+            # `stopped` is should_continue_run's first clause, so it is asked first: a
+            # halted turn (U23: one whose store is down among them) allows the stop
+            # without the two reads below.
+            if ask(stopped):
+                if on_allow is not None:
+                    on_allow(TERMINAL_STOPPED)
+                return {}
             count = int(tool_count())
             verdict = dict(
                 research=research(),
                 nudges_used=state["nudges_used"],
                 max_nudges=max_nudges,
-                stopped=ask(stopped),
+                stopped=False,
                 pending_user_message=ask(pending_user_message),
                 pending_decision=ask(pending_decision),
             )
@@ -796,29 +765,10 @@ def check_registration(
     return problems
 
 
-# R1: the router's contracts -- the second question, completion routing -- hold only
-# when the run actually enters `research`. CONTINUE_REASON asks for "the next GPS
-# sub-skill", never names the router, and rides the Stop hook, which fires only at a
-# voluntary yield: 31.6% of runs never yield (61 of 193 committed e2e runs carrying
-# the counter; `make e2e-narration-figures`). Options are rebuilt every attempt, so
-# this reaches every turn instead.
-#
-# The scope clause is not decoration. Without it this makes every message a job --
-# "where are we?" is a bounded request whose deliverable is the answer. The
-# enforcement arm (whether the model OBEYS this) is deliberately deferred and is a
-# separate measurement; what ships here is delivery.
-ROUTER_REENTRY = (
-    "If this message asks for research work, enter it through the `research` skill so "
-    "the run's routing contracts hold. A status question, or a request bounded to one "
-    "deliverable, is answered directly and is not re-routed."
-)
-
-
 def build_worker_options(
     *,
     project_id: str,
     cwd: str,
-    engine_dir: str,
     plugin_dir: str,
     agents: Mapping[str, Any],
     store: Any,
@@ -827,22 +777,28 @@ def build_worker_options(
     posttool_hook: Callable[..., Any],
     resume: str | None = None,
     session_id: str | None = None,
-    fs_access_token: str | None = None,
+    bearer: str,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
+    turn_user: str | None = None,
+    turn_home: str | None = None,
 ):
     """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given.
     The web tier stamps a nudge cap on every browser message, so when that cap is above
     0 (the default is 60) every browser turn passes one and a yield to ask the user is
-    vetoed like any other."""
+    vetoed like any other.
+
+    ``turn_user`` (U3) is the slot user the CLI runs as; ``turn_home``, a directory that user
+    owns, is the CLI's ``HOME``, ``TMPDIR`` and ``CLAUDE_CODE_TMPDIR`` (the CLI's own temp dir,
+    else a ``/tmp/claude-<uid>`` every later patron on the slot would share)."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
     model, model_env = provider_env(env_in)
-    if (env_in.get("MODEL_PROVIDER") or "").strip().lower() == "gateway":
+    if model_provider(env_in) == "gateway":
         agents = gateway_agent_models(agents)
     project_note = (
         "You are the hosted genealogy research agent. The active research project is "
@@ -854,23 +810,21 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
-    # The DELIVERY rule binds on every turn, the ROUTER rule does not, and the
-    # asymmetry is deliberate. Turn 1 has no project to route -- the web tier prefixes
-    # OPENING_TURN so init-project runs and consumes the objective -- so a routing
-    # instruction there competes with the opener. But "start a project on X and just
-    # give me a plan" IS a legitimate turn-1 bounded request, and #2932's complaint is
-    # exactly a run that would not stop when asked. Binding both to the same condition
-    # was over-application.
+    # Unconditional, on the opening turn too: "start a project on X and just give me a
+    # plan" is a legitimate turn-1 bounded request, so gating this on `resume` would
+    # exempt the very case it exists for.
     project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}\n\n{DECISION_GUIDANCE}"
-    if resume is not None:
-        project_note = f"{project_note}\n\n{ROUTER_REENTRY}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }
-    if env_in.get("TMPDIR"):
+    if turn_home:
+        env["HOME"] = env["TMPDIR"] = env["CLAUDE_CODE_TMPDIR"] = turn_home
+    elif env_in.get("TMPDIR"):
         env["TMPDIR"] = env_in["TMPDIR"]
+    env["PATH"] = hook_path(os.path.dirname(sys.executable), env_in.get("PATH"))
+    env.update(cli_env_blanks(env_in, env))
     hooks: dict[str, Any] = {
         "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook], timeout=PRETOOL_TIMEOUT_S)],
         # Both outcomes stamp the duration: a tool that errored still ran for that long.
@@ -889,9 +843,7 @@ def build_worker_options(
         mcp_servers=write_mcp_config(
             config_dir,
             {
-                "genealogy": tool_server_entry(
-                    engine_dir, env_in, project_id=project_id, fs_access_token=fs_access_token
-                )
+                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer)
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),
@@ -910,4 +862,6 @@ def build_worker_options(
         kwargs["session_id"] = session_id
     if stderr is not None:
         kwargs["stderr"] = stderr
+    if turn_user:
+        kwargs["user"] = turn_user
     return ClaudeAgentOptions(**kwargs)

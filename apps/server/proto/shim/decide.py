@@ -19,7 +19,7 @@ BACKOFF_MAX_S = 300
 # outlived the step ceiling. Only this error earns a container kill.
 READ_TIMEOUT = "read_timeout"
 
-Action = Literal["delete", "requeue", "requeue_backoff"]
+Action = Literal["delete", "requeue", "requeue_backoff", "abandon"]
 
 
 @dataclass(frozen=True)
@@ -37,6 +37,13 @@ def backoff_for(receive_count: int, base_s: int = BACKOFF_BASE_S, max_s: int = B
     return min(base_s * 2 ** (n - 1), max_s)
 
 
+def should_dead_letter(receive_count: int, max_retries: int) -> bool:
+    """True when this receive is past sqsd's ``MaxRetries``: the shim moves the message
+    to the DLQ instead of POSTing it. ``max_retries`` 0 means unlimited. A pre-POST
+    check, separate from ``decide``, which maps a POST's outcome."""
+    return receive_count > max_retries > 0
+
+
 def decide(
     status: int | None,
     error: str | None,
@@ -44,6 +51,8 @@ def decide(
     *,
     backoff_base_s: int = BACKOFF_BASE_S,
     backoff_max_s: int = BACKOFF_MAX_S,
+    kill_on_read_timeout: bool = True,
+    error_visibility_s: int | None = None,
 ) -> Decision:
     """Map one POST outcome to the shim's action.
 
@@ -54,16 +63,31 @@ def decide(
     - 2xx                        -> delete the message (turn completion is durable)
     - any connection-level error -> make the message visible again now; kill the
                                     worker container first if the error was the
-                                    read timeout (the POST outlived the ceiling)
+                                    read timeout (the POST outlived the ceiling).
+                                    With ``error_visibility_s`` set, any error but
+                                    the read timeout waits that long instead, as
+                                    sqsd never redelivers a failed attempt at once
     - any other status           -> make it visible again after a backoff that
-                                    doubles per receive count, base..max
+                                    doubles per receive count, base..max, or after
+                                    ``error_visibility_s`` when set (sqsd's fixed
+                                    ErrorVisibilityTimeout)
+
+    With ``kill_on_read_timeout=False`` a read timeout is ``abandon`` instead, as sqsd
+    does at ``InactivityTimeout``: no kill, no requeue, and the message returns when its
+    visibility lapses.
     """
     if (status is None) == (error is None):
         raise ValueError("decide() needs exactly one of status or error")
     if error is not None:
+        if error == READ_TIMEOUT and not kill_on_read_timeout:
+            return Decision("abandon", 0, False)
+        if error != READ_TIMEOUT and error_visibility_s is not None:
+            return Decision("requeue_backoff", error_visibility_s, False)
         return Decision("requeue", 0, error == READ_TIMEOUT)
     if 200 <= status < 300:
         return Decision("delete", 0, False)
+    if error_visibility_s is not None:
+        return Decision("requeue_backoff", error_visibility_s, False)
     return Decision(
         "requeue_backoff",
         backoff_for(receive_count, backoff_base_s, backoff_max_s),

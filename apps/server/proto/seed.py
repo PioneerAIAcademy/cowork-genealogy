@@ -86,10 +86,17 @@ def default_project_id(fixture: Path) -> str:
     return f"proj_{stem}_{uuid.uuid4().hex[:6]}"
 
 
+def node_dsn(pg_dsn: str) -> str:
+    """What node-postgres connects with: ``$PROTO_NODE_PG_DSN`` when set (U13: a URI through
+    the bastion's forward, since node-postgres cannot read psycopg's ``hostaddr=`` form),
+    else the driver's own DSN."""
+    return os.environ.get("PROTO_NODE_PG_DSN") or pg_dsn
+
+
 def seed(files: list[tuple[str, Path]], *, project_id: str, pg_dsn: str, s3_endpoint: str) -> int:
     manifest = {"projectId": project_id, "anchorPath": ANCHOR,
                 "files": [{"ref": ref, "path": str(path)} for ref, path in files]}
-    env = {**os.environ, "PROTO_PG_DSN": pg_dsn, "PROTO_S3_ENDPOINT": s3_endpoint}
+    env = {**os.environ, "PROTO_PG_DSN": node_dsn(pg_dsn), "PROTO_S3_ENDPOINT": s3_endpoint}
     proc = subprocess.run(
         ["npx", "tsx", "dev/seed-project.ts"], cwd=ENGINE_DIR, input=json.dumps(manifest),
         text=True, encoding="utf-8", env=env, capture_output=True,
@@ -97,6 +104,17 @@ def seed(files: list[tuple[str, Path]], *, project_id: str, pg_dsn: str, s3_endp
     sys.stdout.write(proc.stdout)
     sys.stderr.write(proc.stderr)
     return proc.returncode
+
+
+def _turn():
+    """proto/turn.py's signed_in_client, imported the way demo.py imports it. Lazy: turn
+    pulls in psycopg, which seeding itself never needs."""
+    server_dir = str(Path(__file__).resolve().parents[1])
+    if server_dir not in sys.path:
+        sys.path.insert(0, server_dir)
+    from proto import turn
+
+    return turn
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -108,6 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--project-id", default=None, help="default proj_<fixture>_<6 hex>")
     p.add_argument("--title", default=None, help="session title; default the fixture's name")
     p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--email", default="dev@localhost", help="dev-login as this patron, who then owns the project")
     p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
     p.add_argument("--s3-endpoint", default="http://localhost:9000")
     args = p.parse_args(argv)
@@ -132,8 +151,12 @@ def main(argv: list[str] | None = None) -> int:
     rc = seed(files, project_id=project_id, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
     if rc != 0:
         return rc
-    r = httpx.post(f"{args.base}/api/sessions", json={"title": title, "project_id": project_id}, timeout=10.0)
-    r.raise_for_status()
+    # Under dev-login the tier hands the project the engine just created (no owner yet)
+    # to the signed-in patron; with FamilySearch sign-in on it would answer 404.
+    turn = _turn()
+    with turn.signed_in_client(args.base, args.email, timeout=10.0) as client:
+        r = client.post("/api/sessions", json={"title": title, "project_id": project_id})
+        r.raise_for_status()
     session = r.json()
     print()
     print(f"session_id  {session['id']}")

@@ -43,10 +43,10 @@ Reviewed by Dallan / Richard (see §4).
 
 ## 1. Why this exists
 
-Today the `tree-edit` skill (`packages/engine/plugin/skills/tree-edit/SKILL.md`, "Person
-merging") performs a merge **by hand** — the LLM is instructed to dedup names,
+The `tree-edit` skill (`tree-edit/SKILL.md` §"Person merging" at `d0915210`)
+performed a merge **by hand** — the LLM was instructed to dedup names,
 dedup facts, repoint relationships, and delete the deprecated person (Steps
-1–5). That is error-prone (ID collisions, missed references). This spec replaces the
+1–5). That was error-prone (ID collisions, missed references). This spec replaces the
 hand-done merge with one **deterministic function** so the result is reliable
 and testable. The requirement: *"Make sure that the tree-edit tool calls that
 function."*
@@ -58,7 +58,7 @@ deliberately does NOT:
 - touch `research.json`, the filesystem, or run validation — those belong to the
   **tool wrappers** (§5b), which own persistence and the cross-file remap (§10),
 - run warning checks (`check-warnings` does that after a merge — see
-  `tree-edit/references/relationship-accuracy.md`).
+  `agents/tree-edit.md`, Appendix B).
 
 ---
 
@@ -87,7 +87,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
 | `gedcomx-convert.ts` exports `toSimplified`/`toGedcomX` (+ `collectFacts`/`standardizePlaces`/`toSimplifiedStandardized`) — **no ID-remap or dedup helper there** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
 | The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — the §5b tool wrappers are shipped | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
-| The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
+| The hand-done merge protocol this replaces | `tree-edit/SKILL.md` §"Person merging" at `d0915210` |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
 to the source issue as an *ideas* reference — explicitly **not** a straight port. The exact
@@ -133,10 +133,10 @@ exposed (§5b explains why).
 The internal, side-effect-free merge. Operates on **SimplifiedGedcomX**
 (`{ persons[], relationships[], sources[], places[] }`); any of
 `relationships`/`sources`/`places` may be absent on an input and is treated as
-empty (never throw on a missing array). Candidate `places[]`, person-level
-`sources[]`, and the record-only person/source fields (`principal`,
-`resource_type`, `coverage`) are tolerated on input but never enter the
-result — the persisted tree format has none of them (see §5b.2, §6.3, §6.7),
+empty (never throw on a missing array). Candidate `places[]`, malformed or
+dangling person-level source refs, and the record-only person/source fields
+(`principal`, `resource_type`, `coverage`) are tolerated on input but never
+enter the result — the persisted tree format has none of them (see §5b.2, §6.3, §6.7),
 and the tool layer strips them from candidates with a warning before the merge
 (`sanitizeCandidate`, §5b.2). It is
 **not** advertised as an MCP tool on its own — the two tools in §5b wrap it.
@@ -217,10 +217,11 @@ Sequence inside each tool:
 
 1. Read `tree.gedcomx.json` (and, for `merge_tree_persons`, `research.json`).
    **`merge_record_into_tree` only:** sanitize the inline candidate first —
-   drop top-level `places[]`, person-level `sources[]`, person-level
-   `principal`, and source-level `resource_type`/`coverage` (legal in tool
-   output like `record_read`'s `gedcomx`, not in the tree format) with a
-   warning per stripped kind, then validate the sanitized candidate
+   drop top-level `places[]`, every person-level source ref that is not a
+   well-formed `{ref, page?, quality?}` naming a source in the candidate,
+   person-level `principal`, and source-level `resource_type`/`coverage`
+   (legal in tool output like `record_read`'s `gedcomx`, not in the tree
+   format) with a warning per stripped kind, then validate the sanitized candidate
    (`sanitizeCandidate` + `validateCandidateGedcomx` in `merge-shared.ts`).
    `merge_warnings` sanitizes identically so the dry-run merges the same
    document the writer would.
@@ -349,10 +350,11 @@ survivor (survivor id is kept):
 - **Facts** — union (person facts), then **merge equivalent facts** and **keep
   all distinct facts** (§7.2). For Birth/Death/Christening/Burial, mark the one
   best fact `primary`.
-- **Person source refs** — none. The tree format carries source references on
-  names/facts/relationships, not on persons (`tree-gedcomx.schema.json`
-  `$defs/person` has no `sources`). A candidate persona's person-level refs are
-  stripped by the tool layer with a warning (§5b.2); the core does not fold them.
+- **Person source refs** — union, remapped through the source id map (Mode 1),
+  then deduped by `ref`+`page`, the same rule relationship refs follow. A
+  carried (non-paired) candidate person keeps its remapped refs. Mode 2 folds
+  the collapsed person's refs into the survivor the same way. Only refs that
+  survived the tool layer's candidate sanitize (§5b.2) reach the core.
 
 ### 6.4 Non-paired candidate persons (Mode 1)
 Carried into the result with **remapped** ids — these are the "new relatives."
@@ -490,6 +492,7 @@ Tool-level (the rows above are the pure core's throws):
 | `candidateGedcomx` is not valid SimplifiedGedcomX | clear input error (reuse the exported `validateGedcomx`, `validate-project-refactor-spec.md` §10); write nothing |
 | Merge result carries a **merge-introduced** validation error | **write nothing**; return `{ ok: false, errors }` (§5b.2 step 4). A pre-existing error rides as a warning; for `merge_warnings` a drift-only project returns `{ ok: true }` |
 | A `merges` survivor id not found in the **on-disk** tree | staleness error (§5b.1); write nothing |
+| Merge introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", warnings: [...] }`. Re-call with `warningJustifications`. Pre-existing warnings on collapsed persons are remapped to survivors before diffing. |
 
 ---
 
@@ -575,11 +578,11 @@ Tool-level (wrappers over the pure core):
   `gedcomx_source_description_id` needs **no** remap: target S-ids are preserved
   and `research.json` never references candidate S-ids.
 
-**Caller (the `tree-edit` skill) still** runs `check-warnings`
+**Caller (the `tree-edit` skill) still** spawns the `check-warnings` agent
 (`relationship-accuracy.md`) after the merge to catch genealogical impossibilities
 it may have introduced (e.g. parent younger than child). The tool does the
 **structural** validate (schema + refs) but **not** the genealogical-plausibility
-checks — those stay a separate skill step. The caller no longer hand-edits
+checks — those stay a separate agent step. The caller no longer hand-edits
 `research.json` refs or calls `validate_research_schema` itself; the tool does
 both.
 

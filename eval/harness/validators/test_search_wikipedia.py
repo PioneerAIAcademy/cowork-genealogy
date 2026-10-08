@@ -1,4 +1,18 @@
-"""Skill-specific validators for the search-wikipedia skill.
+"""Validators for the search-wikipedia AGENT.
+
+`search-wikipedia` was a skill until issue #2795; every suite file is now a
+direct-agent test and every "SKILL.md step N" reference below has been
+repointed at `packages/engine/plugin/agents/search-wikipedia.md`. The agent
+body has no numbered step 5: its closing instruction is the `## Return
+contract`, exactly one line naming the saved file. It carries no
+`summary_for_user` paragraphs (PENDING in `agent-return-contract.test.ts`).
+
+`ut_search_wikipedia_008`, the decline, is a direct `grade_on_invariant`
+negative, so every validator below that skips non-positive tests skips it, and
+`test_no_wiki_no_write` alone decides it. The `scope-decline` skips below only
+fire on a positive decline test, which the corpus does not carry today; they
+stay because a future suite may add one, and because removing them would make
+the tag silently inert.
 
 Mechanical checks live here; narrative judgment lands on the
 search-wikipedia `rubric.md` dimensions plus the base Correctness +
@@ -17,15 +31,19 @@ import unicodedata
 
 import pytest
 
+from harness.skill_runner import agent_return_text
+
 
 # --- Tool-allowlist enforcement ---------------------------------------
 
 def test_only_wikipedia_search_called(tool_calls, test):
     """Positive search-wikipedia tests must call wikipedia_search and nothing
-    else. Negative tests should not call wikipedia_search at all — but
-    activation/routing is graded by the negative-test outcome logic in
-    orchestrator._compute_outcome, so we only enforce the positive case
-    here."""
+    else.
+
+    Skips `ut_search_wikipedia_008`, which is a negative. On a positive
+    `scope-decline` test it would run, and pass only if no other MCP tool was
+    called while declining.
+    """
     if test.get("type") != "positive":
         pytest.skip("activation rules handle negative tests")
     mcp_calls = [
@@ -43,10 +61,12 @@ def test_only_wikipedia_search_called(tool_calls, test):
 
 def test_wikipedia_search_called_exactly_once(tool_calls, test):
     """Positive search-wikipedia tests should issue exactly one wikipedia_search
-    call. Multiple calls signal query-refinement loops that the SKILL.md
-    doesn't authorize (and inflate cost)."""
+    call. Multiple calls signal query-refinement loops the agent body
+    forbids by name (step 1: "Exactly one call") and inflate cost."""
     if test.get("type") != "positive":
         pytest.skip("activation rules handle negative tests")
+    if "scope-decline" in test.get("tags", []):
+        pytest.skip("scope-decline: a declined request issues no lookup at all")
     wiki_calls = [
         tc for tc in tool_calls
         if "wikipedia_search" in tc.get("tool", "")
@@ -66,11 +86,13 @@ def _files_created(before_state, after_state) -> list[str]:
 
 def test_wrote_one_markdown_file(before_state, after_state, test):
     """Positive tests must produce exactly one .md file in the working
-    folder. The SKILL.md template names a single file derived from the
-    article title — zero means the skill skipped the save step, more
+    folder. The agent body's template names a single file derived from the
+    article title — zero means the agent skipped the save step, more
     than one means it wrote extra noise."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests write files")
+    if "scope-decline" in test.get("tags", []):
+        pytest.skip("scope-decline: the agent declines, so it saves no file")
     new = _files_created(before_state, after_state)
     md = [p for p in new if p.endswith(".md")]
     assert len(md) == 1, f"expected exactly one new .md file; got {md}"
@@ -79,25 +101,34 @@ def test_wrote_one_markdown_file(before_state, after_state, test):
 # --- Negative no-harm invariant (tag-gated) ---------------------------
 
 def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
-    """Tag-gated (no-wiki-no-write): the search-wikipedia no-harm invariant
-    for a request that belongs to another skill (e.g. narrative migration
-    history → historical-context).
+    """Tag-gated (`no-wiki-no-write` OR `scope-decline`): the search-wikipedia
+    no-harm invariant for a request this agent must not work on — either
+    off-topic entirely, or genealogy work another agent owns (narrative
+    migration history → historical-context).
 
     search-wikipedia's job is to look a topic up on Wikipedia and SAVE a
-    markdown summary. For an out-of-scope request the skill must not perform
-    that workflow. This is the deterministic gate for the grade_on_invariant
-    negative ut_search_wikipedia_007: whether the model declines in place or
-    routes elsewhere is a known-unstable model prior, and the harness's
-    activation heuristic counts a thorough (>=30-word) in-place decline as
-    activation — but the state-harm invariant always holds and is what we
-    assert here.
+    markdown summary. For an out-of-scope request the agent must not perform
+    that workflow, whatever the delegation asserts.
+
+    This is the whole deterministic verdict for `ut_search_wikipedia_008`, the
+    direct decline test (issue #2795; Richard's ruling of 2026-09-28 kept it a
+    `grade_on_invariant` negative). It used to gate
+    a routed `grade_on_invariant` negative, where routing was the unstable part
+    and the state-harm invariant the stable one; the direct arm has no router
+    at all, so the invariant is not merely the reliable half — it is the only
+    mechanical thing there is to check, alongside the judge's base dimensions.
+
+    The gate is an OR rather than a rename so that the two tags stay
+    independently meaningful: `no-wiki-no-write` is the no-harm claim and
+    `scope-decline` is the shape of the test. Either alone fires this.
 
     Fails iff the run:
       - made a `wikipedia_search` MCP call (the lookup was executed), or
       - wrote a new `.md` file (the summary was saved).
     """
-    if "no-wiki-no-write" not in test.get("tags", []):
-        pytest.skip("not a no-wiki-no-write scenario")
+    tags = test.get("tags", [])
+    if "no-wiki-no-write" not in tags and "scope-decline" not in tags:
+        pytest.skip("not a no-wiki-no-write or scope-decline scenario")
 
     # 1. No wikipedia_search executed.
     wiki_calls = [
@@ -109,10 +140,21 @@ def test_no_wiki_no_write(tool_calls, before_state, after_state, test):
         f"wikipedia_search call(s) with args: {[c.get('args') for c in wiki_calls]}"
     )
 
-    # 2. No markdown summary saved.
-    new_md = [p for p in _files_created(before_state, after_state) if p.endswith(".md")]
-    assert not new_md, (
-        f"out-of-scope request must not save a Wikipedia summary; wrote: {new_md}"
+    # 2. No file saved -- ANY file, not just a .md.
+    #
+    # Richard's ruling is "no lookup, no file saved", and this assertion is the
+    # WHOLE verdict for ut_search_wikipedia_008: `_compute_outcome` returns on
+    # `grade_on_invariant` before a judge dimension is read. The agent now holds
+    # `Write`, and _008's prompt asks for a Python function, so an extension
+    # filter would pass a run that saved `parse_csv.py` -- the exact harm, in
+    # the exact shape this test's prompt invites.
+    #
+    # Of 455 committed negative runs, one created a file and it was a `.md`, so
+    # widening changes no committed outcome.
+    new_files = _files_created(before_state, after_state)
+    assert not new_files, (
+        "out-of-scope request must not save a Wikipedia summary or any other "
+        f"file; wrote: {new_files}"
     )
 
 
@@ -205,7 +247,7 @@ def test_saved_file_matches_template(
     """The saved .md must be the filled template, with the tool's own
     title/extract/url copied verbatim.
 
-    SKILL.md step 3: "Use the exact values from the tool response. Do not
+    Agent body step 2: "Use the exact values from the tool response. Do not
     paraphrase, summarize, truncate, or editorialize the extract. Copy it
     verbatim." Nothing checked that. The judge cannot: `file_changes` carries
     only research.json and tree.gedcomx.json, so `rubric.md` tells it to grade
@@ -228,6 +270,8 @@ def test_saved_file_matches_template(
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests save a file")
+    if "scope-decline" in test.get("tags", []):
+        pytest.skip("scope-decline: the agent declines, so it saves no file")
 
     responses = _wikipedia_responses(tool_calls)
     if not responses:
@@ -262,7 +306,7 @@ def test_saved_file_matches_template(
     ):
         assert value and str(value) in actual, (
             f"{path} does not contain the tool response's {field} verbatim. "
-            f"SKILL.md step 3: 'Copy it verbatim.' Expected to find:\n"
+            f"Agent body step 2: 'Copy it verbatim.' Expected to find:\n"
             f"  {value!r}\nSaved file was:\n  {actual!r}"
         )
     raise AssertionError(
@@ -299,7 +343,7 @@ _TRANSLITERATE = str.maketrans({
 
 
 def _slug_from_title(title: str) -> str:
-    """SKILL.md step 4's slug algorithm: transliterate accented letters to
+    """Agent body step 3's slug algorithm: transliterate accented letters to
     their ASCII base, lowercase, replace every run of non-alphanumeric
     characters with a single hyphen, trim leading and trailing hyphens.
 
@@ -330,6 +374,8 @@ def test_slug_matches_returned_title(before_state, after_state, tool_calls, test
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests save a file")
+    if "scope-decline" in test.get("tags", []):
+        pytest.skip("scope-decline: the agent declines, so it saves no file")
 
     responses = _wikipedia_responses(tool_calls)
     if not responses:
@@ -355,7 +401,7 @@ def test_slug_matches_returned_title(before_state, after_state, tool_calls, test
         hint = (
             f" The saved name IS the slug of the query the skill sent "
             f"({queries!r}), so the slug was built from the query instead of "
-            f"the returned title. SKILL.md step 4: 'Build <title-slug> from "
+            f"the returned title. Agent body step 3: 'Build <title-slug> from "
             f"the article title.'"
         )
     assert set(names) & expected, (
@@ -379,8 +425,9 @@ def test_slug_wurttemberg(before_state, after_state, test):
 
 # --- Reply economy: the mechanical half --------------------------------
 
-# First-person announcements of a step the skill is about to take. SKILL.md
-# step 5 wants a report that the file exists, not a plan to write it.
+# First-person announcements of a step the agent is about to take. The agent
+# body's `## Return contract` wants a report that the file exists, not a plan to
+# write it.
 #
 # Deliberately narrow. This is a PROXY for step 5's actual rule ("One sentence
 # only"), which is not mechanical — sentence splitting breaks on abbreviations,
@@ -416,7 +463,34 @@ _NARRATION_RE = re.compile(
 )
 
 
-def test_reply_does_not_narrate_pending_step(text_response, test):
+def _graded_reply(agent_returns, text_response: str) -> str:
+    """The text this suite's reply rules apply to.
+
+    On the direct arm `text_response` belongs to the MAIN THREAD, which is a
+    dispatcher relaying the agent's return -- it paraphrases, and what it writes
+    is not the subject under test. `agent_returns` carries the agent's own text,
+    so it wins whenever the agent under test returned any.
+
+    Measured on `v1_2026-09-28_09-49-04` plus a live capture of
+    `ut_search_wikipedia_002` the same day, one run, two texts:
+
+        agent:       Saved the Wikipedia summary to `albert-einstein.md`.
+        main thread: The subagent has completed the task. It looked up **Albert
+                     Einstein** on Wikipedia and saved the article summary ...
+
+    The agent obeyed its one-line contract; the dispatcher did not, and the
+    dispatcher is what the suite had been failing.
+
+    Selection is `skill_runner.agent_return_text`, the SAME call the judge
+    makes. It used to take the first match here and join every match there, so
+    a clean first return hid a narrating second one from this validator but not
+    from the judge. Falls back to `text_response` when this agent returned
+    nothing -- a routed run, whose reply IS the subject's.
+    """
+    return agent_return_text(agent_returns, "search-wikipedia") or (text_response or "")
+
+
+def test_reply_does_not_narrate_pending_step(agent_returns, text_response, test):
     """No assistant turn announces writing the file — not just the closing one.
 
     `text_response` joins every turn's text (blocks within one turn with no
@@ -434,22 +508,26 @@ def test_reply_does_not_narrate_pending_step(text_response, test):
     """
     if test.get("type") != "positive":
         pytest.skip("step narration is graded on positive runs")
+    # NOT skipped on `scope-decline`, so a positive decline test would be
+    # graded for narration like any other reply. `ut_search_wikipedia_008` is a
+    # negative and skips on the line above.
     # Deliberately NOT a skip. An empty reply on a positive run is itself a
     # step-5 violation ("Tell the user the file was created"), and skipping
     # here would make this validator inert the moment the harness stopped
     # supplying `text_response` — the silent-pass failure mode this whole
     # file exists to avoid. Failing names both causes.
-    assert text_response, (
-        "positive run recorded no reply; SKILL.md step 5 requires the skill "
-        "to tell the user the file was created. If the reply WAS non-empty, "
+    reply = _graded_reply(agent_returns, text_response)
+    assert reply, (
+        "positive run recorded no reply; the agent's return contract requires "
+        "one line naming the saved file. If the reply WAS non-empty, "
         "the harness has stopped passing `text_response` into validators "
         "(see the run_validators call site in orchestrator.py) and this "
         "check is inert rather than passing."
     )
-    hit = _NARRATION_RE.search(text_response)
+    hit = _NARRATION_RE.search(reply)
     assert not hit, (
         f"reply narrates a pending step ({hit.group(0)!r}) instead of only "
-        f"reporting the saved file. SKILL.md step 5: 'Tell the user the file "
-        f"was created. One sentence only.' The phrase may sit in a mid-workflow "
-        f"turn — this string joins every turn's text. Full text: {text_response!r}"
+        f"the saved file. Agent body, '## What to do': 'Do not announce "
+        f"a step before doing it.' On a direct run this is the AGENT's own "
+        f"return, not the dispatcher's relay. Full text: {reply!r}"
     )

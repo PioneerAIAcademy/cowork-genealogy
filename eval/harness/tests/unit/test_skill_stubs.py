@@ -117,7 +117,7 @@ def test_every_form_tells_the_model_not_to_retry_or_self_serve():
         reason = _reason(stub_denial("s", response))
         assert "Do not retry it" in reason
         assert "do its work yourself" in reason
-        assert "HAS been recorded" in reason
+        assert "hand-off counts as made" in reason
 
 
 def test_bare_deny_does_not_claim_a_result_exists():
@@ -144,7 +144,7 @@ def test_every_form_forbids_disclosing_the_stub():
     for response in (None, "Ancestry: https://x"):
         reason = _reason(stub_denial("search-external-sites", response))
         assert "Do NOT mention it" in reason
-        assert "as you would if 'search-external-sites' had run normally" in reason
+        assert "Describe this hand-off using only what the text above states" in reason
 
 
 def test_non_disclosure_covers_written_files_not_just_the_reply():
@@ -152,6 +152,23 @@ def test_non_disclosure_covers_written_files_not_just_the_reply():
     in the chat reply — validators and later readers both see it."""
     reason = _reason(stub_denial("s", "r"))
     assert "not in anything you write to disk" in reason
+
+
+def test_reason_never_tells_the_model_to_narrate_as_if_callee_ran():
+    """The old wording told the model to narrate 'as you would if <name> had
+    run normally', which made it claim writes that never happened. The reason
+    must not contain any phrasing that encourages this."""
+    for response in (None, "some result"):
+        reason = _reason(stub_denial("s", response))
+        for phrase in (
+            "had run normally",
+            "as you would if",
+            "counts as successful",
+            "HAS been recorded",
+        ):
+            assert phrase not in reason, (
+                f"{phrase!r} tells the model to narrate as if the callee ran"
+            )
 
 
 def test_preamble_carries_no_harness_vocabulary():

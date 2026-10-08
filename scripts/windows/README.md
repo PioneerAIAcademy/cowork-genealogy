@@ -16,7 +16,7 @@ there.
 
 | Make target | Windows wrapper | What it does |
 |---|---|---|
-| `make install` | `scripts\windows\install.bat` | Install everything: pnpm workspace, server venv, engine build, eval-ui deps |
+| `make install` | `scripts\windows\install.bat` | Install everything: pnpm workspace (incl. eval-ui), server venv, engine build |
 | `make reinstall` | `scripts\windows\reinstall.bat` | `clean-deps` then `install`, from scratch |
 | `make clean-deps` | `scripts\windows\clean-deps.bat` | Remove every `node_modules` |
 | `make server-install` | `scripts\windows\server-install.bat` | Create the FastAPI server venv (uv sync) |
@@ -33,7 +33,7 @@ there.
 | `make typecheck` | `scripts\windows\typecheck.bat` | TypeScript typecheck (turbo) |
 | `make server-test` | `scripts\windows\server-test.bat` | Control-plane tests (pytest) |
 | `make engine-test` | `scripts\windows\engine-test.bat` | Engine unit tests (vitest) |
-| `make eval-ui-test` | `scripts\windows\eval-ui-test.bat` | Eval CRUD UI tests (vitest) |
+| `make eval-ui-test` | `scripts\windows\eval-ui-test.bat` | Eval CRUD UI typecheck + tests (tsc + vitest) |
 | `make judge-report` | `scripts\windows\judge-report.bat` | Non-discrimination scan of the unit eval judge over committed run logs (no API calls) |
 | `make conflict-verdicts` | `scripts\windows\conflict-verdicts.bat` | Run logs whose own tests reach opposite verdicts on one conflict (no API calls) |
 | `make harness-test` | `scripts\windows\harness-test.bat` | Eval harness tests (pytest) |

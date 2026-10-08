@@ -10,11 +10,12 @@
       "French colonial",
       "parish registers",
       "land grants",
-      "archives"
+      "archives",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?",
+    "delegation": "I'm researching ancestors in Louisiana during the French colonial period (1700s). What records or repositories would help trace families?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -23,6 +24,7 @@
   },
   "mcp_fixtures": [
     "place-search-louisiana",
+    "place-search-any",
     "collections-search-louisiana",
     "wikipedia-search-louisiana-french-colonial",
     "wiki-search-louisiana-french-colonial",

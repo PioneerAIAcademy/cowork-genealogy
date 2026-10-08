@@ -10,7 +10,7 @@
 # uniform, because the ecosystems do not have the same slot demand:
 #
 #   npm              The group covers only minor+patch, so every MAJOR arrives
-#                    as its own PR and competes for a slot. npm also spans three
+#                    as its own PR and competes for a slot. npm also spans two
 #                    directories and holds most of the dependencies. Hence 5.
 #   github-actions   `patterns: "*"` with no update-types, so EVERYTHING —
 #   docker           majors included — collapses into one grouped PR. These two
@@ -131,16 +131,16 @@ version: 2
 
 updates:
   # ── JavaScript / TypeScript ─────────────────────────────────────────────────
-  # Three separate trees by design (see CLAUDE.md): the root pnpm workspace for
-  # the web/electron side, and two npm-managed trees — the engine, kept out of
-  # the workspace because both its shipped artifacts install from its own npm
-  # lockfile, and the Eval CRUD UI. Dependabot reads pnpm-lock.yaml and
-  # package-lock.json alike.
+  # Two separate trees by design (see CLAUDE.md): the root pnpm workspace for
+  # the web/electron side and the Eval CRUD UI, and one npm-managed tree — the
+  # engine, kept out of the workspace because both its shipped artifacts install
+  # from its own npm lockfile. Dependabot reads pnpm-lock.yaml and
+  # package-lock.json alike. (eval/app was a third tree until #1488 made it a
+  # workspace member and deleted its lockfile; the root entry covers it now.)
   - package-ecosystem: npm
     directories:
       - "/"
       - "/packages/engine/mcp-server"
-      - "/eval/app"
     schedule:
       interval: monthly
     # 5, not 2: npm groups only minor+patch, so every MAJOR arrives as its own

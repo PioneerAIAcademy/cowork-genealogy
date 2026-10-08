@@ -5,10 +5,10 @@
     "name": "Report record matches for a tree person using person_record_matches",
     "type": "positive",
     "description": "User invokes tree-edit directly and asks what records FamilySearch has matched to Patrick Flynn (FamilySearch ID LZNY-BRF). Tests that tree-edit calls person_record_matches and correctly reports the accepted attachment, the two pending hints, and their confidence levels — without making any edits to the tree.",
-    "tags": ["tree-edit", "person-record-matches", "record-hints", "no-op-edit"]
+    "tags": ["tree-edit", "person-record-matches", "record-hints", "no-op-edit", "direct-arm"]
   },
   "input": {
-    "user_message": "tree-edit: Check what records are attached to this person — Patrick Flynn, FamilySearch ID LZNY-BRF. What hints does FamilySearch have for this person? Tell me which matches are accepted and which are pending.",
+    "delegation": "Check what records are attached to this person — Patrick Flynn, FamilySearch ID LZNY-BRF. What hints does FamilySearch have for this person? Tell me which matches are accepted and which are pending.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

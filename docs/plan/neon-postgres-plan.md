@@ -7,7 +7,7 @@ branch this was written on no longer exists. **Read with:**
 `apps/server/pyproject.toml`, `deploy/fly.toml`.
 
 > **Status: Superseded by [`search-agent-prototype.md`](./search-agent-prototype.md)**
-> (still in progress). This is the live alpha backend until the prototype decision,
+> (complete 2026-09-29; the handoff is [`familysearch-handoff.md`](./familysearch-handoff.md)). This is the live alpha backend until the prototype decision,
 > then this file is deleted. Implemented: the code changes below + `apps/server/uv.lock`,
 > `apps/server/tests/conftest.py`. Verified locally on **SQLite** (`make
 > server-test`, 30 green) and against a **live Postgres** (throwaway Docker pg):

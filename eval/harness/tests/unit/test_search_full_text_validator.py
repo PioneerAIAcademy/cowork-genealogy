@@ -28,9 +28,10 @@ from test_search_full_text import (  # noqa: E402
     test_wiki_prework_fetch_runs_when_required as check_wiki_prework,
     test_topical_fixture_actually_used as check_topical_fixture,
     test_log_query_traces_to_fulltext_search_call as check_log_fidelity,
-    test_first_fulltext_search_call_is_unscoped as check_first_call_unscoped,
+    test_filtered_nil_is_followed_by_unfiltered_retry as check_filtered_nil_retry,
     test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
     test_plan_item_completion_matches_its_own_record_type as check_plan_item_completion,
+    test_record_place_filters_use_facet_form as check_record_place_form,
 )
 
 
@@ -100,57 +101,77 @@ def test_log_fidelity_does_not_guess_when_the_entry_cannot_be_correlated_to_a_ca
     check_log_fidelity(before, after, calls)
 
 
-# --- test_first_fulltext_search_call_is_unscoped ------------------------
-# Deep dive #1651 finding 2: `ut_search_full_text_002`, run
-# `v1_2026-07-27_22-27-37` -- the first fulltext_search call for the turn
-# already carried recordType/yearFrom/yearTo, before any unfiltered hit
-# count was ever observed. Confirmed by the fix: after SKILL.md named the
-# actual arguments explicitly, a re-run of the same test's first call
-# (`ut_search_full_text_007`, run `v1_2026-08-19_14-12-22`) came back clean.
-
-FIRING_FIRST_CALL_CALLS = [
-    call(
-        "fulltext_search",
-        keywords="+Flynn +Patrick",
-        recordType="Probate Records",
-        yearFrom=1870,
-        yearTo=1890,
-        count=20,
-    ),
-]
-
-PASSING_FIRST_CALL_CALLS = [
-    call("fulltext_search", keywords="+Patrick +Fl?n*", count=20),
-]
+# --- test_filtered_nil_is_followed_by_unfiltered_retry -----------------
+# SKILL.md step 4 / query-syntax.md (2026-09-30): a filtered fulltext_search
+# that returns zero results must be followed by an unfiltered retry for the
+# same topic. A nil under a filter may be a metadata mismatch, not a true
+# negative.
 
 
-def test_first_call_unscoped_fires_on_a_prefiltered_first_call():
-    with pytest.raises(AssertionError) as e:
-        check_first_call_unscoped(FIRING_FIRST_CALL_CALLS)
-    msg = str(e.value)
-    assert "recordType" in msg
-    assert "yearFrom" in msg
-    assert "yearTo" in msg
+def _filtered_nil_call(keywords, **filter_kwargs):
+    """A fulltext_search call with filters that returns zero results."""
+    c = call("fulltext_search", keywords=keywords, **filter_kwargs)
+    c["response"] = {"results": [], "totalResults": 0}
+    return c
 
 
-def test_first_call_unscoped_passes_on_a_clean_first_call():
-    check_first_call_unscoped(PASSING_FIRST_CALL_CALLS)
+def _unfiltered_call(keywords, **kwargs):
+    c = call("fulltext_search", keywords=keywords, **kwargs)
+    c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalResults": 1}
+    return c
 
 
-def test_first_call_unscoped_skips_when_no_fulltext_search_was_called():
-    with pytest.raises(pytest.skip.Exception):
-        check_first_call_unscoped([call("research_log_append", planItemId=None)])
-
-
-def test_first_call_unscoped_only_checks_the_literal_first_call():
-    """Documented narrower scope (see the validator's own docstring): a
-    second, later fulltext_search call in the same turn that adds a filter
-    is not what this check is about, and must not trip it."""
+def test_filtered_nil_retry_fires_when_no_retry_follows():
+    """Validator fires when a filtered nil has no unfiltered follow-up."""
     calls = [
-        call("fulltext_search", keywords="+Naveda +Somarriba", count=50),
-        call("fulltext_search", keywords="+Naveda +Somarriba", recordPlace1="Spain"),
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
     ]
-    check_first_call_unscoped(calls)
+    with pytest.raises(AssertionError) as e:
+        check_filtered_nil_retry(calls)
+    msg = str(e.value)
+    assert "recordPlace1" in msg
+    assert "+Flynn +Patrick" in msg
+
+
+def test_filtered_nil_retry_passes_when_unfiltered_retry_follows():
+    """Validator passes when a filtered nil is followed by an unfiltered call."""
+    calls = [
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+        _unfiltered_call("+Flynn +Patrick", count=50),
+    ]
+    check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_retry_skips_when_no_fulltext_search_was_called():
+    with pytest.raises(pytest.skip.Exception):
+        check_filtered_nil_retry([call("research_log_append", planItemId=None)])
+
+
+def test_filtered_nil_retry_passes_when_filtered_call_returns_results():
+    """A filtered call that returns hits needs no retry."""
+    c = call("fulltext_search", keywords="+Flynn +Patrick", recordPlace1="Pennsylvania")
+    c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalHits": 5}
+    check_filtered_nil_retry([c])
+
+
+def test_filtered_nil_variant_is_not_covered_by_the_canonical_spelling():
+    """SKILL.md step 4: a variant's filtered nil needs its own unfiltered retry."""
+    calls = [
+        _unfiltered_call("+Flynn +witness"),
+        _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_is_not_covered_by_a_broader_positive_search():
+    """A positive +Flynn search does not retry the +Flynn +Patrick nil."""
+    calls = [
+        _unfiltered_call("+Flynn"),
+        _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
 
 
 # --- test_plan_item_completion_matches_its_own_record_type --------------
@@ -384,6 +405,68 @@ def test_collection_id_check_skips_when_no_fulltext_search_was_called():
         check_never_scopes_to_collection_id([])
 
 
+def facets_call(keywords, filter_params=None):
+    """Build a call dict for an includeFacets=true fulltext_search with a mocked response."""
+    items = [{"filterParam": fp} for fp in (filter_params or [])]
+    return {
+        "tool": "mcp__genealogy__fulltext_search",
+        "args": {"keywords": keywords, "includeFacets": True},
+        "response": {"facets": [{"name": "Collection", "count": 1, "items": items}]},
+    }
+
+
+def scoped_call(keywords, collection_id):
+    return {"tool": "mcp__genealogy__fulltext_search", "args": {"keywords": keywords, "collectionId": collection_id}}
+
+
+def test_collection_id_check_passes_when_id_matches_prior_filter_param():
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=["2220359", "2017696"]),
+        scoped_call("+Flynn +Patrick", "2220359"),
+    ]
+    check_never_scopes_to_collection_id(calls)
+
+
+def test_collection_id_check_fires_when_id_not_in_prior_filter_params():
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=["2220359"]),
+        scoped_call("+Flynn +Patrick", "9999999"),
+    ]
+    with pytest.raises(AssertionError) as e:
+        check_never_scopes_to_collection_id(calls)
+    assert "9999999" in str(e.value)
+    assert "2220359" in str(e.value)
+
+
+def test_collection_id_check_fires_when_prior_facets_response_was_empty():
+    """An empty facets response offers no id, so a scoped follow-up borrowed it."""
+    calls = [
+        facets_call("+Flynn +Patrick", filter_params=[]),
+        scoped_call("+Flynn +Patrick", "9999999"),
+    ]
+    with pytest.raises(AssertionError):
+        check_never_scopes_to_collection_id(calls)
+
+
+def test_filtered_nil_is_not_answered_by_a_different_filter():
+    """Swapping one place filter for another is not the unfiltered retry."""
+    calls = [
+        _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania"),
+        _unfiltered_call("+Flynn", recordPlace2="Schuylkill"),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
+def test_filtered_nil_is_answered_by_dropping_one_filter():
+    """Keeping the place and dropping the year IS a looser retry."""
+    calls = [
+        _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania", yearFrom=1880),
+        _unfiltered_call("+Flynn", recordPlace1="Pennsylvania"),
+    ]
+    check_filtered_nil_retry(calls)
+
+
 # --- test_wiki_prework_fetch_runs_when_required ------------------------
 # Added with the #2253 wiki move. Tag-gated on `wiki-prework`; the two
 # tests carrying that tag today are latin-american-notarial.json and
@@ -539,3 +622,54 @@ def test_topical_fixture_fires_rather_than_raising_on_none_and_unfixtured_calls(
     for calls in (None, [], [{"tool": "mcp__genealogy__wiki_read", "args": {}}]):
         with pytest.raises(AssertionError):
             check_topical_fixture(calls, TOPICAL_TAGS)
+
+
+# --- test_record_place_filters_use_facet_form (issue #1828 review) ---------
+# The committed run v1_2026-10-05_14-51-42 sent plain-text recordPlace1/2 in six
+# of nineteen tests and passed them all, because the fixtures ignore the value.
+
+
+def test_record_place_passes_a_facet_filter_param():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", recordPlace1="10,Pennsylvania")])
+
+
+def test_record_place_passes_plain_text_in_the_place_field():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", place="Schuylkill County, Pennsylvania")])
+
+
+def test_record_place_passes_a_call_with_no_place_filter():
+    check_record_place_form([call("fulltext_search", keywords="+Flynn", collectionId="2220359")])
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [("recordPlace1", "Pennsylvania"), ("recordPlace2", "Schuylkill"), ("recordPlace0", "United States")],
+)
+def test_record_place_fails_a_plain_text_value(key, value):
+    with pytest.raises(AssertionError, match="plain-text recordPlace"):
+        check_record_place_form([call("fulltext_search", keywords="+Flynn", **{key: value})])
+
+
+def test_record_place_fails_plain_text_on_a_later_call_only():
+    calls = [
+        call("fulltext_search", keywords="+Flynn", includeFacets=True),
+        call("fulltext_search", keywords="+Flynn", recordPlace1="10,Pennsylvania", recordPlace2="Schuylkill"),
+    ]
+    with pytest.raises(AssertionError, match="recordPlace2"):
+        check_record_place_form(calls)
+
+
+# `place` joined POST_SEARCH_FILTER_KEYS when the skill started recommending it
+# for a named jurisdiction (issue #1828 review): a nil under it owes a retry.
+
+
+def test_filtered_nil_retry_fires_on_a_place_nil_with_no_retry():
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry([_filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania")])
+
+
+def test_filtered_nil_retry_passes_a_place_nil_followed_by_an_unfiltered_retry():
+    check_filtered_nil_retry([
+        _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
+        _unfiltered_call("+Flynn +Patrick"),
+    ])

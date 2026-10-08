@@ -266,6 +266,13 @@ That id is the `TEST=` value for step 6. (Older tests have numeric ids like
 > test after the fix has landed, the bug no longer reproduces on the un-edited
 > skill, the gate comes back `INCONCLUSIVE`, and nothing is proven either way.
 
+> **A mined test merges only in the PR that makes it pass.** Never ahead of
+> the fix, and never with an `expected_outcome: xfail` marker (lead,
+> 2026-10-06; `eval/CLAUDE.md` rules 6 and 10). If your task only finds the
+> failure, push the test to a branch, link it from the issue that owns the
+> fix, and leave the merge to that issue's PR, which runs steps 4–8 from this
+> test.
+
 > **First time improving this skill? You'll need hold-out tests.** Read the
 > hold-out note in step 4 now — they have to be set *before* the run you're
 > about to do, and setting them afterwards invalidates it.
@@ -654,9 +661,12 @@ share a branch.
 **Where:** 🤖 Claude Code at the repo root (or any text editor — the skill is
 just `packages/engine/plugin/skills/<skill>/SKILL.md`).
 
-Occasionally you're not fixing a skill but creating one. For a new
-tool-wrapping skill, copy `packages/engine/plugin/skills/search-wikipedia/` —
-the canonical minimal example of the full pipeline — and write to the prose
+Occasionally you're not fixing a skill but creating one — though under the
+lead's 2026-09-22 ruling a new capability is an **agent**. For a new
+tool-wrapping body, copy `packages/engine/plugin/agents/search-images.md` —
+the smallest agent carrying the `summary_for_user` return contract; **not**
+`search-wikipedia.md`, whose exemption from it fails
+`agent-return-contract.test.ts` on a copy — and write to the prose
 standard in [`docs/skill-authoring-guide.md`](skill-authoring-guide.md). (That
 guide's "What kind of skill are you writing?" section covers whether it should
 be a skill at all, and which of the three kinds — workflow, reference, or
@@ -719,7 +729,7 @@ hand-catching the same class of issue ten rounds in, the loop isn't learning.
 | 6 Verify | ⌨️ terminal | `make gate-skill SKILL=<name> TEST=<id>` | `eval\GateSkill.bat` |
 | 7 Confirm in Cowork | 🖥️ Cowork | `make plugin`, `make mcpb`, then reinstall | `eval\BuildPlugin.bat`, `eval\BuildMcpb.bat` |
 | 8 Re-run + grade + PR | ⌨️ terminal → 🌐 → GitHub | `make eval-skill`, grade all, commit, PR | `eval\RunTests.bat`, then GitHub Desktop |
-| *(side)* new skill | 🤖 Claude Code | the authoring guide + copy `search-wikipedia/` | same |
+| *(side)* new capability | 🤖 Claude Code | the authoring guide + copy `agents/search-images.md` | same |
 | *(side)* description | ⌨️ terminal | `make optimize-skill SKILL=<name>` | `eval\OptimizeSkill.bat` |
 
 **To run the improver on skill `X`:** it needs an *active*, *annotated* run

@@ -10,11 +10,12 @@
       "person-merge",
       "tree-side-merge",
       "conflict-handling",
-      "ownership-aware"
+      "ownership-aware",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "tree-edit: merge data from I3 into I4 — but only as far as tree-edit can safely go. Per proof_summary ps_002, the synthetic stub I3 (\"James Flynn\") is the same individual as the FamilySearch tree person I4 (\"James Patrick Flynn\", ark .../KWCJ-JAM7). Consolidate names + facts onto I4 (keep both conflicting birth dates — no proof specifies which to drop). Do NOT delete I3 yet — research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002, and those sections aren't owned by tree-edit. Present the I3-deletion plan + the cross-file rewrites as work the user needs to coordinate via the owning skills before the merge can finalize.",
+    "delegation": "merge data from I3 into I4 — but only as far as tree-edit can safely go. Per proof_summary ps_002, the synthetic stub I3 (\"James Flynn\") is the same individual as the FamilySearch tree person I4 (\"James Patrick Flynn\", ark .../KWCJ-JAM7). Consolidate names + facts onto I4 (keep both conflicting birth dates — no proof specifies which to drop). Do NOT delete I3 yet — research.json still references I3 in project.subject_person_ids, person_evidence pe_007, and timelines t_002, and those sections aren't owned by tree-edit. Present the I3-deletion plan + the cross-file rewrites as work the user needs to coordinate via the owning skills before the merge can finalize.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-merge-pending"
   },
   "mcp_fixtures": [
@@ -29,15 +30,9 @@
     "MERGE-CORRECTNESS GRADING NOTE for the judge: the standard rubric clause 'every reference is rewritten' does NOT apply here because tree-edit lacks ownership of the research.json sections involved (per the harness OWNERSHIP_TABLE: project belongs to init-project / proof-conclusion, person_evidence to person-evidence, timelines to timeline). The CORRECT behavior in this test is consolidate-data-on-I4 + present-plan-for-coordinated-rewrites + do-not-delete-I3-yet. Judges MUST score Merge correctness as `pass` when the skill (a) consolidates data on I4 without dropping conflicting facts, (b) leaves I3 in place pending coordination, and (c) explicitly names the owning skills that need to do the research.json rewrites. Do NOT mark partial because the rewrites weren't done — that's the entire point of the test",
     "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
     "Should present the merge plan to the user before executing — SKILL.md 'Important rules' requires confirmation since merges are irreversible in practice",
-    "Should invoke `Skill(\"check-warnings\")` after this edit — SKILL.md § Validation requires it after ANY edit or merge. This is stubbed via `execution.stub_skills` (the callee has its own unit suite), so the launch is what's graded, not a real check-warnings run — score on whether the skill actually called it (visible in `skills_invoked`), not on the canned response's content."
+    "Should end its return with a caller-facing `Hand-back: check-warnings <person ids>` line naming every person this edit touched — the agent body requires it after ANY edit or merge. The agent cannot spawn check-warnings itself (it holds no Agent tool), so check-warnings not running is correct and MUST NOT be scored down; score only on whether the return names it for the touched persons."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "check-warnings",
-        "response": "No warnings found for the edited person's data -- no impossible dates, no relationship loops, nothing implausible. FamilySearch's online quality check was not run in this environment."
-      }
-    ]
+    "max_wall_clock_seconds": 600
   }
 }

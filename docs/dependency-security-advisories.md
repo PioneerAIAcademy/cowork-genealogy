@@ -1,8 +1,9 @@
 # Dependency security advisories
 
-Tracking note for `pnpm audit` / `npm audit` findings across the repo's three JS
-dependency trees (root pnpm workspace, `packages/engine/mcp-server` npm,
-`eval/app` npm). Re-run the audits after any dependency bump and update this file.
+Tracking note for `pnpm audit` / `npm audit` findings across the repo's two JS
+dependency trees (root pnpm workspace — which since #1488 includes `eval/app` —
+and `packages/engine/mcp-server` npm). Re-run the audits after any dependency
+bump and update this file.
 
 Last reviewed: **2026-09-21**.
 
@@ -13,9 +14,10 @@ Last reviewed: **2026-09-21**.
 > re-running the audits after any dependency bump and updating this file the only thing
 > standing between a new advisory and a shipped artifact.
 
-**Reachability, once, up front — across the three JS trees.** The engine's production tree
-(`packages/engine/mcp-server`) and `eval/app` both audit clean — `found 0
-vulnerabilities` on `npm audit --omit=dev`. The only production-reachable findings
+**Reachability, once, up front — across the two JS trees.** The engine's production tree
+(`packages/engine/mcp-server`) audits clean — `found 0 vulnerabilities` on
+`npm audit --omit=dev`; `eval/app` is covered by the root `pnpm audit --prod`.
+The only production-reachable findings
 are `electron` and `extract-zip` in `apps/electron`, reached via
 `@electron-toolkit/utils` → `electron` (peer) → `extract-zip` (see the two
 paragraphs below). Everything else lives in **devDependencies** — dev tooling
@@ -197,7 +199,9 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 
 - **postcss** (HIGH GHSA-r28c-9q8g-f849 + HIGH GHSA-6g55-p6wh-862q + MODERATE
   GHSA-qx2v-qp2m-jg93) and **sharp** (HIGH GHSA-f88m-g3jw-g9cj, inherited libvips
-  CVEs) — `eval/app`. Fixed 2026-07-31 by npm `overrides`. **This supersedes the
+  CVEs) — `eval/app`. Fixed 2026-07-31 by npm `overrides`; those pins moved to
+  root `pnpm.overrides` in #1488, because pnpm ignores a workspace member's own
+  `overrides` block **silently** — check with `pnpm why sharp`. **This supersedes the
   earlier deferral of the postcss finding**, whose stated cost no longer holds (see
   below). `next` pins `postcss` at exactly `8.4.31` and `sharp` at `^0.34.3`, and
   **upgrading `next` does not help** — `next@16.2.12` still pins postcss `8.4.31`

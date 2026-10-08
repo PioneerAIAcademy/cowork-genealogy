@@ -1,6 +1,6 @@
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "../utils/http.js";
-import { standardPlaceToPlaceId } from "../utils/place-resolver.js";
+import { resolveStandardPlaceToPlaceId, ambiguousPlaceError } from "../utils/place-resolver.js";
 import {
   stageSearchResults,
   unloggedStagedSearches,
@@ -139,13 +139,17 @@ export async function externalLinksSearchTool(
 
   // Resolve the standard place name to a FamilySearch placeId only after the
   // cheap guards, so malformed input never hits the network.
-  const placeId = await standardPlaceToPlaceId(standardPlace);
-  if (!placeId) {
+  const resolution = await resolveStandardPlaceToPlaceId(standardPlace);
+  if (resolution.kind === "ambiguous") {
+    throw ambiguousPlaceError(standardPlace, resolution.candidates);
+  }
+  if (resolution.kind === "unresolved") {
     throw new Error(
       `Could not resolve "${standardPlace}" to a FamilySearch place. ` +
         "Use place_search to get a standard place name first."
     );
   }
+  const placeId = resolution.placeId;
 
   // The curated set per place is small; fetch every page so the returned set is
   // complete (no caller cursor — the tool filters client-side and returns the

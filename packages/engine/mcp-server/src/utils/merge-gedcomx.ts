@@ -97,12 +97,16 @@ function mergeCrossDocument(
       if (!surv.gender && content.gender) surv.gender = content.gender;
       if (content.names.length) (surv.names ??= []).push(...content.names);
       if (content.facts.length) (surv.facts ??= []).push(...content.facts);
+      if (content.sources.length) {
+        surv.sources = dedupSourceRefs([...(surv.sources ?? []), ...content.sources]);
+      }
     } else {
       const carried: SimplifiedPerson = { id: personIdMap.get(person.id) };
       if (content.ark !== undefined) carried.ark = content.ark;
       if (content.gender !== undefined) carried.gender = content.gender;
       if (content.names.length) carried.names = content.names;
       if (content.facts.length) carried.facts = content.facts;
+      if (content.sources.length) carried.sources = dedupSourceRefs(content.sources);
       result.persons.push(carried);
     }
   }
@@ -156,6 +160,9 @@ function mergeSameDocument(
     if (!surv.gender && coll.gender) surv.gender = coll.gender;
     if (coll.names?.length) (surv.names ??= []).push(...structuredClone(coll.names));
     if (coll.facts?.length) (surv.facts ??= []).push(...structuredClone(coll.facts));
+    if (coll.sources?.length) {
+      surv.sources = dedupSourceRefs([...(surv.sources ?? []), ...coll.sources]);
+    }
   }
 
   const collapsedIds = new Set(merges.map(([, c]) => c));
@@ -191,14 +198,14 @@ interface PersonContent {
   gender?: string;
   names: SimplifiedName[];
   facts: SimplifiedFact[];
+  sources: SimplifiedSourceReference[];
 }
 
 /**
- * Clone a candidate person's names/facts with fresh N/F ids and source refs
- * rewritten through `sourceIdMap`. The id itself is assigned by the caller
- * (survivor id for a collapse, fresh I id for a carry). Person-level
- * `sources` are not part of the tree format and are not carried (the tool
- * layer strips them from candidates before the merge).
+ * Clone a candidate person's names/facts with fresh N/F ids and every source
+ * ref (names, facts, and the person's own `sources`) rewritten through
+ * `sourceIdMap`. The id itself is assigned by the caller (survivor id for a
+ * collapse, fresh I id for a carry).
  */
 function remapPersonContent(
   person: SimplifiedPerson,
@@ -217,7 +224,8 @@ function remapPersonContent(
     if (c.sources) c.sources = remapSourceRefs(c.sources, sourceIdMap);
     return c;
   });
-  return { ark: person.ark, gender: person.gender, names, facts };
+  const sources = person.sources ? remapSourceRefs(person.sources, sourceIdMap) : [];
+  return { ark: person.ark, gender: person.gender, names, facts, sources };
 }
 
 /** Clone a candidate relationship with a fresh R id and all refs repointed. */

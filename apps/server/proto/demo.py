@@ -17,8 +17,8 @@ so the run is the research workflow, not a lookup of the answer the live tree st
 The deadline defaults to two shim ceilings plus slack (``READ_TIMEOUT_S`` is 1800 s per
 attempt, on which the shim kills the worker and requeues at once -- a turn past 1800 s is
 resumed by design, and a one-ceiling deadline would report FAIL as attempt 2 began; the
-D18 arm, ``make proto-demo-auto``, runs the shim at 7200 s and passes its own
-``--deadline-s`` sized the same way). The printed ``receive_count`` says whether the shim
+D18 arm, ``make proto-demo-auto``, runs the shim at the same 1800 s and passes its own
+``--deadline-s`` sized for six attempts). The printed ``receive_count`` says whether the shim
 intervened.
 
 Exit 0 when ``turn_done`` arrived, criterion 3 is PASS, no FamilySearch tool answered with
@@ -50,13 +50,13 @@ from proto import audit, seed, turn  # noqa: E402
 DEFAULT_FIXTURE = "bagley-father-1884"
 DEFAULT_DEADLINE_S = 3900.0  # 2 x the shim's 1800 s per-attempt ceiling, plus slack
 # What the engine's auth module actually says when the bearer is missing, expired or rejected
-# (src/auth/refresh.ts, the hosted message) -- not turn.REAUTH, whose `log ?in|authenticat`
-# also matches "the Login family" and "Authenticated copy" in record text.
-REAUTH = re.compile(r"Call the login tool|Reconnect FamilySearch|unauthori[sz]ed|\b401\b", re.I)
+# -- turn.REAUTH_HITS, owned by turn.py since the kill arm reads it too (U3).
+REAUTH = turn.REAUTH_HITS
 # Transient web-tier faults a 65-minute poll must ride out rather than die on.
 TRANSIENT = (httpx.HTTPError, ValueError, KeyError)
 
 Query = tuple[str, str, tuple]
+CEILING_S = 1800  # the per-attempt step ceiling a production run must outlast on one receive (U5)
 
 
 # -- pure seams -------------------------------------------------------------------------------
@@ -101,6 +101,12 @@ def acceptance_queries(turn_id: str, session_id: str, project_id: str) -> list[Q
          "WHERE turn_id = %s GROUP BY tool_name, decision ORDER BY n DESC, tool_name", (turn_id,)),
         ("tokens (D18): the turn's usage columns",
          f"SELECT {', '.join(turn.TOKEN_COLUMNS)} FROM turns WHERE turn_id = %s", (turn_id,)),
+        ("unmapped model id (P3h): delegations that ran as the general-purpose stand-in -- expect 0",
+         "SELECT count(*) AS n FROM tool_calls WHERE turn_id = %s AND agent_type = 'general-purpose'", (turn_id,)),
+        (f"U5 (a): a run past {CEILING_S} s on its first receive -- expect receive_count 1 and wall_s over {CEILING_S}",
+         "SELECT receive_count, round(extract(epoch FROM completed_at - claimed_at)) AS wall_s, "
+         f"receive_count = 1 AND completed_at - claimed_at > interval '{CEILING_S} seconds' AS passed "
+         "FROM turns WHERE turn_id = %s", (turn_id,)),
     ]
 
 
@@ -115,6 +121,13 @@ def render_query(label: str, sql: str, params: tuple, rows: list[tuple]) -> str:
     else:
         lines.append("   (no rows)")
     return "\n".join(lines)
+
+
+def turn_max_nudges(dsn: str, turn_id: str) -> str | None:
+    """The ``max_nudges`` the web tier put in the turn's message (1a's carrier): what the
+    worker ran under, read from the row, so a deployed tier's environment need not be local."""
+    got = rows(dsn, "SELECT message->>'max_nudges' FROM turns WHERE turn_id = %s", (turn_id,))
+    return got[0][0] if got else None
 
 
 def autonomous_arm(cap: str | None) -> bool:
@@ -168,12 +181,7 @@ def project_status(dsn: str, project_id: str) -> str | None:
     return found[0][0] if found else None
 
 
-def reauth_hits(dsn: str, session_id: str, since_seq: int) -> list[str]:
-    """tool_result summaries after ``since_seq`` matching ``REAUTH`` -- what a FamilySearch tool
-    answers when its bearer is empty or rejected."""
-    found = rows(dsn, "SELECT payload->>'summary' FROM session_events WHERE session_id = %s AND seq > %s "
-                      "AND kind = 'tool_result' ORDER BY seq", (session_id, since_seq))
-    return [s or "" for (s,) in found if REAUTH.search(s or "")]
+reauth_hits = turn.reauth_hits
 
 
 def reply_text(dsn: str, session_id: str, turn_id: str) -> tuple[int, str]:
@@ -207,12 +215,10 @@ def wait_turn_done(client: httpx.Client, base: str, session_id: str, turn_id: st
 
 def preflight(base: str, dsn: str) -> str | None:
     try:
-        health = httpx.get(f"{base}/api/health", timeout=5.0).json()
+        httpx.get(f"{base}/api/health", timeout=5.0).json()
         rows(dsn, "SELECT 1", ())
     except Exception as exc:  # noqa: BLE001
         return f"stack not up ({type(exc).__name__}: {exc}); run `make proto-up` first"
-    if health.get("queue") == "NullQueue":
-        return "the tier has no queue (NullQueue): nothing would run the turn"
     return None
 
 
@@ -226,8 +232,9 @@ def seed_session(args: argparse.Namespace) -> tuple[str, str, dict]:
     rc = seed.seed(files, project_id=project_id, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
     if rc != 0:
         raise RuntimeError(f"seed exited {rc}")
-    r = httpx.post(f"{args.base}/api/sessions", json={"title": title, "project_id": project_id}, timeout=10.0)
-    r.raise_for_status()
+    with turn.signed_in_client(args.base, args.email, timeout=10.0) as client:
+        r = client.post("/api/sessions", json={"title": title, "project_id": project_id})
+        r.raise_for_status()
     return r.json()["id"], project_id, meta
 
 
@@ -262,7 +269,7 @@ def run(args: argparse.Namespace) -> int:
                        (project_id,), rows(args.pg_dsn, section_counts_sql(), (project_id,))))
     print()
 
-    with httpx.Client(timeout=30.0) as client:
+    with turn.signed_in_client(args.base, args.email) as client:
         try:
             turn_id = turn.post_message(client, args.base, session_id, prompt)
         except httpx.HTTPError as exc:
@@ -283,7 +290,8 @@ def run(args: argparse.Namespace) -> int:
     print(reply or "   (no text events yet)")
     print()
     nudged = rows(args.pg_dsn, "SELECT nudges FROM turns WHERE turn_id = %s", (turn_id,))
-    print(nudges_line(nudged[0][0] if nudged else None, os.environ.get("AUTONOMOUS_MAX_NUDGES")))
+    cap = turn_max_nudges(args.pg_dsn, turn_id) or os.environ.get("AUTONOMOUS_MAX_NUDGES")
+    print(nudges_line(nudged[0][0] if nudged else None, cap))
     print()
 
     for label, sql, params in acceptance_queries(turn_id, session_id, project_id):
@@ -298,14 +306,14 @@ def run(args: argparse.Namespace) -> int:
 
     hits = reauth_hits(args.pg_dsn, session_id, since)
     if hits:
-        print("VOID: a FamilySearch tool answered with the reconnect instruction (the token expired) --")
-        print("      make proto-token, then a new session")
+        print("VOID: a FamilySearch tool answered with the reconnect instruction -- the grant was refused or")
+        print("      is missing: make proto-grant, then a new session")
         for h in hits[:3]:
             print(f"      {h[:160]!r}")
         print()
 
     status = project_status(args.pg_dsn, project_id)
-    autonomous = autonomous_arm(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
+    autonomous = autonomous_arm(cap)
     code = verdict(done, a.criterion_3_ok, bool(hits), autonomous=autonomous, completed=status == "completed")
     print(f"demo: {'PASS' if code == 0 else 'FAIL'}  turn_done={done} criterion_3={'PASS' if a.criterion_3_ok else 'FAIL'} "
           f"reauth_hits={len(hits)} project.status={status}"
@@ -325,6 +333,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--prompt", default=None, help="the opening prompt; default the fixture's researcher_question")
     p.add_argument("--session", default=None, help="drive this seeded session instead of seeding (proto/seed.py)")
     p.add_argument("--base", default="http://127.0.0.1:8085")
+    p.add_argument("--email", default=turn.DEV_LOGIN_EMAIL,
+                   help="dev-login as this patron; --session must be one this patron owns")
     p.add_argument("--pg-dsn", default="postgresql://postgres:proto@localhost:5434/proto")
     p.add_argument("--s3-endpoint", default="http://localhost:9000")
     p.add_argument("--deadline-s", type=float, default=DEFAULT_DEADLINE_S, help="wall clock before turn_done is a FAIL")
@@ -333,6 +343,10 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     args.fixture_given = args.fixture is not None
     args.fixture = args.fixture or DEFAULT_FIXTURE
+    problem = turn.require_grant(args.pg_dsn, args.email)
+    if problem:
+        print(f"demo: {problem}", file=sys.stderr)
+        return 2
     return run(args)
 
 

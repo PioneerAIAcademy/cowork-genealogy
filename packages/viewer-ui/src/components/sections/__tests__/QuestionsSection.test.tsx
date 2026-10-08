@@ -38,6 +38,20 @@ describe('QuestionsSection', () => {
     ).toBeInTheDocument()
   })
 
+  it('says "all reachable searched", once, for a question declared searched', () => {
+    mockResearch()
+    render(<QuestionsSection />)
+    expect(screen.getAllByText('all reachable searched')).toHaveLength(1)
+    expect(screen.queryByText('exhaustive')).toBeNull()
+  })
+
+  it('does not repeat the badge when the status already says it', () => {
+    const q = patrickFlynnResearch.questions.find((x) => x.id === 'q_002') as Question
+    mockResearch({ questions: [{ ...q, status: 'exhaustive_declared' }] })
+    render(<QuestionsSection />)
+    expect(screen.getAllByText('all reachable searched')).toHaveLength(1)
+  })
+
   it('shows the empty state when there are no questions', () => {
     mockResearch({ questions: [] })
     render(<QuestionsSection />)

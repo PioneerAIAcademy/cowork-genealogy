@@ -4,18 +4,10 @@
  * dev/smoke-calls.ts, so the dispatch chain in src/server.ts — which no
  * vitest file imports — is exercised end to end: the principal binding, the
  * ProjectStore-backed writers, and the two tools the e2e corpus never calls
- * (`project_create`, `tree_forget`).
+ * (`project_create`, `tree_forget`). Every call passes a fresh temp dir as its
+ * projectPath, removed afterwards.
  *
- *   npm run build && npx tsx dev/smoke-stdio.ts            # build/index.js, file backend
- *   make engine-smoke-stdio-pg                             # build/hosted-stdio.js, Postgres + minio
- *
- *   SMOKE_ENTRY         the entrypoint to fork (default build/index.js)
- *   SMOKE_PROJECT_PATH  the projectPath every call passes, verbatim (default: a
- *                       fresh temp dir, removed afterwards; the hosted entrypoint
- *                       wants its anchor, /project, which is not a directory here)
- *   GENEALOGY_*, FS_ACCESS_TOKEN, WIKI_API_URL, POP_STATS_URL, OPENROUTER_*
- *                       passed through to the child (the SDK's transport forwards
- *                       only a fixed safe list of variables by default)
+ *   npm run build && npx tsx dev/smoke-stdio.ts            # or: make engine-smoke-stdio
  *
  * Exit 0 with one line per call on success; exit 1 naming every failure.
  * No FamilySearch credentials and no network — `auth_status` merely reports.
@@ -23,20 +15,17 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import {
-  anchoredProject,
   assertCoverage,
   callViaClient,
   prepareProject,
   printHeader,
   report,
   runPlan,
-  type PreparedProject,
   type SmokeCtx,
 } from "./smoke-calls.js";
 
-const entry = process.env.SMOKE_ENTRY ?? "build/index.js";
-const requestedPath = process.env.SMOKE_PROJECT_PATH;
-const project: PreparedProject = requestedPath ? anchoredProject(requestedPath) : await prepareProject();
+const entry = "build/index.js";
+const project = await prepareProject();
 const ctx: SmokeCtx = {
   mode: "no-bearer",
   projectPath: project.projectPath,
@@ -46,17 +35,10 @@ const ctx: SmokeCtx = {
   values: {},
 };
 
-const PASS_THROUGH = /^(GENEALOGY_|OPENROUTER_|FS_ACCESS_TOKEN$|WIKI_API_URL$|POP_STATS_URL$)/;
-const childEnv: Record<string, string> = {};
-for (const [key, value] of Object.entries(process.env)) {
-  if (PASS_THROUGH.test(key) && value !== undefined) childEnv[key] = value;
-}
-
 const client = new Client({ name: "smoke-stdio", version: "0" });
 const transport = new StdioClientTransport({
   command: "node",
   args: [entry],
-  env: childEnv,
   stderr: "inherit",
 });
 

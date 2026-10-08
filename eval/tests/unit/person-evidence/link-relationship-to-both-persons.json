@@ -8,7 +8,7 @@
     "tags": ["person-evidence", "multi-person-awareness", "relationship-assertion", "pe_004", "a_010"]
   },
   "input": {
-    "user_message": "person-evidence: Assertion a_010 (the 1860 census placing Patrick in Thomas's household) is linked to Patrick via pe_004 but not to Thomas. Add the missing person_evidence link from a_010 to Thomas, or confirm one already exists.",
+    "delegation": "person-evidence: Assertion a_010 (the 1860 census placing Patrick in Thomas's household) is linked to Patrick via pe_004 but not to Thomas. Add the missing person_evidence link from a_010 to Thomas, or confirm one already exists.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

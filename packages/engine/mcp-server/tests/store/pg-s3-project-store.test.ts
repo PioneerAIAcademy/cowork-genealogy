@@ -1,31 +1,36 @@
-import { describe, it, expect, afterAll, beforeAll } from "vitest";
+import { describe, it, expect, afterAll, afterEach, beforeAll, vi } from "vitest";
 import { createHash, randomUUID } from "node:crypto";
+import { EventEmitter } from "node:events";
+import http from "node:http";
 import net from "node:net";
+import pg from "pg";
 import {
   CreateBucketCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import {
   createPgS3Backend,
   PgS3ProjectStore,
+  READY_TIMEOUT_MS,
   type PgS3Backend,
 } from "../../src/store/pg-s3-project-store.js";
 import { runProjectStoreConformance, type StoreFixture } from "./conformance.js";
+import { protoBackendOptions, PROTO_S3_KEYLESS } from "./pg-s3-test-env.js";
 
 // The Postgres/S3 backend against a live stack: `make proto-store-test` starts
 // the compose postgres + minio and sets these. Without them the file registers
 // one skipped suite whose name says so, so a plain `npm test` stays green and
 // still shows that this backend was not exercised. The cases that need no
-// stack — the projectId guard and the two timeouts — run either way.
+// stack — the projectId guard, the two timeouts, the credential chain and the
+// readiness probe's failure paths — run either way.
 
 const DSN = process.env.PROTO_PG_DSN;
 const ENDPOINT = process.env.PROTO_S3_ENDPOINT;
 const BUCKET = process.env.PROTO_S3_BUCKET ?? "projects";
-const ACCESS_KEY = process.env.PROTO_S3_ACCESS_KEY ?? "proto";
-const SECRET_KEY = process.env.PROTO_S3_SECRET_KEY ?? "protoproto";
 
 const ANCHOR = "/project";
 const MISSING = "/elsewhere";
@@ -44,6 +49,29 @@ describe("PgS3ProjectStore without a stack", () => {
     secretAccessKey: "y",
     forcePathStyle: true,
   };
+
+  // Every variable that sends the SDK default chain somewhere other than the
+  // `AWS_*` key pair, cleared: this laptop's ~/.aws, a container credentials
+  // URI, a web-identity token, and — unless a case asks for it — instance
+  // metadata (which answers on Azure runners). Undone by vi.unstubAllEnvs().
+  function isolateChain({ metadata = false } = {}): void {
+    for (const name of [
+      "AWS_ACCESS_KEY_ID",
+      "AWS_SECRET_ACCESS_KEY",
+      "AWS_SESSION_TOKEN",
+      "AWS_PROFILE",
+      "AWS_CONTAINER_CREDENTIALS_FULL_URI",
+      "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
+      "AWS_WEB_IDENTITY_TOKEN_FILE",
+    ]) {
+      vi.stubEnv(name, undefined);
+    }
+    vi.stubEnv("AWS_SHARED_CREDENTIALS_FILE", "/nonexistent");
+    vi.stubEnv("AWS_CONFIG_FILE", "/nonexistent");
+    vi.stubEnv("AWS_EC2_METADATA_DISABLED", metadata ? undefined : "true");
+  }
+
+  const keyless = { endpoint: s3.endpoint, bucket: s3.bucket, forcePathStyle: s3.forcePathStyle };
 
   it("rejects a projectId that cannot be an S3 key prefix on its own", async () => {
     const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
@@ -76,10 +104,216 @@ describe("PgS3ProjectStore without a stack", () => {
     }
   });
 
+  describe("readiness", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("fails both checks with a label, not a message, when neither store is reachable", async () => {
+      const lines: string[] = [];
+      vi.spyOn(process.stderr, "write").mockImplementation((chunk: any) => {
+        lines.push(String(chunk));
+        return true;
+      });
+      const backend = createPgS3Backend({ dsn: "postgresql://ready-user:ready-pw@127.0.0.1:1/z", s3 });
+      try {
+        const report = await backend.checkReady();
+        expect(report).toEqual({
+          ok: false,
+          checks: { postgres: { ok: false, error: "ECONNREFUSED" }, s3: { ok: false, error: "ECONNREFUSED" } },
+        });
+        // The first probe logs each check's state once; an unchanged second one logs nothing.
+        const logged = () => lines.filter((l) => l.startsWith("readiness:"));
+        expect(logged()).toHaveLength(2);
+        await backend.checkReady();
+        expect(logged()).toHaveLength(2);
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("an idle-client pool error does not throw", async () => {
+      vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+      try {
+        const e: NodeJS.ErrnoException = new Error("Connection terminated unexpectedly");
+        e.code = "ECONNRESET";
+        expect(() => backend.pool.emit("error", e)).not.toThrow();
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("a probe client that errors after connect does not throw", async () => {
+      vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+      // pg's socket-event path: connected, the query hangs, then the client
+      // emits 'error' (node_modules/pg/lib/client.js _handleErrorEvent). With no
+      // listener that emit is an uncaught exception, which fails the run.
+      const heard: number[] = [];
+      class ErroringClient extends EventEmitter {
+        async connect(): Promise<void> {
+          heard.push(this.listenerCount("error"));
+          setImmediate(() => this.emit("error", Object.assign(new Error("socket died"), { code: "ECONNRESET" })));
+        }
+        query(): Promise<never> {
+          return new Promise(() => {});
+        }
+        async end(): Promise<void> {}
+      }
+      // A constructor that returns its own object: `new` then yields the fake.
+      vi.spyOn(pg, "Client").mockImplementation(function () {
+        return new ErroringClient();
+      } as any);
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+      try {
+        const report = await backend.checkReady(300);
+        expect(report.checks.postgres).toEqual({ ok: false, error: "TimeoutError" });
+        expect(heard).toEqual([1]);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("an S3 probe does not queue behind the process client's held sockets", async () => {
+      vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+      // Smithy's default agent caps a handler at 50 sockets: hold that many
+      // GETs open on the process client, and answer HeadBucket at once.
+      let held = 0;
+      const holding = http.createServer((req, res) => {
+        if (req.method === "HEAD") {
+          res.writeHead(200).end();
+          return;
+        }
+        held++;
+      });
+      await new Promise<void>((resolve) => holding.listen(0, "127.0.0.1", resolve));
+      const port = (holding.address() as net.AddressInfo).port;
+      const backend = createPgS3Backend({
+        dsn: "postgresql://x:y@127.0.0.1:1/z",
+        s3: { ...s3, endpoint: `http://127.0.0.1:${port}` },
+      });
+      // Warm first: concurrent cold sends each build their own agent, which
+      // would hide the cap.
+      await backend.s3.send(new HeadBucketCommand({ Bucket: "b" }));
+      const transfers = Array.from({ length: 50 }, (_, i) =>
+        backend.s3.send(new GetObjectCommand({ Bucket: "b", Key: `k${i}` })).catch(() => {}),
+      );
+      try {
+        const deadline = Date.now() + 5000;
+        while (held < 50 && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(held).toBe(50);
+        const report = await backend.checkReady();
+        expect(report.checks.s3).toEqual({ ok: true });
+      } finally {
+        await backend.close();
+        holding.closeAllConnections();
+        await new Promise<void>((resolve) => holding.close(() => resolve()));
+        await Promise.all(transfers);
+      }
+    });
+
+    it("a failed S3 probe is not retried", async () => {
+      vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+      let requests = 0;
+      const unavailable = http.createServer((_req, res) => {
+        requests++;
+        res.writeHead(503).end();
+      });
+      await new Promise<void>((resolve) => unavailable.listen(0, "127.0.0.1", resolve));
+      const port = (unavailable.address() as net.AddressInfo).port;
+      const backend = createPgS3Backend({
+        dsn: "postgresql://x:y@127.0.0.1:1/z",
+        s3: { ...s3, endpoint: `http://127.0.0.1:${port}` },
+      });
+      try {
+        const report = await backend.checkReady();
+        expect(report.checks.s3.ok).toBe(false);
+        // The process client's default three attempts would land inside this wait.
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        expect(requests).toBe(1);
+      } finally {
+        await backend.close();
+        unavailable.closeAllConnections();
+        await new Promise<void>((resolve) => unavailable.close(() => resolve()));
+      }
+    });
+  });
+
+  describe("credentials", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("fails a keyless S3 call loudly and fast when no credential source exists", async () => {
+      isolateChain();
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: keyless });
+      try {
+        const t0 = Date.now();
+        // Credentials resolve before any socket opens, so nothing listens here.
+        await expect(
+          backend.s3.send(new HeadObjectCommand({ Bucket: "projects", Key: "p/x/y" })),
+        ).rejects.toMatchObject({ name: "CredentialsProviderError" });
+        expect(Date.now() - t0).toBeLessThan(3000);
+      } finally {
+        await backend.close();
+      }
+    }, 5000);
+
+    it("resolves keyless credentials from the SDK default chain", async () => {
+      isolateChain();
+      vi.stubEnv("AWS_ACCESS_KEY_ID", "envkey");
+      vi.stubEnv("AWS_SECRET_ACCESS_KEY", "envsecret");
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: keyless });
+      try {
+        const creds = await backend.s3.config.credentials();
+        expect(creds.accessKeyId).toBe("envkey");
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("signs with static keys over the default chain when both are given", async () => {
+      isolateChain();
+      vi.stubEnv("AWS_ACCESS_KEY_ID", "envkey");
+      vi.stubEnv("AWS_SECRET_ACCESS_KEY", "envsecret");
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+      try {
+        const creds = await backend.s3.config.credentials();
+        expect(creds.accessKeyId).toBe("x");
+      } finally {
+        await backend.close();
+      }
+    });
+
+    it("treats empty keys as absent and refuses exactly one", async () => {
+      isolateChain();
+      vi.stubEnv("AWS_ACCESS_KEY_ID", "envkey");
+      vi.stubEnv("AWS_SECRET_ACCESS_KEY", "envsecret");
+      const backend = createPgS3Backend({
+        dsn: "postgresql://x:y@127.0.0.1:1/z",
+        s3: { ...keyless, accessKeyId: "", secretAccessKey: "" },
+      });
+      try {
+        expect((await backend.s3.config.credentials()).accessKeyId).toBe("envkey");
+      } finally {
+        await backend.close();
+      }
+      for (const half of [{ accessKeyId: "x" }, { secretAccessKey: "y" }, { accessKeyId: "x", secretAccessKey: "" }]) {
+        expect(
+          () => createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: { ...keyless, ...half } }),
+          JSON.stringify(half),
+        ).toThrow(/set together/);
+      }
+    });
+  });
+
   describe("timeouts", () => {
     // A listener that accepts every connection and never sends a byte: the
     // stalled-host shape both clients would otherwise wait on forever.
+    let accepted = 0;
     const server = net.createServer((socket) => {
+      accepted++;
       sockets.add(socket);
       socket.on("close", () => sockets.delete(socket));
     });
@@ -131,6 +365,120 @@ describe("PgS3ProjectStore without a stack", () => {
         await backend.close();
       }
     }, 5000);
+
+    it("bounds a keyless S3 call whose instance-metadata lookup never answers", async () => {
+      isolateChain({ metadata: true });
+      vi.stubEnv("AWS_EC2_METADATA_SERVICE_ENDPOINT", `http://127.0.0.1:${port}`);
+      const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3: keyless });
+      const acceptedBefore = accepted;
+      try {
+        const t0 = Date.now();
+        // The 1 s metadata timeout, a v2 token request then the v1 fallback.
+        await expect(
+          backend.s3.send(new HeadObjectCommand({ Bucket: "projects", Key: "p/x/y" })),
+        ).rejects.toMatchObject({ name: "CredentialsProviderError" });
+        expect(Date.now() - t0).toBeLessThan(4000);
+        // The lookup reached the silent listener, not a real metadata service.
+        expect(accepted).toBeGreaterThan(acceptedBefore);
+      } finally {
+        await backend.close();
+        vi.unstubAllEnvs();
+      }
+    }, 6000);
+
+    /** A silent backend whose own timeouts are far longer than any readiness
+     *  deadline, so only the probe's race can bound it. */
+    function slowSilentBackend(s3Options: Partial<typeof s3> = s3): PgS3Backend {
+      return createPgS3Backend({
+        dsn: `postgresql://ready-user:ready-pw@127.0.0.1:${port}/x`,
+        s3: { ...s3, ...s3Options, endpoint: `http://127.0.0.1:${port}` },
+        timeouts: { connectMs: 10_000, s3RequestMs: 10_000 },
+      });
+    }
+
+    /** Neither label carries the DSN's user, password or host, or either key. */
+    function expectNoSecrets(report: unknown): void {
+      expect(JSON.stringify(report)).not.toMatch(/ready-user|ready-pw|127\.0\.0\.1|"x"|"y"/);
+    }
+
+    describe("readiness", () => {
+      beforeAll(() => {
+        vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+      });
+      afterAll(() => {
+        vi.restoreAllMocks();
+      });
+
+      it("checkReady fails both checks within the deadline against a silent host", async () => {
+        const backend = slowSilentBackend();
+        try {
+          const t0 = Date.now();
+          const report = await backend.checkReady(300);
+          expect(Date.now() - t0).toBeLessThan(500);
+          expect(report.ok).toBe(false);
+          expect(report.checks.postgres.ok).toBe(false);
+          expect(report.checks.s3.ok).toBe(false);
+          expectNoSecrets(report);
+        } finally {
+          await backend.close();
+        }
+      });
+
+      it("checkReady bounds a keyless probe whose instance-metadata lookup never answers", async () => {
+        isolateChain({ metadata: true });
+        vi.stubEnv("AWS_EC2_METADATA_SERVICE_ENDPOINT", `http://127.0.0.1:${port}`);
+        const backend = slowSilentBackend({ accessKeyId: undefined, secretAccessKey: undefined });
+        try {
+          const t0 = Date.now();
+          const report = await backend.checkReady(300);
+          expect(Date.now() - t0).toBeLessThan(500);
+          expect(report.checks.postgres.ok).toBe(false);
+          expect(report.checks.s3).toEqual({ ok: false, error: "TimeoutError" });
+          expectNoSecrets(report);
+        } finally {
+          await backend.close();
+          vi.unstubAllEnvs();
+        }
+      });
+
+      it("concurrent probes share one flight", async () => {
+        const one = slowSilentBackend();
+        const three = slowSilentBackend();
+        try {
+          let before = accepted;
+          await one.checkReady(300);
+          const perProbe = accepted - before;
+          expect(perProbe).toBeGreaterThan(0);
+
+          before = accepted;
+          const reports = await Promise.all([three.checkReady(300), three.checkReady(300), three.checkReady(300)]);
+          expect(accepted - before).toBe(perProbe);
+          expect(reports[1]).toBe(reports[0]);
+          expect(reports[2]).toBe(reports[0]);
+        } finally {
+          await one.close();
+          await three.close();
+        }
+      });
+
+      it("a probe after a timed-out one runs fresh", async () => {
+        const backend = slowSilentBackend();
+        try {
+          const first = await backend.checkReady(300);
+          expect(first.checks.postgres.ok).toBe(false);
+          const before = accepted;
+          const t0 = Date.now();
+          const second = await backend.checkReady(300);
+          expect(Date.now() - t0).toBeLessThan(500);
+          expect(second).not.toBe(first);
+          expect(second.ok).toBe(false);
+          // A new Postgres connection reached the silent listener.
+          expect(accepted).toBeGreaterThan(before);
+        } finally {
+          await backend.close();
+        }
+      });
+    });
   });
 });
 
@@ -142,16 +490,8 @@ if (!DSN || !ENDPOINT) {
     },
   );
 } else {
-  const backend: PgS3Backend = createPgS3Backend({
-    dsn: DSN,
-    s3: {
-      endpoint: ENDPOINT,
-      bucket: BUCKET,
-      accessKeyId: ACCESS_KEY,
-      secretAccessKey: SECRET_KEY,
-      forcePathStyle: true,
-    },
-  });
+  const backendOptions = protoBackendOptions();
+  const backend: PgS3Backend = createPgS3Backend(backendOptions);
 
   /** Every object key under a prefix, sorted. */
   async function keysUnder(prefix: string): Promise<string[]> {
@@ -223,6 +563,55 @@ if (!DSN || !ENDPOINT) {
 
     afterAll(async () => {
       await backend.close();
+    });
+
+    it(`signs with ${PROTO_S3_KEYLESS ? "the SDK default chain" : "static keys"} (PROTO_S3_KEYLESS)`, async () => {
+      if (PROTO_S3_KEYLESS) {
+        expect(backendOptions.s3).not.toHaveProperty("accessKeyId");
+        expect(backendOptions.s3).not.toHaveProperty("secretAccessKey");
+        expect((await backend.s3.config.credentials()).accessKeyId).toBe(process.env.AWS_ACCESS_KEY_ID);
+      } else {
+        expect(backendOptions.s3.accessKeyId).toBeTruthy();
+        expect(backendOptions.s3.secretAccessKey).toBeTruthy();
+        expect((await backend.s3.config.credentials()).accessKeyId).toBe(backendOptions.s3.accessKeyId);
+      }
+    });
+
+    describe("readiness", () => {
+      it("reports a healthy stack ready", async () => {
+        expect(await backend.checkReady()).toEqual({ ok: true, checks: { postgres: { ok: true }, s3: { ok: true } } });
+      });
+
+      it("missing table gives 503: a database without the store tables fails the Postgres check", async () => {
+        const scratch = `ready_${randomUUID().replace(/-/g, "")}`;
+        await backend.pool.query(`CREATE DATABASE ${scratch}`);
+        const dsn = new URL(backendOptions.dsn);
+        dsn.pathname = `/${scratch}`;
+        const empty = createPgS3Backend({ ...backendOptions, dsn: dsn.toString() });
+        try {
+          const report = await empty.checkReady();
+          expect(report.ok).toBe(false);
+          expect(report.checks.postgres.ok).toBe(false);
+          expect(report.checks.postgres.error).toMatch(/^schema: missing /);
+          expect(report.checks.postgres.error).toContain("documents");
+          expect(report.checks.s3).toEqual({ ok: true });
+        } finally {
+          await empty.close();
+          await backend.pool.query(`DROP DATABASE ${scratch} WITH (FORCE)`);
+        }
+      });
+
+      it("saturated pool still ready: every pool connection held, the probe still answers ok", async () => {
+        const held = await Promise.all(Array.from({ length: 10 }, () => backend.pool.connect()));
+        try {
+          expect(backend.pool.totalCount).toBe(10);
+          const t0 = Date.now();
+          expect((await backend.checkReady()).ok).toBe(true);
+          expect(Date.now() - t0).toBeLessThan(READY_TIMEOUT_MS);
+        } finally {
+          for (const c of held) c.release();
+        }
+      });
     });
 
     runProjectStoreConformance("PgS3ProjectStore", makeFixture);

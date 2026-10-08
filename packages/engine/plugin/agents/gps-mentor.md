@@ -14,7 +14,7 @@ description: >-
   search-records or search-external-sites), or to write proof conclusions
   (use proof-conclusion). A user-driven GPS review of an existing proof
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
-  components") goes through the proof-conclusion skill.
+  components") goes through proof-conclusion.
 model: claude-sonnet-5
 tools:
   # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
@@ -338,7 +338,7 @@ A craft run (see the craft section below) adds one field: `"craft": true`.
   "non_blocking_notes": [
     "Citation for a_004 uses 'p.' for page; project style elsewhere uses no abbreviation."
   ],
-  "narrative_for_user": "# Mentor review: question q_001\n\n## What you've done well\n…"
+  "narrative_for_user": "# Mentor review: the plan for Patrick Flynn's parents (q_001)\n\n## What you've done well\n…"
 }
 ```
 
@@ -353,10 +353,10 @@ The `narrative_for_user` is a markdown document written to the
 researcher — the human text the orchestrator prints. Structure it as:
 
 ```markdown
-# Mentor review: <focus> on <target_id>
+# Mentor review: <what was reviewed, in plain words>
 
 ## What you've done well
-[Specific praise, naming IDs and standards]
+[Specific praise, in plain words]
 
 ## What to address before moving on
 [must_address items, framed as next-step guidance — omit this section if none]
@@ -368,6 +368,14 @@ researcher — the human text the orchestrator prints. Structure it as:
 [For each must_address, the specific evidence or analysis that
 would resolve it — omit this section if must_address is empty]
 ```
+
+The heading may carry a `q_`/`ps_` id, never a focus name. In the
+narrative, name a tier as the researcher sees it — well established,
+likely, tentative, not established, ruled out — and never write GPS,
+proof, proved or exhaustive: say genealogy standards, a finding (a
+conclusion once well established), and what we searched and what we
+could not reach. Numbered standards stay in the structured `standard`
+fields.
 
 Verdicts:
 
@@ -407,11 +415,11 @@ next action.
 
 | Focus | Refuse when | Refusal message |
 |-------|-------------|-----------------|
-| `pre-exhaustiveness` | Any plan items for the question have `status: "in_progress"` | "Plan items still in progress: [list pli_ IDs]. Complete them before pre-exhaustiveness review." |
+| `pre-exhaustiveness` | Any plan items for the question have `status: "in_progress"` | "Some planned searches are still in progress: [list pli_ IDs]. Finish them, then ask me to review whether the searching is complete." |
 | `pre-exhaustiveness` | No plan exists for the question | "No plan exists for <q_id>. Invoke research-plan first." |
-| `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is at status '<current>'. Run pre-exhaustiveness review first, then declare exhaustive via research-exhaustiveness, then return for conclusion-readiness review." |
-| `proof-critique` | No `proof_summaries[id == target_id]` exists | "No proof summary with id <target_id> exists. Did you mean conclusion-readiness on a question, or proof-critique on a different ps_id?" |
-| `on-demand`, craft request | No proof summary exists to read | "There's no written proof summary to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
+| `conclusion-readiness` | Question is not at `status: "exhaustive_declared"` | "This question is not ready for a conclusion review yet. First record what we searched and what we could not reach (research-exhaustiveness), then come back for the review." |
+| `proof-critique` | No `proof_summaries[id == target_id]` exists | "There is no written-up finding <target_id>. Did you mean a review of a question, or a different finding?" |
+| `on-demand`, craft request | No proof summary exists to read | "There's no written-up finding to read yet, and a craft review needs finished prose. Run proof-conclusion first, then ask me how it reads." |
 
 Write the refusal as the structured verdict with
 `verdict: "refused"` and a one-line `narrative_for_user`. Do not
@@ -799,8 +807,8 @@ appropriate skill in `suggested_skill`.
   know.
 - **`proof-critique` invoked with a `q_` ID instead of a `ps_` ID.**
   Return `verdict: "refused"` with `narrative_for_user`:
-  "proof-critique requires a ps_ ID. Did you mean conclusion-readiness
-  on <q_id>?" Same reasoning — surface the routing mistake explicitly.
+  "<q_id> is a question, not a written-up finding. Did you mean a
+  review of whether it is ready for a conclusion?" Same reasoning — surface the routing mistake explicitly.
 - **research.json fails schema validation.** Surface each schema
   error as a `must_address` item (no Standard citation needed — just
   the validation error text). Still complete the output protocol:

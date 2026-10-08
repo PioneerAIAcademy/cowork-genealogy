@@ -5,10 +5,10 @@
     "name": "Pennsylvania anthracite coal mining context",
     "type": "positive",
     "description": "Different region/topic from the seed test (which covered Irish famine migration). Tests whether the skill can produce coal-industry context for a Schuylkill County ancestor whose occupation was mining.",
-    "tags": ["pennsylvania", "coal-mining", "occupation", "1850s"]
+    "tags": ["pennsylvania", "coal-mining", "occupation", "1850s", "direct-arm"]
   },
   "input": {
-    "user_message": "My ancestor was a coal miner in Schuylkill County, Pennsylvania in the 1850s. What historical context about the anthracite coal industry would be relevant to my research?",
+    "delegation": "My ancestor was a coal miner in Schuylkill County, Pennsylvania in the 1850s. What historical context about the anthracite coal industry would be relevant to my research?",
     "scenario": null
   },
   "mcp_fixtures": [

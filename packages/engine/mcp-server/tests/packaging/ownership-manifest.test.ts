@@ -75,6 +75,12 @@ interface OwnershipRow {
    * (`harness/ownership.py:writer_tool_sets`).
    */
   toolAuthorized?: string[];
+  /**
+   * Agent callers authorized on this row for the unit plane only.
+   * `listed_writers` (e2e) does not read this field; `writer_sets` (unit) does.
+   * Used when a skill→agent conversion should not widen e2e attribution.
+   */
+  unitCallers?: string[];
 }
 
 /**
@@ -155,6 +161,7 @@ const NON_DOCUMENT_STORE_WRITERS: Readonly<Record<string, string>> = {
   "utils/project-io.ts": "the document writers themselves (atomicWriteJson, atomicWriteBoth)",
   "utils/results-staging.ts": "results/ sidecars and their staging files",
   "utils/image-store.ts": "images/ blobs and their pruning",
+  "utils/browse-budget.ts": "results/image-browse.jsonl, the image cap's distinct-image log",
   "tools/rank-search-matches.ts": "the ranker's score log",
   "tools/research-log-append.ts": "removes the staged result it just logged",
   "utils/match-scores.ts": "results/.scores/ attestation files",
@@ -419,13 +426,33 @@ const pluginGrants = readPluginGrants();
  * Whether `row` names `holder` as a writer of it with `tool`.
  *
  * `callers` is a permission field and counts for every writer tool on its row —
- * that is what it means. `hookCallers` names the agent the plugin hook permits,
- * and the hook routes `research_append` alone, so it counts for that tool only.
- * An `agentCallers` entry counts only for the tools it names.
+ * that is what it means for a SKILL. `hookCallers` names the agent the plugin
+ * hook permits, and the hook routes `research_append` alone, so it counts for
+ * that tool only. An `agentCallers` entry counts only for the tools it names.
+ *
+ * **An `agent:` caller is tool-scoped, and has to be (issue #2822).** A
+ * converted skill's agent appears in `callers`, which `writer_sets`
+ * (`harness/ownership.py`) reads alongside `hookCallers` and `unitCallers`
+ * since issue #2821, so the unit plane can authorize the agent's writes on
+ * its own suite. But unlike a
+ * skill, an agent's lane is statically known: the plugin hook confines each
+ * agent's `research_append` to `AGENT_WRITABLE_SECTIONS`, so reading its
+ * `callers` entry as a claim on EVERY `writerTools` entry over-states it.
+ * `proof-conclusion` is the worked case: it writes tree `sources` with
+ * `tree_edit`/`tree_correct` and cannot reach it with `research_append` at all.
+ *
+ * A skill stays whole-row because the opposite is true of it — `reaches` cannot
+ * resolve a skill's `research_append` statically, so a per-tool reading there
+ * would assert something this file cannot see.
  */
 function listedOn(holder: string, tool: string, row: OwnershipRow): boolean {
   if (!row.writerTools.includes(tool)) return false;
-  if (row.callers.includes(holder)) return true;
+  if (row.callers.includes(holder)) {
+    if (!holder.startsWith("agent:") || holder === row.owner) return true;
+    // Tool-scoped: the agent's own `agentCallers` entry says which tools it
+    // actually reaches this row with. Absent an entry, it claims none.
+    return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
+  }
   if (tool === HOOK_ROUTED_TOOL && (row.hookCallers ?? []).includes(holder)) return true;
   return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
 }
@@ -982,11 +1009,18 @@ describe("ownership manifest — every name resolves", () => {
   });
 
   it("lists a non-null owner among its own callers", () => {
-    // `callers` is the set the checks enforce. An owner outside it is a
-    // declaration that the owning skill may not write its own section.
+    // The owner must appear in at least one caller field that `writer_sets`
+    // reads (callers, hookCallers, or unitCallers). An owner absent from all
+    // three is a declaration that the owning agent may not write its own section.
     const bad = rows
-      .filter((r) => r.owner !== null && !r.callers.includes(r.owner as string))
-      .map((r) => `${key(r)}: owner '${r.owner}' not in callers`);
+      .filter(
+        (r) =>
+          r.owner !== null &&
+          !r.callers.includes(r.owner as string) &&
+          !(r.hookCallers ?? []).includes(r.owner as string) &&
+          !(r.unitCallers ?? []).includes(r.owner as string),
+      )
+      .map((r) => `${key(r)}: owner '${r.owner}' not in callers, hookCallers, or unitCallers`);
     expect(bad).toEqual([]);
   });
 
@@ -1019,8 +1053,15 @@ describe("ownership manifest — every name resolves", () => {
   it("does not claim a plane for a row with no writers at all", () => {
     // A row nobody may write cannot be enforced: there is no correct call for
     // the check to permit, so claiming a plane overstates coverage.
+    // A row has writers if any of callers, hookCallers, or unitCallers is non-empty.
     const bad = rows
-      .filter((r) => r.callers.length === 0 && r.enforceableAt.length > 0)
+      .filter(
+        (r) =>
+          r.callers.length === 0 &&
+          (r.hookCallers ?? []).length === 0 &&
+          (r.unitCallers ?? []).length === 0 &&
+          r.enforceableAt.length > 0,
+      )
       .map((r) => key(r));
     expect(bad).toEqual([]);
   });
@@ -1090,6 +1131,9 @@ describe("ownership manifest — every name resolves", () => {
     // The walker names the FIELD; `subject_person_ids` lives inside `project`.
     const sectionOf = (f: string) => (f === "subject_person_ids" ? "project" : f);
     const written = new Set(union.map(sectionOf));
+    // warning_justifications is written through checkWarningGate (which
+    // merge_tree_persons calls), not through the person-id-refs walker.
+    written.add("warning_justifications");
 
     const declared = new Set(
       rows

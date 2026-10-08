@@ -8,11 +8,12 @@
     "tags": [
       "status",
       "blocked",
-      "multi-conflict"
+      "multi-conflict",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Give me the project status.",
+    "delegation": "Report where this research project stands: the user-friendly summary first, then the detailed GPS-state summary, with any integrity warnings surfaced above both, and the recommended next step.\n\nprojectPath: <workspace>",
     "scenario": "flynn-multi-conflict"
   },
   "judge_context": [

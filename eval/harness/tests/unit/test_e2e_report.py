@@ -57,6 +57,19 @@ def test_print_rollup_reports_cost_and_duration():
     assert "total: 30.0 min" in out
 
 
+def test_print_rollup_calls_cost_a_floor_when_a_run_resumed():
+    """#3128: a stall-resume starts a new CLI process, and its `total_cost_usd`
+    covers that process only."""
+    resumed = _make_result("a", "pass", cost=2.50, duration=600)
+    resumed.usage["resumes"] = 1
+    out = _capture([resumed, _make_result("b", "pass", cost=4.10, duration=1200)])
+    assert "1 resumed after a stall" in out
+    assert "resumed" not in _capture([_make_result("b", "pass", cost=4.10, duration=1200)])
+    costless = _make_result("c", "pass", duration=600)
+    costless.usage["resumes"] = 1
+    assert "resumed" not in _capture([costless, _make_result("b", "pass", cost=4.10, duration=1200)])
+
+
 def test_print_rollup_handles_missing_usage_fields():
     """Some runs may have no cost/duration (e.g., harness errored before
     the SDK returned). Roll-up should not crash."""
@@ -113,14 +126,31 @@ def test_a_judge_crash_outranks_skip_judge():
     assert "judge itself failed" in out
 
 
-def test_the_three_causes_are_mutually_distinguishable():
+def test_a_slept_run_is_not_reported_as_treeless():
+    """A `host_slept` run has a tree; the judge was skipped on purpose (#2974)."""
+    slept = E2eResult(
+        test_id="t", captured_at="2026-08-05_00-00-00", verdict="skipped",
+        stop_reason="host_slept", usage={}, judge_output={},
+    )
+    out = ungradeable_reason(slept)
+    assert "host slept" in out
+    assert "no final tree" not in out
+
+
+def test_the_four_causes_are_mutually_distinguishable():
     """The whole point: #1245 could not be diagnosed because they were not."""
     reasons = {
         ungradeable_reason(_skipped(judge_output={"error": "x"})),
         ungradeable_reason(_skipped(judge_output={})),
         ungradeable_reason(_skipped(judge_output={}), skip_judge=True),
+        ungradeable_reason(
+            E2eResult(
+                test_id="t", captured_at="2026-08-05_00-00-00", verdict="skipped",
+                stop_reason="host_slept", usage={}, judge_output={},
+            )
+        ),
     }
-    assert len(reasons) == 3
+    assert len(reasons) == 4
 
 
 def test_no_grade_is_ever_disclosed():

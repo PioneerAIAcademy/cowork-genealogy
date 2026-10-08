@@ -128,7 +128,7 @@ Steps:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `placeName` | string | Yes | Place name to search for. **Sanitized before it is sent** — `&` becomes the word `and`, and `?` `*` `#` `~` are dropped (see [step 1](#behavior) and the [API reference](#places_search_resource)). The caller's string is not echoed back; results reflect the sanitized query. A `placeName` that sanitizes to empty returns `[]`. |
+| `placeName` | string | Yes | Place name to search for. **Sanitized before it is sent** — `&` becomes the word `and`, and `?` `*` `#` `~` are dropped (see step 1 of `placeSearch` above and the [API reference](#places_search_resource)). The caller's string is not echoed back; results reflect the sanitized query. A `placeName` that sanitizes to empty returns `[]`. |
 | `contextName` | string | No | Higher-level place to disambiguate by; matched as a case-insensitive substring of each candidate's full name. If nothing matches, unfiltered results are returned. |
 
 ```json

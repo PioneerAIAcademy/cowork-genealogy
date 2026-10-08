@@ -5,10 +5,10 @@
     "name": "Valid evaluations[] entry passes cleanly (false-positive guard)",
     "type": "positive",
     "description": "Run schema validation against mid-research-flynn-with-evaluation, the clean scenario plus one well-formed evaluations[] entry (ev_001: focus 'on-demand', target_type 'question' -> q_001, verdict 'looks_solid', valid ISO timestamp, superseded_by null). The validator should return no errors. This is the only test that exercises the validateEvaluations code path — every prior positive test left evaluations[] empty — so it guards against false positives on the ev_ prefix, the evaluation enums, and target_id/superseded_by resolution.",
-    "tags": ["validation", "clean-data", "evaluations", "false-positive-avoidance"]
+    "tags": ["validation", "clean-data", "evaluations", "false-positive-avoidance", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-with-evaluation"
   },
   "judge_context": [

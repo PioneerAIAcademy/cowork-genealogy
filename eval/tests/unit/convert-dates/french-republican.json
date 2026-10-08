@@ -1,0 +1,20 @@
+{
+  "test": {
+    "id": "ut_convert_dates_017",
+    "skill": "convert-dates",
+    "name": "Convert French Republican date to Gregorian",
+    "type": "positive",
+    "description": "Convert a French Republican calendar date from a Nord civil birth record to its Gregorian equivalent. The date '11 Brumaire an VIII' should be converted to 2 November 1799 using the frenchRepublican correction. The agent should call convert_calendar with frenchRepublican: true, passing the year as a string or Roman numeral and the month as a name or number.",
+    "tags": ["french-republican", "requires-tool-conversion", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Convert this date from a French civil birth record in Nord: '11 Brumaire an VIII'. What is the Gregorian date?\n\nprojectPath: <workspace>",
+    "scenario": null
+  },
+  "judge_context": [
+    "The French Republican calendar was used in France from 1793 to 1805. 'Brumaire' is the 2nd month, and 'an VIII' is year 8.",
+    "11 Brumaire an VIII = 2 November 1799 (Gregorian). This is also the date of Napoleon's coup d'état (18 Brumaire is the famous one, but 11 Brumaire is the date given here).",
+    "The agent should call convert_calendar with corrections: { frenchRepublican: true } and present both the original Republican date and the converted Gregorian date.",
+    "The agent should preserve the original French Republican notation alongside the converted Gregorian date so the genealogist can verify."
+  ]
+}

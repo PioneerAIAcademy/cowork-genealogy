@@ -9,9 +9,8 @@
 // or a token (see "Non-FamilySearch ids" in the spec).
 
 import type { Principal } from "../auth/principal.js";
-import { getValidToken } from "../auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithRetry } from "../utils/http.js";
+import { fsFetch } from "../utils/fs-fetch.js";
 import { isFamilySearchPersonId } from "../utils/fs-id.js";
 import { toArk } from "../utils/ark.js";
 import { preferredName } from "../utils/name-helpers.js";
@@ -82,14 +81,13 @@ function categoryScore(block: FSCategoryScore | undefined): number | null {
 // Fetch the score, handling error statuses and polling through the
 // CALCULATING state until the score is ready (or attempts run out).
 async function fetchScores(
-  token: string,
+  principal: Principal,
   url: string,
   personId: string,
 ): Promise<FSQualityResponse> {
   for (let attempt = 1; attempt <= CALC_MAX_ATTEMPTS; attempt++) {
-    const res = await fetchWithRetry(url, {
+    const res = await fsFetch(principal, url, {
       headers: {
-        Authorization: `Bearer ${token}`,
         "User-Agent": BROWSER_USER_AGENT,
         Accept: "application/json",
       },
@@ -416,12 +414,11 @@ export async function personQualityTool(
   if (target.kind === "answer") return target.result;
   const personId = target.familySearchId;
 
-  const token = await getValidToken(principal);
   const url = `${HOST}/service/tree/tree-data/quality/person/${encodeURIComponent(
     personId,
   )}/scores`;
 
-  const body = await fetchScores(token, url, personId);
+  const body = await fetchScores(principal, url, personId);
   const scores = body.personScores;
 
   // No personScores (and not CALCULATING — handled in fetchScores). Two known

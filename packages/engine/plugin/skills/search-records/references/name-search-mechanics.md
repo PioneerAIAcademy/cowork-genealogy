@@ -1,44 +1,22 @@
 # Name Search Mechanics — FamilySearch Records API
 
 Reference for constructing name parameters in `record_search` queries.
-Examples are written in the upstream API's own `q.*` syntax; the tool
-takes **camelCase** parameters. Crosswalk:
-
-| API syntax | `record_search` parameter |
-|---|---|
-| `q.surname` / `q.givenName` | `surname` / `givenName` |
-| `q.surname.1` / `q.givenName.1` | `surnameAlt` / `givenNameAlt` |
-| `q.surname.exact=on` | `surnameExact: true` |
-| `q.givenName.exact=on` | `givenNameExact: true` |
-| `q.surname.exact.1=on` | covered by `surnameExact` when `surnameAlt` is set |
-| `q.<relative>GivenName` / `q.<relative>Surname` | `<relative>GivenName` / `<relative>Surname` — `spouse`, `father`, `mother`, `parent`, `other` |
-| `q.sex` | `sex` |
-
-**`surnameExact` and `givenNameExact` are narrower than they sound and
-are usually the wrong reach** — they change how many results come back,
-they re-shuffle the ones they keep, and on a misspelled
-index they can drop the
-target outright. See "Default fuzzy matching" below and
-`docs/specs/record-search-tool-spec-v2.md` § "What `.exact=on` actually
-does" (repo-side; not readable from here — the summary below is the
-operative version).
+Parameters are the tool's own camelCase names. The `*Exact` toggles are
+described on the tool itself — read them there.
 
 ## Wildcards
 
 | Wildcard | Meaning | Rules |
 |---|---|---|
 | `*` | Zero or more characters | Allowed at start, middle, or end (`*bou` is valid — measured). |
-| `?` | Exactly one character | May appear at any position (e.g., `q.surname=Sm?th`). |
+| `?` | Exactly one character | May appear at any position (e.g., `surname=Sm?th`). |
 
-**Constraints — two long-standing ones did not survive measurement:**
-- ~~Minimum 3 non-wildcard letters per name field~~ — **not enforced.** A
-  two-letter stem (`Sm*`) was accepted and expanded *more* broadly than a
-  three-letter one (`Smi*`), which is the comparison that shows the wildcard was
-  honoured rather than quietly dropped.
-- ~~Up to four `*` per name field~~ — **not enforced.** A five-star pattern was
-  accepted and returned a different count from its four-star prefix, so the
-  fifth star bound.
-- **Wildcards + `.exact=on`: the wildcard still expands, and the variant
+**Constraints.** Four long-standing ones did not survive measurement and have
+been deleted rather than carried struck through: a three-letter minimum per
+name field, a four-`*` cap, wildcards being disabled in Ellis Island
+collections, and wildcards working only at the innermost place level. None is
+enforced. What measurement did establish:
+- **Wildcards + `Exact: true`: the wildcard still expands, and the variant
   interpretation is what switches off.** Now measured rather than asserted, by
   reading whole pools rather than sampling them: in a scope small enough to read
   in full, a fuzzy `Smith` search contained every one of the `Smyth` records in
@@ -46,23 +24,10 @@ operative version).
   `surnameExact` contained them all again. So exactness removes the spelling
   variants and leaves the pattern match intact — the two mechanisms are
   independent.
-- ~~Wildcards disabled in Ellis Island collections~~ — **refuted.** Inside the
-  Ellis Island passenger collection, a one-character wildcard on a rare surname
-  returns both spellings it can match, and every record of the bound spelling
-  reappears in the wildcard's results — checked by reading both sets in full,
-  not by sampling them. Wildcards work there; use them.
-- ~~In place parameters, wildcards work only in the innermost jurisdiction
-  level~~ — **refuted, and the rule has the wrong shape.** A wildcard placed at
-  the innermost, middle, or outermost level of a place string returns the same
-  total to within a rounding error, so the level is irrelevant. It is not simply
-  ignored either — a wildcarded place still filters hard, and to something much
-  narrower than the same place written literally. What it actually resolves to is
-  **not established**, so treat a wildcard in a place parameter as unpredictable
-  and prefer an explicit place name.
 
-## Default fuzzy matching (without `.exact=on`)
+## Default fuzzy matching (without `Exact: true`)
 
-Without `.exact=on`, the API auto-applies:
+Without `Exact: true`, the API auto-applies:
 - **Diacritic stripping:** "RENÉE" matches "Renee"
 - **Case insensitivity**
 - **Space/punctuation ignored:** "MacDonald" = "Mac Donald";
@@ -83,7 +48,7 @@ Without `.exact=on`, the API auto-applies:
   should stay fuzzy.
 - **Soundex** is part of default fuzzy (no separate toggle)
 
-Adding `.exact=on` to a name parameter disables all of the above for
+Adding `Exact: true` to a name parameter disables all of the above for
 that parameter. Each parameter can be set to exact independently
 (e.g., exact surname with fuzzy given name). **Disabling it is rarely
 what you want:** it narrows the count, and it re-shuffles the records it
@@ -106,10 +71,10 @@ claim.
 
 ## Initials
 
-- `q.givenName=J*` — the three-letter minimum this once cited is **not enforced** (see Constraints above; measured on `q.surname`). Whether a one-letter given-name stem behaves the same was not measured.
-- `q.givenName=J W` works as a literal match against records indexed
+- `givenName=J*` — the three-letter minimum this once cited is **not enforced** (see Constraints above; measured on `surname`). Whether a one-letter given-name stem behaves the same was not measured.
+- `givenName=J W` works as a literal match against records indexed
   with initials
-- `.exact=on` on the given name keeps only records indexed in that literal
+- `Exact: true` on the given name keeps only records indexed in that literal
   initials form — useful in census and directory collections, and empty in
   collections that spell names out. Start fuzzy; add it to cut the pool once
   you know the index uses initials
@@ -120,13 +85,12 @@ The given-name parameter is multi-token. Search order is ignored
 (with single surname). Include middle name when known — some records
 index "John W. Smith" only as "John W" or "John William."
 
-## Quoted values
-
-When a name value contains a space, quote it in the API parameter:
-`q.givenName="Sally Mae"`. Single-token names need no quotes.
+## Unsupported syntax
 
 **Boolean AND/OR/NOT and plus/minus operators are NOT supported** in
-indexed Records search parameters.
+indexed Records search parameters. Quoting a multi-word value does nothing
+either: the server strips the quote character before matching (measured —
+an unbalanced quote returns the bare total), so send the value as written.
 
 ## Common indexing error patterns
 
@@ -152,8 +116,8 @@ Use wildcards to compensate.
 - Suffixes (Jr., Sr., II, III) commonly dropped — search without
 - Prefixes (von, van, de, Mc/Mac) normalized or dropped — try with
   and without; try contracted (M' for Mc) and expanded forms
-- Hispanic dual surnames misordered — try `q.surname=García` and
-  `q.surname=López` separately
+- Hispanic dual surnames misordered — try `surname=García` and
+  `surname=López` separately
 - Female names: US records use married surname; Spanish/Italian
   preserve maiden; Quaker/Scandinavian use patronymics
 - "Willm" / "Will'm" may not standardize to William — search both

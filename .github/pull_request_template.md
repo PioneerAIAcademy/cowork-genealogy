@@ -38,8 +38,8 @@
      "Nothing" is the common answer. PLAN.md is gitignored, so this line is
      the only way a deviation reaches your reviewer.
 
-     Hit the step-4 stop rule (schema, auth, an ADR reversal, anything hard
-     to undo)? Say so here and name the message where you raised it. -->
+     Hit the step-4 stop rule (a schema change other than a new optional
+     field, auth, an ADR reversal, anything hard to undo)? Say so here and name the message where you raised it. -->
 
 **Didn't change:**
 
@@ -89,7 +89,8 @@
       Windows: `RunTests.bat` — and committed the run log **and its
       `.ann.json`** under `eval/runlogs/unit/<skill>/`.
       <!-- Behaviour-neutral skill edit (typo, rewording, comment)? Ask a senior
-           for the `eval-cosmetic-skip` label instead of burning a paid run.
+           for the `eval-cosmetic-skip:<skill>` label (one per skill) instead
+           of burning a paid run.
            Rules: eval/CLAUDE.md § "GitHub Action rules". -->
 
 - [ ] If I changed a skill's `description` frontmatter or its DO NOT clauses, I

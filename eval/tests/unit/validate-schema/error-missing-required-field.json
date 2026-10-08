@@ -5,10 +5,10 @@
     "name": "Missing required field is reported and explained",
     "type": "positive",
     "description": "Run schema validation against mid-research-flynn-missing-field, the clean scenario with one mutation: question q_001 is missing its required 'rationale' field. The validator emits one error. Exercises the checkRequired path and the skill's report/explain/suggest behavior.",
-    "tags": ["validation", "error-path", "missing-field", "explain-and-suggest"]
+    "tags": ["validation", "error-path", "missing-field", "explain-and-suggest", "direct-arm"]
   },
   "input": {
-    "user_message": "Validate the project files for schema compliance.",
+    "delegation": "Validate the project files for schema compliance.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-missing-field"
   },
   "intentionally_invalid": true,

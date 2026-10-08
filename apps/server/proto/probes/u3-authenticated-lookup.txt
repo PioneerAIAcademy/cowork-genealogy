@@ -1,0 +1,4 @@
+Use record_search to find the 1850 United States census entry for Abraham Lincoln living in
+Springfield, Sangamon, Illinois, then use record_search once more for his wife Mary Lincoln
+in the same census, and answer in one line with the household's dwelling number or, if the
+records do not give one, the page each entry is on.

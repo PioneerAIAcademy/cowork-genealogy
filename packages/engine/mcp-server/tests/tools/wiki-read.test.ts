@@ -10,6 +10,7 @@ vi.mock("../../src/auth/config.js", () => ({
 }));
 
 import { wikiReadTool } from "../../src/tools/wiki-read.js";
+import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
 const API_BASE = "http://localhost:8000";
 const TEST_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
@@ -72,6 +73,15 @@ describe("wikiReadTool", () => {
     await expect(wikiReadTool({ url: TEST_URL }, LOCAL)).rejects.toThrow(
       /Could not reach wiki-query-api/
     );
+  });
+
+  it("names the socket cause, not just \"fetch failed\"", async () => {
+    mockFetch.mockRejectedValue(socketFetchFailure());
+
+    const err = await wikiReadTool({ url: TEST_URL }, LOCAL).catch((e: Error) => e);
+    expect((err as Error).message).toMatch(/Could not reach wiki-query-api.*ETIMEDOUT/s);
+    expect((err as Error).message).toContain(API_BASE);
+    expect((err as Error).message).not.toMatch(/Is the server running/);
   });
 
   it("throws when given a non-wiki URL (and never calls the server)", async () => {
