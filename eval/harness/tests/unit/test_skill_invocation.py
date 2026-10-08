@@ -286,8 +286,9 @@ def test_still_flags_a_landed_write_whose_payload_merely_mentions_no_project():
 
 
 def test_flags_the_untyped_agent_bypass_shape():
-    """An Agent call with no subagent_type never sets skill_name_if_skill_call
-    to anything, so it never opens a window either."""
+    """SHADOW arm, untyped spawn: an Agent call with no subagent_type names no
+    arm (`invoked_skill_name` returns None), so it never opens a window. The
+    HARD-arm counterpart is test_hard_arm_still_fires_on_an_untyped_spawn."""
     calls = [
         {"tool": "Agent", "args": {"description": "write proof summary", "prompt": "..."}},
         _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}}),

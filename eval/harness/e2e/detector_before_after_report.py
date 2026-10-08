@@ -450,7 +450,8 @@ def _direct_spawn_credit_old(
 ) -> list[str]:
     """Pre-fix replica: the real detector fed the run with every `Agent`/`Task`
     entry removed. It reads `tool_calls` only to build its `invoked` set, so
-    this is exactly the Skill-only rule, and it tracks any later arm edit for
+    this is the Skill-only rule (keeping the namespace strip on `Skill` names,
+    which no committed run exercises), and it tracks any later arm edit for
     free instead of copying every arm here."""
     skill_only = [e for e in tool_calls if e.get("tool") not in ("Agent", "Task")]
     return _never_invoked_arms(find_effects_without_invocation(skill_only, research, tree, starting_tree=starting_tree))

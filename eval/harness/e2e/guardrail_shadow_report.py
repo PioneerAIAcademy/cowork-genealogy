@@ -1382,9 +1382,10 @@ def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
     entries back — the one limit the splice does NOT fix.
 
     Putting a subagent's own calls into the list is what lets its write see the
-    `Skill` call that authorised it. But those calls occupy window slots, so a
-    subagent making more than `window` calls before its protected write pushes
-    that `Skill` call back out and the false violation returns by another door.
+    summons that authorised it (a `Skill` call or a typed spawn). But those
+    calls occupy window slots, so a subagent making more than `window` calls
+    before its protected write pushes that summons back out and the false
+    violation returns by another door.
     Local subagent transcripts run 0-204 tool calls, so it is reachable.
 
     Not fixed here on purpose: the e2e harness carries subagent calls in one

@@ -188,9 +188,9 @@ request for work, never a finding about the work's preconditions.
 The direct route is sanctioned, so what the routing skill did on the way in is
 either in the agent body or gone. These are gone, each stated as a loss so the
 next conversion inherits the decision instead of rediscovering it. They apply to
-the pairs the orchestrator spawns directly — `research-exhaustiveness`,
-`proof-conclusion` and `person-evidence` — and not to `record-extraction`, which
-is still routed as a skill.
+every guardrail pair the orchestrator spawns directly (a `@plugin:<name>` cell in
+`research/SKILL.md`'s routing table), and not to `record-extraction`, which is
+still routed as a skill.
 
 - **"Ask which question you meant" degrades to decline-and-name.** A subagent has
   no user turn. When the delegation's words match no question or more than one,

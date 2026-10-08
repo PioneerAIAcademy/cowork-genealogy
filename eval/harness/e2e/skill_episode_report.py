@@ -200,9 +200,11 @@ def skill_launches(tool_calls: list[Any]) -> list[tuple[int, str]]:
     """`(index, skill_name)` for every `Skill` entry, in ledger order.
 
     Delegates the "is this a skill launch" test to
-    `skill_invocation.skill_name_if_skill_call`, which is what §7's own detector
-    uses. A second definition here would let this report and the check it exists
-    to judge drift apart on the one predicate they must agree about.
+    `skill_invocation.skill_name_if_skill_call`, the `Skill` half of what §7's
+    own detector uses (`invoked_skill_name` adds typed spawns, which this
+    report deliberately does not measure). A second definition here would let
+    this report and the check it exists to judge drift apart on the one
+    predicate they must agree about.
     """
     out: list[tuple[int, str]] = []
     for i, entry in enumerate(tool_calls):

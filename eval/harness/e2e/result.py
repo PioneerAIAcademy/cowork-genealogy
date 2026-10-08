@@ -145,8 +145,10 @@ from typing import Any
 #       `Agent`/`Task` spawn whose `subagent_type` (plugin namespace stripped)
 #       names a guardrail arm now credits that arm exactly as a `Skill` call
 #       does, in both `find_effects_without_invocation` and the shadow
-#       `recently_succeeded` window; and a protected write whose own
-#       `agent_type` is its owner is never a shadow violation. The direct
+#       `recently_succeeded` window; a `Skill` name spelled with a plugin
+#       namespace (`genealogy-research:<skill>`) now credits too; and a
+#       protected write whose own `agent_type` is its owner is never a shadow
+#       violation. The direct
 #       spawn of a paired agent is the sanctioned in-loop route, and through v6
 #       every run taking it failed compliance for doing the right thing. Same
 #       shape as entries 2, 4, 5 and 6: `compliance` keeps its name and type
@@ -339,7 +341,9 @@ class E2eResult:
     # protected writes (a proof_summaries/person_evidence/conflicts/
     # exhaustive_declaration write, or a tree_edit/tree_correct/
     # materialize_facts write one of the four GPS guardrail skills owns) with
-    # no matching successful `Skill` invocation in a trailing window. Logged,
+    # no matching successful invocation (a `Skill` call or a typed agent spawn
+    # of the owner's name) in a trailing window, and not made by the owning
+    # agent itself. Logged,
     # never denied, at this stage — the point is to measure the false-positive
     # rate against real runs before any call is ever rejected. Each entry is
     # {index, tool, required_skill, question_id} — see

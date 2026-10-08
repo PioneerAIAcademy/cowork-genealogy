@@ -175,7 +175,8 @@ not restore the `Skill` call to clear it; issue #1851 carries the fix.
 **Premise update (2026-10-08): the detector no longer reads it backwards.**
 `find_effects_without_invocation` and the shadow `recently_succeeded` window now
 credit a typed `Agent`/`Task` spawn whose `subagent_type`, namespace stripped,
-names the arm, exactly as a `Skill` call naming it (`skill_name_if_typed_spawn`
+names the arm, exactly as a `Skill` call naming it, and both names are compared
+with any plugin namespace stripped (`skill_name_if_typed_spawn`
 beside `skill_name_if_skill_call`; `HARNESS_SCHEMA_VERSION` 7). A run taking the
 sanctioned route no longer lands the violation. The paragraph above is the
 history of why it did.

@@ -349,9 +349,10 @@ def find_unguarded_protected_writes(
     successful skill invocation in its trailing window. A write made BY the
     owning agent (its own stripped `agent_type` equals the owner) is that
     owner doing its own work and is never flagged whatever the window holds.
-    For `proof_summaries` and the exhaustiveness declaration the hook also
-    routes the write to that caller; the tree writes are not hook-routed, and
-    the exemption rests on the writer's identity alone. Returns violation
+    For `proof_summaries`, `person_evidence` and the exhaustiveness
+    declaration the hook also routes the write to that caller; the tree writes
+    (including a `materialize_facts` mint) are not hook-routed, and the
+    exemption rests on the writer's identity alone. Returns violation
     records (never denies anything itself — that's the caller's call, and the
     plan mandates shadow mode — log, don't deny — until the false-positive
     rate is measured)."""

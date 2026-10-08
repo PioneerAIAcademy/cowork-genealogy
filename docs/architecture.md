@@ -888,12 +888,14 @@ back through the table anyway. The trigger corpus catches routing
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
 
-**A row spelled `@plugin:<name>` is an agent spawn, and it needs no harness
-edit.** The e2e compliance detectors credit a guardrail arm on either route: a
+**A row spelled `@plugin:<name>` is an agent spawn, and the compliance
+detectors need no edit for it.** They credit a guardrail arm on either route: a
 `Skill` call naming it, or a typed `Agent`/`Task` spawn whose `subagent_type`
 (plugin namespace stripped) names it. So flipping a guardrail row from a skill
 to its agent, or converting another guardrail skill, keeps compliance green as
-long as the agent carries the arm's name. An untyped spawn is still a bypass —
+long as the agent carries the arm's name. Adding the agent file still needs its
+name in `DEDICATED_AGENT_NAMES` (`eval/harness/harness/skill_invocation.py`),
+whose guard test goes red until it is there. An untyped spawn is still a bypass —
 the rule and its reason are in `docs/specs/guardrail-enforcement-spec.md` §2.
 
 The runlog CI gate now applies to `research` (armed by adding

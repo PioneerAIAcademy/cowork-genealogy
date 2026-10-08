@@ -2227,7 +2227,13 @@ Design points that were paid for and should not be re-derived:
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no
   question id can be extracted, it falls back to a per-skill window and accepts
-  the imprecision.
+  the imprecision. A typed spawn's question id is read from its `description`
+  and `prompt`, and used only when exactly one distinct `q_` id appears there.
+- **A summons is a `Skill` call or a typed spawn of the owner's name** (§2, the
+  sanctioned third shape), and **a write made by the owning agent itself is
+  never flagged**: its own `agent_type`, namespace stripped, equals the owner.
+  The exemption is per owner, so a batch that also touches another owner's
+  section is still checked for that owner.
 - **Protected writes include the tree side**, not just `research.json`.
   `materialize_facts` can create a tree person and attach facts with no
   `person_evidence` entry existing at all, and `proof-conclusion` owns tree
@@ -2546,9 +2552,10 @@ this section before reopening one.
   writing `proof_summaries` or encoding its conclusion in the tree, the
   `research-exhaustiveness` agent writing the declaration) is the owner doing
   its own work with its doctrine in context, so `find_unguarded_protected_writes`
-  never flags it wherever it lands. For `proof_summaries` and the declaration the
-  hook additionally routes the write to that caller; the tree writes are not
-  hook-routed, and the exemption rests on the writer's identity alone. So for those writes the bundle arms report 0 by construction, splice
+  never flags it wherever it lands. For `proof_summaries`, `person_evidence` and
+  the declaration the hook additionally routes the write to that caller; the
+  tree writes (a `materialize_facts` mint included) are not hook-routed, and the
+  exemption rests on the writer's identity alone. So for those writes the bundle arms report 0 by construction, splice
   order cannot change them, and `_window_overruns` does not count them. The
   exemption is per owner: a batch the owning agent makes that also touches
   another owner's section (a resolved `conflicts` op beside `proof_summaries`)
