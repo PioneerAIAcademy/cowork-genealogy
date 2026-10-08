@@ -395,6 +395,22 @@ describe("tree_edit", () => {
     });
   });
 
+  it("add_fact: resolves a bare place against the places of the holder's other facts", async () => {
+    await writeProject(onePersonSourced());
+    const add = (place: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Residence", place, sources: [{ ref: "S1" }] },
+      });
+    expect((await add("Borough of Shenandoah, County of Schuylkill")).ok).toBe(true);
+    expect((await add("Shenandoah")).ok).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: expect.arrayContaining(["Borough of Shenandoah, County of Schuylkill"]),
+    });
+  });
+
   it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
     // Regression test for the "West Bromwich" -> "West, Cameroon" incident
     // (hannah-earnest-children e2e rerun, 2026-07-22): resolveStandardPlace
@@ -1681,6 +1697,159 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
     sources: [{ id: "S1", title: "Parish Register" }],
   });
 
+  // A child with one father, and a second father to add. Both men and the child
+  // are individually plausible; the impossibility is purely relational, which is
+  // why only a gate that SEES the parentage edge can catch it.
+  const twoFathersTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "Peter", surname: "Brown", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1902", primary: true }],
+      },
+      {
+        id: "I3",
+        gender: "Female",
+        names: [{ id: "N3", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F3", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I1", child: "I3" }],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a second biological father on a child (the parentage edge the gate used to miss)", async () => {
+    // Returned ok: true on main. `computeTouchedPersonIds` read relationship
+    // endpoints from `person1`/`person2` only -- the Couple pair -- so adding a
+    // ParentChild edge, which carries `parent`/`child`, marked NOBODY as
+    // touched and the gate computed warnings for no one. Over the committed e2e
+    // final trees every ParentChild edge uses parent/child and none uses
+    // person1/person2 (re-derive with dev/measure-parentage-gate-rate.ts).
+    await writeProject(twoFathersTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I3",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(/tooManyFathers2/);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("lands the same second father when every introduced warning is justified", async () => {
+    // The accept direction: the gate narrows, it does not forbid. A genuine
+    // second father -- an adoption, or a correction -- goes through on a
+    // justified re-call.
+    await writeProject(twoFathersTree());
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(refused.ok).toBe(false);
+
+    const ok = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+      warningJustifications: (refused as any).warnings.map((w: any) => ({
+        warningId: w.warningId,
+        justification: "Adoptive father, recorded on the 1940 decree.",
+      })),
+    } as any);
+    expect(ok.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter((r: any) => r.type === "ParentChild");
+    expect(rels).toHaveLength(2);
+  });
+
+  // A parent born 30 years AFTER their child. `earliestChildBirthToBirth12` is
+  // the only check that fires on this, and it was on the exempt list, so every
+  // gated writer accepted it. Exempting it was reading the tag as a
+  // child-bearing-age prior like its cutoff-14 gendered siblings; at cutoff 12
+  // it is also the sole guard against an outright impossibility.
+  const invertedGenerationsTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Female",
+        names: [{ id: "N1", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a parent born after their own child", async () => {
+    await writeProject(invertedGenerationsTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(
+      /earliestChildBirthToBirth12/,
+    );
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("accepts an ordinary parentage edge — un-exempting the tag did not refuse every parent", async () => {
+    // The other direction. Same two people, same operation, generations the
+    // right way round: a guard that refuses this is worse than no guard.
+    const tree = invertedGenerationsTree();
+    tree.persons[1].facts[0].date = "1870";
+    await writeProject(tree);
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter(
+      (x: any) => x.type === "ParentChild",
+    );
+    expect(rels).toHaveLength(1);
+  });
+
   it("refuses a write that introduces a >120-year-lifespan warning, tree unchanged", async () => {
     await writeProject(longLifeTree());
     const treeBefore = await readTree();
@@ -1798,9 +1967,11 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
 
     expect(r.ok).toBe(false);
     expect((r as any).reason).toBe("unjustified_warnings");
-    // The competing-parentage finding replaces tooManyFathers2 for this child,
-    // so the caller is asked once, under the finding's id.
-    expect((r as any).warnings.map((w: any) => [w.issueType, w.personId])).toEqual([["competingParentage", "I1"]]);
+    // The competing-parentage finding replaces the count warning for this
+    // child, so the caller is asked once, under the finding's id. The issue
+    // type stays tooManyFathers2; only the warningId is the finding's.
+    expect((r as any).warnings.map((w: any) => [w.issueType, w.personId])).toEqual([["tooManyFathers2", "I1"]]);
+    expect((r as any).warnings[0].warningId).toMatch(/^competingParentage|I1|Male|/);
     expect(await readTree()).toEqual(treeBefore);
   });
 
@@ -1941,16 +2112,14 @@ describe("tree_edit — warning gate integration (issue #2840)", () => {
   });
 
   it("never surfaces an adoptive second father as competing parentage", async () => {
-    // Whether the general warning gate refuses this edge (tooManyFathers2
-    // ignores subtype) is that gate's scope, not this check's; only the
-    // absence of a competing-parentage finding is pinned here.
+    // tooManyFathers2 counts only biological parents, so an adoptive father
+    // beside a biological one is the ordinary record of an adoption: it lands.
     await writeProject(parentage(), parentageResearch);
 
     const r: any = await addParent("I3", { relationship: { type: "ParentChild", parent: "I3", child: "I1", subtype: "Adoptive", sources: [{ ref: "S1" }] } });
 
+    expect(r.ok).toBe(true);
     expect(r.conflicts_surfaced).toBeUndefined();
-    expect((r.warnings ?? []).map((w: any) => w.issueType)).not.toContain("competingParentage");
-    expect(String(r.message ?? "")).not.toContain("conflict-resolution");
   });
 
   it("the stale-justification refusal carries errors too", async () => {

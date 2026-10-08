@@ -40,7 +40,8 @@ def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
     order by ``handoffs``: a callee converted from a skill to an agent is
     reached by spawn and never appears in ``skills_invoked`` (issue #2825).
     The skill under test appears in the list when the model reached it
-    through a ``Skill`` call and not when it was entered as a slash command.
+    through a ``Skill`` call, and -- since issue #3116 -- also when it was
+    entered as a slash command, where it is recorded first.
     Both shapes are filtered the same way below.  Whether the skill under
     test ran at all is gated by the harness (``orchestrator.py``), not here.
 
@@ -133,16 +134,18 @@ def _paired_names() -> set[str]:
 
 
 def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
-    """On a ``no-shortcut`` test, no paired row may be reached at all.
+    """On a ``no-shortcut`` test, no paired row but the expected one may be reached.
 
-    ``test_routes_to_expected_skill`` asserts only the FIRST delegation, and it
-    reads ``skills_invoked``, which ``skill_runner.py:654`` gates on
-    ``tool_name == "Skill"``. So a router that spawns
-    ``Agent(@plugin:proof-conclusion)`` and then calls
-    ``Skill(question-selection)`` satisfies it — ``delegations[0]`` is the
-    expected name — while doing the exact thing ut_research_015 exists to
-    forbid. Both call mechanisms are checked here because the routing table
-    reaches its ``@plugin:`` rows by spawn and the rest by ``Skill``.
+    Such a test must set ``execution.stop_at_stub`` (the runnability gate
+    requires it), so the harness ends the run once the turn of the router's
+    first stubbed hand-off is over (#3119), and ``test_routes_to_expected_skill``
+    asserts, in call order, that the hand-off is the expected one. So a paired
+    row other than the expected one is either that first hand-off itself, which
+    the routing check also fails, or one made later in that turn, which the stop
+    denies but records, and which only this check sees. A shortcut in a later
+    turn is cut off by the stop and never reaches the record. Both call mechanisms
+    are checked because the routing table reaches its ``@plugin:`` rows by spawn
+    and the rest by ``Skill``.
     """
     from harness.skill_runner import spawned_agents
 
@@ -309,4 +312,74 @@ def test_no_browse_executed_on_indexed_search(
     assert not claimed, (
         "an indexed search must not append a browse log entry; got "
         f"{[(e.get('id'), e.get('tool')) for e in claimed]}"
+    )
+
+
+# The search steps a bounded request must not reach when the answer is already
+# attached. MCP side and delegation side are listed separately because the rule
+# is defeated by either: an inline `record_search` and a hand-off to
+# `search-records` both spend a paid call to re-find what the project holds.
+_SEARCH_MCP_TOOLS = frozenset({
+    "record_search", "person_search", "fulltext_search", "collections_search",
+    "volume_search", "image_search", "external_links_search", "catalog_search",
+})
+# Derived from the skills tree, not recalled: an omission here is silent, because a
+# hand-off to a step missing from this set passes the assertion below.
+_SEARCH_STEPS = frozenset({
+    "search-records", "search-images", "search-familysearch-wiki",
+    "search-full-text", "search-external-sites", "search-wikipedia",
+    # Not reachable from the router's table today, but it searches: it tabulates
+    # households across a place's censuses. Listed because reachability changes and
+    # the comment above is right that an omission here is silent.
+    "survey-surname",
+})
+
+
+def test_reads_attachments_before_searching(
+    test, tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls
+):
+    """Tag-gated (``attached-first``). Issue #2813 item 4.
+
+    "Before any search, read the person's attached sources and relatives. Never
+    search for a record that is already attached."
+
+    Graded on the MCP call log and the hand-off list rather than on the reply,
+    for the reason the routing validator gives: a turn that only NARRATES having
+    checked ("I'll first look at what's already attached") cannot satisfy it.
+
+    This is the assertion the unit suite could not previously make. Neither
+    ``person_read`` nor ``source_attachments`` is in ``mock_mcp.LIVE_TOOLS``, so
+    the mock registers them only for a test that declares fixtures; a body that
+    skipped the rule entirely passed every unit test in the suite.
+    """
+    from harness.skill_runner import handoffs
+
+    if "attached-first" not in test.get("tags", []):
+        pytest.skip("not an attached-first test")
+
+    bare = lambda c: (c.get("tool") or "").rsplit("__", 1)[-1]
+    called = [bare(c) for c in (tool_calls or []) if isinstance(c, dict)]
+    # ATTEMPTED calls count too. `tool_calls` records only successful dispatches
+    # (conftest.py), so a search whose args miss every fixture predicate lands in
+    # `attempted_mcp_calls` instead -- and reading only the first list would let
+    # the exact behaviour this test forbids pass silently.
+    attempted = [bare(c) for c in (attempted_mcp_calls or []) if isinstance(c, dict)]
+    read_first = {"person_read", "source_attachments"} & set(called)
+    assert read_first, (
+        "The router must read what is already attached before routing a request "
+        "anywhere. Neither person_read nor source_attachments was called. "
+        f"MCP calls={called}"
+    )
+
+    searched = [t for t in called + attempted if t in _SEARCH_MCP_TOOLS]
+    assert not searched, (
+        "The requested record is already attached, so searching for it spends a paid "
+        f"call to re-find what the project holds. Search tools called: {searched}"
+    )
+
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    search_steps = [s for s in handed if s in _SEARCH_STEPS]
+    assert not search_steps, (
+        "Handing off to a search step re-finds an already-attached record just as an "
+        f"inline search call would. Hand-offs: {handed}"
     )

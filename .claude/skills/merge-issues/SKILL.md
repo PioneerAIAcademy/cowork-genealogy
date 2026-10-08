@@ -187,6 +187,8 @@ merges is a valid answer when its issues are independent; say so per slot.
 
 ## 4. Prove it before proposing
 
+**Engine-only PRs buy no eval slot.** `packages/engine/mcp-server/src/**` is excluded from every skill's run-log snapshot (`eval/harness/harness/snapshot.py`), so a PR touching only that tree does not earn an eval run — do not count one when computing "runs bought back."
+
 **Open the files the issues name.** Framing resemblance is the dominant false
 positive and it is convincing — two issues both described as "a prose lint with a
 file-and-line allow-list" routinely share no mechanism, one comparing hashes

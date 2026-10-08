@@ -18,11 +18,9 @@ const canonicalPath = join(repoRoot, "plugin", "references", "places-guidance.md
 // a skill here (and copy the file) when it starts using place tools or writing
 // places.
 const SKILLS_WITH_PLACES_GUIDANCE = [
-  "search-external-sites",
   "timeline",
   "conflict-resolution",
   "record-extraction",
-  "init-project",
 ];
 
 // Agents that inline the canonical places guidance verbatim in their body
@@ -63,6 +61,14 @@ const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: 
     // localities entry, you do not call them here."
     why: "delegates place-fact fetching to locality-guide; canonical names four tools it cannot call",
     sha256: "0521723c5e9de12e2277909a23963ff1f32e691e3620b31a9351dc7151cad78d",
+  },
+  {
+    skill: "init-project",
+    // Issue #2944: project_create builds the starting tree from the staged
+    // person_read, standard_place included, so the canonical "copy it from a
+    // person_read result" bullet describes a step init-project no longer takes.
+    why: "project_create carries person_read's standard_place; the canonical copy-it bullet names a step init-project no longer takes",
+    sha256: "8b907a20b43d3393ebf9160224b5ff60ae89a30f1ef435f90453f752baffb3fd",
   },
 ];
 

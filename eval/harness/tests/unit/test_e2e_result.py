@@ -17,6 +17,7 @@ from e2e.result import (
     detector_era_runlog,
     is_committable_run,
     overall_outcome,
+    result_message_covers_last_query_only,
     runlog_prefix,
     timestamp_slug,
     write_result_files,
@@ -908,3 +909,78 @@ def test_git_sha_returns_none_outside_a_git_repo(tmp_path: Path):
     from e2e import provenance
 
     assert provenance.git_sha(tmp_path) is None
+
+
+# ---------------------------------------------------------------------------
+# result_message_covers_last_query_only (#3128).
+#
+# The SDK's ResultMessage reports `usage`, `num_turns` and `duration_ms` for the
+# last query only, and a query starts at each `system:init` timeline row. Rows
+# are 2, 3 or 5 wide depending on when the run was written, so the helper must
+# index them, never unpack them.
+# ---------------------------------------------------------------------------
+
+
+def _init_row(width: int) -> list:
+    return [1.0, "system:init", [], "2026-09-24T07:23:44.000Z", None][:width]
+
+
+@pytest.mark.parametrize("width", [2, 3, 5])
+def test_two_queries_after_a_result_message_are_flagged_at_every_row_width(width):
+    usage = {
+        "num_turns": 3,
+        "timeline": [_init_row(width), [2.0, "assistant"], _init_row(width)],
+    }
+    assert result_message_covers_last_query_only(usage) is True
+
+
+def test_one_query_is_not_flagged_however_often_it_compacts():
+    usage = {
+        "num_turns": 40,
+        "timeline": [
+            _init_row(5),
+            [2.0, "assistant"],
+            [3.0, "system:compact_boundary"],
+            [4.0, "assistant"],
+            [5.0, "system:compact_boundary"],
+        ],
+    }
+    assert result_message_covers_last_query_only(usage) is False
+
+
+def test_a_fallback_block_is_not_flagged():
+    """`_fallback_usage` writes `num_turns: None`, and its tokens come from the
+    stream accumulator, which spans every query of the run."""
+    usage = {
+        "usage_source": "streamed_fallback",
+        "num_turns": None,
+        "timeline": [_init_row(5), _init_row(5)],
+    }
+    assert result_message_covers_last_query_only(usage) is False
+
+
+def test_a_block_with_no_num_turns_key_is_not_flagged():
+    assert result_message_covers_last_query_only({"timeline": [_init_row(3), _init_row(3)]}) is False
+
+
+def test_a_block_written_before_usage_source_existed_is_flagged():
+    """Five of the corpus's affected runs carry no `usage_source`; `num_turns` is
+    what says their block came from a ResultMessage."""
+    usage = {"num_turns": 59, "resumes": 1, "timeline": [_init_row(3), _init_row(3)]}
+    assert result_message_covers_last_query_only(usage) is True
+
+
+@pytest.mark.parametrize(
+    "usage",
+    [
+        None,
+        "not a dict",
+        {},
+        {"num_turns": 3},
+        {"num_turns": 3, "timeline": []},
+        {"num_turns": 3, "timeline": "not a list"},
+        {"num_turns": 3, "timeline": [[1.0], "system:init", None, _init_row(5)]},
+    ],
+)
+def test_shapes_with_at_most_one_readable_init_are_not_flagged(usage):
+    assert result_message_covers_last_query_only(usage) is False

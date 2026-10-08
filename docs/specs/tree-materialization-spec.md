@@ -827,8 +827,8 @@ with no facts and no relatives as `missingFactsAndRelatives` at severity
 `implausible` ("likely an unfinished stub record"), which is this arm's
 documented output verbatim, so a party minted here is flagged until her edge and
 the record's other facts land. That is not a defect in either tool: she *is*
-incomplete at that moment, and `check_warnings` runs after every write to
-surface what is still owed. What the warning cannot see is that she carries a
+incomplete at that moment, and the writers' own warning gate runs on every
+write to surface what is still owed. What the warning cannot see is that she carries a
 resolved ref where a hypothesis stub does not. Do not answer it by writing her a
 fact the record does not support.
 

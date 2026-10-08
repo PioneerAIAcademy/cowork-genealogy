@@ -12,18 +12,21 @@
     ]
   },
   "input": {
-    "user_message": "Run a full-text search of FamilySearch for any document naming Flynn as a witness in Schuylkill County, Pennsylvania.",
+    "delegation": "Run a full-text search of FamilySearch for any document naming Flynn as a witness in Schuylkill County, Pennsylvania.\n\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
     "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-witnesses-by-name",
     "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flinn-witnesses-by-name",
     "fulltext-search-flynn-wildcard-variant",
     "fulltext-search-flynn-prefix-wildcard-variant",
     "wiki-read-any",
     "wiki-search-any"
   ],
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "The new log entry must carry a non-null results_ref pointing at results/<log_id>.json, and a results/<log_id>.json sidecar must be written containing the verbatim fulltext_search response",
     "The sidecar's returned_count must equal the number of results in its payload",
     "results_available should reflect the upstream totalResults count, and notes should be a one-line human summary of what the search returned",

@@ -685,6 +685,8 @@ When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
 
+Prove the guard **emits** on a planted defect, not just that it exits non-zero — a log-line-only guard and a broken guard both produce the same empty output (lead, 2026-09-25).
+
 ### A ruling binds only while its premises hold
 
 A ruling (a `**Ruling:**` comment, a `Decided (lead, …)` line, "lead ruling <date>"
@@ -804,7 +806,7 @@ Where to look first:
   Use `fetchWithRetry` for new call sites; `fetchWithTimeout` is still
   exported for the handful of excluded sites that manage their own retry or
   carry timeouts too long for the budget (`image_transcribe` 180s,
-  `fs-image-fetch` 90s, `place-api`, `match-engine`). Node's global `fetch`
+  `fs-image-fetch` 90s, `match-engine`). Node's global `fetch`
   never times out on its own; a stalled upstream connection
   (FamilySearch/Imperva, the wiki-query-api sidecar, OpenRouter) hangs the
   call forever otherwise. This file is the only one allowed to call the global

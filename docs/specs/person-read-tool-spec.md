@@ -9,10 +9,13 @@ It returns data in **simplified GEDCOMX format** (`persons[]`,
 
 The tool accepts a FamilySearch person ID (required) and always returns the
 person's parents, **siblings**, spouses and children (`persons[]` +
-`relationships[]`) and the sources attached to the person (`sources[]`, each
+`relationships[]`) and the sources attached to the person **and to each relative**
+(`sources[]`, each
 person linking to its own through `persons[].sources`). Siblings are a second
 hop costing one read per parent (see "The sibling fan-out" below). For a
 non-living subject the read also pages that person's source-style memories.
+
+**`persons[0]` is the subject**, guaranteed rather than inherited from the order FamilySearch sent. A consumer that needs the subject's own entries — `source-evaluation` separates them from the relatives' — cannot use the requested `personId`, because after a 301 the response carries the post-redirect id and the requested one names nobody.
 
 **Both reads are always on (lead ruling, 2026-09-27).** The
 `relatives` and `sourceDescriptions` inputs are still accepted, so a prompt that
@@ -107,9 +110,10 @@ after the memories merge, through the shared `stageSearchResults`
   top-level `notes[]` and every source's response-only fields (`notes`, `text`,
   `image_ref`, `artifact_url`). Nothing is stripped on the way in.
 
-It exists so the starting tree can be built host-side from the staged copy rather
-than the model re-typing it into `project_create`. That consumer is not built
-yet: today nothing reads the staged file. It is **not a search**: it is in
+It exists so the starting tree is built host-side from the staged copy rather
+than the model re-typing it into `project_create`: init-project passes
+`staged.resultsRef` to `project_create` as `personReadRef`
+(`project-create-tool-spec.md` §4). It is **not a search**: it is in
 `STAGING_CAPABLE_TOOLS` and not `STAGING_SEARCH_TOOLS`, so no search note fires on
 it, and no shipped flow finalizes it with `research_log_append`. An unconsumed
 file is removed by the 24h TTL prune. Staging is best-effort: a failure never
@@ -128,7 +132,7 @@ Each person object:
 | `living` | boolean | yes | Whether the person is marked as living |
 | `names` | object[] | yes | Every name FamilySearch holds for the person, preferred-first (see "Names" below). At least one — a person FS returns with no name at all gets a single `{ given: "", surname: "" }` placeholder |
 | `facts` | object[] | no | Life facts (birth, death, etc.). Omitted for living persons with no data. |
-| `sources` | object[] | no | The sources FamilySearch attached to this person, as `{ ref, page?, quality? }` refs whose `ref` is an id in this response's `sources[]`. FamilySearch attributes sources at the person level and essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons, 0 of 157 facts, 0 of 31 names). Its `tags` and attribution metadata are not carried. **Only refs that resolve in `sources[]` are kept**, and the key is omitted when none do: the subject's refs are `#<id>` fragments that all resolve, while a relative's refs are mostly full URLs to descriptions FamilySearch does not send in this body (probe, 2026-09-30: 0 of 102 and 2 of 79 resolved), and a `SD_*` target is filtered out of `sources[]`. A dangling ref would make `project_create` refuse the whole tree. Carrying relatives' own sources is not in scope. |
+| `sources` | object[] | no | The sources FamilySearch attached to this person, as `{ ref, page?, quality? }` refs whose `ref` is an id in this response's `sources[]`. FamilySearch attributes sources at the person level and essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons, 0 of 157 facts, 0 of 31 names). Its `tags` and attribution metadata are not carried. **Only refs that resolve in `sources[]` are kept**, and the key is omitted when none do: the subject's refs are `#<id>` fragments that all resolve, while a relative's refs are mostly full URLs to descriptions FamilySearch does not send in this body (probe, 2026-09-30: 0 of 102 and 2 of 79 resolved), and a `SD_*` target is filtered out of `sources[]`. A dangling ref would make `project_create` refuse the whole tree. **Relatives' own sources ARE carried**: the ref is rewritten to `descriptionId`, the bare id FamilySearch sends beside the URL (present on 102/102 and 77/77 URL refs, and equal to the URL's last segment in every one — `dev/probe-relative-sources.json`), and a second per-person read supplies the description so the ref resolves. |
 
 **Names:**
 
@@ -329,7 +333,7 @@ fetched for the id the redirect landed on, not the id the caller passed.
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the person, each linked from the person's own `sources` refs. For a " +
+    "to the person AND to each relative, each linked from that person's own `sources` refs — so what is attached to the SUBJECT is the entries its own refs point at, plus any carrying `artifact_url`. For a " +
     "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
@@ -347,7 +351,7 @@ fetched for the id the redirect landed on, not the id the caller passed.
       },
       sourceDescriptions: {
         type: "boolean",
-        description: "Ignored: attached sources are always returned."
+        description: "Ignored: attached sources are always returned — the subject's and the relatives' own."
       },
       projectPath: {
         type: "string",
@@ -395,6 +399,18 @@ header is needed (no WAF issue on this domain).
 `application/x-gedcomx-v1+json` return identical responses. The FamilySearch
 platform API always returns FS-extended GEDCOMX regardless of the Accept
 header. Confirmed by the FamilySearch team (Todd Chapman, Erik Wilford).
+
+### Endpoint: Relatives' attached sources
+
+```
+GET /platform/tree/persons/{pid}/sources
+```
+
+One call per relative that carries a source ref, concurrency-bounded, each bounded by
+`min(per-read cap, budget left)` on the same deadline as the fan-out and memories. Returns
+that person's `sourceDescriptions[]`. Chosen over fetching each ref's own URL because it
+returns all of one person's descriptions in a single call — 63 calls against ~400 at 63
+relatives (`dev/probe-relative-sources.json`).
 
 ### Endpoint: Person details
 
@@ -750,6 +766,11 @@ rule. They are skipped, which also saves a request whose result cannot be used.
 
 #### 6. Sources
 
+`sources[]` carries the subject's own descriptions **and the relatives' own**, as ordinary
+entries with no discriminator. A consumer that means "what is attached to the subject"
+must intersect against the subject's `persons[].sources[].ref` — and add entries carrying
+`artifact_url`, since a memory is referenced by no person entry.
+
 For each entry in `sourceDescriptions[]`:
 
 | FS-extended field | Simplified field | Conversion |
@@ -804,6 +825,7 @@ is living.
 | Condition | Behavior |
 |-----------|----------|
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
+| A relative's sources read fails or the shared budget expires | Skip that relative, keep the tree read, log one line to stderr, AND name the count in top-level `notes[]` — a silent skip is indistinguishable from a relative with nothing attached |
 | Person not found (404) | Throw: `"Person {pid} not found in the FamilySearch Family Tree."` |
 | Person deleted (410) | Throw: `"Person {pid} has been deleted from the FamilySearch Family Tree."` |
 | Person restricted (403) | Throw: `"Person {pid} is restricted and cannot be viewed."` |
@@ -961,6 +983,13 @@ response. FS couple refs arrive as `resourceId`-only; the tool
 normalizes them to `resource` refs before conversion so participants
 are not dropped.
 
+### `packages/engine/mcp-server/src/utils/relative-sources.ts`
+
+- `fetchRelativeSources(personIds, principal, deadline)` — one `/persons/{pid}/sources`
+  read per relative, concurrency-bounded, each bounded by `min(cap, budget left)`.
+  Returns RAW descriptions plus `skipped[]`; the caller shapes them through
+  `shapeSources`, because the simplified form carries fields the tree schema forbids.
+
 ### `packages/engine/mcp-server/src/tools/person-read.ts`
 
 - `personReadToolSchema` — MCP tool schema
@@ -1008,9 +1037,30 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 26 | No `staged` key without `projectPath`, or with a blank one | Staging gate |
 | 27 | A staging failure returns the read with `staged: null` + `stagingError`; a missing folder is not created | Staging fail-soft |
 | 28 | A merged subject's staged element carries the post-redirect id | Staging + redirect |
-| 29 | Carries the subject's person-level sources, dropping refs to descriptions not returned (an `SD_*` target, a relative's full-URL ref) | Person-level refs |
+| 29 | Carries the subject's person-level sources, dropping refs to descriptions not returned (an `SD_*` target; a relative's ref when the second read fails) | Person-level refs |
 | 30 | Never carries FamilySearch's tags or attribution onto a ref | Person-level refs |
 | 31 | The living 204 stub carries no `sources` key | Living person |
+| 32 | Fetches a relative's attached descriptions and KEEPS the ref that would otherwise dangle | Relatives' sources |
+| 33 | Top level stays exactly `{persons, relationships, sources}` with relatives' sources merged | No discriminator |
+| 34 | A failed relative read returns the tree read with the subject's own sources intact, and does not throw | Fail-soft |
+| 35 | A relative with no attached refs costs no call | No speculative reads |
+| 36 | A source shared by two relatives appears once | Dedupe |
+| 37 | The subject's own sources are not re-fetched | Already in the body |
+| 38 | A relative's entry carries no field the tree schema forbids (no `resource_type`, no `coverage`) | Tree write |
+| 39 | A title-less relative description gets the empty-string title the write requires | Tree write |
+| 40 | An `SD_*` metadata entry from a relative's read is dropped | FS metadata |
+| 41 | A source already carried by the subject is not added twice | Dedupe |
+| 42 | Relatives' sources still arrive on a NON-living subject, where the memories phase also runs | Shared budget |
+| 43 | A skipped relative is named in top-level `notes[]`, not only on stderr | Budget visible |
+| 44 | No note when every relative was read | `notes[]` means something |
+| 45 | A rejecting relative fetch does not take the process down | Unhandled rejection |
+| 46 | The subject is moved to `persons[0]` when upstream lists it second | Subject first |
+| 47 | …and for a MERGED subject, where the requested id names no entry | Subject first |
+
+`tests/utils/relative-sources.test.ts` covers the fetch module directly — the per-read
+bound, the raw-description passthrough, dedupe, partial failure and 204. Those are not
+rows here: this table enumerates the TOOL's behaviours, and the bound is an argument to
+`fsFetch` that a global-`fetch` stub cannot observe.
 
 ### Smoke-test script
 

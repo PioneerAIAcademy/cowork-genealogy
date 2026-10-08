@@ -18,7 +18,8 @@ Settings are read from the environment at call time, so a test can set them per 
 
   PUBLIC_URL                 the tier's public origin; /callback hangs off it. Its scheme
                              is the production discriminant: https turns on secure
-                             cookies, turns off dev-login and arms ``preflight``.
+                             cookies, turns off dev-login and arms ``preflight``
+                             (as FAMILYSEARCH_WEB_ENABLED does, at any scheme).
   WEB_ORIGIN                 where the callback sends the browser (defaults to PUBLIC_URL)
   SESSION_SECRET             signs the session cookie and the OAuth state cookie
   FS_TOKEN_ENC_KEY           any string; a Fernet key is derived from it
@@ -26,6 +27,8 @@ Settings are read from the environment at call time, so a test can set them per 
                              value); the FamilySearch sign-in gate
   FAMILYSEARCH_WEB_ENABLED   true to offer FamilySearch sign-in (needs the client config)
   FAMILYSEARCH_CONFIG        path to the engine's familysearch.json
+  DEV_LOGIN                  true to offer dev-login (compose sets it; U11's packaging
+                             guard keeps every DEV_ variable out of the templates)
 """
 
 from __future__ import annotations
@@ -70,7 +73,8 @@ def client_config_candidates(proto_dir: Path) -> tuple[Path, ...]:
 CLIENT_CONFIG_CANDIDATES = client_config_candidates(PROTO_DIR)
 
 # The alpha's development defaults, kept identical so ciphertext the alpha wrote under
-# its default key decrypts here too. ``preflight`` refuses both on an https PUBLIC_URL.
+# its default key decrypts here too. ``preflight`` refuses both on an https PUBLIC_URL
+# and whenever FamilySearch sign-in is on.
 DEV_SESSION_SECRET = "dev-insecure-secret-change-me"
 DEV_FS_TOKEN_ENC_KEY = grants.DEV_FS_TOKEN_ENC_KEY
 DEFAULT_PUBLIC_URL = "http://127.0.0.1:8085"
@@ -175,10 +179,11 @@ def familysearch_configured() -> bool:
 
 
 def dev_login_enabled() -> bool:
-    """A local convenience only: offered when FamilySearch is off AND the tier is not on
-    an https host, so a deploy that forgot to configure FamilySearch cannot expose an
-    allowlist-free sign-in."""
-    return not familysearch_enabled() and not is_https()
+    """A local convenience only: offered when ``DEV_LOGIN=true`` AND FamilySearch is off
+    AND the tier is not on an https host. Opt-in, so a deploy that forgot both FamilySearch
+    and PUBLIC_URL (http by default) cannot expose an allowlist-free sign-in."""
+    dev = (os.environ.get("DEV_LOGIN") or "").strip().lower() == "true"
+    return dev and not familysearch_enabled() and not is_https()
 
 
 def preflight() -> None:
@@ -186,22 +191,25 @@ def preflight() -> None:
 
     - FamilySearch enabled with no readable client config: named error, not a silent
       fall-through to dev-login.
-    - On an https PUBLIC_URL (a deployed host): a default or empty SESSION_SECRET forges
-      every session and the OAuth state; a default FS_TOKEN_ENC_KEY encrypts every grant
-      under a public string.
+    - On an https PUBLIC_URL (a deployed host), or with FamilySearch sign-in on at any
+      scheme (a grant is real whatever the scheme, e.g. an http loopback PUBLIC_URL): a default or
+      empty SESSION_SECRET forges every session and the OAuth state; a default or empty
+      FS_TOKEN_ENC_KEY encrypts every grant under a public string. Only http with
+      FamilySearch off (compose's dev-login tier) may start on the defaults.
     """
-    if familysearch_enabled():
+    fs_on = familysearch_enabled()
+    if fs_on:
         client_id()
-    if not is_https():
+    if not (is_https() or fs_on):
         return
     problems = []
     for name, dev in (("SESSION_SECRET", DEV_SESSION_SECRET), ("FS_TOKEN_ENC_KEY", DEV_FS_TOKEN_ENC_KEY)):
         if _env(name) in ("", dev):
             problems.append(f"  {name} is unset or the development default; set it to a random secret")
     if problems:
-        raise RuntimeError(
-            f"Refusing to start: PUBLIC_URL is {public_url()} (a deployed host), but\n" + "\n".join(problems)
-        )
+        why = (f"PUBLIC_URL is {public_url()} (a deployed host)" if is_https()
+               else "FAMILYSEARCH_WEB_ENABLED is on (patron grants are stored)")
+        raise RuntimeError(f"Refusing to start: {why}, but\n" + "\n".join(problems))
 
 
 # ── cookies ──────────────────────────────────────────────────────────────────────

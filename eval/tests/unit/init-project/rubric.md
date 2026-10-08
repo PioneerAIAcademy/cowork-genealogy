@@ -18,6 +18,10 @@ fabrication? Stub persons carry whatever facts are known (name, gender if
 known, approximate dates/places); unknown fields are omitted, not guessed.
 FamilySearch-derived facts are sourced to a tree source (`S1`) at
 `quality: 1` (questionable), and local `I` person IDs are used throughout.
+When the skill passes `person_read`'s `staged.resultsRef` as `personReadRef`,
+`project_create` builds all of that from the read: grade the written tree as
+usual, and grade the skill on what it supplies itself (the stubs its statements
+imply) and on passing the ref rather than re-typing the read into `tree`.
 
 - **pass:** Subject and all known relatives have known fields populated and
   unknown fields omitted; FamilySearch-derived facts are sourced to `S1` at
@@ -119,7 +123,9 @@ Score this dimension **N/A (null)** only when the test involves no places
 at all. A test whose places all came from `person_read` is still scored:
 there is something to check — that each returned `standard_place`
 survived into the tree unchanged, and that none was invented for a fact
-the tool left without one.
+the tool left without one. A value `project_create` resolved host-side, on the
+`personReadRef` path, for a fact the read returned with a `place` and no
+`standard_place` is not invented: the host retries the same place resolver.
 
 - **pass:** Every hand-entered place is standardized via `place_search`
   and its `standard_place` is populated from the result. Every

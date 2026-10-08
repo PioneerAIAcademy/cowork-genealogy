@@ -1,4 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
+// The ref build's place retry goes through this resolver; stubbed so the suite
+// stays offline. It resolves nothing unless a test says otherwise.
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
+});
+import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 import { mkdtemp, writeFile, readFile, rm, access, mkdir } from "fs/promises";
 import { realpathSync } from "node:fs";
 import { join } from "path";
@@ -396,5 +404,596 @@ describe("project_create", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/projectPath is required/);
+  });
+});
+
+// ─── Stage B (#2944): the tree built host-side from a staged person_read ───
+
+import { readFileSync } from "node:fs";
+import { stagePersonRead } from "../../src/tools/person-read.js";
+
+const FAMILY = JSON.parse(
+  readFileSync(
+    join(__dirname, "../../../../../eval/fixtures/mcp/person-read-flynn-family.json"),
+    "utf-8",
+  ),
+).response;
+
+describe("project_create — personReadRef (#2944 Stage B)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-01T12:00:00Z"));
+    dir = await mkdtemp(join(tmpdir(), "project-create-ref-"));
+  });
+  afterEach(async () => {
+    vi.useRealTimers();
+    await rm(dir, { recursive: true, force: true });
+  });
+  const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
+
+  /** Stage the family fixture the way person_read does. The requested id is a
+   *  merged-away one (a redirect), and the story memory carries an image_ref. */
+  async function stageFamily(): Promise<string> {
+    const result = structuredClone(FAMILY);
+    result.sources.find((s: { id: string }) => s.id === "228755097").image_ref = "images/228755097.jpg";
+    const { staged } = await stagePersonRead({
+      projectPath: dir,
+      input: { personId: "OLDX-001" },
+      resolvedId: "LZNY-BRF",
+      result,
+    });
+    return staged!.resultsRef;
+  }
+
+  const STUB = { id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] };
+  const src = (id: string) => FAMILY.sources.find((s: { id: string }) => s.id === id);
+  const FS = { ref: "S1", quality: 1 };
+  const fact = (id: string, f: Record<string, unknown>) => ({ id, ...f, sources: [FS] });
+
+  it("builds the starting tree from a staged person_read", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "Find Patrick's parents", personReadRef: ref });
+    expect(result.ok).toBe(true);
+
+    const expected = {
+      persons: [
+        {
+          id: "I1", ark: "ark:/61903/4:1:LZNY-BRF", gender: "Male", living: false,
+          names: [{ id: "N1", preferred: true, given: "Patrick", surname: "Flynn" }],
+          facts: [
+            fact("F1", { type: "Birth", date: "~1845", standard_date: "Abt 1845", place: "Ireland", standard_place: "Ireland" }),
+            fact("F2", { type: "Death", date: "1908", standard_date: "1908", place: "Schuylkill County, Pennsylvania, United States", standard_place: "Schuylkill, Pennsylvania, United States" }),
+          ],
+        },
+        {
+          id: "I2", ark: "ark:/61903/4:1:LZNY-K2M", gender: "Female", living: false,
+          names: [{ id: "N2", preferred: true, given: "Mary", surname: "Kelly" }],
+          facts: [fact("F3", { type: "Birth", date: "1849", standard_date: "1849", place: "Ireland", standard_place: "Ireland" })],
+        },
+        {
+          id: "I3", ark: "ark:/61903/4:1:LZNY-P7Q", gender: "Male", living: false,
+          names: [{ id: "N3", preferred: true, given: "James", surname: "Flynn" }],
+          facts: [fact("F4", { type: "Birth", date: "1871", standard_date: "1871", place: "Branch Township, Schuylkill County, Pennsylvania, United States", standard_place: "Branch, Schuylkill, Pennsylvania, United States" })],
+        },
+        {
+          id: "I4", ark: "ark:/61903/4:1:LZNY-R4T", gender: "Female", living: false,
+          names: [{ id: "N4", preferred: true, given: "Margaret", surname: "Flynn" }],
+          facts: [fact("F5", { type: "Birth", date: "1874", standard_date: "1874", place: "Branch Township, Schuylkill County, Pennsylvania, United States", standard_place: "Branch, Schuylkill, Pennsylvania, United States" })],
+        },
+        {
+          id: "I5", ark: "ark:/61903/4:1:LZNY-M3F", gender: "Male", living: false,
+          names: [{ id: "N5", preferred: true, given: "Michael", surname: "Flynn" }],
+          facts: [fact("F6", { type: "Birth", date: "~1815", standard_date: "Abt 1815", place: "Ireland", standard_place: "Ireland" })],
+        },
+        {
+          id: "I6", ark: "ark:/61903/4:1:LZNY-B8S", gender: "Female", living: false,
+          names: [{ id: "N6", preferred: true, given: "Bridget", surname: "Flynn" }],
+          facts: [fact("F7", { type: "Birth", date: "1848", standard_date: "1848", place: "Ireland", standard_place: "Ireland" })],
+        },
+      ],
+      relationships: [
+        {
+          id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [FS],
+          facts: [fact("F8", { type: "Marriage", date: "1869", standard_date: "1869", place: "Schuylkill County, Pennsylvania, United States", standard_place: "Schuylkill, Pennsylvania, United States" })],
+        },
+        { id: "R2", type: "ParentChild", parent: "I1", child: "I3", subtype: "Biological", sources: [FS] },
+        { id: "R3", type: "ParentChild", parent: "I2", child: "I3", subtype: "Biological", sources: [FS] },
+        { id: "R4", type: "ParentChild", parent: "I1", child: "I4", subtype: "Biological", sources: [FS] },
+        { id: "R5", type: "ParentChild", parent: "I2", child: "I4", subtype: "Biological", sources: [FS] },
+        { id: "R6", type: "ParentChild", parent: "I5", child: "I1", subtype: "Biological", sources: [FS] },
+        { id: "R7", type: "ParentChild", parent: "I5", child: "I6", subtype: "Biological", sources: [FS] },
+      ],
+      sources: [
+        {
+          id: "S1",
+          title: "FamilySearch Family Tree (read from Patrick Flynn, LZNY-BRF)",
+          citation: "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 1 October 2026), read from the page of Patrick Flynn (LZNY-BRF).",
+          url: "https://www.familysearch.org/tree",
+        },
+        { id: "S2", title: src("MMM9-1QF").title, citation: src("MMM9-1QF").citation, url: src("MMM9-1QF").url },
+        // notes, text, image_ref and artifact_url are response-only: dropped.
+        { id: "S3", title: src("MMM9-7RB").title, url: src("MMM9-7RB").url },
+        { id: "S4", title: src("228755097").title, url: src("228755097").url },
+        { id: "S5", title: src("175960782").title, url: src("175960782").url },
+      ],
+    };
+    // The top-level `notes` the read carried is gone too.
+    expect(await readJson("tree.gedcomx.json")).toEqual(expected);
+    expect(await readJson("starting-tree.gedcomx.json")).toEqual(expected);
+    const research = await readJson("research.json");
+    expect(research.project.subject_person_ids).toEqual(["I1"]);
+    expect(result.idMap).toEqual({
+      persons: {
+        "LZNY-BRF": "I1", "OLDX-001": "I1", "LZNY-K2M": "I2", "LZNY-P7Q": "I3",
+        "LZNY-R4T": "I4", "LZNY-M3F": "I5", "LZNY-B8S": "I6",
+      },
+      sources: { "MMM9-1QF": "S2", "MMM9-7RB": "S3", "228755097": "S4", "175960782": "S5" },
+      additions: {},
+      familySearchTreeSource: "S1",
+    });
+  });
+
+  it("cites every relative's facts to a FamilySearch-tree source that names no one person's page", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref });
+    expect(result.ok).toBe(true);
+    expect(result.placesFilled).toBeUndefined();
+    const tree = await readJson("tree.gedcomx.json");
+    const s1 = tree.sources.find((s: any) => s.id === "S1");
+    expect(s1.url).toBe("https://www.familysearch.org/tree");
+    expect(s1.citation).not.toMatch(/tree\/person\/details/);
+    const relative = tree.persons.find((p: any) => p.ark === "ark:/61903/4:1:LZNY-K2M");
+    expect(relative.facts.every((f: any) => f.sources.some((r: any) => r.ref === "S1"))).toBe(true);
+  });
+
+  it("maps a subjectPersonIds PID, including the merged-away requested id", async () => {
+    const ref = await stageFamily();
+    for (const pid of ["LZNY-BRF", "OLDX-001"]) {
+      await rm(join(dir, "research.json"), { force: true });
+      await rm(join(dir, "tree.gedcomx.json"), { force: true });
+      const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref, subjectPersonIds: [pid] });
+      expect(result.ok).toBe(true);
+      expect((await readJson("research.json")).project.subject_person_ids).toEqual(["I1"]);
+    }
+  });
+
+  it("a stub addition naming a staged person by PID lands in the tree and the starting baseline", async () => {
+    const ref = await stageFamily();
+    // Mary Kelly's parent, implied by her stated maiden name. Labels only.
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "Find Mary Kelly's parents",
+      personReadRef: ref,
+      tree: {
+        persons: [{ id: "I1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] }],
+        relationships: [{ type: "ParentChild", parent: "I1", child: "LZNY-K2M" }],
+      },
+    });
+    expect(result.ok).toBe(true);
+    // The label "I1" is NOT staged I1 (Patrick): it is re-minted after the staged ids.
+    expect(result.idMap.additions).toEqual({ I1: "I7" });
+    expect(result.idMap.statementSource).toBe("S6");
+    for (const name of ["tree.gedcomx.json", "starting-tree.gedcomx.json"]) {
+      const tree = await readJson(name);
+      expect(tree.persons.find((p: any) => p.id === "I7")).toEqual({
+        id: "I7", gender: "Unknown", names: [{ id: "N7", given: "", surname: "Kelly" }],
+      });
+      expect(tree.relationships.find((r: any) => r.id === "R8")).toEqual({
+        id: "R8", type: "ParentChild", parent: "I7", child: "I2", sources: [{ ref: "S6", quality: 1 }],
+      });
+      expect(tree.sources.find((s: any) => s.id === "S6")).toEqual({
+        id: "S6", title: "Researcher's statement",
+        citation: "Statement by the researcher when the project was created, 1 October 2026.",
+      });
+    }
+  });
+
+  it.each([
+    ["an I-shaped id that is not one of its own labels", { relationships: [{ type: "ParentChild", parent: "I2", child: "LZNY-K2M" }] }, /neither a FamilySearch ID/],
+    ["an addition person whose id is a staged PID", { persons: [{ id: "LZNY-K2M", gender: "Female", names: [{ given: "M", surname: "K" }] }] }, /already in the staged read/],
+    ["a ref to a source that is neither a label nor staged", { persons: [{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }], facts: [{ type: "Birth", sources: [{ ref: "S2" }] }] }] }, /cites source "S2"/],
+    ["a staged person re-added under a label (it carries an ark)", { persons: [{ id: "A1", ark: "ark:/61903/4:1:LZNY-K2M", gender: "Female", names: [{ given: "Mary", surname: "Kelly" }] }] }, /carries the ark of LZNY-K2M/],
+    [
+      "the whole read copied in as additions, re-id'd as I1..I6",
+      {
+        persons: FAMILY.persons.map((p: any, i: number) => ({ ...p, id: `I${i + 1}` })),
+        relationships: [{ type: "ParentChild", parent: "I1", child: "I3" }],
+      },
+      /carries the ark of LZNY-BRF/,
+    ],
+    [
+      "a label used twice",
+      {
+        persons: [
+          { id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] },
+          { id: "A1", gender: "Unknown", names: [{ given: "", surname: "Doyle" }] },
+        ],
+      },
+      /label "A1" is used twice/,
+    ],
+    [
+      "a source label used twice",
+      { sources: [{ id: "X1", title: "a" }, { id: "X1", title: "b" }] },
+      /source label "X1" is used twice/,
+    ],
+    ["a source label that is a staged FamilySearch source id", { sources: [{ id: "228755097", title: "dup" }] }, /FamilySearch source already in the staged read/],
+    ["a staged relationship repeated", { relationships: [{ type: "ParentChild", parent: "LZNY-BRF", child: "LZNY-P7Q" }] }, /repeats a relationship already in the tree/],
+    ["a staged Couple repeated with its endpoints swapped and lower-cased", { relationships: [{ type: "Couple", person1: "lzny-k2m", person2: "LZNY-BRF" }] }, /repeats a relationship already in the tree/],
+    ["a staged person's ark in another spelling", { persons: [{ ...{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] }, ark: " https://www.familysearch.org/ark:/61903/4:1:lzny-k2m?lang=en" }] }, /carries the ark of lzny-k2m/],
+    ["a label that is a staged PID in lower case", { persons: [{ ...{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] }, id: "lzny-k2m" }] }, /already in the staged read/],
+    ["an endpoint that is an Object prototype key", { relationships: [{ type: "ParentChild", parent: "constructor", child: "LZNY-K2M" }] }, /neither a FamilySearch ID/],
+    ["a source ref that is an Object prototype key", { persons: [{ ...{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] }, facts: [{ type: "Birth", sources: [{ ref: "toString" }] }] }] }, /cites source "toString"/],
+  ])("refuses %s, writing nothing", async (_label, tree, message) => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref, tree: tree as any });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(message);
+    expect(await exists("tree.gedcomx.json")).toBe(false);
+    expect(await exists("research.json")).toBe(false);
+  });
+
+  it.each([
+    ["a fact citation given as a bare string", { persons: [{ ...STUB, facts: [{ type: "Birth", sources: ["228755097"] }] }] }, /sources must be an array of objects/],
+    ["a fact citation given as one object, not an array", { persons: [{ ...STUB, facts: [{ type: "Birth", sources: { ref: "228755097" } }] }] }, /sources must be an array of objects/],
+    ["a relationship citation given as a string", { relationships: [{ type: "ParentChild", parent: "A1", child: "LZNY-K2M", sources: "228755097" }], persons: [STUB] }, /sources must be an array of objects/],
+    ["facts given as an object", { persons: [{ ...STUB, facts: { type: "Birth" } }] }, /facts must be an array of objects/],
+    ["persons given as an object", { persons: STUB }, /tree\.persons must be an array of objects/],
+    ["a staged person's tree URL as an addition's ark", { persons: [{ ...STUB, ark: "https://www.familysearch.org/tree/person/details/LZNY-K2M" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's tree URL with a page segment", { persons: [{ ...STUB, ark: "https://www.familysearch.org/en/tree/person/sources/LZNY-K2M?x=1" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's percent-encoded ark", { persons: [{ ...STUB, ark: "ark:/61903/4%3A1%3ALZNY-K2M" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's percent-encoded ark with a stray %", { persons: [{ ...STUB, ark: "ark:/61903/4%3A1%3ALZNY-K2M%" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's pedigree URL", { persons: [{ ...STUB, ark: "https://www.familysearch.org/tree/pedigree/landscape/LZNY-K2M" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's upper-case ARK", { persons: [{ ...STUB, ark: "ARK:/61903/4:1:LZNY-K2M" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's URL with a two-part locale and a port", { persons: [{ ...STUB, ark: "https://www.familysearch.org:443/en-US/tree/person/details/LZNY-K2M" }] }, /carries the ark of LZNY-K2M/],
+    ["a staged person's URL with a stray % after the PID", { persons: [{ ...STUB, ark: "https://www.familysearch.org/tree/person/details/LZNY-K2M%" }] }, /carries the ark of LZNY-K2M/],
+    ["two additions carrying one non-staged ark", { persons: [{ ...STUB, ark: "ark:/61903/4:1:ZZZZ-999" }, { ...STUB, id: "A2", ark: "ark:/61903/4:1:ZZZZ-999" }] }, /carry the ark of the same person/],
+    ["an addition source with a field the tree does not allow", { sources: [{ id: "X1", title: "t", bogus: 1 }] }, /bogus/],
+  ])("refuses %s rather than dropping it", async (_label, tree, message) => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref, tree: tree as any });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(message);
+    expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
+  it("remaps an addition's name-level sources like its fact sources", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: {
+        persons: [{ ...STUB, names: [{ given: "", surname: "Kelly", sources: [{ ref: "obit" }, { ref: "228755097" }] }] }],
+        sources: [{ id: "obit", title: "Obituary of Mary Flynn" }],
+      },
+    });
+    expect(result.ok).toBe(true);
+    const person = (await readJson("tree.gedcomx.json")).persons.find((p: any) => p.id === "I7");
+    expect(person.names[0].sources).toEqual([{ ref: "S6" }, { ref: result.idMap.sources["228755097"] }]);
+  });
+
+  it.each([
+    ["a tree URL whose query names a staged ark", "https://www.familysearch.org/tree/person/details/NEWP-ERS?from=4:1:LZNY-K2M"],
+    ["a 4:1: substring inside unrelated text", "note 14:1:LZNY-K2M"],
+    ["a record ark whose query names a staged tree ark", "https://www.familysearch.org/ark:/61903/1:1:QVJ5-ABCD?treeref=ark:/61903/4:1:LZNY-K2M"],
+  ])("does not read %s as a staged person", async (_l, ark) => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref, tree: { persons: [{ ...STUB, ark }] } });
+    expect(result.errors?.join(" ") ?? "").not.toMatch(/carries the ark of LZNY-K2M/);
+  });
+
+  it("does not read two non-FamilySearch URLs as one tree person", async () => {
+    const ref = await stageFamily();
+    const ark = "https://example.com/tree/person/john-doe";
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: { persons: [{ ...STUB, ark }, { ...STUB, id: "A2", ark }] },
+    });
+    expect(result.errors?.join(" ") ?? "").not.toMatch(/same person/);
+  });
+
+  it("does not treat a record-persona ark on an addition as a staged tree person", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: { persons: [{ ...STUB, ark: "ark:/61903/1:1:LZNY-K2M" }] },
+    });
+    expect(result.errors?.join(" ") ?? "").not.toMatch(/carries the ark/);
+  });
+
+  it("names the addition label in a refusal raised after the build", async () => {
+    const ref = await stageFamily();
+    const forged: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: { persons: [{ ...STUB, id: "d", facts: [{ type: "Birth", assertion_id: "as_1" }] }] },
+    });
+    expect(forged.errors.join(" ")).toMatch(/I7 \(addition "d"\)/);
+    const invalid: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: { persons: [{ ...STUB, id: "d", gender: "Robot" }] },
+    });
+    expect(invalid.ok).toBe(false);
+    expect(invalid.errors.join(" ")).toMatch(/addition "d" is I7, persons\[6\]/);
+    const quoted: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: { persons: [{ ...STUB, id: 'He said "x"', gender: "Robot" }] },
+    });
+    expect(quoted.errors.join(" ")).toContain('addition "He said \\"x\\"" is I7');
+    const onRel: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: {
+        persons: [STUB],
+        relationships: [{ type: "ParentChild", parent: "A1", child: "LZNY-K2M", facts: [{ type: "Adoption", assertion_id: "as_1" }] }],
+      },
+    });
+    expect(onRel.errors.join(" ")).toMatch(/R8 \(ParentChild, parent I7 \(addition "A1"\), child I2\)/);
+    expect(onRel.errors.join(" ")).toMatch(/addition "A1" is I7, persons\[6\]/);
+  });
+
+  it("refuses rather than overwrites when another create lands while places are filled", async () => {
+    const resolver = vi.mocked(resolveStandardPlace);
+    const result = structuredClone(FAMILY);
+    delete result.persons[0].facts.find((f: any) => f.standard_place).standard_place;
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result });
+    resolver.mockImplementation(async () => {
+      await writeFile(join(dir, "research.json"), "{\"other\": true}");
+      return "Filled, Place";
+    });
+    try {
+      const raced: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: staged!.resultsRef });
+      expect(raced.ok).toBe(false);
+      expect(raced.errors.join(" ")).toMatch(/appeared in projectPath/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe("{\"other\": true}");
+      expect(await exists("tree.gedcomx.json")).toBe(false);
+    } finally {
+      resolver.mockImplementation(async () => null);
+    }
+  });
+
+  it("fills an unresolved read place, and only after every refusal has passed", async () => {
+    const resolver = vi.mocked(resolveStandardPlace);
+    const result = structuredClone(FAMILY);
+    const fact = result.persons[0].facts.find((f: any) => f.standard_place);
+    delete fact.standard_place;
+    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result });
+    resolver.mockClear();
+    resolver.mockImplementation(async () => "Filled, Place");
+    try {
+      for (const tree of [
+        { persons: [{ ...STUB, facts: [{ type: "Birth", assertion_id: "as_1" }] }] },
+        { persons: [{ ...STUB, gender: "Robot" }] },
+      ]) {
+        const refused: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: staged!.resultsRef, tree: tree as any });
+        expect(refused.ok).toBe(false);
+      }
+      expect(resolver).not.toHaveBeenCalled();
+      const ok: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: staged!.resultsRef });
+      expect(ok.ok).toBe(true);
+      expect(resolver).toHaveBeenCalled();
+      const written = (await readJson("tree.gedcomx.json")).persons[0].facts.find((f: any) => f.type === fact.type && f.place === fact.place);
+      expect(written.standard_place).toBe("Filled, Place");
+      expect(ok.placesFilled).toEqual([{ place: fact.place, standardPlace: "Filled, Place" }]);
+    } finally {
+      resolver.mockImplementation(async () => null);
+    }
+  });
+
+  it("keeps the ark of an addition the read does not hold (a second person_read)", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: {
+        persons: [{ id: "A1", ark: "ark:/61903/4:1:ZZZZ-999", gender: "Male", names: [{ given: "Owen", surname: "Kelly" }] }],
+        relationships: [{ type: "ParentChild", parent: "A1", child: "LZNY-K2M" }],
+      },
+    });
+    expect(result.ok).toBe(true);
+    const tree = await readJson("tree.gedcomx.json");
+    expect(tree.persons.find((p: any) => p.id === "I7").ark).toBe("ark:/61903/4:1:ZZZZ-999");
+  });
+
+  it("matches the subject case-insensitively, and refuses a read that does not hold it", async () => {
+    const result = structuredClone(FAMILY);
+    const lower = await stagePersonRead({ projectPath: dir, input: { personId: "lzny-brf" }, result });
+    const ok: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: lower.staged!.resultsRef });
+    expect(ok.ok).toBe(true);
+    const tree = await readJson("tree.gedcomx.json");
+    expect(tree.persons[0]).toMatchObject({ id: "I1", ark: "ark:/61903/4:1:LZNY-BRF" });
+    expect(tree.sources[0].title).toBe("FamilySearch Family Tree (read from Patrick Flynn, LZNY-BRF)");
+    expect((await readJson("research.json")).project.subject_person_ids).toEqual(["I1"]);
+
+    const other = await mkdtemp(join(tmpdir(), "project-create-nosubj-"));
+    try {
+      const wrong = await stagePersonRead({ projectPath: other, input: { personId: "ZZZZ-999" }, result });
+      const refused: any = await projectCreate({ projectPath: other, objective: "x", personReadRef: wrong.staged!.resultsRef });
+      expect(refused.ok).toBe(false);
+      expect(refused.errors.join(" ")).toMatch(/holds no person "ZZZZ-999"/);
+    } finally {
+      await rm(other, { recursive: true, force: true });
+    }
+  });
+
+  it("maps a lower-case subjectPersonIds PID, and links an addition to a lower-case staged PID", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref, subjectPersonIds: [" lzny-brf "],
+      tree: { persons: [{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] }], relationships: [{ type: "ParentChild", parent: "A1", child: "lzny-k2m" }] },
+    });
+    expect(result.ok).toBe(true);
+    expect((await readJson("research.json")).project.subject_person_ids).toEqual(["I1"]);
+    expect((await readJson("tree.gedcomx.json")).relationships.at(-1)).toMatchObject({ parent: "I7", child: "I2" });
+  });
+
+  it("accepts a ref with surrounding whitespace", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ` ${ref}\n` });
+    expect(result.ok).toBe(true);
+  });
+
+  it("refuses a subjectPersonIds entry that names neither a staged PID nor an addition", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref, subjectPersonIds: ["I2"] });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/subjectPersonIds entry "I2"/);
+  });
+
+  it("refuses an assertion_id on an addition's fact", async () => {
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x", personReadRef: ref,
+      tree: { persons: [{ id: "A1", gender: "Unknown", names: [{ given: "", surname: "Kelly" }], facts: [{ type: "Birth", assertion_id: "a_001" }] }] },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/assertion_id/);
+  });
+
+  it.each([
+    ["missing", "results/.staging/nope.json", /not a staged read/],
+    ["outside staging", "results/x.json", /is not under results\/\.staging/],
+    ["a traversal", "../../etc/passwd", /is not under results\/\.staging/],
+    ["blank", "  ", /must be the staged\.resultsRef/],
+    ["invalid-JSON", "results/.staging/bad.json", /not a staged read/],
+  ])("refuses a %s personReadRef in project_create terms, writing nothing", async (_l, ref, message) => {
+    if (ref.endsWith("bad.json")) {
+      await mkdir(join(dir, "results", ".staging"), { recursive: true });
+      await writeFile(join(dir, "results", ".staging", "bad.json"), "{ not json");
+    }
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: ref });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(message);
+    expect(result.errors.join(" ")).toMatch(/call person_read again/);
+    expect(result.errors.join(" ")).not.toMatch(/research_log_append|stagedResultsRef/);
+    expect(await exists("research.json")).toBe(false);
+  });
+
+  it("names a read fault on a ref that exists, rather than calling it pruned", async () => {
+    await mkdir(join(dir, "results", ".staging", "adir.json"), { recursive: true });
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: "results/.staging/adir.json" });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/exists but could not be read/);
+    expect(result.errors.join(" ")).not.toMatch(/pruned/);
+  });
+
+  it("refuses a ref staged by another tool", async () => {
+    const { stageSearchResults } = await import("../../src/utils/results-staging.js");
+    const h = await stageSearchResults({ projectPath: dir, tool: "record_read", response: { results: [{ recordId: "X", gedcomx: {} }] } });
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", personReadRef: h!.resultsRef });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/was not staged by person_read/);
+  });
+
+  const exists = async (name: string) =>
+    access(join(dir, name)).then(() => true, () => false);
+});
+
+describe("project_create — hand-built tree (no personReadRef)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-01T12:00:00Z"));
+    dir = await mkdtemp(join(tmpdir(), "project-create-hand-"));
+  });
+  afterEach(async () => {
+    vi.useRealTimers();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it.each([
+    ["a non-object person entry", { persons: ["I1"] }, /persons\[0\]/],
+    ["a non-object relationship entry", { relationships: [42] }, /relationships\[0\]/],
+    ["a fact citation given as one object", { persons: [{ id: "I1", gender: "Male", names: [{ given: "P", surname: "F" }], facts: [{ type: "Birth", sources: { ref: "S1" } }] }], sources: [{ id: "S1", title: "t" }] }, /sources/],
+    ["a relationship citation given as a string", { persons: [{ id: "I1", gender: "Male", names: [{ given: "P", surname: "F" }] }, { id: "I2", gender: "Male", names: [{ given: "Q", surname: "F" }] }], relationships: [{ type: "ParentChild", parent: "I1", child: "I2", sources: "S1" }], sources: [{ id: "S1", title: "t" }] }, /sources/],
+  ])("refuses %s rather than dropping or re-citing it", async (_l, tree, message) => {
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: tree as any });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(message);
+    expect(await access(join(dir, "tree.gedcomx.json")).then(() => true, () => false)).toBe(false);
+  });
+
+  const P = (id?: unknown) => ({ ...(id === undefined ? {} : { id }), gender: "Male", names: [{ given: "P", surname: "F" }] });
+  it.each([
+    ["a fact citing a source that does not exist, beside an unsourced fact", { persons: [{ ...P("I1"), facts: [{ type: "Birth", sources: [{ ref: "S1" }] }, { type: "Death" }] }] }, undefined, /'S1'/],
+    ["a fact citing S1 beside an id-less source", { persons: [{ ...P("I1"), facts: [{ type: "Birth", sources: [{ ref: "S1" }] }] }], sources: [{ title: "Unrelated" }] }, undefined, /'S1'/],
+    ["a relationship naming I2 beside an id-less person", { persons: [P("I1"), P()], relationships: [{ type: "Couple", person1: "I1", person2: "I2" }] }, undefined, /'I2'/],
+    ["subjectPersonIds naming I1 beside an id-less person", { persons: [P()] }, ["I1"], /I1/],
+  ])("does not let a minted id bind %s", async (_l, tree, subjects, message) => {
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: tree as any, subjectPersonIds: subjects as any });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(message);
+  });
+
+  it("keeps a non-string id the caller referenced, for the validator to judge", async () => {
+    const result: any = await projectCreate({
+      projectPath: dir, objective: "x",
+      tree: { persons: [P(5), P("I2")], relationships: [{ type: "Couple", person1: 5, person2: "I2" }] } as any,
+    });
+    expect(result.errors?.join(" ") ?? "").not.toMatch(/'5' not found/);
+  });
+
+  it("reads a null collection as none, like an absent one", async () => {
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons: null, relationships: null, sources: null } as any });
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([["a string", "abc"], ["an array", [1]]])("refuses a tree that is %s", async (_l, tree) => {
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: tree as any });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/tree must be an object/);
+  });
+
+  it("refuses a tree collection that is not an array rather than writing it as empty", async () => {
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons: { id: "I1" } } as any });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/tree\.persons must be an array of objects/);
+  });
+
+  it("keeps the model's ids, mints only missing ones, and cites unsourced facts and relationships to the researcher's statement", async () => {
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "Find Sarah's grandmother",
+      subjectPersonIds: ["I1"],
+      tree: {
+        persons: [
+          { id: "I1", gender: "Female", names: [{ id: "N1", given: "Sarah", surname: "Hennessy" }], facts: [{ type: "Birth", date: "~1920" }] },
+          { id: "I2", gender: "Unknown", names: [{ given: "", surname: "Donovan" }] },
+        ],
+        relationships: [{ type: "ParentChild", parent: "I2", child: "I1" }],
+      },
+    });
+    expect(result.ok).toBe(true);
+    const tree = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
+    expect(tree.persons[1].names[0].id).toBe("N2");
+    expect(tree.persons[0].facts[0]).toEqual({ id: "F1", type: "Birth", date: "~1920", sources: [{ ref: "S1", quality: 1 }] });
+    expect(tree.relationships[0]).toEqual({ id: "R1", type: "ParentChild", parent: "I2", child: "I1", sources: [{ ref: "S1", quality: 1 }] });
+    expect(tree.sources).toEqual([
+      { id: "S1", title: "Researcher's statement", citation: "Statement by the researcher when the project was created, 1 October 2026." },
+    ]);
+  });
+
+  it("leaves an already-sourced hand-built tree exactly as given", async () => {
+    const tree = {
+      persons: [{ ...SUBJECT, facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 1 }] }] }],
+      relationships: [],
+      sources: [TREE_SOURCE],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: structuredClone(tree) });
+    expect(result.ok).toBe(true);
+    expect(JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"))).toEqual(tree);
+  });
+});
+
+describe("project_create — the old-extension message init-project keys on (#2944)", () => {
+  it("is produced only by a build that ignores personReadRef, never by this one", async () => {
+    // init-project/SKILL.md tells the model that this exact refusal means the
+    // extension predates personReadRef. A build that ignores the ref sees an
+    // empty tree and a PID subject, so it produces it:
+    const dir = await mkdtemp(join(tmpdir(), "project-create-skew-"));
+    try {
+      const old: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["LZNY-BRF"] });
+      expect(old.ok).toBe(false);
+      expect(old.errors.join(" ")).toMatch(/subject_person_ids contains 'LZNY-BRF' which is not in tree\.gedcomx\.json persons/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

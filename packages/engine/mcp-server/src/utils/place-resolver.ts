@@ -55,6 +55,14 @@ export interface ResolveOpts {
    * partially wired).
    */
   date?: string;
+  /**
+   * Other place texts from the same source (the record's other facts). Used
+   * only for a bare single-segment input, which carries no context of its own:
+   * a sibling place that spells the name out is resolved instead, else the
+   * search is confined to the jurisdiction the siblings share. See
+   * `resolveBareName`.
+   */
+  contextPlaces?: string[];
 }
 
 // ─── Caches ────────────────────────────────────────────────────────────────
@@ -124,8 +132,8 @@ function parseTypeSuffix(
  * +date:+999 and +date:+10000 and +date:+-44 all 400, +date:+1000 returns 204,
  * +date:+9999 returns 200. That range is reachable through the same fudge
  * offsets `earliestYear` applies ("abt 1000" -> 999, "44 BC" -> -44), and a 400
- * would throw inside searchPlace, burn all three withRetry attempts, and leave
- * the place blank and uncached so the next call burns them again. The
+ * would throw inside searchPlace (a 400 is not retried) and leave the place
+ * blank and uncached, so the next call throws again. The
  * empty-result fallback in getSearchEntries does not cover a throw. Out-of-range
  * years therefore degrade to an undated query rather than being sent.
  */
@@ -146,16 +154,13 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Retry an idempotent async call with exponential backoff + jitter. Used for
- * place standardization, where a transient network / 429 / 5xx blip shouldn't
- * drop a place. Re-throws the last error after `attempts` tries so the caller
- * can decide (the resolver fns swallow it and return null WITHOUT caching, so
- * the failed lookup retries on a later call).
+ * Retry an idempotent async call with exponential backoff + jitter. Used around
+ * match-engine scoring (rank_search_matches, same_person). Place lookups no
+ * longer go through it: their fetchers retry transient failures at the HTTP
+ * call (place-api.ts, via fetchWithRetry). Re-throws the last error after
+ * `attempts` tries so the caller can decide.
  *
- * NOTE: the underlying fetchers throw a generic Error on any non-2xx, so this
- * retries all thrown errors (not just 5xx). That is harmless for these
- * idempotent GETs; finer transient-only classification will land when the raw
- * fetch moves into this module (see file header TODO).
+ * NOTE: this retries every thrown error, not just transient ones.
  */
 export async function withRetry<T>(
   fn: () => Promise<T>,
@@ -248,9 +253,9 @@ export function deriveContextName(text: string): string | undefined {
  * matches (better to return extra candidates than zero). When the caller passes
  * no explicit contextName, one is derived from the input text itself
  * (see deriveContextName) so every resolver path — including the five write
- * paths that persist standard_place — disambiguates same-name places. Wrapped
- * in withRetry; a successful empty result IS cached (definitive), a thrown
- * error is not.
+ * paths that persist standard_place — disambiguates same-name places. Each
+ * fetch retries transient failures itself (place-api.ts, via fetchWithRetry);
+ * a successful empty result IS cached (definitive), a thrown error is not.
  */
 async function getSearchEntries(
   name: string,
@@ -266,7 +271,7 @@ async function getSearchEntries(
   const cached = searchEntriesCache.get(key);
   if (cached) return cached;
 
-  let entries = await withRetry(() => searchPlace(name, { date: year }));
+  let entries = await searchPlace(name, { date: year });
 
   // `+date:` is a hard filter, not a preference: when no place representation
   // records coverage for that year FamilySearch returns nothing at all, even
@@ -277,7 +282,7 @@ async function getSearchEntries(
   // query makes the qualifier strictly additive — it can sharpen an answer but
   // never turns one into a blank. See dev/probe-place-date-disagreement.ts.
   if (year !== undefined && entries.length === 0) {
-    entries = await withRetry(() => searchPlace(name));
+    entries = await searchPlace(name);
   }
 
   const context = effectiveContext?.trim().toLowerCase();
@@ -492,6 +497,9 @@ export async function resolveStandardPlace(
   opts: ResolveOpts = {},
 ): Promise<string | null> {
   if (!normalizeKey(originalText)) return null;
+  if (placeSegments(originalText).length === 1 && !opts.contextName) {
+    return resolveBareName(originalText, opts);
+  }
   // Only date-qualify a place that names its own context. A bare single-segment
   // input has nothing to anchor the year against, and the qualifier then picks
   // whichever obscure same-named place happens to have coverage for it
@@ -565,6 +573,110 @@ export async function resolveStandardPlace(
 }
 
 /**
+ * A bare single-segment place ("Shenandoah", "Logan LDS Temple") names no
+ * parent, so the best-scored hit is whichever same-named place ranks highest
+ * anywhere, and `countryConsistency` cannot catch it: a one-token input names no
+ * country. Measured on PR #3007's trials: "Shenandoah" beside "Borough of
+ * Shenandoah, County of Schuylkill" in the same will resolved to New Zealand.
+ *
+ * In order: a sibling place from the same source that is this name (or this
+ * name after "Borough of" and the like) is resolved instead; else a best hit
+ * that is a country or state is kept; else the search is confined to the jurisdiction the
+ * siblings share, most specific first, and only a candidate inside it counts;
+ * else the best match is kept only when it is a jurisdiction (a country, state,
+ * territory or county: "Gloucestershire", "Ky" -> Kentucky, "USA"), never a
+ * settlement (a city, town, parish or farm), which is where a same-named place
+ * abroad wins. Anything else is left unresolved (genealogist ruling 2026-10-06,
+ * option C with fallback B′; B′ rather than "only itself at the top", which
+ * would have dropped ~70 correct county and abbreviation resolutions in the
+ * committed e2e corpus).
+ */
+async function resolveBareName(name: string, opts: ResolveOpts): Promise<string | null> {
+  const bare = normalizeKey(name);
+  const siblings = (opts.contextPlaces ?? [])
+    .map(placeSegments)
+    .filter((segs) => segs.length >= 2);
+
+  const fuller = siblings.find((segs) => {
+    const first = normalizeKey(segs[0]);
+    return first === bare || first.replace(ADMIN_PREFIX_RE, "") === bare;
+  });
+  if (fuller) return resolveStandardPlace(fuller.join(", "), { date: opts.date });
+
+  let entries: SearchEntry[];
+  try {
+    entries = await getSearchEntries(name);
+  } catch {
+    return null;
+  }
+
+  // A bare country or state is itself, whatever the record's own area holds:
+  // "Germany" beside Gettysburg is not Germany Township, Adams, Pennsylvania.
+  const best = pickBest(entries);
+  if (best && isTopLevel(best.type)) return best.fullName;
+
+  const word = firstWord(bare);
+  const named = entries.filter((e) => firstWord(normalizeKey(placeSegments(e.fullName)[0] ?? "")) === word);
+  for (const level of sharedJurisdiction(siblings)) {
+    const inside = named.filter((e) => placeSegments(e.fullName).map(normalizeKey).includes(level));
+    if (inside.length > 0) return pickBest(inside)!.fullName;
+  }
+
+  return best && isJurisdiction(best.type) ? best.fullName : null;
+}
+
+/** "Borough of Shenandoah" spells out "Shenandoah"; "New York" does not spell out
+ *  "York", nor "Port Elizabeth" "Elizabeth". Only an administrative prefix counts. */
+/** A place name's first word, after any administrative prefix: a FamilySearch
+ *  variant-name hit ("Laxton" for "Lexington") does not share it. */
+function firstWord(key: string): string {
+  return key.replace(ADMIN_PREFIX_RE, "").split(" ")[0];
+}
+
+const ADMIN_PREFIX_RE = /^(?:borough|town|city|township|village|parish|county|district|municipality|hundred) of /;
+
+/** A FamilySearch place type names a jurisdiction. The live API qualifies some
+ *  types ("County (Top level)"), so the bracketed qualifier is dropped. */
+function isJurisdiction(type: string | undefined): boolean {
+  return JURISDICTION_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+}
+
+/** A place type at the top of the hierarchy: a name that is one of these is
+ *  already as specific as a bare name can be. */
+function isTopLevel(type: string | undefined): boolean {
+  return TOP_LEVEL_TYPES.has(normalizeKey((type ?? "").replace(/\s*\(.*\)\s*$/, "")));
+}
+
+const TOP_LEVEL_TYPES = new Set(["continent", "country", "state", "province"]);
+
+const JURISDICTION_TYPES = new Set([
+  "continent",
+  "country",
+  "state",
+  "province",
+  "territory",
+  "county",
+  "district",
+  "region",
+  "first-level admin div",
+  "second-level admin div",
+]);
+
+/** The trailing jurisdictions every sibling shares (each sibling's own first
+ *  segment excluded), most specific first. One sibling shares its whole tail. */
+export function sharedJurisdiction(siblings: string[][]): string[] {
+  const tails = siblings.map((segs) => segs.slice(1).map(normalizeKey));
+  if (tails.length === 0 || tails.some((t) => t.length === 0)) return [];
+  const shared: string[] = [];
+  for (let i = 1; i <= Math.min(...tails.map((t) => t.length)); i++) {
+    const seg = tails[0][tails[0].length - i];
+    if (!tails.every((t) => t[t.length - i] === seg)) break;
+    shared.unshift(seg);
+  }
+  return shared;
+}
+
+/**
  * A `standardPlace` name -> its placeRepId (1:1), or null. Prefers an exact
  * fullName match among candidates.
  */
@@ -604,7 +716,7 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   if (repInfoCache.has(repId)) return repInfoCache.get(repId) ?? null;
   let place: Awaited<ReturnType<typeof getPlaceById>>;
   try {
-    place = await withRetry(() => getPlaceById(repId));
+    place = await getPlaceById(repId);
   } catch {
     return null; // transient — do not cache
   }
@@ -764,7 +876,7 @@ export async function placeIdToRepIds(placeId: string): Promise<string[]> {
   if (cached) return cached;
   let reps: string[];
   try {
-    reps = await withRetry(() => getPlaceRepIds(placeId));
+    reps = await getPlaceRepIds(placeId);
   } catch {
     return [];
   }

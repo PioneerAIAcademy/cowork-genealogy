@@ -49,11 +49,32 @@ tools on purpose.
   (`mcp__genealogy__research_delivered`) and ends the turn **before the tool body runs**.
   The turn's `outcome` is `delivered` and the browser renders "Done — that's what you asked
   for. Send a message to carry on." Nothing reads the tool's return value.
-- **The hosted ALPHA (`real_agent.py`).** It registers the same MCP server, so the tool is
-  advertised and callable there, but it has neither `DELIVERY_GUIDANCE` nor a hook arm: its
-  Stop hook vetoes the exit like any other yield, and alpha testers keep phase-1 behaviour
-  until the alpha is retired (ruled: `docs/plan/research-as-a-job-later.md`, "Before phase 2").
-  A call there is the inert acknowledgement below, not a stop.
+- **The hosted ALPHA (`real_agent.py`).** It now halts on the same signal. The arm lives in
+  `count_only` — the `matcher=None` PreToolUse callback that already sees every call — and is
+  gated on the main thread (`"agent_id" not in` the payload) so a subagent's delivery cannot
+  strand the orchestrator mid-job. It sets a flag the Stop hook forwards as
+  `should_continue_run(delivered=...)`, so the voluntary exit is allowed instead of nudged.
+  The halt text is built by the shared `delivered_stop_reason`, so both planes send the model's
+  summary first. The alpha does not yet RENDER it: `map_message` has no `ResultMessage`
+  branch and nothing under `apps/server/app` reads `stopReason`, so there the sentence
+  reaches the CLI and the log but not the browser. Surfacing it is a separate change.
+  `DELIVERED_TOOL` and `DELIVERED_REASON` moved to `continue_policy.py` and both planes import
+  them: a tool name that drifts between two copies fails open on whichever holds the stale one.
+  **This reverses the earlier scope ruling** that the alpha keeps phase-1 behaviour until it is
+  retired (`docs/plan/research-as-a-job-later.md`, "Before phase 2"). That ruling rested on
+  nothing needing the signal here; the router's "Bounded request or job" section then put a
+  stop instruction in `research/SKILL.md` which this plane contradicted mid-run, so the
+  premise no longer held. Directed by the project owner on 2026-10-06; the AUTHORITY is the
+  lead's own Done-when, which requires a new browser session to end with the delivered
+  outcome, and the default web transport is the alpha (`apps/server/app/agent/runner.py`
+  returns a `RealAgent`). His 2026-10-06 comments asking for the duplicate-spawn fix apply
+  to the same plane. The ruling this supersedes was the lead's own (496566c29), which is
+  why the authority has to be his and not a redirection.
+  `DELIVERY_GUIDANCE` moved there too and the alpha now appends it to its own system prompt.
+  That half is not optional: the arm fires only on a real call, and nothing calls a tool it
+  was never told about — wiring the arm alone ships a dead rule that looks identical to a
+  working one. `test_alpha_stop_hook.py` asserts the prompt carries it, mirroring the
+  assertion `test_proto_worker.py` already makes for the prototype.
 - **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
   e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
   server-prefix wildcard). So it must not error and must not claim an effect it did not
@@ -68,8 +89,9 @@ asserting the turn ended.
 
 ## When the agent is told to call it
 
-The instruction rides the worker's per-turn system prompt (`DELIVERY_GUIDANCE` in
-`apps/server/proto/worker/options.py`), **not** any skill body — the hook that gives this
+The instruction rides each hosted plane's per-turn system prompt (`DELIVERY_GUIDANCE`, now
+defined once in `apps/server/app/agent/continue_policy.py` and appended by the prototype worker
+and the hosted alpha alike), **not** any skill body — the hook that gives this
 tool its meaning exists only on the hosted path, so a skill-body rule would teach every
 skill to call a tool that is inert in Cowork and in the harness that grades them.
 
@@ -104,5 +126,4 @@ precedence is the hook's ordering, not a clause list:
   (`"agent_id" not in data`); a subagent's call falls through to the inert tool body.
 
 The shared `continue_policy` carries `TERMINAL_DELIVERED` as the value's definition and
-nothing more: it has no `delivered` parameter and no clause, because no caller would pass
-one. An earlier revision added both; they were removed on review as dead code.
+nothing more. It GAINED a `delivered` parameter and clause with the hosted-alpha port: the alpha's Stop hook forwards the flag, so a caller now does pass it. The flag is per TURN, cleared at the turn boundary in `RealAgent._begin_turn_hook_state` -- left set, one bounded delivery would authorise a voluntary stop in every later turn of the session, ending the next research job after a single step.

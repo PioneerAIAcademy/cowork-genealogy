@@ -579,7 +579,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `date_range` | string | yes | Target date range (e.g., "1840", "1830-1850") |
 | `repository` | `repository` | yes | Where to search (see open enums in Section 2) |
 | `rationale` | string | yes | Why this record set for this question |
-| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for, or null |
+| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for — an item of the same plan — or null. `validate_research_schema` rejects any other value, so every writer does. |
 | `status` | `plan_item_status` | yes | Current status |
 
 ### 5.4 `log`
@@ -1079,7 +1079,7 @@ evaluations
 
 **Why `independence_analysis` and `weighing_analysis` are separate fields.** Source independence is a distinct analytical step in the GPS. Two derivative indexes of the same original record are not independent sources — determining this requires analysis separate from weighing the evidence. Keeping them separate forces the conflict-resolution skill to actually perform both steps rather than folding independence into general weighing prose.
 
-**Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — entries are superseded with status fields.
+**Why `log` is append-only but other sections are mutable.** The log is the primary audit trail for "reasonably exhaustive" claims. If log entries could be edited or deleted, the exhaustive search declaration would be unfalsifiable. Other sections allow updates (refining a citation, revising a classification, resolving a conflict) because analytical conclusions legitimately evolve. But no section allows deletion — a `person_evidence` revision sets `superseded_by` on the old entry, and a re-plan sets the old plan's `status` to `superseded`.
 
 **Why `source_classification` is on sources but `information_quality` is on assertions.** A single original source can contain both primary and secondary information. A death certificate is an original source; the death date reported by the attending physician is primary information, but the birth date reported by a son-in-law is secondary information. Classifying the source at the source level and the information at the assertion level prevents the common error of labeling an entire source as "primary."
 

@@ -1,30 +1,23 @@
 /**
  * Probe: how often a committed e2e final tree holds a child with two or more
- * parents of one sex, and what the warning gate would refuse on a parent edge if
- * it saw one. Satisfiability evidence for the competing-parentage check
- * (issue #2525) and for gating ParentChild edges in general (issue #2840).
+ * parents of one sex. Satisfiability evidence for the competing-parentage check
+ * (issue #2525). What the warning gate refuses on parent edges in general is
+ * measured by `dev/measure-parentage-gate-rate.ts`.
  *
- * The warning gate does not run on a ParentChild edge: computeTouchedPersonIds
- * reads only Couple endpoints (person1/person2), so a parent edge touches no
- * person. The competing-parentage check reads the trees directly and does not
- * depend on it. A per-call replay is not possible: e2e run logs keep each call's
+ * A per-call replay is not possible: e2e run logs keep each call's
  * `{tool, args}` and no before-state. The end state is what this counts.
  *
- * Two counts per hit, because they answer different questions:
- * - `warning`: same-sex parents of any subtype, which is what tooManyFathers2 /
- *   tooManyMothers2 fire on.
+ * Two counts per hit:
+ * - `warning`: same-sex parents of any subtype.
  * - `biological`: same-sex parents whose edge has no subtype or `Biological`,
- *   which is what the competing-parentage check refuses and routes.
- *
- * `--all-warnings` replays every ParentChild edge as the gate would if it saw
- * parent edges: it names the edge's two ends as touched itself, since
- * computeTouchedPersonIds does not.
+ *   which is what tooManyFathers2 / tooManyMothers2 and the competing-parentage
+ *   check both count.
  *
  * Offline. Not shipped in any artifact. Re-run rather than quoting figures
  * forward; the corpus moves as run logs land.
  *
  * Usage:
- *   npx tsx dev/probe-same-sex-parents.ts [--list] [--all-warnings]
+ *   npx tsx dev/probe-same-sex-parents.ts [--list]
  */
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
@@ -77,38 +70,9 @@ for (const fixture of readdirSync(root).sort()) {
   }
 }
 
-// Every warning a ParentChild edge would introduce, by type: take each edge out
-// of the final tree and diff the gate's introduced warnings for putting it
-// back, with the edge's two ends named as touched. This is what gating parent
-// edges would refuse, not just the same-sex parent count above.
-if (process.argv.includes("--all-warnings")) {
-  const { introducedWarnings, computeTouchedPersonIds } = await import("../src/validation/introduced-warnings.js");
-  const byType = new Map<string, number>();
-  let edges = 0;
-  let refused = 0;
-  for (const fixture of readdirSync(root).sort()) {
-    const dir = join(root, fixture);
-    if (!statSync(dir).isDirectory()) continue;
-    for (const file of readdirSync(dir).filter((f) => f.endsWith(".final-tree.gedcomx.json"))) {
-      const tree = JSON.parse(readFileSync(join(dir, file), "utf-8")) as SimplifiedGedcomX;
-      for (const edge of tree.relationships ?? []) {
-        if (edge.type !== "ParentChild") continue;
-        edges++;
-        const without = { ...tree, relationships: (tree.relationships ?? []).filter((r) => r !== edge) };
-        const touched = [...new Set([...computeTouchedPersonIds(without, tree), edge.parent!, edge.child!])];
-        const result = introducedWarnings(without, tree, touched);
-        for (const w of result.allIntroduced) byType.set(w.issueType, (byType.get(w.issueType) ?? 0) + 1);
-        if (result.allIntroduced.length > 0) refused++;
-      }
-    }
-  }
-  console.log(`ParentChild edges replayed: ${edges}; would be refused: ${refused}`);
-  for (const [t, n] of [...byType].sort((a, b) => b[1] - a[1])) console.log(`  ${String(n).padStart(5)}  ${t}`);
-}
-
 console.log(`final trees read:            ${trees}`);
-console.log(`children, 2+ same-sex parents (tooManyFathers2/Mothers2 fires): ${warningHits}`);
-console.log(`  of which 2+ biological (conflicts_surfaced fires):           ${biologicalHits}`);
+console.log(`children, 2+ same-sex parents (any subtype): ${warningHits}`);
+console.log(`  of which 2+ biological (the warning and conflicts_surfaced fire): ${biologicalHits}`);
 console.log(`runs with a hit:             ${runs.size}`);
 console.log(`cases with a hit:            ${cases.size}`);
 if (list) for (const h of hits) console.log(`  ${h}`);
