@@ -386,6 +386,154 @@ describe("earliestChildBirthToBirth predicate", () => {
       earliestChildBirthToBirth(new Mob(christeningOnly, "P"), 14),
     ).toBe(true);
   });
+
+  // The child side reads each date's LATEST bound, so the check fires on a
+  // certainty rather than a possibility. Every test above uses exact years,
+  // where the two bounds coincide and the distinction is invisible — these
+  // are the cases that tell them apart, and the reason #2840 could stop
+  // exempting `earliestChildBirthToBirth12` from the write gate.
+  const parentThen = (childDate: string): SimplifiedGedcomX => ({
+    persons: [
+      {
+        id: "P",
+        gender: "Male",
+        names: [{ id: "N1", given: "The", surname: "Parent" }],
+        facts: [
+          { id: "F1", type: "Birth", date: "1860", standard_date: "1860" },
+        ],
+      },
+      {
+        id: "C",
+        gender: "Female",
+        names: [{ id: "N2", given: "The", surname: "Child" }],
+        facts: [
+          { id: "F2", type: "Birth", date: childDate, standard_date: childDate },
+        ],
+      },
+    ],
+    relationships: [{ id: "R", type: "ParentChild", parent: "P", child: "C" }],
+  });
+
+  it("does not fire on an imprecise child date whose LATEST bound clears the cutoff", () => {
+    // `Bef 1880` spans 1870..1880. Read at its earliest bound the gap is
+    // 1870 − 1860 = 10 ≤ 12 and this fired; the child may equally have been
+    // born in 1880, at the parent's age 20. Firing on that is firing on a
+    // possibility, and the gate refuses writes on the result.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("Bef 1880"), "P"), 12),
+    ).toBe(false);
+  });
+
+  it("still fires when the child is born BEFORE the parent", () => {
+    // The impossibility this tag is the only check for, and the one the
+    // write gate stopped exempting. −10 ≤ 12.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1850"), "P"), 12),
+    ).toBe(true);
+  });
+
+  it("still fires on a precise date inside the cutoff", () => {
+    // Guards the other direction: the latest-bound read must not stop the
+    // check firing where it always did. Parent aged 8.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1868"), "P"), 12),
+    ).toBe(true);
+  });
+
+  it("does not fire on a precise date outside the cutoff", () => {
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1890"), "P"), 12),
+    ).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// The age-12 tags are emitted ONCE PER IMPOSSIBLE CHILD, and the age-14
+// tags name the child that actually tripped them.
+//
+// Both halves are a divergence from Java, recorded in
+// person-warnings-tool-spec.md beside the latest-bound one. A single warning
+// per parent cannot say WHICH child is impossible, and the write gate
+// subtracts on a key that includes the child — so one warning keyed on
+// whichever child sorted first made a second impossible child either refuse
+// (key changed) or LAND (key already carried), depending only on the dates.
+// ────────────────────────────────────────────────────────────────────
+
+describe("age-12 is per impossible child", () => {
+  const kid = (id: string, date: string) => ({
+    id,
+    gender: "Male",
+    names: [{ id: `${id}-n`, given: id, surname: "X" }],
+    facts: [{ id: `${id}b`, type: "Birth", date, standard_date: date }],
+  });
+  const mother = (children: Array<[string, string]>): SimplifiedGedcomX =>
+    ({
+      persons: [
+        {
+          id: "M",
+          gender: "Female",
+          names: [{ id: "M-n", given: "Mary", surname: "X" }],
+          facts: [{ id: "Mb", type: "Birth", date: "1860", standard_date: "1860" }],
+        },
+        ...children.map(([id, d]) => kid(id, d)),
+      ],
+      relationships: children.map(([id], i) => ({
+        id: `R${i}`,
+        type: "ParentChild",
+        parent: "M",
+        child: id,
+      })),
+    }) as unknown as SimplifiedGedcomX;
+
+  const age12 = (tree: SimplifiedGedcomX) => {
+    const m = new Mob(tree, "M");
+    return calculateWarnings(m, m, m, true).filter(
+      (w) => w.issueType === "earliestChildBirthToBirth12",
+    );
+  };
+
+  it("emits one warning per impossible child, not one for the parent", () => {
+    // Mother born 1810 with children at 10 and 11 is a real corpus shape
+    // (elisabetha-sugecz-parents). Keyed on one child, the other two were
+    // invisible to the gate.
+    const ws = age12(mother([["A", "1866"], ["B", "1868"], ["C", "1890"]]));
+    expect(ws.map((w) => w.relatedPersonId).sort()).toEqual(["A", "B"]);
+  });
+
+  it("names the child that tripped it, not the earliest POSSIBLE one", () => {
+    // B is certainly age 8. C spans 1850..1880 and is possible-only. Read at
+    // the earliest bound C sorts first, so the warning named C and the
+    // age-14 message read "at most -10".
+    const ws = age12(mother([["B", "1868"], ["C", "Bet 1850 and 1880"]]));
+    expect(ws.map((w) => w.relatedPersonId)).toEqual(["B"]);
+  });
+
+  it("does not fire on a child that is only possibly impossible", () => {
+    expect(age12(mother([["C", "Bet 1850 and 1880"]]))).toEqual([]);
+  });
+
+  it("the age-14 message states the age that triggered it", () => {
+    // A father born 1860 with a child `Bef 1874` trips the cutoff at exactly
+    // 14; read at the child's earliest bound the message said 4.
+    const tree = {
+      persons: [
+        {
+          id: "M",
+          gender: "Male",
+          names: [{ id: "M-n", given: "John", surname: "X" }],
+          facts: [{ id: "Mb", type: "Birth", date: "1860", standard_date: "1860" }],
+        },
+        kid("K", "Bef 1874"),
+      ],
+      relationships: [{ id: "R", type: "ParentChild", parent: "M", child: "K" }],
+    } as unknown as SimplifiedGedcomX;
+    const m = new Mob(tree, "M");
+    const w = calculateWarnings(m, m, m, true).find(
+      (x) => x.issueType === "earliestChildBirthToBirthMale14",
+    );
+    expect(w?.message).toContain("at most 14");
+    expect(w?.relatedPersonId).toBe("K");
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -981,6 +1129,77 @@ describe("structural counters", () => {
       children: 0,
     });
     expect(tooManyFathers(new Mob(tree, "I1"))).toBe(false);
+  });
+
+  // Only parents whose edge CLAIMS biological parentage count. #2840 made
+  // these two tags refuse tree writes, so counting an Adoptive edge refuses
+  // the write that records the adoption.
+  const withParentSubtype = (
+    sub: string | undefined,
+    gender: "Male" | "Female",
+  ) => {
+    // BOTH parents take `gender`. Hardcoding the first as Male left the
+    // mother case with one mother, so `tooManyMothers` returned false whatever
+    // the subtype filter did and the test could not fail. The father cases are
+    // unchanged by this — they already passed Male for both.
+    const tree = makeTreeWithRelatives({
+      parents: [{ gender }, { gender }],
+      children: 0,
+    });
+    // Second parent edge only; the first stays an unqualified (biological) one.
+    const second = tree.relationships!.filter((r) => r.type === "ParentChild")[1];
+    if (sub) (second as { subtype?: string }).subtype = sub;
+    return tree;
+  };
+
+  for (const sub of ["Adoptive", "Step", "Foster", "Guardian"]) {
+    it(`tooManyFathers does not fire for a ${sub} father beside a biological one`, () => {
+      expect(tooManyFathers(new Mob(withParentSubtype(sub, "Male"), "I1"))).toBe(
+        false,
+      );
+    });
+  }
+
+  // `parent_subtype_recommended` is an OPEN enum, so nothing rejects a tree
+  // carrying a case variant or the upstream GedcomX spelling whose `Parent`
+  // suffix the simplified format drops and restores on round-trip. Matched as
+  // an exact string, every one of these counted as biological.
+  for (const sub of ["adoptive", "ADOPTIVE", "AdoptiveParent", "StepParent"]) {
+    it(`tooManyFathers tolerates the subtype spelling "${sub}"`, () => {
+      expect(
+        tooManyFathers(new Mob(withParentSubtype(sub, "Male"), "I1")),
+      ).toBe(false);
+    });
+  }
+
+  it("counts an UNRECOGNIZED subtype as biological rather than guessing", () => {
+    // The safe direction: a value we cannot interpret may mean anything, and
+    // treating it as non-biological would silently drop a real second father.
+    expect(
+      tooManyFathers(new Mob(withParentSubtype("Putative", "Male"), "I1")),
+    ).toBe(true);
+  });
+
+  it("tooManyMothers does not fire for an Adoptive mother beside a biological one", () => {
+    expect(
+      tooManyMothers(new Mob(withParentSubtype("Adoptive", "Female"), "I1")),
+    ).toBe(false);
+  });
+
+  // The other direction, twice: an explicit `Biological` subtype and an absent
+  // one must both still count, or the subtype filter has quietly disarmed the
+  // check. Absent is biological by FamilySearch's data model, and 1427 of the
+  // 2266 committed ParentChild edges carry no subtype at all.
+  it("tooManyFathers still fires for two explicitly Biological fathers", () => {
+    expect(
+      tooManyFathers(new Mob(withParentSubtype("Biological", "Male"), "I1")),
+    ).toBe(true);
+  });
+
+  it("tooManyFathers still fires when neither edge carries a subtype", () => {
+    expect(
+      tooManyFathers(new Mob(withParentSubtype(undefined, "Male"), "I1")),
+    ).toBe(true);
   });
 });
 
