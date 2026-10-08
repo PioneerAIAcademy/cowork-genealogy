@@ -120,8 +120,8 @@ standardized names that differ from `place` (FamilySearch drops
 "County"), so the two are distinguishable in the written tree.
 
 **Hand-entered places.** A place drawn from the user's objective text is
-resolved with `place_search` and its `standard_place` populated from the
-result.
+entered as stated; `project_create` standardizes it itself, so its
+`standard_place` is the tool's. The agent writes no `standard_place`.
 
 Score this dimension **N/A (null)** only when the test involves no places
 at all. A test whose places all came from `person_read` is still scored:
@@ -131,12 +131,13 @@ the tool left without one. A value `project_create` resolved host-side, on the
 `personReadRef` path, for a fact the read returned with a `place` and no
 `standard_place` is not invented: the host retries the same place resolver.
 
-- **pass:** Every hand-entered place is standardized via `place_search`
-  and its `standard_place` is populated from the result. Every
-  tool-supplied `standard_place` appears in the tree exactly as returned.
-- **partial:** A hand-entered place is standardized, but `standard_place`
-  is hand-written without the `place_search` call, or only some
-  hand-entered places are resolved.
+- **pass:** Every hand-entered place reaches the tree as stated, with the
+  `standard_place` `project_create` gave it (or none, when nothing
+  resolves). Every tool-supplied `standard_place` appears in the tree exactly
+  as returned.
+- **partial:** The agent supplied a `standard_place` of its own for a
+  hand-entered place (project_create replaced it and warned), or changed the
+  place text it was given.
 - **fail:** A hand-entered place that resolves is left with no/empty
   `standard_place`, a standardized string is fabricated without the tool
   (including a `standard_place` copied from the fact's free-text `place`),

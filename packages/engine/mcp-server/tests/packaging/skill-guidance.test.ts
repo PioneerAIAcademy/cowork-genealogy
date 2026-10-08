@@ -64,18 +64,6 @@ const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: 
   },
 ];
 
-// An agent that inlines a SPECIALIZED copy carries it as its trailing section,
-// from the "# Working with places (standard places)" heading to the end of the
-// body, held to a pinned hash the same way. init-project moved here from
-// SKILLS_WITH_SPECIALIZED_COPY when issue #2122 converted it to an agent.
-const AGENTS_WITH_SPECIALIZED_COPY: Array<{ agent: string; why: string; sha256: string }> = [
-  {
-    agent: "init-project",
-    why: "project_create carries person_read's standard_place; the canonical copy-it bullet names a step init-project no longer takes",
-    sha256: "1967ddccb15aee12a8c8952433e80f52368dbba50a1a7078e6b353e0cc575035",
-  },
-];
-
 // LF-normalized, matching the eval snapshot's text rule (eval/CLAUDE.md
 // "Normalization rules"). `.gitattributes` now pins every text file to LF, so a
 // fresh clone hashes identically everywhere; the normalization still matters for
@@ -158,22 +146,6 @@ describe("places-guidance drift lint", () => {
 
     it(`${skill} is listed in exactly one of the two lists`, () => {
       expect(SKILLS_WITH_PLACES_GUIDANCE).not.toContain(skill);
-    });
-  }
-
-  for (const { agent, why, sha256 } of AGENTS_WITH_SPECIALIZED_COPY) {
-    it(`${agent} agent inlines a specialized places-guidance section (${why})`, () => {
-      const agentPath = join(repoRoot, "plugin", "agents", `${agent}.md`);
-      expect(existsSync(agentPath), `missing agent: ${agentPath}`).toBe(true);
-      const body = readFileSync(agentPath, "utf8").replace(/\r\n/g, "\n");
-      const start = body.indexOf("# Working with places (standard places)");
-      expect(start, `${agent}.md carries no places-guidance section`).toBeGreaterThan(-1);
-      expect(
-        contentHash(body.slice(start).trim()),
-        `${agent}'s inlined places-guidance section changed. If the edit is ` +
-          `intended, update its sha256 in AGENTS_WITH_SPECIALIZED_COPY.`,
-      ).toBe(sha256);
-      expect(AGENTS_WITH_PLACES_GUIDANCE).not.toContain(agent);
     });
   }
 });

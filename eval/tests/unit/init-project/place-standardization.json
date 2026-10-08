@@ -4,11 +4,10 @@
     "skill": "init-project",
     "name": "Standardize a hand-entered place via place_search",
     "type": "positive",
-    "description": "Single-turn decomposition: no FamilySearch ID, so the subject stub is built from objective text and the birthplace is hand-entered rather than returned by person_read. The skill must standardize that place by calling place_search and populate the stub fact's standard_place from the result. This is the one path that exercises place_search, which is declared in allowed-tools.",
+    "description": "No FamilySearch ID: the agent builds a stub for Michael Brennan, born ~1850 in Boston, from the objective text alone. project_create standardizes every place in a hand-built tree, so the written fact's `standard_place` is the resolver's, not one the agent typed (provenance graded by test_standard_place_came_from_a_tool).",
     "tags": [
       "initialization",
       "place-standardization",
-      "place-search",
       "objective-only",
       "single-turn-decomposition",
       "direct-arm"
@@ -25,9 +24,9 @@
   "judge_context": [
     "No FamilySearch ID is given, so the agent should work from objective text and create a stub for Michael Brennan with an approximate birth (~1850) in Boston",
     "`person_search` is available and returns no candidates. Falling back to objective-text stubs is correct only after the search runs — judge whether the search was attempted, since a run that never searched and a run that searched and found nothing reach the same tree.",
-    "Because 'Boston' is hand-entered (not returned by a person_read fixture), the agent must standardize it by calling `place_search` and populate the stub birth fact's `standard_place` from the first result (e.g. 'Boston, Suffolk, Massachusetts, United States')",
-    "Tool Arguments: place_search should be called with the canonical `placeName` argument",
-    "Should NOT leave `standard_place` null or empty for a place that resolves, and should NOT fabricate a standardized place string without calling the tool",
+    "Because 'Boston' is hand-entered (no person_read fixture returns it), project_create standardizes it itself: the stub birth fact's `standard_place` in the written tree is the tool's ('Boston, Suffolk, Massachusetts, United States'). The agent enters the place as the user stated it.",
+    "Tool Arguments: no place_search call is expected — the agent no longer holds that tool; project_create receives the place as stated",
+    "The agent should NOT write a `standard_place` of its own. project_create replaces any it supplies and reports that as a warning, so a supplied value is a Tool Arguments defect even though the written tree comes out right.",
     "Should not pretend to have FamilySearch tree data — there is no person_read in this scenario"
   ],
   "execution": {

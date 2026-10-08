@@ -23,9 +23,6 @@ tools:
   - mcp__genealogy__person_search
   - mcp__remote-devices__Genealogy_Research__person_search
   - mcp__Genealogy_Research__person_search
-  - mcp__genealogy__place_search
-  - mcp__remote-devices__Genealogy_Research__place_search
-  - mcp__Genealogy_Research__place_search
   - mcp__genealogy__project_create
   - mcp__remote-devices__Genealogy_Research__project_create
   - mcp__Genealogy_Research__project_create
@@ -47,7 +44,7 @@ Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only re
 
 **You write no research questions and review nothing.** Questions and gaps are question-selection's, errors check-warnings'.
 
-**Places:** Follow "Working with places" below for places you enter by hand (stubs, the objective-only build): resolve each with `place_search`. Places from `person_read` are handled by `project_create`.
+**Places:** `project_create` standardizes every place in the tree — the read's and the ones you enter by hand. Enter a place as the user stated it and never write `standard_place`.
 
 ## Opening turn
 
@@ -357,8 +354,8 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 - `type` on facts: PascalCase — `Birth`, `Death`, `Marriage`,
   `Residence`, `Immigration`, `Military`, `Occupation`, etc.
 - `standard_date` / `standard_place` on facts: the standardized sidecars beside
-  the raw `date`/`place`. `project_create` carries the read's through; a place
-  you enter by hand is resolved with `place_search`
+  the raw `date`/`place`. `project_create` carries the read's through and
+  standardizes every place you enter by hand; never write `standard_place`
 - `sources` on persons, facts, names: optional array of source references
 
 ## Additions (with `personReadRef`)
@@ -449,79 +446,3 @@ and the ones an objective-only tree follows.
 - Facts: `F` prefix (`F1`, `F2`)
 - Relationships: `R` prefix (`R1`, `R2`)
 - Sources: `S` prefix (`S1`, `S2`)
-
----
-
-# Working with places (standard places)
-
-Above the tool layer, places are always **names**, never IDs. The canonical
-name is the `standardPlace` from `place_search`.
-
-## Resolving a place
-
-Call `place_search` with the place name as `placeName` (optionally a
-higher-level `contextName` to disambiguate):
-
-```
-place_search({ placeName: "Schuylkill County, Pennsylvania" })
-```
-
-It returns an array of matches; each match has a **`standardPlace`** field (the
-fully-qualified standardized name) plus `type`, `dateRange`, coordinates, and
-links. **Pick the best/first match and use its `standardPlace` verbatim** as the
-handle for everything downstream. There are no place IDs in the output.
-
-Use **`place_search_all`** instead of `place_search` when jurisdictions or
-boundaries changed across the period you're researching — it returns *every*
-standard place a location has belonged to over time, which informs where
-records were created and are now held.
-
-## Passing places to other tools
-
-The place tools all take a `standardPlace` name (not an ID) and resolve it
-internally — pass the `standardPlace` you got from `place_search`:
-
-- `place_population({ standardPlace, ... })`
-- `external_links_search({ standardPlace, ... })`
-- `collections_search({ standardPlace })` — lists record collections; it matches at the state level for the US/Canada/Mexico and the country level elsewhere (derived internally, returned as `scope`)
-- `place_distance({ standardPlace1, standardPlace2 })`
-- `wiki_place_page({ standardPlace, section })` — `section` is one of `home`, `getting_started`, `online_records`, `research_tips`
-- `volume_search({ standardPlace, ... })`
-
-For `place_distance`, two events at the **same** `standard_place` are distance 0
-(no call needed); otherwise pass the two names.
-
-## Broadening to a parent jurisdiction
-
-Every place tool returns results for the **exact** standardPlace you pass.
-A standardPlace is comma-delimited, most-specific-first
-("Schuylkill, Pennsylvania, United States"), so its **parent jurisdiction is
-the text after the first comma** ("Pennsylvania, United States", then
-"United States"). To broaden, drop the leading component and call again.
-
-- **Superseding resources** — `wiki_place_page`, `place_population`. One right
-  answer per place: the most-specific available. If a place has no page / no
-  data, climb to the parent and retry; **stop at the first hit.** A national
-  figure for a village is usually too generic to use — climb only as far as you
-  must.
-- **Additive resources** — `external_links_search`, `collections_search`,
-  `volume_search`. Each level holds *different* records (the county courthouse,
-  the state archive, the national index), so fetch the levels your research
-  actually needs and combine them. Bias to the specific end; the national level
-  is mostly generic collections the researcher already knows — pull it only on
-  first contact with a country or when the local levels are sparse.
-
-## Writing places to research.json / tree.gedcomx.json
-
-Whenever you persist a place on a fact, assertion, or timeline event, also set
-its **`standard_place`** companion (snake_case in the data formats) when one can
-be found:
-
-- A place from a `person_read` result needs nothing: `project_create` builds
-  the tree from the read, `standard_place` included.
-- If the place came from a `record_read` / `record_search` result, that fact
-  already carries a converter-resolved `standard_place` — **copy it** (no tool
-  call).
-- Otherwise call `place_search({ placeName: "<place>" })` and use the first
-  result's `standardPlace`. Resolve each distinct place once.
-- Leave `standard_place` null when `place` is null or nothing resolves.
