@@ -190,6 +190,16 @@ _INFERENCE_MARKERS = (
     # ut_search_records_010/_014/_027 2026-08-28_15-20-05).
     rf"\bindex\w*\b[^.;,]{{0,20}}\b{_ROLE_WORD}\b",
     rf"\b{_ROLE_WORD}\b[^.;,]{{0,20}}\bindex\w*\b",
+    # Two more phrasings of "the record states no relationship", both from
+    # ut_search_records_027's compliant note (v4_2026-10-08_16-05-44, log_002:
+    # "...no relationships stated (pre-1880 census). The 1860 schedule does not
+    # record marriage year or relationship to head."), which the list above
+    # false-failed though the judge scored every dimension 3. Across every
+    # household-describing note in the committed search-records run logs (122),
+    # these two flip exactly that one note and no other.
+    r"\bno\s+relationships?\s+(?:is\s+|are\s+|was\s+|were\s+)?"
+    r"(?:stated|given|recorded|listed)\b",
+    r"\b(?:does|did)(?:\s+not|n['’]t)\s+record\b[^.]{0,60}\brelationship",
 )
 
 

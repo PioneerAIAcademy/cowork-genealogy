@@ -445,3 +445,46 @@ def test_every_offending_entry_is_named_not_just_the_first():
         )
     assert "log_005" in str(e.value)
     assert "log_006" in str(e.value)
+
+
+# ut_search_records_027, run v4_2026-10-08_16-05-44, log_002 -- verbatim. The
+# judge scored every dimension 3; the note lists the household and says, twice,
+# that the record states no relationship. It false-failed the marker list.
+COMPLIANT_NO_RELATIONSHIPS_STATED = (
+    "Ad-hoc user-requested search. One George Ackerman found in Bucks County, PA, "
+    "born about 1818 in Pennsylvania. Household lists George, Henry Ackerman, and "
+    "Margaret Ackerman — no Catherine appears. relativeTerms.spouse: absent (index "
+    "did not tag a Catherine as spouse). Full record read confirms three household "
+    "members only; no relationships stated (pre-1880 census). The 1860 schedule "
+    "does not record marriage year or relationship to head."
+)
+
+
+@pytest.mark.parametrize(
+    "notes",
+    [
+        COMPLIANT_NO_RELATIONSHIPS_STATED,
+        "Household lists George, Henry and Margaret; no relationship given.",
+        "Household of George, Henry and Margaret. The schedule doesn't record "
+        "any relationship to the head.",
+    ],
+)
+def test_no_relationship_stated_phrasings_pass(notes):
+    check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
+
+
+@pytest.mark.parametrize(
+    "notes",
+    [
+        # The same listing with both phrasings removed must still fail -- the
+        # new markers, not some other change, are what admit the note above.
+        "One George Ackerman found in Bucks County, PA. Household lists George, "
+        "Henry Ackerman, and Margaret Ackerman — no Catherine appears.",
+        # "does not record" about something other than relationships is no hedge.
+        "Household lists George, wife Margaret and son Henry. The schedule does "
+        "not record the street address.",
+    ],
+)
+def test_near_misses_of_the_new_markers_still_fail(notes):
+    with pytest.raises(AssertionError):
+        check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
