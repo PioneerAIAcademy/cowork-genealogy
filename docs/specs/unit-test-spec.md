@@ -641,7 +641,7 @@ across the conversion; minting new ids would orphan every prior grade on the
 The "separate file, own id" rule above still governs a **pair** — a routing
 skill that still ships — because there both arms exist and both are graded.
 
-**Historical note (2026-10-02).** The paired-skill pattern described above is
+**Historical note (2026-10-08).** The paired-skill pattern described above is
 now nearly retired. `person-evidence`, `proof-conclusion`, and
 `research-exhaustiveness` have all been deleted as routing skills; only
 `record-extraction` → `record-extractor` remains as a shipped pair. The

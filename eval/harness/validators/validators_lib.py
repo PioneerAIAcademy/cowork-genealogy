@@ -526,7 +526,13 @@ def check_no_exhaustive_declaration(before_state: dict, after_state: dict) -> li
 
     Shared between the ``research-exhaustiveness`` and ``research``
     validator suites (issue #2738).  Each caller gates on the tag itself
-    so that ``tag_gated_validator_tags`` can parse the gate line with AST.
+    so that ``tag_gated_validator_tags`` can parse the gate line with AST,
+    and each caller also skips when either state has no ``research_json``
+    BEFORE calling this.  Keep that skip in the callers: an empty list here
+    means "no violation found", and ``validator_runner`` records that as
+    ``outcome: "passed"`` -- which is not what an unreadable or absent
+    research.json should report.  ``workspace.snapshot_files`` sets the key
+    to None on a JSONDecodeError as well as on a missing file.
     """
     before = before_state.get("research_json")
     after = after_state.get("research_json")

@@ -393,5 +393,7 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
     transition to `exhaustive_declared` or flip `declared` to true."""
     if "no-exhaustive-declaration" not in test.get("tags", []):
         pytest.skip("not a no-exhaustive-declaration scenario")
+    if before_state.get("research_json") is None or after_state.get("research_json") is None:
+        pytest.skip("missing research.json for diff")
     bad = check_no_exhaustive_declaration(before_state, after_state)
     assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
