@@ -4844,6 +4844,13 @@ describe("research_append (batch ops)", () => {
   it("(in-flight) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
   });
+  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ());
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/as it stood before the call/);
+    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
+  });
   it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
     await refusedFor(running(), { unblocks: ["q_001"] });
   });
@@ -6316,6 +6323,30 @@ describe("research_append (composite persist + enforcement)", () => {
     ]);
     expect(r.validation.warnings.join(" ")).toMatch(/names no country/);
     expect((await readResearch()).assertions[1].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
+  it("resolves a bare place against the other places of its own record only", async () => {
+    // Genealogist ruling 2026-10-06, option C: the will's bare "Shenandoah" went
+    // to New Zealand with no context. Context is per record, never the batch.
+    await writeProject();
+    const a = (record_id: string, place: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: { ...noId(validAssertion("x", "src_001")), record_id, place },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("rec-A", "Shenandoah"),
+        a("rec-A", "Borough of Shenandoah, County of Schuylkill"),
+        a("rec-B", "Dublin, Ireland"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    });
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
   });
 
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
@@ -10516,5 +10547,87 @@ describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
 
   it("a person-level ref to another record means it was not minted from this one", () => {
     expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
+});
+
+// ─── An unexplained move: the update path (#2537) ───────────────────────────
+//
+// `research-append-unexplained-move.test.ts` calls the invariant directly; these
+// go through `researchAppend`, which decides whether an update re-checks the
+// move at all. Re-pointing a link is a new pairing: without the re-check, a
+// confident link on a record inside the cluster could be moved onto one across
+// the ocean in a second call.
+
+describe("research_append — unexplained move, update path", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-move-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** I1 lived in Sussex; rec_ENG places him there, rec_TN in Tennessee. I2 has no residence. */
+  async function write() {
+    const r = baseResearch();
+    const a = (id: string, recordId: string, factType: string, extra: Record<string, unknown>) => ({
+      ...validAssertion(id), record_id: recordId, fact_type: factType, ...extra,
+    });
+    r.assertions = [
+      ...r.assertions,
+      a("a_020", "rec_ENG", "name", { value: "William Weller" }),
+      a("a_021", "rec_ENG", "residence", { value: "Horsham", place: "Horsham, Sussex, England" }),
+      a("a_030", "rec_TN", "name", { value: "William Weller" }),
+      a("a_031", "rec_TN", "residence", { value: "Maury", place: "Maury, Tennessee, United States" }),
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Residence", date: "1851", place: "Horsham, Sussex, England" }];
+    tree.persons.push({ id: "I2", gender: "Male", names: [{ id: "N2", given: "William", surname: "Weller" }] });
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await attestEveryAssertion(dir, "I1");
+    await attestEveryAssertion(dir, "I2");
+  }
+  const appendConfident = (assertionId: string, personId: string) =>
+    researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: {
+        assertion_id: assertionId, person_id: personId, confidence: "confident",
+        rationale: "Name and household agree.", match_score: null,
+        created: "2026-10-07", superseded_by: null,
+      },
+    });
+  const update = (entryId: string, fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields });
+
+  it("refuses re-pointing a confident link's assertion onto a record across the move", async () => {
+    await write();
+    const appended = await appendConfident("a_020", "I1");
+    expect(appended.ok).toBe(true);
+    const r = await update(singleOk(appended).entryId, { assertion_id: "a_030" });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/move_bridge/);
+  });
+
+  it("refuses re-pointing a confident link's person onto one the move does not fit", async () => {
+    await write();
+    const appended = await appendConfident("a_030", "I2");
+    expect(appended.ok).toBe(true);
+    const r = await update(singleOk(appended).entryId, { person_id: "I1" });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/move_bridge/);
+  });
+
+  it("still allows a rationale-only edit on a confident link across the move", async () => {
+    await write();
+    const appended = await appendConfident("a_030", "I2");
+    const id = singleOk(appended).entryId;
+    // Make it a pre-rule link across the move: point it at I1 behind the tool's back.
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    research.person_evidence.find((e: any) => e.id === id).person_id = "I1";
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
   });
 });

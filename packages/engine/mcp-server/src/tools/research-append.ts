@@ -45,7 +45,7 @@ import {
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
-import { placeSegments } from "../utils/place-resolver.js";
+import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
@@ -984,6 +984,176 @@ export function coreIdentifierContradictionInvariants(
   ];
 }
 
+const US_STATES: ReadonlySet<string> = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware",
+  "district of columbia", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa",
+  "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota",
+  "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey",
+  "new mexico", "new york", "north carolina", "north dakota", "ohio", "oklahoma", "oregon",
+  "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah",
+  "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming",
+]);
+const US_STATE_CODES: ReadonlySet<string> = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "ct", "de", "dc", "fl", "ga", "hi", "id", "il", "in", "ia",
+  "ks", "ky", "la", "me", "md", "ma", "mi", "mn", "ms", "mo", "mt", "ne", "nv", "nh", "nj", "nm",
+  "ny", "nc", "nd", "oh", "ok", "or", "pa", "ri", "sc", "sd", "tn", "tx", "ut", "vt", "va", "wa",
+  "wv", "wi", "wy",
+]);
+/** Countries whose borders moved across the years genealogy records cover, so a
+ *  place named under one and a later record under another can be the same
+ *  village. A move inside one group is never read as a move between countries:
+ *  Ireland was in the United Kingdom until 1922, Prussian Posen is Polish
+ *  Poznań, and Norway shared a crown with Denmark and then Sweden. */
+const COUNTRY_GROUPS: ReadonlyMap<string, string> = new Map([
+  ...["united kingdom", "england", "scotland", "wales", "northern ireland", "ireland"].map(
+    (c) => [c, "british isles"] as [string, string],
+  ),
+  ...["germany", "poland", "austria", "hungary", "russia", "switzerland"].map(
+    (c) => [c, "central europe"] as [string, string],
+  ),
+  ...["norway", "sweden", "denmark"].map((c) => [c, "scandinavia"] as [string, string]),
+]);
+
+/** The country group a free-text place names, or null when its last comma
+ *  segment is not a country `canonicalCountry` recognizes (or a US state or
+ *  state code, read as the United States). Country, never state: a state line
+ *  is crossed by a short move as often as a long one, and the tool cannot tell
+ *  which (#2537). */
+export function placeCountry(place: unknown): string | null {
+  if (typeof place !== "string") return null;
+  const segments = placeSegments(place);
+  const last = segments[segments.length - 1];
+  if (!last) return null;
+  const lower = last.toLowerCase();
+  if (US_STATES.has(lower) || US_STATE_CODES.has(lower)) return "united states";
+  const country = canonicalCountry(last);
+  if (!country) return null;
+  return COUNTRY_GROUPS.get(country) ?? country;
+}
+
+const HEAD_ROLES: ReadonlySet<string> = new Set(["head", "principal", "self"]);
+
+const RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+const TREE_RESIDENCE_FACT_TYPES: ReadonlySet<string> = new Set(["residence", "census"]);
+
+/** A `confident` link across an unexplained move between countries is refused.
+ *
+ *  The move is read from the documents alone (ADR-0011's first question): the
+ *  record's residence country, from any residence or census assertion on the
+ *  linked record, against the countries of the Residence facts the tree person
+ *  carries. A Residence fact whose every source is a record this person is linked
+ *  to only below `confident` does not count, so the first capped link cannot
+ *  vouch for the next record in the same new place. No attested residence, no
+ *  cluster, no refusal. The agent clears it by naming what bridges the move in
+ *  `move_bridge`; `probable` is never refused. The body's prose cap held about
+ *  two runs in three (ut_person_evidence_g7m, 2026-10-06), which is why it is
+ *  enforced here. */
+export function unexplainedMoveInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  batchAssertions?: Map<string, any>,
+): string[] {
+  if (entry?.confidence !== "confident") return [];
+  if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") return [];
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) {
+    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
+  const linked = assertionById.get(entry.assertion_id);
+  if (!linked) return [];
+  const recordId = linked.record_id ?? linked.source_id ?? null;
+  if (recordId == null) return [];
+
+  // The linked party's own residence; failing that, the household head's (a
+  // census lists the residence once, on the head). Never another party's: an
+  // informant living elsewhere says nothing about where the subject lived.
+  const residenceOf = (pick: (a: any) => boolean) => {
+    const countries = new Set<string>();
+    let place: string | null = null;
+    for (const a of assertionById.values()) {
+      if ((a.record_id ?? a.source_id ?? null) !== recordId) continue;
+      if (!RESIDENCE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
+      if (!pick(a)) continue;
+      const c = placeCountry(a.place);
+      if (c) {
+        countries.add(c);
+        place ??= a.place;
+      }
+    }
+    return { countries, place };
+  };
+  const linkedParty = partyKey(linked);
+  let { countries: recordCountries, place: recordPlace } = residenceOf(
+    (a) => linkedParty !== null && partyKey(a) === linkedParty,
+  );
+  if (recordCountries.size === 0) {
+    ({ countries: recordCountries, place: recordPlace } = residenceOf((a) =>
+      HEAD_ROLES.has(String(a.record_role ?? "").toLowerCase()),
+    ));
+  }
+  if (recordCountries.size === 0) return [];
+
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === entry.person_id);
+  if (!person) return [];
+
+  // Tree S id -> research source id, and which research sources carry a
+  // confident link to this person.
+  const researchSourceByTreeRef = new Map<string, string>();
+  for (const src of (research?.sources ?? []) as any[]) {
+    if (src && typeof src.gedcomx_source_description_id === "string" && typeof src.id === "string") {
+      researchSourceByTreeRef.set(src.gedcomx_source_description_id, src.id);
+    }
+  }
+  const linkedBelowConfident = new Set<string>();
+  const linkedConfident = new Set<string>();
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    // The entry under write is already in the array; it must not vouch for itself.
+    if (!pe || pe === entry || (entry.id && pe.id === entry.id)) continue;
+    if (pe.person_id !== entry.person_id || pe.superseded_by) continue;
+    const a = assertionById.get(pe.assertion_id);
+    if (!a || typeof a.source_id !== "string") continue;
+    (pe.confidence === "confident" ? linkedConfident : linkedBelowConfident).add(a.source_id);
+  }
+
+  const residenceCountries = new Set<string>();
+  let residencePlace: string | null = null;
+  for (const f of (person.facts ?? []) as any[]) {
+    const kind = typeof f?.type === "string" ? f.type.split("/").pop()!.toLowerCase() : "";
+    if (!TREE_RESIDENCE_FACT_TYPES.has(kind)) continue;
+    const c = placeCountry(f.place);
+    if (!c) continue;
+    // A Residence fact vouches only through a source other than the record being
+    // judged, and not one this person is linked to only below confident. An
+    // unmapped ref (a tree source with no research entry) is pre-existing
+    // evidence and vouches; so does a fact with no sources at all.
+    const refs = ((f.sources ?? []) as any[]).map((r: any) => researchSourceByTreeRef.get(r?.ref) ?? null);
+    const vouches =
+      refs.length === 0 ||
+      refs.some(
+        (id) =>
+          id === null ||
+          (id !== linked.source_id && !(linkedBelowConfident.has(id) && !linkedConfident.has(id))),
+      );
+    if (!vouches) continue;
+    residenceCountries.add(c);
+    residencePlace ??= f.place;
+  }
+  if (residenceCountries.size === 0) return [];
+  for (const c of recordCountries) if (residenceCountries.has(c)) return [];
+
+  return [
+    `confidence 'confident' is not available on this link: the record places the person in ` +
+      `'${recordPlace}' while the tree attests residence only in '${residencePlace}', a move ` +
+      `between countries that nothing on the entry explains. Measure it (place_search, then ` +
+      `place_distance), read the destination's {Jurisdiction}_Emigration_and_Immigration wiki ` +
+      `page, and look for a record of the move. If a page sentence naming arrivals from the ` +
+      `person's prior country, or a record, bridges it, quote it in move_bridge and keep ` +
+      `'confident'; otherwise write 'probable' and name the gap in the rationale.`,
+  ];
+}
+
 /** A declared core-identifier conflict caps the link at `speculative`.
  *
  *  Decidable from the write payload alone: it reads the entry's own
@@ -1770,9 +1940,32 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (!isStopGateSatisfied(entry)) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.question_id !== qid) continue;
+  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
+    (item) => item.itemId,
+  );
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
+  ];
+}
+
+/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
+ *  the given snapshot. Shared by the two in-flight gates so which plans and
+ *  items count as in flight is decided once. */
+function activePlanInProgressItems(
+  research: any,
+  includePlan: (plan: any) => boolean,
+): { itemId: string; questionId: unknown }[] {
+  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
     // `research-plan` supersedes a plan by flipping `plans.status` alone — its
     // items keep whatever status they held — and then forbids touching it ever
@@ -1786,20 +1979,12 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      }
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
-  return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
-  ];
+  return inFlight;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -1833,25 +2018,23 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
-    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
-    if (excepted) continue;
-    for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        refused.push(`${item.id} (on ${plan.question_id})`);
-      }
-    }
-  }
+  const refused = activePlanInProgressItems(
+    preCallResearch,
+    (plan) =>
+      unresolvedQuestions.has(plan.question_id) &&
+      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
+  ).map((item) => `${item.itemId} (on ${item.questionId})`);
   if (refused.length === 0) return [];
   const ids = refused.sort().join(", ");
   return [
     `a new question cannot be opened while research is still running: ${ids} ` +
       `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
       "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. The one exception is a question that resolves " +
-      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
+      "report the in-flight item as the reason. Two exceptions: (1) a question that resolves " +
+      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
+      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
+      "this check reads the project as it stood before the call, so write the resolution in " +
+      "its own call and append the new question in the next one.",
   ];
 }
 
@@ -2955,77 +3138,17 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
 // skip-never-refuse contract this rule documents. Fixed here rather than
 // at each index site so a third one cannot reintroduce it, and so the
 // lookup means what the Python mirror's `dict.get()` already meant.
-// Exported only so the cross-language drift test can pin it against the
-// Python copy; nothing else outside this module reads it.
-export const RELATION_CATEGORY: Record<string, string> = Object.assign(
-  Object.create(null) as Record<string, string>,
-  {
-    father: "parent", mother: "parent", parent: "parent",
-    son: "child", daughter: "child", child: "child",
-    wife: "spouse", husband: "spouse", spouse: "spouse",
-    widow: "spouse", widower: "spouse",
-    brother: "sibling", sister: "sibling", sibling: "sibling",
-  },
-);
-const RELATION_WORDS = Object.keys(RELATION_CATEGORY).join("|");
-// A value LABELS the other party in two shapes that need different patterns.
-// An earlier single pattern spanning `[^,]*?` was wrong both ways: a stray
-// `[KEY:` colon suppressed real sibling refusals, and one comma in `Father of
-// the groom, named as X` made it miss and wrongly refuse a correct assertion.
-//
-// Only ONE label guard is needed. A label with no ` of ` -- `father: Jan
-// Roelfs`, `father named as Casper` -- never reaches here, because
-// STATES_SUBJECT_ROLE requires ` of `. A second guard for those was
-// written, measured against the corpus, found to change nothing, and
-// deleted; do not add it back.
-//
-// By role: `Father of groom named as Tellef`. The party being named is
-// identified by ROLE -- a bare lowercase word -- so it is the other party. A
-// CAPITALISED token there is a name, so the value states the subject's own tie
-// and must not be skipped.
-const LABELS_BY_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(?:${RELATION_WORDS})\\s+of\\s+(?:the\\s+)?(\\w+)[\\s,]*(?::|\\s+named\\b)`,
-  "i",
-);
-const STATES_SUBJECT_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(${RELATION_WORDS})\\s+of\\s+`,
-  "i",
-);
-
-/** Exported only so the cross-language drift test can pin it against the
- *  Python `_relationship_category`: the table alone does not cover the
- *  `_inferred` strip or the trim, and `String.replace` with a string
- *  pattern replaces the FIRST occurrence here while Python's replaces
- *  every one. */
-export function relationshipCategory(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
-  // strips the FIRST occurrence here and EVERY occurrence in the Python
-  // mirror, so `child_inferred_inferred` was unknown to this side and
-  // `child` to that one.
-  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
-}
-
-/** The category the VALUE claims for the record subject, or undefined when it
- *  does not speak to the subject's own role. Exported so the cross-language
- *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
- *  because the harness and the engine share no runtime, and nothing else keeps
- *  the two in step. */
-export function subjectRoleInValue(value: string): string | undefined {
-  const byRole = LABELS_BY_ROLE.exec(value);
-  // A lowercase ASCII token is a role word, not a name. Must stay an
-  // explicit class, never a case test: `=== toLowerCase()` is true for a
-  // token with no case (`2`) where the Python mirror's .islower() is
-  // false, so the two disagreed in both directions before this. The
-  // capture stays `\w+` although that is ASCII here and Unicode
-  // there: with this guard both spellings reach the same verdict either
-  // way, and widening it to `\S+?` was reverted as unobservable.
-  if (byRole && /^[a-z]+$/.test(byRole[1])) return undefined;
-  const m = STATES_SUBJECT_ROLE.exec(value);
-  if (!m) return undefined;
-  return RELATION_CATEGORY[m[1].toLowerCase()];
-}
+// The relation-word tables lifted to `src/utils/relationship-category.ts` so
+// rank-search-matches can reuse `relationshipCategory` without the packaging
+// writer-tool check flagging the importer. Re-exported here for the
+// cross-language drift lint (`tests/packaging/relationship-direction-drift.test.ts`),
+// which asserts the pin against the Python copy and reads them from this file.
+import {
+  RELATION_CATEGORY,
+  relationshipCategory,
+  subjectRoleInValue,
+} from "../utils/relationship-category.js";
+export { RELATION_CATEGORY, relationshipCategory, subjectRoleInValue };
 
 function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // `fact_type: relationship` only, which is what the refusal-table row and
@@ -3701,6 +3824,19 @@ function applyOne(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []
         : coreIdentifierContradictionInvariants(resultEntry, research, tree, personLinks, batchAssertions)),
+    );
+    // An update re-checks the move only when it sets the tier or the bridge, or
+    // re-points the link (a new pairing, as the score gate below reads it), so a
+    // rationale edit on a link written before this rule stays possible.
+    const touchesMove =
+      op.op !== "update" ||
+      ["confidence", "move_bridge", "assertion_id", "person_id"].some((f) =>
+        Object.prototype.hasOwnProperty.call(op.fields ?? {}, f),
+      );
+    invariantErrors.push(
+      ...((op.op === "update" && resultEntry.superseded_by) || !touchesMove
+        ? []
+        : unexplainedMoveInvariants(resultEntry, research, tree, batchAssertions)),
     );
     // #1731 step 3. The two halves have different scope, and collapsing them
     // into "append only" left the CIRCULAR arm reachable in two calls: append
@@ -4414,6 +4550,17 @@ async function prepareOps(
     return results;
   };
 
+  // The other places each record's assertions name in this batch: a bare place
+  // ("Shenandoah") is resolved against them, not against the whole world.
+  const placesByRecord = new Map<string, string[]>();
+  for (const op of ops) {
+    const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
+    const place = e ? factText(e.place) : undefined;
+    if (!place) continue;
+    const key = String(e.record_id ?? "");
+    placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
+  }
+
   for (let i = 0; i < ops.length; i++) {
     const op = ops[i];
     if (op.section !== "assertions" || op.op !== "append") continue;
@@ -4601,7 +4748,9 @@ async function prepareOps(
         // a miss and a failure look the same here — both warrant the warning
         // (a silently unresolved place is part of the wrong-geocode theme).
         try {
-          sp = (await resolveStandardPlace(entry.place)) ?? null;
+          const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
+            .filter((p) => p !== entry.place);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
         } catch {
           sp = null;
         }

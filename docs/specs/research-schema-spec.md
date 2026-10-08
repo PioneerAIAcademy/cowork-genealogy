@@ -590,7 +590,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `date_range` | string | yes | Target date range (e.g., "1840", "1830-1850") |
 | `repository` | `repository` | yes | Where to search (see open enums in Section 2) |
 | `rationale` | string | yes | Why this record set for this question |
-| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for, or null |
+| `fallback_for` | string or null | yes | `pli_` ID of the plan item this is a fallback for — an item of the same plan — or null. `validate_research_schema` rejects any other value, so every writer does. |
 | `status` | `plan_item_status` | yes | Current status |
 
 ### 5.4 `log`
@@ -788,6 +788,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `confidence` | `person_evidence_confidence` | yes | How certain we are that this record's role IS the tree person (identity certainty). This is NOT a measure of the source's informant quality (`information_quality`/`informant_proximity`); those fields classify source reliability and belong on the assertion. A single primary-informant source with no corroborating record is `probable` on this scale, not `confident`. |
 | `rationale` | string | yes | Why this assertion's record_role is believed to be this person |
 | `core_identifier_conflict` | string or null | no | The core identifier this link contradicts, stated by person-evidence at the moment it writes the link (e.g. "record gives birthplace Germany; tree attests Ireland across three censuses"). Null or absent means none was found. A non-empty value caps `confidence` at `speculative` — enforced by `research_append`, not by prose |
+| `move_bridge` | string or null | no | What explains a move outside the person's attested residence cluster: the sentence quoted from the destination's `{Jurisdiction}_Emigration_and_Immigration` page that names arrivals from the person's prior country, or the record id that documents the move. Null or absent means nothing bridges it. When the linked record's residence lies in a different country from every Residence fact the tree attests for the person, a `confident` link without it is refused by `research_append`; `probable` is unaffected |
 | `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool for this `(assertion_id, person_id)` pairing. `research_append` REFUSES an append that leaves this null where a record persona is reachable, so null is no longer a free default: it is correct where nothing can be scored (an image-, external-site- or PDF-sourced assertion, a full-text hit, a search that retained no sidecar) and it is REQUIRED where the tree person was minted out of the very record being cited, since scoring a persona against a person created from it only confirms itself |
 | `created` | string | yes | ISO 8601 date |
 | `superseded_by` | string or null | no | `pe_` ID if this linking was revised |

@@ -205,6 +205,7 @@ export interface PersonEvidence {
   confidence: PersonEvidenceConfidence
   rationale: string
   core_identifier_conflict?: string | null
+  move_bridge?: string | null
   match_score?: number | null
   created: string
   superseded_by?: string | null

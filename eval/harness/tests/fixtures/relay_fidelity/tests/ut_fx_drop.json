@@ -1,0 +1,16 @@
+{
+  "test": {
+    "id": "ut_fx_drop",
+    "skill": "alpha",
+    "name": "ut_fx_drop",
+    "type": "positive",
+    "description": "relay-fidelity fixture",
+    "tags": []
+  },
+  "input": {
+    "delegation": "do the thing"
+  },
+  "judge_context": [
+    "fixture"
+  ]
+}

@@ -627,6 +627,17 @@ graded** — a direct test is a separate file with its own `test.id`, not a seco
 arm over an existing one, because a duplicated `test_id` in one envelope corrupts
 annotations, which key on `(test_id, dimension_source, dimension_name)`.
 
+> **How much of an agent's return actually reaches the user is not graded, and
+> deliberately so.** Reply-shape grading reads the agent's own return; nothing
+> compares it with the main thread's `text_response`. (Tier-2 `report_*`
+> validators *are* handed `text_response` and some read it — e.g.
+> `report_unsourced_year_in_response` — which is exactly why a new one here
+> would be the wrong instrument: on this arm that text is the harness's
+> dispatcher, not the subject, so the judge would be charged an observation
+> about the harness.) `make unit-relay-fidelity` measures it offline over the
+> committed run logs instead — a report, never a gate, whose direct block is
+> dispatcher fidelity rather than a statement about production.
+
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
 (the lead's ruling of 2026-09-22: every skill becomes an agent and the skill is
@@ -871,7 +882,7 @@ Guidelines for writing `judge_context` notes:
   - **the scenario's `research.json`** — plan-item rationales are read by the skill and are the natural place to restate the answer.
   - **the scenario's `README.md`** — this one reaches the **judge**, not the skill: `_load_scenario_readme` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A "What it exercises" bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write those bullets as the *capability* under test, never the correct outcome.
 
-  **Negative tests are the deliberate exception.** The harness generates their framing itself (`_negative_judge_context`), including "a clear, accurate decline is a full pass" and "score Correctness and Completeness as fail (1)". Those are verdicts by design: a negative test grades the routing decision, runs on an empty rubric, and without the framing the judge reads a correct decline as a failed attempt. Don't rewrite them, and don't read this rule as forbidding them.
+  **Negative tests are the deliberate exception.** The harness generates their framing itself (`_negative_judge_context`), including "a clear, accurate decline is a full pass" and "score Correctness and Completeness as fail (1)". Those are verdicts by design: a negative test grades the routing decision, runs on an empty rubric, and without the framing the judge reads a correct decline as a failed attempt. Don't rewrite them, and don't read this rule as forbidding them. The route the framing names is `correct_skill` **minus the skill under test**: a test listing itself there would otherwise be told its correct route is the skill it must not run, and a list that empties renders the "decline without invoking any skill" arm.
 
   Senior genealogists review all golden-set `judge_context` notes for leakage; the master plan (`docs/skill-mcp-testing-plan.md`) covers the review cadence.
 
@@ -906,6 +917,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona record-extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
+| `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
@@ -918,7 +930,7 @@ with `handoffs`. The judge's `{skills_invoked}` slot lists the spawn too, as
 `<name> (agent)` (§7, "Judge prompt template"). (This
 is deliberately unlike the negative-test routing short-circuit, which *stops*
 the run: a negative verdict is sealed the moment routing happens, a positive
-test still has work left.)
+test still has work left, unless it sets `stop_at_stub`, below.)
 
 Two forms, and the choice turns on the **caller's** contract, not the callee's:
 
@@ -932,6 +944,37 @@ Two forms, and the choice turns on the **caller's** contract, not the callee's:
 unable to finish — which under the first form required a judge instruction
 ("do not penalize the skill for not producing Ancestry URLs") to keep the test
 green. A grading patch over a harness gap is the signal you needed `response`.
+
+**`stop_at_stub` — when the hand-off IS the verdict.** Some positive tests grade
+nothing after the delegation. A router test whose user names a downstream
+destination (`ut_research_015`, tagged `no-shortcut`) is the worked case: its
+verdict is the router's first routing decision, and the router is then told to walk
+on down its table, which no stub can stop, since a stub's text reaches the model as
+a tool result and stubs write nothing. With `stop_at_stub: true` the first
+main-thread hand-off to a name in `stub_skills`, by a `Skill` call or an agent
+spawn, is denied, and the run stops once the turn that made it is over, through the
+same path the negative-test routing short-circuit uses, so it ends clean rather than
+aborted (`run_skill`'s `stop_at_stub`). Every later main-thread hand-off is denied
+and recorded too, whatever its name, so a validator still sees a second hand-off
+made in that turn. The run stops at the model's next turn, not at the hand-off's own
+message, because the CLI streams one block per message: a second hand-off in the
+same turn arrives as a message of its own, and its hook can run after the first
+one's. The blocks of one turn share the API response's `message_id`; with no id to
+compare, the first tool result after the hand-off ends the turn. A hand-off made
+before the first stubbed one is not denied, and a `Skill` call whose name cannot be
+read never arms the stop (`unread_skill_calls` warns about it). The runnability gate
+refuses the field on a negative test or with nothing stubbed, and requires it on a
+test tagged `no-shortcut`, whose validator (`test_no_paired_skill_shortcut`) fails on
+any paired row reached besides the expected one. Under the stop that validator sees
+only a paired hand-off made in the same turn as the first one: a shortcut in a later
+turn is cut off by the stop and passes, and a shortcut as the first hand-off already
+fails `test_routes_to_expected_skill`. A hand-off of the next turn whose hook runs
+before its message reaches the loop is denied but not kept: only a call that appears
+in a message of the hand-off's own turn stays in `skills_invoked` and
+`builtin_tool_calls`. The transcript ends with the
+hand-off's turn, so the test's `judge_context` must say not to deduct for a missing
+closing summary, and because the run ends before the skill can write or summarize,
+the recorded hand-off counts as its activation (§6, rule 4).
 
 **`run_skills` — letting a sub-skill really run.** The opposite declaration:
 this test wants the callee to execute. Naming it here unions the callee's
@@ -996,7 +1039,9 @@ crossed a `Skill` seam.
 
 A `stub_skills` entry may name an agent with no skill directory; the hook then
 denies that agent's main-thread spawn the same way it denies a `Skill` call. A
-name that is still a skill is stubbed at its `Skill` call only.
+name that is still a skill is stubbed at its `Skill` call only, except on a test
+that sets `stop_at_stub`, where a main-thread spawn of any stubbed name is denied
+too and ends the run.
 
 ### 5.8 `intentionally_invalid`
 
@@ -1040,6 +1085,8 @@ Two matcher modifiers keep the check both precise and non-flappy:
 **Do not reintroduce it gated on empty output.** This still binds, and the coercion does not breach it: it is gated on the routing signature (skill under test absent from `skills_invoked`, an accepted skill fired), never on whether output was empty. All 4 overrides had `text_response == ""` and zero turns, but so did 6 of the 20 confirmations, and `ut_search_records_003` carries that identical signature in all 8 of its eligible cells — confirmed in two run logs, overridden in two others. Such a gate would have fired on 10 cells and been wrong on 6. There is no mechanical discriminator; that is the reason the floor is gone rather than narrowed. Deleting it changes no outcome — `_compute_outcome` decides these tests on routing alone, so a base-dimension score there has never gated anything.
 
 Read a `coerced_routing_negative_to_na` warning before confirming the N/A. Either the skill carried out its own task inline — a real defect the routing pass hides, and correcting the `null` back to `1` is the only route by which it gets seen — or the judge misread a clean decline. Such a test is **mandatory** in the review sample for exactly that reason (§"Layer 3"): coercion turns the diagnostic `1` into `null`, and the sample's first trigger keys on `1` or `2`.
+
+**Invariant negatives are coerced the same way (ruled 2026-09-07).** A `grade_on_invariant` negative that routed to an accepted skill without activating gets the same coercion and the same warning, whose advisory and rewritten rationale say its outcome is decided by its invariant validator rather than by routing. Its dimensions never gate (§7), so this changes no outcome. With one run per test the cell was already in the mandatory review sample through its `1` (the first trigger) and now stays there through the warning (the third). What changes is that the `1` becomes `null` in the run log, with the original kept in the warning. The framing was **not** softened for invariant tests instead, because the corpus does not show these `1`s to be spurious: of the three `grade_on_invariant` cells scored `1` at ruling time, annotators confirmed two (`ut_citation_012`, run `v1_2026-07-21_15-04-23`; `ut_conflict_resolution_010`, run `v1_2026-08-18_19-42-11`) and overrode one (`ut_convert_dates_003`, run `v1_2026-09-01_11-26-50`). That is the same split, with no mechanical discriminator, that retired the floor. The `activated` guard still applies: an invariant negative may activate and pass on its validator, and there its `1` stays a `1`, which the sample's first trigger already catches.
 
 ### 5.11 `refinement_targets`
 
@@ -1159,6 +1206,7 @@ For each run, the harness computes a derived boolean `output.activated` per the 
 1. **Owned-section writes.** The skill wrote to any section it owns per the ownership table in `research-schema-spec.md` Section 4. Examples: conflict-resolution wrote to `conflicts`; record-extraction wrote to `assertions` or `sources`.
 2. **Files created or modified.** The skill created or modified files in `cwd` other than those it normally reads (for stateless skills, e.g., search-wikipedia writing a markdown file in the user's working folder).
 3. **Substantive response.** The skill produced a response that is either (a) at least `_SUBSTANTIVE_MIN_WORDS_LONG` (30) words long, OR (b) does not pattern-match as a routing acknowledgement — short responses must not mention any other skill name. This catches legitimate concise outputs like `convert-dates` → `"1850-03-15"` while excluding "I see you're asking about X, but Y skill handles this" pure-routing.
+4. **A hand-off the run was stopped at.** On a test that sets `execution.stop_at_stub` (§5.7) the harness ends the run at the skill's first stubbed hand-off, before it can write or summarize, so the narration it leaves can be one short line naming the next row, which rule 3 reads as routing away. There the recorded hand-off is the skill's work (`derive_activated`'s `handed_off`). Only that stop sets it, so a skill that merely names another one is still not activated.
 
 **Why `skills_invoked` is required:** Activation derivation has access to file changes, tool calls, and text responses, but no per-side-effect attribution to a specific skill. `skills_invoked` is the harness's authoritative per-skill signal. Tool-call evidence is intentionally NOT used as a corroboration channel: shared tools (notably `validate_research_schema`, present in 14 of 23 skill allowlists) appear in many skills' `allowed-tools`; treating them as corroboration would mis-attribute a correctly-routed sibling skill's tool calls and file writes to the skill under test on negative tests. Prior versions of this spec included a fourth rule ("characteristic tool call activates") and a corroboration variant ("char tool unlocks file-change attribution"); both were removed because they produced false positives on negative tests where the routed-to skill calls a shared tool and writes to `research.json`.
 
@@ -1558,6 +1606,7 @@ vacuous — none does today, and nothing checks for one.
 
 - Universal validators live in `eval/harness/validators/test_universal.py`
 - Skill-specific validators live in `eval/harness/validators/test_<skill>.py`, one file per skill
+- Every opt-in gate tag `tag_gated_validator_tags` reports (the literal `"<tag>" not in tags` form) must be carried by a test in its suite (any suite, for `test_universal.py`) or listed with a reason in `DORMANT` in `eval/harness/tests/unit/test_tag_gate_coverage.py`, which fails otherwise
 - Tier-1 validators are plain Python functions with the `test_` prefix; tier-2 validators use the `report_` prefix. Both raise `AssertionError` to signal a finding and take arguments from the same pool.
 - The harness calls validators as direct function calls (not via pytest subprocess) for speed and reliability
 - Developers can also run validators standalone with `pytest eval/harness/validators/ -v` for debugging — pytest invokes them with fixtures the harness provides; see `eval/harness/validators/conftest.py`. Both tiers are collected: `python_functions` in `eval/harness/pyproject.toml` lists `report_*` alongside `test_*`, without which every tier-2 validator is silently skipped by that command.
@@ -1598,9 +1647,9 @@ def report_example_pattern(text_response):
 - `activated` (bool | None) — whether the skill activated (derived by `derive_activated`). `None` = unknown (e.g. abort before derivation).
 - `num_turns` (int) — SDK-reported turn count. 0 when absent or on early abort. On a negative test's routing short-circuit this is the real count of assistant turns streamed before the hook denied the routed skill's launch — not 0 — for the same reason a wall-clock timeout already records real streamed turns rather than 0.
 - `output_tokens` (int) — SDK-reported output token count. 0 when absent or on early abort. See `no_result_message` below for the one case where this 0 is not a real count.
-- `no_result_message` (bool) — true when the run ended before a `ResultMessage` ever arrived even though it is not an abort (currently only the negative-test routing short-circuit). `num_turns` above has a real answer on this path (it is not read off the `ResultMessage` — see its own entry); `output_tokens` does not, since no partial token count exists before a `ResultMessage`. This field is what distinguishes that 0 from a skill that genuinely used no output tokens. Shape choice: the alternative considered was making `num_turns`/`output_tokens` nullable instead of adding this flag, and rejected — neither field has a null branch today, so nullable would be a schema change in both mirrors, would break every `int(...)` summation site, and would silently disable `test_universal.py`'s V8 guard (`num_turns != 0 or output_tokens != 0`, which becomes vacuously true against `None`). The sibling-flag shape keeps both fields real integers everywhere, so no consumer arithmetic and no existing validator needed to change.
+- `no_result_message` (bool) — true when the run ended before a `ResultMessage` ever arrived even though it is not an abort: the negative-test routing short-circuit, and a `stop_at_stub` stop, which shares its exit. `num_turns` above has a real answer on this path (it is not read off the `ResultMessage` — see its own entry); `output_tokens` does not, since no partial token count exists before a `ResultMessage`. This field is what distinguishes that 0 from a skill that genuinely used no output tokens. Shape choice: the alternative considered was making `num_turns`/`output_tokens` nullable instead of adding this flag, and rejected — neither field has a null branch today, so nullable would be a schema change in both mirrors, would break every `int(...)` summation site, and would silently disable `test_universal.py`'s V8 guard (`num_turns != 0 or output_tokens != 0`, which becomes vacuously true against `None`). The sibling-flag shape keeps both fields real integers everywhere, so no consumer arithmetic and no existing validator needed to change.
 - `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
-- `suppressed_post_deny_calls` (array of objects, optional) — MCP calls made in the turn AFTER the negative-test routing short-circuit's hook denied the hand-off. That turn is the model reacting to the deny, not the skill working, so its text, its turn count and these calls are all withheld from the run's own record. They are still written here rather than dropped, because dropping them made two things uncheckable from any run log: whether a reaction call ever executes at all, and whether one ever names a tool the mock server does not register. Read asymmetrically on purpose — the orchestrator's `unmatched_tool_call` gate counts them on the attempted side (so an executed, fixture-matching reaction call cannot raise `covered` while the left side stays flat and mask an uncovered call from an earlier turn) and scans them for unregistered names; `_build_warnings`' `uncovered_tool_call` advisory does **not**, so a deliberately stopped run collects no advisory for a turn it never owned. Absent when the run suppressed nothing.
+- `suppressed_post_deny_calls` (array of objects, optional) — MCP calls made in the turn AFTER the routing short-circuit's hook denied the hand-off (a negative test's, or a `stop_at_stub` stop). That turn is the model reacting to the deny, not the skill working, so its text, its turn count and these calls are all withheld from the run's own record. They are still written here rather than dropped, because dropping them made two things uncheckable from any run log: whether a reaction call ever executes at all, and whether one ever names a tool the mock server does not register. Read asymmetrically on purpose — the orchestrator's `unmatched_tool_call` gate counts them on the attempted side (so an executed, fixture-matching reaction call cannot raise `covered` while the left side stays flat and mask an uncovered call from an earlier turn) and scans them for unregistered names; `_build_warnings`' `uncovered_tool_call` advisory does **not**, so a deliberately stopped run collects no advisory for a turn it never owned. Absent when the run suppressed nothing.
 - `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate). On a routing short-circuit that also detects a genuine subscription-quota rejection, `aborted_reason`/`error` survive rather than being cleared with the rest of the short-circuit's abort state — see `skill_runner.run_skill`'s routing-short-circuit branch.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.

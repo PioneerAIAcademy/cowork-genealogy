@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Maury, Tennessee, United States, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Maury"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Maury, Tennessee, United States",
+        "type": "County",
+        "latitude": 35.617,
+        "longitude": -87.078,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Maury"
+      }
+    ]
+  }
+}

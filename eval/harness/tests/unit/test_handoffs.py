@@ -122,46 +122,12 @@ def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
         mod.test_live_callee_used_its_own_tools(tools, [], [], live)
 
 
-# --- the four other hand-off readers: Skill route, Agent route, wrong name ------
-
-_TREE_BEFORE = {"tree_gedcomx_json": {"persons": [{"id": "I1"}]}}
-_TREE_AFTER = {"tree_gedcomx_json": {"persons": [{"id": "I1"}, {"id": "I2"}]}}
-ROUTES = {
-    "skill": ([_skill("check-warnings")], True),
-    "agent": ([_spawn("check-warnings")], True),
-    "wrong_name": ([_spawn("conflict-resolution")], False),
-}
-
-
-@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
-def test_tree_edit_check_warnings_after_a_write(route):
-    calls, ok = ROUTES[route]
-    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
-    check = lambda: _validators("test_tree_edit").test_check_warnings_runs_after_any_tree_write(  # noqa: E731
-        _TREE_BEFORE, _TREE_AFTER, skills, {"skill": "tree-edit", "tags": []},
-        builtin_tool_calls=calls,
-    )
-    if ok:
-        check()
-    else:
-        with pytest.raises(AssertionError):
-            check()
-
-
-@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
-def test_person_evidence_check_warnings_after_a_write(route):
-    calls, ok = ROUTES[route]
-    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
-    before = {"research_json": {"person_evidence": []}, **_TREE_BEFORE}
-    after = {"research_json": {"person_evidence": [{"id": "pe_001"}]}, **_TREE_BEFORE}
-    check = lambda: _validators("test_person_evidence").test_check_warnings_runs_after_a_write(  # noqa: E731
-        before, after, skills, [], {"tags": ["check-warnings-required"]}, calls
-    )
-    if ok:
-        check()
-    else:
-        with pytest.raises(AssertionError):
-            check()
+# --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
+# The engine gate now refuses unjustified warnings at write time, so the
+# validators no longer check for check-warnings hand-offs. No eval validator
+# asserts the gate at all — the engine enforces it and PR 1's tests prove it
+# (`guardrail-enforcement-spec.md`, "No eval validator asserts this gate").
+# What remains is the shadow detector, tested in test_skill_invocation.py.
 
 
 @pytest.mark.parametrize(
@@ -250,7 +216,9 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
 
 def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
     """`route-shortcut-guard.json` stubs one paired name that ships as both a
-    skill and an agent; its compliant spawn must keep running.
+    skill and an agent; a name that is still a skill is not stubbed at its
+    spawn, so its agent half can run. (That fixture now ends at its first
+    stubbed hand-off anyway: `stop_at_stub`.)
 
     `proof-conclusion` (issue #2822) and `person-evidence` (issue #2821) were
     paired too until each lost its skill half, so both now take the

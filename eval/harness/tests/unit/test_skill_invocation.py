@@ -26,12 +26,15 @@ from harness.skill_invocation import (
     find_person_evidence_missing_same_person,
     find_protected_writes_by_unnamed_delegate,
     find_relationship_writes_without_warnings_check,
+    unresolved_warning_refusal,
     find_unguarded_protected_writes,
     find_unpersisted_conflict_resolutions,
     owning_skills,
     recently_succeeded,
     same_person_scored_ids,
+    invoked_skill_name,
     skill_name_if_skill_call,
+    skill_name_if_typed_spawn,
     unguarded_new_person_evidence_links,
     classify_question_type,
     find_conclusions_without_tree_encoding,
@@ -283,14 +286,175 @@ def test_still_flags_a_landed_write_whose_payload_merely_mentions_no_project():
 
 
 def test_flags_the_untyped_agent_bypass_shape():
-    """An Agent call with no subagent_type never sets skill_name_if_skill_call
-    to anything, so it never opens a window either."""
+    """SHADOW arm, untyped spawn: an Agent call with no subagent_type names no
+    arm (`invoked_skill_name` returns None), so it never opens a window. The
+    HARD-arm counterpart is test_hard_arm_still_fires_on_an_untyped_spawn."""
     calls = [
         {"tool": "Agent", "args": {"description": "write proof summary", "prompt": "..."}},
         _mcp_call("research_append", {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}}),
     ]
     violations = find_unguarded_protected_writes(calls, window=10)
     assert violations[0]["required_skill"] == "proof-conclusion"
+
+
+# --- the sanctioned direct-spawn route (typed Agent/Task) --------------------
+#
+# Which arm each test covers is named: the HARD arm is
+# find_effects_without_invocation's `invoked` set; the SHADOW arm is
+# recently_succeeded / find_unguarded_protected_writes.
+
+
+def _spawn(subagent_type=None, *, tool="Agent", prompt="...", description="delegate", is_error=False):
+    args = {"description": description, "prompt": prompt}
+    if subagent_type is not None:
+        args["subagent_type"] = subagent_type
+    entry = {"tool": tool, "args": args}
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+_PS_WRITE = {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}}
+
+
+def test_typed_spawn_predicate_strips_the_namespace_and_refuses_untyped():
+    assert skill_name_if_typed_spawn("Agent", {"subagent_type": "proof-conclusion"}) == "proof-conclusion"
+    assert skill_name_if_typed_spawn("Task", {"subagent_type": "proof-conclusion"}) == "proof-conclusion"
+    assert (
+        skill_name_if_typed_spawn("Agent", {"subagent_type": "genealogy-research:proof-conclusion"})
+        == "proof-conclusion"
+    )
+    assert skill_name_if_typed_spawn("Agent", {"prompt": "..."}) is None
+    assert skill_name_if_typed_spawn("Agent", {"subagent_type": ""}) is None
+    assert skill_name_if_typed_spawn("Agent", None) is None
+    assert skill_name_if_typed_spawn("Skill", {"subagent_type": "proof-conclusion"}) is None
+    assert invoked_skill_name("Skill", {"skill": "proof-conclusion"}) == "proof-conclusion"
+    assert invoked_skill_name("Agent", {"subagent_type": "proof-conclusion"}) == "proof-conclusion"
+    assert invoked_skill_name("Skill", {"skill": "genealogy-research:proof-conclusion"}) == "proof-conclusion"
+    assert invoked_skill_name("Skill", {}) is None
+
+
+@pytest.mark.parametrize(
+    "research,arm",
+    [
+        ({"proof_summaries": [{"id": "ps_001"}]}, "proof-conclusion"),
+        ({"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}]}, "research-exhaustiveness"),
+        ({"conflicts": [{"id": "c_001", "status": "resolved"}]}, "conflict-resolution"),
+    ],
+    ids=["proof-conclusion", "research-exhaustiveness", "conflict-resolution"],
+)
+@pytest.mark.parametrize(
+    "subagent_type,tool",
+    [("{arm}", "Agent"), ("{arm}", "Task"), ("genealogy-research:{arm}", "Agent")],
+    ids=["agent", "task", "namespaced"],
+)
+def test_hard_arm_credits_a_typed_spawn_of_that_name(research, arm, subagent_type, tool):
+    """HARD arm. One generic rule over every GUARDRAIL_SKILLS arm, so a pair
+    converted later is covered with no edit. The namespaced spelling has no
+    committed-corpus instance; this is its only instrument."""
+    assert any(arm in v for v in find_effects_without_invocation([], research, {}))
+    calls = [_spawn(subagent_type.format(arm=arm), tool=tool)]
+    assert not any(arm in v for v in find_effects_without_invocation(calls, research, {}))
+
+
+def test_hard_arm_credits_a_typed_person_evidence_spawn():
+    """HARD arm, the tree-side arm: an unlinked new person is credited once the
+    person-evidence agent was spawned."""
+    tree = {"persons": [{"id": "I9", "names": [{"full": "X"}]}]}
+    research = {"person_evidence": []}
+    assert any("person-evidence" in v for v in find_effects_without_invocation([], research, tree))
+    calls = [_spawn("person-evidence")]
+    assert not any("person-evidence" in v for v in find_effects_without_invocation(calls, research, tree))
+
+
+def test_hard_arm_still_fires_on_an_untyped_spawn():
+    """HARD arm. The untyped subagent is a recorded bypass shape, not a route."""
+    calls = [_spawn(None, prompt="Write a proof conclusion for q_001")]
+    violations = find_effects_without_invocation(calls, {"proof_summaries": [{"id": "ps_001"}]}, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_hard_arm_credits_nothing_for_an_errored_spawn():
+    """HARD arm. Same errored-call gate a Skill call already has."""
+    calls = [_spawn("proof-conclusion", is_error=True)]
+    violations = find_effects_without_invocation(calls, {"proof_summaries": [{"id": "ps_001"}]}, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_hard_arm_does_not_credit_a_spawn_of_another_name():
+    calls = [_spawn("gps-mentor")]
+    violations = find_effects_without_invocation(calls, {"proof_summaries": [{"id": "ps_001"}]}, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_shadow_arm_credits_a_typed_spawn_in_window():
+    """SHADOW arm via recently_succeeded."""
+    calls = [_spawn("proof-conclusion"), _mcp_call("research_append", _PS_WRITE)]
+    assert find_unguarded_protected_writes(calls, window=10) == []
+    namespaced = [_spawn("genealogy-research:proof-conclusion", tool="Task"), _mcp_call("research_append", _PS_WRITE)]
+    assert find_unguarded_protected_writes(namespaced, window=10) == []
+
+
+def test_shadow_arm_credits_nothing_for_an_errored_spawn():
+    calls = [_spawn("proof-conclusion", is_error=True), _mcp_call("research_append", _PS_WRITE)]
+    assert [v["required_skill"] for v in find_unguarded_protected_writes(calls, window=10)] == ["proof-conclusion"]
+
+
+def test_shadow_arm_keys_a_spawn_by_its_one_question_id():
+    """recently_succeeded reads the q_ id from a spawn's description/prompt, and
+    only when exactly one distinct id appears."""
+    one = [_spawn("proof-conclusion", prompt="Conclude q_001 in /p")]
+    assert recently_succeeded("proof-conclusion", one, before_index=1, window=5, question_id="q_001") is True
+    assert recently_succeeded("proof-conclusion", one, before_index=1, window=5, question_id="q_002") is False
+    split = [_spawn("proof-conclusion", description="q_001", prompt="q_001 again")]
+    assert recently_succeeded("proof-conclusion", split, before_index=1, window=5, question_id="q_002") is False
+    desc_only = [_spawn("proof-conclusion", description="conclude q_001", prompt="no id here")]
+    assert recently_succeeded("proof-conclusion", desc_only, before_index=1, window=5, question_id="q_002") is False
+    two = [_spawn("proof-conclusion", prompt="q_001 or q_002")]
+    assert recently_succeeded("proof-conclusion", two, before_index=1, window=5, question_id="q_003") is True
+    none = [_spawn("proof-conclusion", prompt="no id here")]
+    assert recently_succeeded("proof-conclusion", none, before_index=1, window=5, question_id="q_003") is True
+
+
+@pytest.mark.parametrize("agent_type", ["proof-conclusion", "genealogy-research:proof-conclusion"])
+def test_shadow_arm_trusts_a_write_made_by_the_owning_agent(agent_type):
+    """SHADOW arm. The hook routes this section to this caller, so the write is
+    guarded by definition, however far the spawn sits outside the window."""
+    write = _mcp_call("research_append", _PS_WRITE, agent_id="a1", agent_type=agent_type)
+    calls = [_mcp_call("record_search", {})] * 50 + [write]
+    assert find_unguarded_protected_writes(calls, window=10) == []
+
+
+def test_shadow_arm_still_flags_a_write_by_a_non_owning_agent():
+    write = _mcp_call("research_append", _PS_WRITE, agent_id="a1", agent_type="general-purpose")
+    assert [v["required_skill"] for v in find_unguarded_protected_writes([write], window=10)] == ["proof-conclusion"]
+
+
+def test_each_never_invoked_message_names_only_its_own_arm_and_classifies_there():
+    """corpus_report.classify is first-substring-wins, so a message naming
+    another arm lands in the wrong bucket silently."""
+    from e2e.corpus_report import classify
+
+    research = {
+        "proof_summaries": [{"id": "ps_001"}],
+        "questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}],
+        "conflicts": [{"id": "c_001", "status": "resolved"}],
+        "person_evidence": [],
+    }
+    tree = {"persons": [{"id": "I9", "names": [{"full": "X"}]}]}
+    violations = find_effects_without_invocation([], research, tree)
+    expected = {
+        "research-exhaustiveness": "exhaustiveness",
+        "proof-conclusion": "proof-conclusion",
+        "person-evidence": "person-evidence (no link)",
+        "conflict-resolution": "conflict-resolution",
+    }
+    assert len(violations) == len(expected)
+    for v in violations:
+        named = [arm for arm in GUARDRAIL_SKILLS if f"'{arm}'" in v]
+        assert len(named) == 1, v
+        assert "no Skill call and no typed Agent/Task spawn of that name" in v
+        assert classify(v) == expected[named[0]], v
 
 
 # --- find_effects_without_invocation -----------------------------------------
@@ -1520,117 +1684,189 @@ def test_conflict_unpersisted_defensive_on_none_and_empty():
     assert find_unpersisted_conflict_resolutions({}) == []
 
 
-# --- find_relationship_writes_without_warnings_check (issue #1193, shadow) ----
-# A new ParentChild/Couple relationship written this run with no person_warnings
-# call. Gated on the relationship being NEW (diffed against the starting tree),
-# and keyed on the person_warnings TOOL (not the check-warnings skill), so it
-# catches a direct-tool path and a skill that fails before reaching the tool.
+# --- find_relationship_writes_without_warnings_check (#1193, retargeted #2840)
+# A tree writer returned `unjustified_warnings` and no later writer call landed
+# to resolve it -- the engine gate blocked the write and the agent gave up.
+# NOT gated on the tree: a refused write never lands, so these runs leave no new
+# relationship to gate on (that gate made the detector dark for its own target).
+# Keyed on the four writer tools under every server spelling.
+
+
+_REFUSAL = '{"ok": false, "reason": "unjustified_warnings"}'
 
 
 def _tree_with_parentchild(child="I3", parent="I1"):
     return {"relationships": [{"id": "R1", "type": "ParentChild", "parent": parent, "child": child}]}
 
 
-def _person_warnings_call(*, is_error=None):
-    return {"tool": "mcp__genealogy__person_warnings", "args": {"personId": "I3"}, "is_error": is_error}
-
-
 def test_warnings_unchecked_fires_on_new_relationship_with_no_call():
-    """The evidenced #1193 shape: a parentage link written, guardrail never run."""
+    """Retargeted by #2840: fires when a writer returned unjustified_warnings
+    and the agent never re-called with justifications."""
     out = find_relationship_writes_without_warnings_check(
-        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'}],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert len(out) == 1
     v = out[0]
     assert v["kind"] == WARNINGS_UNCHECKED_KIND
-    assert v["required_skill"] == "check-warnings"
     # int index + string tool so guardrail_shadow_report's formatters never hit a
     # None format spec.
     assert isinstance(v["index"], int) and isinstance(v["tool"], str)
 
 
-def test_warnings_unchecked_silent_when_person_warnings_was_called():
-    """Keyed on the tool: a successful person_warnings call means the guardrail
-    was consulted, whatever skill (or none) reached it."""
+def test_warnings_unchecked_silent_when_writer_succeeded():
+    """A writer that succeeded means no unjustified warnings."""
     out = find_relationship_writes_without_warnings_check(
-        [{"tool": "mcp__genealogy__tree_edit", "is_error": None}, _person_warnings_call()],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'}],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert out == []
 
 
-def test_warnings_unchecked_still_fires_when_the_call_errored():
-    """A failed person_warnings call left the tree unchecked, so it does not
-    count as consulting the guardrail."""
+def test_warnings_unchecked_still_fires_when_only_refusals():
+    """All writer calls returned unjustified_warnings with no successful retry."""
     out = find_relationship_writes_without_warnings_check(
-        [_person_warnings_call(is_error=True)],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'}],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert len(out) == 1
 
 
-def test_warnings_unchecked_still_fires_on_a_no_project_person_warnings_call():
-    """Issue #1695, and note the INVERTED polarity against the write detectors.
+def test_warnings_unchecked_silent_after_refusal_then_success():
+    """A refusal followed by a successful re-call is fine."""
+    out = find_relationship_writes_without_warnings_check(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+        ],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert out == []
 
-    Everywhere else `did_not_land` makes a detector SKIP a call. Here it must
-    stop a call being CREDITED: a no-project person_warnings checked no tree, so
-    crediting it would mark the guardrail consulted when it never ran — a MISSED
-    violation, which is silent. That is why this test exists rather than being
-    folded into the write-side one.
+
+def test_warnings_unchecked_fires_when_the_success_predates_the_refusal():
+    """A writer call that landed BEFORE the refusal does not resolve it.
+
+    Scanning the whole call list for "any success" credits an unrelated
+    earlier write, so an agent that wrote op A, was refused on op B, and
+    gave up reads as clean — a MISSED violation, and a missed violation in
+    a shadow detector reports nothing at all (the issue #1695 polarity trap
+    on the predicate this one replaced).
     """
-    call = _person_warnings_call()
-    # The MCP-envelope shape, i.e. what production actually emits.
-    call["response_summary"] = _no_project_summary(escaped=True)
     out = find_relationship_writes_without_warnings_check(
-        [call],
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+        ],
         _tree_with_parentchild(),
         starting_tree={"relationships": []},
     )
     assert len(out) == 1
 
 
-def test_warnings_unchecked_matches_the_tool_under_any_server_spelling():
-    """bare_tool_name strips the mcp__<server>__ prefix, so the on-computer /
-    bridge spellings are recognized too."""
+def test_warnings_unchecked_fires_when_the_agent_gives_up_on_a_later_refusal():
+    """Keyed on the LAST refusal: a resolved first refusal does not excuse a
+    second one the agent abandoned."""
+    out = find_relationship_writes_without_warnings_check(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+            {"tool": "mcp__genealogy__materialize_facts", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+        ],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_silent_when_a_repeated_refusal_is_finally_resolved():
+    """The other direction: two refusals then a success is a run that kept at
+    it until the gate was satisfied, and must stay silent."""
+    out = find_relationship_writes_without_warnings_check(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'},
+            {"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": true}'},
+        ],
+        _tree_with_parentchild(),
+        starting_tree={"relationships": []},
+    )
+    assert out == []
+
+
+def test_warnings_unchecked_matches_the_writer_under_any_server_spelling():
+    """bare_tool_name strips the mcp__<server>__ prefix, so a refusal is seen
+    under all three spellings (CLAUDE.md, "Dual-spelled tool names").
+
+    Asserts the detector FIRES. The previous version passed `person_warnings`
+    -- not a writer tool -- and asserted `[]`, which held because there was no
+    refusal to find, never because the spelling resolved. Deleting a spelling
+    from TREE_WRITER_TOOLS left it green."""
     for tool in (
-        "mcp__Genealogy_Research__person_warnings",
-        "mcp__remote-devices__Genealogy_Research__person_warnings",
+        "mcp__genealogy__tree_edit",
+        "mcp__Genealogy_Research__tree_edit",
+        "mcp__remote-devices__Genealogy_Research__tree_edit",
     ):
         out = find_relationship_writes_without_warnings_check(
-            [{"tool": tool, "is_error": None}],
-            _tree_with_parentchild(),
+            [{"tool": tool, "response_summary": _REFUSAL}],
+            {"relationships": []},
             starting_tree={"relationships": []},
         )
-        assert out == [], f"{tool} should count as consulting the guardrail"
+        assert len(out) == 1, f"{tool} should resolve to a tree writer"
 
 
-def test_warnings_unchecked_gated_on_a_new_relationship():
-    """A relationship present in the starting tree is not this run's product, so
-    a run that wrote nothing new is not flagged for skipping the check."""
-    seeded = _tree_with_parentchild()
-    out = find_relationship_writes_without_warnings_check([], seeded, starting_tree=seeded)
-    assert out == []
+def test_warnings_unchecked_fires_when_the_refused_write_landed_nothing():
+    """THE TARGET SCENARIO, and the one the retained tree gate made invisible.
+
+    The agent is refused on its first write and gives up, so nothing lands and
+    the final tree carries no new relationship. The pre-fix detector returned
+    `[]` here -- before ever consulting the refusal -- and so could only fire
+    when some unrelated edge happened to land in the same run."""
+    out = find_relationship_writes_without_warnings_check(
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": _REFUSAL}],
+        {"relationships": []},
+        starting_tree={"relationships": []},
+    )
+    assert len(out) == 1
+
+
+def test_warnings_unchecked_fires_on_a_fact_write_that_creates_no_edge():
+    """`materialize_facts` and a `tree_correct` date fix never create a
+    ParentChild/Couple edge, so the old tree gate made a refusal on either of
+    them permanently invisible, in every run."""
+    for tool in ("mcp__genealogy__materialize_facts", "mcp__genealogy__tree_correct"):
+        out = find_relationship_writes_without_warnings_check(
+            [{"tool": tool, "response_summary": _REFUSAL}],
+            {"relationships": []},
+            starting_tree={"relationships": []},
+        )
+        assert len(out) == 1, tool
 
 
 def test_warnings_unchecked_fires_on_a_new_couple_relationship():
     out = find_relationship_writes_without_warnings_check(
-        [],
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "reason": "unjustified_warnings"}'}],
         {"relationships": [{"id": "R2", "type": "Couple", "person1": "I1", "person2": "I2"}]},
         starting_tree={"relationships": []},
     )
     assert len(out) == 1
 
 
-def test_warnings_unchecked_ignores_non_parentchild_couple_relationships():
-    """Only ParentChild/Couple writes are the parentage-assertion class #1193 is
-    about; another relationship type is not gated on a warnings check."""
+def test_warnings_unchecked_silent_on_a_writer_failure_that_is_not_the_gate():
+    """A writer that failed validate-before-persist is not the warning gate --
+    no refusal, nothing to report.
+
+    This does NOT exercise the `"ok": false` success arm: with no refusal in
+    the list the predicate returns at `if not refusals` and never reaches it.
+    That arm is covered by `test_a_writer_error_does_not_count_as_the_resolving_success`
+    and the spelling matrix below, which put the failure AFTER a refusal."""
     out = find_relationship_writes_without_warnings_check(
-        [],
-        {"relationships": [{"id": "R3", "type": "Sibling", "person1": "I1", "person2": "I2"}]},
+        [{"tool": "mcp__genealogy__tree_edit", "response_summary": '{"ok": false, "errors": ["bad id"]}'}],
+        {"relationships": []},
         starting_tree={"relationships": []},
     )
     assert out == []
@@ -1650,6 +1886,200 @@ def test_warnings_unchecked_no_relationship_no_finding():
 def test_warnings_unchecked_defensive_on_none():
     assert find_relationship_writes_without_warnings_check(None, None) == []
     assert find_relationship_writes_without_warnings_check([], {}) == []
+
+
+# --- unresolved_warning_refusal: the three silent-miss arms (issue #2840) -----
+# Each arm CREDITS a call rather than skipping it, so getting one wrong is a
+# MISSED violation -- and a missed violation in a shadow detector reports
+# nothing at all (the #1695 polarity trap).
+
+
+def test_refusal_is_seen_under_the_response_key_the_unit_tier_records():
+    """THE KEY MISMATCH. `mock_mcp` records `response`; only the e2e tier
+    records `response_summary`. Reading one key made this predicate constantly
+    False in the unit tier, so BOTH validators returned early 100% of the time
+    while their tests -- which hand-build `response_summary` -- passed.
+
+    Measured on the committed corpus: person-evidence
+    v1_2026-10-05_03-04-24.json carries 206 tool calls, zero with
+    `response_summary`, one a real `materialize_facts` refusal."""
+    as_unit_tier = [{"tool": "mcp__genealogy__materialize_facts", "response": _REFUSAL}]
+    as_e2e_tier = [{"tool": "mcp__genealogy__materialize_facts", "response_summary": _REFUSAL}]
+    assert unresolved_warning_refusal(as_unit_tier) is True
+    assert unresolved_warning_refusal(as_e2e_tier) is True
+
+
+def test_refusal_is_seen_when_the_unit_tier_records_a_dict_not_a_string():
+    """`mock_mcp` appends the response as a dict, not a JSON string."""
+    calls = [{"tool": "mcp__genealogy__tree_edit", "response": {"ok": False, "reason": "unjustified_warnings"}}]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_writer_error_does_not_count_as_the_resolving_success():
+    """`{"ok": false, "errors": [...]}` is the writers' commonest failure --
+    validate-before-persist, and the stale-justification branch -- and carries
+    neither `is_error` nor `no_project`, the two shapes `did_not_land` knows.
+    Crediting it resolves the refusal with a write that never happened."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"ok": false, "errors": ["unknown id"]}'},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_no_project_answer_does_not_count_as_the_resolving_success():
+    """Restores the issue-#1695 guard the retarget dropped. The no-project
+    answer deliberately carries no `is_error`, so an `is_error` test counts a
+    write that never happened as the success."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"reason": "no_project"}'},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_stale_justification_answer_is_not_counted_as_a_refusal():
+    """The engine reuses `reason: "unjustified_warnings"` for the stale-id
+    branch, which means the opposite of a refusal: the agent sent a warningId
+    matching no introduced warning and is being told to re-call WITHOUT
+    justifications to get the current ids. That round-trip is expected, not an
+    abandonment, and counting it inflates the fire rate the promotion decision
+    reads."""
+    from harness.skill_invocation import STALE_JUSTIFICATION_MARKER
+
+    stale = (
+        '{"ok": false, "reason": "unjustified_warnings", "warnings": [{"message": '
+        '"' + STALE_JUSTIFICATION_MARKER + '(s) not matching any introduced '
+        'warning: w9. Re-call without warningJustifications to get the current '
+        'warning ids."}]}'
+    )
+    assert unresolved_warning_refusal(
+        [{"tool": "mcp__genealogy__tree_edit", "response": stale}]
+    ) is False
+
+    # And it must not pass as the success that clears a real refusal either —
+    # excluding it from one arm only moves the miscount to the other.
+    assert unresolved_warning_refusal(
+        [
+            {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+            {"tool": "mcp__genealogy__tree_edit", "response": stale},
+        ]
+    ) is True
+
+
+def test_stale_justification_marker_matches_the_engine():
+    """Pins the cross-language coupling. `STALE_JUSTIFICATION_MARKER` keys on a
+    string literal in the engine, so a reword there would silently restore the
+    conflation this exclusion exists to prevent."""
+    from pathlib import Path
+
+    from harness.skill_invocation import STALE_JUSTIFICATION_MARKER
+
+    repo_root = Path(__file__).resolve().parents[4]
+    src = (repo_root / "packages/engine/mcp-server/src/tools/tree-edit.ts").read_text(
+        encoding="utf-8"
+    )
+    assert STALE_JUSTIFICATION_MARKER in src, (
+        f"{STALE_JUSTIFICATION_MARKER!r} is no longer in tree-edit.ts — the "
+        "stale-justification branch was reworded, so unresolved_warning_refusal "
+        "is counting those round-trips as abandoned refusals again"
+    )
+
+
+def test_a_recall_whose_result_never_arrived_does_not_resolve_the_refusal():
+    """The third shape of the same credit trap. A run truncated by the
+    wall-clock or turn cap leaves the re-call with NO recorded response at all,
+    so `response_text` returns `""` — which carries neither `is_error` nor
+    `no_project` nor `"ok": false`, and an absence-based success test credits
+    it. The write never completed; the refusal stands.
+
+    This is why the arm requires `"ok": true` to be PRESENT. Across the 67 runs
+    the replay scans, all 351 writer calls carry an explicit `ok`, so demanding
+    it manufactures nothing on today's corpus."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "args": {"operation": "add_fact"}},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_a_genuine_later_success_does_resolve_the_refusal():
+    """The accept direction: a run that re-called and landed is not a
+    violation, and must not be reported as one."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true, "written": 1}'},
+    ]
+    assert unresolved_warning_refusal(calls) is False
+
+
+def test_a_success_before_the_refusal_does_not_resolve_it():
+    """Ordering: the success must come AFTER the last refusal. A run that wrote
+    op A, was refused on op B and abandoned it is not clean."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true, "written": 1}'},
+        {"tool": "mcp__genealogy__tree_edit", "response": _REFUSAL},
+    ]
+    assert unresolved_warning_refusal(calls) is True
+
+
+def test_no_refusal_at_all_is_not_a_violation():
+    calls = [{"tool": "mcp__genealogy__tree_edit", "response": '{"ok": true}'}]
+    assert unresolved_warning_refusal(calls) is False
+
+
+# The corpus records `ok:false` in four spellings. Counted over every committed
+# run log: 361 `"ok":false`, 334 `"ok": false`, 95 escaped-compact and 7
+# escaped-spaced -- 102 of 797 (13%) in the escaped envelope that
+# `_summarize_tool_response` passes through verbatim under 500 chars. A
+# quoted-key matcher is blind to those, which is exactly the trap `did_not_land`
+# dodges by matching the bare `no_project`. This arm CREDITS a call, so every
+# blind spelling is a silent miss.
+@pytest.mark.parametrize(
+    "label,failed_response",
+    [
+        ("compact", '{"ok":false,"errors":["bad"]}'),
+        ("spaced", '{"ok": false, "errors": ["bad"]}'),
+        ("escaped compact", '[{"type":"text","text":"{\\"ok\\":false,\\"errors\\":[\\"bad\\"]}"}]'),
+        ("escaped spaced", '[{"type":"text","text":"{\\"ok\\": false,\\"errors\\":[\\"bad\\"]}"}]'),
+    ],
+)
+def test_a_failed_recall_never_clears_a_refusal_in_any_recorded_spelling(label, failed_response):
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": failed_response},
+    ]
+    assert unresolved_warning_refusal(calls) is True, label
+
+
+@pytest.mark.parametrize(
+    "label,ok_response",
+    [
+        ("plain", '{"ok": true}'),
+        ("escaped", '[{"type":"text","text":"{\\"ok\\":true}"}]'),
+    ],
+)
+def test_a_real_success_still_clears_a_refusal_in_any_recorded_spelling(label, ok_response):
+    """The accept direction for the same matcher: normalising the escaping must
+    not make a genuine success look like a failure."""
+    calls = [
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": _REFUSAL},
+        {"tool": "mcp__genealogy__tree_edit", "response_summary": ok_response},
+    ]
+    assert unresolved_warning_refusal(calls) is False, label
+
+
+def test_response_text_falls_back_to_repr_on_an_unserializable_payload():
+    """Reached live at the end of a billed run via did_not_land ->
+    find_unguarded_protected_writes. `orchestrator._serialize_result` guards the
+    same json.dumps call because letting it escape aborts a $7-25 run."""
+
+    class Unserializable:
+        def __repr__(self):
+            return "<unserializable>"
+
+    calls = [{"tool": "mcp__genealogy__tree_edit", "response": {"x": Unserializable()}}]
+    assert unresolved_warning_refusal(calls) is False  # no exception
 
 
 def test_dedicated_agent_names_matches_the_shipped_agent_files():

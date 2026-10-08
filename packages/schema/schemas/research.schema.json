@@ -975,6 +975,9 @@
             }
           ]
         },
+        "move_bridge": {
+          "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
         "match_score": {
           "anyOf": [
             {
