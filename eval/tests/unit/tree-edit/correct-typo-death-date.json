@@ -24,8 +24,7 @@
     "Edit-minimality REQUIRED: no other field on F2 may change (place, sources, type, primary all stay byte-identical); no other fact (F1, F3) is touched; no other person (I2) is touched; no relationship (R1) is touched; research.json is not touched at all",
     "Should NOT 'normalize' adjacent fields opportunistically (e.g., re-resolving F2.place via place_search when only the date was wrong)",
     "Source-grounding requirement (per evidence-grounded-edits.md): the correction must be tied to S3 — the user cited it explicitly. The skill should reflect that in the explanation",
-    "Should report what was changed and confirm post-edit schema validity in the response",
-    "Should end its return with a caller-facing `Hand-back: check-warnings <person ids>` line naming every person this edit touched — the agent body requires it after ANY edit or merge. The agent cannot spawn check-warnings itself (it holds no Agent tool), so check-warnings not running is correct and MUST NOT be scored down; score only on whether the return names it for the touched persons."
+    "Should report what was changed and confirm post-edit schema validity in the response"
   ],
   "execution": {
     "max_wall_clock_seconds": 600

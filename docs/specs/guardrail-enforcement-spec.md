@@ -176,7 +176,7 @@ the four objects in this branch’s own record-extraction candidate, so quote th
 | n/a | Assertion correction reaches its materialized fact | engine (MCP tool) — so Cowork, hosted, both harnesses | a `place`/`standard_place`/`date`/`value` corrected on an assertion never reaching the tree fact already materialized from it | **enforcing as a WRITE, not a refusal** — the write being made is the legitimate one, so there is nothing for a boundary check to refuse, and ADR-0009 constraint 6 rules out a gate no call shape can satisfy. Eight advisories ride it, none blocking: no fact carries the backlink; the fact holds a value this assertion never asserted (another source corroborated it); the assertion's value is malformed rather than withdrawn; the assertion has been re-classified so the fact no longer matches its type; a field was DELETED from the fact; the rewritten fact is `primary` (a concluded value a proof summary may cite); a `place` corrected without its `standard_place`; and a `date` corrected without its `standard_date`. A ninth, the country-contradiction clear, rides the same channel. Every advisory that describes a CHANGE is discarded if the rewrite is rolled back |
 | below | Tree fact agrees with its linked assertion | unit harness (inside a paid per-skill run) **and** the e2e harness, where it reports rather than fails | a backlinked fact whose `place`/`standard_place`/`date`/`value` disagrees with the assertion it was minted from | **enforcing on unit, reporting on e2e.** One predicate, `find_tree_facts_disagreeing_with_assertions`: the universal validator asserts on it, while `collect_post_hoc_shadow` emits its findings as a shadow kind live and `replay_post_hoc` recomputes them offline, so the plane the card was filed off is now covered — as a measured number, not a gate. Still green by construction on today's unit corpus, where no run both mints a backlinked fact and corrects its assertion; the shadow bucket likewise reads zero so far, over a small live population. Its falsifiable halves are `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py` and `eval/harness/tests/unit/test_post_hoc_shadow.py` |
 | below | Fact rewrite authorized by tool identity | unit harness only, and only inside a paid per-skill run | record-extraction touching `tree.gedcomx.json`'s `persons` for anything other than that rewrite. The skill is deliberately NOT added to the row's `callers`, which would also authorize adding an unsourced person and setting `primary`; `research_append`/`extraction_append` are authorized as TOOLS, and only when the whole persons delta is mirrored attributes on facts that already carried the same backlink | **enforcing there, nowhere else** (the same reasoning that authorizes `merge_tree_persons` on the research side — anything the substitution does not explain still fails) |
-| §5 | Unjustified genealogical warnings | engine (MCP tool) — so Cowork, hosted, both harnesses | a tree write (`tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`) that introduces a genealogical warning (a `person_warnings` check absent before and present after) without a `warningJustifications` entry for each introduced warning id. `project_create` and `research_append`'s linked-fact rewrite are knowingly ungated (false allows). `tree_forget` is exempt. | **enforcing** |
+| §5 | Unjustified genealogical warnings | engine (MCP tool) — so Cowork, hosted, both harnesses | a tree write (`tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`) that introduces a genealogical warning (a `person_warnings` check absent before and present after) without a `warningJustifications` entry for each introduced warning id, **except** the tags in `GATE_EXEMPT_TYPES` (membership and rationale: `person-warnings-tool-spec.md`). A **merge** that surfaces a contradiction NEITHER predecessor carried does introduce it and must be justified; one the collapsed person already carried is remapped to the survivor and needs nothing. Relationship endpoints are read from `parent`/`child` as well as `person1`/`person2` — reading only the Couple pair meant a parentage write marked nobody as touched and the gate could not fire on one at all; unexempted it refuses 419 of 2266 (18.5%) parentage edges, 67 of 2266 (3.0%) after the exemptions, measured at a36651a33 with `dev/measure-parentage-gate-rate.ts`. `earliestChildBirthToBirth12` and its relative form are deliberately NOT exempt: at cutoff 12 the tag is the only check that fires when a child is born BEFORE their parent, and exempting it let every gated writer accept one. Both are emitted once per impossible CHILD rather than once per parent — keyed on one child, a second impossible child either refused or LANDED depending only on whether the parent already carried that key, and the landing case is a real corpus shape. Warnings are computed one relationship hop out from the touched set, because `calculateWarnings` anchors a `relatives*` warning on a relative and the before side cannot reach that anchor when the path IS the edge being added — without the hop, 16 of 83 refused parentage edges are refused for a warning they did not introduce (`--no-widen-hop`). The hop is not subtract-only in general: on fact writes it ADDS refusals (review measured 37 without, 47 with, the 10 extra all true catches). `project_create` and `research_append`'s linked-fact rewrite are knowingly ungated (false allows). `tree_forget` is exempt. | **enforcing** |
 | §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
@@ -359,7 +359,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **6**, across 5 runs, measured at 0b65122bc | **10** summaries across 9 of 194 runs, measured at 0b65122bc | **graduated 2026-09-28** to a `research_append` precondition that refuses the `proof_summaries` write, under ADR-0011's labelled-case rule. The harness detector stays as the document-plane reading, and both replay one case file |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **0 runs**, of 68 scanned (134 skipped), measured at 14737e6f3 | **retargeted (2026-10-06)**: tree writers refuse unjustified warnings at write time, so the check now detects a refusal nothing landed after. The 59-of-158 figure was the RETIRED question and is not comparable. 134 of 202 committed runs are capture-stripped and cannot carry the marker, so they are skipped rather than counted clean |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 | §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped; 2026-09-23 read: 2/3 fires are false denies (documented negatives), stays WARNING pending a negative-conclusion signal |
 | §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
@@ -460,7 +460,7 @@ splits in two:
 
 | | is the zero ambiguous? | has the live store path ever been exercised? |
 |---|---|---|
-| warnings-unchecked | **no** — 59 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
+| warnings-unchecked | **no** — 0 corpus fires post-retarget (the 59 were the retired question) | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
 | conflict-unpersisted | **no** — 10 corpus fires, measured at 0b65122bc; now also refused at the writer tool | **yes** — 6 stored entries across 5 runs, measured at 0b65122bc, among them `robert-lord-children/run-2026-09-16_14-15-30` |
 | citation-nulling | **yes** — zero on both axes | **no** |
 
@@ -474,18 +474,49 @@ this axis. The replay plumbing has its own controls in
 resolution, seed-tree loading and per-check skip discipline rather than against
 the predicates.
 
-**warnings-unchecked was considered for graduation and declined — 2026-08-23.**
-It is the check with by far the largest sample, so it is the one a future reader
-will reach for first; the reasoning is recorded here so it is not re-derived. 59
-runs of 158 is a **corpus behaviour count, not a production signal**, and
-`docs/architecture.md` ("Every measurement in this repo describes the eval
-corpus, not production") says outright not to graduate a gate on a violation
-rate. A hard compliance check at that frequency would fail a large share of a
-suite costing $7–25 a run, over a process omission that corrupts no document —
-ADR-0011's satisfiability limit reads that as a constant rather than a
-guardrail. What the number argues for instead is moving the check to the write
-boundary, where the guardrail runs itself rather than a detector reporting that
-nobody asked; that is a separate piece of work with its own measurements.
+**warnings-unchecked — superseded by the engine gate (2026-10-02).**
+The 2026-08-23 decline reasoned that the right fix was "moving the check to the
+write boundary, where the guardrail runs itself rather than a detector reporting
+that nobody asked." The four tree writers (`tree_edit`, `tree_correct`,
+`merge_tree_persons`, `materialize_facts`) now refuse a write that introduces
+an unjustified genealogical warning. The shadow detector is retargeted: instead
+of checking whether `person_warnings` was called after a write, it checks
+whether any writer returned `unjustified_warnings` and the agent never re-called
+with justifications. The prose "run check-warnings after writes" steps have been
+removed from the two bodies whose writes a gated writer covers (`tree-edit`,
+`proof-conclusion`). `person-evidence` keeps a SCOPED version: a `pe_` link
+goes through `research_append`, not a gated writer, so an imported relative's
+pre-existing impossibility is surfaced by nothing else — its step is narrowed
+to persons it linked to rather than removed. `init-project` keeps its step: it writes
+only through `project_create` and `research_append`, and both are deliberately
+ungated (above), so nothing else would surface a warning on an imported tree.
+
+**No eval validator asserts this gate, deliberately.** PR 2 first replaced the
+retired `test_check_warnings_runs_after_a_write` validators with
+`test_no_unjustified_warning_write` in `validators/test_tree_edit.py` and
+`validators/test_person_evidence.py`. Both were removed again, because the
+check they performed cannot be expressed at that layer:
+
+- **A real leak is invisible to them.** The thing the gate guarantees is that
+  an unjustified write never LANDS. A leak would therefore show up in the tree,
+  not in `tool_calls` — and these validators read `tool_calls`.
+- **The one path on which they fire is a false positive.** They gated on the
+  project having changed, then failed the run if the last refusal had no landed
+  writer after it. But "a writer landed after the refusal" is the same fact as
+  "the refusal was resolved", so the only way to reach the assertion is a run
+  that changed state through an UNGATED writer (`research_append` writing `pe_`
+  links) and then correctly abandoned a refused one. Abandoning is exactly what
+  the refusal message and both agent bodies tell the agent it may do.
+- They were dead on arrival and so never fired: the shared predicate keyed on
+  `response_summary`, which only the e2e tier records, while the unit harness
+  records `response`. Fixing that key would have turned two inert checks into a
+  false-positive generator reddening compliant paid runs.
+
+What enforces the gate is the engine, and what proves it is the engine's own
+tests (PR 1). That is the ADR-0011 position — the guardrail lives at the write
+boundary — and a second, weaker assertion in the eval layer adds no coverage.
+The shadow detector stays: it MEASURES how often a refusal is abandoned without
+failing a run on it, which is a different question and a legitimate one.
 
 **What the replay claims, and what it does not.** It is a **behaviour-presence**
 measurement: did this shape occur in the corpus at all. It is **not** a per-run
@@ -599,10 +630,11 @@ to understand before reading either:
   as the write, while the replay always sees the full prefix. Its second job is
   scoring a candidate *narrowing* of the rule against history before that
   narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
-  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **59 runs**
-  of 158 — the 159th being the corpus's one orphan run log
-  (`william-ferber-ancestry`, a committed run with no fixture directory, and so
-  no baseline to diff a relationship against). Every replay **names** the runs it
+  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **0 runs**
+  of 67 scanned, 134 skipped. The skips are the capture-stripped logs, which
+  carry no `response_summary` and so cannot hold the refusal marker; the
+  orphan run log (`william-ferber-ancestry`) is no longer among them, because
+  the retargeted check needs no baseline tree to diff against. Every replay **names** the runs it
   could not read rather than counting them clean, per check: a denominator that
   quietly shrank reads as a clean corpus, which is the failure this whole section
   exists to correct.
@@ -833,10 +865,17 @@ manufacture violations in paid grading. `did_not_land` in
 `eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
 use it to **skip** a call (`find_unguarded_protected_writes`, and
 `guardrail_shadow_report.py`'s person-evidence scan). The third —
-`find_relationship_writes_without_warnings_check` — uses it to withhold
-**credit**: there a successful `person_warnings` means the tree was checked, so a
-no-project call must not count as consulting the guardrail. Getting that one
-backwards is a *missed* violation, and therefore silent.
+`find_relationship_writes_without_warnings_check` — retargeted (2026-10-02):
+it now checks for unresolved `unjustified_warnings` refusals from tree writers
+rather than checking whether `person_warnings` was called. **The polarity trap
+survived the retarget**: the success arm still withholds *credit* rather than
+skipping a call, so a success matched in the wrong place is a missed violation
+and therefore silent. It is matched by ORDER — the last refusal, then a
+successful writer call after it. Scanning the whole call list for "any success"
+credits a write that landed *before* the refusal, so a run that wrote one op,
+was refused on the next, and gave up reads as clean; that is how the retarget
+first shipped, and `test_warnings_unchecked_fires_when_the_success_predates_the_refusal`
+is what holds it.
 
 ### Set-once project fields
 

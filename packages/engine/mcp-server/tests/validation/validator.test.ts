@@ -364,6 +364,46 @@ describe("Project Validator", () => {
       }
     });
 
+    it("reports a plan item fallback_for that is not a sibling pli_ id, and allows a sibling or null", async () => {
+      const item = (id: string, fallback_for: unknown) => ({
+        id,
+        sequence: 1,
+        record_type: "census",
+        jurisdiction: "Schuylkill County, Pennsylvania",
+        date_range: "1850-1860",
+        repository: "FamilySearch",
+        rationale: "Household reconstruction",
+        fallback_for,
+        status: "planned",
+      });
+      const plan = (id: string, items: unknown[], status = "active") => ({
+        id,
+        question_id: "q_001",
+        status,
+        created: "2026-01-01T00:00:00.000Z",
+        items,
+      });
+      const fallbackErrors = async (plans: unknown[]) => {
+        await writeProject({ ...minimalResearch, plans }, minimalTree);
+        const result = await validateProject(testDir);
+        return result.errors.filter((e) => e.message.includes("fallback_for"));
+      };
+      for (const bad of ["sequence_3", "pi_005", 3]) {
+        const errs = await fallbackErrors([
+          plan("pl_001", [item("pli_001", null), item("pli_002", bad)]),
+        ]);
+        expect(errs.some((e) => e.message.includes("must be a 'pli_' id"))).toBe(true);
+      }
+      const crossPlan = await fallbackErrors([
+        plan("pl_001", [item("pli_001", null), item("pli_002", null)], "superseded"),
+        plan("pl_002", [item("pli_003", null), item("pli_004", "pli_002")]),
+      ]);
+      expect(crossPlan.some((e) => e.message.includes("is not an item in this plan (pl_002)"))).toBe(true);
+      expect(
+        await fallbackErrors([plan("pl_001", [item("pli_001", null), item("pli_002", "pli_001")])]),
+      ).toEqual([]);
+    });
+
     it("accepts a null log entry plan_item_id (opportunistic search)", async () => {
       const research = {
         ...minimalResearch,

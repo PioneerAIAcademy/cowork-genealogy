@@ -11,11 +11,12 @@
       "census",
       "plan-item-status",
       "capture-pending",
-      "issue-1226"
+      "issue-1226",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Work plan item pli_001 — the 1855 Massachusetts State Census for Josiah Barnes on MyHeritage.",
+    "delegation": "Work plan item pli_001 — the 1855 Massachusetts State Census for Josiah Barnes on MyHeritage.\n\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: <workspace>",
     "scenario": "ma-state-census-external"
   },
   "mcp_fixtures": [

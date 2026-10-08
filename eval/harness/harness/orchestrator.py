@@ -52,6 +52,7 @@ from harness.skill_runner import (
     SkillRunResult,
     agent_return_text,
     direct_dispatch_prompt,
+    handoffs,
     judge_skills_slot,
     run_skill,
     spawn_prompts,
@@ -781,6 +782,7 @@ async def _execute_single_run(
         aborted_reason=result.aborted_reason,
         activated=activated,
         skills_invoked=result.skills_invoked,
+        builtin_tool_calls=result.builtin_tool_calls,
         judge_skipped=judge_result.skipped,
         # None on a routed run, the (possibly empty) spawn list on a direct one
         # — the same shape `derive_activated` is fed above, and the thing
@@ -1374,12 +1376,26 @@ def flag_routing_negative_judge_fail(
     raises. No-op unless the test is negative with a non-empty `correct_skill`,
     the skill under test did not activate, and an accepted skill is in
     `skills_invoked`.
+
+    A `grade_on_invariant` negative takes the same path; only the warning's and
+    rationale's "decided by" clause changes. The `activated` guard is kept for
+    it on purpose: an invariant negative may activate and still pass
+    (`ut_conflict_resolution_010` loads conflict-resolution and declines
+    in-body), and there its 1 is left a 1, which the review sample's first
+    trigger already makes mandatory.
     """
     if not dimensions:
         return dimensions
     negative = spec.negative or {}
-    if negative.get("grade_on_invariant"):
-        return dimensions
+    # Invariant negatives are coerced too (ruling on issue #2190, 2026-09-07):
+    # their dimensions never gate either, and the human corpus split 2-of-3 on
+    # their 1s, the same split with no discriminator that retired the floor.
+    # Only the wording below changes, because routing does not decide them.
+    decided_by = (
+        "its invariant validator alone"
+        if negative.get("grade_on_invariant")
+        else "routing alone"
+    )
     if activated:
         return dimensions
     # The `any()` check below is the only guard needed, and it is load-bearing
@@ -1405,7 +1421,7 @@ def flag_routing_negative_judge_fail(
                     "kind": "coerced_routing_negative_to_na",
                     "advisory": (
                         f"judge scored {dd['name']} 1 on a negative test whose "
-                        f"outcome is decided by routing; coerced to null. "
+                        f"outcome is decided by {decided_by}; coerced to null. "
                         f"Across the committed corpus a human confirmed this 1 "
                         f"in 20 of 24 such cells, so read it before confirming "
                         f"the N/A: if the skill under test carried out its own "
@@ -1432,7 +1448,7 @@ def flag_routing_negative_judge_fail(
             orig = dd.get("rationale") or ""
             dd["rationale"] = (
                 f"[coerced-to-na] this is a correctly-routed negative test, whose "
-                f"outcome is decided by routing alone, so {dd['name']} is N/A and "
+                f"outcome is decided by {decided_by}, so {dd['name']} is N/A and "
                 f"the judge's 1 was coerced to null. READ THE ORIGINAL BELOW "
                 f"BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed "
                 f"corpus the skill under test produced real output first (up to "
@@ -1660,6 +1676,7 @@ def _compute_outcome(
     skills_invoked: list[str],
     judge_skipped: bool = False,
     agents_spawned: list[str] | None = None,
+    builtin_tool_calls: list[dict[str, Any]] | None = None,
 ) -> str:
     """v1 per-run outcome per spec §7.
 
@@ -1825,7 +1842,16 @@ def _compute_outcome(
         # tests' concern, not this test's. The judge runs base-only and
         # diagnostically (see `_run_judge`); its scores must NOT flip a
         # correctly-routed test.
-        if not any(s in skills_invoked for s in correct):
+        # `handoffs`, not `skills_invoked`: under the 2026-09-22 ruling a skill
+        # becomes an agent, and the correct hand-off to a converted callee is an
+        # `Agent` spawn, which never lands in `skills_invoked` (issue #2825).
+        # `runnability.py` already resolves a `correct_skill` entry against the
+        # agents dir as well as the skills dir (issue #2793) — matching on
+        # `skills_invoked` here is what made that acceptance a lie: the test
+        # loaded and then failed however correctly the run routed. Observed on
+        # `ut_init_project_009`, which spawned `project-status` (an agent since
+        # 2026-10-03) and was graded a routing failure for it.
+        if not any(s in handoffs(skills_invoked, builtin_tool_calls or []) for s in correct):
             # Skill didn't fire, but didn't route to an acceptable
             # alternative — the correct_skill array was not satisfied.
             return "fail"
@@ -1975,7 +2001,13 @@ def _negative_judge_context(spec: TestSpec) -> list[str]:
     list. Which group wins when they disagree is deliberately not stated: it
     is the open "Note authority" decision on issue #2478.
     """
-    correct = (spec.negative or {}).get("correct_skill", [])
+    # Minus the skill under test: a `correct_skill` naming it (two fixtures do)
+    # would otherwise tell the judge the correct route is the skill it was just
+    # told must not do its own task. A list that empties renders the
+    # no-skill arm.
+    correct = [
+        s for s in (spec.negative or {}).get("correct_skill", []) if s != spec.skill
+    ]
     if correct:
         routing = "decline and route the user to: " + ", ".join(correct)
     else:
