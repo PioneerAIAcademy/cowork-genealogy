@@ -134,26 +134,30 @@ function warningsForPerson(
 }
 
 /**
- * Every person one relationship hop out from `seed` in either tree, excluding
- * the seed itself.
+ * Every person one relationship hop out from `seed` in the AFTER tree,
+ * excluding the seed itself.
  *
  * Deliberately NOT transitive: one hop is what `calculateWarnings` reaches
  * when it anchors a `relatives*` warning, so one hop is what the before side
  * has to be able to see. A full walk would compute warnings for the whole
  * connected component on every write.
+ *
+ * The before tree was scanned here too, on the reasoning that an edge REMOVAL
+ * strands the neighbour on the other side. That was asserted, not measured,
+ * and it is wrong: a removed edge's own endpoints are already in `seed`
+ * (`computeTouchedPersonIds` adds both), and every other neighbour of theirs
+ * survives in the after tree, so the before pass added nobody. Dropping it
+ * leaves the gate suite at 466/466 and the corpus rate unchanged at 67.
  */
 function oneHopNeighbours(
-  beforeTree: SimplifiedGedcomX,
   afterTree: SimplifiedGedcomX,
   seed: ReadonlySet<string>,
 ): string[] {
   const out = new Set<string>();
-  for (const tree of [beforeTree, afterTree]) {
-    for (const r of tree.relationships ?? []) {
-      const ends = relationshipEndpoints(r);
-      if (!ends.some((e) => seed.has(e))) continue;
-      for (const e of ends) if (!seed.has(e)) out.add(e);
-    }
+  for (const r of afterTree.relationships ?? []) {
+    const ends = relationshipEndpoints(r);
+    if (!ends.some((e) => seed.has(e))) continue;
+    for (const e of ends) if (!seed.has(e)) out.add(e);
   }
   return [...out];
 }
@@ -197,25 +201,25 @@ export function introducedWarnings(
   for (const id of touchedPersonIds) {
     uniqueIds.add(collapseMap?.get(id) ?? id);
   }
-  // Then widen by one relationship hop, across BOTH trees. `calculateWarnings`
-  // reports warnings anchored on an anchor's relatives, not just the anchor,
-  // so the after side sees a neighbour's warning while the before side cannot
-  // reach that neighbour at all when the path is the edge being added. The
-  // warning is then pre-existing but invisible to the subtraction, and the
-  // write is refused for it. Same defect as the collapsed-id remap above,
-  // reached by a different route.
-  //
-  // Both trees, because an edge REMOVAL strands the neighbour on the other
-  // side: widening only on `afterTree` would miss it symmetrically.
+  // Then widen by one relationship hop. `calculateWarnings` reports warnings
+  // anchored on an anchor's relatives, not just the anchor, so the after side
+  // sees a neighbour's warning while the before side cannot reach that
+  // neighbour at all when the path is the edge being added. The warning is
+  // then pre-existing but invisible to the subtraction, and the write is
+  // refused for it. Same defect as the collapsed-id remap above, reached by a
+  // different route.
   //
   // Measured over the committed e2e final trees with
-  // `dev/measure-parentage-gate-rate.ts --widen-hop`: 18 of 83 refused
-  // parentage edges were refused for a warning they did not introduce, all of
-  // them `relativesEarliestChildBirthToBirth12`, and the widened run finds the
-  // same 37 distinct warnings. It subtracts false refusals without losing a
-  // single true one.
+  // `dev/measure-parentage-gate-rate.ts --no-widen-hop`: on PARENTAGE EDGES it
+  // removes 16 of 83 refusals that no write introduced, leaving 67, and the
+  // widened run finds the same distinct warnings -- it loses no true refusal
+  // there. It is NOT subtract-only in general: review measured fact writes
+  // separately (sampling every fourth committed fact as an added fact) at 37
+  // refusals without the hop and 47 with, the 10 extra all parent-anchored and
+  // all true catches. Both directions are the same mechanism -- the before side
+  // can now reach what the after side reports.
   if (widenOneHop) {
-    for (const id of oneHopNeighbours(beforeTree, afterTree, uniqueIds)) {
+    for (const id of oneHopNeighbours(afterTree, uniqueIds)) {
       uniqueIds.add(id);
     }
   }

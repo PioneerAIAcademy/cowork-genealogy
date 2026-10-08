@@ -288,6 +288,69 @@ describe("introducedWarnings", () => {
     expect(result.unjustified).toHaveLength(0);
   });
 
+  // (h) The age-12 gate, one warning per impossible child.
+  //
+  // These three rows are the reviewer's matrix, and the third is why the
+  // per-child change was needed rather than just a better child-picker: with
+  // ONE warning per parent, keyed on whichever child sorted first, adding a
+  // second impossible child was accepted because the parent already carried a
+  // warning under that key. A real corpus shape
+  // (`elisabetha-sugecz-parents`: mother born 1810, children 1816/1820/1821).
+  describe("(h) age-12 gate: each impossible child is judged on its own", () => {
+    const kid = (id: string, date: string) => ({
+      id,
+      gender: "Male",
+      names: [{ id: `${id}-n`, given: id, surname: "X" }],
+      facts: [{ id: `${id}b`, type: "Birth", date, standard_date: date }],
+    });
+    const mum = {
+      id: "M",
+      gender: "Female",
+      names: [{ id: "M-n", given: "Mary", surname: "X" }],
+      facts: [{ id: "Mb", type: "Birth", date: "1860", standard_date: "1860" }],
+    };
+    const build = (kids: Array<[string, string]>, linked: string[]) =>
+      tree(
+        [mum, ...kids.map(([id, d]) => kid(id, d))],
+        linked.map((id, i) => ({
+          id: `R${i}`,
+          type: "ParentChild",
+          parent: "M",
+          child: id,
+        })),
+      );
+    const addEdge = (kids: Array<[string, string]>, existing: string[], add: string) => {
+      const before = build(kids, existing);
+      const after = build(kids, [...existing, add]);
+      return introducedWarnings(
+        before, after, computeTouchedPersonIds(before, after),
+      );
+    };
+
+    it("lands a child that is only POSSIBLY impossible, beside one that is", () => {
+      // B is certainly age 8; C spans 1850..1880 and may be age 30. Adding C
+      // introduces nothing. Before the change this was refused, naming C.
+      const r = addEdge([["B", "1868"], ["C", "Bet 1850 and 1880"]], ["B"], "C");
+      expect(r.unjustified).toHaveLength(0);
+    });
+
+    it("refuses a second CERTAINLY impossible child given as a range", () => {
+      const r = addEdge([["B", "1866"], ["C", "Bet 1850 and 1870"]], ["B"], "C");
+      expect(
+        r.unjustified.map((w) => `${w.issueType}|${w.relatedPersonId}`),
+      ).toContain("earliestChildBirthToBirth12|C");
+    });
+
+    it("refuses a second CERTAINLY impossible child given as an exact date", () => {
+      // The false ALLOW. One warning per parent already existed for B, so the
+      // delta saw nothing new and D landed.
+      const r = addEdge([["B", "1866"], ["D", "1870"]], ["B"], "D");
+      expect(
+        r.unjustified.map((w) => `${w.issueType}|${w.relatedPersonId}`),
+      ).toContain("earliestChildBirthToBirth12|D");
+    });
+  });
+
   it("(f) justification with stale id is detected", () => {
     const before = tree([plausiblePerson("I1", "John", "Smith")]);
     const after = tree([implausiblePerson("I1", "John", "Smith")]);

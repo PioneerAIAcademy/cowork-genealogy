@@ -197,7 +197,11 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
     // `missingFactsAndRelatives` is a self-form tag that merely contains the
     // word, and correctly finds no partner.
     const pairs = relativePairs();
-    expect(pairs.length, "no relative/self tag pairs derived").toBe(28);
+    // A FLOOR, not an equality. The job here is to catch a derivation that has
+    // stopped matching — a renamed tag, a changed spelling, a broken regex —
+    // which shows up as zero or a collapse, not as growth. Pinned exactly, a
+    // correctly ADDED tag pair would red this test for doing the right thing.
+    expect(pairs.length, "no relative/self tag pairs derived").toBeGreaterThanOrEqual(28);
     expect(pairs.map(([r]) => r)).not.toContain("missingFactsAndRelatives");
     // The derivation handles all three gender placements, not just the plain
     // `relativesX` case — the two irregular spellings must be found.

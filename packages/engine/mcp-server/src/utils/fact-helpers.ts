@@ -302,13 +302,15 @@ export function earliestYearOfPersonFacts(
   person: SimplifiedPerson,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  bound: "earliest" | "latest" = "earliest",
 ): number | null {
+  const yearOf = bound === "latest" ? latestYear : earliestYear;
   let earliest: number | null = null;
   for (const f of person.facts ?? []) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     const std = getStandardDate(f);
     if (std === null) continue;
-    const y = earliestYear(std);
+    const y = yearOf(std);
     if (y === null) continue;
     if (earliest === null || y < earliest) earliest = y;
   }
