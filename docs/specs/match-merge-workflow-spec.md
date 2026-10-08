@@ -235,8 +235,10 @@ folds a candidate document.
 
 ### 5.7 Post-materialization
 
-Run `check-warnings` (final mode) on each affected anchor; verify
-`research.json` reference integrity. (`materialize_facts` and the `tree_edit`
+Verify `research.json` reference integrity. `check-warnings` is no longer a
+required post-merge step: the merge tools refuse a write that introduces an
+unjustified genealogical warning, so the impossibility this step looked for is
+refused at the write boundary. (`materialize_facts` and the `tree_edit`
 edge writes validate the would-be project before persisting and write nothing on
 a call-introduced error (pre-existing drift rides as a warning) —
 `tree-materialization-spec.md` §4.1.)
