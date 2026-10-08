@@ -1,4 +1,10 @@
 import { validateProject } from "../validation/validator.js";
+import {
+  classifyProjectPath,
+  missingProjectDirMessage,
+  noProjectResult,
+  type NoProjectResult,
+} from "../utils/project-io.js";
 
 export interface ValidateResearchSchemaInput {
   projectPath: string;
@@ -13,8 +19,19 @@ export interface ValidateResearchSchemaResult {
 
 export async function validateResearchSchema(
   input: ValidateResearchSchemaInput
-): Promise<ValidateResearchSchemaResult> {
+): Promise<ValidateResearchSchemaResult | NoProjectResult> {
   const { projectPath } = input;
+
+  if (!projectPath || typeof projectPath !== "string") {
+    throw new Error("projectPath is required");
+  }
+
+  switch (await classifyProjectPath(projectPath)) {
+    case "no_project":
+      return noProjectResult("read");
+    case "missing_dir":
+      throw new Error(missingProjectDirMessage(projectPath));
+  }
 
   try {
     const result = await validateProject(projectPath);

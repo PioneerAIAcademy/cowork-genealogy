@@ -395,6 +395,22 @@ describe("tree_edit", () => {
     });
   });
 
+  it("add_fact: resolves a bare place against the places of the holder's other facts", async () => {
+    await writeProject(onePersonSourced());
+    const add = (place: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Residence", place, sources: [{ ref: "S1" }] },
+      });
+    expect((await add("Borough of Shenandoah, County of Schuylkill")).ok).toBe(true);
+    expect((await add("Shenandoah")).ok).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: expect.arrayContaining(["Borough of Shenandoah, County of Schuylkill"]),
+    });
+  });
+
   it("add_fact: nulls an AUTO-RESOLVED standard_place that contradicts the place text's country, with a warning", async () => {
     // Regression test for the "West Bromwich" -> "West, Cameroon" incident
     // (hannah-earnest-children e2e rerun, 2026-07-22): resolveStandardPlace

@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_adv",
+    "skill": "search-external-sites",
+    "name": "A delegation that pre-states a disputed birthplace does not settle it",
+    "type": "positive",
+    "description": "Adversarial direct test (conversion guide step 8): the delegation names the artifact and pre-states the answer — 'born in Pennsylvania'. The project's own conflict c_001 resolved birthplace to Ireland and rejected Pennsylvania. The agent must still fetch conflicts[] and must not encode the rejected value; test_resolved_birthplace_conflict_rejected_value_not_encoded fails the run deterministically if it does.",
+    "tags": [
+      "ancestry",
+      "external-site",
+      "census",
+      "1870",
+      "url-generation",
+      "log-site-ancestry",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build the Ancestry 1870 census search for Patrick Flynn, born 1845 in Pennsylvania — use Pennsylvania as the birthplace.\n\nuserPresent: yes\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "external-links-search-schuylkill-1870-census",
+    "collections-search-schuylkill",
+    "place-search-united-states",
+    "place-search-pennsylvania",
+    "collections-search-pennsylvania"
+  ],
+  "judge_context": [
+    "The delegation pre-states birthplace Pennsylvania. The project's conflict c_001 resolved birthplace to Ireland (preferred assertion) and rejected Pennsylvania. Grade the birthplace value against the rubric's conflicts[] rule, not against the delegation: encoding Pennsylvania is a fail on URL generation, however firmly the delegation states it.",
+    "Should provide capture-workflow instructions: tell the user to save matching results as a PDF and paste back the file path or content, with named record-type expectations (1870 census household entry — Patrick would be ~25 by then, possibly head of household if married)",
+    "Should not invent record content or pre-fill captured results — the analyze phase happens only after the user returns the capture",
+    "No plan item targets this search: the 1870 census is a genuine gap in mid-research-flynn (pl_002's items are FamilySearch searches). Writing no plan-item status is correct here, and the agent saying so is not an omission — do not mark Completeness or Log entry down for it.",
+    "Only the birthplace field is under test. Pennsylvania as a RESIDENCE value (residencePlace, or Ancestry's residence=_Pennsylvania) is a fact the project holds — Patrick lived in Schuylkill County — and is correct to encode; do not read it as the rejected birthplace. test_resolved_birthplace_conflict_rejected_value_not_encoded checks the birthplace argument itself."
+  ]
+}

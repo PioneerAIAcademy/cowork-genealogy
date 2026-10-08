@@ -1,0 +1,1039 @@
+{
+ "e06": {
+  "key": "juan-rodriguez-son/2026-09-10_16-34-35/ps_001",
+  "class": "CHI",
+  "subject": [
+   "I1"
+  ],
+  "target": "ParentChild(9634-PS9->I1) + ParentChild(963H-MBM->I1) + I1 Burial",
+  "rel": [
+   [
+    "ParentChild",
+    "9634-PS9",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "963H-MBM",
+    "I1",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "Couple",
+    "9634-PS9",
+    "963H-MBM"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [
+   {
+    "p": "I1",
+    "t": "Burial",
+    "d": "17 Feb 1801",
+    "pl": "San Bartolome, Pozuelo, Albacete",
+    "tier": "probable",
+    "va": [
+     "a_003"
+    ]
+   }
+  ],
+  "facts_ctx": [
+   {
+    "p": "I2",
+    "t": "Birth",
+    "va": [
+     "a_012"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Christening",
+    "va": [
+     "a_013"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Christening",
+    "va": [
+     "a_029"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Birth",
+    "va": [
+     "a_030"
+    ]
+   },
+   {
+    "p": "963H-88B",
+    "t": "Birth",
+    "va": [
+     "a_049"
+    ]
+   },
+   {
+    "p": "963H-88B",
+    "t": "Christening",
+    "va": [
+     "a_050"
+    ]
+   },
+   {
+    "p": "I4",
+    "t": "Birth",
+    "va": [
+     "a_071"
+    ]
+   },
+   {
+    "p": "I4",
+    "t": "Christening",
+    "va": [
+     "a_072"
+    ]
+   },
+   {
+    "p": "GS51-S1P",
+    "t": "Christening",
+    "va": [
+     "a_090"
+    ]
+   },
+   {
+    "p": "GS51-S1P",
+    "t": "Birth",
+    "va": [
+     "a_091"
+    ]
+   },
+   {
+    "p": "I5",
+    "t": "Birth",
+    "va": [
+     "a_106"
+    ]
+   },
+   {
+    "p": "I5",
+    "t": "Christening",
+    "va": [
+     "a_107"
+    ]
+   },
+   {
+    "p": "963H-MYP",
+    "t": "Christening",
+    "va": [
+     "a_124"
+    ]
+   },
+   {
+    "p": "963H-MYP",
+    "t": "Birth",
+    "va": [
+     "a_125"
+    ]
+   },
+   {
+    "p": "I6",
+    "t": "Christening",
+    "va": [
+     "a_146"
+    ]
+   },
+   {
+    "p": "I6",
+    "t": "Birth",
+    "va": [
+     "a_147"
+    ]
+   },
+   {
+    "p": "963H-WVN",
+    "t": "Christening",
+    "va": [
+     "a_169"
+    ]
+   },
+   {
+    "p": "963H-WVN",
+    "t": "Birth",
+    "va": [
+     "a_170"
+    ]
+   }
+  ],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_001",
+    "9634-PS9"
+   ],
+   [
+    "src_001",
+    "963H-MBM"
+   ]
+  ],
+  "idn_ctx": [
+   [
+    "src_002",
+    "I2"
+   ],
+   [
+    "src_003",
+    "I3"
+   ],
+   [
+    "src_004",
+    "963H-88B"
+   ],
+   [
+    "src_005",
+    "I4"
+   ],
+   [
+    "src_006",
+    "GS51-S1P"
+   ],
+   [
+    "src_007",
+    "I5"
+   ],
+   [
+    "src_008",
+    "963H-MYP"
+   ],
+   [
+    "src_009",
+    "I6"
+   ],
+   [
+    "src_010",
+    "963H-WVN"
+   ]
+  ],
+  "idn_neg": [],
+  "unmapped": [],
+  "multi": "",
+  "tier_note": "",
+  "notes": "Nine sibling baptisms are cited as indirect (completeness) evidence; their own facts and identities are context. None of the siblings' relationship assertions is in the supporting set, so their parentage is neither derived nor concluded here."
+ },
+ "e07": {
+  "key": "catharina-gosner-daughter/2026-09-23_18-38-32/ps_001",
+  "class": "CHI",
+  "subject": [
+   "I1"
+  ],
+  "target": "ParentChild(K4K8-5K3->I1) + ParentChild(KZS8-RS7->I1)",
+  "rel": [
+   [
+    "ParentChild",
+    "K4K8-5K3",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KZS8-RS7",
+    "I1",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "ParentChild",
+    "K4K8-5K3",
+    "97Z5-NC1"
+   ],
+   [
+    "ParentChild",
+    "KZS8-RS7",
+    "97Z5-NC1"
+   ],
+   [
+    "ParentChild",
+    "K4K8-5K3",
+    "97ZY-PZT"
+   ],
+   [
+    "ParentChild",
+    "KZS8-RS7",
+    "97ZY-PZT"
+   ],
+   [
+    "ParentChild",
+    "K4K8-5K3",
+    "97ZB-P6C"
+   ],
+   [
+    "ParentChild",
+    "KZS8-RS7",
+    "97ZB-P6C"
+   ],
+   [
+    "ParentChild",
+    "K4K8-5K3",
+    "97Z5-NZF"
+   ],
+   [
+    "ParentChild",
+    "KZS8-RS7",
+    "97Z5-NZF"
+   ],
+   [
+    "Couple",
+    "K4K8-5K3",
+    "KZS8-RS7"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [],
+  "facts_ctx": [
+   {
+    "p": "I1",
+    "t": "Christening",
+    "d": "12 Jun 1743",
+    "pl": "Triesen",
+    "va": [
+     "a_003"
+    ]
+   }
+  ],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_001",
+    "K4K8-5K3"
+   ],
+   [
+    "src_001",
+    "KZS8-RS7"
+   ],
+   [
+    "src_002",
+    "K4K8-5K3"
+   ],
+   [
+    "src_002",
+    "KZS8-RS7"
+   ],
+   [
+    "src_003",
+    "K4K8-5K3"
+   ],
+   [
+    "src_003",
+    "KZS8-RS7"
+   ],
+   [
+    "src_004",
+    "K4K8-5K3"
+   ],
+   [
+    "src_004",
+    "KZS8-RS7"
+   ],
+   [
+    "src_005",
+    "K4K8-5K3"
+   ],
+   [
+    "src_005",
+    "KZS8-RS7"
+   ]
+  ],
+  "idn_ctx": [
+   [
+    "src_002",
+    "97Z5-NC1"
+   ],
+   [
+    "src_003",
+    "97ZY-PZT"
+   ],
+   [
+    "src_004",
+    "97ZB-P6C"
+   ],
+   [
+    "src_005",
+    "97Z5-NZF"
+   ]
+  ],
+  "idn_neg": [],
+  "unmapped": [],
+  "multi": "",
+  "tier_note": "",
+  "notes": "Christening date is the question's premise (context). Sibling christenings corroborate the PARENTS' identity (Schedlerin = Gosnerin); sibling parentage edges are context (seeded)."
+ },
+ "e08": {
+  "key": "hannah-earnest-children/2026-07-22_10-51-46/ps_001",
+  "class": "CHN",
+  "subject": [
+   "I1"
+  ],
+  "target": "new children of 9DJ7-2BY & 9DJ7-219: ParentChild x2 per child + birth",
+  "rel": [
+   [
+    "ParentChild",
+    "9DJ7-2BY",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "9DJ7-219",
+    "I1",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [],
+  "rel_neg": [],
+  "facts": [
+   {
+    "p": "I1",
+    "t": "Birth",
+    "d": "1878",
+    "pl": "West Bromwich, Staffordshire",
+    "tier": "probable",
+    "va": [
+     "a_002"
+    ]
+   }
+  ],
+  "facts_ctx": [],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_002",
+    "I1"
+   ],
+   [
+    "src_003",
+    "I1"
+   ],
+   [
+    "src_002",
+    "9DJ7-2BY"
+   ],
+   [
+    "src_002",
+    "9DJ7-219"
+   ],
+   [
+    "src_003",
+    "9DJ7-2BY"
+   ],
+   [
+    "src_003",
+    "9DJ7-219"
+   ]
+  ],
+  "idn_ctx": [],
+  "idn_neg": [],
+  "idn_weak": [
+   [
+    "src_007",
+    "9DJ7-2B2",
+    "possible: the 1883 Hannah Grice death is 'most parsimoniously' known daughter Hannah Grace"
+   ]
+  ],
+  "unmapped": [
+   "NEG: Emma Grice b.1879 (mother Harriet) is not a child of the couple - no tree person",
+   "POSSIBLE: William Grice d.1880 may be an additional child - no tree person"
+  ],
+  "multi": "",
+  "tier_note": "Maternal link stated as indirect but still probable. Hannah Grace death identity only possible.",
+  "notes": "Era-AB under-linking: census relationship assertions (a_024, a_047) are linked only to Lydia, the head and wife are never linked, so both concluded edges are missed by the deriver (and their own party is undecidable)."
+ },
+ "e09": {
+  "key": "broyles-siblings/2026-07-23_08-56-12/ps_001",
+  "class": "CHN",
+  "subject": [
+   "I1",
+   "I2",
+   "I3",
+   "I4",
+   "I5",
+   "I6"
+  ],
+  "target": "siblings of MJ7L-SL9 = ParentChild edges of each sibling to LCPC-PZK and to the right mother + George's two Couples",
+  "rel": [
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "I3",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PDH",
+    "I3",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "I4",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PDH",
+    "I4",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "I5",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PDH",
+    "I5",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KP3V-5CY",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "I2",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KP3V-5CY",
+    "I2",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "I6",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KP3V-5CY",
+    "I6",
+    "probable"
+   ],
+   [
+    "Couple",
+    "LCPC-PZK",
+    "KP3V-5CY",
+    "probable"
+   ],
+   [
+    "Couple",
+    "LCPC-PZK",
+    "LCPC-PDH",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "ParentChild",
+    "LCPC-PZK",
+    "MJ7L-SL9"
+   ],
+   [
+    "ParentChild",
+    "LCPC-PDH",
+    "MJ7L-SL9"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [],
+  "facts_ctx": [
+   {
+    "p": "I5",
+    "t": "Birth",
+    "d": "17 May 1886",
+    "pl": "Marshall, Missouri",
+    "va": []
+   }
+  ],
+  "facts_neg": [],
+  "cfacts": [
+   {
+    "c": [
+     "LCPC-PZK",
+     "KP3V-5CY"
+    ],
+    "d": "18 May 1856",
+    "pl": "Cooper County, Missouri",
+    "tier": "probable",
+    "va": [
+     "a_121",
+     "a_124"
+    ]
+   }
+  ],
+  "cfacts_ctx": [],
+  "idn": [
+   [
+    "src_001",
+    "LCPC-PZK"
+   ],
+   [
+    "src_001",
+    "LCPC-PDH"
+   ],
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_001",
+    "I2"
+   ],
+   [
+    "src_001",
+    "I3"
+   ],
+   [
+    "src_001",
+    "I4"
+   ],
+   [
+    "src_001",
+    "MJ7L-SL9"
+   ],
+   [
+    "src_002",
+    "I5"
+   ],
+   [
+    "src_002",
+    "LCPC-PZK"
+   ],
+   [
+    "src_002",
+    "LCPC-PDH"
+   ],
+   [
+    "src_003",
+    "I4"
+   ],
+   [
+    "src_003",
+    "LCPC-PZK"
+   ],
+   [
+    "src_003",
+    "LCPC-PDH"
+   ],
+   [
+    "src_004",
+    "I4"
+   ],
+   [
+    "src_004",
+    "LCPC-PZK"
+   ],
+   [
+    "src_005",
+    "LCPC-PZK"
+   ],
+   [
+    "src_005",
+    "KP3V-5CY"
+   ],
+   [
+    "src_005",
+    "I1"
+   ],
+   [
+    "src_005",
+    "I6"
+   ],
+   [
+    "src_006",
+    "I3"
+   ],
+   [
+    "src_006",
+    "LCPC-PZK"
+   ],
+   [
+    "src_007",
+    "I4"
+   ],
+   [
+    "src_008",
+    "LCPC-PZK"
+   ],
+   [
+    "src_008",
+    "KP3V-5CY"
+   ]
+  ],
+  "idn_ctx": [],
+  "idn_neg": [],
+  "unmapped": [
+   "unresolved conflict c_001: Minnie's birth 28 Feb 1877 vs 28 Oct 1877 - proof concludes neither"
+  ],
+  "multi": "",
+  "tier_note": "Milton (I6) single-source and Geo. W. (I2) maternity by chronology, both still probable.",
+  "notes": "Three concluded edges have no deriving assertion: PC(LCPC-PDH->I3) and PC(KP3V-5CY->I2) are chronology inferences; PC(LCPC-PZK->I2) rests on a 1880 'son' relationship that is not in the supporting set. Both conflicting Minnie birth dates are drafted as fact claims although the conflict is explicitly unresolved. a_057/a_058/a_067/a_069/a_077/a_108 (parents' NAME assertions) are also linked to the child: bears-on links.",
+  "facts_open": [
+   {
+    "p": "I4",
+    "t": "Birth",
+    "va": [
+     "a_063",
+     "a_074"
+    ]
+   }
+  ]
+ },
+ "e10": {
+  "key": "elizabeth-geach-siblings/2026-07-12_23-53-08/ps_001",
+  "class": "CHN",
+  "subject": [
+   "I1",
+   "I2",
+   "I3",
+   "I4"
+  ],
+  "target": "ParentChild(KGYQ-8BZ->X) + ParentChild(KGYQ-D3V->X) for X in I1..I4",
+  "rel": [
+   [
+    "ParentChild",
+    "KGYQ-8BZ",
+    "I4",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-D3V",
+    "I4",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-8BZ",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-D3V",
+    "I1",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-8BZ",
+    "I2",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-D3V",
+    "I2",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-8BZ",
+    "I3",
+    "probable"
+   ],
+   [
+    "ParentChild",
+    "KGYQ-D3V",
+    "I3",
+    "probable"
+   ]
+  ],
+  "rel_ctx": [
+   [
+    "Couple",
+    "I4",
+    "I12"
+   ]
+  ],
+  "rel_neg": [],
+  "facts": [],
+  "facts_ctx": [
+   {
+    "p": "I1",
+    "t": "Birth",
+    "d": "17 Mar 1827",
+    "va": [
+     "a_001",
+     "a_133"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "Death",
+    "va": [
+     "a_002"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "Burial",
+    "va": [
+     "a_003"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Birth",
+    "d": "14 May 1830",
+    "va": [
+     "a_004",
+     "a_102",
+     "a_103",
+     "a_179"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Death",
+    "va": [
+     "a_005"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Burial",
+    "va": [
+     "a_006"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Birth",
+    "d": "18 Dec 1831",
+    "va": [
+     "a_009",
+     "a_086"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Death",
+    "va": [
+     "a_010"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Burial",
+    "va": [
+     "a_011"
+    ]
+   },
+   {
+    "p": "I4",
+    "t": "Birth",
+    "d": "1820",
+    "va": [
+     "a_013",
+     "a_053",
+     "a_054",
+     "a_211"
+    ]
+   },
+   {
+    "p": "I4",
+    "t": "Death",
+    "va": [
+     "a_012"
+    ]
+   },
+   {
+    "p": "I4",
+    "t": "Residence",
+    "va": [
+     "a_014"
+    ]
+   },
+   {
+    "p": "I1",
+    "t": "Residence",
+    "va": [
+     "a_019",
+     "a_134"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Residence",
+    "va": [
+     "a_085"
+    ]
+   },
+   {
+    "p": "I2",
+    "t": "Residence",
+    "va": [
+     "a_178"
+    ]
+   },
+   {
+    "p": "KGYQ-D3V",
+    "t": "Residence",
+    "va": [
+     "a_165",
+     "a_266"
+    ]
+   },
+   {
+    "p": "I3",
+    "t": "Alsoknownas",
+    "va": [
+     "a_008"
+    ]
+   },
+   {
+    "p": "I4",
+    "t": "Occupation",
+    "va": [
+     "a_015"
+    ]
+   },
+   {
+    "p": "KGYQ-D3V",
+    "t": "Property",
+    "va": [
+     "a_264"
+    ]
+   }
+  ],
+  "facts_neg": [],
+  "cfacts": [],
+  "cfacts_ctx": [
+   {
+    "c": [
+     "I4",
+     "I12"
+    ],
+    "d": "1847",
+    "va": [
+     "a_272",
+     "a_273"
+    ]
+   }
+  ],
+  "idn": [
+   [
+    "src_001",
+    "I1"
+   ],
+   [
+    "src_005",
+    "I1"
+   ],
+   [
+    "src_009",
+    "I1"
+   ],
+   [
+    "src_002",
+    "I2"
+   ],
+   [
+    "src_008",
+    "I2"
+   ],
+   [
+    "src_011",
+    "I2"
+   ],
+   [
+    "src_003",
+    "I3"
+   ],
+   [
+    "src_007",
+    "I3"
+   ],
+   [
+    "src_004",
+    "I4"
+   ],
+   [
+    "src_006",
+    "I4"
+   ],
+   [
+    "src_012",
+    "I4"
+   ],
+   [
+    "src_015",
+    "I4"
+   ],
+   [
+    "src_010",
+    "KGYQ-D3V"
+   ],
+   [
+    "src_013",
+    "KGYQ-D3V"
+   ]
+  ],
+  "idn_ctx": [
+   [
+    "src_015",
+    "I12"
+   ]
+  ],
+  "idn_neg": [],
+  "idn_weak": [
+   [
+    "src_014",
+    "I1",
+    "speculative T.S. Geach surveyor - noted, initials only"
+   ]
+  ],
+  "unmapped": [
+   "NEG: Mary Eleanor Geach (b.1825; parents Samuel Grubbs & Margaret Windsor) is not a child of Peter & Rebecca - tree id not stated"
+  ],
+  "multi": "",
+  "tier_note": "",
+  "notes": "Purely circumstantial (surname, chronology, geography, burial ground). No record states any of the 8 concluded edges, so the deriver produces none of them: the archetypal correlated-conclusion miss."
+ }
+}
