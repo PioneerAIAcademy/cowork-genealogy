@@ -2,9 +2,11 @@
 
 docs/specs/guardrail-enforcement-spec.md §7, GitHub issue #1463 — §7's recency
 check credits a guardrail skill through `recently_succeeded`, which reads
-`is_error` on `Skill` ledger entries. Every `Skill` result in the corpus is a
-*launch acknowledgement*, so that gate can only ever observe an unknown-skill
-launch failure, never "the skill ran and produced nothing." Closing that would
+`is_error` on `Skill` ledger entries and on typed `Agent`/`Task` spawns of the
+owner's name. Every `Skill` result in the corpus is a *launch acknowledgement*,
+so on the `Skill` route that gate can only ever observe an unknown-skill launch
+failure, never "the skill ran and produced nothing." This report measures the
+`Skill` route only: an episode is bounded by `Skill` entries. Closing that would
 need an instrument observing skill **completion**.
 
 The cheapest candidate instrument is the trace: between a skill's launch and the

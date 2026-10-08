@@ -325,9 +325,14 @@ These are the regression causes:
   `tool_calls[]` against the last passing run for the same fixture.
 - **`/research` skill regression** — the agent skipped a GPS step or
   picked the wrong sub-skill. Read the ordered sub-skills the agent ran
-  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`,
-  in order (`[tc['args'].get('skill') for tc in tool_calls if tc['tool']=='Skill']`).
-  If `proof-conclusion` never appears, that's the smoking gun; if
+  from `run-<ts>.json`'s `tool_calls` — the `Skill` entries' `args.skill`
+  **and** the typed `Agent`/`Task` entries' `args.subagent_type` (strip a
+  `genealogy-research:` prefix), in order:
+  `[tc['args'].get('skill') if tc['tool']=='Skill' else (tc['args'].get('subagent_type') or 'UNTYPED').split(':')[-1] for tc in tool_calls if tc['tool'] in ('Skill','Agent','Task')]`.
+  The orchestrator spawns paired agents (`research-exhaustiveness`,
+  `proof-conclusion`, `person-evidence`) directly, so a `Skill`-only list
+  misses them. If `proof-conclusion` never appears on either route, that's the
+  smoking gun; an `UNTYPED` spawn standing where it should be is a bypass; if
   `question-selection` is missing where a gap needed one, that's another.
 - **Sub-skill regression** — the right sub-skill ran but produced
   worse output than before. Pointer: the relevant `tool_calls` block

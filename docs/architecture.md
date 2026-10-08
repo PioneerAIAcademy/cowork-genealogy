@@ -806,8 +806,9 @@ There **is** an orchestrator, and it is a skill:
    an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
    every other entry is a `Skill` call. The paired rows —
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
-   the spawn; their same-named thin skills stay on disk as the direct-user and
-   unit-eval entry points and are **not** on the in-loop route
+   the spawn; a same-named thin skill, where one still exists (only
+   `research-exhaustiveness` today), is the direct-user and unit-eval entry
+   point and is **not** on the in-loop route
    (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
@@ -886,6 +887,14 @@ back through the table anyway. The trigger corpus catches routing
 *into* `research` from the description, but not the internal routing table; a
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
+
+**A row spelled `@plugin:<name>` is an agent spawn, and it needs no harness
+edit.** The e2e compliance detectors credit a guardrail arm on either route: a
+`Skill` call naming it, or a typed `Agent`/`Task` spawn whose `subagent_type`
+(plugin namespace stripped) names it. So flipping a guardrail row from a skill
+to its agent, or converting another guardrail skill, keeps compliance green as
+long as the agent carries the arm's name. An untyped spawn is still a bypass —
+the rule and its reason are in `docs/specs/guardrail-enforcement-spec.md` §2.
 
 The runlog CI gate now applies to `research` (armed by adding
 `eval/tests/unit/research/`). `forget-and-rederive` remains exempt

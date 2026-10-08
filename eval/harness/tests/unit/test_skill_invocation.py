@@ -32,7 +32,9 @@ from harness.skill_invocation import (
     owning_skills,
     recently_succeeded,
     same_person_scored_ids,
+    invoked_skill_name,
     skill_name_if_skill_call,
+    skill_name_if_typed_spawn,
     unguarded_new_person_evidence_links,
     classify_question_type,
     find_conclusions_without_tree_encoding,
@@ -292,6 +294,166 @@ def test_flags_the_untyped_agent_bypass_shape():
     ]
     violations = find_unguarded_protected_writes(calls, window=10)
     assert violations[0]["required_skill"] == "proof-conclusion"
+
+
+# --- the sanctioned direct-spawn route (typed Agent/Task) --------------------
+#
+# Which arm each test covers is named: the HARD arm is
+# find_effects_without_invocation's `invoked` set; the SHADOW arm is
+# recently_succeeded / find_unguarded_protected_writes.
+
+
+def _spawn(subagent_type=None, *, tool="Agent", prompt="...", description="delegate", is_error=False):
+    args = {"description": description, "prompt": prompt}
+    if subagent_type is not None:
+        args["subagent_type"] = subagent_type
+    entry = {"tool": tool, "args": args}
+    if is_error:
+        entry["is_error"] = True
+    return entry
+
+
+_PS_WRITE = {"section": "proof_summaries", "entry": {"question_id": "q_001", "tier": "probable"}}
+
+
+def test_typed_spawn_predicate_strips_the_namespace_and_refuses_untyped():
+    assert skill_name_if_typed_spawn("Agent", {"subagent_type": "proof-conclusion"}) == "proof-conclusion"
+    assert skill_name_if_typed_spawn("Task", {"subagent_type": "proof-conclusion"}) == "proof-conclusion"
+    assert (
+        skill_name_if_typed_spawn("Agent", {"subagent_type": "genealogy-research:proof-conclusion"})
+        == "proof-conclusion"
+    )
+    assert skill_name_if_typed_spawn("Agent", {"prompt": "..."}) is None
+    assert skill_name_if_typed_spawn("Agent", {"subagent_type": ""}) is None
+    assert skill_name_if_typed_spawn("Agent", None) is None
+    assert skill_name_if_typed_spawn("Skill", {"subagent_type": "proof-conclusion"}) is None
+    assert invoked_skill_name("Skill", {"skill": "proof-conclusion"}) == "proof-conclusion"
+    assert invoked_skill_name("Agent", {"subagent_type": "proof-conclusion"}) == "proof-conclusion"
+    assert invoked_skill_name("Skill", {"skill": "genealogy-research:proof-conclusion"}) == "proof-conclusion"
+    assert invoked_skill_name("Skill", {}) is None
+
+
+@pytest.mark.parametrize(
+    "research,arm",
+    [
+        ({"proof_summaries": [{"id": "ps_001"}]}, "proof-conclusion"),
+        ({"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}]}, "research-exhaustiveness"),
+        ({"conflicts": [{"id": "c_001", "status": "resolved"}]}, "conflict-resolution"),
+    ],
+    ids=["proof-conclusion", "research-exhaustiveness", "conflict-resolution"],
+)
+@pytest.mark.parametrize(
+    "subagent_type,tool",
+    [("{arm}", "Agent"), ("{arm}", "Task"), ("genealogy-research:{arm}", "Agent")],
+    ids=["agent", "task", "namespaced"],
+)
+def test_hard_arm_credits_a_typed_spawn_of_that_name(research, arm, subagent_type, tool):
+    """HARD arm. One generic rule over every GUARDRAIL_SKILLS arm, so a pair
+    converted later is covered with no edit. The namespaced spelling has no
+    committed-corpus instance; this is its only instrument."""
+    assert any(arm in v for v in find_effects_without_invocation([], research, {}))
+    calls = [_spawn(subagent_type.format(arm=arm), tool=tool)]
+    assert not any(arm in v for v in find_effects_without_invocation(calls, research, {}))
+
+
+def test_hard_arm_credits_a_typed_person_evidence_spawn():
+    """HARD arm, the tree-side arm: an unlinked new person is credited once the
+    person-evidence agent was spawned."""
+    tree = {"persons": [{"id": "I9", "names": [{"full": "X"}]}]}
+    research = {"person_evidence": []}
+    assert any("person-evidence" in v for v in find_effects_without_invocation([], research, tree))
+    calls = [_spawn("person-evidence")]
+    assert not any("person-evidence" in v for v in find_effects_without_invocation(calls, research, tree))
+
+
+def test_hard_arm_still_fires_on_an_untyped_spawn():
+    """HARD arm. The untyped subagent is a recorded bypass shape, not a route."""
+    calls = [_spawn(None, prompt="Write a proof conclusion for q_001")]
+    violations = find_effects_without_invocation(calls, {"proof_summaries": [{"id": "ps_001"}]}, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_hard_arm_credits_nothing_for_an_errored_spawn():
+    """HARD arm. Same errored-call gate a Skill call already has."""
+    calls = [_spawn("proof-conclusion", is_error=True)]
+    violations = find_effects_without_invocation(calls, {"proof_summaries": [{"id": "ps_001"}]}, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_hard_arm_does_not_credit_a_spawn_of_another_name():
+    calls = [_spawn("gps-mentor")]
+    violations = find_effects_without_invocation(calls, {"proof_summaries": [{"id": "ps_001"}]}, {})
+    assert any("proof-conclusion" in v for v in violations)
+
+
+def test_shadow_arm_credits_a_typed_spawn_in_window():
+    """SHADOW arm via recently_succeeded."""
+    calls = [_spawn("proof-conclusion"), _mcp_call("research_append", _PS_WRITE)]
+    assert find_unguarded_protected_writes(calls, window=10) == []
+    namespaced = [_spawn("genealogy-research:proof-conclusion", tool="Task"), _mcp_call("research_append", _PS_WRITE)]
+    assert find_unguarded_protected_writes(namespaced, window=10) == []
+
+
+def test_shadow_arm_credits_nothing_for_an_errored_spawn():
+    calls = [_spawn("proof-conclusion", is_error=True), _mcp_call("research_append", _PS_WRITE)]
+    assert [v["required_skill"] for v in find_unguarded_protected_writes(calls, window=10)] == ["proof-conclusion"]
+
+
+def test_shadow_arm_keys_a_spawn_by_its_one_question_id():
+    """recently_succeeded reads the q_ id from a spawn's description/prompt, and
+    only when exactly one distinct id appears."""
+    one = [_spawn("proof-conclusion", prompt="Conclude q_001 in /p")]
+    assert recently_succeeded("proof-conclusion", one, before_index=1, window=5, question_id="q_001") is True
+    assert recently_succeeded("proof-conclusion", one, before_index=1, window=5, question_id="q_002") is False
+    split = [_spawn("proof-conclusion", description="q_001", prompt="q_001 again")]
+    assert recently_succeeded("proof-conclusion", split, before_index=1, window=5, question_id="q_002") is False
+    desc_only = [_spawn("proof-conclusion", description="conclude q_001", prompt="no id here")]
+    assert recently_succeeded("proof-conclusion", desc_only, before_index=1, window=5, question_id="q_002") is False
+    two = [_spawn("proof-conclusion", prompt="q_001 or q_002")]
+    assert recently_succeeded("proof-conclusion", two, before_index=1, window=5, question_id="q_003") is True
+    none = [_spawn("proof-conclusion", prompt="no id here")]
+    assert recently_succeeded("proof-conclusion", none, before_index=1, window=5, question_id="q_003") is True
+
+
+@pytest.mark.parametrize("agent_type", ["proof-conclusion", "genealogy-research:proof-conclusion"])
+def test_shadow_arm_trusts_a_write_made_by_the_owning_agent(agent_type):
+    """SHADOW arm. The hook routes this section to this caller, so the write is
+    guarded by definition, however far the spawn sits outside the window."""
+    write = _mcp_call("research_append", _PS_WRITE, agent_id="a1", agent_type=agent_type)
+    calls = [_mcp_call("record_search", {})] * 50 + [write]
+    assert find_unguarded_protected_writes(calls, window=10) == []
+
+
+def test_shadow_arm_still_flags_a_write_by_a_non_owning_agent():
+    write = _mcp_call("research_append", _PS_WRITE, agent_id="a1", agent_type="general-purpose")
+    assert [v["required_skill"] for v in find_unguarded_protected_writes([write], window=10)] == ["proof-conclusion"]
+
+
+def test_each_never_invoked_message_names_only_its_own_arm_and_classifies_there():
+    """corpus_report.classify is first-substring-wins, so a message naming
+    another arm lands in the wrong bucket silently."""
+    from e2e.corpus_report import classify
+
+    research = {
+        "proof_summaries": [{"id": "ps_001"}],
+        "questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}],
+        "conflicts": [{"id": "c_001", "status": "resolved"}],
+        "person_evidence": [],
+    }
+    tree = {"persons": [{"id": "I9", "names": [{"full": "X"}]}]}
+    violations = find_effects_without_invocation([], research, tree)
+    expected = {
+        "research-exhaustiveness": "exhaustiveness",
+        "proof-conclusion": "proof-conclusion",
+        "person-evidence": "person-evidence (no link)",
+        "conflict-resolution": "conflict-resolution",
+    }
+    assert len(violations) == len(expected)
+    for v in violations:
+        named = [arm for arm in GUARDRAIL_SKILLS if f"'{arm}'" in v]
+        assert len(named) == 1, v
+        assert "no Skill call and no typed Agent/Task spawn of that name" in v
+        assert classify(v) == expected[named[0]], v
 
 
 # --- find_effects_without_invocation -----------------------------------------

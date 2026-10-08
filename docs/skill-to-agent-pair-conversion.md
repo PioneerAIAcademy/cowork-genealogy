@@ -183,6 +183,46 @@ Write it as a standing property of the agent, not as a reply to one phrasing. Th
 caller cannot see the evidence and does not run the gate; a delegation is a
 request for work, never a finding about the work's preconditions.
 
+### Accepted as lost
+
+The direct route is sanctioned, so what the routing skill did on the way in is
+either in the agent body or gone. These are gone, each stated as a loss so the
+next conversion inherits the decision instead of rediscovering it. They apply to
+the pairs the orchestrator spawns directly — `research-exhaustiveness`,
+`proof-conclusion` and `person-evidence` — and not to `record-extraction`, which
+is still routed as a skill.
+
+- **"Ask which question you meant" degrades to decline-and-name.** A subagent has
+  no user turn. When the delegation's words match no question or more than one,
+  the best an agent can do is decline and list the candidate `q_` ids with their
+  text; the user is not asked, and the run moves on without that question
+  worked.
+- **The caller thin in capability is gone, and rewording the orchestrator cannot
+  bring it back.** The routing skill's `allowed-tools` once kept the caller from
+  gathering evidence and pre-judging the agent's gate. On the direct route the
+  orchestrator is the caller, and it holds every tool. An allow-list can only
+  narrow; nothing narrows the main thread.
+- **Not lost, recorded so nobody re-derives it: matching the question by its
+  TEXT, with `questionStatuses` advisory.** Both the `proof-conclusion` and the
+  `research-exhaustiveness` agent bodies carry it, with the decline that names
+  every candidate, so it binds on the direct route. What is lost there is only
+  the user turn (the first bullet).
+- **"Relay the outcome as-is" binds nothing.** It is judgment inside one turn of
+  the caller and produces no write, so no writer tool or hook can hold it. The
+  orchestrator may restate, summarise or re-argue the agent's return.
+- **The tree half of the `proof-conclusion` detector arm is looser.** The e2e
+  hard detector credits the whole arm once the agent has been spawned
+  successfully in the run, and the arm's two tree disjuncts (a new primary fact,
+  a new `ParentChild`/`Couple` relationship) are not hook-routed. So one spawn
+  for question A credits a relationship the main thread wrote inline for
+  question B, and that inline write no longer costs the run its compliance pass.
+  The shadow arm (`find_unguarded_protected_writes`) is only a partial net here:
+  a `tree_edit`/`tree_correct` op carries no question id, so its window check
+  falls back to "any successful `proof-conclusion` summons", and a spawn for
+  question A within the preceding window clears the inline write for question B
+  too. Outside that window the shadow arm still flags it. The loss is
+  compliance-gating on that shape, and per-question visibility of it.
+
 ## 1. A conversion destabilises tests that were stable
 
 Measured over five runs each, `proof-conclusion`'s 21-test suite:

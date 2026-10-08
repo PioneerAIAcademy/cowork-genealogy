@@ -13,10 +13,12 @@ its full `tool_calls` list, so
 against the whole historical corpus for free — no new API spend.
 
 **This is no longer a calibration tool, and `GUARDRAIL_SHADOW_WINDOW` is not a
-knob waiting to be tuned.** §7 is shadow-only permanently: its success gate reads
-`Skill` entries, which carry launch acknowledgements, and no instrument available
-to the harness observes skill *completion* (spec §7, "What the success gate can
-and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
+knob waiting to be tuned.** §7 is shadow-only permanently: its success gate reads `Skill`
+entries, which carry launch acknowledgements, and typed `Agent`/`Task` spawns of
+the owner's name, whose `is_error` does not say whether the agent did the work
+either; no instrument available to the harness observes completion on either
+route (spec §7, "What the success gate can and cannot see";
+`e2e/skill_episode_report.py` is the measurement for the `Skill` route). The window
 barely changes the count from 10 to 150, which was the early tell. What this
 report is still for: reading the shadow signal as measurement, and the §8/§7.5
 post-hoc families and the §11 unnamed-delegate check below, whose graduations
@@ -1389,7 +1391,12 @@ def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
     flat list too, so a bundle-only window rule would make the two corpora
     incomparable. Anchoring the window at the spawning call instead of the write
     is a change to `skill_invocation.py`. This counts how often it would matter,
-    so that change is made on a measurement rather than a hunch."""
+    so that change is made on a measurement rather than a hunch.
+
+    An owner is dropped when the write was made by that owner's own agent:
+    `find_unguarded_protected_writes` treats it as guarded by definition, so no
+    window can make it a finding. A batch that also touches another owner's
+    section still counts, for that other owner."""
     overruns = 0
     for group in groups:
         calls = group["tool_calls"]
@@ -1397,7 +1404,9 @@ def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
             # A spliced child entry carries `agent_type`; a parent one does not.
             if not entry.get("agent_type"):
                 continue
-            if not owning_skills(entry.get("tool", ""), entry.get("args") or {}):
+            writer = strip_agent_namespace(entry.get("agent_type"))
+            owners = [o for o in owning_skills(entry.get("tool", ""), entry.get("args") or {}) if o != writer]
+            if not owners:
                 continue
             # Walk back to the nearest parent-stream entry: that is the call
             # that spawned this subagent (directly, or its ancestor).
@@ -1755,7 +1764,9 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"{len(live)} bundle(s) where the write is visible — either the bundle "
             f"carries this agent's own spliced transcript, or it predates the split "
             f"and the write came from the main thread, un-denied and in the parent "
-            f"transcript, so those counts are real measurements; "
+            f"transcript, so those counts are real measurements (though a write the "
+            f"owning agent made itself is guarded by definition and is 0 by "
+            f"construction; only a non-owner's write can count); "
             f"{len(unknown)} where it is not, for either of two reasons that send "
             f"you to different places: no transcript of this agent's here and the "
             f"bundle is on/after the split or undated, so the write may have "
@@ -1773,7 +1784,7 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     overruns = sum(r.get("window_overruns") or 0 for r in results)
     lines.append(
         f"  Window overruns: {overruns} spliced protected write(s) whose spawning "
-        f"call sits more than the window back, so the parent's Skill call is out "
+        f"call sits more than the window back, so the parent's summons is out "
         f"of reach and the finding may be false. Non-zero is the trigger for "
         f"anchoring the window at the spawning call (skill_invocation.py), which "
         f"is deliberately NOT done here — the e2e corpus has the same flat shape, "
