@@ -75,7 +75,7 @@ from app.agent.continue_policy import (  # noqa: E402
     TERMINAL_BUDGET, TERMINAL_NO_PROGRESS, TERMINAL_QUEUED, TERMINAL_STOPPED,
 )
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD  # noqa: E402
-from proto import demo, seed, smoke, turn  # noqa: E402
+from proto import demo, seed, smoke, target, turn  # noqa: E402
 from proto.worker.options import (  # noqa: E402
     HANDOVER_REASON,
     SPEND_CAP_REASON,
@@ -179,6 +179,19 @@ class Ctx:
     worker: str = "proto-worker"
     postgres: str = "proto-postgres"
     tools: str = "proto-tools"
+    target: str = "compose"
+
+
+def compose_target(worker: str = "proto-worker", postgres: str = "proto-postgres",
+                   tools: str = "proto-tools") -> target.ComposeTarget:
+    """Today's docker argv, through ``turn.docker`` (late-bound, so tests that replace it see
+    every call)."""
+    return target.ComposeTarget({"web": "proto-web", "worker": worker, "postgres": postgres, "tools": tools},
+                                docker=lambda *a: turn.docker(*a), compose=lambda *a: smoke.compose(*a))
+
+
+# Where worker_events, signal and pause go; make_ctx sets it from --target.
+TARGET: target.ComposeTarget | target.DeployedTarget = compose_target()
 
 
 # -- pure: selecting rows ----------------------------------------------------------------
@@ -199,19 +212,9 @@ def events_for(events: list[dict], turn_id: str) -> list[dict]:
 
 
 def parse_json_lines(text: str) -> list[dict]:
-    """Every JSON-object line of a container log, in order; anything else skipped."""
-    out: list[dict] = []
-    for line in text.splitlines():
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            rec = json.loads(line)
-        except ValueError:
-            continue
-        if isinstance(rec, dict):
-            out.append(rec)
-    return out
+    """Every JSON-object line of a container or CloudWatch log, in order, parsed from its
+    first ``{``; anything else skipped."""
+    return target.json_records(text)
 
 
 def spend_config(start: dict | None, cap_default: float, price_default: float) -> tuple[float, float, str]:
@@ -557,8 +560,8 @@ def db_exec(dsn: str, sql: str, params: tuple) -> int:
 
 
 def worker_events() -> list[dict]:
-    """The worker container's JSON lines, whole and in order (across restarts)."""
-    return parse_json_lines(smoke.compose("logs", "--no-color", "--no-log-prefix", "worker"))
+    """The worker's JSON lines, whole and in order (across restarts)."""
+    return TARGET.events("worker")
 
 
 def snapshot(ctx: Ctx, session_id: str, turn_id: str) -> TurnSnap:
@@ -706,6 +709,18 @@ def docker_logs(container: str, since: str, until: str) -> list[str]:
     return [ln for ln in (proc.stdout + proc.stderr).splitlines() if ln.strip()]
 
 
+def epoch_ms(rfc3339: str) -> int:
+    return int(datetime.strptime(rfc3339, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc).timestamp() * 1000)
+
+
+def tools_log_lines(ctx: Ctx, since: str, until: str) -> list[str]:
+    """The tool server's log lines between two ``utc_now`` marks, from its container or its
+    CloudWatch group."""
+    if TARGET.name == "compose":
+        return docker_logs(ctx.tools, since, until)
+    return [ln for ln in TARGET.logs("tools", epoch_ms(since), epoch_ms(until)).splitlines() if ln.strip()]
+
+
 def stopped_at(ctx: Ctx, session_id: str) -> Any:
     return turn.one(ctx.dsn, STOP_AT_SQL, (session_id,))
 
@@ -733,7 +748,7 @@ def case_precli(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     fresh_session(ctx, client, rep)
     down = False
     try:
-        turn.docker("stop", ctx.worker)
+        TARGET.signal("worker", "stop")
         down = True
         # Open, not held: no turn runs, so the tier enqueues it and the shim cannot deliver.
         tid = post(ctx, client, rep, FOLLOW_UP_TEXT)["turn_id"]
@@ -741,7 +756,7 @@ def case_precli(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         rep.checks.append(("precli: the flag is set while the turn waits", stopped_at(ctx, rep.session_id) is not None, ""))
     finally:
         if down:
-            turn.docker("start", ctx.worker)
+            TARGET.signal("worker", "start")
     if not done(ctx, client, rep, tid):
         return
     snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
@@ -809,6 +824,9 @@ def shim_posts_for(msgid: str | None, timeout_s: float = 60, every_s: float = 1.
     answers the delivery, after its teardown and release -- past the turn_done ``done`` saw."""
     if msgid is None:
         return []
+    if TARGET.name != "compose":
+        raise NotImplementedError("shim_posts_for reads compose's shim; a deployed worker has sqsd, whose log "
+                                  "is not parsed yet")
     return smoke.wait_for(lambda: [p for p in smoke.service_lines("shim", "post") if p.get("msgid") == msgid],
                           timeout_s, every_s) or []
 
@@ -911,7 +929,7 @@ def _outage(ctx: Ctx, client: httpx.Client, rep: Report, *, condition: str) -> N
         time.sleep(0.3)
     mark2, t_end = max_entry(ctx, sdk), utc_now()
     ran, unresolved = calls_ran(entries(ctx, sdk, mark1, mark2))
-    tools_lines = docker_logs(ctx.tools, t_out, t_end)
+    tools_lines = tools_log_lines(ctx, t_out, t_end)
     rep.figures.update({"terminated_backends": terminated, "entries_window": f"({mark1}, {mark2}]",
                         "tools_log_lines_in_window": len(tools_lines)})
     rep.findings.append(f"calls issued after the outage with no result in attempt 1: {unresolved}")
@@ -1003,14 +1021,9 @@ def case_outage_pause(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     sdk = sdk_of(ctx, rep.session_id)
     mark1 = max_entry(ctx, sdk)
     calls_before = int(turn.one(ctx.dsn, "SELECT COALESCE(max(id), 0) FROM tool_calls WHERE turn_id = %s", (tid,)) or 0)
-    paused, t_p = False, utc_now()
-    try:
-        turn.docker("pause", ctx.postgres)
-        paused = True
+    t_p = utc_now()
+    with TARGET.pause("postgres"):
         time.sleep(ctx.pause_s)  # no driver read may touch postgres while it is frozen
-    finally:
-        if paused:
-            turn.docker("unpause", ctx.postgres)
     t_u = utc_now()
     rep.checks.append(("outage_pause: postgres answers after the unpause", postgres_answers(ctx), ""))
     rep.figures.update({"paused_s": ctx.pause_s, "paused_at": t_p, "unpaused_at": t_u})
@@ -1046,10 +1059,10 @@ def case_probe_resume(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     marks = turn.take_marks(ctx.dsn, rep.session_id, tid, sdk_before, project_id)
     killed = False
     try:
-        turn.docker("kill", ctx.worker)
+        TARGET.signal("worker", "kill")
         killed = True
     finally:
-        turn.docker("start", ctx.worker)
+        TARGET.signal("worker", "start")
     rep.figures.update({"kill_after_s": ctx.kill_after_s, "killed": killed})
     finished = done(ctx, client, rep, tid, label="resumed")
     rep.evidence.append(turn.render_evidence(turn.gather_evidence(ctx.dsn, rep.session_id, tid, sdk_before, project_id, marks)))
@@ -1063,6 +1076,156 @@ def case_probe_resume(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     after = int(turn.one(ctx.dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",)) or 0)
     rep.checks += resume_checks("probe_resume", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
                                 entries_at_kill=at_kill, entries_after=after)
+
+
+# -- U13: cases for the rehearsal's Beanstalk worker (--target deployed only) -----------------
+
+ATTEMPT_LOCK_SQL = (
+    "SELECT count(*) FROM pg_locks l JOIN pg_stat_activity a USING (pid) "
+    "WHERE l.locktype = 'advisory' AND l.classid = %s"
+)
+ATTEMPT_LOCK_NS = 30301  # grants.ATTEMPT_LOCK_NS
+KEEPALIVE_DROP_MAX_S = 180.0
+DEADMAN_S = 300
+NFT_TABLE = "u13drop"
+SPILL_TOOL = "collections_search"
+SPILL_TEXT = PROBES / "u13-spill.txt"
+SPILL_READ_SQL = ("SELECT count(*) FROM tool_calls WHERE turn_id = %s AND id > %s AND tool_name IN ('Read', 'Grep') "
+                  "AND input_path LIKE '%%/tool-results/%%'")
+SPILL_CALL_SQL = ("SELECT id, duration_ms FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s "
+                  "AND duration_ms IS NOT NULL ORDER BY id LIMIT 1")
+
+
+NFT_INSTALL = "command -v nft >/dev/null || dnf -y -q install nftables"
+
+
+def nft_drop_commands(port: int = 5432) -> list[str]:
+    """The worker's Postgres traffic dropped both ways, behind a dead-man that removes the
+    table after DEADMAN_S even if this driver never comes back. The dead-man first, after
+    nftables itself: the AL2023 Beanstalk worker ships neither nft nor iptables (U13, 2026-10-07)."""
+    return [
+        NFT_INSTALL,
+        f"systemd-run --unit {NFT_TABLE}-deadman --on-active={DEADMAN_S} /usr/sbin/nft delete table inet {NFT_TABLE}",
+        f"nft add table inet {NFT_TABLE}",
+        f"nft add chain inet {NFT_TABLE} out '{{ type filter hook output priority 0 ; }}'",
+        f"nft add chain inet {NFT_TABLE} in '{{ type filter hook input priority 0 ; }}'",
+        f"nft add rule inet {NFT_TABLE} out tcp dport {port} drop",
+        f"nft add rule inet {NFT_TABLE} in tcp sport {port} drop",
+    ]
+
+
+NFT_UNDROP = [f"nft delete table inet {NFT_TABLE} || true", f"systemctl stop {NFT_TABLE}-deadman.timer || true"]
+
+
+def wait_lock_gone(ctx: Ctx, deadline_s: float = KEEPALIVE_DROP_MAX_S, every_s: float = 5.0) -> float | None:
+    """Seconds until the patron's attempt lock backend is gone (polled through the driver's
+    own connection, which the drop does not touch), or None at the deadline."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < deadline_s:
+        if int(turn.one(ctx.dsn, ATTEMPT_LOCK_SQL, (ATTEMPT_LOCK_NS,)) or 0) == 0:
+            return round(time.monotonic() - t0, 1)
+        time.sleep(every_s)
+    return None
+
+
+def shutdown_named(events: list[dict], turn_id: str) -> bool:
+    return any(e.get("ev") == "shutdown" and turn_id in json.dumps(e) for e in events)
+
+
+def case_sigterm_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M42 (U5 b): SIGTERM mid-turn on Beanstalk (systemctl restart). The worker answers 500
+    and exits; sqsd redelivers after ErrorVisibilityTimeout; the redelivery resumes. A
+    held message rides along to attempt ev=deferred_release_skipped (M75)."""
+    fresh_session(ctx, client, rep)
+    tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    if reach(ctx, rep, tid, subagent=False) is None:
+        return
+    sdk_before = sdk_of(ctx, rep.session_id)
+    at_kill = max_entry(ctx, sdk_before)
+    held = post(ctx, client, rep, FOLLOW_UP_TEXT)
+    TARGET.signal("worker", "term")
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, tid), ""))
+    rep.checks += resume_checks("sigterm_real", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
+                                entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before))
+    skipped = [e for e in events if e.get("ev") == "deferred_release_skipped"]
+    rep.findings.append(f"held reply {held}; ev=deferred_release_skipped lines: {skipped[:3]}")
+    done(ctx, client, rep, held["turn_id"], label="held")
+
+
+def case_dead_letter_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M43 (U5 c): with MaxRetries 1 (probe maxretries_1), a 500 on the only receive closes
+    the turn retries_exhausted and releases its held message. The 500 comes from the
+    attempt's own Postgres connection terminated mid-turn (turn:<id>)."""
+    fresh_session(ctx, client, rep)
+    tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    if reach(ctx, rep, tid, subagent=False) is None:
+        return
+    held = post(ctx, client, rep, FOLLOW_UP_TEXT)
+    terminated = sum(1 for (ok,) in turn.db(ctx.dsn, TERMINATE_SQL, (f"turn:{tid}",)) if ok)
+    rep.figures["terminated_backends"] = terminated
+    if not done(ctx, client, rep, tid, label="closed"):
+        return
+    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    rep.checks += [closed_check("dead_letter_real", snap, "retries_exhausted"),
+                   ("dead_letter_real: one receive", (snap.row or (0,))[0] == 1, f"row={snap.row}"),
+                   ("dead_letter_real: its close released a message", bool(released_by(events, tid)),
+                    f"released={released_by(events, tid)}")]
+    done(ctx, client, rep, held["turn_id"], label="held")
+
+
+def case_keepalive_drop(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M52: the worker's Postgres traffic dropped both ways mid-turn, as a vanished host.
+    Client side: the attempt errors within ~30 s and the redelivery resumes. Server side:
+    seconds until RDS drops the patron's attempt lock backend (TCP keepalives, grants.py)."""
+    fresh_session(ctx, client, rep)
+    tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    if reach(ctx, rep, tid, subagent=False) is None:
+        return
+    rep.figures["attempt_locks_before"] = int(turn.one(ctx.dsn, ATTEMPT_LOCK_SQL, (ATTEMPT_LOCK_NS,)) or 0)
+    try:
+        TARGET.run("worker", *nft_drop_commands(), comment="U13 keepalive_drop: drop worker<->RDS")
+        rep.figures["lock_gone_after_s"] = wait_lock_gone(ctx)
+    finally:
+        TARGET.run("worker", *NFT_UNDROP, comment="U13 keepalive_drop: undrop")
+    rep.checks.append(("keepalive_drop: the attempt lock backend disappeared within "
+                       f"{KEEPALIVE_DROP_MAX_S:g} s", rep.figures["lock_gone_after_s"] is not None,
+                       f"figures={rep.figures}"))
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    rep.checks.append(redelivered_check("keepalive_drop", snap))
+    rep.findings.append(f"store errors on the turn: {[e.get('ev') for e in events_for(events, tid) if is_store_error(str(e.get('error') or ''))][:5]}")
+
+
+def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M51: SIGKILL between a tool result spilling to the CLI's tool-results file and the
+    agent reading it back; the redelivery must complete, not end no_progress."""
+    fresh_session(ctx, client, rep)
+    tid = post(ctx, client, rep, SPILL_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    t0, row = time.monotonic(), None
+    while time.monotonic() - t0 < ctx.deadline_s and row is None:
+        got = turn.db(ctx.dsn, SPILL_CALL_SQL, (tid, f"%{SPILL_TOOL}"))
+        row = got[0] if got else None
+        if row is None:
+            time.sleep(0.2)
+    rep.checks.append(("spill_kill: the spilling call finished", row is not None, "none within --deadline-s"))
+    if row is None:
+        return
+    read_first = int(turn.one(ctx.dsn, SPILL_READ_SQL, (tid, row[0])) or 0)
+    TARGET.signal("worker", "kill")
+    rep.figures.update({"spill_call_id": row[0], "spill_call_ms": row[1], "read_before_kill": read_first})
+    rep.checks.append(("spill_kill: killed before the spill file was read (else void)", read_first == 0,
+                       f"{read_first} Read/Grep rows on tool-results came first"))
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap = snapshot(ctx, rep.session_id, tid)
+    rep.checks += [redelivered_check("spill_kill", snap),
+                   ("spill_kill: not closed no_progress", snap.row is not None and snap.row[2] != TERMINAL_NO_PROGRESS,
+                    f"row={snap.row}")]
+    rep.findings.append(f"Read/Grep rows on tool-results after the kill: {turn.one(ctx.dsn, SPILL_READ_SQL, (tid, row[0]))}")
 
 
 CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
@@ -1080,8 +1243,20 @@ CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "outage_hook": case_outage_hook,
     "outage_pause": case_outage_pause,
     "probe_resume": case_probe_resume,
+    "sigterm_real": case_sigterm_real,
+    "dead_letter_real": case_dead_letter_real,
+    "keepalive_drop": case_keepalive_drop,
+    "spill_kill": case_spill_kill,
 }
 SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe_resume"})
+# Cases a deployed target cannot run yet, and why.
+COMPOSE_ONLY = {
+    "outage_pause": "RDS has no freeze (U19 calls a pause no RDS failure shape)",
+    "held_release": "its release check reads compose's shim; a deployed worker has sqsd",
+    "held_after_stop": "its release check reads compose's shim; a deployed worker has sqsd",
+}
+# Cases only a deployed target runs (U13): they signal or firewall the Beanstalk worker.
+DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill"})
 
 
 def run_case(ctx: Ctx, name: str) -> Report:
@@ -1131,12 +1306,25 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--worker-container", default="proto-worker")
     p.add_argument("--postgres-container", default="proto-postgres")
     p.add_argument("--tools-container", default="proto-tools")
+    p.add_argument("--target", choices=("compose", "deployed"), default="compose",
+                   help="compose's containers, or U13's rehearsal tiers on Beanstalk")
+    p.add_argument("--profile", default=None, help="deployed: the aws CLI profile")
     return p
+
+
+def make_target(args: argparse.Namespace) -> target.ComposeTarget | target.DeployedTarget:
+    if args.target == "compose":
+        return compose_target(args.worker_container, args.postgres_container, args.tools_container)
+    return target.DeployedTarget(profile=args.profile)
 
 
 def make_ctx(args: argparse.Namespace, start: dict | None) -> Ctx:
     """The parsed arguments plus the worker's spend figures; ValueError on a combination
     that would spend money for nothing (or too much)."""
+    if getattr(args, "target", "compose") == "deployed" and args.case in COMPOSE_ONLY:
+        raise ValueError(f"{args.case} is compose-only: {COMPOSE_ONLY[args.case]}")
+    if getattr(args, "target", "compose") == "compose" and args.case in DEPLOYED_ONLY:
+        raise ValueError(f"{args.case} runs only with --target deployed (make proto-bounds-aws)")
     if args.session is not None and args.case not in SEEDED:
         raise ValueError(f"--session is for {', '.join(sorted(SEEDED))}; {args.case} runs on a fresh session")
     lo, hi = KILL_AFTER_RANGE_S
@@ -1153,7 +1341,7 @@ def make_ctx(args: argparse.Namespace, start: dict | None) -> Ctx:
     return Ctx(base=args.base, dsn=args.pg_dsn, email=args.email, s3_endpoint=args.s3_endpoint, fixture=args.fixture,
                session=args.session, deadline_s=args.deadline_s, kill_after_s=args.kill_after_s, pause_s=args.pause_s,
                cap_usd=cap, price_output=price, worker=args.worker_container, postgres=args.postgres_container,
-               tools=args.tools_container)
+               tools=args.tools_container, target=getattr(args, "target", "compose"))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1161,6 +1349,8 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
     args = build_parser().parse_args(argv)
+    global TARGET
+    TARGET = make_target(args)
     problem = demo.preflight(args.base, args.pg_dsn) or turn.require_grant(args.pg_dsn, args.email)
     if problem:
         print(f"bounds: {problem}", file=sys.stderr)

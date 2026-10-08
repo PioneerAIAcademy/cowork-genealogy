@@ -1,0 +1,15 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for Baiersbronn, at the country scope collections_search derives for Germany. No FamilySearch collection covers the Baiersbronn Protestant registers, so nothing here offers a FamilySearch copy.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany"
+    },
+    "scope": "Germany",
+    "totalForPlace": 0,
+    "results": []
+  }
+}

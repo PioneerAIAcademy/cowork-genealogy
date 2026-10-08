@@ -520,20 +520,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // the check-warnings SKILL — a route an agent does not have. Widened
   // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
   // in the routing skill: `/research` may spawn this agent directly, so no
-  // plane guarantees the router runs at all. Still no `Read` and no
-  // `project_context` — the body reaches project state through research_query
-  // and never named either.
+  // plane guarantees the router runs at all. Still no `Read`: the body reaches
+  // research.json through research_query. `place_search`, `place_distance` and `wiki_read`
+  // were added for #2537: the identity decision measures a move outside the
+  // residence cluster and reads the destination's migration page and the
+  // country's naming page (ADR-0012), so those facts left the body.
+  // `place_distance` alone would be a dead grant — it takes the `standardPlace`
+  // only `place_search` returns. `project_context` was added for the same issue:
+  // it is the only tool that lists a person's tree spouses and children, which
+  // the Household check needs to name an absent spouse (ut_person_evidence_026).
   "person-evidence.md": {
     tools: [
       "materialize_facts",
       "merge_warnings",
       "person_quality",
       "person_warnings",
+      "place_distance",
+      "place_search",
+      "project_context",
       "record_read",
       "research_append",
       "research_query",
       "same_person",
       "tree_edit",
+      "wiki_read",
     ],
     denies: [],
   },
@@ -718,10 +728,29 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `tools:` is exact-match restrictive, so copying that one-entry list would
   // have spawned an agent that cannot read project state — and, because one
   // entry resolves, the runtime's zero-tools refusal would NOT have fired.
-  // `Read` is required by the narration line, which reads
-  // researcher_profile.narration_guidance out of research.json directly.
+  // `Read` is required for tree.gedcomx.json (persons' dates, places and
+  // sources); the body forbids reading research.json with it.
   "question-selection.md": {
     tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [],
+  },
+
+  // The folded search-external-sites skill (issue #2802): its seven tools plus
+  // `project_context`, which is how a triage invocation finds the open hand-off
+  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
+  // parish page arrives in the delegation as `baseUrl`.
+  "search-external-sites.md": {
+    tools: [
+      "Read",
+      "build_external_search_url",
+      "collections_search",
+      "external_links_search",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_log_append",
+      "research_query",
+    ],
     denies: [],
   },
 

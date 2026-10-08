@@ -10,12 +10,13 @@
       "external-site",
       "compiled-source",
       "url-generation",
-      "log-site-findagrave"
+      "log-site-findagrave",
+      "direct-arm"
     ],
     "holdout": true
   },
   "input": {
-    "user_message": "Look for Patrick Flynn's grave on FindAGrave — he died in Pennsylvania sometime after 1880.",
+    "delegation": "Look for Patrick Flynn's grave on FindAGrave — he died in Pennsylvania sometime after 1880.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

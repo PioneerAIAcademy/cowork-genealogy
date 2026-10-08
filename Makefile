@@ -502,7 +502,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_rehearsal.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -579,6 +579,45 @@ proto-bounds: $(ENGINE_DEPS) ## U23: record one live bound on compose — CASE=<
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && PROTO_COMPOSE="$(PROTO_COMPOSE)" uv run python proto/bounds.py --case '$(CASE)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
+
+# U13: the drivers against the rehearsal (apps/server/proto/eb-rehearsal) instead of
+# compose: no env.sh, no compose up, no tree-read block (the worker refuses BLOCKED_TOOLS
+# without DEV_PATHS, which a template never sets; put the block in --prompt instead).
+# BASE is the web tier (the 1837 forward or the ALB); PG_DSN the psycopg DSN through the
+# bastion's RDS forward, `host=<rds endpoint> hostaddr=127.0.0.1 port=15432 dbname=… user=…`
+# with the password only in PGPASSFILE (the DSN may hold no password and no sslmode); RDS_CA the bundle's certs/rds-global-bundle.pem; BUCKET
+# the data bucket; COOKIE_FILE the operator's signed-in wb_session (0600, never argv).
+# The seed's node-postgres takes NODE_PG_DSN, `postgresql://<user>@<rds endpoint>:15432/<db>`
+# (no password: it reads PGPASSFILE too), and needs a `127.0.0.1 <rds endpoint>` line in /etc/hosts and
+# `npm ci` in the engine (the optional pg and S3 packages). seed.py overwrites
+# PROTO_S3_ENDPOINT from --s3-endpoint, so both are set; the empty key pair sends the
+# store to the operator's default AWS credential chain.
+AWS_S3_ENDPOINT := https://s3.us-east-1.amazonaws.com
+PROTO_AWS_ENV = export PROTO_S3_ENDPOINT='$(AWS_S3_ENDPOINT)' PROTO_S3_BUCKET='$(BUCKET)' PROTO_S3_ACCESS_KEY= \
+	  PROTO_S3_SECRET_KEY= PROTO_SESSION_COOKIE_FILE='$(COOKIE_FILE)' PGSSLMODE=verify-full \
+	  PGSSLROOTCERT='$(RDS_CA)' NODE_EXTRA_CA_CERTS='$(RDS_CA)' PGPASSFILE='$(PGPASSFILE)' \
+	  PROTO_NODE_PG_DSN='$(NODE_PG_DSN)'
+proto_aws_require = $(foreach v,BASE PG_DSN NODE_PG_DSN BUCKET COOKIE_FILE RDS_CA EMAIL PGPASSFILE,$(if $($(v)),,$(error $(1): $(v)=… is required; see the U13 block above it in the Makefile)))$(if $(findstring password,$(PG_DSN))$(findstring sslmode,$(PG_DSN))$(findstring @,$(PG_DSN))$(findstring sslmode,$(NODE_PG_DSN))$(findstring password,$(NODE_PG_DSN))$(shell printf '%s' '$(NODE_PG_DSN)' | grep -E '://[^/@]*:[^/@]*@'),$(error $(1): PG_DSN or NODE_PG_DSN carries a password or sslmode; the password goes in PGPASSFILE and TLS in PGSSLMODE))
+
+.PHONY: proto-demo-aws
+proto-demo-aws: $(ENGINE_DEPS) ## U13: proto-demo against the rehearsal — BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [FIXTURE=] ARGS=…
+	$(call proto_aws_require,proto-demo-aws)
+	$(PROTO_AWS_ENV); cd apps/server && uv run python proto/demo.py --base '$(BASE)' --pg-dsn '$(PG_DSN)' \
+	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
+
+.PHONY: proto-audit-aws
+proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= [SESSION=]
+	@test -n "$(PG_DSN)" && test -n "$(RDS_CA)" || { echo "proto-audit-aws: PG_DSN=… and RDS_CA=… are required" >&2; exit 2; }
+	export PGSSLMODE=verify-full PGSSLROOTCERT='$(RDS_CA)'; cd apps/server && uv run python proto/audit.py \
+	  --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',)
+
+.PHONY: proto-bounds-aws
+proto-bounds-aws: $(ENGINE_DEPS) ## U13: proto-bounds against the rehearsal — CASE= BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [PROFILE=] [SESSION=] ARGS=…
+	@test -n "$(CASE)" || { echo "proto-bounds-aws: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
+	$(call proto_aws_require,proto-bounds-aws)
+	$(PROTO_AWS_ENV); cd apps/server && uv run python proto/bounds.py --target deployed \
+	  $(if $(PROFILE),--profile '$(PROFILE)',) --case '$(CASE)' --base '$(BASE)' --pg-dsn '$(PG_DSN)' \
+	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
 
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
 # through PgS3ProjectStore, and a web-tier session on that project. Prints the
@@ -808,6 +847,39 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# only as new runs age in. Read the current number from a run, not from this
 	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
+
+.PHONY: unit-relay-fidelity
+unit-relay-fidelity: ## How much of an agent's return survives the main thread's relay — offline report over committed unit run logs, never a gate
+	# NOT replay-check above, which is one letter away and replays e2e runs.
+	# Report only: the direct block measures the HARNESS DISPATCHER, not
+	# production, so nothing here gates a build or reaches the judge (#3188).
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py
+
+.PHONY: replay-sizes
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
+	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
+	# local-state read tools (research_query, project_context, person_warnings,
+	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
+	# to the BASE build (default: merge-base with origin/main, built once into a
+	# cached sparse worktree under $$TMPDIR/genealogy-replay-builds/; remove with
+	# `git worktree remove <dir>`) and to the working-tree build, over
+	# research.json rebuilt as of each call (harness/replay.py) and the run's
+	# FINAL tree (approximate). The headline is candidate - base, never vs the
+	# recorded size. FamilySearch/wiki tools are listed as NOT REPLAYED (T1.4c).
+	# Exit 2: selection, usage or build error. Exit 3: the replay is not
+	# measuring what it claims (rebase broke, state errors over the margin, a
+	# read wrote files, a network call) — it refuses to print a misleading 0%.
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+
+.PHONY: replay-collapse
+replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
+	# Proves the replacement returns EXACTLY the walk's question's entries (an
+	# oracle computed from the rebuilt notes), and that the walk it is compared
+	# against is the real one: each replayed walk call's count must equal the
+	# count the run recorded, else exit 3. Reports N walk calls -> M replacement
+	# calls. Exit 1 = the candidate lacks the filter; exit 2 = nothing comparable
+	# (e.g. every group unverifiable after a capture strip); exit 3 = integrity.
+	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
