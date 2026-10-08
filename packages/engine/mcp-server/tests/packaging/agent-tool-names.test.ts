@@ -716,10 +716,29 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `tools:` is exact-match restrictive, so copying that one-entry list would
   // have spawned an agent that cannot read project state — and, because one
   // entry resolves, the runtime's zero-tools refusal would NOT have fired.
-  // `Read` is required by the narration line, which reads
-  // researcher_profile.narration_guidance out of research.json directly.
+  // `Read` is required for tree.gedcomx.json (persons' dates, places and
+  // sources); the body forbids reading research.json with it.
   "question-selection.md": {
     tools: ["Read", "project_context", "research_append", "research_query"],
+    denies: [],
+  },
+
+  // The folded search-external-sites skill (issue #2802): its seven tools plus
+  // `project_context`, which is how a triage invocation finds the open hand-off
+  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
+  // parish page arrives in the delegation as `baseUrl`.
+  "search-external-sites.md": {
+    tools: [
+      "Read",
+      "build_external_search_url",
+      "collections_search",
+      "external_links_search",
+      "place_search",
+      "project_context",
+      "research_append",
+      "research_log_append",
+      "research_query",
+    ],
     denies: [],
   },
 

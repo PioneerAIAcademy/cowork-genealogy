@@ -1764,9 +1764,32 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.exhaustive_declaration?.declared !== true) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.question_id !== qid) continue;
+  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
+    (item) => item.itemId,
+  );
+  if (inFlight.length === 0) return [];
+  const ids = inFlight.sort().join(", ");
+  return [
+    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
+      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+      "search has not finished, so the declaration would rest on work still running. " +
+      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
+      "the search finish; declaring is available on the next call once the plan reflects it. " +
+      "Items still at `planned` do not block — consulting the stop criteria before draining " +
+      "the plan is the sanctioned path.",
+  ];
+}
+
+/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
+ *  the given snapshot. Shared by the two in-flight gates so which plans and
+ *  items count as in flight is decided once. */
+function activePlanInProgressItems(
+  research: any,
+  includePlan: (plan: any) => boolean,
+): { itemId: string; questionId: unknown }[] {
+  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
     // `research-plan` supersedes a plan by flipping `plans.status` alone — its
     // items keep whatever status they held — and then forbids touching it ever
@@ -1780,20 +1803,12 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") inFlight.push(item.id);
+      if (item?.status === "in_progress" && typeof item?.id === "string") {
+        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      }
     }
   }
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
-  return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
-  ];
+  return inFlight;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -1827,25 +1842,23 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused: string[] = [];
-  for (const plan of Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : []) {
-    if (!plan || plan.status !== "active" || !unresolvedQuestions.has(plan.question_id)) continue;
-    const excepted = conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id);
-    if (excepted) continue;
-    for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        refused.push(`${item.id} (on ${plan.question_id})`);
-      }
-    }
-  }
+  const refused = activePlanInProgressItems(
+    preCallResearch,
+    (plan) =>
+      unresolvedQuestions.has(plan.question_id) &&
+      !(conflictBlocked.has(plan.question_id) && unblocks.has(plan.question_id)),
+  ).map((item) => `${item.itemId} (on ${item.questionId})`);
   if (refused.length === 0) return [];
   const ids = refused.sort().join(", ");
   return [
     `a new question cannot be opened while research is still running: ${ids} ` +
       `${refused.length === 1 ? "is" : "are"} still 'in_progress'. The plan says that search ` +
       "has not finished, whatever the request that reached you says. Write no question now: " +
-      "report the in-flight item as the reason. The one exception is a question that resolves " +
-      "an unresolved conflict blocking that question — set its `unblocks` to name it.",
+      "report the in-flight item as the reason. Two exceptions: (1) a question that resolves " +
+      "an unresolved conflict whose `blocks_question_ids` lists that question, with the new " +
+      "question's `unblocks` naming it; (2) if this same call also resolves that question — " +
+      "this check reads the project as it stood before the call, so write the resolution in " +
+      "its own call and append the new question in the next one.",
   ];
 }
 
@@ -2948,77 +2961,17 @@ function validateNegativeEvidenceRole(entry: Record<string, unknown>): void {
 // skip-never-refuse contract this rule documents. Fixed here rather than
 // at each index site so a third one cannot reintroduce it, and so the
 // lookup means what the Python mirror's `dict.get()` already meant.
-// Exported only so the cross-language drift test can pin it against the
-// Python copy; nothing else outside this module reads it.
-export const RELATION_CATEGORY: Record<string, string> = Object.assign(
-  Object.create(null) as Record<string, string>,
-  {
-    father: "parent", mother: "parent", parent: "parent",
-    son: "child", daughter: "child", child: "child",
-    wife: "spouse", husband: "spouse", spouse: "spouse",
-    widow: "spouse", widower: "spouse",
-    brother: "sibling", sister: "sibling", sibling: "sibling",
-  },
-);
-const RELATION_WORDS = Object.keys(RELATION_CATEGORY).join("|");
-// A value LABELS the other party in two shapes that need different patterns.
-// An earlier single pattern spanning `[^,]*?` was wrong both ways: a stray
-// `[KEY:` colon suppressed real sibling refusals, and one comma in `Father of
-// the groom, named as X` made it miss and wrongly refuse a correct assertion.
-//
-// Only ONE label guard is needed. A label with no ` of ` -- `father: Jan
-// Roelfs`, `father named as Casper` -- never reaches here, because
-// STATES_SUBJECT_ROLE requires ` of `. A second guard for those was
-// written, measured against the corpus, found to change nothing, and
-// deleted; do not add it back.
-//
-// By role: `Father of groom named as Tellef`. The party being named is
-// identified by ROLE -- a bare lowercase word -- so it is the other party. A
-// CAPITALISED token there is a name, so the value states the subject's own tie
-// and must not be skipped.
-const LABELS_BY_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(?:${RELATION_WORDS})\\s+of\\s+(?:the\\s+)?(\\w+)[\\s,]*(?::|\\s+named\\b)`,
-  "i",
-);
-const STATES_SUBJECT_ROLE = new RegExp(
-  `^\\s*(?:the\\s+)?(${RELATION_WORDS})\\s+of\\s+`,
-  "i",
-);
-
-/** Exported only so the cross-language drift test can pin it against the
- *  Python `_relationship_category`: the table alone does not cover the
- *  `_inferred` strip or the trim, and `String.replace` with a string
- *  pattern replaces the FIRST occurrence here while Python's replaces
- *  every one. */
-export function relationshipCategory(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  // Anchored, and one suffix only. A bare `.replace("_inferred", "")`
-  // strips the FIRST occurrence here and EVERY occurrence in the Python
-  // mirror, so `child_inferred_inferred` was unknown to this side and
-  // `child` to that one.
-  return RELATION_CATEGORY[value.toLowerCase().trim().replace(/_inferred$/, "")];
-}
-
-/** The category the VALUE claims for the record subject, or undefined when it
- *  does not speak to the subject's own role. Exported so the cross-language
- *  drift test can pin it against the Python copy in
- *  `eval/harness/validators/test_record_extraction.py`: the rule exists twice
- *  because the harness and the engine share no runtime, and nothing else keeps
- *  the two in step. */
-export function subjectRoleInValue(value: string): string | undefined {
-  const byRole = LABELS_BY_ROLE.exec(value);
-  // A lowercase ASCII token is a role word, not a name. Must stay an
-  // explicit class, never a case test: `=== toLowerCase()` is true for a
-  // token with no case (`2`) where the Python mirror's .islower() is
-  // false, so the two disagreed in both directions before this. The
-  // capture stays `\w+` although that is ASCII here and Unicode
-  // there: with this guard both spellings reach the same verdict either
-  // way, and widening it to `\S+?` was reverted as unobservable.
-  if (byRole && /^[a-z]+$/.test(byRole[1])) return undefined;
-  const m = STATES_SUBJECT_ROLE.exec(value);
-  if (!m) return undefined;
-  return RELATION_CATEGORY[m[1].toLowerCase()];
-}
+// The relation-word tables lifted to `src/utils/relationship-category.ts` so
+// rank-search-matches can reuse `relationshipCategory` without the packaging
+// writer-tool check flagging the importer. Re-exported here for the
+// cross-language drift lint (`tests/packaging/relationship-direction-drift.test.ts`),
+// which asserts the pin against the Python copy and reads them from this file.
+import {
+  RELATION_CATEGORY,
+  relationshipCategory,
+  subjectRoleInValue,
+} from "../utils/relationship-category.js";
+export { RELATION_CATEGORY, relationshipCategory, subjectRoleInValue };
 
 function validateRelationshipDirection(entry: Record<string, unknown>): void {
   // `fact_type: relationship` only, which is what the refusal-table row and

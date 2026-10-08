@@ -32,6 +32,7 @@
 // network, so it is safe to call from the gate mid-write.
 
 import { relationshipKey } from "../utils/merge-gedcomx.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type {
   SimplifiedGedcomX,
   SimplifiedPerson,
@@ -145,14 +146,6 @@ function relationshipMap(
     out.set(relationshipKey(r), r);
   }
   return out;
-}
-
-function relationshipEndpoints(r: SimplifiedRelationship): string[] {
-  const ends: string[] = [];
-  for (const e of [r.parent, r.child, r.person1, r.person2]) {
-    if (typeof e === "string" && e) ends.push(e);
-  }
-  return ends;
 }
 
 export function treeDiff(input: TreeDiffInput): TreeDiffResult {
