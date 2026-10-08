@@ -465,6 +465,12 @@ def released_by(events: list[dict], turn_id: str) -> list[str]:
     return [e["released_turn"] for e in events_for(events, turn_id) if e.get("ev") == "turn" and e.get("released_turn")]
 
 
+def released_named(events: list[dict], held_turn_id: str) -> bool:
+    """An ev=released line names ``held_turn_id``. close_turn's own release (the worker's
+    last-receive close, U5 c) logs only this; ``released_turn`` is the handover's."""
+    return any(e.get("ev") == "released" and e.get("turn_id") == held_turn_id for e in events)
+
+
 def held_checks(label: str, reply: dict, a: TurnSnap, b: TurnSnap, events: list[dict],
                 shim_posts: list[dict], *, a_outcome: str, a_reason: str) -> list[Check]:
     """B posted while A ran: held, A ended by its bound, the msgid A's close released is B's
@@ -1204,8 +1210,9 @@ def case_dead_letter_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
     rep.checks += [closed_check("dead_letter_real", snap, "retries_exhausted"),
                    ("dead_letter_real: one receive", (snap.row or (0,))[0] == 1, f"row={snap.row}"),
-                   ("dead_letter_real: its close released a message", bool(released_by(events, tid)),
-                    f"released={released_by(events, tid)}")]
+                   ("dead_letter_real: its close released the held message",
+                    bool(released_by(events, tid)) or released_named(events, held["turn_id"]),
+                    f"released_turn={released_by(events, tid)}; no ev=released names {held['turn_id']}")]
     done(ctx, client, rep, held["turn_id"], label="held")
 
 

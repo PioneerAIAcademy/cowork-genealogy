@@ -459,6 +459,38 @@ def test_sigterm_real_signals_the_original_turn_when_no_handover_came(monkeypatc
     assert ("sigterm_real: ev=shutdown names the turn", True, "") in rep.checks
 
 
+def _dead_letter_run(monkeypatch, events: list[dict]) -> bounds.Report:
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    ids = iter(["t1", "t2"])
+    monkeypatch.setattr(bounds, "post", lambda ctx, client, rep, text: {"turn_id": next(ids)})
+    monkeypatch.setattr(bounds.turn, "db", lambda dsn, sql, params: [(True,)])
+    monkeypatch.setattr(bounds, "snapshot", lambda ctx, s, t: bounds.TurnSnap(turn_id=t, row=(1, "now", "retries_exhausted", 1.0)))
+    monkeypatch.setattr(bounds, "worker_events", lambda: events)
+    rep = bounds.Report(case="dead_letter_real")
+    bounds.case_dead_letter_real(_ctx(), None, rep)
+    return rep
+
+
+def _released_ok(rep: bounds.Report) -> bool:
+    [ok] = [ok for n, ok, _ in rep.checks if n.startswith("dead_letter_real: its close released")]
+    return ok
+
+
+def test_dead_letter_real_counts_close_turns_ev_released_for_the_held_turn(monkeypatch):
+    """The worker's own last-receive close logs ev=released naming the held turn, with no
+    released_turn on the closing ev=turn (U13, 2026-10-08)."""
+    events = [{"ev": "close", "turn_id": "t1", "outcome": "retries_exhausted"},
+              {"ev": "released", "turn_id": "t2", "message_id": "m"}]
+    assert _released_ok(_dead_letter_run(monkeypatch, events))
+
+
+def test_dead_letter_real_fails_when_nothing_released_the_held_turn(monkeypatch):
+    events = [{"ev": "close", "turn_id": "t1", "outcome": "retries_exhausted"},
+              {"ev": "released", "turn_id": "t9", "message_id": "m"}]
+    assert not _released_ok(_dead_letter_run(monkeypatch, events))
+
+
 def _spill_run(monkeypatch, *, reads_after: int, rerun: int) -> tuple[bounds.Report, list[str]]:
     """spill_kill with the spilling call at id 7 and no read before the kill; ``reads_after``
     tool-results reads and ``rerun`` calls after it."""
