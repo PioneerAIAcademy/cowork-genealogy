@@ -2375,6 +2375,24 @@ def test_a_first_hand_off_whose_message_never_arrives_is_kept(tmp_path, monkeypa
     assert _spawned(result) == ["question-selection"]
 
 
+def test_two_hand_offs_whose_messages_never_arrive_are_both_kept(tmp_path, monkeypatch):
+    """With no message there is no turn to measure against, so a same-turn
+    shortcut cannot be told from a next-turn walk: every denial is kept, the
+    second as well as the first."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [_hook_runs(_SPAWN_QS, "qs-id"), _hook_runs(_SPAWN_PE, "pe-id"), _done()],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert returns["pe-id"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+
+
 # --- the short-circuit's abort clearing is scoped, and nothing pinned it ------
 #
 # `if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON: clear`

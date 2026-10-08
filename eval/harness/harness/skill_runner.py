@@ -1792,8 +1792,10 @@ async def run_skill(
     # stopped correctly. A call with no id is kept, as before. Skipped when no
     # hand-off message was seen: a stream that ended before it arrived (an
     # abort, a cap) has no turn to measure against, and filtering would drop the
-    # first hand-off, the run's routing evidence. Done before the slash-command
-    # entry is inserted, while every index still holds.
+    # first hand-off, the run's routing evidence. Every denial is kept then, a
+    # second one too: with no message, a same-turn shortcut and a next-turn walk
+    # cannot be told apart. Done before the slash-command entry is inserted,
+    # while every index still holds.
     if stop_at_stub and stop_denials and handoff_seen["v"]:
         turn_ids = handoff_turn["tool_ids"]
         dropped = [
