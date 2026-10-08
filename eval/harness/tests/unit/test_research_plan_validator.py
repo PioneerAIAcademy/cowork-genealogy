@@ -368,6 +368,44 @@ def test_v5_still_fires_on_an_indexed_claim_against_zero(phrase):
         check_v5(before, after, _SERVED)
 
 
+# SKILL.md's prescribed phrases (issue #2251): each must be read as the claim it
+# makes, so the guard still binds once the skill stops writing "indexed".
+def test_v5_accepts_the_prescribed_phrases_when_they_match():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0)."),
+        _item("pli_011", rationale="Collection 1921317 is name-searchable (personCount 50000)."),
+    ])
+    check_v5(before, after, _SERVED)
+
+
+def test_v5_fires_on_name_searchable_against_zero():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is name-searchable (personCount 0).")
+    ])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
+def test_v5_reads_not_name_searchable_as_a_browse_claim():
+    before, after = _states([
+        _item("pli_010", rationale="Collection 1999196 is not name-searchable; browse the images.")
+    ])
+    check_v5(before, after, _SERVED)
+
+
+# ut_research_plan_002, v5_2026-10-08_00-17-25, pli_011, verbatim: a real slip,
+# "indexed" used as part of the collection's description. Must keep firing.
+def test_v5_fires_on_the_ut002_indexed_collection_slip():
+    rationale = (
+        "The Pennsylvania Probate Records indexed collection (1999196) returned "
+        "personCount 0 — this is a browse of image group 007936749 (Schuylkill "
+        "County Probate Records, 1851–1930, 412 images, 0% indexed)."
+    )
+    before, after = _states([_item("pli_011", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(before, after, _SERVED)
+
+
 def test_v5_ignores_browse_only_on_a_volume():
     before, after = _states([_item("pli_007", rationale=_UT016_PLI007)])
     check_v5(before, after, _SERVED_KY)

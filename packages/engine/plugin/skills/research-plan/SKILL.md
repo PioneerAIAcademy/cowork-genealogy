@@ -186,10 +186,14 @@ collection, not the exact-parish one.
 
 **Availability comes from the response, not from memory.** A collection's
 returned `personCount` decides how you plan and describe it:
-- **Above 0:** name-searchable. Plan a name search; never call it
-  browse-only, image-only, unindexed or not indexed.
-- **0:** browse-only images. Plan an image browse, not a name search; never
-  call it indexed.
+- **Above 0:** name-searchable. Plan a name search.
+- **0:** browse-only images. Plan an image browse, not a name search.
+
+Wherever a rationale names a collection, describe it with exactly one of
+these two phrases, copied as written — `name-searchable (personCount N)` or
+`browse-only (personCount 0)` — and with no other availability word: not
+"indexed", "unindexed", "image-only" or "searchable" on its own, and not as
+part of the collection's name.
 
 Cite a collection or volume id in a rationale only if a tool returned it
 this session or it is in `research.json`. To plan a national collection

@@ -693,7 +693,10 @@ def test_research_plan_rationale_identifiers_traceable(
 
 # --- V5: an availability claim must match the returned personCount ----------
 
-_INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
+# "name-searchable" is SKILL.md's prescribed phrase for personCount > 0
+# (issue #2251), so it is an indexed claim too; without it a mislabel written in
+# the new phrasing would pass unseen.
+_INDEXED_RE = re.compile(r"\b(?:(?:fully\s+)?indexed|name[\s-]searchable)\b", re.I)
 # "no indexed name search is possible" and "not name-indexed" both negate the
 # indexed claim.  Allow an optional adjective between "not" and "indexed"
 # (e.g. "not name-indexed", "not record-indexed") and keep "no indexed" and
@@ -708,7 +711,7 @@ _INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
 # 1999196 "indexed" because the one optional word was spent on "a".
 _UNINDEXED_RE = re.compile(
     r"\b(?:un-?indexed|not\s+(?:(?:a|an|the)\s+)?(?!fully\s)(?:\w+[\s-])?indexed"
-    r"|no\s+indexed)\b",
+    r"|not\s+(?:(?:a|an|the)\s+)?name[\s-]searchable|no\s+indexed)\b",
     re.I,
 )
 _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
