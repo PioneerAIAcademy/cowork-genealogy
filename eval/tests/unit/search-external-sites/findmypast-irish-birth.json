@@ -11,11 +11,12 @@
       "ireland",
       "url-generation",
       "fallback-template",
-      "log-site-findmypast"
+      "log-site-findmypast",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search FindMyPast for Patrick Flynn's birth in Ireland, about 1845.",
+    "delegation": "Search FindMyPast for Patrick Flynn's birth in Ireland, about 1845.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

@@ -39,6 +39,12 @@ name: EB bundles
 # ~5s step rather than the ~10 minute build.
 on:
   pull_request:
+  # A push to main and a manual dispatch build too, so a deploy (U13's
+  # rehearse.py up --phase versions) has an artifact for a main sha; a pull
+  # request's artifact is built from its merge ref, not from main.
+  push:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -63,6 +69,11 @@ jobs:
           PATTERNS: '^apps/server/|^apps/web/|^packages/|^scripts/|^package\.json$|^pnpm-lock\.yaml$|^pnpm-workspace\.yaml$|^tsconfig\.base\.json$|^\.npmrc$|^Makefile$|^\.github/workflows/eb-bundles\.yml$'
         run: |
           set -euo pipefail
+          if [ -z "${PR_NUMBER}" ]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Not a pull request; building the bundles."
+            exit 0
+          fi
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
                      --paginate --jq '.[].filename')"
           if printf '%s\n' "$files" | grep -qE "$PATTERNS"; then

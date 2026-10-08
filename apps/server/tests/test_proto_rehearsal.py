@@ -208,8 +208,18 @@ class FakeAws:
     def ec2_describe_vpcs(self, rest):
         return {"Vpcs": [{"VpcId": "vpc-fake"}]}
 
+    SUBNET_AZS = {"subnet-a": "us-east-1a", "subnet-b": "us-east-1b"}
+    NO_T3_AZ = "us-east-1e"
+
     def ec2_describe_subnets(self, rest):
-        return {"Subnets": [{"SubnetId": "subnet-b"}, {"SubnetId": "subnet-a"}]}
+        ids = rest[rest.index("--subnet-ids") + 1:] if "--subnet-ids" in rest else sorted(self.SUBNET_AZS)[::-1]
+        return {"Subnets": [{"SubnetId": i, "AvailabilityZone": self.SUBNET_AZS[i]} for i in ids]}
+
+    def ec2_describe_instance_type_offerings(self, rest):
+        azs = set(self.SUBNET_AZS.values()) | {"us-east-1e"}
+        if "Name=instance-type,Values=t3." in " ".join(rest):
+            azs.discard(self.NO_T3_AZ)
+        return {"InstanceTypeOfferings": [{"Location": az} for az in sorted(azs)]}
 
     def ec2_describe_security_groups(self, rest):
         if "--group-ids" in rest:
@@ -794,6 +804,32 @@ def test_rds_is_private_and_reached_only_from_tier_groups(stack):
     assert all("--cidr" not in a for a in fake.calls_to("ec2", "authorize-security-group-ingress"))
 
 
+def test_rds_class_defaults_and_can_be_overridden(env):
+    """us-east-1 has refused db.t4g.micro gp3 in every zone (InsufficientDBInstanceCapacity)."""
+    for extra, want in (((), "db.t4g.micro"), (("--rds-class", "db.t3.micro"), "db.t3.micro")):
+        fake = FakeAws()
+        rc, lines = run(env, fake, "up", "--billed", "--phase", "net", "--phase", "stores", *extra)
+        assert rc == 0, lines[-5:]
+        db = fake.calls_to("rds", "create-db-instance")[0]
+        assert db[db.index("--db-instance-class") + 1] == want
+
+
+def test_eb_subnets_skip_a_zone_without_the_instance_type(env):
+    """us-east-1e offers no t3 (2026-10-07): an environment whose Subnets include it is refused."""
+    fake = FakeAws()
+    fake.SUBNET_AZS = {"subnet-a": "us-east-1a", "subnet-b": "us-east-1b", "subnet-e": "us-east-1e"}
+    rc, lines = up_all(env, fake)
+    assert rc == 0, lines[-5:]
+    for name in ("genealogy-u13-web", "genealogy-u13-worker", "genealogy-u13-tools"):
+        create = [a for a in fake.calls_to("elasticbeanstalk", "create-environment") if name in a][0]
+        opts = {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(create, "--option-settings")}
+        assert opts[("aws:ec2:vpc", "Subnets")] == "subnet-a,subnet-b", name
+        if ("aws:ec2:vpc", "ELBSubnets") in opts:
+            assert opts[("aws:ec2:vpc", "ELBSubnets")] == "subnet-a,subnet-b", name
+    db = fake.calls_to("rds", "create-db-subnet-group")[0]
+    assert "subnet-e" in db, "RDS keeps every default subnet"
+
+
 def test_data_bucket_blocks_public_access(stack):
     _, fake, _ = stack
     block = fake.calls_to("s3api", "put-public-access-block")[0]
@@ -1259,6 +1295,84 @@ def test_status_exits_nonzero_on_drift(stack):
     assert any("drift" in line and "MaxRetries" in line for line in lines)
 
 
+def test_status_reads_options_as_beanstalk_reports_them(stack):
+    """Live 2026-10-07: Beanstalk adds its own group, names the profile, reorders subnets."""
+    env, fake, _ = stack
+    for name, settings in fake.env_settings.items():
+        lc = (rh.LC_NS, "SecurityGroups")
+        if lc in settings:
+            settings[lc] += ",sg-beanstalk-managed"
+        prof = (rh.LC_NS, "IamInstanceProfile")
+        if prof in settings:
+            settings[prof] = settings[prof].rsplit("/", 1)[1]
+        sub = (rh.VPC_NS, "Subnets")
+        if sub in settings:
+            settings[sub] = ",".join(reversed(settings[sub].split(",")))
+    rc, lines = run(env, fake, "status")
+    assert rc == 0, [line for line in lines if "drift" in line]
+    worker = fake.env_settings["genealogy-u13-worker"]
+    worker[(rh.LC_NS, "SecurityGroups")] = "sg-beanstalk-managed"
+    worker[(rh.LC_NS, "IamInstanceProfile")] = "genealogy-u13-web"
+    rc, lines = run(env, fake, "status")
+    assert rc == 1
+    assert sum("drift" in line for line in lines) == 2
+
+
+def test_probe_reports_an_update_beanstalk_rejected_and_still_restores(stack):
+    """Live 2026-10-07: env_4096's update was refused (EnvironmentVariables over 4,096 bytes),
+    the environment ended Ready on its old configuration, and the probe exited 0."""
+    env, fake, _ = stack
+    fake.reset()
+    fake.elasticbeanstalk_describe_events = lambda rest: {"Events": [
+        {"Severity": "ERROR", "Message": "Failed to deploy configuration."}]} if "ERROR" in rest else {"Events": []}
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "env_4096", "--hold-s", "0")
+    assert rc == 3, lines[-5:]
+    assert any(line.startswith("apply REJECTED: genealogy-u13-web: Failed to deploy") for line in lines)
+    assert len(fake.calls_to("elasticbeanstalk", "update-environment")) == 2, "the restore still ran"
+
+
+def test_pause_scales_the_tiers_first_then_stops_rds_and_the_bastion(stack):
+    env, fake, _ = stack
+    fake.reset()
+    rc, lines = run(env, fake, "pause", "--billed")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    scaled = [a for a in fake.calls_to("elasticbeanstalk", "update-environment")]
+    assert len(scaled) == 3
+    for call in scaled:
+        opts = {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(call, "--option-settings")}
+        assert opts == {(rh.ASG_NS, "MinSize"): "0", (rh.ASG_NS, "MaxSize"): "0"}, opts
+    assert ops.index(("rds", "stop-db-instance")) > max(i for i, o in enumerate(ops) if o == ("elasticbeanstalk", "update-environment"))
+    assert ("ec2", "stop-instances") in ops
+
+
+def test_a_paused_stack_shows_no_asg_drift_but_still_shows_other_drift(stack):
+    env, fake, _ = stack
+    run(env, fake, "pause", "--billed")
+    for settings in fake.env_settings.values():
+        if (rh.ASG_NS, "MinSize") in settings:
+            settings[(rh.ASG_NS, "MinSize")] = settings[(rh.ASG_NS, "MaxSize")] = "0"
+    rc, lines = run(env, fake, "status")
+    assert rc == 0, [line for line in lines if "drift" in line]
+    fake.env_settings["genealogy-u13-worker"][(rh.SQSD_NS, "MaxRetries")] = "1"
+    rc, lines = run(env, fake, "status")
+    assert rc == 1 and any("MaxRetries" in line for line in lines)
+
+
+def test_resume_starts_rds_before_the_bastion_and_the_tiers(stack):
+    env, fake, _ = stack
+    run(env, fake, "pause", "--billed")
+    fake.reset()
+    rc, lines = run(env, fake, "resume", "--billed")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    first_scale = ops.index(("elasticbeanstalk", "update-environment"))
+    assert ops.index(("rds", "start-db-instance")) < ops.index(("ec2", "start-instances")) < first_scale
+    for call in fake.calls_to("elasticbeanstalk", "update-environment"):
+        opts = {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(call, "--option-settings")}
+        assert opts == {(rh.ASG_NS, "MinSize"): "1", (rh.ASG_NS, "MaxSize"): "1"}
+
+
 # ── dry-run ───────────────────────────────────────────────────────────────────────────
 
 
@@ -1384,6 +1498,18 @@ def test_leak_check_history_passes_placeholder_edits(leak_repo):
     _git(repo, "commit", "-q", "-am", "reword")
     rc, lines = _leak(leak_repo)
     assert rc == 0, lines
+
+
+def test_leak_check_scans_only_the_account_zone_and_host(leak_repo):
+    """The emails in .local/ are not D9 values: one already in a tracked file is no leak."""
+    (leak_repo["local"] / "alert-email").write_text("op@example.invalid\n", encoding="utf-8")
+    (leak_repo["local"] / "allowed-emails").write_text("a@example.invalid b@example.invalid\n", encoding="utf-8")
+    (leak_repo["repo"] / "CONTACT.md").write_text("op@example.invalid a@example.invalid\n", encoding="utf-8")
+    _git(leak_repo["repo"], "add", "CONTACT.md")
+    _git(leak_repo["repo"], "commit", "-q", "-m", "contacts")
+    rc, lines = _leak(leak_repo)
+    assert rc == 0, lines
+    assert lines[-1].endswith("for 2 value(s) from .local/")
 
 
 def test_leak_check_refuses_an_empty_value(leak_repo):
