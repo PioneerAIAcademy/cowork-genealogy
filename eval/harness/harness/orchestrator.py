@@ -52,6 +52,7 @@ from harness.skill_runner import (
     SkillRunResult,
     agent_return_text,
     direct_dispatch_prompt,
+    handoffs,
     judge_skills_slot,
     run_skill,
     spawn_prompts,
@@ -781,6 +782,7 @@ async def _execute_single_run(
         aborted_reason=result.aborted_reason,
         activated=activated,
         skills_invoked=result.skills_invoked,
+        builtin_tool_calls=result.builtin_tool_calls,
         judge_skipped=judge_result.skipped,
         # None on a routed run, the (possibly empty) spawn list on a direct one
         # — the same shape `derive_activated` is fed above, and the thing
@@ -1660,6 +1662,7 @@ def _compute_outcome(
     skills_invoked: list[str],
     judge_skipped: bool = False,
     agents_spawned: list[str] | None = None,
+    builtin_tool_calls: list[dict[str, Any]] | None = None,
 ) -> str:
     """v1 per-run outcome per spec §7.
 
@@ -1825,7 +1828,16 @@ def _compute_outcome(
         # tests' concern, not this test's. The judge runs base-only and
         # diagnostically (see `_run_judge`); its scores must NOT flip a
         # correctly-routed test.
-        if not any(s in skills_invoked for s in correct):
+        # `handoffs`, not `skills_invoked`: under the 2026-09-22 ruling a skill
+        # becomes an agent, and the correct hand-off to a converted callee is an
+        # `Agent` spawn, which never lands in `skills_invoked` (issue #2825).
+        # `runnability.py` already resolves a `correct_skill` entry against the
+        # agents dir as well as the skills dir (issue #2793) — matching on
+        # `skills_invoked` here is what made that acceptance a lie: the test
+        # loaded and then failed however correctly the run routed. Observed on
+        # `ut_init_project_009`, which spawned `project-status` (an agent since
+        # 2026-10-03) and was graded a routing failure for it.
+        if not any(s in handoffs(skills_invoked, builtin_tool_calls or []) for s in correct):
             # Skill didn't fire, but didn't route to an acceptable
             # alternative — the correct_skill array was not satisfied.
             return "fail"
