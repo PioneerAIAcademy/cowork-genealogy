@@ -74,14 +74,12 @@ resolve," not "is not a standard place."
 
 - **No FamilySearch token required.** `src/utils/place-api.ts` sends no
   `Authorization` header, so `place_distance` works before `login`.
-- **Retried above the HTTP layer, not inside it.** `place-api.ts` calls
-  `fetchWithTimeout`, not `fetchWithRetry`, because it is one of
-  CLAUDE.md's named retry exclusions — the resolver retries instead.
+- **Retried at the HTTP call.** Every `place-api.ts` fetcher goes through
+  `fetchWithRetry`: a 429, a 5xx, a network error or a timeout is retried
+  under the 10 s retry budget with backoff and jitter; a 400 or 404 is not.
   `standardPlaceToCoords` reaches the API through `getSearchEntries` and
-  `getRepInfo`, and both wrap their fetch in `place-resolver.ts`'s
-  `withRetry`: 3 attempts, 200 ms backoff doubling, plus jitter. A
-  transient upstream failure is retried up to three times before the
-  resolver gives up and returns `null`.
+  `getRepInfo`, which add no retry of their own. A failure that outlasts the
+  retries makes the resolver return `null`.
 - Both places are resolved concurrently (`Promise.all`).
 
 ## 6. Consumers

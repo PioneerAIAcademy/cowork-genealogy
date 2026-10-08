@@ -8,10 +8,11 @@ description: >-
   message with `--autonomous`, or any open-ended research goal that needs
   multiple steps (question selection, planning, searching, extraction, proof
   conclusion). Choose this over any sub-skill when the user states an objective
-  rather than a specific action. Do NOT use when the user explicitly targets one
-  step only (search-records, research-plan, question-selection, etc.), wants
-  only a status summary (project-status), or has no project yet (init-project
-  first).
+  rather than a specific action. Start it rather than first asking the user
+  about the person: it reads what the project already records about them.
+  Do NOT use when the user explicitly targets one step only (search-records,
+  research-plan, question-selection, etc.), wants only a status summary
+  (project-status), or has no project yet (init-project first).
 allowed-tools:
   - validate_research_schema
   - research_query
