@@ -313,6 +313,25 @@ describe("questionStatus — unregistered disagreements route to conflict-resolu
     ]);
   });
 
+  it("a bounded date is a span: a year inside it agrees, one beyond its far end disagrees", () => {
+    const birth = (id: string, standard_date: string) =>
+      ({ id, fact_type: "birth", date: "x", standard_date, extracted_for_question_ids: [Q] });
+    for (const other of ["1847", "Bef 1845", "Abt 1849"]) {
+      const inside = doc({
+        assertions: [birth("a_1", "Bet 1836 and 1848"), birth("a_2", other)],
+        person_evidence: linked("a_1", "a_2"),
+      });
+      expect(questionStatus(inside, question()).unregisteredDisagreements).toEqual([]);
+    }
+    const beyond = doc({
+      assertions: [birth("a_1", "Bet 1836 and 1848"), birth("a_2", "1851")],
+      person_evidence: linked("a_1", "a_2"),
+    });
+    expect(questionStatus(beyond, question()).unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth year", assertionIds: ["a_1", "a_2"] },
+    ]);
+  });
+
   it("assertions linked to different persons, or not vital facts, never disagree", () => {
     const d = doc({
       assertions: [
@@ -389,6 +408,17 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
   it("one parent couple is not competing", () => {
     const t = { relationships: tree.relationships.slice(0, 2) };
     expect(questionStatus(withSubject(), question(), t).competingParentSets).toEqual([]);
+  });
+
+  it("step-parents, in any casing, do not count toward competing sets; other subtypes do", () => {
+    const rel = (parent: string, subtype?: string) =>
+      ({ type: "ParentChild", parent, child: "I1", ...(subtype ? { subtype } : {}) });
+    const steps = { relationships: [rel("I2"), rel("I3"), rel("I4", "Step"), rel("I5", "step")] };
+    expect(questionStatus(withSubject(), question(), steps).competingParentSets).toEqual([]);
+    const adoptive = { relationships: [rel("I2"), rel("I3"), rel("I4", "Adoptive")] };
+    expect(questionStatus(withSubject(), question(), adoptive).competingParentSets).toEqual([
+      { personId: "I1", parentIds: ["I2", "I3", "I4"] },
+    ]);
   });
 
   it("a person outside the question's scope is not reported", () => {

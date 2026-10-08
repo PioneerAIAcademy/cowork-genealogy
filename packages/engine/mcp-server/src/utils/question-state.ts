@@ -32,6 +32,8 @@
  * gate's population to within two runs.
  */
 
+import { earliestYear, latestYear } from "./date-helpers.js";
+
 export type QuestionState =
   | "framed"
   | "planned"
@@ -111,10 +113,16 @@ const placesAgree = (xs: string[][], ys: string[][]): boolean =>
     }),
   );
 
-const yearOf = (a: any): number | null => {
+/** The span of years an assertion's date allows — `Bet 1836 and 1848` is
+ *  [1836, 1848], `Bef 1880` is [1870, 1880]. A date the standard-date parser
+ *  cannot read falls back to its first four-digit year as a one-year span. */
+const yearsOf = (a: any): [number, number] | null => {
   for (const raw of [a?.standard_date, a?.date]) {
-    const m = typeof raw === "string" ? raw.match(/\b(\d{4})\b/) : null;
-    if (m) return Number(m[1]);
+    if (typeof raw !== "string") continue;
+    const lo = earliestYear(raw), hi = latestYear(raw);
+    if (lo !== null && hi !== null) return [lo, hi];
+    const m = raw.match(/\b(\d{4})\b/);
+    if (m) return [Number(m[1]), Number(m[1])];
   }
   return null;
 };
@@ -155,8 +163,9 @@ export function unregisteredDisagreements(
         return pa.length > 0 && pb.length > 0 && !placesAgree(pa, pb);
       }],
       ["year", (a, b) => {
-        const ya = yearOf(a), yb = yearOf(b);
-        return ya !== null && yb !== null && Math.abs(ya - yb) > YEAR_TOLERANCE;
+        const ya = yearsOf(a), yb = yearsOf(b);
+        return ya !== null && yb !== null &&
+          (ya[0] > yb[1] + YEAR_TOLERANCE || yb[0] > ya[1] + YEAR_TOLERANCE);
       }],
     ];
     for (const [aspect, disagree] of aspects) {
@@ -207,6 +216,7 @@ export function competingParentSets(
   const parents = new Map<string, Set<string>>();
   for (const r of arr(tree?.relationships)) {
     if (r?.type !== "ParentChild" || typeof r?.child !== "string" || typeof r?.parent !== "string") continue;
+    if (typeof r?.subtype === "string" && r.subtype.toLowerCase() === "step") continue;
     if (!inScope.has(r.child)) continue;
     const s = parents.get(r.child) ?? new Set<string>();
     s.add(r.parent);
