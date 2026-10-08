@@ -133,7 +133,7 @@ wiki_read({ url: "<relevant FamilySearch Wiki page URL>" })
 
 `volume_search` finds digitized volumes that may not appear in `collections_search`, which only surfaces indexed collections. For each volume, read `recordSearchablePercent` (name-indexed, reachable via `record_search`) and `fulltextSearchable` (reachable via `fulltext_search`). Low/false on both = browse-only. Results paginate. One page is usually enough for a survey, but it is never the whole picture on its own: check `totalResults` and `nextPageToken` against the volumes you actually detail, and when the token is present (or `totalResults` exceeds that count) say so in the guide with both numbers — "31 digitized volumes match; the 4 detailed below are the first page." Fetch further pages only if the researcher asks. When it returns volumes for the same locality filed under different place names across a boundary change (e.g., a territorial-era volume and a later county volume), connect them explicitly as one continuous research trail — tell the researcher to work both together despite the differing place names, not as unrelated sources.
 
-`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` tells where originals are held ("Online", "FamilySearch Library", a named archive). `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
+`catalog_search` searches the FamilySearch Catalog — microfilm, books, manuscripts, and finding aids that may not appear in `collections_search` (which surfaces only indexed record collections). A hit's `repositoryCalls` (and each `filmNotes` entry's `copyLocation`) says where FamilySearch's copy can be seen ("Online", "FamilySearch Library"; "Granite Mountain Record Vault" is storage), not where the originals are; `creator` is who made the record. Name the archive holding the originals only when a hit's `notes` or a wiki page you fetched names it. `filmNotes` carry the microfilm/DGS numbers. `totalHits: 0` is a cataloguing gap — report it plainly, never evidence that the records do not exist. Keep the default `hydrate` (10).
 
 `external_links_search` returns a flat list of FS-curated third-party URLs (Ancestry, MyHeritage, FindMyPast, FindAGrave, national archives, FamilySearch Wiki pages) filtered to the requested time window. The list is not deduplicated — collapse duplicate URLs before listing repositories. **Compare `totalForPlace` and `results.length`:** if `totalForPlace > 0` but `results` is empty, FS has resources for this place outside your time window — note the gap rather than reporting "no online resources." If `totalForPlace === 0`, FS has no curated external links for this place at all.
 
@@ -277,7 +277,7 @@ For `place_distance`, two events at the **same** `standard_place` are distance 0
 
 ### Broadening to a parent jurisdiction
 
-Every place tool returns results for the **exact** standardPlace you pass.
+Every place tool except `catalog_search` returns results for the **exact** standardPlace you pass.
 A standardPlace is comma-delimited, most-specific-first
 ("Schuylkill, Pennsylvania, United States"), so its **parent jurisdiction is
 the text after the first comma** ("Pennsylvania, United States", then
@@ -289,14 +289,15 @@ the text after the first comma** ("Pennsylvania, United States", then
   figure for a village is usually too generic to use — climb only as far as you
   must.
 - **Additive resources** — `external_links_search`, `collections_search`,
-  `volume_search`, `catalog_search`. Each level holds *different* records (the
-  county courthouse, the state archive, the national index), so fetch the levels
-  your research actually needs and combine them. Bias to the specific end; the
-  national level is mostly generic collections the researcher already knows —
-  pull it only on first contact with a country or when the local levels are
-  sparse. `catalog_search` **includes subordinate places by default** (`exactPlace`
-  is false). So on 0 hits, climb one jurisdiction level and **stop at the first
-  level with hits** — do not call every level.
+  `volume_search`. Each level holds *different* records (the county courthouse,
+  the state archive, the national index), so fetch the levels your research
+  actually needs and combine them. Bias to the specific end; the national level
+  is mostly generic collections the researcher already knows — pull it only on
+  first contact with a country or when the local levels are sparse.
+- **Inclusive resource** — `catalog_search`. A search includes subordinate
+  places by default (`exactPlace` is false), so a parent's hits already cover
+  its children. On 0 hits, climb one jurisdiction level and **stop at the
+  first level with hits** — do not call every level.
 
 ### Writing places to research.json / tree.gedcomx.json
 
@@ -753,7 +754,7 @@ abbreviation guides for specific record types.
 | What churches were present in this area? | Local history publications, FamilySearch Wiki, denominational archives |
 | What does this term/abbreviation mean? | Specialized dictionaries, glossaries |
 | What has been published about this locality? | Bibliographies, library catalogs (WorldCat, `catalog_search`) |
-| Where are the original records held? | `catalog_search({ standardPlace: … })` — a hit's `repositoryCalls` names the archive; state archive guides |
+| Where are the original records held? | The jurisdiction's wiki pages (constructed-URL `wiki_read`), state archive guides; `catalog_search` shows where FamilySearch's copy can be seen |
 
 ## Broad Context Factors for Locality Research
 

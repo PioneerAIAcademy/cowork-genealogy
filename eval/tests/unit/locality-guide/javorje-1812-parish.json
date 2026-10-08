@@ -38,7 +38,7 @@
     "wikipedia-search-any"
   ],
   "judge_context": [
-    "The agent must call catalog_search for Javorje (or a standardPlace containing Javorje). When it gets 0 hits, it must broaden by calling catalog_search again at a higher jurisdiction (e.g. Škofja Loka). It must report what the Catalog actually returned — censuses, population lists, urbaria — as a coverage gap (no parish registers found).",
+    "The agent must call catalog_search for Javorje (or a standardPlace containing Javorje). When it gets 0 hits, it must broaden by calling catalog_search again at a higher jurisdiction (e.g. Škofja Loka). It must report what the Catalog actually returned at the level it reached, as a coverage gap with no parish registers among them: at Škofja Loka, trade accounts 1739–1763, church affairs 1550–1747, a house book and the 1870 census; at Gorenja Vas-Poljane, the 1931 and 1936 population censuses.",
     "The agent must NOT state that Javorje was a filial of a mother parish, and must NOT name any mother parish.",
     "The agent must present Javorje's 1812 parish affiliation as unconfirmed, and send the user to where Slovenian parish registers are held (the diocesan or archdiocesan archives, per the Slovenia_Church_Records wiki page it should have fetched).",
     "Do not penalize the agent for failing to name 'from about 1785' for Javorje's parish registers — the Catalog holds none at any level, so no tool output carries that date."

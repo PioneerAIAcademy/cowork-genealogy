@@ -286,7 +286,33 @@ def test_catalog_broadening_fires_when_only_one_call():
             [_call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia")],
             _UT028_TEST,
         )
-    assert "at least 2 calls" in str(exc.value)
+    assert "parent jurisdictions" in str(exc.value)
+
+
+def test_catalog_broadening_fires_on_sibling_villages():
+    """VR5 must fire when two calls target sibling villages (no climb)."""
+    with pytest.raises(AssertionError) as exc:
+        check_catalog_broadening(
+            [
+                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
+                _call("catalog_search", standardPlace="Javorje, Gorenja Vas-Poljane, Slovenia"),
+            ],
+            _UT028_TEST,
+        )
+    assert "parent jurisdictions" in str(exc.value)
+
+
+def test_catalog_broadening_fires_on_same_place_twice():
+    """VR5 must fire when catalog_search is called twice for the same place."""
+    with pytest.raises(AssertionError) as exc:
+        check_catalog_broadening(
+            [
+                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
+                _call("catalog_search", standardPlace="Javorje, Škofja Loka, Slovenia"),
+            ],
+            _UT028_TEST,
+        )
+    assert "parent jurisdictions" in str(exc.value)
 
 
 def test_catalog_broadening_passes_when_called_twice():

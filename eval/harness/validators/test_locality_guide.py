@@ -219,11 +219,21 @@ def test_catalog_search_called_and_broadened(tool_calls, test):
     assert calls, (
         "ut_locality_guide_028 must call catalog_search at least once"
     )
-    places = [
-        (tc.get("args") or {}).get("standardPlace", "")
-        for tc in calls
-    ]
-    assert len(places) >= 2, (
-        f"catalog_search was called {len(places)} time(s) with places {places}; "
-        "expected at least 2 calls (initial + broadened) after a 0-hit result"
+    places = [(tc.get("args") or {}).get("standardPlace") or "" for tc in calls]
+
+    def parts(place):
+        return [p.strip().lower() for p in place.split(",") if p.strip()]
+
+    def is_parent(broader, narrower):
+        b, n = parts(broader), parts(narrower)
+        return 0 < len(b) < len(n) and n[-len(b):] == b
+
+    assert any(
+        is_parent(places[j], places[i])
+        for i in range(len(places))
+        for j in range(i + 1, len(places))
+    ), (
+        f"catalog_search places in call order: {places}. After the 0-hit village "
+        "call, a later call must name one of its parent jurisdictions (the text "
+        "after its first comma), not a sibling or the same place"
     )
