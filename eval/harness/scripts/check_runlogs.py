@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """GH Action: enforce the per-PR runlog contract.
 
-Eight blocking rules + two warn-only rules per
+Blocking rules plus two warn-only rules (2b, 2f) per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
@@ -25,7 +25,7 @@ docs/plan/eval-runlog-versioning.md §C6:
              that the deletion really is a prune.
     Rule 4   no two unit-test files share a `test.id`.
     Rule 5   every committed unit .ann.json is valid JSON.
-    Rule 6   no unsuppressed test in a run log THIS PR ADDS resolves to
+    Rule 6   no test in a run log THIS PR ADDS resolves to
              `fail` or `aborted`. Zero reds, not zero new reds: there is no
              carry list and no exemption, because "it was already red" is the
              excuse the rule exists to remove.
@@ -38,6 +38,8 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 8   every ``LLM: <a> → Junior: <b>`` header inside a unit
              .ann.json comment carries at most one header, and no header
              whose ``<b>`` disagrees with the entry's own corrected_score.
+    Rule 10  a touched skill's unit tests carry no `expected_outcome: xfail`
+             marker (warn-only under that skill's cosmetic-skip label).
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
@@ -84,10 +86,6 @@ TESTS_UNIT_DIR = REPO_ROOT / "eval" / "tests" / "unit"
 
 # Match `eval/runlogs/unit/<skill>/<file>.json`
 RUNLOG_PATH_RE = re.compile(r"^eval/runlogs/unit/([^/]+)/([^/]+\.json)$")
-
-# For the closed-owner lookup. Hard-coded rather than derived from the git remote:
-# a fork's `origin` points at the fork, whose issue numbers are not these.
-_REPO_SLUG = "PioneerAIAcademy/cowork-genealogy"
 
 # Match `packages/engine/plugin/agents/<name>.md` — a plugin agent prompt.
 # An agent edit gates every skill whose SKILL.md references `@plugin:<name>`
@@ -734,64 +732,8 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
 # and matches neither "fail" nor "pass" -- the exact exit-0-having-done-nothing
 # shape CLAUDE.md names.
 _RUN_OUTCOMES = frozenset({"pass", "partial", "fail", "aborted"})
-_GH_TIMEOUT_SECONDS = 20
-
-def closed_marker_owners(markers: dict[str, int], runner=subprocess.run) -> set[int]:
-    """-> the set of issues cited by an `xfail_reason` that are CLOSED.
-
-    Warn-only and **never raises**: it needs the network, so it is silently inert
-    with no `gh`, no token, or no connection. A gate that hard-fails on a GitHub
-    blip fails work the author was entitled to land.
-
-    It exists because a marker's stated removal condition can cite an issue that
-    is already closed, at which point the condition can never be met and nothing
-    notices. Three of the five live markers are in that state (#2173, #2030,
-    #1967), and `h4k`'s has been stale since 2026-09-02.
-    """
-    closed: set[int] = set()
-    for number in sorted(set(markers.values())):
-        try:
-            proc = runner(
-                ["gh", "api", f"repos/{_REPO_SLUG}/issues/{number}", "--jq", ".state"],
-                capture_output=True, text=True, encoding="utf-8",
-                timeout=_GH_TIMEOUT_SECONDS,
-            )
-            if proc.returncode == 0 and (proc.stdout or "").strip().upper() == "CLOSED":
-                closed.add(number)
-        except Exception:
-            # Blanket, and deliberate: no gh, no token, a 403, a timeout, a shape
-            # change -- all the same non-answer, and none the author's problem.
-            return set()
-    return closed
-
-
-def marker_owners(tests_root: Path) -> dict[str, int]:
-    """-> {test_id: issue number} for every committed `expected_outcome: xfail`
-    marker whose `xfail_reason` cites one. A marker citing no issue is not an
-    error here; it simply cannot be checked."""
-    owners: dict[str, int] = {}
-    for path in sorted(tests_root.rglob("*.json")):
-        try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-            continue
-        test = doc.get("test") or {}
-        if test.get("expected_outcome") != "xfail":
-            continue
-        m = re.search(r"#(\d{3,6})", str(test.get("xfail_reason") or ""))
-        if m and test.get("id"):
-            owners[test["id"]] = int(m.group(1))
-    return owners
-
-
-def rule6_outcomes(
-    skill: str,
-    log: dict,
-    filename: str,
-    closed_owners: set[int] | None = None,
-    marker_issues: dict[str, int] | None = None,
-) -> int:
-    """Rule 6 (blocking): no unsuppressed test in this run log resolves to
+def rule6_outcomes(skill: str, log: dict, filename: str) -> int:
+    """Rule 6 (blocking): no test in this run log resolves to
     `fail` or `aborted`.
 
     **Zero reds, not zero new reds** (lead ruling 2026-09-22, reversing the
@@ -808,10 +750,9 @@ def rule6_outcomes(
     function the runner uses, so the gate and `run_tests.py` cannot drift.
 
     `partial` never blocks (lead ruling 2026-09-18: "tests must pass, or
-    partial, consistently"). An `expected_outcome: xfail` marker declares a known
-    FAILURE, so it suppresses `fail` only: a suppressed test that aborts blocks,
-    because an abort is an ungraded run rather than evidence of the declared
-    defect, and one that passes warns as a stale-marker signal.
+    partial, consistently"). An `expected_outcome: xfail` marker suppresses
+    nothing: a marked test that fails is red like any other (lead, 2026-10-06:
+    "We no longer allow xfail"). Rule 10 is what makes the next editor remove it.
     """
     fails = 0
     for test in log.get("tests") or []:
@@ -838,29 +779,6 @@ def rule6_outcomes(
             continue
         agg = aggregate_per_run_outcome(per_run)
 
-        if test.get("expected_outcome") == "xfail":
-            if agg == "aborted":
-                gh_error(
-                    f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
-                    f"`expected_outcome: xfail` but ABORTED. A marker declares a "
-                    f"known failure; an abort is an ungraded run, not evidence of "
-                    f"it. Re-run, or fix the abort.",
-                )
-                fails += 1
-            elif agg == "pass":
-                owner = (marker_issues or {}).get(test_id)
-                stale = (
-                    f" Its removal condition cites issue #{owner}, which is CLOSED."
-                    if owner and owner in (closed_owners or set())
-                    else ""
-                )
-                gh_warning(
-                    f"skill `{skill}`: `{filename}` test `{test_id}` is marked "
-                    f"`expected_outcome: xfail` but PASSED. The marker may be "
-                    f"stale — check whether its removal condition is met.{stale}",
-                )
-            continue
-
         if agg in ("fail", "aborted"):
             gh_error(
                 f"skill `{skill}`: `{filename}` test `{test_id}` resolved to "
@@ -870,6 +788,51 @@ def rule6_outcomes(
             )
             fails += 1
     return fails
+
+
+def rule10_no_xfail_markers(skill: str, tests_dir: Path) -> int:
+    """Rule 10 (blocking): a skill this PR touches carries no
+    `expected_outcome: xfail` marker in `eval/tests/unit/<skill>/`.
+
+    Lead, 2026-10-06: "We no longer allow xfail. If you add a test you must make
+    sure it passes", and the markers already committed are removed "the next
+    time they edit the skill". This rule is that "next time": any PR that
+    touches the skill (and so already owes it a re-run under rule 2) must take
+    the marker off and make the test pass. It also blocks a new marker, since
+    adding one touches the skill.
+
+    With the skill's `eval-cosmetic-skip:<skill>` label it only warns: that label
+    says the edit needs no re-run, and removing a marker needs one.
+    """
+    marked: list[str] = []
+    for path in sorted(tests_dir.rglob("*.json")) if tests_dir.is_dir() else []:
+        try:
+            doc = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        test = doc.get("test") if isinstance(doc, dict) else None
+        if isinstance(test, dict) and test.get("expected_outcome") == "xfail":
+            marked.append(f"  - {_format_path(path)} (`{test.get('id', '<no id>')}`)")
+    if not marked:
+        return 0
+    listing = "\n".join(marked)
+    if cosmetic_skip_label(skill) in cosmetic_skip_labels():
+        gh_warning(
+            f"skill `{skill}`: {len(marked)} test(s) still carry "
+            f"`expected_outcome: xfail`. The cosmetic-skip label defers their "
+            f"removal to the next PR that re-runs this skill.\n" + listing,
+        )
+        return 0
+    gh_error(
+        f"skill `{skill}`: this PR touches the skill, and {len(marked)} of its "
+        f"test(s) still carry `expected_outcome: xfail`. Markers are no longer "
+        f"allowed: delete `expected_outcome` and `xfail_reason`, make the test "
+        f"pass, and include it in this PR's run log. If the fix belongs to "
+        f"another open issue, delete the test file instead (keep its scenario "
+        f"and fixtures) and add \"restore <test id> from git\" to that issue's "
+        f"done-when.\n" + listing,
+    )
+    return 1
 
 
 def rule5_annotations_parse(runlogs_dir: Path) -> int:
@@ -1388,16 +1351,9 @@ def main() -> int:
     fails += rule7_deletions(deleted_paths, added_by_skill)
 
     graded_logs = graded_tests = 0
-    # Only when there is something to grade. The lookup is network-bound, and a
-    # PR that adds no run log pays up to one `gh` call per marker for a warning it
-    # can never trigger.
-    marker_issues: dict[str, int] = {}
-    closed_owners: set[int] = set()
-    if added_by_skill:
-        marker_issues = marker_owners(TESTS_UNIT_DIR)
-        closed_owners = closed_marker_owners(marker_issues)
 
     for skill in sorted(touched_skills):
+        fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
         skill_dir = RUNLOGS_DIR / skill
         status, latest = resolve_latest_runlog(skill_dir)
         if status == "no_dir":
@@ -1444,9 +1400,7 @@ def main() -> int:
                 continue
             graded_logs += 1
             graded_tests += len(added_log.get("tests") or [])
-            fails += rule6_outcomes(
-                skill, added_log, added, closed_owners, marker_issues
-            )
+            fails += rule6_outcomes(skill, added_log, added)
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See

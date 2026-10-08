@@ -1,0 +1,4 @@
+Work on this project's open research question. Pick the two most promising records the
+project already cites or has staged and extract both now: hand each one to the
+record-extractor agent, one delegation per record, before you search for anything new.
+Then continue the normal GPS loop with whatever they return.

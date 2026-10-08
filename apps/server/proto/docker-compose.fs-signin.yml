@@ -1,6 +1,14 @@
 # U2: the FamilySearch sign-in round-trip on compose (docs/plan/familysearch-handoff.md, U2).
 #
+#   export SESSION_SECRET="$(openssl rand -hex 32)" FS_TOKEN_ENC_KEY="$(openssl rand -hex 32)"
 #   docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web
+#
+# Both secrets are required here (`:?`): with FamilySearch sign-in on, web/auth.py's
+# preflight refuses a default or empty one at any scheme, and compose refuses first. The
+# worker decrypts grants with the same FS_TOKEN_ENC_KEY, read from the environment of the
+# `up` that created it, and `make proto-grant` encrypts with the one in its own shell --
+# keep the one export for `make proto-up` and `make proto-grant` too, or every turn ends
+# signin_required (undecryptable).
 #
 # The dev key's only registered redirect is http://127.0.0.1:1837/callback
 # (packages/engine/mcp-server/src/auth/config.ts), so the web tier must answer on 1837.
@@ -22,3 +30,5 @@ services:
       PUBLIC_URL: http://127.0.0.1:1837
       WEB_ORIGIN: ${WEB_ORIGIN:-http://127.0.0.1:5173}
       FAMILYSEARCH_WEB_ENABLED: "true"
+      SESSION_SECRET: ${SESSION_SECRET:?export SESSION_SECRET (a random secret) for FamilySearch sign-in}
+      FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:?export FS_TOKEN_ENC_KEY (a random secret, the worker's too) for FamilySearch sign-in}

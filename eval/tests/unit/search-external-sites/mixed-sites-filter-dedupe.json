@@ -11,11 +11,12 @@
       "host-filter",
       "dedupe",
       "url-generation",
-      "log-site-ancestry"
+      "log-site-ancestry",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search Ancestry for Thomas Flynn's probate or will records in Schuylkill County, 1870 to 1890.",
+    "delegation": "Search Ancestry for Thomas Flynn's probate or will records in Schuylkill County, 1870 to 1890.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

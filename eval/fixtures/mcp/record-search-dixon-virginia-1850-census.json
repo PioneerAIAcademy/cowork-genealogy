@@ -1,0 +1,218 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search for Dixon surname in the 1850 Virginia census. Post-1850: multiple persons share a recordArk (same household). Includes a slave-schedule stub in a separate collection. totalMatches 5, under the 600 threshold.",
+  "args": {
+    "surname": "~Dixon",
+    "residenceYearFrom": 1850,
+    "residenceYearTo": 1850
+  },
+  "response": {
+    "query": {
+      "surname": "Dixon",
+      "recordType": "census",
+      "recordCountry": "United States",
+      "recordSubdivision": "Virginia",
+      "residenceYearFrom": 1850,
+      "residenceYearTo": 1850
+    },
+    "totalMatches": 5,
+    "paginationCappedAt": 4999,
+    "returned": 5,
+    "offset": 0,
+    "hasMore": false,
+    "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
+    "results": [
+      {
+        "personId": "XJQV-1850-A",
+        "recordId": "XJQV-1850-A",
+        "personName": "Edmund Dixon",
+        "score": 0.92,
+        "sex": "Male",
+        "birthDate": "1810",
+        "birthPlace": "Virginia",
+        "role": "Principal",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Edmund", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1810", "place": "Virginia" },
+                { "id": "F2", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Mary", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "P1", "person2": "P2" }
+          ]
+        }
+      },
+      {
+        "personId": "XJQV-1850-B",
+        "recordId": "XJQV-1850-B",
+        "personName": "Mary Dixon",
+        "score": 0.89,
+        "sex": "Female",
+        "birthDate": "1815",
+        "birthPlace": "Virginia",
+        "role": "Other",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1850-A",
+        "treeMatches": [],
+        "primaryId": "P2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Edmund", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1810", "place": "Virginia" },
+                { "id": "F2", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                { "id": "N2", "preferred": true, "given": "Mary", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F3", "type": "Residence", "date": "1850", "place": "Wheeling, Ohio, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": [
+            { "id": "R1", "type": "Couple", "person1": "P1", "person2": "P2" }
+          ]
+        }
+      },
+      {
+        "personId": "XJQV-1850-C",
+        "recordId": "XJQV-1850-C",
+        "personName": "William Dixon",
+        "score": 0.85,
+        "sex": "Male",
+        "birthDate": "1820",
+        "birthPlace": "Virginia",
+        "role": "Principal",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Rockingham, Virginia, United States" }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1850-C",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "William", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1820", "place": "Virginia" },
+                { "id": "F2", "type": "Residence", "date": "1850", "place": "Rockingham, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1850-D",
+        "recordId": "XJQV-1850-D",
+        "personName": "James Dixon",
+        "score": 0.82,
+        "sex": "Male",
+        "birthDate": "1825",
+        "birthPlace": "Virginia",
+        "role": "Principal",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Augusta, Virginia, United States" }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-HH1850-D",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "James", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Birth", "date": "1825", "place": "Virginia" },
+                { "id": "F2", "type": "Residence", "date": "1850", "place": "Augusta, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XJQV-1850-SL",
+        "recordId": "XJQV-1850-SL",
+        "personName": "Edmund Dixon",
+        "score": 0.78,
+        "sex": "Male",
+        "role": "Principal",
+        "events": [
+          { "type": "Residence", "date": "1850", "place": "Ohio, Virginia, United States" }
+        ],
+        "collectionId": "1420440",
+        "collectionTitle": "United States Census (Slave Schedule), 1850",
+        "recordArk": "ark:/61903/1:2:XJQV-SL1850-A",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                { "id": "N1", "preferred": true, "given": "Edmund", "surname": "Dixon", "type": "BirthName" }
+              ],
+              "facts": [
+                { "id": "F1", "type": "Residence", "date": "1850", "place": "Ohio, Virginia, United States" }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

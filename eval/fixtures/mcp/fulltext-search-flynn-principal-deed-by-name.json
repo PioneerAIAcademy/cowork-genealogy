@@ -1,0 +1,101 @@
+{
+  "tool": "fulltext_search",
+  "description": "Mirrors fulltext-search-flynn-principal-deed but matches the `name` field. Returns Thomas Flynn as grantor in a Schuylkill County land deed when the skill queries via the Name parameter instead of Keywords.",
+  "args": { "name": "~Flynn" },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "keywords": {
+        "type": "string",
+        "description": "Full-text search query with Lucene operators. Use + to require a term, - to exclude, \"...\" for phrase, * for wildcard (min 3 chars). Default is OR — always use + for required terms."
+      },
+      "name": {
+        "type": "string",
+        "description": "Search within name fields only. Same operator syntax as keywords."
+      },
+      "place": {
+        "type": "string",
+        "description": "Search within place fields. Note: place matches collection metadata and can cause false positives. Prefer post-filtering."
+      },
+      "nlQuery": {
+        "type": "string",
+        "description": "Natural language search query or a FamilySearch tree person ID."
+      },
+      "collectionId": {
+        "type": "string",
+        "description": "Filter to a specific FamilySearch collection by ID."
+      },
+      "imageGroupNumber": {
+        "type": "string",
+        "description": "Filter to a specific digitized volume by Image Group Number."
+      },
+      "yearFrom": {
+        "type": "number",
+        "description": "Start of year range filter. Must be paired with yearTo."
+      },
+      "yearTo": {
+        "type": "number",
+        "description": "End of year range filter. Must be paired with yearFrom."
+      },
+      "recordType": {
+        "type": "string",
+        "description": "Filter by record type."
+      },
+      "recordPlace0": {
+        "type": "string",
+        "description": "Filter by region."
+      },
+      "recordPlace1": {
+        "type": "string",
+        "description": "Filter by country (or state within US/Mexico/Canada/UK)."
+      },
+      "recordPlace2": {
+        "type": "string",
+        "description": "Filter by county."
+      },
+      "recordPlace3": {
+        "type": "string",
+        "description": "Filter by city."
+      },
+      "count": {
+        "type": "number",
+        "description": "Number of results to return. Default 5, max 100."
+      },
+      "offset": {
+        "type": "number",
+        "description": "Pagination offset. Default 0."
+      },
+      "includeFacets": {
+        "type": "boolean",
+        "description": "When true, include facet counts in the response. Default false."
+      },
+      "projectPath": {
+        "type": "string",
+        "description": "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle to pass to research_log_append as stagedResultsRef, so the results are retained without re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log."
+      }
+    }
+  },
+  "response": {
+    "query": { "name": "Flynn" },
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/1:1:QV9N-KX83",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed of Conveyance — Thomas Flynn to John McCarthy",
+        "recordDate": "1879",
+        "recordType": "Land",
+        "recordPlace": "Schuylkill, Pennsylvania",
+        "textDocument": "Know all men by these presents that Thomas Flynn of Branch Township Schuylkill County Pennsylvania for and in consideration of the sum of three hundred and fifty dollars to him in hand paid by John McCarthy of the same county the receipt whereof is hereby acknowledged hath granted bargained sold and conveyed unto the said John McCarthy a certain tract or parcel of land situate in Branch Township aforesaid bounded and described as follows To have and to hold the said tract or parcel of land with the appurtenances thereunto belonging to the only proper use benefit and behoof of the said John McCarthy his heirs and assigns forever. In witness whereof the said Thomas Flynn hath hereunto set his hand and seal the eighth day of June in the year of our Lord one thousand eight hundred and seventy nine.",
+        "names": ["Thomas Flynn", "John McCarthy"],
+        "places": ["Branch Township", "Schuylkill County", "Pennsylvania"],
+        "dates": ["1879"],
+        "highlightTerms": ["Flynn", "Thomas Flynn"]
+      }
+    ]
+  }
+}

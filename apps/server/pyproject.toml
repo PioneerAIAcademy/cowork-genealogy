@@ -73,6 +73,9 @@ proto-worker = [
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "spawns_subprocess: needs a subprocess-capable event loop (ProactorEventLoop on Windows)",
+]
 
 [tool.uv]
 package = false

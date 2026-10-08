@@ -142,7 +142,7 @@ def test_ledger_from_rows():
 
 def test_the_lock_has_a_namespace_of_its_own():
     """The text half; test_proto_migrate_pg's test 16 is the behaviour half."""
-    assert migrate.MIGRATE_LOCK_NS not in {grants.ATTEMPT_LOCK_NS, grants.WRITE_LOCK_NS}
+    assert migrate.MIGRATE_LOCK_NS not in {grants.ATTEMPT_LOCK_NS, grants.WRITE_LOCK_NS, grants.QUEUE_LOCK_NS}
     assert re.fullmatch(r"SELECT pg_advisory_xact_lock\(%s::int4, %s::int4\)", migrate.LOCK_SQL)
     source = Path(migrate.__file__).read_text(encoding="utf-8")
     assert "pg_advisory_lock(" not in source, "a session-level lock outlives the transaction"

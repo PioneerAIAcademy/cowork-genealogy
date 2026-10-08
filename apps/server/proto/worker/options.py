@@ -38,8 +38,9 @@ The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write under ``/proc``
 or ``/dev``, the turn's own process (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
-It never raises: any exception allows the call. The turn's identifiers reach it through
-a closure, never a global.
+It never raises. An exception in the deny rules allows the call; one in ``halt()`` halts it
+(U23: an unreadable Stop or spend cap must not let the run carry on). The turn's
+identifiers reach it through a closure, never a global.
 """
 
 from __future__ import annotations
@@ -52,6 +53,12 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from app.agent.continue_policy import (
+    DELEGATION_TOOLS,
+    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
+    delivered_stop_reason,
+    foreground_rewrite,
+    DELIVERY_GUIDANCE,
+    DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
     env_int,
@@ -331,6 +338,14 @@ def _deny(reason: str) -> dict[str, Any]:
 # executed on a just-revoked token), so the halt also denies the call it fires on.
 STOP_REASON = "Stopped by the researcher."
 
+# U23: halt() could not read the store, so Stop, the handover and the spend cap cannot be
+# checked; the attempt raises StoreUnavailable (500) and the redelivery reads them fresh.
+STORE_UNAVAILABLE_REASON = (
+    "A server problem is keeping this run from checking for a Stop or its spend limit, so "
+    "it is stopping here and will pick up again shortly. Findings already written to the "
+    "project are kept."
+)
+
 # 1b. The turn ends so the patron's message becomes the next one. Text the MODEL reads as
 # the turn closes, so the transcript says why it stopped rather than ending mid-thought.
 HANDOVER_REASON = (
@@ -342,63 +357,15 @@ HANDOVER_REASON = (
 # MODEL reads as the turn ends -- so the transcript says what happened rather than
 # stopping mid-thought.
 SPEND_CAP_REASON = (
-    "This session has reached its ${cap:.0f} spend limit and is stopping here. "
+    "This session has reached its ${cap:g} spend limit and is stopping here. "
     "Everything found so far is saved. Start a new session on the same project to carry on."
 )
 
-
-# The carrier for "I delivered what you asked". Deliberately NOT AskUserQuestion -- an ask
-# has `questions` and waits for an answer, a delivery waits for nothing, and one tool
-# carrying both leaves this hook with no discriminator.
-DELIVERED_TOOL = "mcp__genealogy__research_delivered"
-
-# When to reach for it. This rides the per-turn system prompt, NOT the skill bodies: the
-# hook that makes this tool end a turn exists only here, so a skill-body rule would teach
-# every skill to call a tool that is inert in Cowork and in the harness that grades them.
-#
-# Both exclusions are load-bearing. Calling it when the OBJECTIVE is finished would report
-# `delivered` where `completed` is true and the run ends on its own. Calling it instead of
-# asking would swallow a question nobody answers -- an ask waits, a delivery does not.
-DELIVERY_GUIDANCE = (
-    "When this message asked for one bounded thing and you have produced it, WRITE YOUR "
-    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
-    "researcher -- then call "
-    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
-    "asked you to stop after, a single record or lookup, or a status question such as "
-    "\"where are we?\". Do not call it when the project's research objective itself is "
-    "finished -- that run ends on its own -- and do not call it in place of asking the "
-    "researcher a question, which waits for their answer. Its schema is deferred, so "
-    "search for it by name if you do not already hold it."
-)
-
-DELIVERED_REASON = (
-    "You have delivered what this message asked for. Stopping here rather than carrying "
-    "on; your next message picks up from here."
-)
 
 
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason, **_deny(reason)}
 
-# Delegation tools whose `run_in_background` the worker overrides. The worker ends a turn at
-# the main thread's ResultMessage and closes the CLI, so a background agent still running
-# then dies with it -- measured 2026-09-23 (plan D17: both background extractors lost, the
-# patron told their summaries would follow). Forcing the foreground keeps parallelism: several
-# Agent calls in one message still run concurrently. Lead ruling 2026-09-23, reaffirmed as the
-# design 2026-09-29. Every call that is not explicitly `False` is rewritten: CLI 2.1.220 runs an
-# agent in the background when the flag is absent, and the two extractors lost on 2026-09-21
-# (sess_25297de9b15b4ef5) carried no flag at all.
-DELEGATION_TOOLS = frozenset({"Agent", "Task"})
-
-
-def _foregrounded(tool_input: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "allow",
-            "updatedInput": {**tool_input, "run_in_background": False},
-        },
-    }
 
 
 def make_pretool_hook(
@@ -412,6 +379,7 @@ def make_pretool_hook(
     blocked: frozenset[str] = frozenset(),
     halt: Callable[[], str | None] | None = None,
     on_delivered: Callable[[], None] | None = None,
+    on_halt_failed: Callable[[], None] | None = None,
 ):
     """The worker's ``PreToolUse`` callback. ``config_root`` may be a callable because
     the directory the CLI actually runs in is known only after ``connect()`` on a
@@ -424,7 +392,12 @@ def make_pretool_hook(
     button wired to the Stop hook would take 53 minutes to answer.
 
     A halted call is recorded as a ``tool_calls`` row like any other, with decision
-    ``halt``, so the audit trail shows where the turn was cut."""
+    ``halt``, so the audit trail shows where the turn was cut.
+
+    A ``halt()`` that raises HALTS with ``STORE_UNAVAILABLE_REASON``, logs
+    ``ev=halt_failed`` and calls ``on_halt_failed()`` (U23). The worker's halt classifies
+    each clause's error itself; this is the last resort, and allowing here is what let Stop
+    and the spend cap fail open during an outage."""
 
     async def _pretool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         decision, reason = "allow", None
@@ -436,8 +409,18 @@ def make_pretool_hook(
         try:
             if halt is not None:
                 stop_now = halt()
-        except Exception:  # noqa: BLE001 - a hook that raises fails a call the user was entitled to make
-            stop_now = None
+        except Exception as exc:  # noqa: BLE001 - halts: the call may be one Stop or the cap forbids
+            stop_now = STORE_UNAVAILABLE_REASON
+            if log is not None:
+                log(ev="halt_failed", turn_id=turn_id, tool_name=tool_name,
+                    error=f"{type(exc).__name__}: {exc}")
+            if on_halt_failed is not None:
+                try:
+                    on_halt_failed()
+                except Exception as cb_exc:  # noqa: BLE001 - the halt stands either way
+                    if log is not None:
+                        log(ev="halt_failed_report_failed", turn_id=turn_id,
+                            error=f"{type(cb_exc).__name__}: {cb_exc}")
         if stop_now is not None:
             try:
                 record({
@@ -462,11 +445,13 @@ def make_pretool_hook(
         #
         # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
         # session's tool set, so without this a record-extractor saying "delivered" would
-        # end the researcher's whole turn. `agent_id` is tested for MEMBERSHIP, not
-        # truthiness: it is absent as a KEY on the main thread, and `agent_type` alone is
-        # not sufficient because it is present on the main thread of a session started
-        # with `--agent`. That is the discriminator the shipped plugin hook already uses
-        # (`owner_denied`, hooks/guard_project_files.py), reused rather than re-derived.
+        # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
+        # stop the parent, 3 of 3 on compose). `agent_id` is tested for
+        # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
+        # `agent_type` alone is not sufficient because it is present on the main thread of
+        # a session started with `--agent`. That is the discriminator the shipped plugin
+        # hook already uses (`owner_denied`, hooks/guard_project_files.py), reused rather
+        # than re-derived.
         # A subagent's call falls through to ordinary handling, where the tool returns its
         # harmless acknowledgement and the run carries on.
         if tool_name == DELIVERED_TOOL and "agent_id" not in data:
@@ -501,10 +486,10 @@ def make_pretool_hook(
                 log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
                     tool_use_id=tool_use_id, summary=summary)
             # Summary FIRST: the browser replaces the chip with the result text cut at
-            # 160 chars, and DELIVERED_REASON alone is 157 -- appended, the summary is
-            # lost. What the researcher most needs to see leads.
-            return _halt(f"Delivered: {summary} {DELIVERED_REASON}" if summary
-                         else DELIVERED_REASON)
+            # 160 chars, and DELIVERED_REASON alone is 124 (re-measured 2026-10-06; the
+            # comment said 157). Appended rather than prepended, the reason eats most of
+            # the window and the summary is cut. What the researcher most needs leads.
+            return _halt(delivered_stop_reason(summary))
         try:
             protected = direct_project_file_write(tool_name, tool_input)
             if protected:
@@ -539,10 +524,13 @@ def make_pretool_hook(
             if log is not None:
                 log(ev="deny", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id, reason=reason)
             return _deny(reason or "denied")
-        if tool_name in DELEGATION_TOOLS and tool_input.get("run_in_background") is not False:
+        # The PREDICATE lives in the shared helper too, not just the rewrite. Restating
+        # it here left the sharing half-done: removing the explicit-False exemption
+        # inside `foreground_rewrite` failed a test on the alpha and none here.
+        if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
             if log is not None:
                 log(ev="foregrounded", turn_id=turn_id, tool_name=tool_name, tool_use_id=tool_use_id)
-            return _foregrounded(tool_input)
+            return rewritten
         return {}
 
     return _pretool
@@ -646,12 +634,19 @@ def make_stop_hook(
 
     async def _stop(_input_data: Any, _tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         try:
+            # `stopped` is should_continue_run's first clause, so it is asked first: a
+            # halted turn (U23: one whose store is down among them) allows the stop
+            # without the two reads below.
+            if ask(stopped):
+                if on_allow is not None:
+                    on_allow(TERMINAL_STOPPED)
+                return {}
             count = int(tool_count())
             verdict = dict(
                 research=research(),
                 nudges_used=state["nudges_used"],
                 max_nudges=max_nudges,
-                stopped=ask(stopped),
+                stopped=False,
                 pending_user_message=ask(pending_user_message),
                 pending_decision=ask(pending_decision),
             )

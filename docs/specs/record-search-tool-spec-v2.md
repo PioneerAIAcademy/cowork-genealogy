@@ -386,8 +386,10 @@ reads the record.
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
 `matchConfidence`, `candidateFactCount` and the `attachedTo*` flags — and the
-list is ordered **best first**. `ranked` carries metadata only; it has no row
-list of its own. There is one set of rows, never two.
+list is ordered **best first**. `ranked` carries metadata only (plus
+`subjectTooThin: true` when the subject lacks both a narrow date and a named
+relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has
+no row list of its own. There is one set of rows, never two.
 
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.
 Sorting by match score discards FamilySearch's own ordering, so without the
@@ -542,7 +544,8 @@ settling for this note to be correct.
 
 **The nil note's wording is load-bearing.** `negative` records what the search
 returned, never that the record is absent — this spec's own consumers say so at
-`search-records/SKILL.md:223`, `:72` and `:593` — and the note reaches an agent that
+`packages/engine/plugin/skills/search-records/SKILL.md` §"MCP tools and routing",
+§"2. Construct the search query" and §"8. Handle nil results" — and the note reaches an agent that
 by construction has read none of them.
 
 Both are advisory: no deny, no error, no changed exit path. Both are withheld from
@@ -694,8 +697,12 @@ this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
 and the hint deliberately fires on both. One is a scoreable subject against a pool
-that holds no match (a real negative). The other is a subject too thin to
-discriminate — no dated or placed fact — where the scores are noise. Those two
+that holds no match (a real negative). The other is a subject with no dated or
+placed fact, which cannot be discriminated, so the scores are noise. (That is
+not the `subjectTooThin` flag, which is a separate test: neither strictly
+contains the other — a subject with a named spouse but no facts fires the
+withholding branch without the flag, and a city-only subject gets the flag
+without firing the branch.) Those two
 need opposite responses from the caller *about the ranking*, but they want the same
 response here, and the thin-subject case may be the more valuable of the two: in
 genealogy you often cannot enrich the subject, because not knowing the missing
@@ -1927,7 +1934,7 @@ npx @modelcontextprotocol/inspector node build/index.js
 
 ### Manual Layers 3 + 4 (Cowork via WSL2 + native Windows)
 Standard end-to-end testing per `docs/testing-guides/oauth-tool-testing-guide.md`
-template. Detailed playbook in `docs/testing-guides/search-tool-testing-guide.md`.
+template.
 
 ---
 
@@ -1989,6 +1996,6 @@ the headline changes:
 19. **Browser User-Agent header** required (WAF) — same constant
     as `collections_search`.
 
-Everything in this spec is grounded in evidence from probe scripts
-under `packages/engine/mcp-server/dev/probe-svc-*.ts` (run April 30 – May 4,
-2026, ~170 queries total).
+Everything in this spec is grounded in evidence from the `probe-svc-*.ts` probe
+scripts (run April 30 – May 4, 2026, ~170 queries total; removed with the other
+unused probes before the move to `packages/engine/`).

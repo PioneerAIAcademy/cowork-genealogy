@@ -61,7 +61,9 @@ summaries) is 0. Run it with ``FS_GRANT_REFRESH_AGE_S=0`` on the web tier.
 
 Every real-turn arm first checks that the dev-login patron has a usable grant
 (``require_grant``) and exits 2 naming ``make proto-grant`` when not: without it a missing
-grant shows only as a ``signin_required`` turn.
+grant shows only as a ``signin_required`` turn. Every arm that gives up on a turn it posted --
+a miss, a timeout, a failed docker call or DB read, ^C before turn_done -- POSTs
+``/interrupt`` first (U23), so no billed turn is left running.
 
 Whatever the checks say, an evidence block follows ``turn_done``: the ``turns`` row, the
 ``tool_calls`` and ``session_entries`` rows written after the kill (the CLI's own words
@@ -73,6 +75,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -106,25 +109,46 @@ REAUTH_ENTRY = re.compile(r"call the login tool|Reconnect FamilySearch", re.I)
 
 
 # U2: every /api/sessions route needs a signed-in patron. The scripts sign in through
-# dev-login, which the tier offers only while FamilySearch sign-in is off and PUBLIC_URL is
-# http -- the default compose stack. Distinct emails are distinct patrons.
+# dev-login, which the tier offers only with DEV_LOGIN=true, FamilySearch sign-in off and
+# PUBLIC_URL http -- the default compose stack. Distinct emails are distinct patrons.
 DEV_LOGIN_EMAIL = "dev@localhost"
+# U13: a deployed web tier has no dev-login; a driver signs in with the operator's own
+# ``wb_session`` cookie, read from this file (0600, never argv) when set.
+COOKIE_FILE_ENV = "PROTO_SESSION_COOKIE_FILE"
+SESSION_COOKIE = "wb_session"
+
+
+def read_cookie_file(path: str) -> str:
+    """The cookie value in ``path``: the bare value, or ``wb_session=<value>``."""
+    raw = Path(path).read_text(encoding="utf-8").strip()
+    value = raw.split("=", 1)[1] if raw.startswith(f"{SESSION_COOKIE}=") else raw
+    if not value or any(c.isspace() or c == ";" for c in value):
+        raise ValueError(f"{path} holds no single {SESSION_COOKIE} value")
+    return value
 
 
 def signed_in_client(
-    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None
+    base: str, email: str = DEV_LOGIN_EMAIL, *, timeout: float = 30.0, transport: httpx.BaseTransport | None = None,
+    cookie_file: str | None = None,
 ) -> httpx.Client:
     """An UNOPENED ``httpx.Client`` on ``base`` holding a dev-login session cookie, usable
     with or without ``with``. It takes absolute URLs (``f"{base}/api/..."``) and relative
     ones alike. The login goes through its own short-lived client: a client that has sent
     a request refuses ``__enter__``, so logging in on the returned one broke every
-    ``with signed_in_client(...)``. ``transport`` is for tests."""
+    ``with signed_in_client(...)``. ``transport`` is for tests. With ``cookie_file`` (or
+    ``$PROTO_SESSION_COOKIE_FILE``) it carries that session instead and never posts to
+    dev-login (U13: a deployed tier signs in only through FamilySearch)."""
     extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    cookie_file = cookie_file or os.environ.get(COOKIE_FILE_ENV) or None
+    if cookie_file:
+        return httpx.Client(base_url=base, timeout=timeout,
+                            cookies={SESSION_COOKIE: read_cookie_file(cookie_file)}, **extra)
     with httpx.Client(base_url=base, timeout=timeout, **extra) as login:
         r = login.post("/auth/dev-login", json={"email": email})
         if r.status_code == 403:
             raise RuntimeError(
-                f"dev-login is disabled at {base} (FamilySearch sign-in is on, or PUBLIC_URL is https); "
+                f"dev-login is disabled at {base} (DEV_LOGIN is not true, FamilySearch sign-in is on, "
+                "or PUBLIC_URL is https); "
                 "run the scripts against the default stack, not docker-compose.fs-signin.yml"
             )
         r.raise_for_status()
@@ -136,6 +160,17 @@ def post_message(client: httpx.Client, base: str, session_id: str, text: str) ->
     r = client.post(f"{base}/api/sessions/{session_id}/messages", json={"text": text})
     r.raise_for_status()
     return r.json()["turn_id"]
+
+
+def interrupt(client: httpx.Client, base: str, session_id: str) -> str | None:
+    """POST /interrupt (Stop) on a session, so a turn a driver gave up on does not run on
+    billed; None on the 202, else what went wrong. Never raises: it runs on paths that are
+    already failing (U23)."""
+    try:
+        r = client.post(f"{base}/api/sessions/{session_id}/interrupt")
+    except Exception as exc:  # noqa: BLE001
+        return f"{type(exc).__name__}: {exc}"
+    return None if r.status_code == 202 else f"HTTP {r.status_code}"
 
 
 def wait_turn_done(client: httpx.Client, base: str, session_id: str, turn_id: str, deadline_s: float) -> tuple[int, float]:
@@ -282,7 +317,11 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
             turn1, seq1, wall1 = post_and_wait(client, base, session_id, TEXT_1, deadline_s)
         except Exception as exc:  # noqa: BLE001 - a timeout is a FAIL, not a crash
             checks.append(("turn 1 reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            interrupt(client, base, session_id)
             return checks, figures
+        except BaseException:  # ^C: Stop the turn, then exit
+            interrupt(client, base, session_id)
+            raise
         checks.append(("turn 1 reached turn_done", True, f"{wall1:.0f}s"))
         figures["turn1"] = {"turn_id": turn1, "wall_s": round(wall1, 1)}
 
@@ -314,7 +353,11 @@ def run(base: str, dsn: str, deadline_s: float, email: str = DEV_LOGIN_EMAIL) ->
             turn2, seq2, wall2 = post_and_wait(client, base, session_id, TEXT_2, deadline_s)
         except Exception as exc:  # noqa: BLE001
             checks.append(("turn 2 reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+            interrupt(client, base, session_id)
             return checks, figures
+        except BaseException:  # ^C: Stop the turn, then exit
+            interrupt(client, base, session_id)
+            raise
         checks.append(("turn 2 reached turn_done", True, f"{wall2:.0f}s"))
         figures["turn2"] = {"turn_id": turn2, "wall_s": round(wall2, 1)}
 
@@ -366,6 +409,8 @@ class KillSpec:
     # U3: wait, between the kill and the start, for the web tier to refresh the grant, and
     # check the resumed attempt bore the new one (no reauth anywhere).
     expect_grant_refresh: bool = False
+    # U13: a DeployedTarget signals the worker over SSM instead of docker.
+    deployed: Any = None
 
     @property
     def target(self) -> str:
@@ -698,41 +743,59 @@ def run_kill(
         project_id = one(dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
         turn_id = post_message(client, base, session_id, spec.text)
         figures["turn_id"] = turn_id
-        if spec.kill_on_input:
-            outcome = wait_for_tool_input(dsn, session_id, turn_id, spec.kill_on, spec.kill_on_input, deadline_s)
-            missed = "the turn finished without one" if outcome == "completed" else "no matching tool_use block in time"
-        else:
-            outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
-            missed = "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"
-        checks.append((f"kill: the turn reached its first {spec.target} call", outcome == "seen", missed))
-        if outcome != "seen":
-            return checks, figures
-        if spec.kill_after_s > 0:
-            time.sleep(spec.kill_after_s)
-        sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
-        entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
-        marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
-        grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
-        grant_refreshed: bool | None = None
-        t_kill = time.monotonic()
-        if spec.kill_signal == "term":
-            docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
-        else:
-            docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
-            if spec.expect_grant_refresh:
-                # No attempt is live now, so the web tier's loop may refresh -- and revoke the
-                # token the killed attempt bore. The redelivery must bear the new one.
-                grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
-                figures["grant_refreshed"] = grant_refreshed
-            docker("start", spec.container)
-        figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
-                        "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
+        # U23: whatever leaves this block before turn_done -- a failed docker call, a DB
+        # error, ^C during a wait -- Stops the turn first; the misses below do it themselves.
         try:
-            _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
-        except Exception as exc:  # noqa: BLE001
-            checks.append(("kill: the redelivered turn reached turn_done", False, f"{type(exc).__name__}: {exc}"))
-            print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
-            return checks, figures
+            if spec.kill_on_input:
+                outcome = wait_for_tool_input(dsn, session_id, turn_id, spec.kill_on, spec.kill_on_input, deadline_s)
+                missed = "the turn finished without one" if outcome == "completed" else "no matching tool_use block in time"
+            else:
+                outcome = wait_for_tool_call(dsn, turn_id, spec.kill_on, deadline_s)
+                missed = "the turn finished without one" if outcome == "completed" else "no tool_calls row in time"
+            checks.append((f"kill: the turn reached its first {spec.target} call", outcome == "seen", missed))
+            if outcome != "seen":
+                # U23: a miss leaves the turn running billed until its own end (a probe turn
+                # under the Stop hook can run an hour); Stop it.
+                interrupt(client, base, session_id)
+                return checks, figures
+            if spec.kill_after_s > 0:
+                time.sleep(spec.kill_after_s)
+            sdk_before = one(dsn, "SELECT sdk_session_id FROM sessions WHERE session_id = %s", (session_id,))
+            entries_at_kill = one(dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",))
+            marks = take_marks(dsn, session_id, turn_id, sdk_before, project_id)
+            grant_before = one(dsn, GRANT_START_SQL, (project_id,)) if spec.expect_grant_refresh else None
+            grant_refreshed: bool | None = None
+            t_kill = time.monotonic()
+            if spec.deployed is not None and spec.kill_signal == "term":
+                spec.deployed.signal("worker", "term")  # systemd: SIGTERM, then SIGKILL after 90 s
+            elif spec.kill_signal == "term":
+                docker("restart", "-t", "30", spec.container)  # SIGTERM, then SIGKILL after 30 s (the compose stop grace)
+            else:
+                if spec.deployed is not None:
+                    spec.deployed.signal("worker", "kill")
+                else:
+                    docker("kill", spec.container)  # counts as a manual stop: unless-stopped will not restart it
+                if spec.expect_grant_refresh:
+                    # No attempt is live now, so the web tier's loop may refresh -- and revoke the
+                    # token the killed attempt bore. The redelivery must bear the new one.
+                    grant_refreshed = wait_grant_refresh(dsn, project_id, grant_before)
+                    figures["grant_refreshed"] = grant_refreshed
+                if spec.deployed is not None:
+                    spec.deployed.signal("worker", "start")
+                else:
+                    docker("start", spec.container)
+            figures.update({"sdk_session_id": sdk_before, "entries_at_kill": entries_at_kill, "kill_on": spec.target,
+                            "kill_after_s": spec.kill_after_s, "kill_signal": spec.kill_signal})
+            try:
+                _seq, _wall = wait_turn_done(client, base, session_id, turn_id, deadline_s)
+            except Exception as exc:  # noqa: BLE001
+                checks.append(("kill: the redelivered turn reached turn_done", False, f"{type(exc).__name__}: {exc}"))
+                interrupt(client, base, session_id)
+                print(render_evidence(gather_evidence(dsn, session_id, turn_id, sdk_before, project_id, marks)))
+                return checks, figures
+        except BaseException:
+            interrupt(client, base, session_id)
+            raise
         figures["wall_after_kill_s"] = round(time.monotonic() - t_kill, 1)
         checks.append(("kill: the redelivered turn reached turn_done", True, ""))
         row = db(dsn, "SELECT receive_count, completed_at, outcome, cost_usd FROM turns WHERE turn_id = %s", (turn_id,))
@@ -799,6 +862,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--kill", action="store_true", help="D14: one turn killed at its first --kill-on call, redelivered and resumed")
     p.add_argument("--session", default=None, help="with --kill: run on this session (proto/seed.py) instead of a fresh one")
     p.add_argument("--worker-container", default="proto-worker")
+    p.add_argument("--target", choices=("compose", "deployed"), default="compose",
+                   help="--kill: signal compose's worker container, or U13's Beanstalk worker over SSM")
+    p.add_argument("--profile", default=None, help="--target deployed: the aws CLI profile")
     p.add_argument("--kill-on", default=KILL_TOOL,
                    help=f"with --kill: the bare tool name whose PreToolUse row triggers the kill (default {KILL_TOOL}; "
                         "Agent lands it during a delegation)")
@@ -835,10 +901,18 @@ def kill_spec(args: argparse.Namespace) -> KillSpec:
         raise ValueError(f"--kill-after-s must be >= 0, not {args.kill_after_s}")
     if args.expect_grant_refresh and args.kill_signal == "term":
         raise ValueError("--expect-grant-refresh needs --kill-signal kill: a restart leaves no gap to refresh in")
+    deployed = None
+    if getattr(args, "target", "compose") == "deployed":
+        here = str(Path(__file__).resolve().parent)
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import target
+
+        deployed = target.DeployedTarget(profile=args.profile)
     return KillSpec(kill_on=args.kill_on, kill_after_s=args.kill_after_s, text=text,
                     kill_on_input=parse_input_selector(args.kill_on_input),
                     session_id=args.session, container=args.worker_container, kill_signal=args.kill_signal,
-                    expect_grant_refresh=args.expect_grant_refresh)
+                    expect_grant_refresh=args.expect_grant_refresh, deployed=deployed)
 
 
 def main(argv: list[str] | None = None) -> int:

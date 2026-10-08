@@ -43,10 +43,10 @@ Reviewed by Dallan / Richard (see §4).
 
 ## 1. Why this exists
 
-Today the `tree-edit` skill (`packages/engine/plugin/skills/tree-edit/SKILL.md`, "Person
-merging") performs a merge **by hand** — the LLM is instructed to dedup names,
+The `tree-edit` skill (`tree-edit/SKILL.md` §"Person merging" at `d0915210`)
+performed a merge **by hand** — the LLM was instructed to dedup names,
 dedup facts, repoint relationships, and delete the deprecated person (Steps
-1–5). That is error-prone (ID collisions, missed references). This spec replaces the
+1–5). That was error-prone (ID collisions, missed references). This spec replaces the
 hand-done merge with one **deterministic function** so the result is reliable
 and testable. The requirement: *"Make sure that the tree-edit tool calls that
 function."*
@@ -87,7 +87,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
 | `gedcomx-convert.ts` exports `toSimplified`/`toGedcomX` (+ `collectFacts`/`standardizePlaces`/`toSimplifiedStandardized`) — **no ID-remap or dedup helper there** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
 | The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — the §5b tool wrappers are shipped | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
-| The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
+| The hand-done merge protocol this replaces | `tree-edit/SKILL.md` §"Person merging" at `d0915210` |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
 to the source issue as an *ideas* reference — explicitly **not** a straight port. The exact

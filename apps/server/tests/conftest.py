@@ -76,5 +76,11 @@ if sys.platform == "win32":
     def pytest_asyncio_loop_factories(config, item):
         """psycopg's async connection refuses Windows' default ProactorEventLoop with an
         InterfaceError before it connects, so every PgStore probe would report that
-        instead of what the test set up. Production runs on Linux, where this is moot."""
+        instead of what the test set up. Production runs on Linux, where this is moot.
+        A SelectorEventLoop cannot spawn subprocesses on Windows (`NotImplementedError`,
+        empty message), so a test that starts a process must carry `spawns_subprocess`.
+        Always return a non-empty mapping: `None` is a `UsageError`, and two entries run
+        the test twice."""
+        if item.get_closest_marker("spawns_subprocess"):
+            return {"proactor": asyncio.ProactorEventLoop}
         return {"selector": asyncio.SelectorEventLoop}

@@ -70,6 +70,74 @@ That validator is not redundant with `test_routes_to_expected_skill`, which
 asserts only the first hand-off. A router that calls `Skill(question-selection)`
 first and *then* spawns `@plugin:proof-conclusion` passes it green.
 
+## Bounded requests (issue #2813)
+
+`ut_research_019` (`open-ask-still-a-job.json`) and `ut_research_020`
+(`bounded-ask-not-a-job.json`) pin the two directions of the "Bounded request or
+job" section: an open ask must still walk the routing table, and a bounded ask
+must not enter the question/plan chain. They are paired deliberately — neither
+passes a body that classifies everything one way.
+
+**Both are deterministic, and both were briefly not.** Each carries a `routes-to:`
+tag and so fires `test_routes_to_expected_skill`, which reads hook records rather
+than the model's narration: 019 `routes-to:question-selection`, 020
+`routes-to:image-reader`. 020 was first written with the `routing` tag and no
+`routes-to:` tag — the one combination that validator *skips* (`test_research.py:58`),
+and a skipped validator records `passed=True`. It was therefore judge-only while
+three places (this README, the commit message, the plan) claimed it was
+deterministic. Nothing lints for that, which is why it is written down here.
+image-reader is 020's destination because its own description owns "transcribe this
+register page" / "OCR this scan", and the router holds no `image_transcribe`, so
+doing it inline is not available.
+
+`ut_research_021` (`attached-before-searching.json`) covers the third rule in that
+section, "Start from what is already attached" (issue #2813 item 4). Cornelius
+Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request
+for a death record asks for something the project has; reading and reporting it is
+the pass, and searching for it — by an MCP call *or* by a hand-off to a search step —
+is the failure. Deterministic, via the `attached-first` tag and
+`test_reads_attachments_before_searching`, which reads the MCP call log and the
+hand-off list so a turn that only narrates having checked cannot pass.
+
+**This one needed a fixture to exist at all, and that is the general rule.** Neither
+`person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock
+registers a tool outside that set *only* for a test that declares a fixture for it
+(`mock_mcp.py:1094`). Before this test no research test declared one, so the rule was
+unexercisable and a body ignoring it passed every test in the suite. It also needed a
+NEW fixture rather than the existing `person-read-driscoll-attached-sources.json`:
+that one's predicate requires `sourceDescriptions: true`, and `matches()` demands
+every predicate key be present (`harness/fixtures.py:93`), so a router omitting that
+optional argument would have matched nothing and been refused — the wrong failure for
+a test about whether the router looks before it searches.
+
+`ut_research_022` (`candidates-not-verdicts.json`) covers item 6, and is **judge-graded
+on purpose** — which is a different thing from 020's accident. Every part of that rule
+is a property of the reply: whether a name match was presented as an answer, whether
+match strength and search scope were given, and whether the closing offer is to research
+further rather than to extract or attach. None of that appears in a hook record or a
+call log. A deterministic check here could only assert something that cannot fail, and
+CLAUDE.md is explicit that such a check is worse than none. The suite's "routing is not
+yours to grade" rule constrains ROUTING; reply quality is what the judge is for. The
+distinction worth holding on to: 020 was judge-only because a gate tag silently skipped
+its validator, and nobody could see it; 022 says so in its own description and here.
+
+`ut_research_023` (`autonomous-is-always-a-job.json`) guards the e2e corpus against
+this whole section. Every e2e run enters as `/research --autonomous {question}`, so
+every run reads it, and 63 of the 136 committed e2e fixtures ask a question whose
+SHAPE is on the bounded list. Without the `--autonomous` carve-out the router would
+deliver one answer and stop on those. Its message deliberately omits the leading
+`/research`: `skills_invoked` is filled only by a `Skill` tool call, so a slash entry
+grades a positive test `fail` whatever the router does (issue #3116, fix PR #3146 open).
+Restore the prefix once that lands and this becomes the e2e entry form exactly.
+
+**What they do NOT cover, and cannot:** that a bounded turn ends with the
+`delivered` outcome. `research_delivered` is not in this harness's `LIVE_TOOLS` and
+no Stop hook binds here, so the outcome is unobservable in a unit test regardless of
+which plane implements it. Both hosted planes now halt on the signal — the prototype
+via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
+`should_continue_run(delivered=...)` — and that half is covered by
+`apps/server/tests/test_alpha_stop_hook.py`, not here.
+
 ## Moved negatives (issue #2268)
 
 `ut_research_016` (negative-research-plan.json) and `ut_research_017`

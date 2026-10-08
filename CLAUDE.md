@@ -412,7 +412,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-six other agents also carry no line — `search-wikipedia` is the one whose
+seven other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 
@@ -684,6 +684,8 @@ check is its own ground truth — `eval/harness/e2e/guardrail_shadow_report.py`.
 When the bug is the **second** instance of a class already fixed, write one
 shared guard, not a second one-off — the `encoding="utf-8"` AST lint replaced
 per-line greps for exactly this reason.
+
+Prove the guard **emits** on a planted defect, not just that it exits non-zero — a log-line-only guard and a broken guard both produce the same empty output (lead, 2026-09-25).
 
 ### A ruling binds only while its premises hold
 

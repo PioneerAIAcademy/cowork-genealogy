@@ -44,6 +44,12 @@ from pathlib import Path
 
 from .continue_policy import (
     CONTINUE_REASON,
+    DELEGATION_TOOLS,
+    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
+    DELIVERED_TOOL,
+    delivered_stop_reason,
+    foreground_rewrite,
+    DELIVERY_GUIDANCE,
     env_int,
     read_research_json,
     should_continue_run,
@@ -232,8 +238,10 @@ _EXFIL_GUARD_TOOLS = ("Bash",)
 _PRETOOL_MATCHER = "|".join(
     (
         # Anchored, so a search cannot bind a tool that merely CONTAINS one of
-        # these names. Three constants, not two.
-        "^(" + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS)) + ")$",
+        # these names. FOUR constants: DELEGATION_TOOLS joined with the foreground arm.
+        "^("
+        + "|".join((*_FILE_WRITE_TOOLS, *_EXFIL_GUARD_TOOLS, *sorted(DELEGATION_TOOLS)))
+        + ")$",
         # Trailing `$`: the tail is compared WHOLE. Without it the pattern also
         # bound `*device_commit_files_v2` spellings, which this hook can deny
         # nothing about - the last 8 over-matches of the 136 spellings measured
@@ -415,6 +423,21 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
             },
         }
 
+    # Run every delegation in the FOREGROUND. Not a deny: the call is allowed and
+    # its input rewritten, so this is the one arm here that changes a call rather
+    # than refusing it. Without it the Stop hook nudges a turn that is waiting on
+    # its own background subagent, and the model answers the nudge by spawning a
+    # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
+    # rewritten, because CLI 2.1.220 backgrounds an agent when the flag is absent
+    # and the measured incidents carried no flag at all.
+    # Shared with the prototype: one predicate, one rewrite, so a mutation in either
+    # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
+    # turn, and this file's own doctrine is that an inert arm looks identical to a
+    # working one.
+    if (rewritten := foreground_rewrite(tool_name, tool_input)) is not None:
+        _log(f"[agent] foregrounded {tool_name} delegation")
+        return rewritten
+
     return {}
 
 
@@ -499,7 +522,7 @@ AUTONOMOUS_MAX_NUDGES = _max_nudges()
 
 
 def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
-                   pending_user_message=None):
+                   pending_user_message=None, delivered=None):
     """The alpha's ``Stop`` callback (1d): veto the model's voluntary yield while the
     project is unfinished, so one user message runs a whole research job.
 
@@ -526,6 +549,7 @@ def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
                 tool_count=count,
                 tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
                 pending_user_message=bool(pending_user_message and pending_user_message()),
+                delivered=bool(delivered and delivered()),
             ):
                 return {}
             state["nudges_used"] += 1
@@ -547,12 +571,18 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     sandboxes in one process cannot read each other's progress. It is what
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
-    counter = {"tool_calls": 0}
+    counter = {"tool_calls": 0, "delivered": False}
+    # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
+    # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
+    # across two stops); `delivered` is not, and the dict outlives the turn because
+    # the SDK client is built once and cached (`if self._client is None`).
+    if agent is not None:
+        agent._hook_counter = counter
 
     async def count_only(_input_data, _tool_use_id, _ctx):
         """Counts, and does nothing else. Bound with ``matcher=None`` because the count
-        has to see EVERY call -- ``_PRETOOL_MATCHER`` covers five tool names (Write, Edit,
-        NotebookEdit, Bash, device_commit_files) and a research loop runs almost none of
+        has to see EVERY call -- ``_PRETOOL_MATCHER`` covers seven tool names (Write, Edit,
+        NotebookEdit, Bash, device_commit_files, Agent, Task) and a research loop runs almost none of
         them, so counting behind it stays at 0 all run and the Stop hook's no-progress arm
         ends the job after ONE nudge.
 
@@ -569,6 +599,23 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
         above still holds."""
         counter["tool_calls"] += 1
+        # A bounded request was met and the model is stopping on purpose (#2813 item 1).
+        # Gated on the MAIN thread: a subagent calling it means its own leg is done, and
+        # halting the session there would strand the orchestrator mid-job.
+        if (_input_data or {}).get("tool_name") == DELIVERED_TOOL and "agent_id" not in (
+            _input_data or {}
+        ):
+            counter["delivered"] = True
+            _log("[agent] delivered — allowing the stop")
+            # Prepend the model's own one-sentence summary, as the prototype does
+            # (`options.py`). It is the whole reason the tool takes a `summary`:
+            # without it the researcher is told a delivery happened but not what
+            # was delivered, and the two planes claim a parity they do not have.
+            delivered_input = (_input_data or {}).get("tool_input") or {}
+            return {
+                "continue": False,
+                "stopReason": delivered_stop_reason(delivered_input.get("summary")),
+            }
         if agent is not None:
             try:
                 if agent.pending_user_message():
@@ -596,6 +643,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
                     project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
                     tool_count=lambda: counter["tool_calls"],
                     pending_user_message=(agent.pending_user_message if agent else None),
+                    delivered=lambda: counter["delivered"],
                 )],
                 timeout=_PRETOOL_TIMEOUT_S,
             )
@@ -628,7 +676,11 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         add_dirs=[str(project_dir)],
         model=os.environ.get("MODEL") or None,
         permission_mode="bypassPermissions",  # operator-controlled, headless
-        system_prompt={"type": "preset", "preset": "claude_code", "append": project_note},
+        system_prompt={
+            "type": "preset",
+            "preset": "claude_code",
+            "append": f"{project_note}\n\n{DELIVERY_GUIDANCE}",
+        },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
         # stage_plugin_agents just wrote. "user" was also listed, which read a
@@ -1148,6 +1200,26 @@ class RealAgent:
             self._client_key = key
         return self._client
 
+    def _begin_turn_hook_state(self) -> None:
+        """Clear the per-TURN half of the hook counter. Called at the turn boundary.
+
+        `delivered` means "THIS turn delivered what was asked". The hooks dict is
+        built once per SESSION, because the SDK client is cached (`if self._client
+        is None`), so without this the flag set by one bounded turn authorises a
+        voluntary stop in every later turn -- the next research job ends after a
+        single sub-skill, with no error and nothing in the log.
+
+        A method rather than three inline lines so it can be driven by a test. The
+        first cut cleared on the next tool call instead, and was wrong twice: a turn
+        that yields without calling any tool never cleared it, and the clearing was
+        not main-thread gated, so a straggler subagent call could clear a
+        main-thread delivery. `tool_calls` is deliberately NOT reset -- the
+        no-progress arm compares it across two stops.
+        """
+        counter = getattr(self, "_hook_counter", None)
+        if counter is not None:
+            counter["delivered"] = False
+
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
 
@@ -1262,6 +1334,7 @@ class RealAgent:
         try:
             await client.query(text)
             self._stream_dirty = True
+            self._begin_turn_hook_state()
             # Whether an errored AssistantMessage has already told the user about
             # this turn. Turn-scoped, not session-scoped: a later turn's failure
             # is a new fact the user needs.
