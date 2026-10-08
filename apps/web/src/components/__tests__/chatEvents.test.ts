@@ -10,7 +10,8 @@ import {
   clearQueued,
   turnOutcomeLabel,
   TURN_OUTCOME_LABELS,
-  SPEND_CAP_LABEL
+  SPEND_CAP_LABEL,
+  KEEPS_RUNNING_NOTE
 } from '../chatEvents'
 import subagentStream from './fixtures/subagent-stream.json'
 
@@ -345,5 +346,174 @@ describe('turnOutcomeLabel', () => {
                     'retries_exhausted', 'transcript_lost', 'signin_required']
       .map((o) => turnOutcomeLabel(o))
     expect(new Set(labels).size).toBe(labels.length)
+  })
+})
+
+// --- Chip attribution across concurrent sub-agents (phase 2 item 3 prerequisite) ---
+//
+// A tool_result closed the first OPEN chip with the same tool name, ignoring which
+// agent produced it. With up to eight extraction agents live at once and
+// `same_person` called 299 times, results land on the wrong chip and overwrite its
+// summary. Measured on the captured session: 28 of 1,006 results (2.8%) closed a
+// different agent's chip.
+//
+// This has to be right before anything anchors paragraphs to steps, or the anchoring
+// validates against cross-attributed chips.
+
+describe('tool chips with several agents in flight', () => {
+  const start = (tool: string, agent?: string): Record<string, unknown> => ({
+    tool, summary: `${agent ?? 'main'} started`, ...(agent ? { agent } : {})
+  })
+  const finish = (tool: string, agent?: string): Record<string, unknown> => ({
+    tool, summary: `${agent ?? 'main'} finished`, ...(agent ? { agent } : {})
+  })
+
+  it("closes the chip belonging to the agent that produced the result", () => {
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'text', { text: 'working' })
+    msgs = foldChatEvent(msgs, 'tool_use', start('same_person', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_use', start('same_person', 'agent-B'))
+    // B finishes first — A must stay open and keep ITS summary.
+    msgs = foldChatEvent(msgs, 'tool_result', finish('same_person', 'agent-B'))
+
+    const tools = msgs[msgs.length - 1].tools
+    const a = tools.find((t) => t.agent === 'agent-A')
+    const b = tools.find((t) => t.agent === 'agent-B')
+    expect(b?.done, 'the agent that finished should be closed').toBe(true)
+    expect(b?.summary).toBe('agent-B finished')
+    expect(a?.done, "the other agent's chip must stay open").toBe(false)
+    expect(a?.summary, "and must keep its own summary").toBe('agent-A started')
+  })
+
+  it('does not let a sub-agent result close the main thread chip', () => {
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'text', { text: 'working' })
+    msgs = foldChatEvent(msgs, 'tool_use', start('research_query'))
+    msgs = foldChatEvent(msgs, 'tool_use', start('research_query', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_result', finish('research_query', 'agent-A'))
+
+    const tools = msgs[msgs.length - 1].tools
+    expect(tools.find((t) => t.agent === undefined)?.done).toBe(false)
+    expect(tools.find((t) => t.agent === 'agent-A')?.done).toBe(true)
+  })
+
+  it('still closes same-agent chips in order when one agent repeats a tool', () => {
+    let msgs: ChatMessage[] = []
+    msgs = foldChatEvent(msgs, 'text', { text: 'working' })
+    msgs = foldChatEvent(msgs, 'tool_use', start('record_read', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_use', start('record_read', 'agent-A'))
+    msgs = foldChatEvent(msgs, 'tool_result', finish('record_read', 'agent-A'))
+
+    const tools = msgs[msgs.length - 1].tools
+    expect(tools.filter((t) => t.done).length).toBe(1)
+    expect(tools.filter((t) => !t.done).length).toBe(1)
+  })
+})
+
+// --- Ordered blocks, so chips render where they arrived (phase 2 item 3) ---
+//
+// `text` accumulates into one string and `tools` into one array, so the order
+// BETWEEN them is lost and ChatPane can only render every chip above every
+// paragraph. `blocks` records arrival order alongside them; `text`/`tools` are
+// untouched, so every existing reader keeps working.
+
+describe('ordered blocks', () => {
+  it('records text and chips in the order they arrived', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'first' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'record_search', summary: 's' })
+    m = foldChatEvent(m, 'text', { text: 'second' })
+
+    const blocks = m[m.length - 1].blocks ?? []
+    expect(blocks.map((b) => b.kind)).toEqual(['text', 'chip', 'text'])
+    expect(blocks[0].text).toBe('first')
+    expect(blocks[1].tool).toBe('record_search')
+    expect(blocks[2].text).toBe('second')
+  })
+
+  it('leaves the existing text and tools fields exactly as they were', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'a' })
+    m = foldChatEvent(m, 'tool_use', { tool: 't1', summary: 's' })
+    m = foldChatEvent(m, 'text', { text: 'b' })
+
+    const last = m[m.length - 1]
+    expect(last.text).toBe(joinTextBlocks('a', 'b'))
+    expect(last.tools.map((t) => t.tool)).toEqual(['t1'])
+  })
+
+  it('does not record a block for a tool_result — it closes a chip, it is not new', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'x' })
+    m = foldChatEvent(m, 'tool_use', { tool: 't1', summary: 'started' })
+    m = foldChatEvent(m, 'tool_result', { tool: 't1', summary: 'done' })
+
+    const blocks = m[m.length - 1].blocks ?? []
+    expect(blocks.filter((b) => b.kind === 'chip').length).toBe(1)
+  })
+
+  it('each chip block points at ITS OWN entry in tools', () => {
+    // Break-testing found this uncovered: pointing every block at tools[0] passed.
+    // A wrong index renders the wrong tool's label and done-state in that slot.
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'go' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'first', summary: 'a' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'second', summary: 'b' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'third', summary: 'c' })
+
+    const last = m[m.length - 1]
+    const chipBlocks = (last.blocks ?? []).filter((b) => b.kind === 'chip')
+    expect(chipBlocks.map((b) => last.tools[b.toolIndex as number].tool)).toEqual([
+      'first',
+      'second',
+      'third'
+    ])
+  })
+})
+
+// --- "The job outlives the tab" (phase 2 item 4) ---
+//
+// Alpha testers who locked the screen reported the run had QUIT (#2921, #2922). It
+// had not: on the prototype a disconnect stops only the stream. The captured session
+// is direct proof -- 133 minutes, and the queue delivered that one turn FIVE times
+// with the resume guard absorbing each redelivery and the run completing.
+//
+// So the behaviour is right and only the saying-so is missing. The reassurance must
+// appear while a turn is running and only then: telling an idle reader their job
+// keeps running is noise.
+
+describe('keeps-running reassurance', () => {
+  it('names closing the tab, because that is what testers actually did', () => {
+    expect(KEEPS_RUNNING_NOTE.toLowerCase()).toMatch(/close|leave/)
+    expect(KEEPS_RUNNING_NOTE.toLowerCase()).toMatch(/keep|continue|carry/)
+  })
+
+  it('does not promise a notification the product cannot send', () => {
+    expect(KEEPS_RUNNING_NOTE.toLowerCase()).not.toMatch(/email|notify|notification/)
+  })
+
+  it('is short enough to sit under a typing indicator', () => {
+    expect(KEEPS_RUNNING_NOTE.length).toBeLessThan(90)
+  })
+})
+
+describe('decision questions reach the bubble', () => {
+  it('keeps the structured questions off a decision tool_use', () => {
+    // The card cannot be built from the 160-char summary; the options ride the event.
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'thinking' })
+    m = foldChatEvent(m, 'tool_use', {
+      tool: 'AskUserQuestion',
+      summary: 'questions=[...]',
+      questions: [{ question: 'Which one?', options: [{ label: 'A' }] }]
+    })
+    expect(m[m.length - 1].decision?.[0].question).toBe('Which one?')
+  })
+
+  it('leaves an ordinary tool_use without a decision payload', () => {
+    let m: ChatMessage[] = []
+    m = foldChatEvent(m, 'text', { text: 'x' })
+    m = foldChatEvent(m, 'tool_use', { tool: 'record_read', summary: 'ark=1' })
+    expect(m[m.length - 1].decision).toBeUndefined()
   })
 })

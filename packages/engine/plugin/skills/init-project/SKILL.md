@@ -114,11 +114,17 @@ Do NOT call `person_read` before the opening turn's questions are asked — aski
 
 Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below). If the stated objective is too vague (no named individual), ask for clarification — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
 
+**Before the first search**, when the researcher gave a name rather than a FamilySearch ID, say in one or two lines roughly how long this takes, what it can reach, and what it will hand back — and that they can close the tab and come back. A first message naming a person ID and a task goes straight to work; say nothing then.
+
 ### Searching by name
 
 Call `person_search` with camelCase params: `surname` (required), plus one or more of `givenName`, `birthPlace`, `birthYearFrom`/`birthYearTo`, `residencePlace`, or a relative name (`fatherGivenName`, `motherGivenName`, `spouseGivenName`). Do NOT use snake_case (`given`, `birth_year`, `birth_place`) — those are not recognized params and the call is rejected. **Surname-plus-one rule:** `surname` required plus at least one other qualifying field (given name, date, place, or relative name).
 
-Present ranked candidates with `personId`, confidence, key facts. In single-turn mode, select the top candidate. Once confirmed, call `person_read` and continue. If no candidates match, initialize from objective text only using local stub persons.
+Present ranked candidates with `personId`, confidence, key facts.
+
+**Read `pick.decisive` on the response.** When it is `true`, select the top candidate and continue. When it is `false`, do NOT pick: call `AskUserQuestion` with the top candidates as options, each labelled with the name and the facts that tell them apart (lifespan, places), and stop there. Put the strongest first and end its label with "(Recommended)".
+
+Once confirmed, call `person_read` and continue. If no candidates match, initialize from objective text only using local stub persons.
 
 ### 2. Fetch person data
 

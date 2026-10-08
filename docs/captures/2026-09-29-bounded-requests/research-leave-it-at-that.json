@@ -1,0 +1,234 @@
+{
+  "log": [],
+  "plans": [
+    {
+      "id": "pl_001",
+      "items": [
+        {
+          "id": "pli_001",
+          "status": "planned",
+          "sequence": 1,
+          "rationale": "Michigan County Marriages, 1820–1941 (collection 1810350; 498,558 records, index + images) is the primary online source for Wayne County civil marriage registrations. Wayne County registration began 1833, predating statewide registration (1867), so this collection covers both pre- and post-1867 county records. The marriage must predate October 1876 (first child Thomas Frank Mogan born 19 October 1876). Search groom 'John Mogan' and variants (Morgan, Magan, Magen) with bride 'Mary McAndrew'; also search bride-first. Free and indexed at FamilySearch.",
+          "date_range": "1855-1876",
+          "repository": "FamilySearch",
+          "record_type": "civil_registration",
+          "fallback_for": null,
+          "jurisdiction": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "pli_002",
+          "status": "planned",
+          "sequence": 2,
+          "rationale": "Michigan Marriages, 1868–1925 (collection 1452395; 62,847 Wayne County records per the FamilySearch wiki coverage table; index + images) is the statewide registration collection. If the marriage was 1868–1876, this provides a second indexed route. Indexing may differ from collection 1810350, so searching both independently is worthwhile. Free at FamilySearch.",
+          "date_range": "1868-1876",
+          "repository": "FamilySearch",
+          "record_type": "civil_registration",
+          "fallback_for": null,
+          "jurisdiction": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "pli_003",
+          "status": "planned",
+          "sequence": 3,
+          "rationale": "The Mogan–McAndrew family was almost certainly Irish Catholic, given both surnames. Marriage licenses were not required until 1887, so the Catholic parish register may be the only surviving record for pre-1887 marriages. The Archdiocese of Detroit's records (1704–1930) are on microfilm at the Burton Historical Collection, Detroit Public Library. FamilySearch collection 2787825 (Michigan Church Records, 1819–1991; 47,038 records, index + images) and collection 2515887 (Michigan Church Marriages, 1865–1931; 213 records) are the online search targets. Priority Detroit parishes for Irish families include Holy Trinity and St. Patrick's.",
+          "date_range": "1855-1876",
+          "repository": "Burton Historical Collection, Detroit Public Library; FamilySearch",
+          "record_type": "church",
+          "fallback_for": null,
+          "jurisdiction": "Detroit, Wayne, Michigan, United States"
+        },
+        {
+          "id": "pli_004",
+          "status": "planned",
+          "sequence": 4,
+          "rationale": "The 1870 federal census (enumerated June–July 1870) predates all known Mogan children (first born October 1876). If John appears with Mary listed as wife, the marriage predates mid-1870. If he appears without her, the marriage window narrows to 1870–1876. The census also confirms Detroit residence and Irish birthplace, supporting the parish search in item 3. Free and indexed at FamilySearch.",
+          "date_range": "1870-1870",
+          "repository": "FamilySearch",
+          "record_type": "census",
+          "fallback_for": null,
+          "jurisdiction": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "pli_005",
+          "status": "planned",
+          "sequence": 5,
+          "rationale": "Birth records for the five known children (Thomas Frank b. 1876 through Mary L. Mogan) were registered with Wayne County. Early Michigan birth records named both parents and may include the mother's maiden name and length of the parents' marriage. These records corroborate the marriage and may carry a marriage year even if the marriage record itself is not found. Search Michigan County Births, 1867–1917 (collection 1923472; 724,380 records, index + images) and Michigan Births, 1867–1902 (collection 1459684).",
+          "date_range": "1876-1888",
+          "repository": "FamilySearch",
+          "record_type": "vital",
+          "fallback_for": null,
+          "jurisdiction": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "pli_006",
+          "status": "planned",
+          "sequence": 6,
+          "rationale": "Michigan Naturalization Records, 1837–1997 (collection 2546149; 2,146,151 records with images) covers the Michigan Eastern District. John Mogan's declaration of intent or final petition may name his wife and marriage date. An indirect route to the marriage if civil and church searches fail. Date range extended to 1900 because Irish immigrants often naturalized decades after arrival. Search 'John Mogan' and variants.",
+          "date_range": "1855-1900",
+          "repository": "FamilySearch",
+          "record_type": "naturalization",
+          "fallback_for": null,
+          "jurisdiction": "Wayne, Michigan, United States"
+        },
+        {
+          "id": "pli_007",
+          "status": "planned",
+          "sequence": 7,
+          "rationale": "Wayne County Marriage Returns, 1803–1867 and 1868–1893, are original records at the Burton Historical Collection (FamilySearch Catalog entries 218057 and 960719). The FamilySearch indexed collections (items 1 and 2) are derived from these originals. If indexed searches fail, direct examination of the originals or microfilm may surface records not yet digitized or correctly indexed. Wayne County Clerk Records Division is at the Coleman A. Young Municipal Center, Detroit. Attempt after FamilySearch online searches are exhausted.",
+          "date_range": "1855-1876",
+          "repository": "Burton Historical Collection, Detroit Public Library",
+          "record_type": "civil_registration",
+          "fallback_for": null,
+          "jurisdiction": "Wayne, Michigan, United States"
+        }
+      ],
+      "status": "active",
+      "created": "2026-09-29",
+      "question_id": "q_001"
+    }
+  ],
+  "project": {
+    "id": "rp_001",
+    "title": "Mary E. McAndrew, Detroit",
+    "status": "active",
+    "created": "2026-09-29",
+    "updated": "2026-09-29",
+    "objective": "General research: build out the tree and identify gaps and next steps.",
+    "subject_person_ids": [
+      "I1"
+    ]
+  },
+  "sources": [],
+  "conflicts": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "status": "open",
+      "created": "2026-09-29",
+      "priority": "high",
+      "question": "When and where did Mary E. McAndrew and John Mogan marry?",
+      "resolved": null,
+      "unblocks": [],
+      "rationale": "No marriage date, place, or source exists in the tree. Children's birth records (1876–1888) name the parents as John and Mary Morgan, confirming the marriage existed, but no marriage record has been identified. The search for a record that everyone agrees existed but no one has found is the defining gap for this project.",
+      "depends_on": [],
+      "selection_basis": "unresolved_conflict",
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "resolution_assertion_ids": []
+    }
+  ],
+  "timelines": [],
+  "assertions": [],
+  "hypotheses": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Wayne, Michigan, United States",
+      "quirks": [
+        "Wayne County marriage registration began 1833, predating Michigan's 1867 statewide requirement. Both county-level and state collections must be searched.",
+        "Marriage licenses were not required until 1887. Pre-1887 records are marriage returns (certificates filed by the officiant), not license applications.",
+        "Original Wayne County Marriage Returns, 1803–1867 and 1868–1893, are at the Burton Historical Collection, Detroit Public Library (FamilySearch Catalog 218057 and 960719). FamilySearch holds derived indexes, not the complete originals.",
+        "Roman Catholic church records from the Archdiocese of Detroit, 1704–1930, are on microfilm at the Burton Historical Collection — essential for Irish immigrant families who may have married by church rite with no separate civil record pre-1887.",
+        "Surname 'Mogan' is an uncommon Irish spelling; records often render it Morgan, Magen, or Magan. Search all variants using phonetic matching.",
+        "Wayne County had no known courthouse disasters — records should be largely intact.",
+        "Neighboring counties are Macomb, Monroe, Oakland, and Washtenaw. For a Detroit family the cross-border risk is low but worth noting if the civil search fails."
+      ],
+      "source": "locality-guide",
+      "created": "2026-09-29",
+      "for_place": "Detroit, Wayne, Michigan, United States",
+      "pages_read": [
+        {
+          "url": "https://www.familysearch.org/en/wiki/Michigan,_United_States_Genealogy",
+          "found": true,
+          "section": "home"
+        },
+        {
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Getting_Started",
+          "found": true,
+          "section": "getting_started"
+        },
+        {
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Online_Genealogy_Records",
+          "found": true,
+          "section": "online_records"
+        },
+        {
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Research_Tips_and_Strategies",
+          "found": true,
+          "section": "research_tips"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1810350",
+          "title": "Michigan, County Marriages, 1820-1941",
+          "date_range": "1820-1941"
+        },
+        {
+          "id": "2473289",
+          "title": "Michigan, County Marriages Index, 1820-1937",
+          "date_range": "1820-1937"
+        },
+        {
+          "id": "1452395",
+          "title": "Michigan, Marriages, 1868-1925",
+          "date_range": "1868-1925"
+        },
+        {
+          "id": "1675359",
+          "title": "Michigan, Marriages, 1822-1995",
+          "date_range": "1822-1995"
+        },
+        {
+          "id": "2515887",
+          "title": "Michigan, Church Marriages, 1865-1931",
+          "date_range": "1865-1931"
+        },
+        {
+          "id": "2787825",
+          "title": "Michigan, Church Records, 1819-1991",
+          "date_range": "1819-1991"
+        },
+        {
+          "id": "2515912",
+          "title": "Michigan, Civil Marriages, 1834-1974",
+          "date_range": "1834-1974"
+        },
+        {
+          "id": "1923472",
+          "title": "Michigan, County Births, 1867-1917",
+          "date_range": "1867-1917"
+        },
+        {
+          "id": "1459684",
+          "title": "Michigan, Births, 1867-1902",
+          "date_range": "1867-1902"
+        },
+        {
+          "id": "2546149",
+          "title": "Michigan, Naturalization Records, 1837-1997",
+          "date_range": "1837-1997"
+        }
+      ],
+      "time_period": "1855-1880",
+      "jurisdictions": [
+        {
+          "name": "Wayne County, Michigan",
+          "date_range": "1815–present"
+        }
+      ],
+      "guide_markdown": "## Wayne County, Michigan — Marriage Records, 1855–1880\n\n### Jurisdictional Overview\nWayne County was established 21 November 1815 as an original county, with Detroit as its seat. Marriage registration began at the county level in 1833, well before Michigan's 1867 statewide requirement. Marriage licenses were not required until 1887; pre-1887 records are \"marriage returns\" — certificates filed by the officiant with the county clerk.\n\n### Civil Marriage Records\n\n**Indexed + images (free at FamilySearch):**\n- **Michigan, County Marriages, 1820–1941** (collection 1810350) — 498,558 records. The core county marriage register, covering all of Wayne County including Detroit. Best single starting point.\n- **Michigan Marriages, 1868–1925** (collection 1452395) — 1,603,279 statewide records; the FamilySearch wiki reports 62,847 Wayne County entries. Covers the post-1867 state registration window.\n- **Michigan, Civil Marriages, 1834–1974** (collection 2515912) — 1,098 records; index and images.\n- **Michigan, County Marriages Index, 1820–1937** (collection 2473289) — 14,239 records; index only. Cross-check index.\n- **Michigan Marriages, 1822–1995** (collection 1675359) — 1,128,807 records; index only. Broad composite.\n\n**Physical/microfilm:**\n- **Wayne County Marriage Returns, 1803–1867 and 1868–1893** — Original records at the Burton Historical Collection, Detroit Public Library. FamilySearch Catalog entries: \"Marriage records, 1836–1913; index 1836–1937\" (catalog 218057) and \"Marriage records, 1843–1887\" (catalog 960719). If the online indexed searches miss the record, these originals are the fallback.\n\n### Church Records\n- **Michigan, Church Records, 1819–1991** (collection 2787825) — 47,038 records, index and images.\n- **Michigan, Church Marriages, 1865–1931** (collection 2515887) — 213 records, index and images.\n- **Archdiocese of Detroit Catholic records, 1704–1930** — On microfilm at the Burton Historical Collection, Detroit Public Library. For an Irish immigrant couple in Detroit in the 1860s–1870s, the parish register is co-primary with the civil record. Priority parishes for Irish Detroit families include Holy Trinity and St. Patrick's.\n\n### Census Records\n- 1870 U.S. Federal Census: brackets the marriage window. The couple's first known child was born October 1876; if they appear married with no children in 1870, the marriage is narrowed to 1870–1876.\n- 1880 U.S. Federal Census: confirms family composition and ages.\n\n### Birth Records\n- **Michigan, County Births, 1867–1917** (collection 1923472) — 724,380 records, index and images. Wayne County registration began 1867. Birth records for children born 1876–1888 name both parents and may include the mother's maiden name and length of parents' marriage.\n- **Michigan, Births, 1867–1902** (collection 1459684) — 1,409,988 records.\n\n### Naturalization Records\n- **Michigan, Naturalization Records, 1837–1997** (collection 2546149) — 2,146,151 records with images. John Mogan's naturalization papers may name his wife and marriage date.\n\n### City Directories\n- Detroit City Directories, 1861–1923 — Fold3 ($). Year-by-year address records useful for bracketing the couple's Detroit residence.\n\n### Key Considerations\n1. The marriage must predate October 1876. The target window crosses the pre/post-1867 registration boundary — both county and statewide collections are required.\n2. Licenses were not required until 1887. Do not expect a license record for this marriage.\n3. Irish Catholic families almost certainly married in a Catholic parish. The parish register may be the only surviving record.\n4. Search surname variants: Mogan, Morgan, Magen, Magan.\n5. Wayne County records survived intact — no courthouse fires.\n6. For originals not yet fully indexed: Burton Historical Collection, Detroit Public Library, 5201 Woodward Ave, Detroit MI 48202.\n\n### External Resources\n- USGenWeb Michigan Marriage Records: http://usgwarchives.net/marriages/michigan/michigan.htm\n- Ancestry: Michigan Marriage Records, 1867–1952 (collection 9093); Michigan County Marriages, 1822–1940 (collection 61374)\n- Burton Historical Collection (Detroit Public Library): https://detroitpubliclibrary.org/research/burton-historical-collection"
+    }
+  ],
+  "evaluations": [],
+  "person_evidence": [],
+  "proof_summaries": [],
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  }
+}

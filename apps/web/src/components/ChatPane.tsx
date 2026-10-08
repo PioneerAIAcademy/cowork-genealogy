@@ -1,6 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import React from 'react'
+import { useResearchDataOptional } from '@genealogy/viewer-ui'
+import { SchemaIdText } from './SchemaIdText'
+import { DecisionCard } from './DecisionCard'
+import { toolLabel, humanizeToolNames } from './toolLabel'
+import { chipTarget } from './chipTarget'
 import type { SessionConnection, WsMessage } from '../transport/SessionConnection'
 import { api, ApiError } from '../api'
 import {
@@ -8,7 +14,10 @@ import {
   trackLiveTask,
   withOpeningTurn,
   stripOpeningTurn,
+  KEEPS_RUNNING_NOTE,
   type ChatMessage,
+  type ChatBlock,
+  type ToolChip,
   clearQueued,
   turnOutcomeLabel
 } from './chatEvents'
@@ -133,6 +142,81 @@ export interface UsageDelta {
   estimated: boolean
 }
 
+/**
+ * One chip: humanized in both slots, and clickable when it names a card.
+ *
+ * 544 of the captured session's 1,009 chips name a schema id in their summary, so
+ * more than half become navigation. A chip that names nothing, or that has no
+ * resolver above it, renders exactly as before -- the same additive rule the prose
+ * linker follows, so the failure mode is "not clickable", never a dead control.
+ */
+function ToolChipView({
+  chip,
+  onOpen
+}: {
+  chip: ToolChip
+  onOpen?: (id: string, section: string) => void
+}): React.JSX.Element {
+  const body = (
+    <>
+      {chip.done ? '✓' : '⟳'} {chip.agent ? `${chip.agent} · ` : ''}
+      {toolLabel(chip.tool)}: {humanizeToolNames(chip.summary)}
+    </>
+  )
+  const target = onOpen ? chipTarget(chip.summary) : null
+  const cls = `toolChip ${chip.done ? 'toolDone' : 'toolRunning'}`
+  if (!target) return <span className={cls}>{body}</span>
+  return (
+    <button
+      type="button"
+      className={`${cls} toolChipLink`}
+      title={`Open ${target.id}`}
+      onClick={() => onOpen?.(target.id, target.section)}
+    >
+      {body}
+    </button>
+  )
+}
+
+/**
+ * Chips grouped into the runs they arrived in, so each run sits with its prose.
+ *
+ * The text itself is rendered by the markdown block below; this places only the
+ * chips. A block with no chips contributes nothing, so the markup is unchanged for
+ * a paragraph that had none.
+ */
+function renderChipRuns(
+  blocks: ChatBlock[],
+  tools: ToolChip[],
+  onOpen?: (id: string, section: string) => void
+): React.JSX.Element[] {
+  const out: React.JSX.Element[] = []
+  let run: ToolChip[] = []
+  let key = 0
+  const flush = (): void => {
+    if (run.length === 0) return
+    const chips = run
+    out.push(
+      <div className="toolChips" key={`run-${key++}`}>
+        {chips.map((c, i) => (
+          <ToolChipView key={i} chip={c} onOpen={onOpen} />
+        ))}
+      </div>
+    )
+    run = []
+  }
+  for (const b of blocks) {
+    if (b.kind === 'chip') {
+      const chip = b.toolIndex !== undefined ? tools[b.toolIndex] : undefined
+      if (chip) run.push(chip)
+    } else {
+      flush()
+    }
+  }
+  flush()
+  return out
+}
+
 export default function ChatPane({
   conn,
   sessionId,
@@ -146,6 +230,51 @@ export default function ChatPane({
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
+  // Phase 2 item 1: schema ids in chat prose become links into the viewer.
+  //
+  // OPTIONAL by design. The provider is hoisted above both panes in SessionView, but
+  // only when a transport exists -- and this pane renders on the socket, which is a
+  // different condition. With no provider, `research` is null, no handler is passed
+  // down, and every id renders as the plain text it is today. The failure mode is
+  // "no link", never a broken bubble.
+  const research = useResearchDataOptional()
+  const openSchemaId = useMemo(
+    () =>
+      research
+        ? (_id: string, section: string): void => research.setActiveSection(section)
+        : undefined,
+    [research]
+  )
+  // react-markdown hands a paragraph's children through; only the STRING children are
+  // prose. Non-string children are already-parsed nodes (emphasis, code, links) and
+  // are passed through untouched, so markdown keeps working exactly as before.
+  const mdComponents = useMemo(
+    () => ({
+      p: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <p>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </p>
+      ),
+      li: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
+        <li>
+          {React.Children.map(children, (child) =>
+            typeof child === 'string' ? (
+              <SchemaIdText text={child} onOpen={openSchemaId} />
+            ) : (
+              child
+            )
+          )}
+        </li>
+      )
+    }),
+    [openSchemaId]
+  )
   // Reasoning blocks are hidden by default: the lay user never asked for the
   // model's private reasoning, and two alpha testers read the collapsed block's
   // label as a cryptic message. The toggle is for whoever wants to look.
@@ -165,8 +294,18 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+  const [connAttempt, setConnAttempt] = useState<{ attempt: number; max: number } | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
+  // The card replaces the one-line outcome label only for a turn that actually ended
+  // waiting on the researcher AND carried its options. A `decision` turn whose payload
+  // did not arrive falls through to the label, which is the honest degradation: a
+  // question the reader can still see, rather than an empty card.
+  const m0Decision = useMemo(() => {
+    if (!outcome) return null
+    const last = [...messages].reverse().find((m) => m.decision && m.decision.length > 0)
+    return last?.decision ?? null
+  }, [outcome, messages])
   // 1b: the server is holding a message for this session. Distinct from the per-bubble
   // `queued` flag, which only the tab that sent it knows about.
   const [queuedOnServer, setQueuedOnServer] = useState(false)
@@ -249,7 +388,18 @@ export default function ChatPane({
       // but a reload or a second tab learns it only from here.
       else if (msg.type === 'status' && msg.state === 'turn_queued') setQueuedOnServer(true)
       else if (msg.type === 'status' && msg.state === 'turn_unqueued') setQueuedOnServer(false)
-      else if (msg.type === 'conn_state') setConnState(msg.state as 'open' | 'reconnecting')
+      else if (msg.type === 'conn_state') {
+        setConnState(msg.state as 'open' | 'reconnecting')
+        // Which retry this is. A bare "Reconnecting…" cannot tell attempt 2 of
+        // 20 from attempt 19 — one is worth waiting through, the other is about
+        // to give up. Absent on 'open' and on the SSE transport, which emits no
+        // count, so the render falls back to the bare label rather than "NaN".
+        setConnAttempt(
+          typeof msg.attempt === 'number' && typeof msg.maxAttempts === 'number'
+            ? { attempt: msg.attempt, max: msg.maxAttempts }
+            : null
+        )
+      }
       else if (msg.type === 'status' && msg.state === 'chat_error') {
         setReady(false)
         // Reconnect attempts are over — stop the "Reconnecting…" spinner so the
@@ -349,16 +499,20 @@ export default function ChatPane({
           )}
           {messages.map((m, i) => (
             <div key={i} className={m.role === 'user' ? 'msgUser' : 'msgAssistant'}>
-              {m.tools.length > 0 && (
-                <div className="toolChips">
-                  {m.tools.map((t, j) => (
-                    <span key={j} className={`toolChip ${t.done ? 'toolDone' : 'toolRunning'}`}>
-                      {t.done ? '✓' : '⟳'} {t.agent ? `${t.agent} · ` : ''}
-                      {t.tool}: {t.summary}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Chips render WHERE THEY ARRIVED, not all above the prose. `blocks`
+                  carries arrival order; without it a turn stacks every chip above
+                  every paragraph -- 36 in one stretch of the captured session. Older
+                  messages have no `blocks`, so they fall back to the flat list and
+                  render exactly as before. */}
+              {m.blocks
+                ? renderChipRuns(m.blocks, m.tools, openSchemaId)
+                : m.tools.length > 0 && (
+                    <div className="toolChips">
+                      {m.tools.map((t, j) => (
+                        <ToolChipView key={j} chip={t} onOpen={openSchemaId} />
+                      ))}
+                    </div>
+                  )}
               {showThinking && (m.thinking || m.streamThinking) && (
                 <details className="thinkingBlock">
                   <summary>💭 Model&rsquo;s private reasoning — not its answer</summary>
@@ -370,7 +524,9 @@ export default function ChatPane({
               )}
               {m.text && (
                 <div className={`msgText ${m.error ? 'msgError' : ''}`}>
-                  <Markdown remarkPlugins={[remarkGfm]}>{m.text}</Markdown>
+                  <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                    {m.text}
+                  </Markdown>
                 </div>
               )}
               {/* 1b: the agent is mid-turn, so this one waits for the next step
@@ -398,7 +554,22 @@ export default function ChatPane({
               about; it takes priority over "working" so a stall never masquerades
               as progress (the failure mode that hid the 2026-07-20 disconnect). */}
           {connState === 'reconnecting' ? (
-            <div className="typing">●●● Reconnecting…</div>
+            <div className="typing">
+              ●●● Reconnecting
+              {connAttempt ? ` (attempt ${connAttempt.attempt} of ${connAttempt.max})` : ''}…
+            </div>
+          ) : m0Decision && !busy ? (
+            // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
+            // one-line "Waiting on you" label. Answering sends the reader's choice
+            // as the next message, which is what resumes the run -- the same path a
+            // typed reply takes, so nothing new has to be taught to the worker.
+            <DecisionCard
+              questions={m0Decision}
+              onAnswer={(answer) => {
+                conn.send({ type: 'user_msg', text: answer })
+                setMessages((prev) => [...prev, { role: 'user', text: answer, tools: [] }])
+              }}
+            />
           ) : outcome && !busy ? (
             <div className="turnOutcome">{outcome}</div>
           ) : queuedOnServer && !messages.some((m) => m.queued) ? (
@@ -416,6 +587,10 @@ export default function ChatPane({
                     }`
                   : 'working…'}{' '}
                 {elapsed}s
+                {/* Item 4: the job already survives a disconnect; testers who locked
+                    their screen thought it had quit (#2921, #2922). Shown only while
+                    a turn is RUNNING -- telling an idle reader this is noise. */}
+                <div className="keepsRunning">{KEEPS_RUNNING_NOTE}</div>
               </div>
             )
           )}

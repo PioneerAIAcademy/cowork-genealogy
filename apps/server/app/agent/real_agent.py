@@ -735,6 +735,7 @@ def map_message(
     tool_names: dict[str, str],
     tasks: dict[str, str] | None = None,
     live: set[str] | None = None,
+    task_ids: dict[str, str] | None = None,
 ) -> list[dict]:
     """SDK message → the wire events the UI consumes.
 
@@ -771,11 +772,23 @@ def map_message(
 
     tasks = tasks if tasks is not None else {}
     live = live if live is not None else set()
+    # Task tool_use_id -> task_id. OPTIONAL: a caller that does not pass it gets the
+    # stream exactly as before. Attribution by description STRING cannot tell two
+    # tasks apart -- five labels were each used by two different tasks in the captured
+    # session -- so "which step produced this" needs the id, not the label.
+    task_ids = task_ids if task_ids is not None else {}
 
     def _event_for(msg, kind: str, **kw) -> dict:
-        """Attach the originating subagent's label, when there is one."""
-        agent = tasks.get(getattr(msg, "parent_tool_use_id", None) or "")
-        return _event(kind, **kw, **({"agent": agent} if agent else {}))
+        """Attach the originating subagent's label, and its task id when known."""
+        parent = getattr(msg, "parent_tool_use_id", None) or ""
+        agent = tasks.get(parent)
+        extra: dict = {}
+        if agent:
+            extra["agent"] = agent
+            tid = task_ids.get(parent)
+            if tid:
+                extra["task_id"] = tid
+        return _event(kind, **kw, **extra)
 
     out: list[dict] = []
     if isinstance(message, TaskStartedMessage):
@@ -784,6 +797,7 @@ def map_message(
         # `str | None` — a Task without one simply goes unlabelled.
         if message.tool_use_id:
             tasks[message.tool_use_id] = label
+            task_ids[message.tool_use_id] = message.task_id
         # LIVENESS is keyed on `task_id`, which is a required `str`. These were
         # one dict until review: keying liveness on the optional field meant a
         # Task with no `tool_use_id` registered nothing, so the drainer never
@@ -879,8 +893,10 @@ def map_message(
                 out.append(_event_for(message, "thinking", text=getattr(block, "thinking", "")))
             elif isinstance(block, ToolUseBlock):
                 tool_names[getattr(block, "id", "")] = block.name  # for the matching tool_result
+                inp = getattr(block, "input", None)
+                extra = _decision_payload(block.name, inp)
                 out.append(_event_for(message, "tool_use", tool=block.name,
-                                      summary=_tool_summary(getattr(block, "input", None))))
+                                      summary=_tool_summary(inp), **extra))
     elif isinstance(message, UserMessage):
         # Tool results come back as a UserMessage of ToolResultBlock(s); tag each
         # with the originating tool's name so the UI can mark that chip done.
@@ -895,6 +911,33 @@ def map_message(
 # Live-only event kinds: shown as they stream, never written to the replay
 # transcript (see map_message's docstring). Shared with sandbox_server's pump.
 TRANSIENT_KINDS = frozenset({"text_delta", "thinking_delta", "task_progress"})
+
+
+# The decision tool, and only it, carries its input structured alongside the summary.
+#
+# `_tool_summary` flattens an input to its first four keys truncated to 160 characters,
+# which is right for a chip and useless for a card: in the committed corpus an
+# AskUserQuestion arrives with its `questions` cut off mid-word. A card showing
+# candidates side by side cannot be built from that.
+#
+# Every other tool is left alone deliberately. Widening this for all of them would put
+# whole record payloads on the wire for every call.
+DECISION_TOOL_NAME = "AskUserQuestion"
+
+
+def _decision_payload(tool_name: str, inp: object) -> dict:
+    """`{"questions": [...]}` for a well-formed decision call, else `{}`.
+
+    Silent on a malformed input rather than raising: an event builder that throws
+    ends the turn, and a decision whose shape we do not recognise must still produce
+    a chip the reader can see.
+    """
+    if tool_name != DECISION_TOOL_NAME or not isinstance(inp, dict):
+        return {}
+    questions = inp.get("questions")
+    if not isinstance(questions, list) or not questions:
+        return {}
+    return {"questions": questions}
 
 
 def _tool_summary(inp: object) -> str:

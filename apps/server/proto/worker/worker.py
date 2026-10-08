@@ -198,6 +198,7 @@ from proto.worker.options import (  # noqa: E402
     STOP_REASON,
     STORE_UNAVAILABLE_REASON,
     TERMINAL_BUDGET,
+    TERMINAL_DECISION,
     TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
@@ -2182,6 +2183,14 @@ async def _run_turn(
         def on_halt_failed() -> None:
             store_unavailable()
 
+        def on_decision() -> None:
+            """The agent asked the researcher something only they can answer. The turn ends
+            `decision`, not `no_progress`: the run did not stall, it is waiting on a person,
+            and the answer arrives as the next message."""
+            terminal["reason"] = TERMINAL_DECISION
+            terminal["halted"] = True
+            log(ev="decision_exit", turn_id=turn_id, session_id=session_id)
+
         def on_delivered() -> None:
             """The agent delivered what a bounded request asked for. The turn ends
             `delivered`, not `completed`: the ask was met while the PROJECT is still
@@ -2193,7 +2202,8 @@ async def _run_turn(
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt, on_delivered=on_delivered, on_halt_failed=on_halt_failed,
+            halt=halt, on_decision=on_decision, on_delivered=on_delivered,
+            on_halt_failed=on_halt_failed,
         )
 
         def finish(tool_use_id: str) -> None:

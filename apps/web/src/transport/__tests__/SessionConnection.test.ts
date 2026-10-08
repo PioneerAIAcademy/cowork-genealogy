@@ -295,3 +295,135 @@ describe('the happy path still works', () => {
 
 
 })
+
+/** Drive failures until the retry ceiling, without the two artifacts that make
+ *  this easy to get wrong: calling `onopen` resets the attempt budget (so the
+ *  count never climbs), and closing an already-dead socket after exhaustion
+ *  re-enters `scheduleRetry` and emits a second `chat_error`. Stops at the first
+ *  terminal error, which is the thing under test. */
+async function failUntilCeiling(seen: WsMessage[], close: (s: FakeSocket) => void): Promise<void> {
+  for (let i = 0; i < MAX_RETRIES + 5; i++) {
+    if (errors(seen).length) return
+    const s = FakeSocket.instances[FakeSocket.instances.length - 1]
+    if (s) close(s)
+    await vi.advanceTimersByTimeAsync(2000)
+  }
+}
+
+// ─── [R8] What the user is told while it retries, and when it gives up ──────
+//
+// Two findings restored from the deleted `docs/ux-findings.md`, neither of which
+// had an issue. Both are about a message that is technically true and useless:
+// "Reconnecting…" that never says which attempt, and "Could not reach the agent"
+// that cannot tell a sandbox that is GONE from a healthy one this network cannot
+// reach. Those are different faults with different fixes, and diagnosing one live
+// took a process table.
+
+describe('[R8] the reconnect indicator carries the attempt number', () => {
+  it('every reconnecting frame says which attempt it is, and the ceiling', async () => {
+    const conn = new WsSessionConnection(() => Promise.resolve({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    FakeSocket.instances[0].onopen?.()
+    FakeSocket.instances[0].close()
+
+    const frames = reconnecting(seen)
+    expect(frames.length).toBeGreaterThan(0)
+    expect(frames[0].attempt).toBe(1)
+    expect(frames[0].maxAttempts).toBe(MAX_RETRIES)
+  })
+
+  it('the attempt number climbs, so 2-of-20 and 19-of-20 are distinguishable', async () => {
+    // The whole point: one is worth waiting through and the other is about to
+    // give up, and the user is the one deciding whether to wait.
+    const conn = new WsSessionConnection(() => Promise.resolve({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    // NO `onopen` here. A successful open resets the budget to 0, which is
+    // correct behaviour and would hold every frame at "attempt 1".
+    for (let i = 0; i < 4; i++) {
+      const s = FakeSocket.instances[FakeSocket.instances.length - 1]
+      if (s) s.close()
+      await vi.advanceTimersByTimeAsync(2000)
+    }
+    const nums = reconnecting(seen).map((f) => f.attempt)
+    expect(nums.length).toBeGreaterThan(2)
+    expect(new Set(nums).size).toBeGreaterThan(1)
+  })
+
+  it('an OPEN frame carries no attempt number — there is no attempt in progress', async () => {
+    const conn = new WsSessionConnection(() => Promise.resolve({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    FakeSocket.instances[0].onopen?.()
+    const open = seen.filter((m) => m.type === 'conn_state' && m.state === 'open')
+    expect(open).toHaveLength(1)
+    expect(open[0].attempt).toBeUndefined()
+  })
+})
+
+describe('[R8] a terminal failure says what actually went wrong', () => {
+  it('names the attempt count and the last cause, not just "could not reach"', async () => {
+    const conn = new WsSessionConnection(() =>
+      Promise.reject(new Error('session 404: not found'))
+    )
+    const seen = listen(conn)
+    conn.connect()
+    for (let i = 0; i < MAX_RETRIES + 2; i++) await vi.advanceTimersByTimeAsync(2000)
+
+    expect(errors(seen)).toHaveLength(1)
+    const msg = String(errors(seen)[0].message)
+    expect(msg).toMatch(new RegExp(String(MAX_RETRIES)))
+    expect(msg).toMatch(/session 404: not found/)
+  })
+
+  it('a socket that never reached the server reads differently from one the server closed', async () => {
+    // 1006 (no close frame) means it never got there — network or sandbox down.
+    // A real code came FROM the server, so the server was reachable. Opposite
+    // faults, and the close code is the only thing that separates them.
+    const conn = new WsSessionConnection(() => Promise.resolve({ wssUrl: 'ws://x', token: 't' }))
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(0)
+    await failUntilCeiling(seen, (s) =>
+      (s.onclose as ((ev?: unknown) => void) | null)?.({ code: 1006, reason: '' })
+    )
+    expect(errors(seen)).toHaveLength(1)
+    expect(String(errors(seen)[0].message)).toMatch(/without reaching the server/i)
+  })
+
+  it('a healthy open resets the clock, so the elapsed time is THIS outage not an old one', async () => {
+    // What the reset actually protects is the ELAPSED figure, and testing it via
+    // the cause string does not work: every later failure calls `noteFailure`
+    // and overwrites the old cause anyway, so a missing reset stays invisible
+    // there. Mutation-checked — deleting the reset leaves a cause-based
+    // assertion green and this one red.
+    let calls = 0
+    const conn = new WsSessionConnection(() => {
+      calls += 1
+      if (calls === 1) return Promise.reject(new Error('an old, unrelated fault'))
+      return Promise.resolve({ wssUrl: 'ws://x', token: 't' })
+    })
+    const seen = listen(conn)
+    conn.connect()
+    await vi.advanceTimersByTimeAsync(2000)
+    FakeSocket.instances[FakeSocket.instances.length - 1].onopen?.()
+
+    // An hour of healthy session between the old fault and the new outage.
+    await vi.advanceTimersByTimeAsync(3_600_000)
+
+    await failUntilCeiling(seen, (s) =>
+      (s.onclose as ((ev?: unknown) => void) | null)?.({ code: 1006, reason: '' })
+    )
+    expect(errors(seen)).toHaveLength(1)
+    const msg = String(errors(seen)[0].message)
+    const seconds = Number(/over (\d+)s/.exec(msg)?.[1] ?? 0)
+    // The ceiling is reached in well under a minute of retries; an unreset clock
+    // would report the hour of healthy session as part of the outage.
+    expect(seconds).toBeLessThan(600)
+    expect(msg).not.toMatch(/an old, unrelated fault/)
+  })
+})

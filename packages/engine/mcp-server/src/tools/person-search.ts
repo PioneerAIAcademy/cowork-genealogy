@@ -1,3 +1,4 @@
+import { decisiveness } from "../utils/person-search-decisiveness.js";
 import type { Principal } from "../auth/principal.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import {
@@ -262,6 +263,9 @@ function emptyResponse(input: PersonSearchInput): PersonSearchToolResponse {
     returned: 0,
     offset: input.offset ?? 0,
     hasMore: false,
+    // No results is emphatically not a decisive pick, and `decisiveness` says so in
+    // those words rather than this path inventing its own.
+    pick: decisiveness([]),
     results: [],
   };
 }
@@ -334,6 +338,11 @@ export async function personSearchTool(
     returned: results.length,
     offset: data.index ?? input.offset ?? 0,
     hasMore: data.links?.next?.href != null,
+    // Whether these results pick one person, or need a human to. On the RESPONSE
+    // rather than on each candidate: the per-candidate shape is pinned to exactly
+    // personId/score/confidence/gedcomx (test 17b), and this is a fact about the
+    // result SET, not about any one row.
+    pick: decisiveness(results),
     results,
   };
 }

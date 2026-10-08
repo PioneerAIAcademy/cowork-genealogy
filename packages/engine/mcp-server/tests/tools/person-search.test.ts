@@ -465,6 +465,65 @@ describe("personSearchTool zero matches", () => {
   });
 });
 
+// ─── `pick` reaches the RESPONSE ────────────────────────────────────────
+//
+// `person-search-decisiveness.test.ts` covers the rule itself, exhaustively. None of
+// it touches this tool: deleting `pick: decisiveness(results)` from the response left
+// all 48 tests in both files green (measured 2026-09-30). So the helper was proven and
+// the WIRING was not, while `init-project/SKILL.md` reads `pick.decisive` off the
+// response and would silently stop finding it.
+
+describe("personSearchTool pick", () => {
+  it("21a. puts `pick` on the response, decisive for a single clear candidate", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 7, index: 0, entries: [lincolnTreeEntry()] }),
+    );
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
+    expect(result.pick).toBeDefined();
+    expect(result.pick.decisive).toBe(true);
+    expect(result.pick.tiedAtTop).toBe(1);
+    expect(result.pick.reason).toBeTruthy();
+  });
+
+  it("21b. is NOT decisive when the top score is tied — the flood shape", async () => {
+    // Two entries sharing a score: the same fields matched for both, so the tool has
+    // no basis to prefer one. This is the Mary Hales case in miniature.
+    const tied = () => ({ ...lincolnTreeEntry(), score: 3.6236 });
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 35921, index: 0, entries: [tied(), tied()] }),
+    );
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
+    expect(result.pick.decisive).toBe(false);
+    expect(result.pick.tiedAtTop).toBe(2);
+  });
+
+  it("21c. says so on zero matches rather than omitting the field", async () => {
+    // An absent `pick` reads as "not computed"; nothing to choose from is a real
+    // answer and the caller must be able to tell the two apart.
+    mockFetch.mockResolvedValueOnce(make204Response());
+    const result = await personSearchTool(VALID_QUERY, LOCAL);
+    expect(result.pick).toBeDefined();
+    expect(result.pick.decisive).toBe(false);
+    expect(result.pick.tiedAtTop).toBe(0);
+  });
+
+  it("21d. is computed from the same response every time (phase 4 acceptance 3)", async () => {
+    // Asserted directly rather than inferred from a run: the whole reason the rule
+    // lives in the tool is that a model asked "is this decisive?" answers differently
+    // on different runs, and a number does not.
+    const entries = [lincolnTreeEntry(), { ...lincolnTreeEntry(), id: "X", score: 4.1 }];
+    const runOnce = async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 7, index: 0, entries: entries.map((e) => ({ ...e })) }),
+      );
+      return (await personSearchTool(VALID_QUERY, LOCAL)).pick;
+    };
+    const first = await runOnce();
+    expect(await runOnce()).toEqual(first);
+    expect(await runOnce()).toEqual(first);
+  });
+});
+
 // ─── Errors ─────────────────────────────────────────────────────────────
 
 describe("personSearchTool errors", () => {

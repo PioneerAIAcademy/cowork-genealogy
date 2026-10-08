@@ -10,10 +10,29 @@ export interface ToolChip {
   agent?: string // set when a subagent, not the main agent, made the call
 }
 
+/** One rendered unit, in arrival order. See `blocks` below. */
+export interface ChatBlock {
+  kind: 'text' | 'chip'
+  text?: string
+  tool?: string
+  /** Index into `tools`, so the chip renders with its live done/summary state. */
+  toolIndex?: number
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   tools: ToolChip[]
+  // Arrival order of text and chips. `text` accumulates into one string and `tools`
+  // into one array, so the order BETWEEN them is lost -- which is why every chip in a
+  // turn renders above every paragraph, 36 of them in one stretch of the captured
+  // session. This records it. Both fields above are untouched, so every existing
+  // reader keeps working and this stays additive.
+  blocks?: ChatBlock[]
+  // The structured questions from a decision call. The chip summary is truncated to
+  // 160 characters, so a card showing candidates side by side cannot be built from
+  // it; the options ride the event instead.
+  decision?: Array<{ question: string; header?: string; options: Array<{ label: string; description?: string }> }>
   thinking?: string
   // Partial content streaming in ahead of its canonical block. Held separately
   // so committing the block can't double-render what the deltas already showed.
@@ -38,6 +57,17 @@ export interface ChatMessage {
 // spent budget and no progress. To a genealogist a half-finished run then reads as
 // "nothing more was found", which is a correctness bug in the product, not a cosmetic
 // one. `ok` is deliberately absent: an ordinary turn that simply finished says nothing.
+// Phase 2 item 4. Alpha testers who locked the screen reported the run had QUIT
+// (#2921, #2922). It had not -- on the prototype a disconnect stops only the stream,
+// and the captured session proves it: 133 minutes, one turn delivered FIVE times by
+// the queue, the resume guard absorbing each redelivery, and the run completing.
+// The behaviour was already right; only the saying-so was missing.
+//
+// Deliberately promises nothing the product cannot do. There is no notification when
+// a job finishes, so this must not imply one -- the reader comes back and looks.
+export const KEEPS_RUNNING_NOTE =
+  'This keeps running if you close the tab — come back any time.'
+
 export const TURN_OUTCOME_LABELS: Record<string, string> = {
   completed: 'Research complete.',
   stopped: 'Stopped — send a message to carry on.',
@@ -45,10 +75,12 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   budget: 'Paused: this run reached its step budget. Send a message to carry on.',
   no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
   decision: 'Waiting on you — see the question above.',
-  // The ask was met and the JOB is still open. It must not read like `completed`
-  // ('Research complete.'), or a plan-only request looks like a finished project.
+  // R4: the ask was met and the JOB is still open. It must not read like
+  // `completed` ('Research complete.'), or a plan-only request looks like a
+  // finished project.
   delivered: "Done — that's what you asked for. Send a message to carry on.",
   mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
+  // Added on main while this branch was open (U13/U23 outcomes).
   retries_exhausted: 'This run was interrupted too many times and has stopped. Send a message to carry on.',
   transcript_lost: "Stopped: a server problem kept this run's conversation from being saved. Findings written to the project are kept.",
   signin_required: 'FamilySearch needs you to sign in again. Sign in, then send a message to carry on.'
@@ -182,6 +214,7 @@ export function foldChatEvent(
     // commit it (as its own paragraph) and drop the preview rather than
     // appending both.
     last.text = joinTextBlocks(last.text, text)
+    last.blocks = [...(last.blocks ?? []), { kind: 'text', text }]
     last.streamText = ''
   } else if (kind === 'text_delta') {
     last.streamText = (last.streamText ?? '') + text
@@ -200,6 +233,13 @@ export function foldChatEvent(
     last.text = joinTextBlocks(last.text, (ev.text as string) ?? 'Error')
     last.error = true
   } else if (kind === 'tool_use') {
+    last.blocks = [
+      ...(last.blocks ?? []),
+      { kind: 'chip', tool: ev.tool as string, toolIndex: last.tools.length }
+    ]
+    if (Array.isArray(ev.questions) && ev.questions.length > 0) {
+      last.decision = ev.questions as ChatMessage['decision']
+    }
     last.tools.push({
       tool: ev.tool as string,
       summary: ev.summary as string,
@@ -207,7 +247,17 @@ export function foldChatEvent(
       agent: typeof ev.agent === 'string' ? ev.agent : undefined
     })
   } else if (kind === 'tool_result') {
-    const idx = last.tools.findIndex((t) => t.tool === ev.tool && !t.done)
+    // Match the AGENT as well as the tool. Matching on the tool alone closed the
+    // first open chip with that name, whoever produced it -- and with up to eight
+    // extraction agents live at once and `same_person` called 299 times in one
+    // session, a result from agent B closed agent A's chip and overwrote its
+    // summary. Measured on the captured session: 28 of 1,006 results (2.8%) landed
+    // on the wrong chip. `agent` is undefined on the main thread, so main-thread
+    // results still match main-thread chips and only each other.
+    const evAgent = typeof ev.agent === 'string' ? ev.agent : undefined
+    const idx = last.tools.findIndex(
+      (t) => t.tool === ev.tool && t.agent === evAgent && !t.done
+    )
     if (idx >= 0) last.tools[idx] = { ...last.tools[idx], done: true, summary: ev.summary as string }
     else
       last.tools.push({

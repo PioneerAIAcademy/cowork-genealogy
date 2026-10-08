@@ -78,6 +78,11 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 #: `locality-guide`'s own persist test.
 NEWLY_ENFORCED = {"localities"}
 
+#: Brought in by the research-as-a-job phase-2 merge: `rejected_links` is written by
+#: `person-evidence` alone (phase 3 item 3, "a rejection is its own record"). Declared
+#: here for the same reason NEWLY_ENFORCED is -- the frozen table predates the section.
+ADDED: dict[str, set[str]] = {"rejected_links": {"person-evidence"}}
+
 #: `questions` gains `proof-conclusion`. The transition it covers —
 #: `status -> resolved` — was owned by nobody: `proof-conclusion`'s body hands
 #: it to `question-selection`, `question-selection`'s body hands it back, and
@@ -211,6 +216,9 @@ def expected_research_owners() -> dict[str, set[str]]:
         expected[section] |= added
     for section, removed in NARROWED.items():
         expected[section] -= removed
+    # Sections the frozen table predates, declared rather than frozen in.
+    for section, writers in ADDED.items():
+        expected[section] = set(writers)
     return expected
 
 
@@ -232,9 +240,10 @@ def test_the_only_newly_enforced_section_is_localities():
     kind of change happened — a new section being enforced and an owner being
     added to an existing one are different decisions with different costs.
     """
-    before = set(FROZEN_OWNERSHIP_TABLE) - NEWLY_ENFORCED
+    declared = NEWLY_ENFORCED | set(ADDED)
+    before = set(FROZEN_OWNERSHIP_TABLE) - declared
     after = set(_union_writer_sets(RESEARCH_JSON))
-    assert after - before == NEWLY_ENFORCED
+    assert after - before == declared
     assert before - after == set()
 
 

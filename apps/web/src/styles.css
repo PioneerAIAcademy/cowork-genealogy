@@ -862,3 +862,65 @@ button {
   font-size: 12px;
   color: var(--danger, #c0392b);
 }
+
+/* Phase 2 item 4: the run survives a closed tab; testers who locked their screen
+   thought it had quit (#2921, #2922). Sits under the typing indicator, quieter than
+   the activity line above it so it reassures without competing. */
+.keepsRunning {
+  margin-top: 4px;
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* Phase 2, "one view of job state": the session list's four states. Two want the
+   reader's attention (working, needs you) and two are resting states. */
+.jobState {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.78em;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.jobStateLive { background: var(--accent-soft, #1f6feb22); color: var(--accent, #1f6feb); }
+.jobStateRest { background: var(--bg-muted, #8884); color: var(--text-secondary, #666); }
+
+/* A chip that opens the card it names. Looks like its non-clickable siblings -- the
+   affordance is the cursor and the hover, not a second visual language in a strip
+   where half the chips navigate and half do not. */
+.toolChipLink {
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  text-align: left;
+}
+.toolChipLink:hover { text-decoration: underline; }
+
+/* Phase 3 item 1: the decision card. A turn that ends waiting on the researcher used
+   to render one line; this shows the candidates side by side with what each would do.
+   The recommended one is marked, because *not sure* continues on it (R9). */
+.decisionCard {
+  border: 1px solid var(--accent, #1f6feb);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  background: var(--bg-card, transparent);
+}
+.decisionQuestion { font-weight: 600; margin-bottom: 8px; }
+.decisionOptions { display: flex; flex-direction: column; gap: 6px; }
+.decisionOption {
+  display: flex; flex-direction: column; gap: 2px;
+  text-align: left; padding: 8px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--border, #8883); background: transparent; font: inherit;
+  color: inherit;
+}
+.decisionOption:hover { border-color: var(--accent, #1f6feb); }
+.decisionRecommended { border-color: var(--accent, #1f6feb); }
+.decisionLabel { font-weight: 600; }
+.decisionBadge { font-size: 0.75em; color: var(--accent, #1f6feb); }
+.decisionWhy { font-size: 0.85em; opacity: 0.8; }
+.decisionEscapes { display: flex; gap: 12px; margin-top: 10px; }
+.decisionEscape {
+  background: none; border: none; padding: 0; font: inherit; font-size: 0.85em;
+  color: var(--text-secondary, #666); text-decoration: underline; cursor: pointer;
+}

@@ -1,7 +1,13 @@
 // REST client for the control plane. Same-origin (Vite proxies to FastAPI in
 // dev; the server serves the built app in prod), cookies included.
 
+/** running | needs you | done | stopped | new — what a returning reader sees. */
+export type JobState = 'running' | 'needs you' | 'done' | 'stopped' | 'new'
+
 export interface SessionSummary {
+  /** The four job states the session list shows, plus `new` for a session that has
+   *  never run. Optional so an older server that omits it degrades to no badge. */
+  job_state?: JobState
   id: string
   title: string
   model: string

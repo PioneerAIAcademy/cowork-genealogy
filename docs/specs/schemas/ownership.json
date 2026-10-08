@@ -672,6 +672,31 @@
       "failure": "A source description minted outside extraction has no `src_` behind it, so every `gedcomx_source_description_id` reference into it dangles at upload time.",
       "remedy": "Let record-extraction mint the entry as part of the record's write; cite an existing one by its `S` id.",
       "override": "none"
+    },
+    {
+      "artifact": "research.json",
+      "section": "rejected_links",
+      "owner": "skill:person-evidence",
+      "callers": [
+        "skill:person-evidence"
+      ],
+      "writerTools": [
+        "research_append"
+      ],
+      "toolAuthorized": [],
+      "enforceableAt": [
+        "unit",
+        "hook",
+        "tool"
+      ],
+      "notes": "A researcher's rejection of a person-link, ruled 2026-09-30 to be its own record rather than a fourth `person_evidence.confidence` value -- that field says how sure we are a link IS a match, and rejected is the opposite claim, so every reader of it would otherwise have to learn a value meaning 'ignore this row'. Owned by the same lane as the links themselves, so a rejection cannot be written by something that could not have made the link. Also enforceable at the TOOL plane, which the link section is not: whether a pair was rejected is decidable from research.json alone, so the writer tool refuses the re-link rather than a skill body asking the model to remember.",
+      "requires": "Only the person-evidence lane creates or rejects an identity link.",
+      "failure": "A rejection recorded by deletion is forgotten, and a later step re-links the same pair -- the reported failure, where a researcher challenged an assumption and the agent reverted to it because nothing recorded the rivals.",
+      "remedy": "Record the rejection; never delete the link to mean 'no'.",
+      "override": "none",
+      "hookCallers": [
+        "agent:person-evidence"
+      ]
     }
   ]
 }

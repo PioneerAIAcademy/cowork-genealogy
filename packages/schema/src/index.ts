@@ -190,6 +190,15 @@ export interface Assertion {
   extracted_for_question_ids: string[]
 }
 
+export interface RejectedLink {
+  id: string
+  assertion_id: string
+  person_id: string
+  /** Optional: a rejection is never a demand for the right answer. */
+  reason?: string | null
+  created: string
+}
+
 export interface PersonEvidence {
   id: string
   assertion_id: string
@@ -364,6 +373,11 @@ export interface ResearchData {
   sources: Source[]
   assertions: Assertion[]
   person_evidence: PersonEvidence[]
+  /** Person-links the researcher rejected. Its own record rather than a fourth
+   *  `confidence` value: that field says how sure we are a link IS a match, and
+   *  rejected is the opposite claim. Optional -- a project that has rejected nothing
+   *  has no array. */
+  rejected_links?: RejectedLink[]
   conflicts: Conflict[]
   hypotheses: Hypothesis[]
   timelines: Timeline[]
@@ -539,4 +553,17 @@ export function getPrimaryFact(person: GedcomxPerson, type: string): GedcomxFact
     person.facts?.find((f) => f.type === type && f.primary) ??
     person.facts?.find((f) => f.type === type)
   )
+}
+
+/**
+ * A candidate link ruled out, so the next session does not re-propose it.
+ * `rejected_links` on research.json; written by person-evidence alone.
+ */
+export interface RejectedLinkEntry {
+  id: string;
+  assertion_id: string;
+  person_id: string;
+  /** Optional. A rejection is never a demand for the right answer. */
+  reason?: string | null;
+  created: string;
 }

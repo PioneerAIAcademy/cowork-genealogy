@@ -48,7 +48,6 @@ services:
   minio:
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio
-    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: proto
       MINIO_ROOT_PASSWORD: protoproto
@@ -56,9 +55,9 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - proto-minio:/data
+      - proto-minio:/bitnami/minio/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live || exit 1"]
       interval: 2s
       timeout: 5s
       retries: 30
@@ -254,6 +253,12 @@ services:
       AWS_ACCESS_KEY_ID: x
       AWS_SECRET_ACCESS_KEY: x
       AWS_EC2_METADATA_DISABLED: "true"
+      # Sidecar bodies live in the blob store, so the tier that serves them needs to
+      # reach it. Same values the worker uses.
+      GENEALOGY_S3_ENDPOINT: http://minio:9000
+      GENEALOGY_S3_BUCKET: projects
+      GENEALOGY_S3_ACCESS_KEY: proto
+      GENEALOGY_S3_SECRET_KEY: protoproto
       POLL_S: "1"
       SSE_PING_S: "15"
       # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start
