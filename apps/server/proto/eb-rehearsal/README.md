@@ -65,6 +65,8 @@ they run against a fake `aws`.
 | `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live. |
 | `probe --case <c>` | Applies cases (repeatable), holds, then restores in reverse order in `finally`. Enter, Ctrl-C, an exception or `--hold-s N` all lead to the restore, which first waits for the environment to leave `Launching` or `Updating`. |
 | `down` | Tears everything down in order. It is idempotent. |
+| `pause` | Between sessions: the three tiers to ASG 0/0, then RDS and the bastion stopped, and `paused` recorded so `status` does not report the ASG sizes as drift. AWS restarts a stopped RDS instance after seven days. |
+| `resume` | Undoes `pause`: RDS (waits for `available`), the bastion, then the tiers back to 1/1. |
 | `prove-empty` | Exits 1 if anything of the rehearsal remains. |
 | `leak-check [--body <file>]` | The account-id leak check. It makes no AWS call. |
 
@@ -75,7 +77,7 @@ they run against a fake `aws`.
 | `guard` | The `DAILY` cost budget `genealogy-u13`. Its limit is the trailing 30-day maximum daily `UnblendedCost` plus $15, with ACTUAL alerts at max + $5 and at the limit. Every run recomputes it and prints the trailing min and max. |
 | `iam` | The service role and four instance roles and profiles (web, worker, tools, bastion), each with `AmazonSSMManagedInstanceCore`. Web gets `sqs:SendMessage`. Tools gets the data bucket's object actions and `s3:ListBucket`. Each tier can read its own secrets. |
 | `net` | Security groups `web`, `worker`, `tools`, `tools-alb` (80 from `worker`) and `rds` (5432 from the three tier groups), in the default VPC. |
-| `stores` | RDS PostgreSQL 16.13 `db.t4g.micro`: private, encrypted, with an RDS-managed master secret, a subnet group and a parameter group. Also the data bucket, with the public-access block and SSE. |
+| `stores` | RDS PostgreSQL 16.13 `db.t4g.micro` (`--rds-class` picks another when AWS reports `InsufficientDBInstanceCapacity`, as us-east-1 did for gp3 on 2026-10-07): private, encrypted, with an RDS-managed master secret, a subnet group and a parameter group. Also the data bucket, with the public-access block and SSE. |
 | `secrets` | The six secrets, created from 0600 files. |
 | `bastion` | A t3.micro AL2023 instance in the `worker` group, reachable only over SSM. |
 | `versions` | The storage location, recording whether this run created the bucket. Then the application, and the three application versions (`--process`). |
@@ -179,7 +181,7 @@ the budget, the Resolver config and both log-group prefixes.
 python apps/server/proto/eb-rehearsal/rehearse.py leak-check --work-dir <dir> --body <pr-body.md>
 ```
 
-It reads every value in `.local/` and refuses an empty file, since an empty pattern
+It reads the values in `.local/account`, `zone` and `host` (the emails are not D9 values) and refuses an empty one, since an empty pattern
 matches every line. It writes the patterns to `<work-dir>/leak-patterns` and runs
 `git grep -F --untracked` over the repo (ignored files stay excluded). It then scans each
 `--body` file, the commit messages in `<base>..HEAD` (`--base`, default `main`), and every

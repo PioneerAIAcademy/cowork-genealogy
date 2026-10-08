@@ -169,10 +169,20 @@ shopt -s nullglob
 for d in "$REPO_ROOT"/packages/engine/plugin/skills/*/; do
   name="$(basename "$d")"
   ln -s "$d" ".claude/skills/$name"
+  if [ ! -L ".claude/skills/$name" ]; then
+    echo "ERROR: ln -s for skill '$name' created a copy, not a symlink." >&2
+    echo "This platform does not support symlinks. Run scripts\\setup-feedback-case.bat instead." >&2
+    exit 1
+  fi
 done
 for d in "$REPO_ROOT"/.claude/skills/*/; do
   name="$(basename "$d")"
   ln -s "$d" ".claude/skills/$name"
+  if [ ! -L ".claude/skills/$name" ]; then
+    echo "ERROR: ln -s for skill '$name' created a copy, not a symlink." >&2
+    echo "This platform does not support symlinks. Run scripts\\setup-feedback-case.bat instead." >&2
+    exit 1
+  fi
 done
 shopt -u nullglob
 

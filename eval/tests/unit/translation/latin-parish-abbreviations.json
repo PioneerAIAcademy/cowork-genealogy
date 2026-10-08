@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_translation_013",
+    "skill": "translation",
+    "name": "Expand Latin parish-register abbreviations deleted from the vocabulary table",
+    "type": "positive",
+    "description": "A Latin Catholic baptism entry whose abbreviations (bapt., fil. leg., test., ej., vid.) and the full term patrini are exactly the vocabulary rows #2259 deletes from the agent body. The point is to show the deletion cost nothing: the agent must still expand each abbreviation individually from craft, not from a bundled table. Added by #2259 as the instrument that detects whether a deleted row was load-bearing.",
+    "tags": ["latin", "catholic", "baptism", "church-record", "abbreviations", "residue-deletion-check", "issue-2259", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Translate this Latin Catholic baptismal entry: 'Die 14 Aprilis 1798 bapt. est Catharina, fil. leg. Michaelis Hofer et uxoris eius Mariae, nata die 12 ej. mensis. Patrini: Josephus Bauer et Theresia Gruber vid. Test.: Franciscus Lang.'",
+    "scenario": null
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "Grade each abbreviation's expansion individually. Translating the surrounding entry correctly does not earn credit for an abbreviation that is left unexpanded, mis-expanded, or dropped.",
+    "`bapt.` must be expanded to `baptizatus/a (est)` — 'was baptized' (here: Catharina was baptized).",
+    "`fil. leg.` must be expanded to `filius/filia legitimus/a` — 'legitimate daughter' (Catharina is the legitimate daughter of Michael Hofer and his wife Maria). Flag that this parent-naming is what makes the record valuable for parentage.",
+    "`ej.` must be expanded to `ejusdem` — 'of the same [month]' (born on the 12th of the same month, April).",
+    "`patrini` must be identified as the godparents (Josephus Bauer and Theresia Gruber) — distinct from the witnesses.",
+    "`vid.` must be expanded to `vidua` — 'widow' (describing the godmother Theresia Gruber).",
+    "`test.` must be expanded to `testes` — 'witnesses' (Franciscus Lang), distinct from the godparents.",
+    "Should flag that Latin records Latinize names (Josephus = Joseph, Franciscus = Francis) so the genealogist expects this when matching to other records."
+  ]
+}
