@@ -1,0 +1,151 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-10-03T11:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "givenName": "William",
+      "surname": "Weller",
+      "birthLikeDate": "1825"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "TN70-WEL",
+        "personName": "William Weller",
+        "score": 0.78,
+        "sex": "Male",
+        "birthDate": "1825",
+        "birthPlace": "England",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1870",
+            "place": "Maury, Tennessee, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+        "collectionId": "0",
+        "collectionTitle": "United States Census, 1870",
+        "recordTitle": "William Weller household, Maury County, Tennessee, 1870",
+        "treeMatches": [],
+        "primaryId": "CP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "CP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NCP1",
+                  "preferred": true,
+                  "given": "William",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP1",
+                  "type": "Birth",
+                  "date": "1825",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "NCP2",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP2",
+                  "type": "Birth",
+                  "date": "1828",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NCP3",
+                  "preferred": true,
+                  "given": "James",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP3",
+                  "type": "Birth",
+                  "date": "1852",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP4",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "NCP4",
+                  "preferred": true,
+                  "given": "Ellen",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP4",
+                  "type": "Birth",
+                  "date": "1855",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP5",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NCP5",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Weller",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP5",
+                  "type": "Birth",
+                  "date": "1859",
+                  "place": "England"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
