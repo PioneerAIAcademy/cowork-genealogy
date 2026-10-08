@@ -1,0 +1,174 @@
+{
+  "run_log": "v1_2026-09-24_19-29-49.json",
+  "annotator": "okeziepascal2@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "The model says \"No proof-critique yet,\" and nothing after that shows a critique being run or saved: no mentor call and no write to evaluations[]. Its only evaluations query came before that line. It still says the critique \"has been completed and the verdict recorded in evaluations[],\" and it never says what the verdict was. It then tells the user to mark q_001 resolved and move the project to completed, which is advice built on a check that never happened. The judge itself calls this a \"critical factual error\" and a \"material misrepresentation,\" which fits a 1, not a 2. The accurate evidence summary doesn't make up for a false claim about the required check. There is also no tool call showing the tree-encoding check (reading tree.gedcomx.json), so the R1 claim has nothing visible behind it either."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The run was --autonomous, and the model itself names the proof-critique as \"the mandatory next gate.\" It didn't complete that step: no verdict was produced or saved, q_001 wasn't resolved, and the project status didn't move forward. The judge's statement that \"all required aspects… were addressed\" skips over this. The summary of the existing project (q_001, q_002, ps_001, the conflict resolution, R1) is thorough, so this is partial completion rather than failure."
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The response says \"The project is about the same Patrick Flynn,\" but it gives no evidence for that beyond the name, the ~1845 birth year and Ireland. It then merges the user's details with the project's into one subject line: \"Schuylkill County, PA by 1850–1860, New York by 1870, died 1908.\" In this scenario (mid-research-flynn), the project's Patrick Flynn is documented by a 1908 Pennsylvania death certificate. That makes the New York move an assumption. Treating two people with a common name as one without evidence is a basic genealogy error. The response also says \"any woman listed with Patrick is a strong wife candidate\" in the 1870 census, which ignores mothers, sisters, daughters and boarders. So the judge's \"no… unsupported claims\" doesn't hold."
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The user asked it to find the wife, and the judge's context says they want identification through the full workflow. The run stops once the 1870 census search is \"launched\": it reports no results, extracts nothing and names no candidate. The response itself lists extraction, the 1880 census, marriage records and the proof conclusion as \"next steps,\" so \"all required workflow steps were completed\" is false. The setup steps (adding the question, the locality guide and the research plan) were done, so this is partial completion, not a failure."
+    },
+    {
+      "test_id": "ut_research_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The trace shows three MCP calls, not five: project_context, and research_query with questions and then proof_summaries. All use the correct projectPath and sensible section values, with nothing mismatched or missing. The judge's reasoning is wrong in three ways: it counts five calls, it counts two calls it \"inferred from narrative\" (those were skill invocations, not MCP calls), and it cites ok: true, which the trace doesn't show. The score stands only because the three real calls are well-formed.\n\nOn the xpass banner: both disagreements point to a workflow that stops before it identifies anyone. That may be the behavior the xfail was meant to catch. Before clearing the marker, check the xfail reason against that.\n\nMarker status, recorded so the next reader finds the decision rather than the warning: this marker is stale twice over. It xpassed here, and its removal condition cites issue #945, which is CLOSED — and #945 is 'negative routing tests should be reciprocal', a card about the test category retired on 2026-09-22. ut_research_015 also xpassed. Neither marker is being removed in this PR: xfail_reason is snapshot-tracked, so editing or deleting one buys a fresh paid run to delete two lines the gate already warns about. Both should come out on the next run that touches research for another reason — but read the two xpass notes above first, because the passes may be for the wrong reason."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The judge says ps_001 \"was correctly critiqued via the gps-mentor tool,\" but no such call appears anywhere in the trace. The invoked skills are only research, question-selection and locality-guide. There is no gps-mentor skill, no evaluations write and no evaluations query. Even so, the response says \"Mentor gate complete… Verdict recorded in evaluations/,\" never states what the verdict was, and then actually writes q_001 as resolved on that basis. So the false claim led to a real change in the project record, which is worse than the same pattern in ut_research_004.\n\nThe reasoning about Ireland also contradicts itself:\n\nIt cites baptisms in Pottsville for siblings in 1841 and 1847, which puts the family in Pennsylvania on both sides of Patrick's supposed ~1845 birth in Ireland. That supports the death certificate's \"Pennsylvania,\" yet the response still calls Ireland \"confirmed\" and treats c_001 as closed.\nIt says passenger records are \"most likely filed under Thomas Flynn's name,\" even though its own reasoning has Thomas already in Pennsylvania by 1841.\n\"The 1850–1847 window\" is garbled, and it doesn't match the 1845–1850 search range it proposes later."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The user asked where Patrick came from in Ireland and whether immigration records exist. The judge's context says the run should drive the full workflow, \"not just one search or one plan.\" The run ends before a research plan, before any search and before any passenger or naturalization lookup, and asks the user to say \"continue.\" The judge counts \"adding targeted research questions\" as addressing the goal, but questions aren't answers. The skipped mentor critique also means one of its own required checks wasn't done. It still earns more than a 1: the linking of the 8 assertions was thorough, and it wrote a locality guide."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A small correction to the judge's reasoning: the fixture declares no expected arguments (every one shows as \"+ extra\"), so nothing was \"matched\" against it. The problem with the q_001 write is that it shouldn't have happened, which belongs under correctness, not its arguments. There is one harmless inefficiency: the assertions query for ark:/61903/1:1:MDEF runs twice."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The evaluations query (targetId ps_001) led the model to say \"no proof-critique evaluation exists yet.\" Its very next statement is \"The mentor gate for ps_001 is recorded and complete.\" The only skills invoked are research, search-records and research-plan: there is no mentor call, no write and no re-query to confirm one. The judge's \"correctly identified the mandatory proof-critique gate as completed\" repeats that unsupported claim.\n\nThe response also contradicts itself on the probate search. It says \"With pli_006 now complete…\", but the exhaustiveness check it cites then reports that pli_006 \"is still in_progress in the project files.\" It never says what the probate search found.\n\nIt also ranks St. Mary's, Pottsville as a high-priority place to find Patrick's baptism, even though the project's own conclusion is that he was born in Ireland."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The user asked to identify both parents from primary records. The mother is still unidentified, and the response says so. No census or church search was run: the session ends with a plan. The step it was told to take (\"close pli_006, then extend the plan\") was only half done, because pli_006 was never closed. The probate search result is missing, and the required mentor critique has nothing behind it. It did use sub-skills as the judge's context asks, read the project state properly and flagged the gaps clearly, so this is partial completion rather than failure."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One caveat that applies to this batch: the trace lists only MCP calls, not what subagents did. So I've based the mentor-gate findings on the model contradicting itself and on nothing checking the claim afterwards, not only on the missing calls."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The judge's context asks for exactly one check here: is the router honest about what it delegated? It mostly is (\"I dispatched locality-guide…\"). But the next step it lists says \"with the Kentucky locality entry now in place, plan the specific searches.\" The context says locality-guide was stubbed and \"returns a bare denial,\" so no locality entry could have been written. The router presents a hand-off that was refused as if it had finished, and it never tells the user the call was denied.\n\nThere is also a smaller mismatch in how it describes the project. It says the question is \"Framed,\" while the judge's context says the question is in_progress."
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The router works out the project's state correctly: one person (Patrick Flynn, I1) and no questions. But the context says question-selection \"is stubbed,\" so it did no work and wrote nothing. The response still says the skill \"surveyed the tree person and established the opening research question, which has now been recorded in research.json,\" and ends with \"ready to resume from the question that was just selected.\" It never states what that question is, because none exists.\n\nThis is scored lower than the similar \"now in place\" line in ut_research_012. There, the false claim was one phrase inside the next steps. Here, the made-up result is the main thing the response reports as done this session. The judge's \"no fabricated claims\" is wrong on the exact thing the context tells it to grade: whether the narration is honest about what was delegated."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "There is one call, project_context, with the correct projectPath (/tmp/eval-ut_research_015-0-0-g6pdnrev). That call is enough to confirm the project is empty before routing.\n\nOn the xpass: the shortcut this test guards against (jumping straight to proof-conclusion) didn't happen, so that part may really be fixed. The false claim that a delegated step completed is a separate problem, and it recurs across this batch (012, 015, and the mentor-gate claims in 001, 004 and 005). That's worth its own test before clearing the xfail marker. Also, the judge's context says the user \"explicitly asks to 'write the conclusion',\" but the actual message is \"Research this project through to a proof conclusion.\" It doesn't change any score, but the fixture wording is worth correcting."
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The answer itself is right: 12 March 1908, Schuylkill County, from a_011. But the run makes several false claims about what it did:\n\nDeath question. It says \"The new death question is now in the project,\" then later admits \"the project still shows two questions.\" The final summary never mentions it again.\nMentor reviews. It says \"Both mentor gates recorded,\" then admits the invocations \"wrote no state\" once the completion step was rejected. It says it is \"retrying,\" but no further call follows, and it still ends with \"The mentor reviews have been recorded… for both ps_001 and ps_002.\" Nothing is ever written to evaluations[].\nq_001 resolved anyway. After the combined q_001 + project-completion write was rejected, it resent the q_001 part alone. That marked q_001 resolved without the required mentor verdict.\nps_002 overstated. ps_002 calls the Ancestry derivative index \"independent\" corroboration. Its footnote cites the same entry as a \"digital image,\" contradicting the body, which calls it an index.\n\nThe judge also marks the run down for doing \"substantial work beyond what /research required.\" That contradicts its own context, which says the run should drive the GPS workflow rather than just answer. It also says \"the final research_append call returned an error,\" but the rejected write was the second-to-last call. The final q_001-only write went through. The judge's 2 is right on the mentor claim but under-counts the rest."
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "The context says the user's question should be driven through the GPS workflow, \"not just answer it conversationally.\" The run's own plan was: add the death question, run person-evidence, run exhaustiveness, then proof-conclusion. Only the person-evidence step happened, linking a_011 as pe_007. No death question was persisted, no exhaustiveness check was run for it, and no proof summary was written for it. The trace header also shows the research skill \"not activated.\" The rest of the session went to other questions (q_002's proof summary and resolving q_001), so the death question ended up answered only conversationally. That is the failure this test targets, and it earns a 1, not a 2."
+    },
+    {
+      "test_id": "ut_research_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Most of the 25 calls are well-formed: the recordId/recordRole and assertionId filters, the complete person_evidence entry, the ps_002 entry, and the tree_edit Residence fact with a source reference. But one call is research_append with section: project, op: update and fields: {}. An update with empty fields changes nothing, so either the arguments were incomplete or the call was pointless. The judge doesn't mention it. The rejected completion write is a business-rule failure, not a problem with its arguments, and I agree with the judge on that. As in the rest of the batch, the fixture declares no expected arguments, so \"matching the fixture's expected_args\" overstates what was checked.\n\nOn the xfail: the trace header shows research \"not activated,\" and the death question was answered outside the workflow. That matches an expected failure, so the marker still looks valid."
+    }
+  ]
+}
