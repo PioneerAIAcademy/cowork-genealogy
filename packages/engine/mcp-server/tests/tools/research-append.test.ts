@@ -8571,6 +8571,47 @@ describe("research_append — detected core-identifier contradiction", () => {
     } as any);
     expect(r.ok ? [] : failure(r).errors).toEqual([]);
   });
+
+  // ut_person_evidence_001's shape: a conflict already resolved for the tree's
+  // birthplace leaves the losing assertion a weighed, set-aside claim.
+  async function withConflict(conflict: Record<string, unknown>, stated: Record<string, unknown> = {}) {
+    await write(stated);
+    const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r.conflicts = [{
+      id: "c_001", conflict_type: "fact", description: "Birthplace: Ireland or Trier",
+      disputed_attribute: "birth_place", competing_assertion_ids: ["a_001", "a_050"],
+      blocks_question_ids: [], ...conflict,
+    }];
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+  }
+
+  it("does NOT cap on an assertion a resolved conflict decided against", async () => {
+    await withConflict({ status: "resolved", preferred_assertion_id: "a_001", resolution_rationale: "Baptism outweighs." });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap on the date arm either when the conflict decided against it", async () => {
+    await withConflict(
+      { status: "resolved", preferred_assertion_id: "a_001", resolution_rationale: "Census age outweighs." },
+      { fact_type: "christening", date: "12 March 1858", place: null },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("still caps when the resolved conflict PREFERRED the contradicting assertion", async () => {
+    await withConflict({ status: "resolved", preferred_assertion_id: "a_050", resolution_rationale: "Record outweighs." });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("still caps while the conflict is unresolved", async () => {
+    await withConflict({ status: "unresolved" });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  it("still caps when the conflict is moot", async () => {
+    await withConflict({ status: "moot", preferred_assertion_id: "a_001" });
+    expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
 });
 
 // ─── The two-party arm of the detected contradiction (#2272) ────────────────

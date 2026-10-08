@@ -1272,12 +1272,34 @@ const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
 /** Whether this assertion's stated value is credible enough to contradict the
  *  tree. Measured over every committed scenario fixture 2026-09-24: with these
  *  two gates the arm refuses **0 of 323** confident/probable person_evidence
- *  entries, against 38 without them and 274 comparing any place at all. */
-function contradictionIsCredible(assertion: any): boolean {
+ *  entries, against 38 without them and 274 comparing any place at all. An
+ *  assertion a resolved conflict decided against is not credible either
+ *  (`resolvedAgainstIds`). */
+function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
+  if (resolvedAgainst.has(assertion?.id)) return false;
   if (assertion?.information_quality === "secondary") return false;
   return !WEAK_INFORMANT_PROXIMITY.has(
     String(assertion?.informant_proximity ?? "unknown"),
   );
+}
+
+/** Assertions a RESOLVED conflict decided against: every competitor that is not
+ *  its `preferred_assertion_id`. A contradiction the project has already weighed
+ *  and set aside is not a live one, so it cannot cap the link. Measured
+ *  2026-10-08 over 315 committed fixture and e2e documents (9,934
+ *  confident/probable links): 14 of the gate's 1,100 refusals cite only such an
+ *  assertion (`dev/measure-core-identifier-gate.ts`). Read from the document as
+ *  this op sees it, so a conflict resolved LATER in the same batch still
+ *  refuses, which fails safe. */
+function resolvedAgainstIds(research: any): Set<string> {
+  const out = new Set<string>();
+  for (const c of (research?.conflicts ?? []) as any[]) {
+    if (c?.status !== "resolved" || typeof c.preferred_assertion_id !== "string") continue;
+    for (const id of (c.competing_assertion_ids ?? []) as unknown[]) {
+      if (typeof id === "string" && id !== c.preferred_assertion_id) out.add(id);
+    }
+  }
+  return out;
 }
 
 /** A person_evidence link as the contradiction gate needs it: which assertion,
@@ -1460,6 +1482,7 @@ interface ContradictionScope {
   twoParty: boolean;
   birth: any;
   sameRecord: any[];
+  resolvedAgainst: ReadonlySet<string>;
 }
 
 /** What the gate compares for one link, or null when the link is out of scope:
@@ -1542,13 +1565,13 @@ function contradictionScope(
       partyKey(a) === linkedParty &&
       linkedParty !== null,
   );
-  return { twoParty, birth, sameRecord };
+  return { twoParty, birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research) };
 }
 
 /** The record's birth-place assertions that disagree with the tree's Birth
  *  place, before the distance test. */
 function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
-  const { twoParty, birth, sameRecord } = scope;
+  const { twoParty, birth, sameRecord, resolvedAgainst } = scope;
   if (twoParty || typeof birth.place !== "string" || placeSegments(birth.place).length === 0) return [];
   return sameRecord.filter((a: any) =>
     // Like for like. An ANY-place comparison refuses 274 of 323 committed
@@ -1556,7 +1579,7 @@ function disagreeingBirthPlaces(scope: ContradictionScope): any[] {
     // not a claim about birthplace: a man born in Ireland appears in a
     // Pennsylvania census, and that is biography, not contradiction.
     BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase()) &&
-    contradictionIsCredible(a) &&
+    contradictionIsCredible(a, resolvedAgainst) &&
     typeof a.place === "string" &&
     placeSegments(a.place).length > 0 &&
     // "Same House" names no place, so it states nothing, like a place-less one.
@@ -1599,7 +1622,7 @@ export function coreIdentifierContradictionInvariants(
 ): string[] {
   const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
   if (!scope) return [];
-  const { birth, sameRecord } = scope;
+  const { birth, sameRecord, resolvedAgainst } = scope;
 
   const findings: string[] = [];
 
@@ -1627,7 +1650,7 @@ export function coreIdentifierContradictionInvariants(
   if (treeBirthYear != null) {
     for (const a of sameRecord) {
       if (!BIRTH_DATE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
-      if (!contradictionIsCredible(a)) continue;
+      if (!contradictionIsCredible(a, resolvedAgainst)) continue;
       const stated = yearOf(a.date);
       if (stated == null) continue;
       if (Math.abs(stated - treeBirthYear) > MAX_BIRTH_YEAR_GAP) {
