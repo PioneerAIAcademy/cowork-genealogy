@@ -1160,6 +1160,26 @@ describe("structural counters", () => {
     });
   }
 
+  // `parent_subtype_recommended` is an OPEN enum, so nothing rejects a tree
+  // carrying a case variant or the upstream GedcomX spelling whose `Parent`
+  // suffix the simplified format drops and restores on round-trip. Matched as
+  // an exact string, every one of these counted as biological.
+  for (const sub of ["adoptive", "ADOPTIVE", "AdoptiveParent", "StepParent"]) {
+    it(`tooManyFathers tolerates the subtype spelling "${sub}"`, () => {
+      expect(
+        tooManyFathers(new Mob(withParentSubtype(sub, "Male"), "I1")),
+      ).toBe(false);
+    });
+  }
+
+  it("counts an UNRECOGNIZED subtype as biological rather than guessing", () => {
+    // The safe direction: a value we cannot interpret may mean anything, and
+    // treating it as non-biological would silently drop a real second father.
+    expect(
+      tooManyFathers(new Mob(withParentSubtype("Putative", "Male"), "I1")),
+    ).toBe(true);
+  });
+
   it("tooManyMothers does not fire for an Adoptive mother beside a biological one", () => {
     expect(
       tooManyMothers(new Mob(withParentSubtype("Adoptive", "Female"), "I1")),

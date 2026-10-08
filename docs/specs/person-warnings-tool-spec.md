@@ -926,8 +926,8 @@ Grep for `calculateWarnings` when sizing the blast radius.
   message age now read the latest bound too, or they name the earliest-POSSIBLE
   child and print an age that never triggered them.
 
-  Measured over the committed e2e final trees, 203 trees and 2266 ParentChild
-  edges: gating parentage edges unexempted refuses **419 of 2266** (18.5%) — 559
+  Measured over the committed e2e final trees at a36651a33, 203 trees and 2266
+  ParentChild edges: gating parentage edges unexempted refuses **419 of 2266** (18.5%) — 559
   instances across 74 runs (`--all`; 506 with `--all --no-widen-hop`). After the
   exemptions it refuses **67 of 2266** (3.0%), 75 instances across 20 runs and 41
   distinct warnings, and every tag still gating is an impossibility rather than a

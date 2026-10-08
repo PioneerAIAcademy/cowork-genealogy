@@ -492,15 +492,31 @@ export function tooManyChildren(mob: Mob, cutoff: number): boolean {
 }
 
 /** `parent_subtype` values that are NOT a claim of biological parentage.
- *  The full enum is `Biological | Adoptive | Step | Foster | Guardian`
+ *  The recommended enum is `Biological | Adoptive | Step | Foster | Guardian`
  *  (`simplified-gedcomx-spec.md`); an ABSENT subtype is biological, which is
- *  FamilySearch's own data-model default, so only these four are excluded. */
+ *  FamilySearch's own data-model default, so only these four are excluded.
+ *
+ *  Held lowercase and matched through `isNonBiologicalSubtype`, because
+ *  `parent_subtype_recommended` is an OPEN enum — nothing rejects a tree
+ *  carrying `adoptive` or the upstream GedcomX `AdoptiveParent`, whose
+ *  `Parent` suffix the simplified format drops and restores on round-trip.
+ *  Matched as an exact string, all three of those counted as biological. */
 const NON_BIOLOGICAL_PARENT_SUBTYPES: ReadonlySet<string> = new Set([
-  "Adoptive",
-  "Step",
-  "Foster",
-  "Guardian",
+  "adoptive",
+  "step",
+  "foster",
+  "guardian",
 ]);
+
+/** True when a `parent_subtype` denies biological parentage, tolerating case
+ *  and the upstream `…Parent` suffix. An unrecognized value counts as
+ *  biological: it may mean anything, and assuming otherwise would silently
+ *  drop a real second-father from the count. */
+function isNonBiologicalSubtype(sub: unknown): boolean {
+  if (typeof sub !== "string") return false;
+  const normalized = sub.trim().replace(/parent$/i, "").toLowerCase();
+  return NON_BIOLOGICAL_PARENT_SUBTYPES.has(normalized);
+}
 
 /** Ids of the anchor's parents by a relationship that claims biological
  *  parentage — every ParentChild edge except the four subtypes above. */
@@ -508,8 +524,7 @@ function biologicalParentIds(mob: Mob): Set<string> {
   const out = new Set<string>();
   for (const r of mob.tree.relationships ?? []) {
     if (r.type !== "ParentChild" || r.child !== mob.anchorId) continue;
-    const sub = (r as { subtype?: string }).subtype;
-    if (typeof sub === "string" && NON_BIOLOGICAL_PARENT_SUBTYPES.has(sub)) continue;
+    if (isNonBiologicalSubtype((r as { subtype?: string }).subtype)) continue;
     if (r.parent) out.add(r.parent);
   }
   return out;
