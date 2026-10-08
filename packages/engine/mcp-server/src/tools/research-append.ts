@@ -1777,10 +1777,16 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.exhaustive_declaration?.declared !== true) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const blocking = activePlanItems(preCallResearch, (plan) => plan.question_id === qid, [
-    "in_progress",
-    "planned",
-  ]);
+  // Of `plan_item_status`'s four, the two that are not disposed. Derived from
+  // the enum rather than listed so a status added later blocks by default: this
+  // gate should not wave through an item whose disposition it has never heard
+  // of, and a block here is recoverable — the plan's owner disposes of it —
+  // where a silent pass is the exhaustive declaration #1830 exists to stop.
+  const blocking = activePlanItems(
+    preCallResearch,
+    (plan) => plan.question_id === qid,
+    [...VALIDATOR_ENUMS.plan_item_status].filter((s) => s !== "completed" && s !== "skipped"),
+  );
   const inFlight = blocking.filter((i) => i.status === "in_progress").map((i) => i.itemId);
   const undisposed = blocking.filter((i) => i.status === "planned").map((i) => i.itemId);
   if (inFlight.length === 0 && undisposed.length === 0) return [];
