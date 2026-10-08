@@ -127,7 +127,8 @@ Projection rules:
   `http://gedcomx.org/` URI both count; an edge missing either end is
   skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
-  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), or null when none is dated.
+  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), or null when none is dated;
+  a date with no upper bound (`Aft 1850`) gives no year.
   The latest year, so a person is read as dead before a record only when they
   certainly were: a wife who died after an 1860 census is still expected in
   it. They exist so person-evidence can name

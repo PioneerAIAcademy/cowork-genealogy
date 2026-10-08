@@ -155,6 +155,8 @@ describe("project_context", () => {
           ]),
           person("I4", [{ id: "F6", type: "http://gedcomx.org/Death", date: "not a date" }]),
           person("I5", [{ id: "F7", type: "Birth", date: "1850" }]),
+          // no upper bound: "after 1850" could be 1880, so it is no evidence of when
+          person("I6", [{ id: "F8", type: "Death", date: "Aft 1850" }]),
         ],
         relationships: [],
         sources: [],
@@ -166,7 +168,7 @@ describe("project_context", () => {
     const byId = Object.fromEntries(r.persons.map((p) => [p.id, p.diedByYear]));
     // the latest possible year, never the earliest: a death "Abt 1890" is not before 1891,
     // and one "Bef 1870" can fall in 1869, after an 1865 household
-    expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null });
+    expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null, I6: null });
   });
 
   it("returns the objective verbatim and untruncated, and null when absent (#3026)", async () => {

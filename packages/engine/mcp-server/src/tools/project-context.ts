@@ -13,7 +13,7 @@ import { readProjectJson, NoProjectError, noProjectResult } from "../utils/proje
 import { readBuildInfo } from "../utils/build-info.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
-import { latestYear } from "../utils/date-helpers.js";
+import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -338,14 +338,15 @@ function familyIndex(tree: any): Map<string, { spouseIds: string[]; parentIds: s
 /** The year the person was certainly dead by: the earliest of the latest
  *  possible years of their dated Death and Burial facts, or null when none is
  *  dated. The latest year, not the earliest, so a death "Bef 1870" or "Abt 1861"
- *  never reads as before an 1865 or 1860 household the person may still be in. */
+ *  never reads as before an 1865 or 1860 household the person may still be in.
+ *  A date with no upper bound ("Aft 1850") gives no year: it never says when. */
 function diedByYear(p: any): number | null {
   let by: number | null = null;
   for (const f of Array.isArray(p?.facts) ? p.facts : []) {
     const kind = typeof f?.type === "string" ? f.type.split("/").pop() : "";
     if (kind !== "Death" && kind !== "Burial") continue;
     const std = getStandardDate(f);
-    const y = std === null ? null : latestYear(std);
+    const y = std === null || latestIsUnbounded(std) ? null : latestYear(std);
     if (y !== null && (by === null || y < by)) by = y;
   }
   return by;
