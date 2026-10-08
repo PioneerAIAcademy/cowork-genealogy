@@ -143,11 +143,14 @@ type FilterKey =
 /** One filter's match rule: `field` (or the first-matching of `fields`) on
  *  each item, compared by `mode` — `exact` equality, or `contains` /
  *  `contains-any` when the item's field is an array (e.g. an assertion's
- *  `extracted_for_question_ids`, a hypothesis's `supporting_assertion_ids`). */
+ *  `extracted_for_question_ids`, a hypothesis's `supporting_assertion_ids`).
+ *  `plan-question` is a cross-section filter: the item's `field` must be one of
+ *  the item ids of the plans whose `question_id` is the value — it lets one
+ *  `log` call replace the walk of one `planItemId` call per plan item (T2.1). */
 interface FilterRule {
   field?: string;
   fields?: string[];
-  mode: "exact" | "contains" | "contains-any";
+  mode: "exact" | "contains" | "contains-any" | "plan-question";
 }
 
 /** Per-section allow-list of supported filter keys — the whole point of not
@@ -166,6 +169,7 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
   },
   log: {
     planItemId: { field: "plan_item_id", mode: "exact" },
+    questionId: { field: "plan_item_id", mode: "plan-question" },
   },
   sources: {
     sourceId: { field: "id", mode: "exact" },
@@ -238,8 +242,12 @@ const FILTER_KEYS: FilterKey[] = [
   "focus",
 ];
 
-function matches(item: any, rule: FilterRule, value: string): boolean {
+function matches(item: any, rule: FilterRule, value: string, planItems?: Set<string>): boolean {
   const fields = rule.fields ?? (rule.field ? [rule.field] : []);
+  if (rule.mode === "plan-question") {
+    const id = item?.[fields[0]];
+    return typeof id === "string" && planItems !== undefined && planItems.has(id);
+  }
   if (rule.mode === "exact") {
     return item && item[fields[0]] === value;
   }
@@ -338,8 +346,28 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       throw new ResearchQueryError(`research.json '${section}' is missing or not an array`);
     }
 
-    const filtered = arr.filter(
-      (item) => activeFilters.every(({ rule, value }) => matches(item, rule, value)),
+    // A `plan-question` filter reads `plans` once to learn which plan items
+    // belong to the question. `plans` is a required section, so its absence is
+    // a corrupt document — an error, never a confident empty answer.
+    const planItemsFor = new Map<string, Set<string>>();
+    for (const { rule, value } of activeFilters) {
+      if (rule.mode !== "plan-question" || planItemsFor.has(value)) continue;
+      const plans = research?.plans;
+      if (!Array.isArray(plans)) {
+        throw new ResearchQueryError("research.json 'plans' is missing or not an array");
+      }
+      const ids = new Set<string>();
+      for (const plan of plans) {
+        if (plan?.question_id !== value || !Array.isArray(plan?.items)) continue;
+        for (const planItem of plan.items) {
+          if (typeof planItem?.id === "string") ids.add(planItem.id);
+        }
+      }
+      planItemsFor.set(value, ids);
+    }
+
+    const filtered = arr.filter((item) =>
+      activeFilters.every(({ rule, value }) => matches(item, rule, value, planItemsFor.get(value))),
     );
 
     const start = input.offset ?? 0;
@@ -374,7 +402,8 @@ export const researchQuerySchema = {
     "items 51+).\n" +
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
-    "(questionId, status), `log` (planItemId), `sources` (sourceId), `assertions` " +
+    "(questionId, status), `log` (planItemId, questionId — every entry for any plan item " +
+    "of that question's plans), `sources` (sourceId), `assertions` " +
     "(recordId, recordRole, sourceId, questionId — matches extracted_for_question_ids), " +
     "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids, status), " +
@@ -415,7 +444,8 @@ export const researchQuerySchema = {
         description:
           "questions/plans/proof_summaries: matches question_id (or id, for questions itself). " +
           "assertions: matches extracted_for_question_ids (contains). hypotheses: matches " +
-          "related_question_ids (contains). conflicts: matches blocks_question_ids (contains).",
+          "related_question_ids (contains). conflicts: matches blocks_question_ids (contains). " +
+          "log: entries whose plan_item_id is an item of a plan for this question.",
       },
       personId: {
         type: "string",

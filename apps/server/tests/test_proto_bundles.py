@@ -307,6 +307,20 @@ def test_web_dist_dir_is_the_layout_directory():
     assert _env("web").get("WEB_DIST_DIR") == layout.WEB_DIST_DIR
 
 
+def test_root_drop_in_lives_where_a_deploy_does_not_delete_it():
+    """U13 (2026-10-07): every deploy, app or configuration, deregisters web and deletes
+    /etc/systemd/system/web.service.d after predeploy and before the restart, so a drop-in
+    there never governs the deploy's own start; the worker came up as webapp. One under
+    /usr/lib/systemd/system/web.service.d survived both kinds of deploy."""
+    text = WORKER_HOOK.read_text(encoding="utf-8")
+    live = [ln for ln in text.splitlines() if not ln.lstrip().startswith("#")]
+    assert any(re.fullmatch(r"printf '\[Service\]\\nUser=root\\nGroup=root\\n' > "
+                            r"/usr/lib/systemd/system/web\.service\.d/10-genealogy-root\.conf", ln)
+               for ln in live), "the hook writes no root drop-in under /usr/lib"
+    assert not any("/etc/systemd/system/web.service.d" in ln for ln in live), \
+        "a drop-in under /etc is deleted by every deploy"
+
+
 def test_worker_hook_is_executable_in_git_and_strict():
     rel = WORKER_HOOK.relative_to(REPO).as_posix()
     staged = subprocess.run(["git", "ls-files", "-s", "--", rel], cwd=REPO, capture_output=True,
