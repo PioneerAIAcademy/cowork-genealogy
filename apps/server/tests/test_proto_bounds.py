@@ -633,8 +633,19 @@ def test_the_outage_cases_terminate_exactly_the_turns_backend(monkeypatch):
 # ── the probe texts and the make target ────────────────────────────────────────────────
 
 
+def test_kill_hold_names_one_record_and_matches_the_namespaced_extractor():
+    """A fresh seed cites nothing, so the generic extraction prompt searched for ~20 min first
+    and its first extraction_append came past the deadline (U13, 2026-10-08). The runtime
+    records the agent as ``genealogy-research:record-extractor``."""
+    text = bounds.KILL_HOLD_TEXT.read_text(encoding="utf-8")
+    assert re.search(r"ark:/61903/1:1:[A-Z0-9-]+", text) and "record-extractor" in text, text
+    assert "background" not in text.lower()
+    assert "agent_type LIKE '%%record-extractor'" in bounds.HOLD_ROW_SQL, bounds.HOLD_ROW_SQL
+    assert "agent_type = 'record-extractor'" not in bounds.HOLD_ROW_SQL
+
+
 def test_the_probe_texts_exist_and_the_delegation_one_never_asks_for_background():
-    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT, bounds.SPILL_TEXT):
+    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT, bounds.SPILL_TEXT, bounds.KILL_HOLD_TEXT):
         assert path.read_text(encoding="utf-8").strip(), path
     text = bounds.EXTRACTIONS_TEXT.read_text(encoding="utf-8").lower()
     assert "background" not in text and "record-extractor" in text

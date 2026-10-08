@@ -88,6 +88,8 @@ PROBES = Path(__file__).resolve().parent / "probes"
 LOOKUPS_TEXT = PROBES / "u23-lookups.txt"
 EXTRACTIONS_TEXT = PROBES / "u23-two-extractions.txt"
 RESUME_TEXT = PROBES / "background-delegation.txt"
+# kill_hold: one named record straight to the extractor, so the held write comes in minutes.
+KILL_HOLD_TEXT = PROBES / "u13-kill-hold.txt"
 FOLLOW_UP_TEXT = "Reply with the single word ok."
 PROBE_KEY = "__u23_probe__"
 REAL_CAP_MAX_USD = 5.0
@@ -1303,7 +1305,7 @@ USER_SEQ_SQL = ("SELECT max(seq) FROM session_events WHERE session_id = %s AND k
                 "AND payload->>'turn_id' = %s")
 RECLAIM_SQL = "SELECT receive_count, claimed_at, completed_at FROM turns WHERE turn_id = %s"
 # kill_hold: the delegated extraction_append inside the hold -- allowed, no duration_ms yet.
-HOLD_ROW_SQL = ("SELECT id, ts FROM tool_calls WHERE turn_id = %s AND agent_type = 'record-extractor' "
+HOLD_ROW_SQL = ("SELECT id, ts FROM tool_calls WHERE turn_id = %s AND agent_type LIKE '%%record-extractor' "
                 "AND tool_name LIKE '%%extraction_append' AND decision = 'allow' AND duration_ms IS NULL "
                 "ORDER BY id LIMIT 1")
 DURATION_SQL = "SELECT duration_ms FROM tool_calls WHERE id = %s"
@@ -1447,7 +1449,7 @@ def case_kill_hold(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         return
     seeded_session(ctx, rep)
     project_id = turn.one(ctx.dsn, PROJECT_SQL, (rep.session_id,))
-    tid = post(ctx, client, rep, EXTRACTIONS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    tid = post(ctx, client, rep, KILL_HOLD_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
     hold = wait_row(ctx, tid, HOLD_ROW_SQL, (tid,))
     rep.checks.append(("kill_hold: a delegated extraction_append entered the hold", hold is not None,
                        "the turn closed without one, or none within --deadline-s"))
