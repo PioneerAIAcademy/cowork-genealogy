@@ -183,8 +183,12 @@ def test_fetches_registration_start_date(tool_calls, test):
     Gated off two populations that never reach Step 1, measured on
     v1_2026-09-08_06-48-40 where this check failed all three:
 
-    - the four near-miss negatives (ut_002/_007/_008/_011) route away before the
-      agent is spawned, so they make no MCP calls at all;
+    - the near-miss negatives route away before the agent is spawned, so they
+      make no MCP calls at all. The gate was written for four
+      (ut_002/_007/_008/_011); `ut_002` and `ut_011` went with earlier agent
+      conversions and only `_007` and `_008` carry the tag now. The skip is
+      keyed on the tag rather than on that list, so it still binds — the list
+      read as current and was not;
     - a run that correctly returns at a Step 0 precondition — `refuse-in-progress`
       (an in-flight plan item), `refuse-planned` (an undisposed one, issue
       #1830), `already-declared` ("stop before any other check") and
