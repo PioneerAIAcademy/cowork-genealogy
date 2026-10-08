@@ -819,16 +819,31 @@ def case_cap_delegation(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     _delegation(ctx, client, rep, bound="cap")
 
 
-def shim_posts_for(msgid: str | None, timeout_s: float = 60, every_s: float = 1.0) -> list[dict]:
-    """The shim's post lines for ``msgid``, polled: the shim logs one when the worker
-    answers the delivery, after its teardown and release -- past the turn_done ``done`` saw."""
+DEPLOYED_DELIVERY_S = (180.0, 5.0)  # CloudWatch ingestion lags the worker by tens of seconds
+
+
+def deliveries(events: list[dict], msgid: str) -> list[dict]:
+    """The worker's own evidence that ``msgid`` was delivered: an ev=released line maps it to
+    a turn_id, and an ev=turn line with a receive_count says sqsd handed that turn over.
+    One dict per such ev=turn, carrying ``msgid`` (held_checks reads it)."""
+    released = {e.get("turn_id") for e in events if e.get("ev") == "released" and e.get("message_id") == msgid}
+    return [{**e, "msgid": msgid} for e in events
+            if e.get("ev") == "turn" and e.get("turn_id") in released and e.get("receive_count") is not None]
+
+
+def shim_posts_for(msgid: str | None, timeout_s: float | None = None, every_s: float | None = None) -> list[dict]:
+    """``msgid``'s deliveries, polled. Compose: the shim's post lines, logged when the worker
+    answers the delivery, after its teardown and release -- past the turn_done ``done`` saw.
+    Deployed: sqsd's log is not read; the worker's own lines (``deliveries``), on a longer
+    budget for CloudWatch's lag."""
     if msgid is None:
         return []
-    if TARGET.name != "compose":
-        raise NotImplementedError("shim_posts_for reads compose's shim; a deployed worker has sqsd, whose log "
-                                  "is not parsed yet")
-    return smoke.wait_for(lambda: [p for p in smoke.service_lines("shim", "post") if p.get("msgid") == msgid],
-                          timeout_s, every_s) or []
+    if TARGET.name == "compose":
+        return smoke.wait_for(lambda: smoke.shim_decisions(msgid), 60 if timeout_s is None else timeout_s,
+                              1.0 if every_s is None else every_s) or []
+    budget, every = DEPLOYED_DELIVERY_S
+    return smoke.wait_for(lambda: deliveries(worker_events(), msgid), budget if timeout_s is None else timeout_s,
+                          every if every_s is None else every_s) or []
 
 
 def _held(ctx: Ctx, client: httpx.Client, rep: Report, *, stop_first: bool) -> None:
@@ -1094,6 +1109,7 @@ SPILL_READ_SQL = ("SELECT count(*) FROM tool_calls WHERE turn_id = %s AND id > %
                   "AND input_path LIKE '%%/tool-results/%%'")
 SPILL_CALL_SQL = ("SELECT id, duration_ms FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s "
                   "AND duration_ms IS NOT NULL ORDER BY id LIMIT 1")
+RERUN_SQL = "SELECT count(*) FROM tool_calls WHERE turn_id = %s AND id > %s AND tool_name LIKE %s"
 
 
 NFT_INSTALL = "command -v nft >/dev/null || dnf -y -q install nftables"
@@ -1202,7 +1218,13 @@ def case_keepalive_drop(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
 
 def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     """M51: SIGKILL between a tool result spilling to the CLI's tool-results file and the
-    agent reading it back; the redelivery must complete, not end no_progress."""
+    agent reading it back; the redelivery must complete, not end no_progress.
+
+    The prompt asks for Italy's last collection title: Italy is measured past the CLI's
+    50,000-character spill and the title is only in the tail, past the 2 KB preview. The
+    kill fires on ``duration_ms``, which a failed call stamps too, so the run is void
+    unless the turn read a tool-results file somewhere: a failing upstream call reads as
+    void, not as M51 met. ``rerun_calls`` and ``reads_after_kill`` record re-ran vs stranded."""
     fresh_session(ctx, client, rep)
     tid = post(ctx, client, rep, SPILL_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
     t0, row = time.monotonic(), None
@@ -1222,10 +1244,18 @@ def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     if not done(ctx, client, rep, tid, label="resumed"):
         return
     snap = snapshot(ctx, rep.session_id, tid)
-    rep.checks += [redelivered_check("spill_kill", snap),
+    reads = int(turn.one(ctx.dsn, SPILL_READ_SQL, (tid, 0)) or 0)
+    after = int(turn.one(ctx.dsn, SPILL_READ_SQL, (tid, row[0])) or 0)
+    rerun = int(turn.one(ctx.dsn, RERUN_SQL, (tid, row[0], f"%{SPILL_TOOL}")) or 0)
+    rep.figures.update({"tool_results_reads": reads, "reads_after_kill": after, "rerun_calls": rerun})
+    rep.checks += [("spill_kill: the result spilled (a tool-results Read/Grep in the turn, else void)", reads > 0,
+                    "no Read/Grep of a tool-results path: the call failed or never spilled"),
+                   redelivered_check("spill_kill", snap),
                    ("spill_kill: not closed no_progress", snap.row is not None and snap.row[2] != TERMINAL_NO_PROGRESS,
                     f"row={snap.row}")]
-    rep.findings.append(f"Read/Grep rows on tool-results after the kill: {turn.one(ctx.dsn, SPILL_READ_SQL, (tid, row[0]))}")
+    rep.findings.append("after the kill the agent " + (f"re-ran {SPILL_TOOL}" if rerun else
+                                                        "read a tool-results path without re-running (stranded spill)"
+                                                        if after else "neither re-ran nor read a tool-results path"))
 
 
 CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
@@ -1252,8 +1282,6 @@ SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe
 # Cases a deployed target cannot run yet, and why.
 COMPOSE_ONLY = {
     "outage_pause": "RDS has no freeze (U19 calls a pause no RDS failure shape)",
-    "held_release": "its release check reads compose's shim; a deployed worker has sqsd",
-    "held_after_stop": "its release check reads compose's shim; a deployed worker has sqsd",
 }
 # Cases only a deployed target runs (U13): they signal or firewall the Beanstalk worker.
 DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill"})

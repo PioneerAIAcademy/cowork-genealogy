@@ -174,10 +174,60 @@ def test_bounds_refuses_compose_only_cases_on_a_deployed_target():
     assert bounds.make_ctx(args, None).target == "deployed"
 
 
-def test_shim_posts_for_refuses_a_deployed_target(monkeypatch):
+@pytest.mark.parametrize("case", ["held_release", "held_after_stop"])
+def test_the_held_cases_run_on_a_deployed_target(case):
+    args = bounds.build_parser().parse_args(["--case", case, "--target", "deployed", "--profile", "p"])
+    assert bounds.make_ctx(args, None).target == "deployed"
+
+
+def _released(msgid: str = "m-B", turn_id: str = "t-B") -> str:
+    return json.dumps({"ev": "released", "session_id": "s", "turn_id": turn_id, "message_id": msgid})
+
+
+def _b_turn(turn_id: str = "t-B") -> str:
+    return json.dumps({"ev": "turn", "turn_id": turn_id, "session_id": "s", "receive_count": 1, "status": 200})
+
+
+def _shim_on(monkeypatch, lines: list[str]) -> FakeAws:
+    fake = FakeAws(log_lines=[f"Oct 07 15:09:22 ip-10-0-0-1 web[1]: {ln}" for ln in lines])
+    monkeypatch.setattr(bounds, "TARGET", deployed(fake))
+    monkeypatch.setattr(bounds.smoke, "service_lines", lambda *a: pytest.fail("a deployed target has no shim"))
+    return fake
+
+
+def test_deployed_shim_posts_for_reads_the_workers_released_and_turn_lines(monkeypatch):
+    fake = _shim_on(monkeypatch, [_released(), _b_turn()])
+    [post] = bounds.shim_posts_for("m-B", timeout_s=0, every_s=0)
+    assert post["msgid"] == "m-B" and post["turn_id"] == "t-B"
+    assert any(fake.op(c) == ("logs", "filter-log-events") and bounds.TARGET.log_group("worker") in c
+               for c in fake.calls), fake.calls
+
+
+@pytest.mark.parametrize("lines", [
+    [_released()],                                                     # released, never delivered
+    [_b_turn()],                                                       # a turn, but nothing released it
+    [_released(turn_id="t-other"), _b_turn()],                         # released another turn
+    [_released(), json.dumps({"ev": "turn", "turn_id": "t-B", "status": 400, "error": "bad body"})],  # no receive
+])
+def test_deployed_shim_posts_for_finds_no_delivery(monkeypatch, lines):
+    _shim_on(monkeypatch, lines)
+    assert bounds.shim_posts_for("m-B", timeout_s=0, every_s=0) == []
+
+
+def test_deployed_shim_posts_for_ignores_another_msgid(monkeypatch):
+    _shim_on(monkeypatch, [_released(msgid="m-A"), _b_turn()])
+    assert bounds.shim_posts_for("m-B", timeout_s=0, every_s=0) == []
+
+
+def test_deployed_shim_posts_for_polls_longer_than_compose(monkeypatch):
+    waits: list[tuple] = []
     monkeypatch.setattr(bounds, "TARGET", deployed(FakeAws()))
-    with pytest.raises(NotImplementedError, match="sqsd"):
-        bounds.shim_posts_for("m-1")
+    monkeypatch.setattr(bounds.smoke, "wait_for", lambda pred, t, every: waits.append((t, every)))
+    bounds.shim_posts_for("m-B")
+    monkeypatch.setattr(bounds, "TARGET", bounds.compose_target())
+    bounds.shim_posts_for("m-B")
+    assert waits == [bounds.DEPLOYED_DELIVERY_S, (60, 1.0)]
+    assert bounds.DEPLOYED_DELIVERY_S[0] >= 180
 
 
 def test_turn_kill_spec_builds_a_deployed_target_only_when_asked():
@@ -362,6 +412,49 @@ def test_sigterm_real_signals_term_over_the_target(monkeypatch):
     bounds.case_sigterm_real(_ctx(), None, rep)
     assert "signal worker term" in order
     assert ("sigterm_real: ev=shutdown names the turn", True, "") in rep.checks
+
+
+def _spill_run(monkeypatch, *, reads_after: int, rerun: int) -> tuple[bounds.Report, list[str]]:
+    """spill_kill with the spilling call at id 7 and no read before the kill; ``reads_after``
+    tool-results reads and ``rerun`` calls after it."""
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    monkeypatch.setattr(bounds.turn, "db", lambda dsn, sql, params: [(7, 1200)] if sql == bounds.SPILL_CALL_SQL else [])
+
+    def one(dsn, sql, params):
+        killed = "signal worker kill" in order
+        if sql == bounds.SPILL_READ_SQL:
+            return reads_after if killed else 0
+        if sql == bounds.RERUN_SQL:
+            return rerun
+        return 1
+
+    monkeypatch.setattr(bounds.turn, "one", one)
+    rep = bounds.Report(case="spill_kill")
+    bounds.case_spill_kill(_ctx(), None, rep)
+    return rep, order
+
+
+def _spilled(rep: bounds.Report) -> bool:
+    [ok] = [ok for n, ok, _ in rep.checks if n.startswith("spill_kill: the result spilled")]
+    return ok
+
+
+def test_spill_kill_is_void_when_nothing_read_a_tool_results_file(monkeypatch):
+    """A failed upstream call stamps duration_ms too: the kill fires, but nothing ever spilled."""
+    rep, order = _spill_run(monkeypatch, reads_after=0, rerun=0)
+    assert "signal worker kill" in order
+    assert _spilled(rep) is False
+    assert rep.figures["tool_results_reads"] == 0 and rep.figures["rerun_calls"] == 0
+    assert "neither re-ran nor read" in rep.findings[-1]
+
+
+@pytest.mark.parametrize("rerun, said", [(0, "stranded spill"), (1, "re-ran collections_search")])
+def test_spill_kill_counts_a_tool_results_read_and_records_rerun_vs_stranded(monkeypatch, rerun, said):
+    rep, _order = _spill_run(monkeypatch, reads_after=1, rerun=rerun)
+    assert _spilled(rep) is True
+    assert rep.figures["tool_results_reads"] == 1 and rep.figures["reads_after_kill"] == 1
+    assert rep.figures["rerun_calls"] == rerun and said in rep.findings[-1]
 
 
 def test_deployed_only_cases_refuse_compose():

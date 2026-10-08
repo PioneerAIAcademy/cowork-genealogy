@@ -634,10 +634,16 @@ def test_the_outage_cases_terminate_exactly_the_turns_backend(monkeypatch):
 
 
 def test_the_probe_texts_exist_and_the_delegation_one_never_asks_for_background():
-    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT):
+    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT, bounds.SPILL_TEXT):
         assert path.read_text(encoding="utf-8").strip(), path
     text = bounds.EXTRACTIONS_TEXT.read_text(encoding="utf-8").lower()
     assert "background" not in text and "record-extractor" in text
+    # Italy is measured past the 50,000-character spill; England never was. A count is in the
+    # 2 KB preview (totalForPlace), the last title only in the spilled tail.
+    spill = bounds.SPILL_TEXT.read_text(encoding="utf-8").lower()
+    assert '"italy"' in spill and "england" not in spill, spill
+    assert re.search(r"\btitle\b", spill) and re.search(r"\blast collection\b", spill), spill
+    assert "how many" not in spill, "a count is answerable from the preview without reading the spill"
 
 
 _NUDGES_3 = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:-3\}\1$""")
