@@ -44,7 +44,8 @@
   ],
   "judge_reads_files": true,
   "execution": {
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 1200,
+    "sdk_message_silence_seconds": 300,
     "max_turns": 30,
     "stub_skills": [
       {
@@ -54,6 +55,18 @@
       {
         "skill": "search-external-sites",
         "response": "Executing the plan's external-repository items now, without stopping to check in, per your instruction. For each one I generated targeted search URLs (Ancestry and FindAGrave, Schuylkill County, Pennsylvania, surname Doyle) and logged each as an external_site entry with outcome 'partial' -- the URL is generated but no capture has been received yet. No MyHeritage or FindMyPast links: researcher_profile lists no subscription to either. Those items stay in_progress until the researcher opens the URLs in their own authenticated browser and uploads the PDF captures. Every remaining external item in the plan is handled the same way in turn."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Extracted the queued records from the earlier positive log entries into research.json and the tree. Returning to the plan's remaining items, without stopping to check in, per your instruction."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Linked the extracted assertions to the matching tree persons. Returning to the plan's remaining items, without stopping to check in, per your instruction."
+      },
+      {
+        "skill": "search-images",
+        "response": "Searched the plan's browse-only volumes and logged each image group for reading. Returning to the plan's remaining items, without stopping to check in, per your instruction."
       }
     ]
   }
