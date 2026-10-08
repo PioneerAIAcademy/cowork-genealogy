@@ -198,6 +198,26 @@ def test_a_matching_hash_is_not_reported_as_changed():
     assert alpha["body_changed"] == 0
 
 
+
+def test_heading_matches_the_typescript_contract():
+    """`HEADING` is a hand port of the regex in agent-return-contract.test.ts.
+
+    Read off the TypeScript source, because the two cannot share an import:
+    without this, widening or narrowing the contract's heading levels there
+    would silently change which agents this report counts as conforming.
+    """
+    import re
+
+    ts = (
+        HERE.parents[3]
+        / "packages" / "engine" / "mcp-server" / "tests" / "packaging"
+        / "agent-return-contract.test.ts"
+    ).read_text(encoding="utf-8")
+    found = re.search(r"^const HEADING = /(.+)/([a-z]*);$", ts, re.M)
+    assert found, "the HEADING literal is no longer in agent-return-contract.test.ts"
+    assert found.group(1) == rfr.HEADING.pattern
+    assert ("m" in found.group(2)) == bool(rfr.HEADING.flags & re.M)
+
 # --- the pure helpers, where the ambiguities were ---------------------------
 
 

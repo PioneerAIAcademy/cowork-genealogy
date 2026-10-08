@@ -59,9 +59,10 @@ The numbers move as run logs land. Re-run and update the baseline; do not
 treat a change as a regression without reading which logs changed.
 
 `HEADING` below is hand-ported from
-`packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts` and
-cannot be imported across the language boundary, so drift between the two is
-unguarded -- a `nothing-checks` gap noted on issue #3188.
+`packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`,
+which cannot be imported across the language boundary;
+`test_heading_matches_the_typescript_contract` reads that file and fails when
+the two drift.
 """
 
 from __future__ import annotations
