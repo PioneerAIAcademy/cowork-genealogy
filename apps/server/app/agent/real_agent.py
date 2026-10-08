@@ -201,7 +201,7 @@ _CREDENTIAL_READ_TOOLS = {
     "Grep": ("path", "glob"),
     "Glob": ("path", "pattern"),
 }
-_CREDENTIAL_READ_GUARD_TOOLS = ("Read", "Grep", "Glob")
+_CREDENTIAL_READ_GUARD_TOOLS = tuple(_CREDENTIAL_READ_TOOLS)
 
 # The PreToolUse matcher, DERIVED from the deny arms above rather than restated.
 # `matcher=None` fired the hook for EVERY tool, which is how one unanswered hook
