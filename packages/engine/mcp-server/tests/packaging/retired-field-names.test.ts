@@ -317,8 +317,6 @@ const ALLOWED2: Record<string, string> = {
     "a dated 2026-09-05 leadership themes document recording the field name as it stood then",
   "docs/skill-to-agent-pair-conversion.md":
     "a dated conversion log recording the field name as it stood at migration time",
-  "docs/specs/skill-rewrites-for-persistence-tools-spec.md":
-    "a dated spec whose acceptance criteria reference the field name as it stood when the spec was written",
   "docs/testing-guides/gps-mentor-agent-testing-guide.md":
     "a dated testing guide written before the rename",
 };
