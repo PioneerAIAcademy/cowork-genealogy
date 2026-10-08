@@ -59,6 +59,11 @@ export default function PersonEvidenceSection(): React.JSX.Element {
                   <span className={styles.label}>Conflict:</span> {pe.core_identifier_conflict}
                 </div>
               )}
+              {pe.move_bridge && (
+                <div className={styles.detail}>
+                  <span className={styles.label}>Move explained by:</span> {pe.move_bridge}
+                </div>
+              )}
               {pe.match_score != null && (
                 <div className={styles.detail}>
                   <span className={styles.label}>Match:</span> {Math.round(pe.match_score * 100)}%

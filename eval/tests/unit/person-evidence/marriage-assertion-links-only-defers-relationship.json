@@ -13,9 +13,7 @@
       "ownership",
       "a_005",
       "named-party"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Owned by issue #3032 (a PreToolUse arm denying relationship-edge and couple-event writes when person-evidence is the caller). The agent occasionally crosses the lane this test guards: on the 2026-09-29 suite run (v1_2026-09-29_21-44-08) it created the Couple relationship R1 and a Marriage fact through tree_edit, which judge_context item 3 names as wrong, and Correctness scored 1. It is rare rather than constant: the test passed its four committed runs before that one and then pass, pass, pass (flaky: false) at --runs-per-test 3 the same day, 7 of 8 in all. The rule is already in agents/person-evidence.md and prose has not bound it, which is why the instrument is a hook arm, not a sentence. Remove this marker when that arm lands and this test comes back flaky: false and non-failing on --runs-per-test 3."
+    ]
   },
   "input": {
     "delegation": "person-evidence: assertion a_005 documents the marriage of Thomas Flynn (I2) to Mary Doyle — 12 May 1843 at St. Patrick's Church, Schuylkill County, Pennsylvania (source src_005 / tree source S5). Mary Doyle is not yet in the tree. Link this marriage assertion to the right persons.\n\nprojectPath: <workspace>",
