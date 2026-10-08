@@ -20,7 +20,9 @@
   },
   "mcp_fixtures": [
     "record-search-mary-flynn-marriage-hit",
-    "record-read-mary-flynn-9xkd-r7m"
+    "record-read-mary-flynn-9xkd-r7m",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_turns": 20,

@@ -1,0 +1,130 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-10-03T11:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "givenName": "Joseph",
+      "surname": "Pratt",
+      "birthLikeDate": "1822"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "UT60-PRA",
+        "personName": "Joseph Pratt",
+        "score": 0.78,
+        "sex": "Male",
+        "birthDate": "1822",
+        "birthPlace": "England",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1860",
+            "place": "Salt Lake, Utah, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:UT60-PRA",
+        "recordId": "https://www.familysearch.org/ark:/61903/1:1:UT60-PRA",
+        "collectionId": "0",
+        "collectionTitle": "United States Census, 1860",
+        "recordTitle": "Joseph Pratt household, Salt Lake County, Utah Territory, 1860",
+        "treeMatches": [],
+        "primaryId": "CP1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "CP1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NCP1",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Pratt",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP1",
+                  "type": "Birth",
+                  "date": "1822",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "NCP2",
+                  "preferred": true,
+                  "given": "Ann",
+                  "surname": "Pratt",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP2",
+                  "type": "Birth",
+                  "date": "1825",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "NCP3",
+                  "preferred": true,
+                  "given": "Sarah",
+                  "surname": "Pratt",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP3",
+                  "type": "Birth",
+                  "date": "1847",
+                  "place": "England"
+                }
+              ]
+            },
+            {
+              "id": "CP4",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "NCP4",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Pratt",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "FCP4",
+                  "type": "Birth",
+                  "date": "1850",
+                  "place": "England"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

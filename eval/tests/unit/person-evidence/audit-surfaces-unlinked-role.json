@@ -11,8 +11,7 @@
       "audit-review",
       "review-only",
       "unlinked-role"
-    ],
-    "expected_outcome": "pass"
+    ]
   },
   "input": {
     "delegation": "Audit the person_evidence links for the 1860 census record. Are there any roles on that record that look like gaps?\n\nprojectPath: <workspace>",
