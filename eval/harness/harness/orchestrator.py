@@ -1558,6 +1558,11 @@ _MOCK_ENRICHED_KEYS = (
     # run log.
     "unloggedSearches",
     "nilSearchNeedsLog",
+    # Computed by the mock from the call's own arguments (#3054). A nil
+    # record_search with no projectPath carries none of the keys above, so
+    # without this its hint would be stripped from the run log the
+    # surnameVariantHints validator and a reviewer both read.
+    "surnameVariantHints",
 )
 
 

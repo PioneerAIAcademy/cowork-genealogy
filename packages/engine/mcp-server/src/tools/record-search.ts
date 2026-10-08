@@ -53,6 +53,7 @@ import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
+import { surnameVariantHints } from "../utils/surname-variant-hints.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
@@ -1227,7 +1228,35 @@ export async function recordSearchTool(
     }
   }
 
+  // A nil search on a -datter/-dotter patronymic is a prompt to try the
+  // abbreviated forms the index may hold (issue #3054). The rule — trigger and
+  // content — lives in `surnameVariantHints` so the eval mock can run the same
+  // function. Computed after ranking because `subjectResolvable` is part of the
+  // trigger, and after staging so it never reaches the sidecar: it is advice, not
+  // what the search returned. Serialized BEFORE `results`, which is what a size
+  // bound drops first — that matters on the rows-present `subjectResolvable:
+  // false` branch.
+  const surnameHints = surnameVariantHints(input, out);
+  if (surnameHints) {
+    return withKeyBeforeResults(out, "surnameVariantHints", surnameHints);
+  }
+
   return out;
+}
+
+/** `out` with `key` inserted immediately before `results`, every other key in
+ *  its original order. */
+function withKeyBeforeResults<K extends keyof RecordSearchToolResponse>(
+  out: RecordSearchToolResponse,
+  key: K,
+  value: RecordSearchToolResponse[K],
+): RecordSearchToolResponse {
+  const reordered: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(out)) {
+    if (k === "results") reordered[key] = value;
+    reordered[k] = v;
+  }
+  return reordered as unknown as RecordSearchToolResponse;
 }
 
 export const recordSearchToolSchema = {

@@ -2145,3 +2145,131 @@ describe("#2367/#2336 role on results", () => {
     expect(r!.role).toBe("Mother");
   });
 });
+
+// Issue #3054. The tool-level half of the proof the issue asks for: the hint is
+// emitted for ut_search_records_023's exact inputs, and not for nils that do not
+// qualify. The rule itself is unit-tested in tests/utils/surname-variant-hints.test.ts.
+describe("recordSearchTool — surnameVariantHints on a search that did not find the subject", () => {
+  it("emits the abbreviated forms for ut_search_records_023's inputs, with no project", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    const out = await recordSearchTool(
+      { surname: "Halsteinsdatter", givenName: "Unna", collectionId: "1468080" },
+      LOCAL,
+    );
+
+    expect(out.surnameVariantHints?.fields).toEqual([
+      {
+        field: "surname",
+        searched: "Halsteinsdatter",
+        variants: ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd"],
+      },
+    ]);
+  });
+
+  // The shape the real index answers: the bride is not indexed as a principal,
+  // only as the groom's spouse (eval/tests/e2e/anders-monsen-ancestry/README.md).
+  it("emits on spouseSurname when the bride is the secondary party", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    const out = await recordSearchTool(
+      {
+        surname: "Monsen",
+        givenName: "Anders",
+        spouseSurname: "Halsteinsdatter",
+        collectionId: "1468080",
+      },
+      LOCAL,
+    );
+
+    expect(out.surnameVariantHints?.fields.map((e) => e.field)).toEqual(["spouseSurname"]);
+  });
+
+  it("is serialized before results", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+
+    const out = await recordSearchTool({ surname: "Halsteinsdatter" }, LOCAL);
+
+    const keys = Object.keys(out);
+    expect(keys.indexOf("surnameVariantHints")).toBeGreaterThan(-1);
+    expect(keys.indexOf("surnameVariantHints")).toBe(keys.indexOf("results") - 1);
+  });
+
+  it("stays silent on a nil search whose surname is not a -datter/-dotter patronymic", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const neal = await recordSearchTool({ surname: "Neal", recordType: "marriage" }, LOCAL);
+    expect(neal.surnameVariantHints).toBeUndefined();
+
+    // -son is deliberately not covered (it ends ordinary English surnames).
+    mockFetch.mockResolvedValueOnce(makeOkResponse(emptyResponse()));
+    const johnson = await recordSearchTool({ surname: "Johnson" }, LOCAL);
+    expect(johnson.surnameVariantHints).toBeUndefined();
+  });
+
+  it("stays silent when the search found records and no ranking ran", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+    );
+
+    const out = await recordSearchTool({ surname: "Halsteinsdatter" }, LOCAL);
+
+    expect(out.totalMatches).toBe(1);
+    expect(out.surnameVariantHints).toBeUndefined();
+  });
+
+  describe("rows returned but ranking matched nobody", () => {
+    let dir: string;
+    const TREE = {
+      persons: [
+        {
+          id: "I2",
+          names: [{ given: "Unna", surname: "Halsteinsdatter" }],
+          facts: [
+            {
+              type: "Birth",
+              date: "May 1745",
+              place: "Meland, Hordaland, Norway",
+              standard_place: "Meland, Hordaland, Norway",
+            },
+          ],
+        },
+      ],
+      relationships: [],
+    };
+
+    beforeEach(async () => {
+      dir = await mkdtemp(join(tmpdir(), "record-search-surname-hint-"));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE), "utf-8");
+    });
+    afterEach(async () => {
+      await rm(dir, { recursive: true, force: true });
+    });
+
+    // The only branch that stages a sidecar, so the only one where "never staged"
+    // can be shown. The note must not claim the rows are empty: one of them may
+    // be the subject under a different spelling.
+    it("fires, says 'did not find the subject', precedes results, and is not staged", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+      );
+
+      const out = await recordSearchTool(
+        { surname: "Halsteinsdatter", projectPath: dir, subjectId: "I2" },
+        LOCAL,
+      );
+
+      expect(out.totalMatches).toBe(1);
+      expect(out.ranked?.subjectResolvable).toBe(false);
+      expect(out.surnameVariantHints?.fields[0].variants[0]).toBe("Halsteinsdr");
+      expect(out.surnameVariantHints?.note).toMatch(/did not find the subject/);
+      expect(out.surnameVariantHints?.note).not.toMatch(/found nobody|no results/i);
+      const keys = Object.keys(out);
+      expect(keys.indexOf("surnameVariantHints")).toBe(keys.indexOf("results") - 1);
+
+      const staged = JSON.parse(
+        await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
+      );
+      expect(JSON.stringify(staged)).not.toContain("surnameVariantHints");
+    });
+  });
+});

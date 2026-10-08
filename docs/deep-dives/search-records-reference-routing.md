@@ -339,6 +339,25 @@ card and a decision, not a fourth prose attempt — filed as issue #3054.
 **Read this before re-wording the Norway entry.** Three variants have been
 measured; a fourth needs a mechanism, not a rewrite.
 
+**Resolved 2026-10-08 by a mechanism keyed on the surname, not the collection.**
+The decision went past the data-source blocker above: `record_search` now
+returns `surnameVariantHints` on a search that did not find its subject whenever
+a surname field ends in `-datter`/`-dotter`, listing `dr`/`dtr`/`d` forms from
+the wiki's Norway and Sweden Naming Customs pages. That needs no plugin file and
+no per-collection table (record-search spec, "`surnameVariantHints`"). Measured
+with `--runs-per-test 10`, the only difference being the hint:
+
+| | per-run | `record_search` calls per run |
+|---|---|---|
+| Without the hint (test restored, nothing else changed) | 4 pass / 6 fail | passing 2; failing 9–12 |
+| With the hint | **10 pass / 0 fail**, every dimension 3 | 2 in 8 runs; 4–5 in two that also tried the other forms after the hit |
+
+All six baseline failures had one cause: no call ever sent an abbreviated
+surname. (One also tripped `test_capture_pending_item_not_terminal` on the
+escalation path the failure led to; with the hint no run reached it.) The new
+`test_surname_variant_hints_followed` validator ran and passed in all ten runs.
+The Norway entry in `collection-quirks.md` is unchanged.
+
 ## The ARK sentence was innocent; the "Collect impartially" rewording was not
 
 `2fbd2210c` reverted TWO reworded `SKILL.md` lines together and `ut_search_records_027`
