@@ -175,7 +175,7 @@ a component of the other, comparing the raw and standardized spellings separatel
 and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
 England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
 On the committed corpus (2026-10-07: 391 question entries across the scenarios and
-206 e2e final states) it fires on 12 e2e question-runs; the six spot-checked are
+206 e2e final states) it fires on 12 e2e question-runs; all 12, spot-checked, are
 real disagreements (one borderline: a village against its municipality). It fires on no
 scenario except `research-unregistered-census-conflicts`, mined to need it.
 
