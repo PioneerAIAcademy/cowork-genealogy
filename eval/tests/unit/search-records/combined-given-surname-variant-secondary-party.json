@@ -27,7 +27,9 @@
     "record-search-urna-halsteinsdr-spouse-marriage-match",
     "record-search-surname-not-abbreviated-zero-results",
     "rank-search-matches-anders-unna-marriage",
-    "record-read-urna-anders-1786-marriage"
+    "record-read-urna-anders-1786-marriage",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_turns": 35,
