@@ -645,7 +645,9 @@ and offline because the tree write gate (`introduced-warnings.ts`) and
   there is no 20-year window, so no residence qualifies.
 - **Lookup:** `standardPlaceToCoords` (anonymous Places API), names
   de-duplicated, at most 4 at once, with one overall cap of 30 seconds
-  (`PLACE_LOOKUP_BUDGET_MS`). A name that does not resolve, a lookup that
+  (`PLACE_LOOKUP_BUDGET_MS`). Each Places request retries transient failures
+  itself (`place-api.ts`, through `fetchWithRetry`); the cap bounds the whole
+  step, which the ruling keeps under 60 seconds. A name that does not resolve, a lookup that
   throws, or the cap expiring skips the pairs that needed it; every other
   warning is still returned (decided, lead, 2026-09-27: lookup failure skips
   the check). The resolver is injectable (`personWarningsTool(input, { placeCoords })`);
@@ -655,9 +657,10 @@ and offline because the tree write gate (`introduced-warnings.ts`) and
   the limit: `implausible`, `facts` = the birth fact and the residence fact,
   `relatedPersonId` = the parent. No relative-mob mirror.
 
-The skip-on-undated rule, the generous band for a straddling range, and the
-30-second cap standing in for `fetchWithRetry` are defaults put to the lead and
-not yet ruled on.
+The skip-on-undated rule and the generous band for a straddling range were
+defaults put to the lead and kept (decided, lead, 2026-10-08). The same answer
+moved the retry for place lookups down to the HTTP call in `place-api.ts`,
+rather than wrapping the resolver's calls.
 
 ### The four `person_quality` parity checks
 
