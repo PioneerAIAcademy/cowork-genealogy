@@ -152,7 +152,7 @@
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "checked"
+      "comment": "`research` never activated in this run: the main thread answered the planning ask inline instead of routing to `research-plan`, so this PR's new sentence never loaded. The same 1/1 appears in v7, before this PR. Not a regression from this change."
     },
     {
       "test_id": "ut_research_016",
@@ -160,7 +160,7 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "checked"
+      "comment": "`research` never activated in this run: the main thread answered the planning ask inline instead of routing to `research-plan`, so this PR's new sentence never loaded. The same 1/1 appears in v7, before this PR. Not a regression from this change."
     },
     {
       "test_id": "ut_research_016",

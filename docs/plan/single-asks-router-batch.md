@@ -330,7 +330,10 @@ and was not covered by this batch.
 
 **Both landed 2026-10-07 in PR #3235**, as one sentence at the bounded-turn close in
 `research/SKILL.md`, not in `search-records`. Item 5's clause 1 (a found record goes in as a
-source through `record-extraction`) is still built nowhere.
+source through `record-extraction`) is **not built on the BOUNDED path**: it exists as
+routing-table row `research/SKILL.md:186`, as this file says at :55-63, but a bounded request
+never walks that table (`research/SKILL.md:107`, "Do not walk the routing table from the top for
+one"). An earlier revision of this line said "built nowhere", which contradicted :55-63.
 
 Dropped from the first draft: *"a bounded first message creates a project with no questions
 and no plans"* — that is **item 3's** acceptance, because the web path's first message never
