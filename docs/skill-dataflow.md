@@ -23,11 +23,17 @@ likely to surprise you.
 
 **Thin router + agent.** The skill resolves the request to one id, delegates, and relays
 the result. It reads almost nothing and writes nothing; the agent holds the judgment and
-the writer tool. Four pairs today: `record-extraction` → `record-extractor`,
-`research-exhaustiveness` → `research-exhaustiveness`, `proof-conclusion` →
-`proof-conclusion`, `person-evidence` → `person-evidence` (paired 2026-09-09).
-All four split because only an agent carries an `agent_id`, which is what lets the
-`PreToolUse` hook route a section's writes to exactly one caller. `search-images`
+the writer tool. Two pairs keep both halves today: `record-extraction` →
+`record-extractor`, and `research-exhaustiveness` → `research-exhaustiveness`. The
+`proof-conclusion` and `person-evidence` skills are deleted; only their agents remain.
+`/research` spawns the `research-exhaustiveness`, `proof-conclusion` and
+`person-evidence` agents directly, so the surviving `research-exhaustiveness` skill is
+the direct-user and unit-eval entry point, not a step on the in-loop route;
+`record-extraction` is still routed as a skill. Two rationales reach a pair
+(`docs/skill-to-agent-pair-conversion.md`): **attribution** — only an agent carries an
+`agent_id`, which is what lets the `PreToolUse` hook route a section's writes to exactly
+one caller, and what all four of those pairs bought when they split — and **cost and context**, a `model:`/`effort:`
+pin and a body out of the orchestrator's context, which buys no attribution. `search-images`
 was formerly the fifth pair (paired 2026-09-21, deleted 2026-09-29 in issue #2268);
 the agent remains and is now reached directly by delegation from the orchestrator.
 
@@ -84,21 +90,19 @@ flowchart TD
     RE["record-extraction<br/>log[] · acquires, triages, delegates"]
     RE ==> RX["record-extractor · agent<br/>sources[] + assertions[]<br/>classification is final here"]
 
-    RX --> PE["person-evidence<br/>person_evidence[] · tree persons + edges"]
+    RX --> PE["person-evidence · agent<br/>person_evidence[] · tree persons + edges"]
     PE --> CR["conflict-resolution<br/>conflicts[]"]
     PE --> HT["hypothesis-tracking · agent<br/>hypotheses[]"]
-    PE --> EX
-    CR --> EX
-    HT --> EX
+    PE --> EXA
+    CR --> EXA
+    HT --> EXA
 
-    EX["research-exhaustiveness<br/>thin router"]
-    EX ==> EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
+    EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
     EXA -- "gap remains" --> RP
     EXA -- "FAN pivot" --> QS
-    EXA -- "declared" --> PC
+    EXA -- "declared" --> PCA
 
-    PC["proof-conclusion<br/>thin router"]
-    PC ==> PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
+    PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
     PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
     GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
     GATE -- no --> QS
@@ -114,8 +118,9 @@ flowchart TD
     class SF,ASK,U1,U2 unrouted
 ```
 
-Solid arrow: the orchestrator routes here on `research.json` state. Thick arrow: a skill
-delegates to its agent. Dotted: a prose handoff with no routing row behind it —
+Solid arrow: the orchestrator routes here on `research.json` state; where the target is
+an agent, the orchestrator spawns it directly. Thick arrow: a skill delegates to its
+agent — only `record-extraction` does that in the loop now. Dotted: a prose handoff with no routing row behind it —
 The `search-full-text` agent is drawn dashed for that reason, and everything in the bottom box is
 unreachable from an autonomous run.
 
