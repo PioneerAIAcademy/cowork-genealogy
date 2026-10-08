@@ -13,10 +13,12 @@ its full `tool_calls` list, so
 against the whole historical corpus for free — no new API spend.
 
 **This is no longer a calibration tool, and `GUARDRAIL_SHADOW_WINDOW` is not a
-knob waiting to be tuned.** §7 is shadow-only permanently: its success gate reads
-`Skill` entries, which carry launch acknowledgements, and no instrument available
-to the harness observes skill *completion* (spec §7, "What the success gate can
-and cannot see"; `e2e/skill_episode_report.py` is the measurement). The window
+knob waiting to be tuned.** §7 is shadow-only permanently: its success gate reads `Skill`
+entries, which carry launch acknowledgements, and typed `Agent`/`Task` spawns of
+the owner's name, whose `is_error` does not say whether the agent did the work
+either; no instrument available to the harness observes completion on either
+route (spec §7, "What the success gate can and cannot see";
+`e2e/skill_episode_report.py` is the measurement for the `Skill` route). The window
 barely changes the count from 10 to 150, which was the early tell. What this
 report is still for: reading the shadow signal as measurement, and the §8/§7.5
 post-hoc families and the §11 unnamed-delegate check below, whose graduations
@@ -112,6 +114,7 @@ from harness.skill_invocation import (
     TREE_FACT_ASSERTION_KIND,
     unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
+    WARNINGS_UNCHECKED_KIND_LEGACY,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -171,7 +174,15 @@ def format_summary(by_window: dict[int, list[dict[str, Any]]], *, n_runs: int) -
         affected = len({v["file"] for v in violations})
         by_skill: dict[str, int] = {}
         for v in violations:
-            by_skill[v["required_skill"]] = by_skill.get(v["required_skill"], 0) + 1
+            # Coerced for the same reason `format_detail` coerces, and this
+            # one matters more: `main()` prints the summary unconditionally
+            # while the detail prints only under --detail, so an unguarded
+            # None crashes here first. `sorted(by_skill.items())` raises
+            # "TypeError: '<' not supported between instances of 'str' and
+            # 'NoneType'" as soon as one None-skill entry sits beside a
+            # named one, and `warnings_unchecked` carries None by design.
+            skill = v.get("required_skill") or "-"
+            by_skill[skill] = by_skill.get(skill, 0) + 1
         skill_str = ", ".join(f"{k}={v}" for k, v in sorted(by_skill.items()))
         lines.append(f"{w:>8}  {len(violations):>10}  {affected:>14}  {skill_str or '(none)'}")
     return "\n".join(lines)
@@ -180,9 +191,17 @@ def format_summary(by_window: dict[int, list[dict[str, Any]]], *, n_runs: int) -
 def format_detail(violations: list[dict[str, Any]]) -> str:
     lines = []
     for v in violations:
+        # `required_skill` is legitimately None on some kinds and
+        # format(None, "<24") raises TypeError, so coerce before formatting.
+        # The section-4.1 entries this printer receives today all carry a skill
+        # name; `warnings_unchecked` carries None by design, because the
+        # retargeted check names no skill -- the engine refuses the write and no
+        # skill invocation would resolve it. Widening this printer to the other
+        # stored kinds would otherwise crash the report.
+        needs = v.get("required_skill") or "-"
         lines.append(
             f"  {v['fixture']:<35} idx={v['index']:<4} tool={v['tool']:<30} "
-            f"needs={v['required_skill']:<24} q={v.get('question_id')}"
+            f"needs={needs:<24} q={v.get('question_id')}"
         )
     return "\n".join(lines) if lines else "  (none)"
 
@@ -262,6 +281,7 @@ def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
             CONFLICT_UNPERSISTED_KIND,
             PERSON_EVIDENCE_DENY_KIND,
             WARNINGS_UNCHECKED_KIND,
+            WARNINGS_UNCHECKED_KIND_LEGACY,
             TREE_ENCODING_KIND,
             TREE_FACT_ASSERTION_KIND,
         ),
@@ -300,12 +320,22 @@ def scan_conflict_unpersisted(paths: list[Path]) -> list[dict[str, Any]]:
 
 
 def scan_warnings_unchecked(paths: list[Path]) -> list[dict[str, Any]]:
-    """The issue-#1193 warnings-unchecked shadow entries STORED in each run's
-    `guardrail_shadow_violations` (a new ParentChild/Couple relationship written
-    with no `person_warnings` call). Identified by
-    `kind == WARNINGS_UNCHECKED_KIND`.
+    """The warnings-unchecked shadow entries STORED in each run's
+    `guardrail_shadow_violations`. Retargeted by issue #2840: now detects runs
+    where a tree writer returned ``unjustified_warnings`` and the agent never
+    re-called with justifications. Identified by
+    BOTH KINDS, because the corpus holds both meanings. Every committed entry
+    today carries ``WARNINGS_UNCHECKED_KIND_LEGACY`` and answers the RETIRED
+    question -- a parentage write with no ``person_warnings`` call. Runs
+    recorded after the retarget carry ``WARNINGS_UNCHECKED_KIND`` and answer the
+    current one. Matching only the new kind silently drops the history;
+    matching only the old silently drops everything from here on.
+    `format_warnings_unchecked` is what tells a reader which it is looking at.
     """
-    return _scan_stored(paths, lambda v: v.get("kind") == WARNINGS_UNCHECKED_KIND)
+    return _scan_stored(
+        paths,
+        lambda v: v.get("kind") in (WARNINGS_UNCHECKED_KIND, WARNINGS_UNCHECKED_KIND_LEGACY),
+    )
 
 
 def scan_tree_encoding(paths: list[Path]) -> list[dict[str, Any]]:
@@ -416,8 +446,8 @@ class RunInputs:
     `missing_for_*` methods below — five of them, one per distinct requirement
     tuple rather than one per check. They are NOT a ladder of supersets, and
     writing them as one is the error the next paragraph exists to warn about:
-    `missing_for_warnings` reads the run log, the final tree and the seed and
-    never `final_research`, while `missing_for_tree_encoding` reads the research,
+    `missing_for_warnings` reads the run log and nothing else, while
+    `missing_for_tree_encoding` reads the research,
     the tree and the seed and never the run log. A single shared skip list would
     drop a run from every denominator because one check's input was absent (see
     `PostHocReplay`).
@@ -455,11 +485,10 @@ class RunInputs:
 
         Its own combination, and deliberately not either of its neighbours':
         it needs the final research (for the conclusion gate) AND the final tree
-        (for the sources), but NOT the seed tree — unlike warnings-unchecked,
-        which compares against the seed to tell a new relationship from a
-        carried-in one. Reusing `missing_for_warnings` here would discard every
-        run with no fixture directory for a seed this check never reads, and
-        under-report the rate it exists to measure.
+        (for the sources), but NOT the seed tree. Reusing `missing_for_warnings`
+        here would go the other way and scan a run whose research sidecar is
+        absent, since that method now reads the run log alone — and this check
+        cannot be run without the research.
         """
         if self.run_log is None:
             return "unreadable run log"
@@ -471,20 +500,36 @@ class RunInputs:
 
     def missing_for_warnings(self) -> str | None:
         """Why `find_relationship_writes_without_warnings_check` cannot read this
-        run, or None. The seed tree is required, not optional: without it the
-        detector treats every relationship as new, which manufactures exactly the
-        violation being measured."""
+        run, or None.
+
+        THE TREES ARE NO LONGER READ. Both were required while the detector
+        diffed relationships — without the seed it treated every relationship as
+        new and manufactured the violation being measured. Since the gate moved
+        to the write boundary the signal is entirely in `tool_calls`: a writer
+        returned `unjustified_warnings` and nothing landed after it. Keeping the
+        tree requirement skipped runs that are perfectly gradable, which is the
+        same detector going dark a second way — the first being the tree gate
+        inside the detector itself.
+
+        A CAPTURE-STRIPPED RUN IS NOT SCANNABLE, and must be skipped rather
+        than counted clean. Retention drops `response_summary` from run logs
+        past 14 days; `replay_remnant` keeps `ok` and the bare `no_project`
+        marker but NOT `reason: "unjustified_warnings"`, so a stripped run
+        cannot carry this detector's only signal. 134 of the 201 committed run
+        logs are in that state. Counting them as scanned inflates the
+        denominator and reports a corpus as cleaner than it was measured to be
+        — the exact inverse of the shrinking-denominator failure this module
+        was built to prevent, and the number the promotion decision reads."""
         if self.run_log is None:
             return "unreadable run log"
-        absent = [
-            name
-            for name, value in (
-                ("no readable final-tree.gedcomx.json sidecar", self.final_tree),
-                ("no readable starting-tree.gedcomx.json", self.seed_tree),
-            )
-            if value is None
-        ]
-        return ", ".join(absent) or None
+        if self.run_log.get("captures_stripped"):
+            return "captures stripped (the refusal marker cannot survive)"
+        if not any(c.get("response_summary") for c in self.tool_calls if isinstance(c, dict)):
+            # Distinct from the above: a run that aborted before any tool
+            # returned is not "stripped", and labelling it so mis-describes
+            # the denominator the spec table quotes.
+            return "no tool call recorded a response"
+        return None
 
     def missing_for_tree_encoding(self) -> str | None:
         """Why `find_conclusions_without_tree_encoding` cannot read this run, or
@@ -1030,7 +1075,7 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
         ("citation-nulling", "concluded source(s) with a null/empty citation string", False, replay.citation),
         ("tree citation-nulling", "uploaded tree source(s) with a null/empty citation string", False, replay.tree_citation),
         ("conflict-unpersisted", "concluded question(s) relying on an unpersisted conflict resolution", False, replay.conflict),
-        ("warnings-unchecked", "run(s) that wrote a new ParentChild/Couple relationship without calling person_warnings", True, replay.warnings),
+        ("warnings-unchecked", "run(s) where a tree writer was refused for unjustified warnings and nothing landed after it", True, replay.warnings),
         ("tree-encoding", "tier->=-probable conclusion(s) that added no new tree structure — a gate would refuse/warn", False, replay.tree_encoding),
         ("fact/assertion drift", "backlinked tree fact attribute(s) disagreeing with the assertion they were materialized from", False, replay.fact_agreement),
     ):
@@ -1106,16 +1151,32 @@ def format_conflict_unpersisted(violations: list[dict[str, Any]]) -> str:
     )
 
 
+_SECTION = chr(0xA7)
+
+
 def format_warnings_unchecked(violations: list[dict[str, Any]]) -> str:
-    """One flat count — a fact about the final tree + tool_calls, not a windowed
-    scan. This is the number the graduation decision (shadow → mandatory
-    person_warnings call in the orchestrator, issue #1193 question b) is gated
-    on."""
+    """One flat count over STORED violations, not a windowed scan.
+
+    THESE ENTRIES WERE COMPUTED WHEN EACH RUN EXECUTED, by whatever detector
+    was live then, and are not re-derived here. Every committed run predates
+    the retarget, so every stored `warnings_unchecked` entry still means the
+    RETIRED question -- a new ParentChild/Couple edge with no successful
+    `person_warnings` call -- not the current one. Printing the stored count
+    under the new wording reports a pre-retarget measurement as a post-retarget
+    one. The recomputed number is the replay line (`REPLAY=1`), which is the
+    one to read for the current check.
+    """
     affected = len({v["file"] for v in violations})
+    legacy = sum(1 for v in violations if v.get("kind") == WARNINGS_UNCHECKED_KIND_LEGACY)
+    current = sum(1 for v in violations if v.get("kind") == WARNINGS_UNCHECKED_KIND)
     return (
-        "\n§7 warnings-unchecked check (issue #1193, shadow): "
-        f"{len(violations)} run(s) wrote a new ParentChild/Couple relationship "
-        f"without calling person_warnings, across {affected} run(s)."
+        "\n" + _SECTION + "7 warnings-unchecked check (shadow, STORED): "
+        f"{len(violations)} entr(ies) across {affected} run(s) -- {legacy} under "
+        f"the RETIRED question (a parentage write with no person_warnings call) "
+        f"and {current} under the current one (a writer refused for unjustified "
+        f"warnings with nothing landing after it). The two answer different "
+        f"questions and must not be summed; the retired count is history. For "
+        f"the current check across the corpus, read the replay line."
     )
 
 
@@ -1321,16 +1382,22 @@ def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
     entries back — the one limit the splice does NOT fix.
 
     Putting a subagent's own calls into the list is what lets its write see the
-    `Skill` call that authorised it. But those calls occupy window slots, so a
-    subagent making more than `window` calls before its protected write pushes
-    that `Skill` call back out and the false violation returns by another door.
+    summons that authorised it (a `Skill` call or a typed spawn). But those
+    calls occupy window slots, so a subagent making more than `window` calls
+    before its protected write pushes that summons back out and the false
+    violation returns by another door.
     Local subagent transcripts run 0-204 tool calls, so it is reachable.
 
     Not fixed here on purpose: the e2e harness carries subagent calls in one
     flat list too, so a bundle-only window rule would make the two corpora
     incomparable. Anchoring the window at the spawning call instead of the write
     is a change to `skill_invocation.py`. This counts how often it would matter,
-    so that change is made on a measurement rather than a hunch."""
+    so that change is made on a measurement rather than a hunch.
+
+    An owner is dropped when the write was made by that owner's own agent:
+    `find_unguarded_protected_writes` treats it as guarded by definition, so no
+    window can make it a finding. A batch that also touches another owner's
+    section still counts, for that other owner."""
     overruns = 0
     for group in groups:
         calls = group["tool_calls"]
@@ -1338,7 +1405,9 @@ def _window_overruns(groups: list[dict[str, Any]], *, window: int) -> int:
             # A spliced child entry carries `agent_type`; a parent one does not.
             if not entry.get("agent_type"):
                 continue
-            if not owning_skills(entry.get("tool", ""), entry.get("args") or {}):
+            writer = strip_agent_namespace(entry.get("agent_type"))
+            owners = [o for o in owning_skills(entry.get("tool", ""), entry.get("args") or {}) if o != writer]
+            if not owners:
                 continue
             # Walk back to the nearest parent-stream entry: that is the call
             # that spawned this subagent (directly, or its ancestor).
@@ -1696,7 +1765,9 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
             f"{len(live)} bundle(s) where the write is visible — either the bundle "
             f"carries this agent's own spliced transcript, or it predates the split "
             f"and the write came from the main thread, un-denied and in the parent "
-            f"transcript, so those counts are real measurements; "
+            f"transcript, so those counts are real measurements (though a write the "
+            f"owning agent made itself is guarded by definition and is 0 by "
+            f"construction; only a non-owner's write can count); "
             f"{len(unknown)} where it is not, for either of two reasons that send "
             f"you to different places: no transcript of this agent's here and the "
             f"bundle is on/after the split or undated, so the write may have "
@@ -1714,7 +1785,7 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
     overruns = sum(r.get("window_overruns") or 0 for r in results)
     lines.append(
         f"  Window overruns: {overruns} spliced protected write(s) whose spawning "
-        f"call sits more than the window back, so the parent's Skill call is out "
+        f"call sits more than the window back, so the parent's summons is out "
         f"of reach and the finding may be false. Non-zero is the trigger for "
         f"anchoring the window at the spawning call (skill_invocation.py), which "
         f"is deliberately NOT done here — the e2e corpus has the same flat shape, "

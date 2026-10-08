@@ -171,11 +171,13 @@ def adapt_bundle_transcript(path: Path) -> dict[str, Any]:
 # Those calls must be SPLICED into the parent's list at the index of the
 # `Agent`/`Task` call that spawned them, never appended:
 # `find_unguarded_protected_writes` scans the 40 entries BY INDEX before each
-# write for the `Skill` call that authorised it, and the summons lives in the
+# write for the summons that authorised it (a `Skill` call, or a typed
+# `Agent`/`Task` spawn of the owner's name), and the summons lives in the
 # parent stream while the write lives in the child's. Appending puts the write
 # far from its own summons and reports a violation that never happened — a
 # fabricated non-zero, which is worse than a known zero because it is the
-# number people act on.
+# number people act on. A write by the owning agent itself is guarded by
+# definition and never flagged, so the order matters for a non-owner child.
 
 _ACTIVE_GROUP = "active"
 

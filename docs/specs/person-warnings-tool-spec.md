@@ -3,15 +3,19 @@
 ## Overview
 
 A deterministic MCP tool that checks person data for impossible or unlikely
-genealogical facts. Reads `tree.gedcomx.json` from a project directory. Offline
-and deterministic; no authentication required, no network access.
+genealogical facts. Reads `tree.gedcomx.json` from a project directory. No
+authentication required. Deterministic and offline except for one check:
+`hasBirthFarFromParentsResidence` looks up place coordinates online, and is
+skipped silently when a lookup fails or runs out of time (§ Birthplace far from
+the parents' residence).
 
 Decided (lead, 2026-09-27): no live mode — the live mode added for a
 no-project profile audit had no caller, and such an audit runs local mode
 over a scratch project instead.
 
-Adapted from FamilySearch's `MobWarnings.java`, plus one project rule
-(`hasEventInOtherCountry`) that is not a FamilySearch port. This spec
+Adapted from FamilySearch's `MobWarnings.java`, plus two project rules
+(`hasEventInOtherCountry`, `hasBirthFarFromParentsResidence`) that are not
+FamilySearch ports. This spec
 starts with three starter warnings and is designed for easy extension.
 
 ### Scope: anchor person and their one-hops
@@ -33,10 +37,10 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 28 of the 53 self-checks have a relative-mob variant
+not the anchor alone.** 28 of the 54 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 25 run on the anchor only.
+the warning's `personId`/`personName`. The other 26 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -78,7 +82,7 @@ The shipped shape is `PersonWarning` in
 | Field | Type | Description |
 |-------|------|-------------|
 | `scoreType` | string | Always `"COHERENCE"`. The quality-score family the check belongs to (ported from FamilySearch's MobWarnings, which groups checks by score type) |
-| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag, except `hasEventInOtherCountry` which is a project rule |
+| `issueType` | string | The warning tag (e.g., `hasEventAfterDeath1`). One of the tags catalogued under § Warning Definitions; each tag is a FamilySearch quality-score tag, except `hasEventInOtherCountry` and `hasBirthFarFromParentsResidence`, which are project rules |
 | `severity` | string | `contradiction` (impossible) or `implausible` (unlikely but possible) |
 | `personId` | string | Person ID the warning applies to |
 | `personName` | string | Display name of the person (see below) |
@@ -135,8 +139,9 @@ implementation is checked against.
   description:
     "Check a person for impossible or unlikely genealogical data (e.g., death " +
     "before birth, parent too young, event after death). Reads " +
-    "tree.gedcomx.json from the local project — no authentication or network " +
-    "access required. personId is the anchor person; warnings are evaluated " +
+    "tree.gedcomx.json from the local project — no authentication required; " +
+    "may look up place coordinates online, and skips that check when the " +
+    "lookup fails. personId is the anchor person; warnings are evaluated " +
     "over that person and their one-hop relatives.",
   inputSchema: {
     type: "object" as const,
@@ -202,10 +207,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 28 of
-the 53 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 54 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **81 tags** the tool emits in `issueType` is
+The full catalogue of the **82 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -439,7 +444,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **81** tags the tool emits in `issueType`. Each row is
+The full set of **82** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -566,9 +571,9 @@ reason (§ The four `person_quality` parity checks).
 
 #### Relative-mob mirrors (`implausible`)
 
-28 of the 53 self-checks above have a relative-mob variant that fires the
+28 of the 54 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 25 run on the anchor only. They are **always
+the anchor; the other 26 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
@@ -613,6 +618,49 @@ mode, marked below, so `person_warnings` can emit 18 of them.
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
 | `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
+| `hasBirthFarFromParentsResidence` | implausible | person_warnings only (never `calculateWarnings`): the anchor's birthplace (a placed Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era's limit — 25 mi before 1850, 250 mi 1850–1949, 500 mi from 1950 | A record of a different person attached, or a mis-standardised place |
+
+### Birthplace far from the parents' residence
+
+`hasBirthFarFromParentsResidence`. The only check that
+needs the network, so it runs in `personWarningsTool` after
+`calculateWarnings` and never inside it: `calculateWarnings` stays synchronous
+and offline because the tree write gate (`introduced-warnings.ts`) and
+`merge_warnings` call it. Those two never see this tag.
+
+- **Birth anchor:** the anchor's first `Birth` fact with a `standard_place`;
+  else the first `Christening`, else the first `Baptism`, with one. Its date is
+  that fact's own; when that is missing, unparseable or open-ended, the earliest bounded date on any
+  birth-like fact.
+- **Residence:** each parent's residence-like facts with a `standard_place`
+  and a bounded date. Only a residence within **20 years** of the birth under
+  every reading of both dates is compared — `Bef`/`Aft` dates are open-ended
+  and never qualify. No such residence → no check, no lookup (decided, lead,
+  2026-08-31).
+- **Limit by the birth's era:** before 1850, 25 miles; 1850–1949, 250 miles;
+  1950 and later, 500 miles (decided, lead, 2026-08-31). A birth date range
+  that straddles a boundary takes the more generous band it touches.
+- **No birth date:** skipped. The ruled "different country and more than
+  100 miles" row for an undated birth is therefore not reached: with no date
+  there is no 20-year window, so no residence qualifies.
+- **Lookup:** `standardPlaceToCoords` (anonymous Places API), names
+  de-duplicated, at most 4 at once, with one overall cap of 30 seconds
+  (`PLACE_LOOKUP_BUDGET_MS`). Each Places request retries transient failures
+  itself (`place-api.ts`, through `fetchWithRetry`); the cap bounds the whole
+  step, which the ruling keeps under 60 seconds. A name that does not resolve, a lookup that
+  throws, or the cap expiring skips the pairs that needed it; every other
+  warning is still returned (decided, lead, 2026-09-27: lookup failure skips
+  the check). The resolver is injectable (`personWarningsTool(input, { placeCoords })`);
+  the unit eval harness passes one that returns `null`, so the check never
+  fires there.
+- **Fires** on the first pair whose haversine distance (whole miles) exceeds
+  the limit: `implausible`, `facts` = the birth fact and the residence fact,
+  `relatedPersonId` = the parent. No relative-mob mirror.
+
+The skip-on-undated rule and the generous band for a straddling range were
+defaults put to the lead and kept (decided, lead, 2026-10-08). The same answer
+moved the retry for place lookups down to the HTTP call in `place-api.ts`,
+rather than wrapping the resolver's calls.
 
 ### The four `person_quality` parity checks
 
@@ -791,6 +839,11 @@ npx tsx dev/try-person-warnings.ts /path/to/project I1        # anchor person (r
 
 Unit tests (see Testing section below).
 
+### `packages/engine/mcp-server/tests/tools/person-warnings-birth-residence.test.ts`
+
+`hasBirthFarFromParentsResidence`, driven through `personWarningsTool` with an
+injected place resolver, so no test reaches the network.
+
 ---
 
 ## Testing
@@ -802,7 +855,7 @@ fixture trees; there are no `extractYear`/`extractEarliestYear`/
 `extractLatestYear` tests, because those helpers do not exist (date
 handling is tested where it lives, under `src/utils/`).
 
-**Per-tag coverage is partial.** Roughly half of the 81 tags are named
+**Per-tag coverage is partial.** Roughly half of the 82 tags are named
 in that test file; the rest are covered indirectly or not at all. The
 drift lint proves a tag is *documented and emitted*, never that its
 catalogue entry reads correctly — so a reviewer verifying a
@@ -842,12 +895,18 @@ and need not be added to that reference.
    emitter in `src/tools/person-warnings.ts`, returning a `PersonWarning`
    with `scoreType: "COHERENCE"`, the chosen `issueType`, and a
    `severity` of `contradiction` or `implausible`.
-3. Wire the check into `calculateWarnings` so it is emitted.
+3. Wire the check into `calculateWarnings` so it is emitted. A check that
+   needs the network cannot go there — the write gate and `merge_warnings`
+   call it synchronously — so it is appended in `personWarningsTool` instead,
+   as `hasBirthFarFromParentsResidence` is, and the two sites below never see
+   its tag.
 4. Add the tag to the `ALL_WARNING_TAGS` array.
-5. Add unit tests in `tests/tools/person-warnings.test.ts`.
+5. Add unit tests in `tests/tools/person-warnings.test.ts` (the networked
+   `hasBirthFarFromParentsResidence` has its own,
+   `tests/tools/person-warnings-birth-residence.test.ts`).
 6. Add the tag's row to § Tag Catalogue in this spec.
 7. Bump the three hardcoded tag-count assertions in
-   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(81)` guards)
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(82)` guards)
    to the new total.
 8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).
@@ -872,6 +931,102 @@ Grep for `calculateWarnings` when sizing the blast radius.
   that introduces a warning at any severity until the caller justifies it, unless
   the tag is in `GATE_EXEMPT_TYPES`. A new `implausible` tag therefore can refuse a
   tree write. Decide whether it belongs in that exempt set.
+
+  **`GATE_EXEMPT_TYPES` membership, and why each entry is there.** The set is
+  matched against `issueType` by string equality, so an entry that is not a real
+  tag exempts nothing — pinned by `person-warnings-spec-drift.test.ts`, which
+  fails on a typo and on a case-only variant.
+
+  **The line is the class, not the frequency.** A tag is exempt when it reports
+  a DATA-QUALITY artefact — an import that duplicated a person, a stub with one
+  fact, two spellings of one name — and gating when it reports a genealogical
+  IMPOSSIBILITY the writer would be asserting. An earlier draft of this list
+  picked the five most frequent tags instead, which put a real impossibility
+  (`hasCloseChildBirthsIgnoreSimilarChildren`, two DISSIMILAR children born
+  2–240 days apart) on the exempt side while `similarChildren` — one person
+  recorded twice, the artefact class the list exists for — kept refusing.
+
+  **A relative or gendered form is exempt iff its self form is.** They are the
+  same predicate at the same severity evaluated from a different anchor, so
+  splitting a pair means one write refuses and an identical one does not.
+  Stated here as prose the rule was silently broken by four pairs, one of them
+  refusing a write in a released run log, so it is now derived from
+  `ALL_WARNING_TAGS` and asserted by `person-warnings-spec-drift.test.ts`
+  rather than maintained by hand.
+
+  **The one pair that gates: `earliestChildBirthToBirth12` and
+  `relativesEarliestChildBirthToBirth12`.** At cutoff 14 the gendered forms are
+  a child-bearing-age prior and stay exempt — 13 is young, not impossible. At
+  cutoff 12 the same check is also the ONLY one that fires when a child is born
+  BEFORE their parent, so exempting it let every gated writer accept one. The
+  pair still travels together; it travels on the gating side.
+
+  What makes that safe is the predicate reading the child's LATEST date bound
+  (`earliestYearOfChildFacts(..., "latest")`), so it fires on a certainty rather
+  than a possibility: a child dated `Bef 1880` spans 1870..1880 and under a
+  parent born 1860 could be the parent's age 10 or 20, and only the second
+  reading declines to call that a warning. **This reverses a recorded call** —
+  the 2026-06-02 meeting overrode the spec's conservative-range principle here
+  in favour of an earliest-to-earliest bound, decided when `person_warnings`
+  only reported and over-firing cost a glance rather than a refused write. No
+  test pinned it: all five used exact years, where the two bounds coincide.
+
+  **The two age-12 tags are emitted once per impossible CHILD, not once per
+  parent.** That is a second deliberate divergence from Java, alongside the
+  latest bound. A single warning per parent cannot say which child is
+  impossible, and the gate subtracts on a key that includes the child — so with
+  one warning keyed on whichever child sorted first, adding a second impossible
+  child either refused (the key moved) or **landed** (the parent already carried
+  that key), decided by nothing but the dates. The landing case was the serious
+  one and is a real corpus shape: `elisabetha-sugecz-parents` carries a mother
+  born 1810 with children born 1816, 1820 and 1821, of which the one-per-parent
+  form reported only the first. The four age-14 forms stay one-per-parent — they
+  are exempt, so the gate never subtracts on them — but their child picker and
+  message age now read the latest bound too, or they name the earliest-POSSIBLE
+  child and print an age that never triggered them.
+
+  Measured over the committed e2e final trees at a36651a33, 203 trees and 2266
+  ParentChild edges: gating parentage edges unexempted refuses **419 of 2266** (18.5%) — 559
+  instances across 74 runs (`--all`; 506 with `--all --no-widen-hop`). After the
+  exemptions it refuses **67 of 2266** (3.0%), 75 instances across 20 runs and 41
+  distinct warnings, and every tag still gating is an impossibility rather than a
+  prior: `hasCloseChildBirthsIgnoreSimilarChildren` (32), `tooManyMothers2` (16),
+  `earliestChildBirthToBirth12` (8), `relativesEarliestChildBirthToBirth12` (8),
+  `tooManyFathers2` (6), `childBirthRange40` (3) and
+  `relativesHasAgeRangeGreaterThan120` (2). The two-parents-of-one-sex tags
+  account for 22 edge-level instances but only 10 distinct warnings, because
+  removing either parent edge introduces the same one; the script prints both
+  columns so they are not confused. A genealogist read those cases on
+  2026-10-05 and reported most to be one person entered twice rather than
+  competing parentage, with no adoption the warning would wrongly refuse — a
+  human judgement, attributed rather than quoted as a measurement. Those two
+  tags now also ignore an `Adoptive`, `Step`, `Foster` or `Guardian` parent edge,
+  counting only edges that claim biological parentage; the corpus carries none of
+  those four, so that is a shape fixed rather than a rate moved.
+
+  **One relative hop is computed, and what it fixes is a false REFUSAL.**
+  `calculateWarnings` anchors a `relatives*` warning on the relative that has the
+  problem, and emits it from every anchor that relative is a relative OF — so
+  when the path to such an anchor IS the edge being added, the after side
+  surfaces a warning the before side cannot reach, and a warning the tree has
+  carried all along reads as introduced. The gate therefore computes warnings one
+  relationship hop out from the touched set, on the after tree. Measured cost on
+  parentage edges: **16 of the 83** that would otherwise be refused were refused
+  for a warning they did not introduce, leaving 67, and the widened run loses no
+  true refusal. **It is not subtract-only in general** — that figure is parentage
+  edges alone. Review measured fact writes separately, sampling every fourth
+  committed fact as an added fact: 37 refusals without the hop and 47 with, the
+  10 extra all parent-anchored and all true catches. Both directions are the same
+  mechanism, the before side reaching what the after side reports. An earlier
+  reading of this shape as a false ALLOW measured 0; that measurement was taken
+  while `earliestChildBirthToBirth12` was exempt, which is why the cost was
+  invisible. The before tree was scanned too, for a removal case that on
+  measurement does not exist: a removed edge's endpoints are already touched,
+  dropping the before pass changes no test and no corpus figure.
+
+  Re-derive every count above with `dev/measure-parentage-gate-rate.ts` before
+  changing the list (`--all` for the unexempted figure, `--no-widen-hop` for the
+  18); do not hand-copy them.
 
 **The prose counts in this spec are not linted.** `catalogueTags()` compares the
 tag *set* only, so every sentence stating a total ("the N tags", "M of the K
