@@ -1,0 +1,189 @@
+{
+ "log_id": "log_003",
+ "tool": "record_search",
+ "retrieved": "2026-10-07T11:18:26.170Z",
+ "returned_count": 2,
+ "payload": {
+  "query": {
+   "collectionId": "1919687",
+   "count": 50,
+   "givenName": "Jonathan",
+   "recordCountry": "United States",
+   "recordSubdivision": "Mississippi",
+   "surname": "Barker"
+  },
+  "totalMatches": 22,
+  "paginationCappedAt": 4999,
+  "returned": 2,
+  "offset": 0,
+  "hasMore": false,
+  "results": [
+   {
+    "recordId": "ark:/61903/1:1:WD2C-XVN2",
+    "events": [
+     {
+      "type": "Census",
+      "date": "1845",
+      "place": "Smith, Mississippi, United States"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "Jonathan Barker",
+    "score": 5.6236,
+    "confidence": 5,
+    "collectionId": "1919687",
+    "collectionTitle": "Mississippi, State Archives, Various Records, 1818-1952",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1919687",
+    "recordTitle": "Entry for Jonathan Barker, \"Mississippi, State Archives, Various Records, 1818-1952\"",
+    "recordArk": "ark:/61903/1:2:7RX2-KL3Z",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_140461684700",
+       "ark": "ark:/61903/1:1:WD2C-XVN2",
+       "names": [
+        {
+         "type": "BirthName",
+         "given": "Jonathan",
+         "surname": "Barker"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1845",
+         "standard_date": "1845",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_127931932000",
+       "title": "Entry for Jonathan Barker, \"Mississippi, State Archives, Various Records, 1818-1952\"",
+       "citation": "\"Mississippi, State Archives, Various Records, 1818-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WD2C-XVN2 : Sat Mar 09 11:46:38 UTC 2024), Entry for Jonathan Barker, 1845.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:7RX2-KL3Z"
+      },
+      {
+       "id": "sd_c_1919687",
+       "title": "Mississippi, State Archives, Various Records, 1818-1952",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1919687"
+      },
+      {
+       "id": "sd_da1",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GPWR-CH"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "title": "United States, Residences, Census, from 1400 to 2021"
+      },
+      {
+       "id": "src_p_p_140461684700",
+       "url": "#p_140461684700"
+      }
+     ],
+     "places": [
+      {
+       "id": "395845",
+       "name": "Smith, Mississippi, United States",
+       "latitude": 31.970829,
+       "longitude": -89.498329
+      }
+     ]
+    },
+    "primaryId": "p_140461684700"
+   },
+   {
+    "recordId": "ark:/61903/1:1:WDX9-3B3Z",
+    "events": [
+     {
+      "type": "Census",
+      "date": "1866",
+      "place": "Smith, Mississippi, United States"
+     }
+    ],
+    "treeMatches": [],
+    "personName": "Johnatha Barker",
+    "score": 4.9028807,
+    "confidence": 4,
+    "collectionId": "1919687",
+    "collectionTitle": "Mississippi, State Archives, Various Records, 1818-1952",
+    "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1919687",
+    "recordTitle": "Entry for Johnatha Barker, \"Mississippi, State Archives, Various Records, 1818-1952\"",
+    "recordArk": "ark:/61903/1:2:7RZY-982M",
+    "gedcomx": {
+     "persons": [
+      {
+       "id": "p_140309116300",
+       "ark": "ark:/61903/1:1:WDX9-3B3Z",
+       "names": [
+        {
+         "type": "BirthName",
+         "surname": "Barker",
+         "given": "Johnatha"
+        }
+       ],
+       "facts": [
+        {
+         "type": "Census",
+         "primary": true,
+         "date": "1866",
+         "standard_date": "1866",
+         "place": "Smith, Mississippi, United States",
+         "standard_place": "Smith, Mississippi, United States"
+        }
+       ],
+       "sources": [
+        {
+         "ref": "sd_da1"
+        }
+       ]
+      }
+     ],
+     "sources": [
+      {
+       "id": "src_r_127839907500",
+       "title": "Entry for Johnatha Barker, \"Mississippi, State Archives, Various Records, 1818-1952\"",
+       "citation": "\"Mississippi, State Archives, Various Records, 1818-1952\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WDX9-3B3Z : Fri Mar 08 23:43:18 UTC 2024), Entry for Johnatha Barker, 1866.",
+       "url": "https://www.familysearch.org/ark:/61903/1:2:7RZY-982M"
+      },
+      {
+       "id": "sd_c_1919687",
+       "title": "Mississippi, State Archives, Various Records, 1818-1952",
+       "url": "https://www.familysearch.org/service/cds/recapi/collections/1919687"
+      },
+      {
+       "id": "sd_da1",
+       "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GPWR-CD8"
+      },
+      {
+       "id": "sd_auto_M9JT-92D",
+       "title": "United States, Residences, Census, from 1400 to 2021"
+      },
+      {
+       "id": "src_p_p_140309116300",
+       "url": "#p_140309116300"
+      }
+     ],
+     "places": [
+      {
+       "id": "395845",
+       "name": "Smith, Mississippi, United States",
+       "latitude": 31.970829,
+       "longitude": -89.498329
+      }
+     ]
+    },
+    "primaryId": "p_140309116300"
+   }
+  ]
+ }
+}

@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Salt Lake, Utah, United States, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Salt Lake"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Salt Lake, Utah, United States",
+        "type": "County",
+        "latitude": 40.667,
+        "longitude": -111.924,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Salt%20Lake"
+      }
+    ]
+  }
+}

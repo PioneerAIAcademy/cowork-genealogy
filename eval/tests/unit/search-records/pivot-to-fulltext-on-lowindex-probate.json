@@ -23,7 +23,9 @@
     "record-search-wilkins-probate-no-results",
     "record-search-wilkens-variant-no-results",
     "fulltext-search-wilkins-probate-empty",
-    "record-search-wilkins-any-variant-no-results"
+    "record-search-wilkins-any-variant-no-results",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "This is a POSITIVE test for the low-index nil DECISION. record_search on the probate collection returns zero results. The Kentucky Probate collection is browse-only / ~1% record-indexed, so an index nil is not evidence of absence.",
