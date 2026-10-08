@@ -1144,6 +1144,10 @@ def wait_lock_gone(ctx: Ctx, deadline_s: float = KEEPALIVE_DROP_MAX_S, every_s: 
     return None
 
 
+HANDOVER_WAIT_S = 30.0
+COMPLETED_SQL = "SELECT completed_at FROM turns WHERE turn_id = %s AND completed_at IS NOT NULL"
+
+
 def shutdown_named(events: list[dict], turn_id: str) -> bool:
     return any(e.get("ev") == "shutdown" and turn_id in json.dumps(e) for e in events)
 
@@ -1156,19 +1160,32 @@ def case_sigterm_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
     if reach(ctx, rep, tid, subagent=False) is None:
         return
+    held = post(ctx, client, rep, FOLLOW_UP_TEXT)
+    # The held message hands over at the turn's next tool call (handover_clause): if that
+    # closes it inside HANDOVER_WAIT_S, the released held turn is the live one to signal.
+    target = tid
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < HANDOVER_WAIT_S:
+        if turn.one(ctx.dsn, COMPLETED_SQL, (tid,)) is not None:
+            target = held["turn_id"]
+            break
+        time.sleep(1.0)
+    rep.figures["kill_target"] = "held" if target != tid else "original"
+    if target != tid and reach(ctx, rep, target, subagent=False) is None:
+        return
     sdk_before = sdk_of(ctx, rep.session_id)
     at_kill = max_entry(ctx, sdk_before)
-    held = post(ctx, client, rep, FOLLOW_UP_TEXT)
     TARGET.signal("worker", "term")
-    if not done(ctx, client, rep, tid, label="resumed"):
+    if not done(ctx, client, rep, target, label="resumed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
-    rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, tid), ""))
+    snap, events = snapshot(ctx, rep.session_id, target), worker_events()
+    rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, target), ""))
     rep.checks += resume_checks("sigterm_real", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
                                 entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before))
     skipped = [e for e in events if e.get("ev") == "deferred_release_skipped"]
     rep.findings.append(f"held reply {held}; ev=deferred_release_skipped lines: {skipped[:3]}")
-    done(ctx, client, rep, held["turn_id"], label="held")
+    if target == tid:
+        done(ctx, client, rep, held["turn_id"], label="held")
 
 
 def case_dead_letter_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:

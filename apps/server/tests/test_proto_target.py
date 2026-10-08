@@ -414,6 +414,37 @@ def test_sigterm_real_signals_term_over_the_target(monkeypatch):
     assert ("sigterm_real: ev=shutdown names the turn", True, "") in rep.checks
 
 
+def _sigterm_run(monkeypatch, *, handed_over: bool) -> tuple[bounds.Report, list[str]]:
+    """sigterm_real where the first post is t1 and the held one t2; t1 closes by handover
+    before the signal when ``handed_over``."""
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    ids = iter(["t1", "t2"])
+    monkeypatch.setattr(bounds, "post", lambda ctx, client, rep, text: {"turn_id": next(ids)})
+    monkeypatch.setattr(bounds, "HANDOVER_WAIT_S", 0.05)
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params:
+                        ("now" if handed_over and params == ("t1",) else None) if sql == bounds.COMPLETED_SQL else 1)
+    monkeypatch.setattr(bounds, "worker_events", lambda: [{"ev": "shutdown", "answered": ["t2" if handed_over else "t1"]}])
+    monkeypatch.setattr(bounds, "sdk_of", lambda ctx, s: "sdk")
+    monkeypatch.setattr(bounds, "max_entry", lambda ctx, sdk: 1)
+    rep = bounds.Report(case="sigterm_real")
+    bounds.case_sigterm_real(_ctx(), None, rep)
+    return rep, order
+
+
+def test_sigterm_real_signals_the_held_turn_when_the_original_handed_over(monkeypatch):
+    rep, order = _sigterm_run(monkeypatch, handed_over=True)
+    assert rep.figures["kill_target"] == "held"
+    assert "signal worker term" in order
+    assert ("sigterm_real: ev=shutdown names the turn", True, "") in rep.checks
+
+
+def test_sigterm_real_signals_the_original_turn_when_no_handover_came(monkeypatch):
+    rep, order = _sigterm_run(monkeypatch, handed_over=False)
+    assert rep.figures["kill_target"] == "original"
+    assert ("sigterm_real: ev=shutdown names the turn", True, "") in rep.checks
+
+
 def _spill_run(monkeypatch, *, reads_after: int, rerun: int) -> tuple[bounds.Report, list[str]]:
     """spill_kill with the spilling call at id 7 and no read before the kill; ``reads_after``
     tool-results reads and ``rerun`` calls after it."""
