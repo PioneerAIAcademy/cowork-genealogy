@@ -56,6 +56,10 @@ proto-web = [
     "cryptography>=48.0.1",
     "httpx>=0.27",
     "botocore>=1.40",
+    # The web tier fetches sidecar bodies (`results/<log_id>.json`) from the blob
+    # store; proto/web/sidecar.py needs a client. Imported lazily, so a deployment
+    # with no blob store still serves every other route.
+    "boto3>=1.34,<2",
 ]
 # The SDK pin is the flush-mode pin (session_store_flush="eager" is SDK-side) and the CLI
 # pin (the wheel bundles Claude Code 2.1.220). One lock resolves one version, so this also

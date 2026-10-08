@@ -42,14 +42,6 @@ WORKDIR /app
 COPY apps/server/proto/web/requirements.txt ./requirements.txt
 RUN pip install --require-hashes -r requirements.txt
 
-# boto3 is NOT in the hash-pinned closure above, and the web tier needs it: sidecar
-# bodies (`results/<log_id>.json`) are S3 objects, and without a client every
-# search-result chip 404s and the viewer shows nothing. Installed as its own layer
-# because --require-hashes admits no unpinned additions.
-# FOLLOW-UP: fold boto3 into uv.lock's proto-web closure and regenerate
-# requirements.txt (`make proto-requirements`), then delete this layer.
-RUN pip install "boto3>=1.34,<2"
-
 COPY apps/server/proto/enqueue.py ./
 COPY apps/server/proto/grants.py ./
 COPY apps/server/proto/migrate.py ./

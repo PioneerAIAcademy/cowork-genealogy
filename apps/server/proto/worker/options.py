@@ -393,6 +393,22 @@ DECISION_REASON = (
 DECISION_TOOL = "AskUserQuestion"
 
 
+# Phase 3 item 1. R9 rules that *not sure* continues on the option the agent
+# RECOMMENDED -- and that ruling could not be honoured, because AskUserQuestion carries
+# no recommendation field and all 15 unprompted calls in the committed unit corpus mark
+# nothing. This asks for the convention the tool's OWN contract already defines, so the
+# client reader and the model are looking at the same place rather than at two.
+#
+# It says how to ask, never to ask more: the decision exit is deliberately rare, and a
+# 133-minute captured run asked nothing at all.
+DECISION_GUIDANCE = (
+    "When you ask the researcher to choose between options, put the one you recommend "
+    "first and end its label with \"(Recommended)\". Say in each option's description "
+    "what you will do if it is chosen. If the researcher answers that they are not "
+    "sure, carry on with the option you recommended rather than stopping."
+)
+
+
 def _halt(reason: str = STOP_REASON) -> dict[str, Any]:
     return {"continue_": False, "stopReason": reason, **_deny(reason)}
 

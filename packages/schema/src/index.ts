@@ -554,3 +554,16 @@ export function getPrimaryFact(person: GedcomxPerson, type: string): GedcomxFact
     person.facts?.find((f) => f.type === type)
   )
 }
+
+/**
+ * A candidate link ruled out, so the next session does not re-propose it.
+ * `rejected_links` on research.json; written by person-evidence alone.
+ */
+export interface RejectedLinkEntry {
+  id: string;
+  assertion_id: string;
+  person_id: string;
+  /** Optional. A rejection is never a demand for the right answer. */
+  reason?: string | null;
+  created: string;
+}

@@ -15,9 +15,15 @@ anyio==4.14.2 \
     #   httpx
     #   starlette
     #   watchfiles
+boto3==1.43.106 \
+    --hash=sha256:c11ad4c429a983493ba10014c7af9831a455c2c0eea91c1cefff74530e480277 \
+    --hash=sha256:fdf2e304f9e8864b8613591b18b36ee995560c9666033622eda1cb9057866880
 botocore==1.43.106 \
     --hash=sha256:006870b3b4e40547232ad12c3bb4faec91bbbe0659aafaa3b7fa48a112c4ee97 \
     --hash=sha256:c1fb8818f9957cb5037f73db34ac1a12ba43562e31d6e7f9cb7e5fc64e1dba78
+    # via
+    #   boto3
+    #   s3transfer
 certifi==2026.5.20 \
     --hash=sha256:3c52e209ba0a4ad7aebe60436a4ab349c39e1e602e8c134221e546902ad25897 \
     --hash=sha256:69dea482ab64caa7b9f6aba1c6bf48bb6a5448d1c0f1b17ab42ad8c763a5344d
@@ -184,7 +190,9 @@ itsdangerous==2.2.0 \
 jmespath==1.1.0 \
     --hash=sha256:472c87d80f36026ae83c6ddd0f1d05d4e510134ed462851fd5f754c8c3cbb88d \
     --hash=sha256:a5663118de4908c91729bea0acadca56526eb2698e83de10cd116ae0f4e97c64
-    # via botocore
+    # via
+    #   boto3
+    #   botocore
 psycopg==3.3.4 \
     --hash=sha256:b6bbc25ccf05c8fad3b061d9db2ef0909a555171b84b07f29458a447253d679a \
     --hash=sha256:e21207764952cff81b6b8bdacad9a3939f2793367fdac2987b3aac36a651b5bc
@@ -347,6 +355,10 @@ pyyaml==6.0.3 \
     --hash=sha256:f7057c9a337546edc7973c0d3ba84ddcdf0daa14533c2065749c9075001090e6 \
     --hash=sha256:fc09d0aa354569bc501d4e787133afc08552722d3ab34836a80547331bb5d4a0
     # via uvicorn
+s3transfer==0.19.2 \
+    --hash=sha256:ba0309fd86be3c27dbf78cdd813c13c5e1df16e5874b99d2535ebbdfb9892993 \
+    --hash=sha256:d8168eccca828cbb2cd573675333f3bddd254313a9c42494b84c76b539e8ba25
+    # via boto3
 six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81

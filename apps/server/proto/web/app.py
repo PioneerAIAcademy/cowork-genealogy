@@ -91,6 +91,8 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
+from proto.web.job_state import job_state
+from proto.web.sidecar import fetch_sidecar, sidecar_key, sidecar_payload
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
@@ -191,6 +193,10 @@ class SessionRow:
     # projects.owner_id (008). None -- a project the engine created and nobody has
     # claimed -- is visible to nobody: the route's owner check never matches it.
     owner_id: str | None = None
+    # The three facts the session list's job state is derived from.
+    latest_outcome: str | None = None
+    turn_in_flight: bool = False
+    project_completed: bool = False
 
 
 @dataclass(frozen=True)
@@ -276,6 +282,21 @@ class Queue(Protocol):
 # ── pure helpers (tested without I/O) ────────────────────────────────────────────
 
 
+S3_ENDPOINT = os.environ.get("GENEALOGY_S3_ENDPOINT", "")
+S3_BUCKET = os.environ.get("GENEALOGY_S3_BUCKET", "projects")
+
+def _s3_client():
+    """A blob-store client, or None where none is configured.
+
+    None rather than raising: a deployment with no blob store should serve every
+    other route, and its sidecars are legitimately absent.
+    """
+    if not S3_ENDPOINT:
+        return None
+
+
+# ── rows ─────────────────────────────────────────────────────────────────────────
+
 def sse_frame(data: dict[str, Any], *, seq: int | None = None) -> str:
     """One SSE event. ``id:`` only when the frame is a session_events row."""
     head = f"id: {seq}\n" if seq is not None else ""
@@ -335,6 +356,13 @@ def session_out(row: SessionRow) -> dict[str, Any]:
         "title": row.title,
         "model": row.model,
         "status": "active",
+        # The four states the session list shows. `status` above is the legacy field
+        # every existing client reads; this is additive beside it.
+        "job_state": job_state(
+            latest_outcome=row.latest_outcome,
+            turn_in_flight=row.turn_in_flight,
+            project_completed=row.project_completed,
+        ),
         "sandbox_id": "",
         "agent_session_id": None,
         "created": row.created_at.isoformat(),
@@ -567,6 +595,9 @@ class PgStore:
             title=r["title"] or DEFAULT_TITLE, model=r["model"] or DEFAULT_MODEL,
             created_at=r["created_at"], updated_at=r["updated_at"] or r["created_at"],
             owner_id=r["owner_id"],
+            latest_outcome=r.get("latest_outcome"),
+            turn_in_flight=bool(r.get("turn_in_flight")),
+            project_completed=bool(r.get("project_completed")),
         )
 
     # LEFT JOIN: 001 declares no foreign keys, so a session whose project row is missing
@@ -1549,8 +1580,23 @@ def create_app(
     async def session_sidecar(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
-        await _session(request, session_id, user)
-        raise HTTPException(status_code=404, detail="Sidecar bodies are not served by the prototype web tier (D6-8)")
+        row = await _session(request, session_id, user)
+        try:
+            sidecar_key(log_id)
+        except ValueError:
+            # A traversal attempt is a bad request, not a missing file -- 404 would
+            # tell a prober that the path shape was accepted.
+            raise HTTPException(status_code=400, detail="not a log id") from None
+        s3 = _s3_client()
+        if s3 is None:
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        with psycopg.connect(PG_DSN) as conn:
+            blob = fetch_sidecar(conn, s3, S3_BUCKET, row.project_id, log_id)
+        payload = sidecar_payload(blob)
+        if payload is None:
+            # 404 is a REAL state: most log entries have no sidecar.
+            raise HTTPException(status_code=404, detail="no sidecar for this log")
+        return payload
 
     _NOT_IN_PROTOTYPE = {
         "image": "Source images are not served by the prototype web tier (D6-8 blobs)",
