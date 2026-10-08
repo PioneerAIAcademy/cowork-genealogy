@@ -827,7 +827,10 @@ def rule10_no_xfail_markers(skill: str, tests_dir: Path) -> int:
         f"skill `{skill}`: this PR touches the skill, and {len(marked)} of its "
         f"test(s) still carry `expected_outcome: xfail`. Markers are no longer "
         f"allowed: delete `expected_outcome` and `xfail_reason`, make the test "
-        f"pass, and include it in this PR's run log.\n" + listing,
+        f"pass, and include it in this PR's run log. If the fix belongs to "
+        f"another open issue, delete the test file instead (keep its scenario "
+        f"and fixtures) and add \"restore <test id> from git\" to that issue's "
+        f"done-when.\n" + listing,
     )
     return 1
 

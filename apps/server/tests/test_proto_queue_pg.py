@@ -429,6 +429,54 @@ def test_a_redelivered_claim_keeps_a_closed_turns_outcome(pg_dsn):
                (turn_id,)) == [("ok", True)]
 
 
+# ── U4: the claim takes the web tier's row, never the queue body's ids ──────────────
+
+
+def claim_as(dsn: str, turn_id: str, session_id: str, project_id: str, text: str = "forged") -> dict | None:
+    with psycopg.connect(dsn) as conn:
+        return worker.claim(conn, {"turn_id": turn_id, "session_id": session_id, "project_id": project_id,
+                                   "message": {"text": text}}, 1)
+
+
+def stamps(dsn: str, turn_id: str) -> list[tuple]:
+    return sql(dsn, "SELECT claimed_at IS NOT NULL, receive_count FROM turns WHERE turn_id = %s", (turn_id,))
+
+
+def test_a_claim_naming_its_row_runs_the_row_s_message(pg_dsn):
+    row = session(pg_dsn)
+    turn_id = turn(pg_dsn, row.session_id, row.project_id, "patron")
+    assert claim_as(pg_dsn, turn_id, row.session_id, row.project_id)["text"] == "patron"
+    assert stamps(pg_dsn, turn_id) == [(True, 1)]
+
+
+def test_a_claim_naming_another_patron_s_project_is_refused_and_writes_nothing(pg_dsn):
+    """The finding (U4): a body carrying a real turn's ids and someone else's project_id
+    picked whose grant the turn ran on."""
+    mine, theirs = session(pg_dsn), session(pg_dsn)
+    turn_id = turn(pg_dsn, mine.session_id, mine.project_id, "patron")
+    assert claim_as(pg_dsn, turn_id, mine.session_id, theirs.project_id) is None
+    assert claim_as(pg_dsn, turn_id, theirs.session_id, theirs.project_id) is None
+    assert stamps(pg_dsn, turn_id) == [(False, 0)]
+
+
+def test_a_claim_naming_no_row_creates_none(pg_dsn):
+    row = session(pg_dsn)
+    invented = "turn_" + uuid.uuid4().hex[:10]
+    new_session = "sess_" + uuid.uuid4().hex[:10]
+    assert claim_as(pg_dsn, invented, row.session_id, row.project_id) is None
+    assert claim_as(pg_dsn, invented, new_session, row.project_id) is None
+    assert sql(pg_dsn, "SELECT count(*) FROM turns WHERE turn_id = %s", (invented,)) == [(0,)]
+    assert sql(pg_dsn, "SELECT count(*) FROM sessions WHERE session_id = %s", (new_session,)) == [(0,)]
+
+
+def test_a_turn_row_whose_project_is_not_its_session_s_is_refused(pg_dsn):
+    """The session's project is the one the web tier checked ownership of; a turns row
+    disagreeing with it is not one the web tier wrote."""
+    mine, theirs = session(pg_dsn), session(pg_dsn)
+    turn_id = turn(pg_dsn, mine.session_id, theirs.project_id, "patron")
+    assert claim_as(pg_dsn, turn_id, mine.session_id, theirs.project_id) is None
+
+
 # ── the queue lock's wait is bounded ───────────────────────────────────────────────
 
 

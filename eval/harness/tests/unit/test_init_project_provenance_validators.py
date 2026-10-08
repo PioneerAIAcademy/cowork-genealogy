@@ -26,6 +26,7 @@ from test_init_project import (  # noqa: E402
     _DEFAULT_LEVEL,
     _HOUSE_STYLE,
     test_every_fact_and_relationship_is_sourced as check_sourced,
+    test_existing_project_is_not_reinitialized as check_not_reinit,
     test_narration_guidance_is_the_house_style as check_narration,
     test_person_level_sources_carried as check_person_sources,
     test_init_empty_sections as check_empty,
@@ -408,6 +409,193 @@ def test_v3_fires_on_a_plausible_but_unreturned_standardization():
     assert "match neither" in _fails(check_std_place, after, [_person_read_call()])
 
 
+_STAGED_REF = "results/.staging/x.json"
+
+
+def _as_built(after):
+    """The state as project_create leaves it: the same tree also written as the
+    write-once starting baseline, which is what V3 checks a host fill against."""
+    import json
+    tree = after["tree_gedcomx_json"]
+    return {**after, "files": {"starting-tree.gedcomx.json": json.dumps(tree)}}
+
+
+def _staged(call, ref=_STAGED_REF):
+    """The call with the `staged` handle production attaches when it stages."""
+    call["response"]["staged"] = {"resultsRef": ref}
+    return call
+
+
+def _unresolved_read():
+    """person_read returning a Death with a place it could not standardize."""
+    return _staged(_person_read_call(persons=[{
+        "id": "LZNY-BRF", "gender": "Male", "living": False,
+        "names": [{"given": "Patrick", "surname": "Flynn"}],
+        "facts": [{"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania"}],
+    }]))
+
+
+_REF_CREATE = {"tool": "mcp__genealogy__project_create",
+               "args": {"personReadRef": " " + _STAGED_REF},
+               "response": {"ok": True}}
+_ARK = "ark:/61903/4:1:LZNY-BRF"
+_FILLED = _tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+    {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+     "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"},
+]}])
+
+
+def test_v3_passes_a_value_the_host_retry_filled():
+    """#2944: project_create's host build retries a place the read left
+    unresolved, so the value matches no returned value and no place_search."""
+    check_std_place(_as_built(_FILLED), [_unresolved_read(), _REF_CREATE])
+
+
+def test_v3_still_fires_on_that_value_when_the_tree_was_hand_built():
+    """Without personReadRef no host build ran, so the model invented it."""
+    assert "match neither" in _fails(check_std_place, _as_built(_FILLED), [_unresolved_read()])
+
+
+def test_v3_passes_a_host_resolution_identical_to_the_raw_place():
+    """A resolved name can equal the raw text ("Ireland")."""
+    read = _staged(_person_read_call(persons=[{"id": "LZNY-BRF", "gender": "Male", "living": False,
+        "names": [{"given": "P", "surname": "F"}], "facts": [{"type": "Birth", "place": "Ireland"}]}]))
+    after = _tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+        {"type": "Birth", "place": "Ireland", "standard_place": "Ireland"}]}])
+    check_std_place(_as_built(after), [read, _REF_CREATE])
+
+
+def test_v3_passes_a_host_fill_on_the_second_of_two_same_type_facts():
+    read = _staged(_person_read_call(persons=[{"id": "LZNY-BRF", "gender": "Male", "living": False,
+        "names": [{"given": "P", "surname": "F"}], "facts": [
+            {"type": "Residence", "place": "Pottsville"},
+            {"type": "Residence", "place": "Reading", "standard_place": "Reading, Berks, Pennsylvania, United States"},
+        ]}]))
+    after = _tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+        {"type": "Residence", "place": "Pottsville", "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"},
+        {"type": "Residence", "place": "Reading", "standard_place": "Reading, Berks, Pennsylvania, United States"},
+    ]}])
+    check_std_place(_as_built(after), [read, _REF_CREATE])
+
+
+def test_v3_does_not_let_one_person_s_unresolved_fact_exempt_another_s():
+    """The read left Patrick's Death unresolved; a Death on his brother with the
+    same raw place and an invented value is not the host's fill."""
+    after = _tree(persons=[
+        {"id": "I1", "ark": _ARK, "facts": [{"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania"}]},
+        {"id": "I2", "ark": "ark:/61903/4:1:LZNY-B8S", "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+    ])
+    message = _fails(check_std_place, _as_built(after), [_unresolved_read(), _REF_CREATE])
+    assert "I2/Death" in message
+
+
+def test_v3_does_not_exempt_a_fact_on_a_person_with_no_ark():
+    unarked = _tree(persons=[{"id": "I1", "facts": [
+        {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+         "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"},
+    ]}])
+    assert "match neither" in _fails(check_std_place, _as_built(unarked), [_unresolved_read(), _REF_CREATE])
+
+
+def _couple_read(place_fact):
+    read = _person_read_call(persons=[
+        {"id": "LZNY-BRF", "gender": "Male", "living": False, "names": [{"given": "P", "surname": "F"}]},
+        {"id": "LZNY-K2M", "gender": "Female", "living": False, "names": [{"given": "M", "surname": "K"}]},
+    ])
+    read["response"]["relationships"] = [
+        {"type": "Couple", "person1": "LZNY-BRF", "person2": "LZNY-K2M", "facts": [place_fact]}]
+    return _staged(read)
+
+
+def _couple_tree(person2_ark):
+    return _tree(
+        persons=[{"id": "I1", "ark": _ARK}, {"id": "I2", "ark": person2_ark}],
+        relationships=[{"id": "R1", "type": "Couple", "person1": "I2", "person2": "I1", "facts": [
+            {"type": "Marriage", "place": "Dublin", "standard_place": "Dublin, Ireland"}]}],
+    )
+
+
+def test_v3_passes_a_host_fill_on_a_relationship_fact_matched_by_its_endpoints():
+    read = _couple_read({"type": "Marriage", "place": "Dublin"})
+    check_std_place(_as_built(_couple_tree("ark:/61903/4:1:LZNY-K2M")), [read, _REF_CREATE])
+
+
+def test_v3_does_not_exempt_a_relationship_fact_on_other_endpoints():
+    read = _couple_read({"type": "Marriage", "place": "Dublin"})
+    message = _fails(check_std_place, _as_built(_couple_tree("ark:/61903/4:1:ZZZZ-999")), [read, _REF_CREATE])
+    assert "R1/Marriage" in message
+
+
+def test_v3_does_not_trust_a_second_read_the_ref_did_not_name():
+    """A second person_read's person joins as an addition; the host retry never
+    touched its facts, so its unresolved place does not excuse an invented value."""
+    second = _staged(_person_read_call(persons=[{
+        "id": "ZZZZ-001", "gender": "Male", "living": False,
+        "names": [{"given": "O", "surname": "K"}],
+        "facts": [{"type": "Birth", "place": "Cork"}],
+    }], personId="ZZZZ-001"), ref="results/.staging/other.json")
+    after = _tree(persons=[{"id": "I7", "ark": "ark:/61903/4:1:ZZZZ-001", "facts": [
+        {"type": "Birth", "place": "Cork", "standard_place": "Made Up Parish, Cork, Ireland"}]}])
+    assert "I7/Birth" in _fails(check_std_place, _as_built(after), [_unresolved_read(), second, _REF_CREATE])
+    # The same read, when it IS the one the ref named, is trusted.
+    named = {**_REF_CREATE, "args": {"personReadRef": "results/.staging/other.json"}}
+    check_std_place(_as_built(after), [second, named])
+
+
+@pytest.mark.parametrize("spelling", [
+    "./" + _STAGED_REF, "/abs/project/" + _STAGED_REF, "results//.staging/x.json",
+])
+def test_v3_matches_the_ref_in_any_spelling_project_create_accepts(spelling):
+    create = {**_REF_CREATE, "args": {"personReadRef": spelling}}
+    check_std_place(_as_built(_FILLED), [_unresolved_read(), create])
+
+
+def test_v3_does_not_exempt_a_value_the_starting_tree_does_not_hold():
+    """The host fill is what the write-once baseline holds. A different value on
+    that fact now (a copy of `place`, or one a later tree_edit invented) is not."""
+    baseline = _as_built(_tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+        {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania"}]}]))
+    for invented in ["Pottsville, Schuylkill, Pennsylvania", "Totally Invented"]:
+        after = {**_tree(persons=[{"id": "I1", "ark": _ARK, "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": invented}]}]), "files": baseline["files"]}
+        assert "I1/Death" in _fails(check_std_place, after, [_unresolved_read(), _REF_CREATE])
+
+
+def test_v3_does_not_exempt_without_a_starting_tree():
+    assert "match neither" in _fails(check_std_place, _FILLED, [_unresolved_read(), _REF_CREATE])
+
+
+def test_v3_does_not_key_an_addition_with_a_record_ark_to_a_staged_person():
+    """project_create treats only a `4:1:` tree ark as naming a person from the
+    read, so an addition carrying the subject's RECORD ark is a separate person.
+    Its invented value at a place the host filled for the subject is not the
+    host's fill, though the addition is in the starting baseline too."""
+    after = _as_built(_tree(persons=[
+        {"id": "I1", "ark": _ARK, "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+        {"id": "I7", "ark": "ark:/61903/1:1:LZNY-BRF", "facts": [
+            {"type": "Death", "place": "Pottsville, Schuylkill, Pennsylvania",
+             "standard_place": "Pottsville, Schuylkill, Pennsylvania, United States"}]},
+    ]))
+    message = _fails(check_std_place, after, [_unresolved_read(), _REF_CREATE])
+    assert "I7/Death" in message and "I1/Death" not in message
+
+
+def test_v3_does_not_trust_a_read_that_was_never_staged():
+    read = _unresolved_read()
+    del read["response"]["staged"]
+    assert "match neither" in _fails(check_std_place, _as_built(_FILLED), [read, _REF_CREATE])
+
+
+def test_v3_does_not_trust_a_refused_ref_call():
+    refused = {**_REF_CREATE, "response": {"ok": False, "errors": ["x"]}}
+    assert "match neither" in _fails(check_std_place, _as_built(_FILLED), [_unresolved_read(), refused])
+
+
 def test_v3_skips_when_nothing_was_standardized():
     after = _tree(persons=[{"id": "I1", "facts": [{"type": "Birth", "place": "Boston"}]}])
     with pytest.raises(pytest.skip.Exception):
@@ -768,3 +956,117 @@ def test_empty_sections_still_fires_on_the_other_sections():
     assert "questions (1 entries)" in _fails(check_empty, after,
                                              _EMPTY_TAGGED, calls)
 
+
+
+# --- The host-built tree passes the provenance validators (#2944 Stage B) ---
+
+_ENGINE_BUILD = Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/build"
+_FAMILY = Path(__file__).resolve().parents[3] / "fixtures/mcp/person-read-flynn-family.json"
+
+
+def _host_build(tmp_path, fixture=_FAMILY, pid="LZNY-BRF"):
+    """Stage a person_read fixture and create the project through the COMPILED
+    stagePersonRead + projectCreate, the path init-project now takes. Returns
+    (person_read response with its `staged` handle, written tree, the
+    project_create call as the log would record it)."""
+    import json, subprocess
+
+    response = json.loads(fixture.read_text(encoding="utf-8"))["response"]
+
+    def url(p):
+        posix = str(p).replace("\\", "/")
+        return ("file:///" + posix) if sys.platform == "win32" else posix
+
+    script = (
+        f"import {{ stagePersonRead }} from '{url(_ENGINE_BUILD / 'tools/person-read.js')}';"
+        f"import {{ projectCreate }} from '{url(_ENGINE_BUILD / 'tools/project-create.js')}';"
+        " import { readFileSync } from 'node:fs';"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const { staged } = await stagePersonRead({ projectPath: i.dir, input: { personId: i.pid }, result: i.result });"
+        " const r = await projectCreate({ projectPath: i.dir, objective: 'Find Patrick Flynn\\'s parents', personReadRef: staged.resultsRef });"
+        " process.stdout.write(JSON.stringify({ r, staged }));"
+    )
+    proc = subprocess.run(
+        ["node", "--input-type=module", "--eval", script],
+        input=json.dumps({"dir": str(tmp_path).replace("\\", "/"), "result": response, "pid": pid}),
+        capture_output=True, text=True, encoding="utf-8", timeout=120,
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads(proc.stdout)
+    result = out["r"]
+    assert result["ok"], result
+    tree = json.loads((tmp_path / "tree.gedcomx.json").read_text(encoding="utf-8"))
+    create = {"tool": "mcp__genealogy__project_create",
+              "args": {"personReadRef": out["staged"]["resultsRef"]}, "response": result}
+    return {**response, "staged": out["staged"]}, tree, create
+
+
+@pytest.mark.requires_engine_build
+def test_host_built_tree_passes_the_provenance_validators(tmp_path):
+    """The rules the model followed by hand now run on the host. Checked by the
+    validators written to grade the model, not by the builder's own reading."""
+    response, tree, create = _host_build(tmp_path)
+    calls = [{"tool": "mcp__genealogy__person_read", "args": {"personId": "LZNY-BRF"}, "response": response}, create]
+    after = {"tree_gedcomx_json": tree}
+    check_ark(after, calls)
+    check_std_place(after, calls)
+    check_std_date(after, calls)
+    check_sourced(after, POSITIVE)
+    check_notes(after, calls)
+
+
+@pytest.mark.requires_engine_build
+def test_host_built_tree_carries_person_level_sources(tmp_path):
+    """V1 over the moreau fixture, whose persons carry person-level refs (on the
+    family fixture V1 would pass vacuously). The refs must reach the written
+    persons, re-pointed at the tree's own `S` ids."""
+    moreau = _FAMILY.parent / "person-read-moreau-person-level-sources.json"
+    response, tree, _create = _host_build(tmp_path, moreau, "MRQ1-JBM")
+    calls = [{"tool": "mcp__genealogy__person_read", "args": {"personId": "MRQ1-JBM"}, "response": response}]
+    after = {"tree_gedcomx_json": tree}
+    check_person_sources(calls, after)
+    check_ark(after, calls)
+    assert any(p.get("sources") for p in tree["persons"]), "V1 checked nothing"
+
+
+# --- refuse-if-exists invariant --------------------------------------------
+
+_REFUSE = {"type": "negative", "tags": ["refuse-if-exists"]}
+_PROJECT = {"id": "rp_001", "created": "2026-01-01", "objective": "Find Patrick's parents"}
+
+
+def _states(after_project=None):
+    before = {"research_json": {"project": dict(_PROJECT)}}
+    after = {"research_json": {"project": dict(after_project or _PROJECT)}}
+    return before, after
+
+
+def test_not_reinit_passes_when_the_request_is_routed_without_init_work():
+    before, after = _states()
+    calls = [{"tool": "mcp__genealogy__research_query", "args": {}},
+             {"tool": "mcp__genealogy__project_context", "args": {}}]
+    check_not_reinit(before, after, calls, _REFUSE)
+
+
+@pytest.mark.parametrize("tool", ["person_read", "person_search", "project_create"])
+def test_not_reinit_fails_on_any_init_tool_call(tool):
+    before, after = _states()
+    with pytest.raises(AssertionError, match=f"called \\['{tool}'\\]"):
+        check_not_reinit(before, after, [{"tool": f"mcp__genealogy__{tool}", "args": {}}], _REFUSE)
+
+
+@pytest.mark.parametrize("key,value", [("id", "rp_002"), ("created", "2026-10-05"), ("objective", "General research")])
+def test_not_reinit_fails_when_the_existing_project_was_replaced(key, value):
+    before, after = _states({**_PROJECT, key: value})
+    with pytest.raises(AssertionError, match=f"project.{key} changed"):
+        check_not_reinit(before, after, [], _REFUSE)
+
+
+def test_not_reinit_refuses_a_scenario_with_no_existing_project():
+    with pytest.raises(AssertionError, match="needs a scenario"):
+        check_not_reinit({"research_json": None}, {"research_json": None}, [], _REFUSE)
+
+
+def test_not_reinit_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_not_reinit({}, {}, [{"tool": "mcp__genealogy__person_read"}], POSITIVE)

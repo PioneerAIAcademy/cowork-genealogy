@@ -43,10 +43,10 @@ Reviewed by Dallan / Richard (see §4).
 
 ## 1. Why this exists
 
-Today the `tree-edit` skill (`packages/engine/plugin/skills/tree-edit/SKILL.md`, "Person
-merging") performs a merge **by hand** — the LLM is instructed to dedup names,
+The `tree-edit` skill (`tree-edit/SKILL.md` §"Person merging" at `d0915210`)
+performed a merge **by hand** — the LLM was instructed to dedup names,
 dedup facts, repoint relationships, and delete the deprecated person (Steps
-1–5). That is error-prone (ID collisions, missed references). This spec replaces the
+1–5). That was error-prone (ID collisions, missed references). This spec replaces the
 hand-done merge with one **deterministic function** so the result is reliable
 and testable. The requirement: *"Make sure that the tree-edit tool calls that
 function."*
@@ -57,8 +57,9 @@ deliberately does NOT:
   (§4, Dallan's FINAL DECISION),
 - touch `research.json`, the filesystem, or run validation — those belong to the
   **tool wrappers** (§5b), which own persistence and the cross-file remap (§10),
-- run warning checks (`check-warnings` does that after a merge — see
-  `agents/tree-edit.md`, Appendix B).
+- run warning checks — the merge tools refuse a write that introduces an
+  unjustified genealogical warning, so the plausibility check is at the write
+  boundary rather than a pass the caller runs afterwards.
 
 ---
 
@@ -87,7 +88,7 @@ and child↔child. Whatever isn't paired is simply **carried in as a new relativ
 | IDs `I/N/F/R/S` unique within their array (restart at 1 per doc → collisions on merge) | `docs/specs/simplified-gedcomx-spec.md` |
 | `gedcomx-convert.ts` exports `toSimplified`/`toGedcomX` (+ `collectFacts`/`standardizePlaces`/`toSimplifiedStandardized`) — **no ID-remap or dedup helper there** | `packages/engine/mcp-server/src/utils/gedcomx-convert.ts` |
 | The pure core `mergeGedcomx` (§5–§7) is **already implemented and unit-tested** — the §5b tool wrappers are shipped | `src/utils/merge-gedcomx.ts` (728 lines), `tests/utils/merge-gedcomx.test.ts` |
-| The hand-done merge protocol this replaces | `packages/engine/plugin/skills/tree-edit/SKILL.md` §"Person merging" |
+| The hand-done merge protocol this replaces | `tree-edit/SKILL.md` §"Person merging" at `d0915210` |
 
 Richard attached FamilySearch's **`MobMergeUtil.java`** (the match-system merge)
 to the source issue as an *ideas* reference — explicitly **not** a straight port. The exact
@@ -578,13 +579,16 @@ Tool-level (wrappers over the pure core):
   `gedcomx_source_description_id` needs **no** remap: target S-ids are preserved
   and `research.json` never references candidate S-ids.
 
-**Caller (the `tree-edit` skill) still** spawns the `check-warnings` agent
-(`relationship-accuracy.md`) after the merge to catch genealogical impossibilities
-it may have introduced (e.g. parent younger than child). The tool does the
-**structural** validate (schema + refs) but **not** the genealogical-plausibility
-checks — those stay a separate agent step. The caller no longer hand-edits
-`research.json` refs or calls `validate_research_schema` itself; the tool does
-both.
+**Caller (the `tree-edit` skill) no longer** spawns the `check-warnings` agent
+after the merge. The merge tools refuse a write that introduces an unjustified
+genealogical warning, so the impossibility this paragraph used to
+name — a parent younger than their child — is refused at the write boundary
+rather than reported by a pass the caller has to remember. The tool does the
+structural validate (schema + refs) AND, through that gate, the
+genealogical-plausibility check on what the write introduced; `check-warnings`
+remains available as a review of a person already in the tree. The caller no
+longer hand-edits `research.json` refs or calls `validate_research_schema`
+itself; the tool does both.
 
 ---
 

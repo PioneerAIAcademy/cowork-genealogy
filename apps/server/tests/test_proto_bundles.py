@@ -196,6 +196,7 @@ def test_no_dev_variable_in_a_template(tier):
 
 @pytest.mark.parametrize(("tier", "env", "dev"), [
     ("worker", {"DEV_PATHS": "true"}, True),
+    ("web", {"DEV_LOGIN": "true"}, True),
     ("tools", {"GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS": "30000"}, True),
     ("web", {"BLOCKED_TOOLS": "person_read"}, True),
     ("worker", {"AUTONOMOUS_MAX_NUDGES": "60"}, True),
@@ -248,6 +249,7 @@ def test_no_dev_variable_in_a_shipped_file_or_image(tier):
 @pytest.mark.parametrize(("tier", "text", "dev"), [
     ("worker", "set -euo pipefail\nexport DEV_PATHS=1\n", True),
     ("worker", "FROM python:3.12-slim\nENV DEV_PATHS=1\n", True),
+    ("web", "ENV DEV_LOGIN=true\n", True),
     ("worker", "export DEV_PATHS=1  # a trailing comment is not a comment line\n", True),
     ("web", 'RUN echo "${GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS}"\n', True),
     ("tools", "ENV AUTONOMOUS_MAX_NUDGES=5\n", True),
@@ -303,6 +305,20 @@ def test_worker_runtime_paths_match_the_hook_and_layout():
 
 def test_web_dist_dir_is_the_layout_directory():
     assert _env("web").get("WEB_DIST_DIR") == layout.WEB_DIST_DIR
+
+
+def test_root_drop_in_lives_where_a_deploy_does_not_delete_it():
+    """U13 (2026-10-07): every deploy, app or configuration, deregisters web and deletes
+    /etc/systemd/system/web.service.d after predeploy and before the restart, so a drop-in
+    there never governs the deploy's own start; the worker came up as webapp. One under
+    /usr/lib/systemd/system/web.service.d survived both kinds of deploy."""
+    text = WORKER_HOOK.read_text(encoding="utf-8")
+    live = [ln for ln in text.splitlines() if not ln.lstrip().startswith("#")]
+    assert any(re.fullmatch(r"printf '\[Service\]\\nUser=root\\nGroup=root\\n' > "
+                            r"/usr/lib/systemd/system/web\.service\.d/10-genealogy-root\.conf", ln)
+               for ln in live), "the hook writes no root drop-in under /usr/lib"
+    assert not any("/etc/systemd/system/web.service.d" in ln for ln in live), \
+        "a drop-in under /etc is deleted by every deploy"
 
 
 def test_worker_hook_is_executable_in_git_and_strict():

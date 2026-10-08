@@ -7,8 +7,8 @@ disagree about which paths an issue names, or about which paths are inside a ski
 eval snapshot, fill-ready's Gate 4 map and the merge pass's queue depths describe
 different boards.
 
-Everything here is a claim about ONE issue body. Anything that compares two items
-lives in the caller.
+Everything here is a claim about ONE issue body, except `deleted_on_ref`, which checks
+paths against `origin/main`. Anything that compares two items lives in the caller.
 """
 
 import os
@@ -182,21 +182,90 @@ def _live_touches_segment(body):
     return first
 
 
-def paths_from_touches(body):
+def _touches_tokens(body):
     seg = _live_touches_segment(body)
     if seg is None:
-        return set()
+        return []
     seg = seg.replace("`", " ").replace("·", " ")
-    out = set()
-    for tok in _TOKEN.findall(seg):
-        tok = tok.rstrip(".,;:)").rstrip("/")
-        if tok:
-            out.add(parse(tok))
-    return out
+    toks = (tok.rstrip(".,;:)").rstrip("/") for tok in _TOKEN.findall(seg))
+    return [tok for tok in toks if tok]
+
+
+def paths_from_touches(body):
+    return {parse(tok) for tok in _touches_tokens(body)}
+
+
+def globs_from_touches(body):
+    """-> {pre-`*` head: the glob as the card wrote it}. `parse` keeps only the head, so
+    this is how a caller tells a glob from a plain directory and prints what the card said."""
+    return {parse(tok)[1]: tok for tok in _touches_tokens(body) if "*" in tok}
 
 
 def under(path, prefix):
     return path == prefix or path.startswith(prefix + "/")
+
+
+def _git(repo, *args):
+    return subprocess.run(["git", "-C", repo, *args], capture_output=True,
+                          text=True, encoding="utf-8")
+
+
+def deletion_check_skipped(ref="origin/main", repo=None):
+    """-> why `deleted_on_ref` cannot answer here, or None. A shallow clone is a skip, not
+    an answer: `git log` cannot see a deletion older than the clone's history, so it would
+    report a clean board."""
+    repo = repo or REPO_ROOT
+    try:
+        if _git(repo, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}").returncode != 0:
+            return f"{ref} does not resolve"
+        if _git(repo, "rev-parse", "--is-shallow-repository").stdout.strip() == "true":
+            return "this clone is shallow, so an older deletion would be missed"
+    except OSError:
+        return "git is not installed"
+    return None
+
+
+def deleted_on_ref(entries, ref="origin/main", repo=None, globs=()):
+    """-> {path: short sha of the commit that deleted it} | None when the check is skipped
+    (`deletion_check_skipped`).
+
+    `entries` are `(kind, path)` pairs as `paths_from_touches` returns them. A path is
+    flagged only if it is absent at `ref` AND has history there: absent alone is
+    mostly files a card will create (21 of 24 absent paths on 2026-10-05, issue #3148).
+    A directory counts as present if any tracked file sits under it. A glob reaches
+    here as its pre-`*` head; pass the heads as `globs` (`globs_from_touches`). A live
+    directory head is present, and a glob head with no history of its own
+    (`skills/zz-new-`, `skills/gone/SKILL`) is judged by its parent directory, so a glob
+    into a deleted directory is flagged and one into a live directory is not. Only a glob
+    gets that fallback: a plain path with no history (`skills/gone/newsub`) is one the
+    card will create, even under a deleted directory.
+    """
+    repo = repo or REPO_ROOT
+    if deletion_check_skipped(ref, repo):
+        return None
+
+    def git(*args):
+        return _git(repo, *args)
+
+    tracked = set(git("ls-tree", "-r", "-z", "--name-only", "--full-tree", ref)
+                  .stdout.split("\0")) - {""}
+    tracked_dirs = {f.rsplit("/", i)[0] for f in tracked for i in range(1, f.count("/") + 1)}
+    present = tracked | tracked_dirs
+
+    def deleting_sha(path):
+        return git("log", "-1", "--format=%h", ref, "--", path).stdout.strip()
+
+    out = {}
+    for kind, path in entries:
+        if path in present or path in out:
+            continue
+        sha = deleting_sha(path)
+        if not sha and path in globs and "/" in path:
+            parent = path.rsplit("/", 1)[0]
+            sha = "" if parent in present else deleting_sha(parent)
+        if sha:
+            out[path] = sha
+    return out
 
 
 def tracked_count(prefix):

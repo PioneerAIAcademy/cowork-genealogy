@@ -24,7 +24,8 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   reads under the worker's anchor, and is waited on by proto-up but never by
   proto-up-core (the D3 smoke must not gate on the engine image);
 - U11: the base worker, and no other service in any compose file, sets DEV_PATHS=true,
-  and it names its tool server as a literal.
+  and it names its tool server as a literal;
+- U13: the base web tier, and no other service in any compose file, sets DEV_LOGIN=true.
 
 No Docker needed: the compose files parse as YAML; the HOCON conf and the SQL are
 read as text with their comments stripped first, so a comment that *mentions*
@@ -307,6 +308,20 @@ def test_no_other_compose_service_sets_dev_paths():
                 assert "TOOL_SERVER_URL" not in env, f"{path.name} overrides the worker's TOOL_SERVER_URL"
 
 
+
+def test_compose_opts_the_web_tier_into_dev_login_and_nothing_else():
+    """U13: dev-login is opt-in (web/auth.py dev_login_enabled). Compose's web tier opts in
+    with a literal, so no host variable at `up` time switches it; no other service or
+    overlay sets it."""
+    files = sorted(PROTO.glob("docker-compose*.yml"))
+    assert COMPOSE in files and len(files) >= 4
+    assert _env(_service(_load(COMPOSE), "web")).get("DEV_LOGIN") == "true"
+    for path in files:
+        for name, service in (_load(path).get("services") or {}).items():
+            if (path, name) != (COMPOSE, "web"):
+                assert "DEV_LOGIN" not in _env(service or {}), f"{path.name}: {name} sets DEV_LOGIN"
+
+
 def _wait_services(line: str) -> list[str]:
     """The service names after `--wait` on one logical recipe line, a trailing comment stripped."""
     return line.split("#", 1)[0].split("--wait", 1)[1].split()
@@ -544,8 +559,8 @@ def test_elasticmq_has_no_redrive_policy():
 
 BEANSTALK_MAX_INACTIVITY_S = 36000  # the sqsd options table: InactivityTimeout "1 to 36000"
 SQS_MAX_VISIBILITY_S = 43200
-# Beanstalk's worker stop grace is unmeasured (U13); systemd's default stop timeout is
-# the bound the template is sized against until then.
+# Beanstalk's worker stop grace: the platform's web.service has TimeoutStopUSec=1min 30s,
+# KillMode=control-group, SIGTERM then SIGKILL (U13, 2026-10-07, AL2023 Python 3.12 4.13.9).
 BEANSTALK_STOP_GRACE_S = 90
 STOP_GRACE_MARGIN_S = 2  # worker stop_grace_period above SHUTDOWN_GRACE_S + RELEASE_BUDGET_S (main()'s join slack)
 CONTAINER_RESTART_S = 10  # a `docker restart` bringing proto-worker back up

@@ -8,12 +8,13 @@
     "tags": ["fulltext", "nil-ladder", "name-field", "keywords-retry", "cross-field"]
   },
   "input": {
-    "user_message": "Search for Thomas Flynn appearing as a witness or named heir in Schuylkill County probate records from the 1870s–1880s. Use the full-text index.",
+    "delegation": "Search for Thomas Flynn appearing as a witness or named heir in Schuylkill County probate records from the 1870s–1880s. Use the full-text index.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
     "fulltext-search-flynn-probate-empty-by-name",
     "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-flinn-variant",
     "wiki-read-any",
     "wiki-search-any"
   ],
@@ -21,6 +22,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "The routing table says keywords first for witness/heir searches. If the skill used keywords and found the witness record directly, all dimensions pass — do not penalise for skipping the name field. The name-field fixture is only exercised when the skill happens to try the name field first.",
     "QUERY CONSTRUCTION — name-field-first path only: if the skill tried the name field and got zero results, it must recognise that FTS NLP tagging may have failed and retry using the keywords field before concluding Thomas Flynn is absent. A skill that stops at the name-field nil without retrying in the keywords field scores PARTIAL. A skill that used keywords first and found results scores PASS.",
     "If the skill tried name field first: the keywords retry finds Thomas Flynn named as a witness in a Schuylkill County land record. The skill should log the name-field nil and then log the keywords result separately — two log entries, one nil and one positive.",
