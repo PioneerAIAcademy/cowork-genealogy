@@ -48,6 +48,34 @@ describe("research_query", () => {
     expect(result.truncated).toBe(false);
   });
 
+  it("filters assertions by assertionId — an EXACT match on the assertion's own id", async () => {
+    // The field is `id`. An assertion object has no `assertion_id` key — that
+    // is person_evidence's POINTER to one — so a rule on `assertion_id` here
+    // is accepted by the tool and matches nothing, ever, returning a silent
+    // `count: 0` indistinguishable from "no such assertion".
+    //
+    // Two assertions, and the assertion is on EXACTLY one: a test that only
+    // checked "did not throw", or "returned something", passes under the wrong
+    // field (0 items) and under a widened mode.
+    await writeResearch({
+      assertions: [
+        { id: "a_001", record_id: "REC1", record_role: "principal", fact_type: "birth" },
+        { id: "a_002", record_id: "REC2", record_role: "child", fact_type: "death" },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      assertionId: "a_002",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(1);
+    expect(result.items.map((i) => i.id)).toEqual(["a_002"]);
+  });
+
   it("filters assertions by questionId — a CONTAINS match on extracted_for_question_ids", async () => {
     await writeResearch({
       assertions: [

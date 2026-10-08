@@ -73,7 +73,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `status` | `status` | exact |
 | `log` | `planItemId` | `plan_item_id` | exact |
 | `sources` | `sourceId` | `id` | exact |
-| `assertions` | `recordId` | `record_id` | exact |
+| `assertions` | `assertionId` | `id` | exact |
+| | `recordId` | `record_id` | exact |
 | | `recordRole` | `record_role` | exact |
 | | `sourceId` | `source_id` | exact |
 | | `questionId` | `extracted_for_question_ids` | contains |

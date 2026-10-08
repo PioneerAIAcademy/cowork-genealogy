@@ -171,6 +171,10 @@ const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<FilterKey, Fi
     sourceId: { field: "id", mode: "exact" },
   },
   assertions: {
+    // `id`, not `assertion_id` — an assertion object has no `assertion_id`
+    // key (that is person_evidence's POINTER to one, below). A rule on
+    // `assertion_id` here is accepted by the tool and matches nothing, ever.
+    assertionId: { field: "id", mode: "exact" },
     recordId: { field: "record_id", mode: "exact" },
     recordRole: { field: "record_role", mode: "exact" },
     sourceId: { field: "source_id", mode: "exact" },
@@ -375,7 +379,8 @@ export const researchQuerySchema = {
     "\n" +
     "Supported filters per section: `questions` (questionId, status), `plans` " +
     "(questionId, status), `log` (planItemId), `sources` (sourceId), `assertions` " +
-    "(recordId, recordRole, sourceId, questionId — matches extracted_for_question_ids), " +
+    "(assertionId — matches id, recordId, recordRole, sourceId, questionId — " +
+    "matches extracted_for_question_ids), " +
     "`person_evidence` (personId, assertionId), `conflicts` (assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids, status), " +
     "`hypotheses` (questionId — matches " +
@@ -424,7 +429,8 @@ export const researchQuerySchema = {
       assertionId: {
         type: "string",
         description:
-          "person_evidence: matches assertion_id. proof_summaries: matches " +
+          "assertions: matches id. person_evidence: matches assertion_id. " +
+          "proof_summaries: matches " +
           "supporting_assertion_ids (contains). conflicts: matches competing_assertion_ids " +
           "(contains). hypotheses: matches supporting_assertion_ids OR " +
           "contradicting_assertion_ids (contains either).",
