@@ -6,14 +6,15 @@ Contract: `PLAN.md` at the repo root ("apps/server/dev/p1/plugin_agents.py").
 The prototype registers agents through ``ClaudeAgentOptions.agents`` (bare
 names, no staging into the project — see `docs/plan/search-agent-prototype.md`),
 so the frontmatter has to be read here. A minimal stdlib parser covers exactly
-the shapes the sixteen shipped agents use — ``name``, ``description`` (plain or a
+the shapes the shipped agents use — ``name``, ``description`` (plain or a
 ``>-`` / ``>`` / ``|`` block scalar), ``model``, ``tools`` (a ``- item`` list
 with ``#`` comment lines) — and nothing else; PyYAML is deliberately not used.
 
     uv run python -m dev.p1.plugin_agents [--plugin-dir DIR]
 
 prints one line per agent (name, model, tool count, description length) and
-exits 1 if fewer than sixteen were found.
+exits 1 if fewer than ``EXPECTED_AGENT_COUNT`` were found (held equal to the
+worker's ``EXPECTED_AGENTS`` by test_proto_worker).
 """
 from __future__ import annotations
 
@@ -26,7 +27,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from claude_agent_sdk import AgentDefinition
 
-EXPECTED_AGENT_COUNT = 16
+EXPECTED_AGENT_COUNT = 24
 
 _KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$")
 _BLOCK_INDICATORS = frozenset({">", ">-", ">+", "|", "|-", "|+"})

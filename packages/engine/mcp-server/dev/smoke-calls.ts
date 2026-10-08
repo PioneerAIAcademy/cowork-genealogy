@@ -157,6 +157,24 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
+  //
+  // personReadRef first, while the project does not exist yet, asserting its
+  // refusal through the transport. A successful staged create cannot be
+  // smoked: the run has one project, every later row works on the one the
+  // next row creates, and a second create is refused as "already exist".
+  {
+    tool: "project_create",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      objective: "Does the staged-read path reach the store?",
+      personReadRef: STAGED_REF,
+    }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && /personReadRef/.test(JSON.stringify(res.body?.errors ?? "")),
+      detail: brief(res, 300),
+    }),
+  },
   {
     tool: "project_create",
     offline: true,
@@ -505,6 +523,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     count: 3,
     hydrate: 2,
   }),
+
+  // Pure signal: no network, no token, no project state. The hosted PreToolUse hook
+  // ends the turn on its NAME before it executes, so this exercises the arm that
+  // runs only where no hook binds (Cowork, the e2e harness).
+  { tool: "research_delivered", args: () => ({ summary: "the plan you asked for" }), expect: noError },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },

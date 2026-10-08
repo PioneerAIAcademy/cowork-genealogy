@@ -1,7 +1,7 @@
 -- D9-10 worker (docs/plan/search-agent-prototype.md, "Week 2"): what the real worker
--- records that the D3 stub did not. Additive and idempotent like 001-003 -- applied by
--- initdb on an empty volume AND by the worker at start (proto/worker/worker.py), so a
--- volume that predates this file gets the columns without a `make proto-down`.
+-- records that the D3 stub did not. Additive and idempotent like 001-003 -- applied once
+-- by `migrate.py`, so a volume that predates this file gets the columns without a
+-- `make proto-down`.
 --
 -- sessions.sdk_session_id: the Agent SDK's session id, CHOSEN by the worker when the
 -- session's first turn is claimed (one COALESCE write, before the CLI spawns) and

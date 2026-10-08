@@ -112,13 +112,6 @@ The index.ts is the MCP server entry point that registers all tools. Update it t
 
 ---
 
-## Files to Delete (after testing works)
-
-- `packages/engine/mcp-server/src/tools/hello.ts`
-- `packages/engine/mcp-server/src/types/greeting.ts`
-
----
-
 ## Tool Schema
 
 ```typescript

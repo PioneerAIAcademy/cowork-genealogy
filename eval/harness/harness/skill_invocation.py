@@ -1126,15 +1126,39 @@ DEDICATED_AGENT_NAMES = frozenset(
         # no row. Listed because the set is asserted equal to the shipped agent
         # files.
         "validate-schema",
+        # Same shape as convert-dates (issue #2796): a converted skill with no
+        # hook route. It writes nothing at all, so `ownership.json` names it on
+        # no row. Listed because the set is asserted equal to the shipped agent
+        # files.
+        "source-evaluation",
         # Same shape as citation (issue #2117): a converted skill. The hook lanes
         # it to `localities` and routes nothing to it; `ownership.json` names
         # `agent:locality-guide` on that row.
         "locality-guide",
+        # Same shape as search-images (issue #2802): a converted skill, not a
+        # hook-routed pair. It writes `log` entries (one through
+        # build_external_search_url) and a plan item's `status`, and
+        # `ownership.json` names `agent:search-external-sites` on those rows.
+        # Listed because the set is asserted equal to the shipped agent files.
+        "search-external-sites",
         # Same shape as convert-dates (issue #2800): a converted skill with no
         # hook route. It writes no project state at all -- its output is a
         # narrative to the user -- so `ownership.json` names it on no row. Listed
         # because the set is asserted equal to the shipped agent files.
         "historical-context",
+        # Same shape as search-images (issue #2065): a new agent, not a
+        # converted skill. It writes `log` entries via `research_log_append`
+        # and one standalone markdown file via `Write`. No hook routes anything
+        # to it. Listed because the set is asserted equal to the shipped agent
+        # files. `ownership.json` names `agent:survey-surname` on the `log` row.
+        "survey-surname",
+        # Same shape as search-images and citation (issue #2120): a
+        # cost-motivated conversion, no hook route. It writes `log` entries via
+        # `research_log_append` and updates `plan_items` status via
+        # `research_append`. No hook routes anything to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json`
+        # names `agent:search-full-text` on the `plan_items` and `log` rows.
+        "search-full-text",
     }
 )
 

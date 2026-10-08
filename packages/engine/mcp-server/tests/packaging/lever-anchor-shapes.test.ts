@@ -79,12 +79,19 @@ const SURNAME_ABSENT_BY_NAME = new Set([
 
 function deriveShape(row: LeverRow): { applies: boolean; shape: RecordSearchInput } {
   const apiChange = row.apiChange;
-  const keepsSurname = /keep\s+`?q\.surname`?/i.test(apiChange);
+  // Accepts both spellings. The file was written in the upstream `q.*` syntax
+  // and rewritten into `record_search`'s camelCase by issue #2123 (CLAUDE.md's
+  // casing rule: the tool takes camelCase, and the crosswalk that justified
+  // `q.*` went with it). The `q\.` stays optional rather than being deleted so
+  // this keeps parsing any row a future edit writes either way — and because
+  // dropping it silently un-matches rows rather than failing them, which is what
+  // the count pin below exists to catch.
+  const keepsSurname = /keep\s+`?(?:q\.)?surname`?/i.test(apiChange);
   if (keepsSurname) {
     return { applies: true, shape: { surname: "Test" } as RecordSearchInput };
   }
 
-  const clearsQSurname = /clear\s+`?q\.surname`?/i.test(apiChange);
+  const clearsQSurname = /clear\s+`?(?:q\.)?surname`?/i.test(apiChange);
   const clearsPrincipalName = /clear\s+(?:all\s+)?principal\s+name/i.test(apiChange);
   const clearsByName = SURNAME_ABSENT_BY_NAME.has(row.lever);
   const surnameCleared = clearsQSurname || clearsPrincipalName || clearsByName;

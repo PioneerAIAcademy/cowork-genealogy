@@ -4,9 +4,9 @@ rendering, the verdict, and the make target that runs it. No Postgres, no stack,
 from __future__ import annotations
 
 import argparse
+import ast
 import contextlib
 import os
-import pathlib
 import re
 import subprocess
 from pathlib import Path
@@ -15,7 +15,7 @@ import pytest
 
 import httpx
 
-from proto import demo, turn
+from proto import bounds, demo, turn
 from tests.test_proto_config import COMPOSE, MAKEFILE, STEP_CEILING_S, _env, _load, _recipe, _service
 
 PROTO = MAKEFILE.parent / "apps" / "server" / "proto"
@@ -205,6 +205,68 @@ def test_wait_turn_done_gives_up_at_the_deadline(monkeypatch):
         demo.wait_turn_done(None, "http://x", "s", "t", 3.0)
 
 
+# ── the grant (U3) ──────────────────────────────────────────────────────────────────
+
+
+def _no_grant_db(dsn, sql, params):
+    if sql == turn.GRANT_SQL:
+        return []
+    return [(1,)]
+
+
+def test_scripts_refuse_to_run_without_a_grant(monkeypatch, capsys):
+    """Without a grant every real turn would only end signin_required. Both scripts check
+    up front, exit 2 and say what to run -- before anything is posted."""
+    monkeypatch.setattr(turn.httpx, "get", lambda *a, **k: httpx.Response(200, json={"queue": "SqsQueue"},
+                                                                         request=httpx.Request("GET", "http://x")))
+    monkeypatch.setattr(turn, "db", _no_grant_db)
+    monkeypatch.setattr(turn, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
+    monkeypatch.setattr(turn, "run_kill", lambda *a, **k: (_ for _ in ()).throw(AssertionError("posted")))
+    assert turn.main([]) == 2
+    assert "make proto-grant EMAIL=dev@localhost" in capsys.readouterr().err
+    assert turn.main(["--kill", "--email", "b@example.org"]) == 2
+    assert "make proto-grant EMAIL=b@example.org" in capsys.readouterr().err
+    monkeypatch.setattr(demo, "run", lambda args: (_ for _ in ()).throw(AssertionError("seeded")))
+    assert demo.main([]) == 2
+    assert "make proto-grant" in capsys.readouterr().err
+    # With a grant the check is silent; a refused one is not a grant.
+    assert turn.require_grant("dsn", "dev@localhost") is not None
+    monkeypatch.setattr(turn, "db", lambda dsn, sql, params: [(1,)])
+    assert turn.require_grant("dsn", "Dev@Localhost") is None
+    assert "refresh_refused_at IS NULL" in turn.GRANT_SQL
+
+
+def test_reauth_entry_hits_reads_full_tool_results(monkeypatch):
+    """The summaries reauth_hits reads are cut at 160 chars, so an instruction deep in a long
+    result is invisible there; this reads the whole tool_result. Only the engine's two
+    anchors: record text has page and film numbers \\b401\\b would flag."""
+    pad = "x" * 300
+    entries = [
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": pad + " Call the login tool to authenticate."}]}},),
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": "census page 401, film 1234401"}]}]}},),
+        ({"type": "assistant", "message": {"content": [{"type": "text", "text": "Reconnect FamilySearch?"}]}},),
+        ({"type": "user", "message": {"content": [{"type": "tool_result", "content": [
+            {"type": "text", "text": pad}, {"type": "text", "text": 'Click "Reconnect FamilySearch" at the top'}]}]}},),
+    ]
+    seen = []
+
+    def fake_db(dsn, sql, params):
+        seen.append((sql, params))
+        return entries
+
+    monkeypatch.setattr(turn, "db", fake_db)
+    hits = turn.reauth_entry_hits("dsn", "sdk-1", "turn-1")
+    assert len(hits) == 2, hits
+    assert "Call the login tool" in hits[0] and "Reconnect FamilySearch" in hits[1]
+    [(sql, params)] = seen
+    assert params == ("sdk-1", "turn-1") and "entries_seq_before" in sql and "subpath" not in sql, \
+        "every subpath (delegated agents' too), above the turn's high-water mark"
+    assert turn.reauth_entry_hits("dsn", None, "turn-1") == []
+    assert not turn.REAUTH_ENTRY.search("page 401") and turn.REAUTH_HITS.search("HTTP 401")
+    assert demo.REAUTH is turn.REAUTH_HITS and demo.reauth_hits is turn.reauth_hits
+
+
 # ── the make targets ────────────────────────────────────────────────────────────────
 
 
@@ -219,9 +281,14 @@ def test_proto_demo_target_brings_the_stack_up_and_runs_the_script():
     assert re.search(r"\$\(if \$\(FIXTURE\),\s*--fixture '\$\(FIXTURE\)',\s*\)", body), body
     assert "bagley-father-1884" not in body and demo.DEFAULT_FIXTURE == "bagley-father-1884"
     # The harness's tree-read block reaches the worker, and an explicit empty value lifts it.
-    assert re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-', body), body  # raw make text: $$ is the shell's $
-    for tool in ("person_read", "person_search", "person_ancestors", "person_record_matches", "person_person_matches", "person_quality"):
-        assert tool in body, tool
+    blocked = re.search(r'export BLOCKED_TOOLS="\$\$\{BLOCKED_TOOLS-([^}]*)\}"', body)  # raw make text: $$ is the shell's $
+    assert blocked, body
+    assert {p.strip() for p in blocked.group(1).split(",") if p.strip()} == _harness_constant("BLOCKED_TREE_TOOLS"), \
+        "proto-demo's BLOCKED_TOOLS default is the harness's BLOCKED_TREE_TOOLS (orchestrator.py): re-sync the Makefile"
+    # The worker blocks by bare name only; it has no copy of the harness's argument-decided map.
+    assert _harness_constant("LIVE_TREE_ARG_TOOLS") == {}, \
+        "orchestrator.py's LIVE_TREE_ARG_TOOLS is no longer empty: the worker blocks by bare name " \
+        "only (BLOCKED_TOOLS), so an argument-decided block needs a worker port before proto-demo compares"
 
 
 def test_proto_test_runs_the_d17_and_demo_suites():
@@ -231,6 +298,18 @@ def test_proto_test_runs_the_d17_and_demo_suites():
 
 
 ORCHESTRATOR = Path(__file__).resolve().parents[3] / "eval" / "harness" / "e2e" / "orchestrator.py"
+
+
+def _harness_constant(name: str):
+    """A module-level literal in orchestrator.py, read by AST (the harness is not importable
+    here); a ``frozenset({...})`` call reads as its set."""
+    for node in ast.parse(ORCHESTRATOR.read_text(encoding="utf-8")).body:
+        if isinstance(node, ast.Assign) and [getattr(t, "id", None) for t in node.targets] == [name]:
+            value = node.value
+            if isinstance(value, ast.Call) and getattr(value.func, "id", None) == "frozenset" and len(value.args) == 1:
+                value = value.args[0]
+            return ast.literal_eval(value)
+    raise AssertionError(f"orchestrator.py has no module-level {name}")
 
 
 def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
@@ -269,11 +348,12 @@ def test_proto_kill_pins_a_one_turn_run_unless_the_caller_sets_nudges():
     """The web tier stamps its own cap on every message (1a, default 60), so a kill turn
     left on that default is nudged as an autonomous run on its redelivery and, with no
     project, ends no_progress -- the kill check then FAILs on a resume that worked
-    (2026-09-30, the U5 SIGTERM run). proto-probe-resume still passes its own 40."""
+    (2026-09-30, the U5 SIGTERM run). proto-probe-resume still passes its own 40, now to
+    proto-bounds (U23)."""
     kill = "\n".join(_recipe("proto-kill"))
     assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}" \$\(MAKE\) proto-turn', kill), kill
     probe = "\n".join(_recipe("proto-probe-resume"))
-    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:-40\}" \$\(MAKE\) proto-kill', probe), probe
+    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:-40\}" \$\(MAKE\) proto-bounds', probe), probe
 
 
 _PIN = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}\1$""")
@@ -341,7 +421,7 @@ def _cap_reaching_compose(target: str, caller: str | None) -> str:
 
 @pytest.mark.parametrize("target, default", [
     ("proto-turn", "0"), ("proto-kill", "0"), ("proto-demo", "0"),
-    ("proto-demo-auto", "40"), ("proto-probe-resume", "40"),
+    ("proto-demo-auto", "40"), ("proto-probe-resume", "40"), ("proto-bounds", "3"),
 ])
 @pytest.mark.parametrize("caller", [None, "", "7"])
 def test_every_proto_target_resolves_unset_and_empty_to_its_default_and_keeps_a_callers_value(
@@ -400,25 +480,28 @@ def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():
 
 def test_the_resume_probe_target_wires_all_three_missing_pieces():
     """0a's probe fires only if all three line up, and any one missing looks identical to
-    "the model never chose a background delegation" -- an hour of billed run, no kill, no
-    finding. So the recipe is asserted rather than left to whoever types the command."""
+    "the model never delegated" -- an hour of billed run, no kill, no finding. So the
+    recipe is asserted rather than left to whoever types the command. U23 moved it onto
+    proto-bounds' probe_resume case: the worker foregrounds every delegation, so the old
+    `run_in_background=true` input selector could no longer pick one."""
     body = "\n".join(_recipe("proto-probe-resume"))
-    # 1. the selector: tool NAME alone lands on a foreground delegation, which already
-    #    resumed cleanly on 2026-09-20 -- that is why the probe did not confirm.
-    assert "--kill-on Agent" in body and "--kill-on-input run_in_background=true" in body, body
-    # 2. a message that provokes two concurrent extractions. The path is READ OUT of the
-    #    recipe rather than repeated here, so repointing --text-file at a file that does
-    #    not exist reds this instead of failing an hour into a billed run.
-    named = re.search(r"--text-file (\S+)", body)
-    assert named, body
-    probe = PROTO / pathlib.PurePosixPath(named.group(1)).relative_to("proto")
-    assert probe.is_file(), f"--text-file names {named.group(1)}, which is not in the repo"
-    assert probe.read_text(encoding="utf-8").strip(), f"{named.group(1)} is empty"
+    # 1. the selector: the case that kills at the first SUBAGENT row (test_proto_bounds
+    #    pins that it waits on agent_id IS NOT NULL), inside its 5-20 s window by default.
+    assert re.search(r"\$\(MAKE\) proto-bounds CASE=probe_resume\b", body), body
+    assert bounds.CASES["probe_resume"] is bounds.case_probe_resume
+    after = re.search(r"--kill-after-s \$\$\{KILL_AFTER_S-(\d+(?:\.\d+)?)\}", body)
+    lo, hi = bounds.KILL_AFTER_RANGE_S
+    assert after and lo <= float(after.group(1)) <= hi, body
+    # 2. a message that provokes two delegations. bounds.py names it; repointing it at a
+    #    file that does not exist reds this instead of failing an hour into a billed run.
+    assert bounds.RESUME_TEXT.is_file(), f"{bounds.RESUME_TEXT} is not in the repo"
+    assert bounds.RESUME_TEXT.read_text(encoding="utf-8").strip(), f"{bounds.RESUME_TEXT} is empty"
     # 3. the nudge cap: at 0 the run ends before it ever reaches a delegation -- including
-    #    when the caller left it set but empty.
+    #    when the caller left it set but empty, and through proto-bounds' own `:-3`.
     for caller in (None, ""):
-        assert _cap_reaching_compose("proto-probe-resume", caller) not in ("", "0"), body
+        assert _cap_reaching_compose("proto-probe-resume", caller) == "40", body
     assert re.search(r'test -n "\$\(SESSION\)"', body), "refuse without SESSION rather than probe a fresh project"
+    assert re.search(r'SESSION="\$\(SESSION\)"', body), "the session must reach proto-bounds"
     rule = re.search(r"^proto-probe-resume:.*?##(.*)$", MAKEFILE.read_text(encoding="utf-8"), re.M)
     assert rule and "billed" in rule.group(1), "`make help` must say this one costs money"
 

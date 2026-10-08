@@ -14,7 +14,8 @@
       "conflict",
       "rank-search-matches",
       "needs-review",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -25,6 +26,7 @@
     "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-conflict-household-flynn",
     "rank-search-matches-flynn-conflict",
     "record-read-patrick-flynn-cflt-9k2"
@@ -34,9 +36,10 @@
     "The high match score must NOT auto-accept this as a confirmed match. The underlying record lists Patrick Flynn as HEAD of household in 1850 (recordTitle 'Patrick Flynn — Head of Household, 1850') when he was born ~1845 — a 5-year-old cannot be head of household. The skill must apply its Step-4 logical cross-check (role vs. age) and flag this impossible household role as a qualitative conflict.",
     "The result should be categorized as needs-review or flagged-conflict with explicit reasoning citing the impossible head-of-household role: e.g., 'match score is 0.85 but the record lists a 5-year-old as head of household — likely a transcription or attribution error; flagged for human review'. Reason, not score, is the arbiter.",
     "This tests that the skill treats the inline ranking's match score as one input to triage reasoning, not as the final word — the ranked list is a review surface for the existing role/age cross-checks, not an accept/reject classifier.",
-    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
+    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable if made — do not penalize it, and do not reward it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "IMPORTANT — Completeness grading: score 3 if the skill (a) found the conflicted result, (b) flagged the conflict with reasoning, (c) logged and offered next steps. Do NOT penalize for stopping after the conflicted result — stopping is CORRECT behavior. A conflicted result is NOT nil; the nil-escalation rules do not apply here. The Completeness dimension should NOT require the skill to search further after identifying a qualitative conflict",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
   ],
   "judge_reads_files": true
 }

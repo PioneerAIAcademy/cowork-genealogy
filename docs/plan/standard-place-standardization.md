@@ -375,10 +375,12 @@ Per-skill work:
 | `gps-mentor` (agent) | geographic-plausibility path: `place_search`→`standard_place`→`place_distance` |
 
 **Out of scope (don't let the §12 sweep rewrite these):**
-`search-records/references/place-date-mechanics.md:40` documents the raw FS
-`f.*Place` filter format `{parent_place_id},{place_name}` — a separate,
-currently-unexposed API id-space, **not** a `standard_place` handle. Leave
-as-is.
+The raw FS `f.*Place` filter format `{parent_place_id},{place_name}` is a
+separate, currently-unexposed API id-space, **not** a `standard_place` handle.
+It was documented in `search-records/references/place-date-mechanics.md:40`
+until issue #2123 deleted that file as unreachable-by-the-tool; `record_search`
+exposes no equivalent parameter, so there is nothing here for the §12 sweep to
+rewrite.
 
 **Reference-doc rule:** per CLAUDE.md, shared guidance is **duplicated**,
 not linked. Author one canonical "places & standard_place" guidance block

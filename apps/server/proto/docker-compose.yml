@@ -29,10 +29,8 @@ services:
       POSTGRES_PASSWORD: proto
     ports:
       - "5434:5432"
+    # No initdb mount (U9): the `migrate` one-shot below is the schema's one applier.
     volumes:
-      # initdb runs ./sql/*.sql in name order on an EMPTY data dir only, which is why
-      # proto-down drops the volume (`down -v`) - the next up re-applies the schema.
-      - ./sql:/docker-entrypoint-initdb.d:ro
       - proto-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d proto"]
@@ -40,13 +38,15 @@ services:
       timeout: 3s
       retries: 30
 
-  # quay.io, not Docker Hub, for both minio images below: `docker pull minio/minio` (any
-  # tag, including :latest) now answers "pull access denied ... repository does not exist
-  # or may require 'docker login'" anonymously, so `make proto-up` fails on any machine
-  # with no cached image -- every fresh clone, every CI runner. quay.io serves the SAME
-  # tags and is MinIO's own second registry. Verified 2026-09-24 for both.
+  # pgsty/minio (Docker Hub), not minio/minio or quay.io/minio/minio: Docker Hub's
+  # minio/minio denied anonymous pulls by ~2026-09-18; quay.io/minio/minio followed
+  # by 2026-10-05 ("unauthorized: access to the requested resource is not authorized").
+  # pgsty is a community fork that ships the same minio binary with mc included (as a
+  # symlink to mcli), so the healthcheck and the minio-init one-shot work unchanged.
+  # Both services use ONE image, eliminating the separate mc pin.
+  # Cold-pull verify: docker compose -f apps/server/proto/docker-compose.yml pull minio minio-init
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio
     command: server /data --console-address ":9001"
     environment:
@@ -65,7 +65,7 @@ services:
 
   # One-shot: creates the `projects` bucket, then exits 0.
   minio-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio-init
     depends_on:
       minio:
@@ -91,10 +91,38 @@ services:
       timeout: 3s
       retries: 30
 
+  # U9 one-shot: applies the pending sql/*.sql through proto/migrate.py (one transaction per
+  # file, recorded in schema_migrations), then exits 0. worker, web and tools wait for that
+  # exit and only read the ledger; none of them runs DDL. The worker's image, which carries
+  # migrate.py, sql/ and psycopg (WORKDIR /opt/genealogy/server); its HEALTHCHECK polls the
+  # worker's /healthz, so it is off here. The worker's `build:`, under compose's own image
+  # name: `image:` alone makes an `up` that names tools without the worker PULL it
+  # (measured with --dry-run, "pull access denied"), and one `image:` shared by both builds
+  # fails `proto-up`'s parallel build ("image ... already exists", measured 2026-10-05).
+  # The second build is all cache.
+  # MIGRATE_PG_DSN is the schema owner's, set on this service alone: migrate.py reads no
+  # other variable.
+  migrate:
+    build:
+      context: ../../..
+      dockerfile: apps/server/proto/worker/Dockerfile
+    container_name: proto-migrate
+    command: ["python3", "proto/migrate.py"]
+    environment:
+      MIGRATE_PG_DSN: postgresql://postgres:proto@postgres:5432/proto
+      # The worker's note on OPENSSL_armcap: the same image, the same SIGILL.
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
+    restart: "no"
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # D9-10 worker: one patron turn per message through the Agent SDK. Context is the
   # repo root (the image carries packages/engine/plugin and apps/server); the root
   # .dockerignore drops node_modules, .git, .venv and eval. Its tools are the D16 `tools`
-  # service below (options.py's TOOL_SERVER_URL default, http://tools:8787/mcp), ONE
+  # service below (TOOL_SERVER_URL, which the worker requires), ONE
   # process for every turn and every patron -- bearer as Authorization, the turn's
   # project id as X-Genealogy-Project-Id, the store bound per request. Only the recipes
   # that wait for `tools` can run a real turn -- proto-up, proto-turn, proto-kill,
@@ -113,6 +141,12 @@ services:
     # the 500 is lost.
     stop_grace_period: 30s
     environment:
+      # U11: the worker honours its dev-only paths -- the D3 smoke's stub turns,
+      # BLOCKED_TOOLS, an unset QUEUE_URL, the default FS_TOKEN_ENC_KEY -- only when this is
+      # true. Compose only, worker only: never in an image or a Beanstalk template
+      # (test_proto_bundles.py), and the web tier never reads it.
+      DEV_PATHS: "true"
+      TOOL_SERVER_URL: http://tools:8787/mcp
       PG_DSN: postgresql://postgres:proto@postgres:5432/proto
       # The model. Passed through from the host environment at `up` time, never a
       # literal here; the stub arms run with it empty.
@@ -123,22 +157,26 @@ services:
       GATEWAY_BASE_URL: ${GATEWAY_BASE_URL:-}
       GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
       GATEWAY_TOOL_SEARCH: ${GATEWAY_TOOL_SEARCH:-false}
-      # The patron's FamilySearch bearer on this one-patron stack, read PER TURN from
-      # this file (proto/env.sh writes it; `make proto-token` rewrites it between turns --
-      # never during one, since a FamilySearch refresh revokes the previous access token).
-      # Empty, and every FamilySearch tool answers with the reconnect instruction.
-      FS_ACCESS_TOKEN_FILE: /run/fs-token
-      # The fallback `bearer_token()` documents ("else the worker env's
-      # FS_ACCESS_TOKEN") -- which was never actually supplied, so it was always "".
-      # It matters because the FILE path is not reliable: the mount is a host file owned
-      # by the invoking user at mode 600, and this container runs as uid 1001, so the
-      # read fails with EPERM whenever those uids differ -- always under rootless docker,
-      # where the container uid is mapped through the caller's subuid range. bearer_token
-      # swallows that OSError, returns "", and the engine then answers
-      # HOSTED_REAUTH_INSTRUCTION -- "Your FamilySearch session has expired" -- for a
-      # token that is perfectly valid. Three billed demo runs were lost to that message
-      # before anyone checked the tokens, which were all still live afterwards.
-      FS_ACCESS_TOKEN: ${FS_ACCESS_TOKEN:-}
+      # U3: the FamilySearch bearer is the turn's project owner's grant, read from Postgres
+      # (familysearch_tokens) at the start of EVERY attempt and held under that patron's
+      # attempt lock; the web tier is its only refresher. No token reaches this service any
+      # other way. The key is the web tier's (one value for both), passed through and never
+      # a literal; the CLI inherits no worker variable (options.CLI_ENV_KEEP), and each turn's
+      # CLI runs as its own slot user (the image's WORKER_TURN_USERS), so the kernel keeps it
+      # out of the worker's /proc and every other turn's dirs. `make proto-grant` stores the
+      # dev patron's grant.
+      FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:-}
+      # An attempt starts only on a session at most this old (8 h less one 1,800 s attempt
+      # less 600 s, so a shim-killed attempt cannot outlive its session), else waits up to
+      # FS_GRANT_WAIT_S -- below the shim's 1,800 s kill -- for the refresher.
+      FS_GRANT_MAX_START_AGE_S: ${FS_GRANT_MAX_START_AGE_S:-26400}
+      FS_GRANT_WAIT_S: ${FS_GRANT_WAIT_S:-300}
+      # cryptography >= 47's linux/aarch64 wheel dies with SIGILL at import inside a colima
+      # (Virtualization.Framework) VM on Apple silicon: OpenSSL's CPU-capability probe runs an
+      # instruction the VM advertises but traps (measured 2026-10-02, 46.0.3 imports, 47.0.0
+      # and 48.0.1 do not; OPENSSL_armcap=0 fixes it). 0 masks OpenSSL's ARM acceleration, which
+      # a dev stack does not need; x86 ignores it. Compose only: never in an image.
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
       # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
       # separated; proto-demo exports the harness's five). Empty: no block.
       BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
@@ -147,10 +185,18 @@ services:
       # stamps its own cap (below) on every message, and the worker prefers it, so this 0
       # does not switch the hook off for a web-tier turn.
       AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
+      # 1e: the per-session spend cap (0 is off) and the price vector that meters it, each
+      # defaulting to app/agent/spend.py's own value. Read once at start, so a new value
+      # needs the container recreated (`up -d` does), not restarted.
+      SESSION_SPEND_CAP_USD: ${SESSION_SPEND_CAP_USD:-35}
+      PRICE_INPUT_PER_MTOK: ${PRICE_INPUT_PER_MTOK:-3.0}
+      PRICE_CACHE_WRITE_PER_MTOK: ${PRICE_CACHE_WRITE_PER_MTOK:-3.75}
+      PRICE_CACHE_READ_PER_MTOK: ${PRICE_CACHE_READ_PER_MTOK:-0.30}
+      PRICE_OUTPUT_PER_MTOK: ${PRICE_OUTPUT_PER_MTOK:-15.0}
       # 1b: where a message held during a turn is released to when that turn ends. The
       # SAME queue the web tier and the shim use. The worker is the only component that
       # knows a turn finished -- the web tier is stateless and the browser may be closed
-      # -- so the handover is its job. Unset means no release.
+      # -- so the handover is its job. Empty means no release, which needs DEV_PATHS.
       QUEUE_URL: http://elasticmq:9324/000000000000/turns
       # U7: the release is SigV4-signed (proto/enqueue.py). elasticmq ignores signatures;
       # these dummies exercise the default-chain (env) path and keep it off IMDS. Not
@@ -171,21 +217,22 @@ services:
     # writable-not-durable: a tmpfs, discarded with the container.
     tmpfs:
       - /tmp:size=1g,mode=1777
-    volumes:
-      - ./.fs-token:/run/fs-token:ro
     expose:
       - "8080"
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       elasticmq:
         condition: service_healthy
 
   # D11-12 web tier: POST /messages -> turns row + user_msg event + SendMessage; GET
   # /events and the SSE stream read session_events / session_activity / documents.
-  # Depends on postgres and the queue only -- never on the worker: until D9-10 lands it
-  # is driven against rows proto/drive.py inserts. Context is the repo root (like the
-  # tools image) so the image carries enqueue.py, sql/ and the engine's familysearch.json.
+  # Depends on postgres, the migration and the queue only -- never on the worker: until
+  # D9-10 lands it is driven against rows proto/drive.py inserts. Context is the repo root
+  # (like the tools image) so the image carries enqueue.py, migrate.py, sql/ and the
+  # engine's familysearch.json.
   web:
     build:
       context: ../../..
@@ -193,8 +240,8 @@ services:
     container_name: proto-web
     restart: unless-stopped
     # Loopback only. U2 put patron sign-in in front of every session route, but dev-login
-    # (on while FamilySearch sign-in is off and PUBLIC_URL is http) signs anyone in, so the
-    # tier must still not be LAN-reachable. docker-compose.fs-signin.yml adds the 1837
+    # (on with DEV_LOGIN=true while FamilySearch sign-in is off and PUBLIC_URL is http)
+    # signs anyone in, so the tier must still not be LAN-reachable. docker-compose.fs-signin.yml adds the 1837
     # publish the FamilySearch round-trip needs.
     ports:
       - "127.0.0.1:8085:8085"
@@ -210,16 +257,26 @@ services:
       POLL_S: "1"
       SSE_PING_S: "15"
       # U2 sign-in (web/auth.py). The defaults are dev-only; web/auth.py refuses to start
-      # on an https PUBLIC_URL with a default secret. FamilySearch sign-in stays off here
-      # (dev-login only) -- docker-compose.fs-signin.yml turns it on.
+      # with a default secret on an https PUBLIC_URL or with FamilySearch sign-in on, and
+      # the overlay requires both secrets. FamilySearch sign-in stays off here
+      # (dev-login only) -- docker-compose.fs-signin.yml turns it on, which turns dev-login
+      # off. DEV_LOGIN is the opt-in no template may set (U11); a literal, so no host
+      # variable at `up` time switches it.
+      DEV_LOGIN: "true"
       PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8085}
       WEB_ORIGIN: ${WEB_ORIGIN:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
       FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:-}
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       FAMILYSEARCH_WEB_ENABLED: ${FAMILYSEARCH_WEB_ENABLED:-false}
+      # U3: this tier refreshes each patron's grant, between attempts, once its session is
+      # this old and the patron has an open turn; the loop runs every interval.
+      FS_GRANT_REFRESH_AGE_S: ${FS_GRANT_REFRESH_AGE_S:-3600}
+      FS_GRANT_REFRESH_INTERVAL_S: ${FS_GRANT_REFRESH_INTERVAL_S:-30}
+      # The worker's note on OPENSSL_armcap: the same cryptography wheel, the same SIGILL.
+      OPENSSL_armcap: ${OPENSSL_armcap:-0}
       # PR #2870 item 1a: the Stop hook's veto cap, stamped on every queue message
-      # this tier enqueues (begin_turn -> body.max_nudges) and preferred by run_turn over
+      # this tier enqueues (admit_message -> body.max_nudges) and preferred by run_turn over
       # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: the
       # cap is the operator's, so a request field would let a signed-in patron set their
       # own nudge budget. The worker cannot tell the browser from `make proto-demo` -- there is no
@@ -236,6 +293,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       elasticmq:
         condition: service_healthy
 
@@ -283,6 +342,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       minio:
         condition: service_healthy
 

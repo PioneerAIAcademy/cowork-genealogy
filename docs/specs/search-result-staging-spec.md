@@ -63,8 +63,9 @@ read. An acquisition file that is never finalized is removed by the TTL prune li
 **A third acquisition producer, `person_read`** (given a `projectPath`), stages the tree read
 it returns. It is in `STAGING_CAPABLE_TOOLS` only, never `STAGING_SEARCH_TOOLS`,
 so none of the search notes fire on it. Its file is not a log sidecar: no shipped flow
-finalizes it with `research_log_append`. It is staged for `project_create` to build the starting
-tree from (not yet built; nothing reads it today), and is otherwise TTL-pruned. The eval mock
+finalizes it with `research_log_append`. `project_create` builds the starting tree
+from it (`personReadRef`; `project-create-tool-spec.md` §4) without consuming it, and it is otherwise
+TTL-pruned. The eval mock
 stages a canned `person_read` through the tool's own compiled `stagePersonRead`, so the envelope
 has one definition.
 

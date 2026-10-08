@@ -15,8 +15,8 @@
  * high-ish score, the assumption holds and the feature is sound. If it errors
  * or returns nonsense, STOP and raise it before relying on the heuristic.
  *
- * Requires a valid FS session (run `login` first, or set FS_ACCESS_TOKEN
- * in the environment if you want to bypass tokens.json).
+ * Requires a valid FS session: run `login` first (tokens.json is the only
+ * source; the engine has no environment-variable fallback).
  *
  * Usage:
  *   npx tsx dev/try-same-person-relatives.ts

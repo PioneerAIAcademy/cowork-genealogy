@@ -340,8 +340,9 @@ Separate from the unit-test framework documented above. E2e tests
 exercise the full GPS research flow autonomously against live
 FamilySearch APIs via the `/research --autonomous` skill. They're a
 stakeholder-facing benchmark, not a regression suite — much more
-expensive per run than unit tests (20–60 min, $3–10 each), so they
-run on demand.
+expensive per run than unit tests (about an hour and single-digit dollars
+each, with a long tail; the guide's overview table, row 5, has the measured
+median), so they run on demand.
 
 - **How-to:** [`../docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md) — creating fixtures, running tests, reading results, investigating failures.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
@@ -381,14 +382,18 @@ equivalent in parentheses:
 6. `eval\ValidateFixture.bat` → enter the slug (`make e2e-validate
    TEST=<slug>`) → resolve any `WARN`.
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
-   live run (20–60 min, $3–10).
-8. `/interpret-e2e-result` → read the verdict.
-9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
+   live run (about an hour and single-digit dollars; the guide's overview
+   table, row 5, has the measured median).
+8. `/grade-e2e-run` → label each expected finding, blind. It writes
+   `run-<ts>.ann.json`.
+9. `/interpret-e2e-result` → see what it recovered and why it stopped. Run it
+   after step 8: reading it first anchors your grade.
+10. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
    the Research Viewer with `eval\Viewer.bat` (`make electron`) and open
    `eval\e2e-view` in it (its **Open Project** button) to inspect the agent's
    final tree, research log, and each finding's direct/indirect badge. Keep the
    viewer open — re-running `ViewE2E.bat` refreshes it live.
-10. If it passes, commit the fixture (and optionally its run log), and
+11. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
 ### Debug a fixture interactively (Cowork + the viewer)
@@ -397,7 +402,8 @@ Before — or instead of — a headless `RunE2E.bat`, run the fixture **live in
 Claude Cowork** and watch it unfold. This is the recommended starting point
 for debugging *why* the agent did or didn't do something, and it keeps the
 test-improve loop fast: you watch the fix work in minutes instead of waiting
-20–60 min for a headless verdict.
+about an hour for a headless verdict (the guide's overview table, row 5, has
+the measured median).
 
 **First time (and after any skill or MCP-server change):** run
 `eval\CoworkInstall.bat` (`make cowork-install`). It builds **both** artifacts
@@ -430,7 +436,8 @@ headless run. Re-seed a fresh project (wiping any work) with `FORCE=1`.
 
 ### Keep the machine awake during a run
 
-A run is long (20–60 min) and the machine must **not sleep** partway through.
+A run is long (about an hour; the guide's overview table, row 5, has the measured
+median) and the machine must **not sleep** partway through.
 If it does, the work pauses until the machine wakes, and the run takes much
 longer in real time. The harness detects a sleep, leaves it out of the reported
 wall-clock time, and prints a `machine slept ~N min` note. Treat that note as

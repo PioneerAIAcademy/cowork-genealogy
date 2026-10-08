@@ -13,7 +13,8 @@
       "near-match",
       "rank-search-matches",
       "needs-review",
-      "pre-1880-census-household"
+      "pre-1880-census-household",
+      "topical-fixture-required"
     ]
   },
   "input": {
@@ -21,6 +22,7 @@
     "scenario": "flynn-record-matching"
   },
   "mcp_fixtures": [
+    "wiki-read-united-states-census",
     "record-search-near-match-age-off-flynn",
     "rank-search-matches-flynn-near-match",
     "record-read-patrick-flyn-vrnt-7m3"
@@ -29,11 +31,12 @@
     "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",
     "The returned match has a MIDDLING matchScore (0.52) that lands in the needs-review band. Two facts are in tension and the skill must weigh both: county and place (Schuylkill) agree, while the surname differs ('Flyn' vs 'Flynn') and the age is off by ~3 years. Grade whether the skill reasoned about that tension in BOTH directions — it must not auto-dismiss on the middling score alone, and it must not explain the discrepancies away and adopt the record as a confirmed or strong match. Do not treat either reading of the evidence as the required answer; grade the reasoning. `attachedToSubject` is false in the ranked block, so this is an unattached candidate, not a record already in the tree.",
     "The log entry should record outcome 'positive' (a result was returned) and notes should capture the triage reasoning",
-    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable and expected — do not penalize it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
+    "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable if made — do not penalize it, and do not reward it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "Log quality: do NOT require the skill to print the raw log entry JSON in its text response. Grade the authored fields (`query` faithfulness, `results_examined` accuracy, `notes` usefulness) from its account of what it wrote.",
     "Completeness: score 3 if the skill flagged the near-match for human review with reasoning. Do NOT require the skill to continue searching further — one result that is flagged needs-review is a complete, correct response to this test",
     "Nil escalation: score null (N/A) for this test. The scenario returned one result and the skill triaged it. This test grades near-match triage behavior only — it is NOT a nil search. Do not penalize for not attempting additional variant searches.",
-    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run."
+    "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
   ],
   "judge_reads_files": true
 }

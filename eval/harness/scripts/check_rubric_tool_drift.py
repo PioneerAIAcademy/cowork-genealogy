@@ -586,60 +586,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
-        "tool": "place_search",
-        "quotes": [
-            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
-            "its tool calls legitimately appear in search-records' transcript",
-        ],
-        "reason": (
-            "cross-owner, live callee - 'search-external-sites RUNS FOR "
-            "REAL here - it is not stubbed. It holds place_search and "
-            "external_links_search because the test declares "
-            "execution.run_skills ... its tool calls legitimately appear in "
-            "search-records' transcript'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
-        "tool": "external_links_search",
-        "quotes": [
-            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
-            "its tool calls legitimately appear in search-records' transcript",
-        ],
-        "reason": (
-            "cross-owner, live callee - 'search-external-sites RUNS FOR "
-            "REAL here - it is not stubbed. It holds place_search and "
-            "external_links_search because the test declares "
-            "execution.run_skills ... its tool calls legitimately appear in "
-            "search-records' transcript'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
-        "tool": "place_search",
-        "quotes": [
-            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
-        ],
-        "reason": (
-            "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry 'Norway' is "
-            "a sufficient anchor for the church search'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
-        "tool": "collections_search",
-        "quotes": [
-            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
-        ],
-        "reason": (
-            "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry 'Norway' is "
-            "a sufficient anchor for the church search'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
         "tool": "validate_research_schema",
         "quotes": [

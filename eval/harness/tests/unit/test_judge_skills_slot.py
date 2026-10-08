@@ -157,3 +157,71 @@ def test_direct_arm_slot_is_still_the_spawned_agent_alone(monkeypatch):
     assert _judged_slot(monkeypatch, _spec(direct=True), result) == [
         "search-wikipedia (agent, spawned directly — no skill was invoked)",
     ]
+
+
+def test_slash_entry_keeps_call_order():
+    """A slash entry has no `Skill` call of its own (issue #3116).
+
+    `skills_invoked` is walked positionally against the `Skill` calls, so an
+    entry with no matching call would never match, stall the walk, and dump the
+    whole list after the spawns -- destroying the call order this function
+    exists to preserve, and only on slash-entry tests, which are exactly the
+    ones #3116 makes gradable. Fix per chesworthrm, 2026-10-05.
+    """
+    calls = [
+        {"tool": "Skill", "args": {"skill": "question-selection"}},
+        {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
+        {"tool": "Skill", "args": {"skill": "research-plan"}},
+    ]
+    assert judge_skills_slot(
+        ["research", "question-selection", "research-plan"], calls, "research"
+    ) == [
+        "research (slash command)",
+        "question-selection",
+        "gps-mentor (agent)",
+        "research-plan",
+    ]
+
+
+def test_without_a_slash_entry_the_walk_is_unchanged():
+    """The other direction: the fix must not reorder an ordinary run."""
+    calls = [
+        {"tool": "Skill", "args": {"skill": "question-selection"}},
+        {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
+        {"tool": "Skill", "args": {"skill": "research-plan"}},
+    ]
+    assert judge_skills_slot(["question-selection", "research-plan"], calls, None) == [
+        "question-selection",
+        "gps-mentor (agent)",
+        "research-plan",
+    ]
+
+
+def test_an_unreadable_skill_call_does_not_defeat_the_slash_entry():
+    """The entry is passed in, never inferred from list arithmetic.
+
+    A `Skill` call whose input shape the hook could not read goes to
+    `unread_skill_calls` and NOT to `skills_invoked`, while still counting as a
+    `Skill` call here. A `len(skills_invoked) == n_Skill_calls + 1` heuristic
+    therefore misses the entry and silently reverts to the corruption it was
+    added to prevent.
+    """
+    calls = [
+        {"tool": "Skill", "args": {"unreadable": 1}},
+        {"tool": "Task", "args": {"subagent_type": "gps-mentor"}},
+        {"tool": "Skill", "args": {"skill": "research-plan"}},
+    ]
+    assert judge_skills_slot(["research", "research-plan"], calls, "research") == [
+        "research (slash command)",
+        "gps-mentor (agent)",
+        "research-plan",
+    ]
+
+
+def test_the_slash_entry_is_marked_not_bare():
+    """The judge grounds its rationales in this list, so a bare name would let
+    it write "the right skill was invoked" on a test where registration, not
+    the model, put the name there. `skills_invoked` itself stays plain --
+    membership checks must keep matching the bare name."""
+    out = judge_skills_slot(["research"], [], "research")
+    assert out == ["research (slash command)"]

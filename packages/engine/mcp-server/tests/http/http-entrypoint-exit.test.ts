@@ -6,10 +6,11 @@ import { fileURLToPath } from "node:url";
 // The real build/http.js (`pretest` builds it) refusing to start on a store
 // environment it cannot use: a half-set S3 key pair, or a path-style flag that
 // is neither `true` nor `false`. Both exit before the Pg/S3 backend exists, so
-// no stack is needed. The start-up mode line is read the same way, killing the
-// child once it is printed. Every inherited GENEALOGY_* variable is cleared, so the
-// case sees only what it sets. The readiness case keeps the child running,
-// with both stores pointed at a closed port, and asks it for /healthz.
+// no stack is needed. The start-up mode line and the debug-hold line are read
+// the same way, killing the child once it prints. Every inherited GENEALOGY_*
+// variable is cleared, so the case sees only what it sets. The readiness case
+// keeps the child running, with both stores pointed at a closed port, and asks
+// it for /healthz.
 
 const HTTP_JS = resolve(dirname(fileURLToPath(import.meta.url)), "../../build/http.js");
 
@@ -41,7 +42,9 @@ function runHttp(
       if (until?.test(stderr)) child.kill("SIGKILL");
     });
     // A process that listens instead of exiting is killed, and reads as code null.
-    const timer = setTimeout(() => child.kill("SIGKILL"), 5000);
+    // 15s, not 5s: under make test-all's parallel load, start-up alone has run past
+    // 5s and been killed before it could exit 2.
+    const timer = setTimeout(() => child.kill("SIGKILL"), 15_000);
     child.on("error", (e) => {
       clearTimeout(timer);
       reject(e);
@@ -117,18 +120,18 @@ describe("build/http.js store environment", () => {
     const r = await runHttp({ ...BASE, GENEALOGY_S3_ACCESS_KEY: "ak" });
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toMatch(/required environment not set: GENEALOGY_S3_SECRET_KEY/);
-  }, 10_000);
+  }, 20_000);
 
   it("exits 2 naming GENEALOGY_S3_FORCE_PATH_STYLE when it is neither true nor false", async () => {
     const r = await runHttp({ ...BASE, GENEALOGY_S3_FORCE_PATH_STYLE: "yes" });
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toMatch(/invalid value.*GENEALOGY_S3_FORCE_PATH_STYLE/);
-  }, 10_000);
+  }, 20_000);
 
   it("names the SDK default chain on start-up when neither S3 key is set", async () => {
     const r = await runHttp(BASE, /s3 credentials:.*\n/);
     expect(r.stderr).toMatch(/s3 credentials: SDK default chain; region us-east-1; endpoint AWS default/);
-  }, 10_000);
+  }, 20_000);
 
   it("names static keys on start-up without printing either key", async () => {
     const r = await runHttp(
@@ -137,5 +140,21 @@ describe("build/http.js store environment", () => {
     );
     expect(r.stderr).toMatch(/s3 credentials: static keys;/);
     expect(r.stderr).not.toMatch(/ak-sentinel|sk-sentinel/);
+  }, 20_000);
+});
+
+describe("build/http.js debug holds", () => {
+  it("prints no debug-hold line when neither hold is set", async () => {
+    const r = await runHttp(BASE, /listening on .*\n/);
+    expect(r.stderr).toMatch(/listening on/);
+    expect(r.stderr).not.toMatch(/debug hold|GENEALOGY_DEBUG_/i);
+  }, 10_000);
+
+  it("names a set hold and its value before listening", async () => {
+    const r = await runHttp({ ...BASE, GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS: "45000" }, /listening on .*\n/);
+    expect(r.stderr).toMatch(
+      /debug holds set \(never in production\): GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS="45000"\n(.|\n)*listening on/,
+    );
+    expect(r.stderr).not.toMatch(/GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS/);
   }, 10_000);
 });

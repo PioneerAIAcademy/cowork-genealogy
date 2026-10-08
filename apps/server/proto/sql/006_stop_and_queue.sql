@@ -1,7 +1,6 @@
 -- PR #2870 items 1b and 1c: Stop, and the message typed while a turn runs.
--- Additive and idempotent like 001-005 -- applied by initdb on an empty volume AND by the
--- worker and the web tier at start, so a volume that predates this file gets the column
--- without a `make proto-down`.
+-- Additive and idempotent like 001-005 -- applied once by `migrate.py`, so a volume that
+-- predates this file gets the column without a `make proto-down`.
 --
 -- sessions.stop_requested_at (1c): the control-plane row Stop writes. Set by
 -- POST /api/sessions/{id}/interrupt, read on the turn's own connection by BOTH worker

@@ -70,6 +70,8 @@ def _sigterm_one_post(max_retries: int) -> tuple[int, dict, int, float, "queue.Q
     Returns (status, reply, exit code, seconds from the signal to the exit, log lines)."""
     port = _free_port()
     env = {**os.environ, "PORT": str(port), "SHUTDOWN_GRACE_S": str(GRACE_S), "QUEUE_URL": "",
+           "WORKER_TURN_USERS": "none", "MODEL_PROVIDER": "anthropic",
+           "TOOL_SERVER_URL": "http://tools:8787/mcp",
            "SWEEP_INTERVAL_S": "0", "SQSD_MAX_RETRIES": str(max_retries), "PYTHONUNBUFFERED": "1"}
     env.pop("SQSD_RETENTION_PERIOD_S", None)
     proc = subprocess.Popen([sys.executable, str(HARNESS)], cwd=SERVER, env=env, stdout=subprocess.PIPE,

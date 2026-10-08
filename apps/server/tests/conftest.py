@@ -62,11 +62,25 @@ def _isolated_sqs_credentials(monkeypatch):
     _reset_sqs_clients()
 
 
+@pytest.fixture(autouse=True)
+def _dev_paths_on(monkeypatch):
+    """U11: the worker honours its compose-only paths (the D3 stub arms, an unset
+    QUEUE_URL, the default grant key) only with DEV_PATHS=true, which every offline test
+    runs with, like compose. A test of a refusal deletes it itself."""
+    monkeypatch.setenv("DEV_PATHS", "true")
+
+
 if sys.platform == "win32":
     import asyncio  # noqa: E402
 
     def pytest_asyncio_loop_factories(config, item):
         """psycopg's async connection refuses Windows' default ProactorEventLoop with an
         InterfaceError before it connects, so every PgStore probe would report that
-        instead of what the test set up. Production runs on Linux, where this is moot."""
+        instead of what the test set up. Production runs on Linux, where this is moot.
+        A SelectorEventLoop cannot spawn subprocesses on Windows (`NotImplementedError`,
+        empty message), so a test that starts a process must carry `spawns_subprocess`.
+        Always return a non-empty mapping: `None` is a `UsageError`, and two entries run
+        the test twice."""
+        if item.get_closest_marker("spawns_subprocess"):
+            return {"proactor": asyncio.ProactorEventLoop}
         return {"selector": asyncio.SelectorEventLoop}

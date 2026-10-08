@@ -134,6 +134,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e import pricing
+from e2e.result import result_message_covers_last_query_only
 from e2e.runlog_selection import (
     add_since_arg,
     all_result_jsons,
@@ -288,11 +289,20 @@ def _int(value: Any) -> int | None:
 
 
 def analyze_run(doc: dict, *, fixture: str, run: str) -> RunRow | str:
-    """A RunRow, or the exclusion reason: `no-timeline` or `no-cache-figures`."""
+    """A RunRow, or the exclusion reason: `no-timeline`, `multi-query` or
+    `no-cache-figures`.
+
+    `multi-query`: the run's `usage.usage` came from a ResultMessage that saw only
+    its last query (`result_message_covers_last_query_only`), so its cache figures
+    are a fraction of the run's and spreading them over the whole timeline would
+    price gaps against the wrong total.
+    """
     usage = doc.get("usage") or {}
     timeline = usage.get("timeline")
     if not isinstance(timeline, list) or not timeline:
         return "no-timeline"
+    if result_message_covers_last_query_only(usage):
+        return "multi-query"
     inner = usage.get("usage") if isinstance(usage.get("usage"), dict) else {}
     cache_read = _int(inner.get("cache_read_input_tokens"))
     if cache_read is None:
