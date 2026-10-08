@@ -1131,6 +1131,18 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: e2e-advisories
+e2e-advisories: ## Do the 4 advisory return-fields fire, and does the agent act? Over committed e2e runs (issue #3199): make e2e-advisories | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. For each advisory
+	# (unloggedSearches, nilSearchNeedsLog, sources-without-assertions,
+	# log-without-persistence) prints fired / acted / ignored /
+	# condition-never-held / not-observable, split by agent_type, with run and
+	# call denominators. Turns no advisory into a refusal -- it only measures;
+	# whether a note becomes a deny is the lead's call, made on these numbers.
+	cd eval/harness && uv run python -m e2e.advisory_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
 .PHONY: e2e-transcribe-failures
 e2e-transcribe-failures: ## How often image_transcribe fails to REACH OpenRouter, over committed e2e runs (issue #1594): make e2e-transcribe-failures | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs. Replaces the shell snippet
