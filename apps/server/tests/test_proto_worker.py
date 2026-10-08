@@ -903,7 +903,7 @@ def test_the_plugin_ships_twenty_five_agents_and_eight_skills():
     assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 8
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 8\n" in Path(worker.__file__).read_text(encoding="utf-7")
+    assert "\nEXPECTED_SKILLS = 8\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
