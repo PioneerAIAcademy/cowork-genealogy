@@ -32,7 +32,7 @@
  * gate's population to within two runs.
  */
 
-import { earliestYear, latestYear } from "./date-helpers.js";
+import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
 
 export type QuestionState =
   | "framed"
@@ -116,14 +116,17 @@ const placesAgree = (xs: string[][], ys: string[][]): boolean =>
 const BOUNDED_TEXT = /\b(between|bet|after|aft|before|bef)\b/i;
 
 /** The span of years an assertion's date allows — `Bet 1836 and 1848` is
- *  [1836, 1848], `Bef 1880` is [1870, 1880]. A bounded date the standard-date
- *  parser cannot read ("after 1870, before 1880") is left out; any other
- *  unreadable date falls back to its first four-digit year as a one-year span. */
+ *  [1836, 1848]; `Bef 1880` is open below and `Aft 1870` open above, so neither
+ *  disagrees on its open side. A bounded date the standard-date parser cannot
+ *  read ("after 1870, before 1880") is left out; any other unreadable date
+ *  falls back to its first four-digit year as a one-year span. */
 const yearsOf = (a: any): [number, number] | null => {
   for (const raw of [a?.standard_date, a?.date]) {
     if (typeof raw !== "string") continue;
     const lo = earliestYear(raw), hi = latestYear(raw);
-    if (lo !== null && hi !== null) return [lo, hi];
+    if (lo !== null && hi !== null) {
+      return [earliestIsUnbounded(raw) ? -Infinity : lo, latestIsUnbounded(raw) ? Infinity : hi];
+    }
     if (BOUNDED_TEXT.test(raw)) return null;
     const m = raw.match(/\b(\d{4})\b/);
     if (m) return [Number(m[1]), Number(m[1])];

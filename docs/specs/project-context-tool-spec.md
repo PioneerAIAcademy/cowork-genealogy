@@ -170,8 +170,10 @@ reads the evidence instead: two assertions linked by `person_evidence` to the sa
 person, about the same birth or death (`birth`/`birthplace`, `death`/`deathplace`),
 whose places disagree or whose years differ by more than two, with no conflict of
 any status listing both ids. A date is the span of years it allows, read from the
-standard form (`Bet 1836 and 1848` is 1836–1848, `Bef 1880` is 1870–1880), and two
-spans disagree only when more than two years separate them. A bounded date the
+standard form (`Bet 1836 and 1848` is 1836–1848), and two spans disagree only when
+more than two years separate them. A one-sided date is open on its unbounded side:
+`Bef 1880` has no lower bound and `Aft 1870` no upper one, so neither disagrees with
+an earlier or later year respectively. A bounded date the
 standard-date parser cannot read ("after 1870, before 1880") takes no part in the
 year comparison. At least one of the pair must be extracted for this
 question. Places agree when every component of the less specific one prefix-matches

@@ -346,6 +346,15 @@ describe("questionStatus — unregistered disagreements route to conflict-resolu
     }
   });
 
+  it("a one-sided date does not disagree on its open side", () => {
+    const birth = (id: string, standard_date: string) =>
+      ({ id, fact_type: "birth", date: "x", standard_date, extracted_for_question_ids: [Q] });
+    for (const [open, year] of [["Bef 1880", "1850"], ["Aft 1870", "1890"]]) {
+      const d = doc({ assertions: [birth("a_1", open), birth("a_2", year)], person_evidence: linked("a_1", "a_2") });
+      expect(questionStatus(d, question()).unregisteredDisagreements).toEqual([]);
+    }
+  });
+
   it("birth years exactly three apart disagree", () => {
     const birth = (id: string, date: string) => ({ id, fact_type: "birth", date, extracted_for_question_ids: [Q] });
     const d = doc({ assertions: [birth("a_1", "1819"), birth("a_2", "1822")], person_evidence: linked("a_1", "a_2") });
