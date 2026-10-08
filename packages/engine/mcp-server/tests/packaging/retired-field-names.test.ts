@@ -313,23 +313,6 @@ const ALLOWED2: Record<string, string> = {
   // ── Dated records and captures ──
   "eval/harness/tests/fixtures/gh_issues_slurp_capture.json":
     "a verbatim capture of a GitHub issue body as returned by the API; editing it falsifies the capture",
-
-  // ── Eval fixture research.json files written before the rename ──
-  // The legacy shim (question-stop.ts) reads both shapes, so these remain valid.
-  "eval/fixtures/scenarios/archion-baiersbronn-unplanned/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
-  "eval/fixtures/scenarios/archion-baiersbronn/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
-  "eval/fixtures/scenarios/bedfordshire-utah-corridor-move/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
-  "eval/fixtures/scenarios/census-household-spouse-died-later/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
-  "eval/fixtures/scenarios/ma-state-census-handoff-open/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
-  "eval/fixtures/scenarios/research-unregistered-census-conflicts/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
-  "eval/fixtures/scenarios/sussex-tennessee-unexplained-move/research.json":
-    "eval fixture written before the exhaustive_declaration → search_stop rename; the legacy shim reads it",
   "docs/lead-themes-2026-09-05.md":
     "a dated 2026-09-05 leadership themes document recording the field name as it stood then",
   "docs/skill-to-agent-pair-conversion.md":

@@ -21,7 +21,7 @@ function stoppedBecauseLabel(value: string): string {
 function QuestionCard({ question }: { question: Question }): React.JSX.Element {
   // New shape: search_stop (issue #2539). Legacy shape: exhaustive_declaration.
   const search_stop = question.search_stop
-  const legacy = (question as Record<string, unknown>).exhaustive_declaration as
+  const legacy = (question as unknown as Record<string, unknown>).exhaustive_declaration as
     | { declared?: boolean; stop_criteria?: StopCriteria }
     | undefined
 
