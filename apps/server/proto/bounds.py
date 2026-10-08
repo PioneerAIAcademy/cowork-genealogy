@@ -498,14 +498,28 @@ def held_checks(label: str, reply: dict, a: TurnSnap, b: TurnSnap, events: list[
     ]
 
 
+RESEARCH_DOC_SQL = ("SELECT count(*) FROM documents d JOIN sessions s ON s.project_id = d.project_id "
+                    "WHERE s.session_id = %s AND d.name = 'research.json'")
+
+
+def nudged_projectless(ctx: Ctx, session_id: str, events: list[dict], turn_id: str) -> bool:
+    """The session has no research.json and the worker logged an ev=nudge on the turn."""
+    nudged = any(e.get("ev") == "nudge" for e in events_for(events, turn_id))
+    return nudged and int(turn.one(ctx.dsn, RESEARCH_DOC_SQL, (session_id,)) or 0) == 0
+
+
 def resume_checks(label: str, snap: TurnSnap, *, sdk_before: str | None, sdk_after: str | None,
-                  entries_at_kill: int, entries_after: int) -> list[Check]:
+                  entries_at_kill: int, entries_after: int, nudged_projectless: bool = False) -> list[Check]:
+    """``nudged_projectless``: the session has no research.json and the worker nudged this
+    turn. Then ``no_progress`` is the Stop hook ending a reply to a probe, not a stranded
+    resume (U13, 2026-10-08: the same at caps 60 and 3); the SDK-session and entries checks
+    below are what catch stranding."""
     rc, completed, outcome, _cost = snap.row or (None, None, None, None)
+    bad = turn.RESUMED_FAILED_OUTCOMES - ({TERMINAL_NO_PROGRESS} if nudged_projectless else set())
     return [
         redelivered_check(label, snap),
-        (f"{label}: closed, not {'/'.join(sorted(turn.RESUMED_FAILED_OUTCOMES))}",
-         completed is not None and outcome is not None and outcome not in turn.RESUMED_FAILED_OUTCOMES,
-         f"row={snap.row}"),
+        (f"{label}: closed, not {'/'.join(sorted(bad))}",
+         completed is not None and outcome is not None and outcome not in bad, f"row={snap.row}"),
         (f"{label}: the same SDK session resumed", bool(sdk_before) and sdk_after == sdk_before, f"{sdk_before} -> {sdk_after}"),
         (f"{label}: session_entries grew past the kill", entries_after > entries_at_kill, f"{entries_at_kill} -> {entries_after}"),
     ]
@@ -1208,7 +1222,8 @@ def case_sigterm_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     snap, events = snapshot(ctx, rep.session_id, target), events_until(target, closing_lines)
     rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, target), ""))
     rep.checks += resume_checks("sigterm_real", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
-                                entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before))
+                                entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before),
+                                nudged_projectless=nudged_projectless(ctx, rep.session_id, events, target))
     skipped = [e for e in events if e.get("ev") == "deferred_release_skipped"]
     rep.findings.append(f"held reply {held}; ev=deferred_release_skipped lines: {skipped[:3]}")
     if target == tid:
@@ -1296,7 +1311,9 @@ def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.checks += [("spill_kill: the result spilled (a tool-results Read/Grep in the turn, else void)", reads > 0,
                     "no Read/Grep of a tool-results path: the call failed or never spilled"),
                    redelivered_check("spill_kill", snap),
-                   ("spill_kill: not closed no_progress", snap.row is not None and snap.row[2] != TERMINAL_NO_PROGRESS,
+                   ("spill_kill: not closed no_progress (unless nudged on a project-less session)",
+                    snap.row is not None and (snap.row[2] != TERMINAL_NO_PROGRESS
+                                              or nudged_projectless(ctx, rep.session_id, events_until(tid, closing_lines), tid)),
                     f"row={snap.row}")]
     rep.findings.append("after the kill the agent " + (f"re-ran {SPILL_TOOL}" if rerun else
                                                         "read a tool-results path without re-running (stranded spill)"
@@ -1572,7 +1589,9 @@ def case_kill_refresh(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         ("kill_refresh: reauth_hits=0 since the user_msg", not hits, f"hits={hits[:2]}"),
         ("kill_refresh: reauth_entry_hits=0 (full tool results)", not entry_hits, f"hits={entry_hits[:2]}"),
         *resume_checks("kill_refresh", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
-                       entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before)),
+                       entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before),
+                       nudged_projectless=nudged_projectless(ctx, rep.session_id, events_until(tid, closing_lines),
+                                                             tid)),
     ]
 
 

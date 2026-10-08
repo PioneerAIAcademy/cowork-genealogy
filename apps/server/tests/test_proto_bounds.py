@@ -708,3 +708,32 @@ def test_bounds_py_runs_as_a_script_from_apps_server():
                           text=True, encoding="utf-8")
     assert proc.returncode == 0, proc.stderr
     assert "--case" in proc.stdout and "probe_resume" in proc.stdout
+
+
+def _closed(rep_ok: list) -> bool:
+    [ok] = [ok for n, ok, _ in rep_ok if ": closed, not " in n]
+    return ok
+
+
+def test_resume_checks_pass_no_progress_only_for_a_nudged_project_less_turn():
+    """Deployed probe turns run project-less with nudges on and close no_progress after two
+    empty nudges, at caps 60 and 3 alike (U13, 2026-10-08). That is not a stranded resume."""
+    snap = bounds.TurnSnap(turn_id="t1", row=(2, "now", "no_progress", 0.2))
+    kw = dict(sdk_before="s", sdk_after="s", entries_at_kill=1, entries_after=5)
+    assert _closed(bounds.resume_checks("x", snap, nudged_projectless=True, **kw))
+    assert not _closed(bounds.resume_checks("x", snap, **kw))
+    for outcome in ("retries_exhausted", "signin_required", "transcript_lost"):
+        bad = bounds.TurnSnap(turn_id="t1", row=(2, "now", outcome, 0.2))
+        assert not _closed(bounds.resume_checks("x", bad, nudged_projectless=True, **kw)), outcome
+
+
+def test_nudged_projectless_needs_both_a_nudge_and_no_research_json(monkeypatch):
+    ctx = bounds.Ctx(base="b", dsn="d", email="e", s3_endpoint="s", fixture="f", session=None, deadline_s=5.0,
+                     kill_after_s=10.0, pause_s=1.0, cap_usd=35.0, price_output=15.0)
+    nudged = [{"ev": "nudge", "turn_id": "t1", "n": 1}]
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 0 if sql == bounds.RESEARCH_DOC_SQL else None)
+    assert bounds.nudged_projectless(ctx, "s1", nudged, "t1")
+    assert not bounds.nudged_projectless(ctx, "s1", [], "t1"), "no nudge: a no_progress there is a real failure"
+    assert not bounds.nudged_projectless(ctx, "s1", [{"ev": "nudge", "turn_id": "t9"}], "t1")
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 1 if sql == bounds.RESEARCH_DOC_SQL else None)
+    assert not bounds.nudged_projectless(ctx, "s1", nudged, "t1"), "a seeded project's no_progress still fails"
