@@ -245,7 +245,21 @@ class FakeAws:
                 self.drop("sg", g["name"])
 
     def ec2_describe_instances(self, rest):
+        ids = _flag_values(rest, "--instance-ids")
+        if ids:  # prove-empty's per-id look behind the tag index
+            states = {**{i["name"]: "running" for i in self.all("instance")}, **self.leftover.get("instance_states", {})}
+            if not any(i in states for i in ids):
+                raise AwsError("An error occurred (InvalidInstanceID.NotFound) when calling the DescribeInstances operation")
+            return {"Reservations": [{"Instances": [{"InstanceId": i, "State": {"Name": states[i]}}
+                                                    for i in ids if i in states]}]}
         return {"Reservations": [{"Instances": [{"InstanceId": i["name"]} for i in self.all("instance")]}]}
+
+    def ec2_describe_volumes(self, rest):
+        ids = _flag_values(rest, "--volume-ids")
+        live = [v for v in ids if v in self.leftover.get("volumes", [])]
+        if not live:
+            raise AwsError("An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation")
+        return {"Volumes": [{"VolumeId": v} for v in live]}
 
     def ec2_run_instances(self, rest):
         self.add("instance", "i-bastion")
@@ -1314,6 +1328,36 @@ def test_prove_empty_fails_on_anything_left(stack, leftover):
         fake.add("secret", "genealogy-u13/web/pg-dsn", arn="x")
     else:
         fake.leftover["eip"] = [{"PublicIp": "192.0.2.1"}]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1, lines
+    assert any("NOT EMPTY" in line for line in lines)
+
+
+def test_prove_empty_passes_tag_index_entries_ec2_reports_gone(stack):
+    """A terminated instance stays in the tag index for up to an hour, past the re-poll; on the
+    rehearsal prove-empty said NOT EMPTY for four terminated instances and a deleted volume
+    (U13, 2026-10-08). Those are verified gone through EC2 and pass."""
+    env, fake, _ = stack
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [f"arn:aws:ec2:us-east-1:{ACCOUNT}:instance/i-0aaa",
+                               f"arn:aws:ec2:us-east-1:{ACCOUNT}:volume/vol-0bbb"]
+    fake.leftover["instance_states"] = {"i-0aaa": "terminated"}
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 0, lines
+    assert any("EC2 reports gone" in line for line in lines)
+
+
+@pytest.mark.parametrize("arn_tail, states, volumes", [
+    ("instance/i-0aaa", {"i-0aaa": "stopped"}, []),
+    ("instance/i-0aaa", {"i-0aaa": "shutting-down"}, []),
+    ("volume/vol-0bbb", {}, ["vol-0bbb"]),
+])
+def test_prove_empty_still_fails_on_an_ec2_resource_that_is_not_gone(stack, arn_tail, states, volumes):
+    env, fake, _ = stack
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [f"arn:aws:ec2:us-east-1:{ACCOUNT}:{arn_tail}"]
+    fake.leftover["instance_states"] = states
+    fake.leftover["volumes"] = volumes
     rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
     assert rc == 1, lines
     assert any("NOT EMPTY" in line for line in lines)
