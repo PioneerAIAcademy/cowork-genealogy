@@ -139,8 +139,8 @@
       "callers": [
         "skill:research-plan",
         "skill:search-records",
-        "skill:search-external-sites",
-        "skill:search-full-text",
+        "agent:search-external-sites",
+        "agent:search-full-text",
         "agent:search-images",
         "skill:record-extraction"
       ],
@@ -150,7 +150,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "research-plan owns plan and item structure. The search skills, the search-images agent, and record-extraction may update only `items[].status` after executing or extracting from an item.",
+      "requires": "research-plan owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents, and record-extraction may update only `items[].status` after executing or extracting from an item.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through research-plan.",
       "override": "none"
@@ -162,14 +162,26 @@
       "callers": [
         "skill:research-plan",
         "skill:search-records",
-        "skill:search-external-sites",
-        "skill:search-full-text",
+        "agent:search-external-sites",
+        "agent:search-full-text",
         "agent:search-images",
         "skill:record-extraction"
       ],
       "agentCallers": [
         {
+          "agent": "agent:search-full-text",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
           "agent": "agent:search-images",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
+          "agent": "agent:search-external-sites",
           "tools": [
             "research_append"
           ]
@@ -192,8 +204,8 @@
       "reason": "Append-only and multi-writer by design. Every search and extraction skill appends its own entries through `research_log_append`, which owns entry structure and id allocation and takes no `section` argument at all; `build_external_search_url` appends its in-flight `external_site` hand-off entry by calling the same function when given a `projectPath`. No single skill owns the section; the permitted writers are listed in `callers`.",
       "callers": [
         "skill:search-records",
-        "skill:search-external-sites",
-        "skill:search-full-text",
+        "agent:search-external-sites",
+        "agent:search-full-text",
         "agent:search-images",
         "skill:record-extraction",
         "agent:survey-surname"
@@ -206,9 +218,22 @@
           ]
         },
         {
+          "agent": "agent:search-full-text",
+          "tools": [
+            "research_log_append"
+          ]
+        },
+        {
           "agent": "agent:search-images",
           "tools": [
             "research_log_append"
+          ]
+        },
+        {
+          "agent": "agent:search-external-sites",
+          "tools": [
+            "research_log_append",
+            "build_external_search_url"
           ]
         },
         {
