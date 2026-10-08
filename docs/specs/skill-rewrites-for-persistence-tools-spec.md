@@ -1,4 +1,4 @@
-# Skill rewrites for the structured-persistence + deterministic tools — Spec
+﻿# Skill rewrites for the structured-persistence + deterministic tools — Spec
 
 > **Status:** Consolidated (2026-06-19). Supersedes the wave-1-only draft of this
 > file. Now covers **both** migration waves, organized **by skill** so every
@@ -166,8 +166,8 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ### 4.9 `research-exhaustiveness` — Wave 2
 - **Steps 4/5:** `research_append({ section: "questions", op: "update", entryId,
-  fields: { status: "exhaustive_declared", exhaustive_declaration: { declared,
-  log_entry_ids, stop_criteria } } })`. Early termination → `declared: false` form.
+  fields: { status: "exhaustive_declared", search_stop: { declared,
+  log_entry_ids, stopped_because } } })`. Early termination → `declared: false` form.
   Re-declaring an already-declared question is a structural no-op. **Keep**
   `references/research-exhaustiveness.md` in full. **Superseded 2026-08-23:**
   `research-exhaustiveness` is now a skill-agent pair, so that reference file is
@@ -196,7 +196,7 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 - **Step 7 — DO NOT resolve the question here.** Proof-conclusion deliberately
   does **not** write the `questions` section — marking a question `resolved` (and
   setting `resolved` / `resolution_assertion_ids`) is `question-selection`'s job,
-  and `exhaustive_declaration` is `research-exhaustiveness`'s. Leave §7 ("Do not
+  and `search_stop` is `research-exhaustiveness`'s. Leave §7 ("Do not
   modify the question") intact. (An earlier draft of this spec wrongly listed a
   `research_append` questions-update here — that reverses the skill's standing
   ownership boundary and must not be applied.)
