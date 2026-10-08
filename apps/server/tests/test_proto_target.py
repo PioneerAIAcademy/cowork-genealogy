@@ -917,3 +917,36 @@ def test_outage_held_terminates_before_it_posts_the_held_message(monkeypatch):
     monkeypatch.setattr(bounds, "done", lambda *a, **k: False)
     bounds.case_outage_held(_ctx(), None, bounds.Report(case="outage_held"))
     assert order.index("post first") < order.index("terminate") < order.index("post held"), order
+
+
+def _outage_hook_run(monkeypatch, allowed_after: list[tuple]) -> bounds.Report:
+    order: list[str] = []
+    _case_stack(monkeypatch, order)
+    monkeypatch.setattr(bounds, "sdk_of", lambda ctx, s: "sdk")
+    monkeypatch.setattr(bounds, "max_entry", lambda ctx, sdk: 1)
+    monkeypatch.setattr(bounds, "cancel_hook_waiter", lambda ctx, tid, stamp=None: (stamp.append("t_cancel") if stamp is not None else None) or 1)
+    # The entries window still sees a call that ran before the cancel (U13 call 873).
+    monkeypatch.setattr(bounds, "entries", lambda ctx, sdk, a, b: [])
+    monkeypatch.setattr(bounds, "calls_ran", lambda rows: ([("", "place_search", "early")], []))
+    monkeypatch.setattr(bounds.turn, "db", lambda dsn, sql, params: list(allowed_after)
+                        if sql == bounds.ALLOWED_AFTER_SQL else [(2, "now")])
+    monkeypatch.setattr(bounds, "events_until", lambda tid, lines=None: [
+        {"ev": "halt_check_failed", "turn_id": "t1", "store_down": True},
+        {"ev": "halt", "turn_id": "t1", "reason": bounds.STORE_UNAVAILABLE_REASON},
+        {"ev": "turn", "turn_id": "t1", "status": 500, "error": "StoreUnavailable: x"}])
+    rep = bounds.Report(case="outage_hook")
+    bounds.case_outage_hook(_ctx(), None, rep)
+    return rep
+
+
+def _ran_after_ok(rep: bounds.Report) -> bool:
+    [ok] = [ok for n, ok, _ in rep.checks if "no tool call ran after the outage" in n]
+    return ok
+
+
+def test_outage_hook_ignores_a_call_allowed_before_the_cancel(monkeypatch):
+    assert _ran_after_ok(_outage_hook_run(monkeypatch, allowed_after=[]))
+
+
+def test_outage_hook_fails_a_call_the_hook_allowed_after_the_cancel(monkeypatch):
+    assert not _ran_after_ok(_outage_hook_run(monkeypatch, allowed_after=[("", "place_search", "late")]))

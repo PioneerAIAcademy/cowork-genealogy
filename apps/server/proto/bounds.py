@@ -989,10 +989,17 @@ def case_outage_held(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     _outage(ctx, client, rep, condition="held")
 
 
-def cancel_hook_waiter(ctx: Ctx, turn_id: str) -> int:
+ALLOWED_AFTER_SQL = ("SELECT coalesce(agent_id, ''), tool_name, tool_use_id FROM tool_calls WHERE turn_id = %s "
+                     "AND decision = 'allow' AND ts > %s "
+                     "AND ts < (SELECT CASE WHEN receive_count > 1 THEN claimed_at "
+                     "ELSE coalesce(completed_at, now()) END FROM turns WHERE turn_id = %s)")
+
+
+def cancel_hook_waiter(ctx: Ctx, turn_id: str, stamp: list | None = None) -> int:
     """Lock ``turns`` ACCESS EXCLUSIVE, wait for the turn's backend to block on it inside the
     halt check, cancel that backend, release. Returns how many backends were cancelled. No
-    other driver read may touch ``turns`` while the lock is held."""
+    other driver read may touch ``turns`` while the lock is held. ``stamp`` gets Postgres's
+    now() at the cancel, the instant after which no call may be allowed."""
     # Two connections: pg_stat_activity is snapshotted once per transaction, so a poll inside
     # the transaction holding the lock never sees the backend that starts waiting on it.
     with psycopg.connect(ctx.dsn) as lock, psycopg.connect(ctx.dsn, autocommit=True) as watch:
@@ -1003,6 +1010,8 @@ def cancel_hook_waiter(ctx: Ctx, turn_id: str) -> int:
             while time.monotonic() - t0 < 60:
                 pids = [r[0] for r in watch.execute(HOOK_WAITER_SQL, (f"turn:{turn_id}", HOOK_WAIT_QUERY)).fetchall()]
                 if pids:
+                    if stamp is not None:
+                        stamp.append(watch.execute(PG_NOW_SQL).fetchone()[0])
                     return sum(1 for pid in pids
                                if watch.execute("SELECT pg_cancel_backend(%s)", (pid,)).fetchone()[0])
                 time.sleep(0.2)
@@ -1019,7 +1028,8 @@ def case_outage_hook(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     sdk = sdk_of(ctx, rep.session_id)
     rc1 = int(turn.one(ctx.dsn, "SELECT receive_count FROM turns WHERE turn_id = %s", (tid,)) or 0)
     mark1 = max_entry(ctx, sdk)
-    cancelled = cancel_hook_waiter(ctx, tid)
+    stamp: list = []
+    cancelled = cancel_hook_waiter(ctx, tid, stamp)
     t0 = time.monotonic()
     while time.monotonic() - t0 < ctx.deadline_s:
         row = turn.db(ctx.dsn, "SELECT receive_count, completed_at FROM turns WHERE turn_id = %s", (tid,))
@@ -1027,7 +1037,10 @@ def case_outage_hook(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
             break
         time.sleep(0.3)
     mark2 = max_entry(ctx, sdk)
-    ran, unresolved = calls_ran(entries(ctx, sdk, mark1, mark2))
+    _ran_entries, unresolved = calls_ran(entries(ctx, sdk, mark1, mark2))
+    # A call the hook allowed after the cancel, within attempt 1. Entries alone over-count: a
+    # call allowed before the lock can land its result after mark1 (U13: call 873, 2 s early).
+    ran = [tuple(r) for r in turn.db(ctx.dsn, ALLOWED_AFTER_SQL, (tid, stamp[0], tid))] if stamp else []
     rep.figures.update({"cancelled_backends": cancelled, "entries_window": f"({mark1}, {mark2}]"})
     rep.findings.append(f"calls issued in attempt 1 after the cancel with no result: {unresolved}")
     if not done(ctx, client, rep, tid, label="redelivered"):
