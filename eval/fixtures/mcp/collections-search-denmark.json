@@ -46,10 +46,10 @@
         "title": "Denmark, Probate Indexes, 1674-1851",
         "dateRange": "1674-1851",
         "recordCount": 1310442,
-        "personCount": 0,
+        "personCount": 1310442,
         "imageCount": 1310442,
         "url": "https://www.familysearch.org/search/collection/2015318",
-        "notes": "Skifteprotokoller (estate/probate) indexes by district; originals mostly browse-only images."
+        "notes": "Skifteprotokoller (estate/probate) indexes by district, name-searchable; coverage of the period is uneven, and index entries are mostly not linked to the estate volumes, which are browse-only images."
       }
     ]
   }

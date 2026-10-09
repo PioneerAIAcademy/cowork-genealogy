@@ -132,7 +132,7 @@ Cowork's orchestrator decides whether to invoke a skill from its
   replaced that skill with an agent, and it is pinned by
   `tests/packaging/search-wikipedia-no-narration.test.ts`. Re-derive both lists
   with `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
-  `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md` — six other
+  `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md` — eight other
   agents also carry no line, but `search-wikipedia` is the only one whose
   absence is a rule.
 - **End with `## Re-invocation behavior`.** State what the skill

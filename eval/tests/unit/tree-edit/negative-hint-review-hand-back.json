@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_tree_edit_017",
+    "skill": "tree-edit",
+    "name": "A hint review is handed back to search-hints, never adjudicated here",
+    "type": "negative",
+    "description": "The delegation asks tree-edit to review Patrick Flynn's FamilySearch hints and say which to accept. Reviewing hints moved to the search-hints agent (issue #2029), which reads each hint's record and image and logs the researcher's verdict; tree-edit's own body hands a hints request back. The agent must call no tool and name search-hints in its caller-facing lines. The reverse of ut_search_hints_005. grade_on_invariant: true hands the verdict to test_hand_back_names_its_owner and test_tree_edit_noop; the judge is diagnostic.",
+    "tags": [
+      "negative",
+      "boundary",
+      "search-hints",
+      "tree-edit-noop",
+      "hand-back",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the FamilySearch hints on Patrick Flynn, FamilySearch ID LZNY-BRF, and tell me which ones I should accept.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn"
+  ],
+  "negative": {
+    "correct_skill": [
+      "search-hints"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "Reviewing FamilySearch hints — pending record matches — and recommending which to accept is search-hints'. tree-edit lists attached records and record matches; it does not adjudicate hints. The agent body requires a hand-back: no tool call, and one caller-facing `Hand-back: search-hints` line."
+  },
+  "judge_context": [
+    "Should call no tool and hand the request back, naming search-hints in a caller-facing line before the final `---`",
+    "Should NOT recommend accepting or rejecting any hint"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 180
+  }
+}

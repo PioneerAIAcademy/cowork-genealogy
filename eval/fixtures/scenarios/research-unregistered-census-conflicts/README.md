@@ -5,7 +5,11 @@ Mined from a Cowork project on 2026-10-07 (Family Tree MHGK-WT7, Jonathan Barker
 - **Objective / question:** q_001 (1850 census household). It is open and not declared exhaustive.
 - **Plan:** pl_001. Items pli_001, pli_005 and pli_006 are `completed`; the fallbacks pli_002 to pli_004 are `skipped`.
 - **Log:** log_001 (1850 census), log_002 (1860–1880 censuses) and log_003 (Mississippi state censuses). All are positive and all are extracted. The sidecars in `results/` are trimmed to the records the sources cite.
-- **Assertions:** a_001 to a_049, every one linked in `person_evidence` (persons I1 to I5).
+- **Assertions:** a_001 to a_049 **less a_046 and a_047**, every remaining one linked in
+  `person_evidence` (persons I1 to I5). a_046/a_047 named Mary and Edward Delaney, whose
+  persons the carve removed; the two assertions were left behind and had no link, which
+  contradicted this line and made the routing table's "Assertions not yet linked to
+  persons -> person-evidence" row fire ABOVE the conflict row this test grades.
 - **Conflicts / hypotheses / proof_summaries / evaluations:** empty.
 
 ## This is a constructed carve, not the literal pre-failure state
