@@ -244,9 +244,9 @@ def test_new_log_entries_does_not_see_other_sections():
 # --- check_no_exhaustive_declaration -----------------------------------------
 #
 # This is the whole verdict for the `grade_on_invariant` tests that carry the
-# `no-exhaustive-declaration` tag in the research-exhaustiveness suite. It had
-# no test: replacing its `return bad` with `return []` left the entire harness
-# suite green.
+# `no-exhaustive-declaration` tag, in BOTH the research-exhaustiveness and
+# research suites (issue #2738). It had no test: replacing its `return bad`
+# with `return []` left the entire harness suite green.
 
 
 def _q(qid="q_001", declared=False, status="in_progress"):
