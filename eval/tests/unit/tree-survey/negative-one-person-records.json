@@ -2,29 +2,31 @@
   "test": {
     "id": "ut_tree_survey_010",
     "skill": "tree-survey",
-    "name": "Records for one named person: routed to search-records",
+    "name": "One person's records — hand back to search-records, call no tool",
     "type": "negative",
-    "description": "The request belongs to search-records. The agent should redirect in one sentence without calling any tool.",
+    "description": "The request is to find one named person's census record, which is search-records' job. The agent must hand back naming search-records and call no tool. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back).",
     "tags": [
-      "routing",
-      "negative",
-      "direct-arm"
+      "hand-back",
+      "handback-to-search-records",
+      "direct-arm",
+      "routing"
     ]
-  },
-  "negative": {
-    "correct_skill": [],
-    "explanation": "This is not a tree-wide survey before a project exists; it belongs to search-records."
   },
   "input": {
     "delegation": "Find Edmund Dixon's 1850 census record."
+  },
+  "negative": {
+    "correct_skill": [
+      "search-records"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "This is not a tree-wide survey before a project exists; it belongs to search-records."
   },
   "mcp_fixtures": [],
   "execution": {
     "max_wall_clock_seconds": 120
   },
   "judge_context": [
-    "This is a NEGATIVE test: the request belongs to search-records.",
-    "The agent should say it belongs to search-records and stop, WITHOUT calling any tool, not even tree_gaps.",
-    "A single tool call is a failure."
+    "The correct reply is a one-line hand-back naming search-records. Calling any tool, not even tree_gaps, is a fail."
   ]
 }

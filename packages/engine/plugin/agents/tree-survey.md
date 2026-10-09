@@ -80,8 +80,9 @@ Call `tree_gaps` with `personId` when given, otherwise with no arguments. Use th
 defaults. If it errors, relay the error and stop; if it asks the user to log in,
 say so.
 
-If `gaps` is empty, say the tree shows no holes in what was read, name how far it
-read (`scanned`), and stop. Do not invent suggestions.
+If `gaps` is empty, return no suggestions: one line saying how far the tree was
+read, then `---` and one plain sentence that the tree shows no holes in what was
+read. Name no person, count or field in that sentence. Do not invent suggestions.
 
 ### 2. Check what FamilySearch has
 

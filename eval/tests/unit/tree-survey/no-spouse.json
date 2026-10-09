@@ -19,6 +19,8 @@
     "collections-search-any",
     "place-search-any",
     "record-search-any",
+    "record-search-any-parents",
+    "record-search-any-country",
     "person-record-matches-any",
     "person-quality-any"
   ],
@@ -29,6 +31,7 @@
     "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
     "tree_gaps returns ONE hole: August Ashby (TGAP-UNC): died at 73 with no spouse in the tree; a marriage between 1876 and 1931. The agent should call tree_gaps with personId TGAP-ROT and defaults, then check what FamilySearch has (person_record_matches, person_quality, record_search, collections_search) for that hole. The catch-all fixtures return empty results; an empty check is a result, not a fault, and the agent should still suggest the hole, saying plainly that nothing further was found.",
     "The suggestion must name August Ashby / TGAP-UNC and carry ONE research question that is a single fact, names the person, and scopes place and years, e.g. 'Who was the spouse of August Ashby (1858-1931) of Dayton, Ohio?'. A question that spans several facts or the whole family is a fail.",
+    "The `coverage` counts (collections, records) in the tree_gaps response are a legitimate source for what the agent says FamilySearch holds; do not score a statement drawn from them as unsupported.",
     "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
   ]
 }

@@ -1,30 +1,32 @@
 {
   "test": {
-    "id": "ut_tree_survey_009",
+    "id": "ut_tree_survey_011",
     "skill": "tree-survey",
-    "name": "A project already exists: routed to question-selection",
+    "name": "A project already exists — hand back to question-selection, call no tool",
     "type": "negative",
-    "description": "The request belongs to question-selection. The agent should redirect in one sentence without calling any tool.",
+    "description": "The request names an existing project and asks for its next question, which is question-selection's job. The agent must hand back naming question-selection and call no tool. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back).",
     "tags": [
-      "routing",
-      "negative",
-      "direct-arm"
+      "hand-back",
+      "handback-to-question-selection",
+      "direct-arm",
+      "routing"
     ]
-  },
-  "negative": {
-    "correct_skill": [],
-    "explanation": "This is not a tree-wide survey before a project exists; it belongs to question-selection."
   },
   "input": {
     "delegation": "Pick the next research question for my project.\n\nprojectPath: <workspace>"
+  },
+  "negative": {
+    "correct_skill": [
+      "question-selection"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "This is not a tree-wide survey before a project exists; it belongs to question-selection."
   },
   "mcp_fixtures": [],
   "execution": {
     "max_wall_clock_seconds": 120
   },
   "judge_context": [
-    "This is a NEGATIVE test: the request belongs to question-selection.",
-    "The agent should say it belongs to question-selection and stop, WITHOUT calling any tool, not even tree_gaps.",
-    "A single tool call is a failure."
+    "The correct reply is a one-line hand-back naming question-selection. Calling any tool, not even tree_gaps, is a fail."
   ]
 }
