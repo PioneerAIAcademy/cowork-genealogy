@@ -921,6 +921,13 @@ def main(argv: list[str] | None = None) -> int:
     # actually executed against.
     judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
     judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
+    # Judge model stamped at the envelope so judge-model bumps are dated and
+    # comparable rather than silently invalidating historical scores (issue
+    # #2479 PR 1). One value per run log — `judge.grade()` has no per-call
+    # override today, and `DEFAULT_JUDGE_MODEL` is already a dated id, not
+    # an alias.
+    from harness.judge import DEFAULT_JUDGE_MODEL as _DEFAULT_JUDGE_MODEL
+    judge_model = _DEFAULT_JUDGE_MODEL
     snapshot_cache: dict[str, dict] = {}
     partial_paths: dict[str, Path] = {}
 
@@ -961,6 +968,7 @@ def main(argv: list[str] | None = None) -> int:
                     harness_version=HARNESS_VERSION,
                     model=DEFAULT_MODEL,
                     judge_prompt_hash=judge_hash,
+                    judge_model=judge_model,
                     snapshot=_snapshot_for(skill),
                     tests=entries,
                 )
@@ -1341,6 +1349,7 @@ def main(argv: list[str] | None = None) -> int:
             harness_version=HARNESS_VERSION,
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
+            judge_model=judge_model,
             snapshot=_snapshot_for(skill),
             tests=entries,
             review_sample=sample,
