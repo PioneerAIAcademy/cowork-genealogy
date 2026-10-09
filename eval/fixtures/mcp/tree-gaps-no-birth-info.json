@@ -1,6 +1,6 @@
 {
   "tool": "tree_gaps",
-  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: last child born when the mother was 28, she lived to 70. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased man with no birth date or place, windowed on his first child. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
   "args": {
     "personId": "TGAP-ROT"
   },
@@ -11,17 +11,17 @@
     },
     "gaps": [
       {
-        "type": "early_last_child",
-        "personId": "TGAP-GF3",
-        "name": "Samuel Ashby",
-        "lifespan": "1855-1920",
-        "generation": 1,
-        "detail": "Last recorded child born 1888, when the mother was 28.",
+        "type": "no_birth_info",
+        "personId": "TGAP-GF2",
+        "name": "Heinrich Weis",
+        "lifespan": "-1902",
+        "generation": 2,
+        "detail": "Deceased, but the tree gives no birth date or place.",
         "yearRange": {
-          "start": 1889,
-          "end": 1903
+          "start": 1815,
+          "end": 1865
         },
-        "place": "Dayton, Montgomery, Ohio, United States",
+        "place": "Cincinnati, Hamilton, Ohio, United States",
         "coverage": {
           "collections": 9,
           "records": 4200000,
@@ -31,14 +31,12 @@
             "VITAL"
           ],
           "censusYears": [
-            1890,
-            1900
+            1850,
+            1860
           ],
           "placeLevel": "locality",
           "score": 2
-        },
-        "spouseId": "TGAP-GM3",
-        "spouseName": "Ida Marsh"
+        }
       }
     ],
     "scanned": {

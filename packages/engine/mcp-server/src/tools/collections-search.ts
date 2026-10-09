@@ -195,21 +195,27 @@ export function collectionCoverage(
   startYear: number,
   endYear: number,
   typeFacets?: readonly string[],
-): { collections: number; records: number; recordTypes: string[] } {
+): { collections: number; records: number; recordTypes: string[]; censusYears: number[] } {
   const scope = standardPlaceToCollectionsQuery(standardPlace);
   const types = new Set<string>();
+  const censusYears = new Set<number>();
   let records = 0;
   let collections = 0;
   for (const c of filterByQuery(entries, scope)) {
     if (!overlapsYears(c, startYear, endYear)) continue;
     const meta = c.searchMetadata?.[0];
     const facet = meta?.typeFacet;
+    // A census names the whole household, so its years matter for every hole
+    // type, not only those that list CENSUS among their facets.
+    if (facet === "CENSUS" && meta?.startYear != null && meta.startYear === meta.endYear) {
+      censusYears.add(meta.startYear);
+    }
     if (typeFacets && (!facet || !typeFacets.includes(facet))) continue;
     collections += 1;
     records += meta?.recordCount ?? getCount(c.content, "/Record");
     if (facet) types.add(facet);
   }
-  return { collections, records, recordTypes: [...types].sort() };
+  return { collections, records, recordTypes: [...types].sort(), censusYears: [...censusYears].sort((a, b) => a - b) };
 }
 
 // ---------- Tool entry point ----------

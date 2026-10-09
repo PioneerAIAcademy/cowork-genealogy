@@ -7,7 +7,9 @@ import { collectionCoverage, fetchAllCollections } from "./collections-search.js
 import {
   addAncestry,
   addDescendancy,
+  coverageScore,
   detectGaps,
+  placeLevel,
   selectGaps,
   emptyModel,
 } from "../utils/tree-gap-detect.js";
@@ -45,6 +47,8 @@ const TYPE_FACETS: Record<TreeGapType, readonly string[]> = {
   no_children: ["VITAL", "CHURCH_RECORD", "CENSUS"],
   child_gap: ["VITAL", "CHURCH_RECORD", "CENSUS"],
   early_last_child: ["VITAL", "CHURCH_RECORD", "CENSUS"],
+  missing_surname: ["VITAL", "CHURCH_RECORD"],
+  no_birth_info: ["VITAL", "CHURCH_RECORD", "CENSUS"],
   no_spouse: ["VITAL", "CHURCH_RECORD"],
   no_death_date: ["VITAL", "CHURCH_RECORD", "CENSUS", "NEWSPAPER"],
 };
@@ -62,9 +66,12 @@ export const treeGapsToolSchema = {
     "missing before the end of a line, a couple with no children, a gap of " +
     "more than 4 years between births, a last child born when the mother " +
     "was under 34 though she lived past 40, a deceased adult with no " +
-    "spouse, a deceased person with no death date. Each hole gives the person's ID, name, life years, the " +
-    "year range and place to search, and a `coverage` count of catalog " +
-    "collections that could hold the record. Living people never carry a " +
+    "spouse, a wife with no surname, a deceased person with no birth date " +
+    "or place, a deceased person with no death date. Each hole gives the " +
+    "person's ID, name, life years, the year range and place to search, and " +
+    "`coverage`: catalog collections that could hold the record, census " +
+    "years inside the window, and a score weighted by how specific the " +
+    "place is. Living people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
     "else, call person_search first. Reads only; writes nothing. Requires " +
     "authentication — call the login tool first if not logged in.",
@@ -185,13 +192,15 @@ async function loadCatalog(principal: Principal): Promise<FSCollectionEntry[] | 
 function score(gaps: TreeGap[], catalog: FSCollectionEntry[]): void {
   for (const g of gaps) {
     if (!g.place || !g.yearRange) continue;
-    g.coverage = collectionCoverage(
+    const c = collectionCoverage(
       catalog,
       g.place,
       g.yearRange.start,
       g.yearRange.end,
       TYPE_FACETS[g.type],
     );
+    const level = placeLevel(g.place);
+    g.coverage = { ...c, placeLevel: level, score: coverageScore(c.collections, c.censusYears.length, level) };
   }
 }
 

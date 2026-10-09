@@ -29,7 +29,10 @@
             "CENSUS",
             "CHURCH_RECORD",
             "VITAL"
-          ]
+          ],
+          "censusYears": [],
+          "placeLevel": "locality",
+          "score": 1
         },
         "spouseId": "TGAP-GM1",
         "spouseName": "Clara Weis"

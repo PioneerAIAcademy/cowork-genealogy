@@ -29,7 +29,13 @@
             "CENSUS",
             "CHURCH_RECORD",
             "VITAL"
-          ]
+          ],
+          "censusYears": [
+            1880,
+            1890
+          ],
+          "placeLevel": "locality",
+          "score": 2
         }
       }
     ],

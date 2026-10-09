@@ -35,7 +35,9 @@ try {
   console.log(`root: ${r.root.name} (${r.root.personId})`);
   for (const g of r.gaps) {
     const yr = g.yearRange ? `${g.yearRange.start}-${g.yearRange.end}` : "-";
-    const cov = g.coverage ? `${g.coverage.collections} coll/${g.coverage.records} rec` : "n/a";
+    const cov = g.coverage
+      ? `${g.coverage.collections} coll/${g.coverage.records} rec, census [${g.coverage.censusYears.join(",")}], ${g.coverage.placeLevel}, score ${g.coverage.score}`
+      : "n/a";
     console.log(`${String(g.generation).padStart(3)} ${g.type.padEnd(17)} ${g.personId} ${g.name} | ${yr} | ${g.place ?? "-"} | ${cov} | ${g.detail}`);
   }
 } catch (e) {

@@ -29,7 +29,12 @@
             "CENSUS",
             "CHURCH_RECORD",
             "VITAL"
-          ]
+          ],
+          "censusYears": [
+            1860
+          ],
+          "placeLevel": "county",
+          "score": 1.5
         }
       }
     ],
