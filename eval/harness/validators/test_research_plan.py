@@ -540,7 +540,7 @@ def test_research_plan_fallback_for_in_same_plan(before_state, after_state):
     )
 
 
-# --- V2: research-plan calls no MCP tool outside its six --------------------
+# --- V2: research-plan calls no MCP tool outside its own lane --------------
 
 _FORBIDDEN_TOOLS = {"wiki_search", "wiki_place_page", "place_population"}
 _FORBIDDEN_SKILL = "locality-guide"
@@ -549,12 +549,12 @@ _FORBIDDEN_SKILL = "locality-guide"
 def test_research_plan_no_out_of_lane_tools(
     tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls=None
 ):
-    """research-plan owns six tools and states "You have no wiki/place-fact
+    """research-plan owns its `allowed-tools` and states "You have no wiki/place-fact
     tools of your own" (SKILL.md 137). Fail on any call OR attempt of
     wiki_search / wiki_place_page / place_population, or delegation to
     locality-guide (SKILL.md 128, 499). Issue #1866 V2.
 
-    Named prohibition, not the complement of the six: project_context is
+    Named prohibition, not the complement of the grant: project_context is
     attempted by sibling skills and forbidden by nothing, so a complement
     gate reds it. Deriving a deny from a grant is what PR #1774 retired. A
     denied call never reaches tool_calls, so union the attempts (#1748)."""
@@ -571,14 +571,122 @@ def test_research_plan_no_out_of_lane_tools(
     if delegated:
         problems.append(f"delegated to {_FORBIDDEN_SKILL!r}")
     assert not problems, (
-        "research-plan reached outside its six-tool lane:\n  - "
+        "research-plan reached outside its tool lane:\n  - "
         + "\n  - ".join(problems)
+    )
+
+
+# --- Tag-gated: the question person's FamilySearch profile is read first -----
+
+
+def _plan_write_ops(args: dict) -> list[dict]:
+    """The ops of one `research_append` call, in either shape the model sends:
+    `ops` as a list or a JSON string, or a single top-level op (same parse as
+    test_universal.py's assertion-update check)."""
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    candidates = ops if isinstance(ops, list) else ([args] if args.get("section") else [])
+    return [op for op in candidates if isinstance(op, dict)]
+
+
+def _question_person_pids(research: dict, tree: dict) -> set[str]:
+    """FamilySearch ids of tree persons named in an open question's text: the
+    `ark` tail (`ark:/61903/4:1:<PID>`) of every person whose preferred given
+    name and surname both appear in it."""
+    text = " ".join(
+        (q.get("question") or "")
+        for q in research.get("questions") or []
+        if q.get("status") == "open"
+    ).lower()
+    pids: set[str] = set()
+    for person in tree.get("persons") or []:
+        ark = person.get("ark") or ""
+        if not ark:
+            continue
+        name = next(
+            (n for n in person.get("names") or [] if n.get("preferred")),
+            (person.get("names") or [{}])[0],
+        )
+        given = (name.get("given") or "").strip().lower()
+        surname = (name.get("surname") or "").strip().lower()
+        if given and surname and re.search(rf"\b{re.escape(given)}\b", text) and re.search(
+            rf"\b{re.escape(surname)}\b", text
+        ):
+            pids.add(ark.rsplit(":", 1)[-1].strip())
+    return pids
+
+
+def test_research_plan_reads_question_person_profile(before_state, tool_calls, test):
+    """Tag-gated (``profile-reread``), tier 1. Issue #2208, alpha report #3244.
+
+    The project tree is a setup snapshot: a relative imported with the subject
+    arrives without his own parents or attached sources. Before writing a plan,
+    the skill must `person_read` the FamilySearch profile of the person the
+    question is about. Graded on the call log, so narrating a check cannot pass.
+
+    Every mock call lands in `tool_calls`, matched or not; `matched.kind` is
+    what tells a fixture hit from a `fixture_not_found`. A read counts only if
+    it matched and its `personId` is a question person's `ark` PID, and only if
+    it comes before the first `research_append` writing `plans`/`plan_items`.
+    A tagged run with no plan write fails: it planned nothing."""
+    if "profile-reread" not in test.get("tags", []):
+        pytest.skip("not a profile-reread test")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    wanted = _question_person_pids(research, tree)
+    assert wanted, "profile-reread scenario names no tree person with an `ark` in an open question"
+
+    calls = [c for c in tool_calls or [] if isinstance(c, dict)]
+    first_write = next(
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare(c.get("tool", "")) == "research_append"
+            and isinstance(c.get("args"), dict)
+            and any(
+                op.get("section") in {"plans", "plan_items"}
+                for op in _plan_write_ops(c["args"])
+            )
+        ),
+        None,
+    )
+    assert first_write is not None, "no research_append wrote plans or plan_items"
+
+    reads = [
+        (i, (c.get("args") or {}).get("personId"))
+        for i, c in enumerate(calls)
+        if _bare(c.get("tool", "")) == "person_read"
+    ]
+    good = [
+        i
+        for i, pid in reads
+        if isinstance(pid, str)
+        and pid.strip() in wanted
+        and (calls[i].get("matched") or {}).get("kind") == "predicate"
+    ]
+    assert good and good[0] < first_write, (
+        f"The plan must read the question person's FamilySearch profile "
+        f"(personId in {sorted(wanted)}) before writing. person_read calls "
+        f"(index, personId)={reads}; first plan write at index {first_write}."
     )
 
 
 # --- V1: identifiers in a rationale must trace to a served response ---------
 
-_TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_search"}
+# person_read (issue #2208): the plan cites the attached-source ARKs a profile read
+# returns, so they must ground rather than flag as fabrications.
+_TRACEABLE_ID_TOOLS = {
+    "collections_search",
+    "volume_search",
+    "external_links_search",
+    "person_read",
+}
 
 
 # Grounding is deliberately more permissive than candidate_identifiers. A

@@ -17,6 +17,7 @@ allowed-tools:
   - external_links_search
   - place_search
   - place_search_all
+  - person_read
   - research_append
 ---
 
@@ -53,6 +54,7 @@ does itself is **discover which records exist** and **write the plan**:
 | `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives) for this place/period |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
+| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks |
 | `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
 
 The *how-to-search* knowledge — wiki research pages, population context,
@@ -83,6 +85,15 @@ mode, not a defensive re-read.)
 check whether starting-point facts are documented or merely assumed.
 Flag unsupported assumptions (e.g., "widow = mother of all children")
 and add plan items to verify them before relying on them.
+
+**Read the question person's FamilySearch profile first.** For each
+person the question is about whose tree entry has an `ark`, call
+`person_read({ personId })` with the id after the ark's last `:`, before
+writing any plan item. Whatever it holds that the project tree lacks —
+parents, spouses, facts, attached sources — is a lead: state it in the
+rationale and plan items that test it, never searches that treat it as
+unknown. Say "project tree" or "FamilySearch tree" when saying something is
+missing. If the call fails, say so and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, read

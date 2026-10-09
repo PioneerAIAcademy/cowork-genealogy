@@ -18,6 +18,7 @@ Two independent sets of proof-of-failure tests live here:
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,7 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
+    test_research_plan_reads_question_person_profile as check_profile,
     report_survey_surfaces_already_attached_fan_facts as check,
 )
 
@@ -892,3 +894,95 @@ def test_passes_vacuously_when_fact_has_neither_date_nor_value():
     not raise even though the response never mentions Patrick."""
     response = "No mention of anyone."
     check(BEFORE_STATE_NO_DATE_NO_VALUE, response, TAGGED)  # does not raise
+
+
+# --- profile-reread (issue #2208, alpha report #3244) ----------------------
+
+_PROFILE_TEST = {"tags": ["profile-reread"]}
+_PROFILE_STATE = {
+    "research_json": {
+        "questions": [
+            {"id": "q_001", "status": "open", "question": "Who were the parents of Thomas Kerrigan (I2)?"}
+        ]
+    },
+    "tree_gedcomx_json": {
+        "persons": [
+            {"id": "I1", "ark": "ark:/61903/4:1:ZZKR-BR1",
+             "names": [{"preferred": True, "given": "Bridget", "surname": "Kerrigan"}]},
+            {"id": "I2", "ark": "ark:/61903/4:1:ZZKR-TH2",
+             "names": [{"preferred": True, "given": "Thomas", "surname": "Kerrigan"}]},
+        ]
+    },
+}
+
+
+def _read(pid, *, matched=True):
+    c = _call("person_read", {"persons": []} if matched else {"error": "fixture_not_found"},
+              {"personId": pid})
+    c["matched"] = {"kind": "predicate" if matched else "none", "index": 0 if matched else None}
+    return c
+
+
+_PLAN_OPS = [{"section": "plans", "op": "append", "entry": {"question_id": "q_001"}}]
+
+
+def _write(shape="list"):
+    if shape == "string":
+        return _call("research_append", None, {"ops": json.dumps(_PLAN_OPS)})
+    if shape == "single":
+        return _call("research_append", None, dict(_PLAN_OPS[0]))
+    return _call("research_append", None, {"ops": _PLAN_OPS})
+
+
+@pytest.mark.parametrize("shape", ["list", "string", "single"])
+def test_profile_passes_on_matched_read_before_plan_write(shape):
+    check_profile(_PROFILE_STATE, [_read("ZZKR-TH2"), _write(shape)], _PROFILE_TEST)
+
+
+def test_profile_passes_with_extra_subject_read():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-BR1"), _read("ZZKR-TH2"), _write()], _PROFILE_TEST
+    )
+
+
+def test_profile_fires_on_no_read():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_call("collections_search"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_unmatched_read():
+    # Every mock call reaches tool_calls; an unmatched one is told apart only by matched.kind.
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-TH2", matched=False), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_subject_read_only():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_read_after_plan_write():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_write(), _read("ZZKR-TH2")], _PROFILE_TEST)
+
+
+def test_profile_fires_on_no_plan_write():
+    with pytest.raises(AssertionError, match="no research_append wrote plans"):
+        check_profile(
+            _PROFILE_STATE,
+            [_read("ZZKR-TH2"), _call("research_append", None, {"ops": [{"section": "log"}]})],
+            _PROFILE_TEST,
+        )
+
+
+def test_profile_skips_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_profile(_PROFILE_STATE, [], {"tags": []})
+
+
+def test_v1_grounds_ark_served_by_person_read():
+    served = [_call("person_read", {"sources": [
+        {"id": "SD1", "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"}]})]
+    before, after = _states([_item("pli_010", rationale="Extract the attached baptism, ark:/61903/1:1:JQ4M-2XS.")])
+    check_v1(before, after, served)
+

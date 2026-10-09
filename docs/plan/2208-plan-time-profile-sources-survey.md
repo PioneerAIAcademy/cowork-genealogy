@@ -1,9 +1,12 @@
 # Issue #2208 — the plan-time survey asks for a link production trees don't have
 
-**Status:** **Built** — the work landed in the PR from branch
-`2208-survey-reads-facts-not-source-refs`, not pending. This file is the evidence record
-for that PR and supersedes the tool-building plan it held before (two plan-critic rounds).
-**Delete it when that PR merges**; `docs/plan/` is for work not yet built.
+**Status:** **Built, awaiting the paid eval run.** Part 1 (§1–§5, the facts-not-source-refs
+retarget) and Part 2 (§8, re-reading the question person's FamilySearch profile — added
+2026-10-08 on the lead's word, issue #2208 comment from #3244). Test id for §8:
+`ut_research_plan_prof`, fixtures `person-read-kerrigan-proposed-parents` and
+`person-read-kerrigan-subject`. SKILL.md grows ~85 words net; not offset, because §1's third
+row measured that compressing the survey paragraph broke it. Delete this file when the PR merges;
+`docs/plan/` is for work not yet built.
 
 **Issue:** #2208 — needs rewriting a fourth time; the finding below is sharper than the
 card's and points somewhere else.
@@ -12,7 +15,12 @@ card's and points somewhere else.
 `eval/fixtures/scenarios/first-plan-fan-production-shape/`,
 `eval/tests/unit/research-plan/first-plan-fan-production-shape.json`,
 `eval/harness/validators/test_research_plan.py`,
-`eval/runlogs/unit/research-plan/`
+`eval/runlogs/unit/research-plan/`; §8 adds
+`eval/fixtures/scenarios/plan-reads-question-person-profile/`,
+`eval/fixtures/mcp/person-read-*-proposed-parents.json`,
+`eval/tests/unit/research-plan/plan-reads-question-person-profile.json`,
+`eval/harness/tests/unit/test_research_plan_validator.py`,
+`packages/engine/mcp-server/tests/packaging/prompt-sizes.json`
 
 ---
 
@@ -121,9 +129,10 @@ the common case: the data was never missing. It cost a manifest entry, a spec, a
 `dev/smoke-calls.ts` row, a 60s-capped aggregated call, and permanent context budget in
 every session, to fetch something already on disk.
 
-What survives from #2208 as filed is the case where sources are **genuinely absent** from
-the tree — the original #2158 incident, one report. That is a much smaller build and is not
-this PR.
+What survives from #2208 as filed is the case where data is **genuinely absent** from the
+tree — the original #2158 incident (attached sources never imported) and #3244 (a
+relative's parents never imported). §8 builds that, with `person_read` — an existing tool —
+rather than a new one.
 
 ## 7. Out of scope, not deferred quietly
 
@@ -135,3 +144,121 @@ ruling before filing:
 - **The fixture-shape gap** — 62 of 99 unit scenarios versus 3 of 136 real starting trees.
   Wider than this card: the unit suite systematically exercises a tree shape production does
   not have, and this issue is one instance of what that hides.
+
+## 8. Part 2 — read the question person's FamilySearch profile (added 2026-10-08)
+
+### Why
+
+Part 1 fixes the case where the data is in the tree but the rule looked for the wrong link.
+Two live reports show the other case — the data is on FamilySearch and **never reached the
+tree**:
+
+- **#2158** (2026-09-01): the subject's ~10 attached sources never landed in `sources[]`;
+  the decisive birth register was reached only after the tester reminded the agent.
+- **#3244** (2026-10-07, Dallan's comment on #2208): subject Mary Maria Fuller (KWJT-3ZT);
+  her father David Fuller is I5 with FamilySearch id LZKH-93V, imported as a relative, so
+  *his* parents were not imported. `q_001` asks "Who were the parents of David Fuller?",
+  its rationale says "David Fuller (I5) has no parents documented in the tree", and the
+  12-step plan searches from scratch. FamilySearch already proposes a pair; nothing read
+  LZKH-93V.
+
+`research/SKILL.md:112-117` already tells the router to `person_read` "the person" before
+any search, but a plan is not a search, the router reads the project subject, and the
+question's person is often someone else. Lead (Dallan) asked for it in this PR.
+
+### Why this cannot be a writer-tool precondition
+
+ADR-0011's first question — decidable from the project documents alone? — **no**: the
+missing data is upstream. And `questions[]` carries no person link (`$defs/question` has
+no person field), so even "did you read the right profile" needs prose to pick the person.
+So: skill instruction + `person_read` grant + a deterministic call-log validator.
+
+### Changes
+
+1. **`research-plan/SKILL.md`**
+   - `allowed-tools`: add `person_read`. Add one row to the "MCP tools used" table.
+   - Step 1, ahead of the survey paragraph, one short paragraph (target ≤ 70 words):
+     for each person the question is about whose tree entry carries an `ark`, call
+     `person_read({ personId })` with the id at the end of that ark, before writing any
+     plan item. What it returns that the tree lacks — parents, spouses, facts, attached
+     sources — is a lead already held: state it in the rationale and plan items that
+     **test** it, not searches that start as if it were unknown. Say "project tree" vs
+     "FamilySearch tree" when stating what is missing. If the call fails, say so and plan
+     from the tree.
+   - Scope is **the question's person(s)**, not every FAN person — cost is one read (plus
+     its sibling fan-out) per question person, not per in-scope relative.
+   - Regenerate `packages/engine/mcp-server/tests/packaging/prompt-sizes.json`
+     (`UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts`).
+   - Offset the added words elsewhere in the body where possible (standing "leave it
+     shorter" rule); if net growth, say so in the PR body with the reason.
+2. **New scenario** `eval/fixtures/scenarios/plan-reads-question-person-profile/`
+   (`research.json`, `tree.gedcomx.json`, `README.md`), modeled on #3244 with **synthetic**
+   ids and names: subject I1 with an `ark`; her father I2 with an `ark`, with facts but no
+   parents in the tree; `q_001` = "Who were the parents of <father>?", rationale saying
+   none are documented in the tree. Every person carries an `ark` (the production shape).
+3. **New MCP fixture** `eval/fixtures/mcp/person-read-<father>-proposed-parents.json`,
+   predicate `{ "personId": "<father id>" }` alone (the Driscoll note: the tool ignores the
+   flags). Response: the father, a FamilySearch-proposed parent pair, and one attached
+   source (e.g. a baptism) naming those parents — none of it in the project tree.
+4. **New test** `eval/tests/unit/research-plan/plan-reads-question-person-profile.json`
+   (`ut_research_plan_<id>`), tags `profile-reread`, `research-plan-new-plan-for-q-001`,
+   `new-plan-items-planned-status`, `issue-2208`. `mcp_fixtures` = the new person_read
+   fixture plus the place/collections fixtures it needs. Judge context: the plan names the
+   FamilySearch-proposed parents and the attached source's content, and plans to **test**
+   that pair; it does not claim the parents are unknown; it distinguishes project tree from
+   FamilySearch tree. Also register a minimal subject `person_read` fixture, so an extra
+   read of the subject succeeds instead of sending the run down the "call failed" branch.
+5. **New validator** `test_research_plan_reads_question_person_profile` in
+   `eval/harness/validators/test_research_plan.py`, tier 1, tag-gated on `profile-reread`:
+   a `person_read` entry in `tool_calls` whose `matched.kind == "predicate"` and whose
+   `response_fixture` is the father's fixture exists, and its index precedes the first
+   `research_append` that writes `plans`/`plan_items`. (Every mock call, matched or not,
+   lands in `tool_calls`; `matched.kind` is the discriminator — `orchestrator.py`
+   `_predicate_matched_count`.) Plan writes are found by parsing `ops` as
+   `test_universal.py:720-729` does (JSON string → list; single top-level op → `[args]`),
+   matching `section in {"plans", "plan_items"}`. A tagged run with **no** plan write fails,
+   it does not skip.
+6. **`_TRACEABLE_ID_TOOLS`**: add `person_read`, so ARKs the plan cites from the profile
+   are grounded, not flagged as fabrications by V1. (Grounding only ever clears a false
+   flag.) Fix `test_research_plan_no_out_of_lane_tools`'s "six-tool lane" wording.
+7. **Validator unit tests** in `eval/harness/tests/unit/test_research_plan_validator.py`
+   for (5), proven both ways:
+   - *Red:* no `person_read` at all; only a `person_read` with `matched.kind == "none"`
+     and a `fixture_not_found` response (wrong id); a read matching the *subject's* fixture
+     only; the matched read after the plan write; no plan write at all.
+   - *Green:* matched read before the write; the same with `ops` sent as a JSON string;
+     the same with a single top-level op; skip when untagged.
+   - Plus one V1 test: an ARK served only by `person_read` cited in a rationale is not
+     flagged.
+
+### Effect on existing tests
+
+22 tests; none of their scenario trees carries an `ark` (checked 2026-10-08), and
+`person_read` is unregistered there, so the model never sees it (an attempt by name would
+abort `unmatched_tool_call`).
+
+### Acceptance
+
+- `make harness-test` green, including the new validator tests, each red case shown to fail.
+- **Baseline first:** one single-test run of the new test against the pre-§8 SKILL.md
+  (new fixture + validator in place). The harness grants every registered tool, and
+  `person_read`'s description already says it returns parents, so the fixture alone might
+  cause the read. If the baseline passes, the PR says the test guards regression but does
+  not show the paragraph causes the read.
+- `make eval-skill SKILL=research-plan` (one paid run, user approves the spend first):
+  the new test passes; `bpx` and `pshape` do not regress; run log + `.ann.json` committed.
+- Not covered and said so in the PR: the router's own `person_read` rule in
+  `research/SKILL.md` (not touched — it would arm the `research` run-log gate); and e2e —
+  e2e trees carry no `ark` and e2e blocks `person_read`, so §8 is exercised only by the new
+  unit test.
+
+### Sequencing
+
+- **PR #3118** (issue #2251, open) edits the same frontmatter, "MCP tools used" section,
+  `_TRACEABLE_ID_TOOLS` (adds `wiki_read`) and V2's tool-count wording, and adds
+  `docs/specs/research-plan-skill-spec.md`. If it merges first: rebase, keep both tools in
+  `_TRACEABLE_ID_TOOLS`, word V2 to the final list (no hard count), and add the
+  `person_read` step to that spec.
+- **Issue #2116** converts research-plan to an agent: its `tools:` must carry `person_read`
+  in all three spellings, plus the `AGENT_PERMISSIONS` snapshot in
+  `tests/packaging/agent-tool-names.test.ts`. Note this on #2116 when the PR opens.

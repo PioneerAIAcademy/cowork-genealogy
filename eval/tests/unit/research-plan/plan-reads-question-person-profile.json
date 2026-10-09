@@ -1,0 +1,45 @@
+{
+  "test": {
+    "id": "ut_research_plan_prof",
+    "skill": "research-plan",
+    "name": "A parentage question about an imported relative reads that relative's FamilySearch profile before planning",
+    "type": "positive",
+    "description": "Issue #2208, shape of alpha report #3244. The project subject is Bridget Kerrigan (I1); her father Thomas (I2, ark ZZKR-TH2) was imported as a relative, so HIS parents never reached the project tree. q_001 asks who his parents were and its rationale says none are documented in the tree. FamilySearch already proposes a pair (Patrick Kerrigan and Mary Gallagher) and holds an attached 1842 baptism naming both (fixture person-read-kerrigan-proposed-parents). The plan must read ZZKR-TH2 before writing, and test that pair rather than search from scratch. GRADING: the read-before-write is deterministic (`profile-reread` tag -> test_research_plan_reads_question_person_profile, which reads the call log, so narrating a check cannot pass); the judge grades what the plan did with what the read returned. Every tree person carries an `ark`, the shape project_create writes; no other research-plan scenario does.",
+    "tags": [
+      "planning",
+      "profile-reread",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "issue-2208"
+    ]
+  },
+  "input": {
+    "user_message": "Create the first research plan for q_001 -- who were the parents of Thomas Kerrigan?",
+    "scenario": "plan-reads-question-person-profile"
+  },
+  "mcp_fixtures": [
+    "person-read-kerrigan-proposed-parents",
+    "person-read-kerrigan-subject",
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "volume-search-schuylkill",
+    "collections-search-us-national"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: the project tree is a snapshot taken at setup. A relative imported with the subject arrives without his own parents, so 'no parents documented in the tree' says nothing about FamilySearch. Before planning, the skill must read the question person's FamilySearch profile (Thomas Kerrigan, ZZKR-TH2) and plan from what it holds.",
+    "That profile proposes parents Patrick Kerrigan (born about 1815, County Mayo, Ireland; died 1880 Pottsville) and Mary Gallagher (born about 1818, Ireland), and has two attached sources not in the project: a 14 March 1842 St. Patrick's, Pottsville baptism naming father Patrick Kerrigan and mother Mary Gallagher, and an 1850 census household of Patrick (35), Mary (32) and Thomas (8) in Pottsville. The response must name the proposed parents and state what at least one attached source records.",
+    "The plan must treat that pair as a hypothesis to TEST -- e.g. read/extract the attached baptism and census, then corroborate with independent records (Patrick's 1880 death or burial, church marriage of Patrick and Mary, later census) -- rather than plan searches as if Thomas's parents were unknown. A plan that searches for 'parents of Thomas Kerrigan' from scratch and never mentions Patrick and Mary fails Correctness and Completeness.",
+    "The response should keep the two trees apart: 'not in the project tree' is true; 'no parents documented' without saying which tree is the error the tester reported. Do not penalize treating the FamilySearch pair as unproven -- a tree claim is a lead, not a conclusion.",
+    "A read of the subject's own profile (ZZKR-BR1) is harmless and is not graded either way."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 300
+  }
+}
