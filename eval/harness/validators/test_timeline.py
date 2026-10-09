@@ -26,11 +26,6 @@ from validators_lib import assert_foreign_keys_valid
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
 _PAREN_RE = re.compile(r"\([^()]*\)")
-# A parenthetical naming one of these is bounding the person's life (birth,
-# marriage, death), not naming the census year itself — "(married 1859)",
-# "(b. 1861)". A year found only inside such a parenthetical is not a census
-# year and must not be returned as one (finding #4).
-_BOUNDING_EVENT_RE = re.compile(r"\b(?:married?|marriage|wed|born|died|death)\b|\bb\.|\bd\.", re.IGNORECASE)
 
 
 # --- Helpers ----------------------------------------------------------
@@ -254,14 +249,21 @@ def _census_year_of_entry(entry: str) -> int | None:
     census_at = [m.start() for m in re.finditer("census", blanked.lower())]
     if not census_at:
         return None
-    # A year sitting inside a parenthetical that names a bounding life event
-    # (birth, marriage, death) is that event's year, never the census year —
-    # "England census (married 1859)" names no census year at all, and must
-    # return None rather than fall back to 1859 (finding #4). Spans, not a
-    # blanket "any parenthetical", because a parenthetical the jurisdiction
-    # check needs — "census (1861, England & Wales)" — must stay eligible.
+    # A parenthetical names the census year only when the year IS its first
+    # token. Any word before the year makes it that word's year, not the
+    # census's — "(married 1859)", "(m. 1859)", "(bapt. 1859)", "(buried
+    # 1870)", "(widowed 1859)", "(emigrated 1859)" are all a bounding life
+    # event's year and must not be returned as the census year (finding #4).
+    # This is a structural rule, not a word list: it needs no enumeration of
+    # every way a genealogist might phrase a life event, and it still accepts
+    # "(1861, England & Wales)" — the year opens that parenthetical, which is
+    # the shape the jurisdiction check below depends on staying eligible.
+    def _opens_with_year(paren_text: str) -> bool:
+        inner = paren_text[1:-1].lstrip()
+        return _YEAR_RE.match(inner) is not None
+
     bounding_spans = [
-        m.span() for m in _PAREN_RE.finditer(entry) if _BOUNDING_EVENT_RE.search(m.group(0))
+        m.span() for m in _PAREN_RE.finditer(entry) if not _opens_with_year(m.group(0))
     ]
 
     def _in_bounding_span(pos: int) -> bool:

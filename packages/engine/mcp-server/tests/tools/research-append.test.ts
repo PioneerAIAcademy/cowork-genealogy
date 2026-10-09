@@ -2113,6 +2113,99 @@ describe("research_append (Phase 3)", () => {
     expect(t.generated).toMatch(/T.*:/); // ISO datetime, not a bare date
   });
 
+  // The US 1890 federal census does not survive and can never fill a gap
+  // (ADR-0012, issue #2261). Issue #3255: prose alone let an agent write it 4
+  // times across 3 unit tests; this is the write-boundary backstop.
+  describe("US 1890 census backstop (#3255)", () => {
+    const usEvents = [
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    const denmarkEvents = [
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Denmark", standard_place: "Copenhagen, Denmark", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
+    const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
+      researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: {
+          label: "test timeline",
+          person_ids: ["I1"],
+          events,
+          gaps: [{ start: "1880", end: "1900", expected_events: expectedEvents, severity: "high" }],
+        },
+      } as never);
+
+    it.each([
+      ["bare 1890", "census 1890"],
+      ["with a destruction caveat", "census_1890 — largely destroyed, not surviving for most areas"],
+      ["underscore-joined fragments phrasing", "1890_census_fragments"],
+    ])("refuses an expected_events entry naming the US 1890 census: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry]);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toContain(entry);
+      expect(msg).toContain("notes");
+    });
+
+    it("allows the same sentence when it is in `notes`, not `expected_events`", async () => {
+      await writeProject();
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "append",
+        entry: {
+          label: "test timeline",
+          person_ids: ["I1"],
+          events: usEvents,
+          gaps: [{
+            start: "1880", end: "1900", expected_events: ["census_1900"], severity: "high",
+            notes: "The 1890 federal census would have covered this span but did not survive.",
+          }],
+        },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows the 1890 veterans schedule, which partly survives", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 veterans schedule"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows an unattributed 1890 census entry when the timeline's events are not US-placed", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1890"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("allows a non-1890 census year", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1900"]);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does not refuse an update that leaves `gaps` untouched", async () => {
+      await writeProject();
+      const appended = await appendWithGap(["census 1900"]);
+      expect(appended.ok).toBe(true);
+      if (!appended.ok) return;
+      const tId = singleOk(appended).entryId;
+      // A later update that writes 1890 into `gaps` would be refused (covered
+      // above); this update never touches `gaps` at all.
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "timelines",
+        op: "update",
+        entryId: tId,
+        fields: { label: "renamed timeline" },
+      } as never);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+  });
+
   // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
   // question puts it at the write boundary rather than in prose. Until
   // 2026-09-21 it lived only in the agent body and the eval validator, and

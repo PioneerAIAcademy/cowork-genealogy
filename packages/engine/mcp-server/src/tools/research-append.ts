@@ -359,6 +359,60 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
   return out;
 }
 
+// The US 1890 federal census does not survive and can never fill a gap
+// (ADR-0012, issue #2261) -- `expected_events` naming it, bare or with a
+// destruction caveat attached, is a false claim prose alone let through 4
+// times across 3 unit tests (issue #2797, commit 8f1621b0b). This is a single
+// fact fixed in code, not a per-country survival table (issue #3255, lead
+// ruling 2026-10-08): it knows only that the US 1890 census is gone, nothing
+// about any other year or jurisdiction.
+//
+// Attribution differs from the harness's own backstop
+// (`test_us_1890_never_expected`), which reads `tool_calls` to see which
+// `{Country}_Census` wiki page was fetched -- a writer precondition sees only
+// the document being written, not the run's tool history. In its place: an
+// entry naming the US outright fires regardless of the timeline's places;
+// an entry naming no jurisdiction falls back to the timeline's own events --
+// it fires only when every non-null `standard_place` ends in "United States"
+// (and at least one exists), so a non-US timeline is never refused on an
+// ambiguous entry. Stays silent on the 1890 veterans schedule, which partly
+// survives.
+const TIMELINE_CENSUS_RE = /census/i;
+const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
+const TIMELINE_VETERAN_RE = /veteran/i;
+const TIMELINE_NAMES_US_RE = /united states|u\.s\.|\bus\b|federal/i;
+
+export function timelineCensus1890Invariants(entry: any): string[] {
+  const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];
+  if (gaps.length === 0) return [];
+
+  const events: any[] = Array.isArray(entry.events) ? entry.events : [];
+  const standardPlaces = events
+    .map((e: any) => e?.standard_place)
+    .filter((p: unknown): p is string => typeof p === "string" && p.length > 0);
+  const allEventsAreUS =
+    standardPlaces.length > 0 && standardPlaces.every((p: string) => p.endsWith("United States"));
+
+  const errs: string[] = [];
+  for (const gap of gaps) {
+    const expectedEvents: any[] = Array.isArray(gap?.expected_events) ? gap.expected_events : [];
+    for (const item of expectedEvents) {
+      const text = String(item ?? "");
+      if (!TIMELINE_CENSUS_RE.test(text)) continue;
+      if (!TIMELINE_1890_RE.test(text)) continue;
+      if (TIMELINE_VETERAN_RE.test(text)) continue;
+      const namesUS = TIMELINE_NAMES_US_RE.test(text);
+      if (!namesUS && !allEventsAreUS) continue;
+      errs.push(
+        `gaps[].expected_events entry '${text}' names the US 1890 federal census, which does ` +
+          "not survive and can never fill a gap -- move the mention to this gap's `notes` " +
+          "instead and drop it from `expected_events`.",
+      );
+    }
+  }
+  return errs;
+}
+
 function conflictInvariants(entry: any): string[] {
   // `moot` settles a conflict for every gate that reads `status` — the
   // completion gate included — and was the one settling write with no
@@ -3491,6 +3545,15 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(conflictFields, "status")
     ) {
       invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
+    }
+  }
+  // US 1890 census backstop: on append, or an update that (re)sets `gaps`.
+  // Scoped that way so an unrelated edit to a timeline written before this
+  // rule existed is not refused.
+  if (section === "timelines") {
+    const timelineFields = op.fields ?? {};
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(timelineFields, "gaps")) {
+      invariantErrors.push(...timelineCensus1890Invariants(resultEntry));
     }
   }
   // One active plan per question — enforced on append OR an update that

@@ -165,6 +165,19 @@ def test_passes_when_a_sibling_entry_names_only_a_bounding_year():
     check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
 
 
+def test_passes_on_the_abbreviated_marriage_form():
+    """Finding #4 (review round 2): `m.` is how most genealogists abbreviate
+    "married", and a word-list fix that only recognised the spelled-out forms
+    let `(m. 1859)` through as a census year. The structural fix — a
+    parenthetical names the census year only when the year opens it — closes
+    this without needing to enumerate every abbreviation a genealogist might
+    use."""
+    gap = [{"start": "1859", "end": "1861",
+            "expected_events": ["England census (m. 1859)", "England census 1861"],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
 def test_fires_on_cross_country_page_contamination():
     """Finding #3: a year attributed to Ireland that is absent from the Ireland
     page but present on another fetched page (England's 1921) must be caught.
