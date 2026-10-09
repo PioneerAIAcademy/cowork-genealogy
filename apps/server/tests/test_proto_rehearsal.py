@@ -912,6 +912,19 @@ def test_signin_https_refuses_before_the_web_environment_exists(env, capsys):
     assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
 
 
+def test_signin_https_refuses_a_web_environment_with_no_recorded_address(stack, capsys):
+    """A failed `up --phase web` leaves the options snapshot but no CNAME in the inventory;
+    without this refusal the certificate would name CN=None and PUBLIC_URL https://None."""
+    env, fake, _ = stack
+    inv_path = env["work"] / "inventory.json"
+    inv = json.loads(inv_path.read_text(encoding="utf-8"))
+    del inv["state"]["envs"]["web"]
+    inv_path.write_text(json.dumps(inv), encoding="utf-8")
+    rc, _ = _https(env, fake)
+    assert rc == 2 and "run `up --phase web` first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
 def test_signin_https_stops_when_openssl_fails(stack, capsys):
     env, fake, _ = stack
     fake.fail["openssl"] = "req: unknown option -addext"
