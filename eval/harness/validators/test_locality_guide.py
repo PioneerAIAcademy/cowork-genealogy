@@ -237,3 +237,45 @@ def test_catalog_search_called_and_broadened(tool_calls, test):
         "call, a later call must name one of its parent jurisdictions (the text "
         "after its first comma), not a sibling or the same place"
     )
+
+
+def test_single_jurisdiction_enforced(before_state, after_state, tool_calls, test):
+    """VR6 (issue #3186) — tag-gated (`single-jurisdiction`): when delegated
+    several separate jurisdictions, the agent must survey only one. Asserts:
+
+      1. Exactly one localities[] entry is persisted (not one per county).
+      2. volume_search standardPlace arguments target at most one county
+         (broadening to a parent jurisdiction is allowed).
+
+    Guards the context-overflow bug: surveying three counties in parallel
+    produces ~30 tool calls whose results exceed the agent's context window.
+    """
+    if "single-jurisdiction" not in (test.get("tags") or []):
+        pytest.skip("not a single-jurisdiction test")
+    # 1. Exactly one localities entry persisted
+    written = _written_localities(before_state, after_state)
+    assert len(written) == 1, (
+        f"expected exactly 1 localities entry, got {len(written)} — "
+        "the agent should survey one jurisdiction per call, not all of them"
+    )
+    # 2. volume_search calls target at most one county
+    vs_calls = [
+        tc for tc in (tool_calls or [])
+        if bare_tool_name(tc.get("tool")) == "volume_search"
+    ]
+    if vs_calls:
+        # Extract the most-specific component (first comma part) of each
+        # standardPlace argument. Broadening calls (e.g. "Kentucky, United
+        # States") have fewer components than county-level calls (e.g.
+        # "Pulaski, Kentucky, United States"), so only county-level calls
+        # (3+ components for US places) contribute a distinct first part.
+        county_firsts = set()
+        for tc in vs_calls:
+            sp = (tc.get("args") or {}).get("standardPlace") or ""
+            parts = [p.strip() for p in sp.split(",") if p.strip()]
+            if len(parts) >= 3:
+                county_firsts.add(parts[0].lower())
+        assert len(county_firsts) <= 1, (
+            f"volume_search called for multiple counties: {sorted(county_firsts)} — "
+            "the agent should survey only one jurisdiction per call"
+        )

@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_locality_guide_029",
+    "skill": "locality-guide",
+    "name": "Several counties in one delegation — surveys only the first",
+    "type": "positive",
+    "description": "When delegated 'Pulaski, Greenup and Boyd County, Kentucky, 1840-1880', the agent must survey only one county and name the others as still needing their own survey. Guards the context-overflow bug (issue #3186): surveying all three in parallel produces 30+ tool calls whose results exceed the agent's context window.",
+    "tags": [
+      "locality-guide",
+      "localities",
+      "localities-persist",
+      "single-jurisdiction",
+      "kentucky",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Survey Pulaski, Greenup and Boyd County, Kentucky, 1840-1880.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-first-plan"
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "place-population-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-search-any",
+    "wiki-read-any",
+    "wiki-place-page-any",
+    "wikipedia-search-any",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "The delegation names three separate counties: Pulaski, Greenup, and Boyd County, Kentucky. The agent must survey ONLY ONE of them. It must NOT attempt to survey all three in one run — that is the context-overflow bug this test guards.",
+    "The agent's summary_for_user must name the other two counties as still needing their own separate survey.",
+    "Persistence check: the agent should persist exactly ONE localities[] entry via research_append, not three. A run that persists multiple loc_ entries for different counties has failed the single-jurisdiction guard.",
+    "Read-coverage is enforced deterministically by the validator (test_localities_persisted_with_full_page_coverage checks a localities[] entry was persisted with pages_read covering all four wiki sections). Grade the guide's substance for the one county it surveys.",
+    "Do NOT fail the test because the agent surveyed only one county — that is the CORRECT behavior. Fail only if it attempts all three, or if it surveys none, or if it does not name the remaining counties as pending.",
+    "The skill must NOT write to any research.json section other than localities, and must not touch tree.gedcomx.json."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
