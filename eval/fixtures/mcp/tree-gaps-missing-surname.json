@@ -34,8 +34,7 @@
           "censusYears": [
             1880
           ],
-          "placeLevel": "locality",
-          "score": 2
+          "placeLevel": "locality"
         }
       }
     ],

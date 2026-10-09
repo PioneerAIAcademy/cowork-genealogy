@@ -33,8 +33,7 @@
           "censusYears": [
             1860
           ],
-          "placeLevel": "county",
-          "score": 1.5
+          "placeLevel": "county"
         }
       }
     ],

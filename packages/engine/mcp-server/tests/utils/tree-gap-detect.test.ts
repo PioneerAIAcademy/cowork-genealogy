@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   addAncestry,
   addDescendancy,
-  coverageScore,
   detectGaps,
   emptyModel,
   placeLevel,
@@ -419,19 +418,19 @@ describe("no_birth_info", () => {
     return detectGaps(m).filter((x) => x.type === "no_birth_info" && x.personId === p.id);
   };
 
-  it("flags a father with no birth date or place, windowed on his first child (age 15-65)", () => {
-    const g = one(dp("DAD", "1", "Dad", "Male", null, 1920), [1880, 1884]);
+  it("flags a person with no birth date or place, windowed on the death year", () => {
+    const g = one(dp("DAD", "1", "Dad", "Male", null, 1920));
     expect(g).toHaveLength(1);
     expect(g[0].detail).toMatch(/no birth date or place/);
-    expect(g[0].yearRange).toEqual({ start: 1815, end: 1865 });
+    expect(g[0].yearRange).toEqual({ start: 1830, end: 1920 });
   });
 
-  it("windows a mother on ages 15-45", () => {
-    expect(one(dp("MOM", "1", "Mom", "Female", null, 1930), [1880])[0].yearRange).toEqual({ start: 1835, end: 1865 });
+  it("does not guess a window from the children's births", () => {
+    expect(one(dp("DAD", "1", "Dad", "Male", null, 1920), [1880, 1884])[0].yearRange).toEqual({ start: 1830, end: 1920 });
   });
 
-  it("falls back to the death year when there are no children", () => {
-    expect(one(dp("DAD", "1", "Dad", "Male", null, 1920))[0].yearRange).toEqual({ start: 1830, end: 1920 });
+  it("gives no window when neither a birth nor a death year is known", () => {
+    expect(one(dp("DAD", "1", "Dad", "Male", null, null, { deathDate: undefined }, false))[0].yearRange).toBeNull();
   });
 
   it("says which half is missing", () => {
@@ -449,20 +448,11 @@ describe("no_birth_info", () => {
   });
 });
 
-describe("placeLevel and coverageScore", () => {
+describe("placeLevel", () => {
   it("reads the level from the number of place parts", () => {
     expect(placeLevel("Ghana")).toBe("country");
     expect(placeLevel("Central, Ghana")).toBe("region");
     expect(placeLevel("Cape Coast Metropolitan, Central, Ghana")).toBe("county");
     expect(placeLevel("Cape Coast, Cape Coast Metropolitan, Central, Ghana")).toBe("locality");
-  });
-
-  it("is 0 with no collection, doubles with a census year, and shrinks as the place gets coarser", () => {
-    expect(coverageScore(0, 2, "locality")).toBe(0);
-    expect(coverageScore(3, 0, "locality")).toBe(1);
-    expect(coverageScore(3, 1, "locality")).toBe(2);
-    expect(coverageScore(3, 1, "county")).toBe(1.5);
-    expect(coverageScore(3, 1, "region")).toBe(1);
-    expect(coverageScore(3, 1, "country")).toBe(0.5);
   });
 });

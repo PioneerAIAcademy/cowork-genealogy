@@ -7,7 +7,6 @@ import { collectionCoverage, fetchAllCollections } from "./collections-search.js
 import {
   addAncestry,
   addDescendancy,
-  coverageScore,
   detectGaps,
   placeLevel,
   selectGaps,
@@ -70,8 +69,8 @@ export const treeGapsToolSchema = {
     "or place, a deceased person with no death date. Each hole gives the " +
     "person's ID, name, life years, the year range and place to search, and " +
     "`coverage`: catalog collections that could hold the record, census " +
-    "years inside the window, and a score weighted by how specific the " +
-    "place is. Living people never carry a " +
+    "years inside the window, and how specific the place is. Living " +
+    "people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
     "else, call person_search first. Reads only; writes nothing. Requires " +
     "authentication — call the login tool first if not logged in.",
@@ -200,7 +199,7 @@ function score(gaps: TreeGap[], catalog: FSCollectionEntry[]): void {
       TYPE_FACETS[g.type],
     );
     const level = placeLevel(g.place);
-    g.coverage = { ...c, placeLevel: level, score: coverageScore(c.collections, c.censusYears.length, level) };
+    g.coverage = { ...c, placeLevel: level };
   }
 }
 
