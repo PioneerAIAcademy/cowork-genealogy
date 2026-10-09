@@ -2807,7 +2807,7 @@ mismatched write is a no-op and that worker aborts. One column, two `WHERE` clau
 roughly one to two days with a two-worker integration test. It is textbook, which is why
 it was cut from the build plan rather than from this register.
 *Owner: us; needs a two-instance test before production.*
-**Status:** resolved by U6 (PR pending; `familysearch-handoff.md`, U6). One column,
+**Status:** resolved by U6 (PR #3299; `familysearch-handoff.md`, U6). One column,
 `turns.claim_epoch` (`010_claim_epoch.sql`), minted by every claim of an open turn; claims
 are still granted immediately. A stale close raises rather than returning, so it never
 releases a held message; the zero-progress counter is conditioned on the epoch; the
