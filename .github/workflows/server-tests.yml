@@ -46,6 +46,13 @@ name: Server tests
 # runs (a `services:` block would start on every PR, including the out-of-scope
 # ones this job answers in ~5 s), and the module FAILS rather than skips when CI
 # is set without PROTO_TEST_PG_DSN, so this job cannot go green by skipping it.
+#
+# tests/test_proto_fencing_pg.py (U6) is why this job also has Node: it proves a
+# superseded attempt's write through a second tool-server process is a no-op, so
+# it spawns the real `build/http.js` against the same Postgres. The steps below
+# install the pinned npm and build the engine (~40-60 s, relevant PRs only), and
+# the module FAILS rather than skips under CI when node or the build is missing,
+# or when any src/ file is newer than the build.
 
 #
 # Runs on EVERY pull request — no `paths:` filter — so this check always reports
@@ -103,7 +110,11 @@ jobs:
           # tests/test_proto_rehearsal.py's 12-digit account-id scan reads them, and it
           # is CI's only guard against a pasted AWS account id. A docs-only diff would
           # otherwise report success having scanned nothing.
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$'
+          #
+          # `^packages/engine/mcp-server/(src/|package\.json$|...)` (U6):
+          # tests/test_proto_fencing_pg.py spawns build/http.js, so a diff to the
+          # store or http-server alone must run it.
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$|^packages/engine/mcp-server/(src/|package\.json$|package-lock\.json$|tsconfig[^/]*\.json$)'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \
@@ -131,6 +142,29 @@ jobs:
         if: steps.scope.outputs.relevant == 'true'
         working-directory: apps/server
         run: uv sync --frozen
+
+      - name: Set up Node (for the fencing test's tool server)
+        if: steps.scope.outputs.relevant == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        if: steps.scope.outputs.relevant == 'true'
+        run: |
+          # Node 22 bundles npm 10.x; the engine's .npmrc sets engine-strict with
+          # an npm >=11.12 bound, so install the pinned npm before any engine
+          # `npm ci`. Version comes from packageManager (single source of truth).
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+          echo "Using npm $(npm --version)"
+
+      - name: Build the tool server
+        if: steps.scope.outputs.relevant == 'true'
+        working-directory: packages/engine/mcp-server
+        run: npm ci && npm run build
 
       - name: Start Postgres for the grant-lock tests
         if: steps.scope.outputs.relevant == 'true'

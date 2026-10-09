@@ -14,6 +14,17 @@ them. Every method bumps ``calls``, and the worker's per-turn log line reads
 appended > 0" assertion the plan names for the two silent-loss modes (a read-only config
 dir, a mismatched ``CLAUDE_CONFIG_DIR``), and D17's fourth criterion. Connect-per-call,
 one transaction per ``append`` batch.
+
+U6: a store built with ``turn_id`` and ``claim_epoch`` is one attempt's, and its ``append``
+lands only while that epoch is the turn's current claim -- the batch and its fence are ONE
+autocommit statement (``_FENCED_INSERT``). The fence is ``FOR SHARE`` on the ``turns`` row,
+so a newer claim waits for an in-flight batch, and once it commits no stale row can land:
+the redelivery's ``has_entries``/``load`` see a stable prefix. One statement, because a
+two-statement transaction would hold that share lock across an await while a sync hook on
+the same event loop (``record_nudge``, ``reset_zero_progress``, ``complete()``'s FOR UPDATE)
+blocks on the row -- a self-deadlock. No ``completed_at`` term: the closer's own trailing
+flush must land. ``load``, ``list_subkeys`` and ``has_entries`` stay unfenced; they are
+reads by the current claimer.
 """
 
 from __future__ import annotations
@@ -32,6 +43,13 @@ from claude_agent_sdk.types import (
 _INSERT = (
     "INSERT INTO session_entries (project_key, session_id, subpath, entry) "
     "VALUES (%s, %s, %s, %s)"
+)
+# U6: the batch lands only while (turn_id, claim_epoch) is the turn's current claim.
+_FENCED_INSERT = (
+    "INSERT INTO session_entries (project_key, session_id, subpath, entry) "
+    "SELECT %s, %s, %s, e FROM unnest(%s::jsonb[]) WITH ORDINALITY AS t(e, n) "
+    "WHERE EXISTS (SELECT 1 FROM turns WHERE turn_id = %s AND claim_epoch = %s FOR SHARE) "
+    "ORDER BY n"
 )
 _SELECT = (
     "SELECT entry FROM session_entries "
@@ -53,9 +71,23 @@ def entry_rows(project_id: str, key: SessionKey, entries: list[SessionStoreEntry
 
 
 class PgSessionStore(SessionStore):
-    def __init__(self, dsn: str, project_id: str) -> None:
+    def __init__(
+        self,
+        dsn: str,
+        project_id: str,
+        *,
+        turn_id: str | None = None,
+        claim_epoch: int | None = None,
+    ) -> None:
+        if (turn_id is None) != (claim_epoch is None):
+            raise ValueError("a fenced store needs both turn_id and claim_epoch")
         self.dsn = dsn
         self.project_id = project_id
+        self.turn_id = turn_id
+        self.claim_epoch = claim_epoch
+        # Set when an append was refused because a newer claim holds the turn; the worker
+        # reads it to tell a superseded attempt's MirrorErrorMessage from a lost batch.
+        self.superseded = False
         self.calls: dict[str, int] = {
             "append": 0,
             "entries_appended": 0,
@@ -69,7 +101,21 @@ class PgSessionStore(SessionStore):
     async def append(self, key: SessionKey, entries: list[SessionStoreEntry]) -> None:
         self.calls["append"] += 1
         rows = entry_rows(self.project_id, key, entries)
-        if rows:
+        if rows and self.turn_id is not None:
+            # Autocommit: the one statement is its own transaction, so the share lock is
+            # released at the statement's end, never held across an await.
+            async with await psycopg.AsyncConnection.connect(self.dsn, autocommit=True) as conn:
+                async with conn.cursor() as cur:
+                    await cur.execute(_FENCED_INSERT, (
+                        self.project_id, key["session_id"], key.get("subpath") or "",
+                        [row[3] for row in rows], self.turn_id, self.claim_epoch,
+                    ))
+                    landed = cur.rowcount
+            if landed == 0:
+                self.superseded = True
+                raise RuntimeError(f"claim epoch {self.claim_epoch} of turn {self.turn_id} is superseded; "
+                                   "transcript append refused")
+        elif rows:
             # ``async with`` commits on a clean exit and rolls back on an exception, so a
             # batch lands whole or not at all.
             async with await psycopg.AsyncConnection.connect(self.dsn) as conn:

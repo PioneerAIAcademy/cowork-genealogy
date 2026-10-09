@@ -124,14 +124,14 @@ async def attempt(project_id: str, **kw):
 def test_a_baseline_run_backfills_session_start_from_granted_at():
     """A U2-era row (008, no session column, no ledger: what every pre-U9 start left) gets
     its session start from granted_at -- exact, since before 009 only a sign-in wrote a row.
-    An unledgered database re-runs every file once, so the run applies all nine, and a
+    An unledgered database re-runs every file once, so the run applies all of them, and a
     second run changes nothing."""
     with database(apply=False, prefix="u3_") as dsn:
         files = migrate.load()
         names = [m.name for m in files]
-        assert names[-1] == "009_grant_session.sql"
+        assert names[-1] == "010_claim_epoch.sql"
         with psycopg.connect(dsn, autocommit=True) as conn:
-            for m in files[:-1]:
+            for m in files[:names.index("009_grant_session.sql")]:
                 conn.execute(m.text)
             granted = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
             conn.execute("INSERT INTO users (id, email) VALUES ('usr_u2', 'u2@example.org')")

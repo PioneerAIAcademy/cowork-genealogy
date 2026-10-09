@@ -1125,6 +1125,19 @@ def test_009_is_idempotent_and_backfills_from_granted_at():
         "the refresher's open-turn EXISTS needs its index"
 
 
+# ── U6: claim fencing ────────────────────────────────────────────────────────────
+
+
+def test_010_is_idempotent():
+    """010 re-runs on an unledgered database like every file (U9), so its one statement is
+    an IF NOT EXISTS add; NOT NULL with a constant default keeps it metadata-only, and 0 is
+    the "never claimed" epoch every fenced writer refuses."""
+    statements = _statements(SQL_DIR / "010_claim_epoch.sql")
+    assert len(statements) == 1, statements
+    assert re.match(r"ALTER TABLE turns ADD COLUMN IF NOT EXISTS claim_epoch bigint NOT NULL DEFAULT 0$",
+                    statements[0]), f"not idempotent: {statements[0]}"
+
+
 def _proto_imports(source: str, *, packaged: bool) -> set[str]:
     """The proto/<name>.py modules a source imports. ``packaged`` (the worker's layout):
     ``from proto import X``, ``from proto.X import ...`` and ``import proto.X``; otherwise

@@ -502,17 +502,20 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
 # ledger and its races. U23's held-message claim the same way: the worker's release against
-# admit_message on one session. A fresh database per test or module, dropped at teardown.
+# admit_message on one session. U6's claim fence the same way: a superseded attempt's
+# worker writes, transcript append and tool-server commit (two `build/http.js` processes,
+# hence the build first) are no-ops. A fresh database per test or module, dropped at teardown.
 # CI runs the same files against a postgres:16 container (server-tests.yml).
 .PHONY: proto-grants-test
-proto-grants-test: ## U3 + U9 + U23: the grant-lock interleavings, the migration runner and the held-message claim against the compose postgres (real advisory locks)
+proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
+	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a

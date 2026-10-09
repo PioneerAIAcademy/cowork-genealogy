@@ -215,7 +215,9 @@ class Seeder(threading.Thread):
         # The worker's own close: turn_done event + turns.completed_at in one commit. Two
         # commits would open a window where a stream replays turn_done and then announces
         # turn_active, leaving ChatPane busy with nothing left to clear it.
-        self.last_seq = _load_worker_complete()(conn, {"turn_id": self.turn_id, "session_id": self.session_id}, 0)
+        # claim_epoch=None: a seeder, not an attempt (U6), so the close fences every attempt out.
+        self.last_seq = _load_worker_complete()(conn, {"turn_id": self.turn_id, "session_id": self.session_id}, 0,
+                                                claim_epoch=None)
 
 
 # ── embedded mode ───────────────────────────────────────────────────────────────
