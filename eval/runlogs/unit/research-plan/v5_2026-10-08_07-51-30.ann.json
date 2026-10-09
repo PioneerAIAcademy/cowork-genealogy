@@ -29,14 +29,6 @@
     {
       "test_id": "ut_research_plan_006",
       "dimension_source": "rubric",
-      "dimension_name": "Record type selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_research_plan_006`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every record type directly addresses the parentage question's information needs. Probate (pli_006) targets direct evidence naming Patrick as heir/son. Church records (pli_007, pli_009) target marriage and baptism entries naming Thomas as father. Vital records (pli_008) target sibling death certificates naming both parents. Immigration/naturalization (pli_010) targets family declarations. Each rationale explicitly names what information the record type provides and why it advances the proof tier from Probable to Proved.\n\nJunior: (Pass - **`ut_research_plan_006`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\nJunior: (Pass - Record type selection is complete, relevant, and well‑justified. Each item directly addresses the parentage question and is supported by clear rationale.)"
-    },
-    {
-      "test_id": "ut_research_plan_006",
-      "dimension_source": "rubric",
       "dimension_name": "Objective scope containment",
       "llm_score": 3,
       "corrected_score": 3,
@@ -209,14 +201,6 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": "**`ut_research_plan_009`** — `base` / `Completeness`\nLLM: N/A → Junior: N/A\n\n> [coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was required to route the user to record-extraction with a clear explanation. An empty response with no routing message fails to complete the required action. The test author's notes specify that acceptable responses include 'routing the user to record-extraction, or a one-line explanation that extracting facts from records is handled by record-extraction.' Neither was provided.\n\nJunior: (N/A - tool declined properly, routed to record-extraction, transcript truncated)"
-    },
-    {
-      "test_id": "ut_research_plan_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": "**`ut_research_plan_009`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill. Tool Arguments is N/A when zero tool calls occur.\n\nJunior: (N/A - tool **`ut_research_plan_009`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\nJunior: (N/A - tool N/A - tool declined properly, routed to record-extraction, transcript truncated)"
     },
     {
       "test_id": "ut_research_plan_015",
@@ -409,6 +393,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_plan_013`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> Claude correctly chose review mode: pl_002 is active with pli_006 still in_progress, so the request for a plan recap triggered narration of the existing plan, not creation of a new one. No new plan was written to research.json; the audit trail of pl_002 is preserved. Exactly one active plan remains for q_001. Per-test requirement met: did not skip past pli_006 or propose new work.\n\nJunior: (Pass - The response respected the one-active-plan rule, preserved the audit trail, and correctly narrated the current state of pl_002 without creating new work.)"
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_006`** — `rubric` / `Record type selection`\nLLM: 3 → Junior: 3\n\n> Every record type directly addresses the parentage question's information needs. Probate (pli_006) targets direct evidence naming Patrick as heir/son. Church records (pli_007, pli_009) target marriage and baptism entries naming Thomas as father. Vital records (pli_008) target sibling death certificates naming both parents. Immigration/naturalization (pli_010) targets family declarations. Each rationale explicitly names what information the record type provides and why it advances the proof tier from Probable to Proved.\n\nJunior: (Pass - every record type addresses the parentage question and each rationale says what it provides.)"
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_plan_009`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill. Tool Arguments is N/A when zero tool calls occur.\n\nJunior: (Declined properly, routed to record-extraction; transcript truncated at the hand-off, so the N/A is correct rather than masking a 1.)"
     }
   ]
 }
