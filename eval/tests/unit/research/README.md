@@ -121,6 +121,15 @@ job" section: an open ask must still walk the routing table, and a bounded ask
 must not enter the question/plan chain. They are paired deliberately — neither
 passes a body that classifies everything one way.
 
+`ut_research_c1k` (`compound-bounded-ask.json`) pins the COMPOUND direction: a
+message asking for two deliverables that are each on the list is still bounded.
+It grades with `delivers:<skill>` tags rather than `routes-to:`, and the reason is
+worth knowing before copying either. `routes-to:` asserts only the FIRST hand-off,
+so on a compound ask it passes a turn that delivers one and silently drops the
+other — which is precisely the pre-change behaviour. A blind review proved that by
+executing the validator against four synthetic run shapes. `delivers:` requires a
+hand-off for every tag, in any order, because the skill body imposes no ordering.
+
 **Both are deterministic, and both were briefly not.** Each carries a `routes-to:`
 tag and so fires `test_routes_to_expected_skill`, which reads hook records rather
 than the model's narration: 019 `routes-to:question-selection`, 020

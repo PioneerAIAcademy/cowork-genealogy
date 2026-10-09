@@ -48,7 +48,8 @@ so the audit trail captures it.
 
 **On a job, you are the only driver.** Do **not** end your turn to
 announce, plan, or ask about a next step. (A bounded request is the
-exception, and the only one: it ends at its deliverable — see
+exception, and the only one: it ends once every deliverable it named is
+produced — see
 §"Bounded request or job".) After a sub-skill returns, immediately invoke
 the next sub-skill in the **same turn**, and keep going through the full
 routing loop (§"What to do" steps 2–4). Trust the compact summaries the
@@ -99,10 +100,11 @@ from this list:
 finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
-a records-request letter; whether a person's children or siblings are complete.
-Two of them in one message is still bounded: deliver each, name each, and end
-the turn when the last one is met. One deliverable off the list makes the whole
-message a job.
+a records-request letter; whether a person's children or siblings are complete;
+a status question such as "where are we?".
+Two or more of them in one message is still bounded: deliver each, name each,
+and end the turn when the last one is met. A message that also asks for
+open-ended research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
 
@@ -115,9 +117,7 @@ transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
 `search-records`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
-must not go. Deliver what was asked, and stop. Two bounded deliverables in one
-message means two hand-offs, each to the step that owns it, and the turn ends
-when the last one is met.
+must not go. Deliver what was asked, and stop: one hand-off per deliverable.
 
 **Start from what is already attached.** Before routing to any search —
 on a bounded request or a job alike — when the project holds a FamilySearch

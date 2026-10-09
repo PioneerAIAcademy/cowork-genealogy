@@ -4,12 +4,17 @@
     "skill": "research",
     "name": "Two bounded deliverables in one message are still bounded",
     "type": "positive",
-    "tags": ["routing", "routes-to:image-reader", "bounded-request"],
-    "description": "Issue #2813 item 1, from alpha feedback #3217 and #3244. The bounded definition used to read 'the message asks for ONE deliverable', so a message asking for TWO things that are each on the bounded list routed as a JOB: question-selection wrote questions, a plan was written and never executed, and the close never applied. The tester heard 'do you want to move forward' instead of being told both parts were done. Here the message asks for a transcription AND a research plan, both on the list, so the turn is bounded and must not enter the question/plan chain a job walks. GRADING: deterministic. `routes-to:image-reader` asserts the FIRST hand-off from hook records, the transcription being named first; the judge cannot see agent spawns. A router that treats a compound ask as a job calls question-selection first, which is the failure this test exists to catch. Paired with ut_research_020, which pins the single-deliverable direction."
+    "tags": [
+      "routing",
+      "bounded-request",
+      "delivers:image-reader",
+      "delivers:research-plan"
+    ],
+    "description": "Issue #2813 item 1. The bounded definition read \"the message asks for ONE deliverable\", so a message asking for TWO things that are each on the bounded list routed as a JOB. Reported in alpha feedback #3217, where the tester asked to evaluate a person's attached sources AND create a research plan. What that tester reported is the CLOSE, not dropped work: \"instead of coming out and saying 'objective reached, do you want to move forward' it said 'do you want to move forward'\". Here the message asks for a transcription AND a research plan, both on the list, so the turn is bounded. GRADING: deterministic, via `delivers:` rather than `routes-to:`. `routes-to:` asserts only the FIRST hand-off, so it passes a turn that delivers one deliverable and silently drops the other, which IS the pre-change behaviour this test exists to catch; a blind review proved that by executing the validator. `test_every_bounded_deliverable_is_handed_off` requires a hand-off for every `delivers:` tag, in any order (the body imposes none), and requires the FIRST hand-off to be one of them, which is how the job path shows up: on a project with no questions the table's first satisfiable row sends you to question-selection. Every callee is stubbed, as in ut_research_020, so no agent runs for real; the test declares no mcp_fixtures and image_transcribe is not in LIVE_TOOLS, so an unstubbed image-reader would be spawned with no transcription tool. SCENARIO: blyeberg-first-plan, which already has ONE REGISTERED QUESTION and no plan, and that is load-bearing. On a zero-question project research-plan is unreachable: research/SKILL.md:201 says a stated question 'is not a question until' question-selection registers it, and ownership.json gives `questions` to question-selection alone, so the plan deliverable could only be reached through the very step this test calls the failure. A blind review caught that; the first draft used empty-project-just-created and was unsatisfiable."
   },
   "input": {
-    "user_message": "/research Transcribe image 004022578_00190 for me, and also write me a research plan for Mary Hales. Then leave it there.",
-    "scenario": "empty-project-just-created"
+    "user_message": "/research Transcribe image 004022578_00190 for me, and also write the research plan for the Mikkel Blyeberg parentage question. Then leave it there.",
+    "scenario": "blyeberg-first-plan"
   },
   "execution": {
     "max_turns": 20,
@@ -18,13 +23,61 @@
       {
         "skill": "question-selection",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-extraction",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "image-reader",
+        "response": "TRANSCRIPTION of image 004022578_00190, 1881 Census of Canada, Sherbrooke, Quebec, page 14:\nLine 7: Driscoll, Cornelius, M, 67, Ireland, Irish, R. Catholic, Labourer.\nLine 8: Driscoll, Johanna, F, 61, Ireland, Irish, R. Catholic.\nLine 9: Driscoll, Mary, F, 24, Quebec, Irish, R. Catholic.\nNothing else on the page concerns this household. No project state was changed."
       }
     ]
   },
   "judge_context": [
-    "Both asks are on the bounded list (a transcription, and a research plan), so the whole message is bounded. The correct turn hands off to the step that owns each deliverable and ends when the last is met.",
-    "Routing to question-selection is the FAILURE this test exists to catch: that is the job path, and it is what produced the alpha complaints in #3217 and #3244.",
-    "Do not grade what happens after the first hand-off, which the stubs end."
+    "Both asks are on the bounded list (a transcription, and a research plan), so the whole message is bounded. The correct turn hands off for each deliverable and ends when the last is met, naming each.",
+    "Routing to question-selection is the FAILURE this test exists to catch: that is the job path.",
+    "Do not grade what happens after the hand-offs, which the stubs end."
   ],
   "judge_reads_files": true
 }

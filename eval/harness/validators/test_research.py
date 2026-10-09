@@ -425,3 +425,43 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
         pytest.skip("missing research.json for diff")
     bad = check_no_exhaustive_declaration(before_state, after_state)
     assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
+
+
+_DELIVERS_PREFIX = "delivers:"
+
+
+def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_calls, test):
+    """Tag-gated (``delivers:<skill>``, one per deliverable). Issue #2813 item 1.
+
+    ``routes-to:`` asserts the FIRST hand-off and permits only one tag, so on a
+    COMPOUND bounded ask it grades nothing about the second deliverable: a turn
+    that delivers the first and silently drops the second passes it. That is the
+    exact pre-change behaviour this rule exists to remove, which is why a separate
+    assertion is needed rather than a second ``routes-to:``.
+
+    Order-independent among the deliverables, because the body imposes none ("two
+    hand-offs, each to the step that owns it ... ends when the last one is met").
+    What it does forbid is the FIRST hand-off being something off the list, which
+    is how the job path shows up: on a project with no questions the table's first
+    satisfiable row sends you to question-selection.
+    """
+    from harness.skill_runner import handoffs
+
+    expected = [t[len(_DELIVERS_PREFIX):] for t in (test.get("tags") or [])
+                if t.startswith(_DELIVERS_PREFIX)]
+    if not expected:
+        pytest.skip("not a delivers: test")
+    assert all(expected), f"empty {_DELIVERS_PREFIX} tag value — name the skill or remove the tag"
+
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    missing = [e for e in expected if e not in handed]
+    assert not missing, (
+        "a compound bounded ask must hand off for EVERY deliverable it names. "
+        f"Never handed off: {missing}. Hand-offs seen: {handed}. Delivering one and "
+        "dropping the rest is the behaviour the one-or-more rule replaced."
+    )
+    assert handed and handed[0] in expected, (
+        f"the first hand-off must be one of the deliverables {expected}, got "
+        f"{handed[0] if handed else 'none'}. A hand-off off that list is the job "
+        "path, which a bounded request must not enter."
+    )
