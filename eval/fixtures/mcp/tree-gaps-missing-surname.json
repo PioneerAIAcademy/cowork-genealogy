@@ -1,6 +1,6 @@
 {
   "tool": "tree_gaps",
-  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased wife whose surname is missing. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased wife whose tree entry has a given name and no surname. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
   "args": {
     "personId": "TGAP-ROT"
   },
@@ -12,33 +12,30 @@
     "gaps": [
       {
         "type": "missing_surname",
-        "personId": "TGAP-GM4",
-        "name": "Anna (no surname)",
-        "lifespan": "1860-1930",
-        "generation": 2,
-        "detail": "The wife's surname is missing from the tree.",
+        "personId": "TGAP-GM1",
+        "name": "Clara",
+        "spouseId": "TGAP-GF1",
+        "spouseName": "Edmund Ashby",
+        "lifespan": "1854-1927",
+        "generation": 1,
+        "detail": "The wife's surname (maiden name) is missing from the tree.",
         "yearRange": {
-          "start": 1880,
-          "end": 1886
+          "start": 1879,
+          "end": 1881
         },
         "place": "Dayton, Montgomery, Ohio, United States",
         "coverage": {
-          "collections": 9,
-          "records": 4200000,
+          "collections": 6,
+          "records": 3100000,
           "recordTypes": [
-            "CENSUS",
             "CHURCH_RECORD",
             "VITAL"
           ],
           "censusYears": [
-            1900,
-            1910,
-            1920
+            1880
           ],
           "placeLevel": "locality"
-        },
-        "spouseId": "TGAP-GF4",
-        "spouseName": "Karl Ashby"
+        }
       }
     ],
     "scanned": {

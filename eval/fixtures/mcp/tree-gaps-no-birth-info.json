@@ -1,6 +1,6 @@
 {
   "tool": "tree_gaps",
-  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased person with no birth place. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased man with no birth date or place, windowed on his death year (death-90 to death). Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
   "args": {
     "personId": "TGAP-ROT"
   },
@@ -12,16 +12,16 @@
     "gaps": [
       {
         "type": "no_birth_info",
-        "personId": "TGAP-UN2",
-        "name": "Louise Ashby",
-        "lifespan": "-1925",
-        "generation": 1,
-        "detail": "No birth place is recorded.",
+        "personId": "TGAP-GF2",
+        "name": "Heinrich Weis",
+        "lifespan": "-1902",
+        "generation": 2,
+        "detail": "Deceased, but the tree gives no birth date or place.",
         "yearRange": {
-          "start": 1835,
-          "end": 1925
+          "start": 1812,
+          "end": 1902
         },
-        "place": "Dayton, Montgomery, Ohio, United States",
+        "place": "Cincinnati, Hamilton, Ohio, United States",
         "coverage": {
           "collections": 9,
           "records": 4200000,
@@ -31,9 +31,8 @@
             "VITAL"
           ],
           "censusYears": [
-            1900,
-            1910,
-            1920
+            1850,
+            1860
           ],
           "placeLevel": "locality"
         }
