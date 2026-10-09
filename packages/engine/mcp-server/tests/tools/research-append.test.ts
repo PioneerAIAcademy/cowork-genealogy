@@ -2197,13 +2197,37 @@ describe("research_append (Phase 3)", () => {
       expect(r.errors.join(" ")).toContain("census 1890");
     });
 
-    it.each([
-      ["Swiss federal census", "1890 Swiss federal census"],
-      ["Mexican federal census", "Mexico Federal District census 1890"],
-    ])("allows a non-US %s on a non-US timeline (bare 'federal' is not a US signal)", async (_label, entry) => {
+    it("allows a bare '1890 federal census' with no country named, on a non-US timeline (bare 'federal' is not a US signal)", async () => {
       await writeProject();
-      const r = await appendWithGap([entry], denmarkEvents);
+      const r = await appendWithGap(["1890 federal census"], denmarkEvents);
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // The lead's #3255 ruling requires this arm, and round-3 review found it
+    // missing entirely: an entry naming some OTHER country must stay silent
+    // regardless of the timeline's own places -- an emigrant's timeline (the
+    // shape this guard exists for) routinely has both a US-placed event AND
+    // a gap entry naming the origin country's own, surviving census.
+    it.each([
+      ["Denmark census 1890", "Denmark census 1890"],
+      ["Sweden census 1890", "Sweden census 1890"],
+      ["Prussia census 1890", "Prussia census 1890"],
+    ])("allows an entry naming another country's 1890 census on the immigrant's mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("does not read the ordinary pronoun \"us\" as naming the United States", async () => {
+      await writeProject();
+      const r = await appendWithGap(["1890 census (not available to us)"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("still fires on an entry naming the US explicitly, on a non-US timeline", async () => {
+      await writeProject();
+      const r = await appendWithGap(["United States census 1890"], denmarkEvents);
+      expect(r.ok).toBe(false);
     });
 
     it("allows a non-1890 census year", async () => {
