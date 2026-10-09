@@ -128,9 +128,23 @@ actionable error, not a confusingly-empty (or confusingly-unfiltered) result.
                         // fixed shape IS a wire surface)
   truncated: boolean,  // true when matches remain beyond this page
                         // (count > offset + items.length)
+  unregisteredDisagreements?: { personId, fact, assertionIds }[],
+                        // `conflicts` only — see below
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**`conflicts` also returns `unregisteredDisagreements`:** linked assertions that
+disagree on a birth or death place or year with no `conflicts` entry naming the
+pair, computed by `unregisteredDisagreements()` in `utils/question-state.ts` —
+the same detector behind `project_context`'s `questionStatuses`. `count` covers
+registered entries only, and the router read `count: 0` as "no evidence
+conflicts" and skipped `conflict-resolution` while two disagreements sat
+unregistered (`ut_research_h22`). Scope: the question's own assertions
+(`extracted_for_question_ids`) under `questionId`, otherwise every assertion;
+narrowed to those naming `assertionId`; omitted under a `status` filter other
+than `unresolved`, since an unregistered disagreement has no other status. The
+field does not page — `offset` and the 50-item cap apply to `items` alone.
 
 Each call returns at most 50 items (`MAX_ITEMS` in `research-query.ts`). A
 caller that hits `truncated: true` either narrows the filter or **pages**: set

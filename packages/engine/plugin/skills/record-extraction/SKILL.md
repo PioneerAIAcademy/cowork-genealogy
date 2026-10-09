@@ -134,9 +134,11 @@ Record data arrives in one of four ways:
 ## Log entry — router-side, before delegating
 
 **Only when no search skill already logged this search.** If
-search-records, search-external-sites, search-full-text or search-images
-produced the record, reference their existing `logId` — never create a
-second entry.
+search-records, search-external-sites, search-full-text, search-images
+or search-hints produced the record, reference their existing `logId` —
+never create a second entry. For an accepted hint, that is the `logId`
+search-hints returned with its `ark`; fetch the record with `record_read`
+and log nothing new.
 
 For a user-provided record (pasted text, PDF, image), call
 `research_log_append` with `tool: "user_provided"`. For a record you

@@ -24,6 +24,7 @@
 // support is a clear error, not a silent no-op.
 
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 
 const MAX_ITEMS = 50;
 
@@ -107,6 +108,11 @@ export type ResearchQueryResult =
        *  items.length`) — page with `offset` (or narrow the filter) rather than
        *  relying on this being everything. */
       truncated: boolean;
+      /** `conflicts` only: linked assertions that disagree with no entry naming
+       *  the pair. `count` covers registered entries, so a router reading
+       *  `count: 0` as "no conflicts present" skipped conflict-resolution while
+       *  these sat unregistered (ut_research_h22). */
+      unregisteredDisagreements?: UnregisteredDisagreement[];
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -278,6 +284,28 @@ function matches(item: any, rule: FilterRule, value: string, planItems?: Set<str
   });
 }
 
+/** The unregistered disagreements a `conflicts` read is asking about: the
+ *  question's own assertions under `questionId` (project_context's scope),
+ *  otherwise every assertion; narrowed to those naming `assertionId`. */
+function disagreementsInScope(research: any, input: ResearchQueryInput): UnregisteredDisagreement[] {
+  const assertions = Array.isArray(research?.assertions) ? research.assertions : [];
+  const scope = new Set<string>(
+    assertions
+      .filter(
+        (a: any) =>
+          input.questionId === undefined ||
+          (Array.isArray(a?.extracted_for_question_ids) &&
+            a.extracted_for_question_ids.includes(input.questionId)),
+      )
+      .map((a: any) => a?.id)
+      .filter((id: unknown): id is string => typeof id === "string"),
+  );
+  const found = unregisteredDisagreements(research, scope);
+  return input.assertionId === undefined
+    ? found
+    : found.filter((d) => d.assertionIds.includes(input.assertionId as string));
+}
+
 export async function researchQuery(input: ResearchQueryInput): Promise<ResearchQueryResult> {
   const { projectPath, section } = input;
 
@@ -387,13 +415,17 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     );
 
     const start = input.offset ?? 0;
-    return {
-      ok: true,
+    const page = {
+      ok: true as const,
       section,
       count: filtered.length,
       items: filtered.slice(start, start + MAX_ITEMS),
       truncated: filtered.length > start + MAX_ITEMS,
     };
+    if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
+      return page;
+    }
+    return { ...page, unregisteredDisagreements: disagreementsInScope(research, input) };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof ResearchQueryError) return { ok: false, errors: [e.message] };
@@ -437,7 +469,14 @@ export const researchQuerySchema = {
     "matches remain beyond the returned page, so advance `offset` by items.length " +
     "and call again until it is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document.",
+    "projection, not a persisted document.\n" +
+    "\n" +
+    "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
+    "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
+    "year with no conflicts entry naming them. These are evidence conflicts present " +
+    "but not yet registered: `count: 0` does not mean the evidence agrees. Scoped to " +
+    "the question's own assertions under `questionId`, narrowed by `assertionId`, " +
+    "omitted under a `status` other than 'unresolved'.",
   inputSchema: {
     type: "object" as const,
     properties: {
