@@ -86,6 +86,7 @@
     "tool:tree_correct": 4731,
     "tool:tree_edit": 6216,
     "tool:tree_forget": 6066,
+    "tool:tree_gaps": 1788,
     "tool:validate_research_schema": 479,
     "tool:volume_bisect": 998,
     "tool:volume_search": 2653,

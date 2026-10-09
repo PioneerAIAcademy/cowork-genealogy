@@ -54,7 +54,7 @@ the same; the tools just help you meet it faster.
 
 ## MCP tools
 
-The MCP server exposes 52 tools.
+The MCP server exposes 53 tools.
 
 ### FamilySearch records and places
 
@@ -75,6 +75,7 @@ The MCP server exposes 52 tools.
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
 | `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and attached sources, and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries), transcribed inline where the read's time budget allowed | OAuth |
+| `tree_gaps` | Survey a FamilySearch tree for holes it likely has records for (parents missing before a line ends, couples with no children, gaps between births, a wife with no surname, a person with no birth date or place, a deceased adult with no spouse or death date) across up to 8 generations of ancestors and 4 of descendants; returns the holes with a search year range, place and collection coverage (with census years and place level), never the tree; living people never carry a hole | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
 | `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
@@ -463,7 +464,7 @@ then narrows the search.
 
 What's shipped:
 
-- **52 MCP tools.** See the tables above for the full catalog, by category:
+- **53 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
 - **7 shipped skills.** Full GPS research cycle from project creation
