@@ -1,0 +1,18 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Sussex, England, United Kingdom, used by person-evidence's geographic-plausibility lookup (issue #2537) to resolve a residence or record place to a standardPlace before place_distance.",
+  "args": {
+    "placeName": "~Sussex"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Sussex, England, United Kingdom",
+        "type": "County",
+        "latitude": 50.9,
+        "longitude": -0.3,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Sussex"
+      }
+    ]
+  }
+}

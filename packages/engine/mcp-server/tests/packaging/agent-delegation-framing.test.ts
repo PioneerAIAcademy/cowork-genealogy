@@ -192,36 +192,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  "research-exhaustiveness -> research-exhaustiveness": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation that tells you to declare is a destination, not a finding.**",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "Same construction as proof-conclusion: the skill's delegation names both outcomes " +
-        "('declaring if the criteria are met, and recording an honest `declared: false` " +
-        "termination if they are not'), pinned below, and the agent reads the project " +
-        "itself. Measured limit: neither of the 2 delegations in the committed corpus uses " +
-        "the construction, so what actually holds there is that both are neutrally phrased " +
-        "('assess whether', 'evaluate whether') — the outcome the exemption claims, reached " +
-        "without the mechanism it credits. The agent-side pins remain the guarantee.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "declaring if the criteria are met, and recording an honest `declared: false` termination if they are not",
-      },
-    },
-  },
+  // "research-exhaustiveness -> research-exhaustiveness" was the self-delegation
+  // from the thin skills/research-exhaustiveness/ SKILL.md to
+  // agents/research-exhaustiveness.md. That skill directory was deleted in issue
+  // #2738; the direct caller is now `research`, which holds the sole caller-side
+  // pin for this agent below.
 
   // "person-evidence -> person-evidence" was the self-delegation from the thin
   // skills/person-evidence/ SKILL.md to agents/person-evidence.md. That skill
@@ -267,6 +242,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "agent",
         excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
       },
     ],
   },
@@ -485,8 +465,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
+  // (A research-exhaustiveness row left when issue #2738 deleted that skill
+  // directory on 2026-10-08, and a timeline row left when issue #2797 deleted
+  // its skill directory on 2026-10-06 -- both are agent files now, outside
+  // this arm's skillFiles scan, so neither mention is checked here any more.)
   ["conflict-resolution -> proof-conclusion", ""],
-  ["research-exhaustiveness -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -547,7 +530,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> question-selection", ""],
   ["forget-and-rederive -> question-selection", ""],
   ["init-project -> question-selection", ""],
-  ["research-exhaustiveness -> question-selection", ""],
   ["research-plan -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
@@ -574,22 +556,29 @@ const PROSE_MENTIONS = new Map<string, string>([
   // a delegation; it does not spell `@plugin:source-evaluation`.
   ["init-project -> source-evaluation", ""],
   // timeline entered agentOnly when issue #2797 deleted its skill directory.
-  // None of these five spells `@plugin:timeline`, and they split in two:
+  // None of these three spells `@plugin:timeline`, and they split in two:
   //
-  // Routing-boundary mentions of the AGENT, verified per file —
+  // Routing-boundary mention of the AGENT, verified per file —
   // conflict-resolution "build a timeline (use timeline)" and "(timeline)",
-  // project-status "Build or refresh the timeline" + "(timeline)",
   // forget-and-rederive listing it among the sections a forget touches.
+  // (A project-status row left when issue #2793 deleted that skill
+  // directory, and a question-selection row left when issue #2115 deleted
+  // that skill directory -- both are agent files now, outside this arm's
+  // skillFiles scan.)
   ["conflict-resolution -> timeline", ""],
   ["forget-and-rederive -> timeline", ""],
   //
-  // The other two name no agent at all. They match only because
-  // `namesAgent`'s token matcher reads the research.json SECTION word --
-  // init-project's "never restate a timeline", question-selection's
-  // "timeline gaps" and its `timeline_gap` trigger enum. Listed because the
-  // matcher cannot tell a data noun from an agent name, not because either
-  // file routes anywhere.
+  // The other names no agent at all. It matches only because `namesAgent`'s
+  // token matcher reads the research.json SECTION word -- init-project's
+  // "never restate a timeline". Listed because the matcher cannot tell a
+  // data noun from an agent name, not because the file routes anywhere.
   ["init-project -> timeline", ""],
+  // research-exhaustiveness entered agentOnly when issue #2738 deleted its
+  // skill directory. Both mentions below are bare-name mentions — neither
+  // spells `@plugin:research-exhaustiveness`. (A third, from
+  // search-external-sites, went with that skill when issue #2802 deleted it.)
+  ["research-plan -> research-exhaustiveness", ""],
+  ["search-records -> research-exhaustiveness", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -786,6 +775,8 @@ describe("agent delegation framing", () => {
     "record-extractor",
     // ARRIVED when issue #2802 deleted skills/search-external-sites/.
     "search-external-sites",
+    // ARRIVED when issue #2738 deleted skills/research-exhaustiveness/.
+    "research-exhaustiveness",
     "search-familysearch-wiki",
     // ARRIVED when issue #2120 deleted skills/search-full-text/.
     "search-full-text",

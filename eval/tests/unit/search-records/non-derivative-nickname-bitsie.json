@@ -25,7 +25,9 @@
     "record-search-jackson-1880-mary",
     "record-search-jackson-bitsie-no-results",
     "rank-search-matches-jackson-1880-mary",
-    "record-read-mary-jackson-mjkn-bit"
+    "record-read-mary-jackson-mjkn-bit",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "Should read tree.gedcomx.json before searching and notice that person I1 has TWO names — BirthName 'Mary Jackson' (preferred) and Nickname 'Bitsie Jackson'",

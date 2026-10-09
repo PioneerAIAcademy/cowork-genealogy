@@ -29,7 +29,9 @@
     "wiki-read-united-states-census",
     "record-search-conflict-household-flynn",
     "rank-search-matches-flynn-conflict",
-    "record-read-patrick-flynn-cflt-9k2"
+    "record-read-patrick-flynn-cflt-9k2",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "After record_search (with projectPath) stages results, the skill should pass subjectId to record_search and triage from the inline `ranked` block it returns. the inline `ranked` block returns the Patrick Flynn record at matchRank 1 with a high match score (0.85, matchConfidence 5).",

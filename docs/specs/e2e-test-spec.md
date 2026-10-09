@@ -1376,7 +1376,7 @@ which the compliance/correctness axis split fixed.
 | `compliance` | `pass` \| `fail` | **Process.** Whether the GPS guardrail skills actually ran — see §7.5. |
 | `guardrail_bypass_violations` | `string[]` | The specific bypasses, when `compliance` is `fail`. Top-level, not inside `judge_output`: it is a harness fact, and `interpret-e2e-result` is forbidden to read judge output at all. |
 | `outcome` | `pass` \| `partial` \| `fail` \| `ungraded` \| `skipped` | **The gate**, and it is the `verdict` — nothing else. Through `harness_schema_version` 5 it was `fail` whenever `compliance` failed, else the verdict; the §8 post-run compliance detectors were demoted from the gate on 2026-09-25 and now report on the compliance axis alone. The process exit code still keys on this, so a run that bypasses a guardrail exits green and the exit code reveals the verdict — the accepted cost, recorded in `guardrail-enforcement-spec.md` §8. A log at 5 or below stores the old fused value; readers re-derive rather than reading the stored key (`axes_from_runlog`). |
-| `harness_schema_version` | integer | `6` for the current shape. At `6`, `outcome` is the `verdict` alone; at `5` and below it is the old fusion (`fail` whenever `compliance` failed), so a v1–v5 log stores a value this code does not agree with and every reader re-derives it. At `5` **and above**, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped at main `4541a4c5` without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance` and the §7 shadow violation counts are not comparable across that boundary** — `outcome` is, since it is the verdict and those arms never touched it. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on logs predating the compliance/correctness axis split. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
+| `harness_schema_version` | integer | `7` for the current shape. At `7`, `compliance` is strictly **looser** than at `6`: a typed `Agent`/`Task` spawn of a guardrail arm's name credits that arm as a `Skill` call does, a namespaced `Skill` name (`genealogy-research:<skill>`) credits too, and a protected write made by its owning agent is never a shadow violation, so a v1–v6 log can store a "was never successfully invoked" violation this code no longer raises (`corpus_report.py --recompute` re-derives it and lists the run as "stored N -> recomputed M" under "TODAY's detector clears a violation the run recorded" — the detector got looser, not the run better). `outcome` does not move across `7`. At `6` and above, `outcome` is the `verdict` alone; at `5` and below it is the old fusion (`fail` whenever `compliance` failed), so a v1–v5 log stores a value this code does not agree with and every reader re-derives it. At `5` **and above**, `response_summary` for `image_transcribe` calls preserves the full `transcription` field, bypassing both the per-string cap (`_RUNLOG_STRING_MAX`, 500 chars) and the backstop (`_RUNLOG_MAX_CHARS`, 4000 chars). At `4` and below, that field was truncated at 500 chars, though the transcriptions were often many times longer — so extraction-accuracy audits could not see what was read (`make e2e-transcription-join SINCE=all` reports the current count of truncated captures over its window). The two are indistinguishable from the entry shape — `response_summary` stays a string — so **branch on the version before treating a v4 `image_transcribe` summary as complete**. A `4` log **may or may not** carry `tool_calls[].result_chars`, `usage.message_usage`, `usage.thread_windows`, `usage.hand_back_classes` or `usage.betas`: those were added without a bump because they are additive and no existing field changed meaning, so branch on key presence, not on the version — at `4`, `tool_calls[].is_error` means the tool **threw or returned `{ok: false}`**, with one exception: the no-project answer (`reason: "no_project"`) returns `{ok: false}` and is deliberately **not** marked, because the user simply is not in a research project. Ask "did this call land?" with `did_not_land` in `harness/skill_invocation.py`, never with a bare `is_error` gate — a bare gate counts a write that never happened, silently. At `3` it meant only *threw*, so a returned failure read as a success. The two are indistinguishable from an entry, which is why the counter moved; see `result.py`'s history block. `2` is the same shape without `tool_calls[].is_error` — **except for `2` logs written after main `4541a4c5`, which have it** (the join shipped at main `4541a4c5` without a bump; `3` is what makes the distinction readable, and §7.5 "Historical runs" has the table). Where the key is absent an **errored** tool call reads as a successful invocation to every guardrail detector, so **`compliance` and the §7 shadow violation counts are not comparable across that boundary** — `outcome` is, since it is the verdict and those arms never touched it. `1` additionally has a head-truncated `response_summary` — **branch on this before diffing `response_summary` across two runs** (§15, "Evidence to read, in order", step 4). Absent on logs predating the compliance/correctness axis split. Not bumped for `narration`: a reader tells a narration-era log from an older one by whether the `narration` key is present, so that change needs no version branch. |
 
 Committed run logs are never rewritten, so readers of historical data must go
 through `e2e.result.axes_from_runlog`, which resolves all four shapes the
@@ -1631,7 +1631,14 @@ checks over the final project state and the run's tool-call log
    effect is present in `research.json` or `tree.gedcomx.json` (a
    `proof_summaries` entry, `person_evidence` link, resolved `conflicts`
    entry, `exhaustive_declaration.declared`, or a tree write one of them
-   owns) with no successful `Skill` call for it anywhere in the run.
+   owns) with no successful invocation of it anywhere in the run. Either
+   route counts: a `Skill` call naming the skill, or a typed `Agent`/`Task`
+   spawn whose `subagent_type`, plugin namespace stripped, names it (the
+   direct spawn of a paired agent is the sanctioned in-loop route;
+   `guardrail-enforcement-spec.md` §2). An untyped or errored spawn credits
+   nothing. The message reads `'<arm>' was never successfully invoked in this
+   run (no Skill call and no typed Agent/Task spawn of that name)` for every
+   arm.
 2. **`find_missing_mentor_verdicts`** — a resolved question's
    `proof_summaries` entry has no matching `proof-critique` entry in
    `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
@@ -1762,24 +1769,38 @@ two things: a document the writer tool never checked, or the one ordering the
 refusal cannot see — a resolution claim written to the question after the
 summary.
 
-**A sixth check runs in shadow mode only: the warnings guardrail was never
-consulted before a parentage write.** `find_relationship_writes_without_warnings_check`
-(in `harness/skill_invocation.py`) flags a run whose final tree has a **new**
-`ParentChild`/`Couple` relationship (diffed against the starting tree, so seeded
-relationships do not count) for which `person_warnings` — the cheapest, LLM-free
-guardrail — was never successfully called. It keys on the `person_warnings`
-**tool** across all server spellings, not the `check-warnings` agent, so it
-catches a direct-tool path and an agent that launches but fails before reaching the
-tool. Like the citation-nulling check it **logs to
-`guardrail_shadow_violations` and never touches `compliance`/`outcome`**; its
-entries carry `kind: "warnings_unchecked"` for its own bucket
-(`make e2e-guardrail-shadow`). It exists because two runs of the same fixture
-diverged only on whether the parentage write was delegated to `proof-conclusion`
-(which carries the check-warnings step) or inlined by the orchestrator (which does
-not), and nothing recorded that the guardrail was skipped. **Promotion — to a hard
-check, or to a mandatory `person_warnings` call in the `/research` orchestrator so
-an inlined write is still gated — is gated on reading this fire rate across the
-corpus first**; not decided here.
+**A sixth check runs in shadow mode only: a tree write was refused for
+unjustified warnings and the agent gave up.** `find_relationship_writes_without_warnings_check`
+(in `harness/skill_invocation.py`) flags a run in which one of the four tree
+writers — `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`
+— returned `{ ok: false, reason: "unjustified_warnings" }` and no later writer
+call landed to resolve it. It keys on those tools across all server spellings.
+Like the citation-nulling check it **logs to `guardrail_shadow_violations` and
+never touches `compliance`/`outcome`**; its entries carry
+`kind: "unresolved_warning_refusal"` for its own bucket
+(`make e2e-guardrail-shadow`). Entries stored before the retarget carry the old
+`"warnings_unchecked"`, and the report reads both.
+
+**Retargeted when the gate moved to the write boundary, and the name is now
+historical.** It originally
+asked whether `person_warnings` was called after a parentage write, because the
+obligation lived in prose and two runs of the same fixture diverged only on
+whether the write was delegated to `proof-conclusion` (which carried the step)
+or inlined by the orchestrator (which did not). The writer tools now refuse
+such a write outright,
+so the prose step — and the question this check used to ask — went with it.
+
+**It reads `tool_calls` and nothing else.** It takes `tree`/`starting_tree` for
+the call sites and the record shape, but gates on neither, and this is
+load-bearing rather than incidental: a refused write never lands, so the runs
+it hunts leave no new relationship behind. The retarget first shipped with the
+old tree gate still in front of it, which made it fire only when an unrelated
+edge happened to land, and never at all for a refusal on a fact write. For the
+same reason `missing_for_warnings` no longer skips a run for a missing tree.
+
+**Promotion is gated on reading this fire rate across the corpus first**; not
+decided here. Read the rate only from runs recorded after the retarget — every
+earlier run was graded by the `person_warnings` question and is not comparable.
 
 **This numbered list stopped at six and the check set did not.** The ordinals
 are filing order, not a census: the tree-side citation arm is written up above
@@ -2522,7 +2543,11 @@ changing anything, because the fix differs completely by cause.
 
 Unlike the unit-test run log, the e2e run log records no structured list of
 which sub-skills ran. To reconstruct the chain, filter `tool_calls` for
-entries whose `tool` is `Skill` and read `args.skill`. Stated here because an
+entries whose `tool` is `Skill` (read `args.skill`) **and** entries whose
+`tool` is `Agent` or `Task` (read `args.subagent_type`, stripping any
+`genealogy-research:` prefix), in order. The orchestrator spawns most
+destinations as agents, so a `Skill`-only filter misses most of the chain and
+reads a paired agent reached directly as a skipped step. Stated here because an
 absence cannot be inferred from §8's field enumeration.
 
 ### Recording what you learned
