@@ -111,7 +111,8 @@ what applies:
   `place_search` first.
 - **Collections floor.** `collections_search({ standardPlace, startYear, endYear })`
   when `coverage` is null and the hole has a place and a year range. A non-empty
-  `coverage.censusYears` means a census search is possible for that window.
+  `coverage.censusYears` means a census search is possible for that window; ignore 1890 in
+  it, since almost all of that census was destroyed.
 
 Make each call once. A search that returns nothing is a result, not a reason to
 retry.
