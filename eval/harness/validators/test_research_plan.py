@@ -600,7 +600,7 @@ def _question_person_pids(research: dict, tree: dict) -> set[str]:
     text = " ".join(
         (q.get("question") or "")
         for q in research.get("questions") or []
-        if q.get("status") == "open"
+        if q.get("status") in {"open", "in_progress"}
     ).lower()
     pids: set[str] = set()
     for person in tree.get("persons") or []:
@@ -616,7 +616,7 @@ def _question_person_pids(research: dict, tree: dict) -> set[str]:
         if given and surname and re.search(rf"\b{re.escape(given)}\b", text) and re.search(
             rf"\b{re.escape(surname)}\b", text
         ):
-            pids.add(ark.rsplit(":", 1)[-1].strip())
+            pids.add(ark.split("?")[0].rstrip("/").rsplit(":", 1)[-1].strip())
     return pids
 
 
@@ -929,6 +929,28 @@ def _word_grams(text: str, n: int) -> set[str]:
     return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
 
 
+def _survey_noise_grams(research: dict, tree: dict) -> set[str]:
+    """Two-word grams a response can produce without reading any source: the
+    questions' own wording, every place a fact names, and every person name."""
+    text = [q.get("question") or "" for q in research.get("questions") or []]
+    for person in tree.get("persons") or []:
+        text += [f.get("place") or "" for f in person.get("facts") or []]
+        text += [f"{n.get('given') or ''} {n.get('surname') or ''}" for n in person.get("names") or []]
+    return _word_grams(" ".join(text), 2)
+
+
+def _person_source_grams(person: dict, tree: dict, noise: set[str]) -> set[str]:
+    """Distinctive two-word grams from the title and citation of every source
+    the person's own `sources` refs resolve to (noise removed)."""
+    by_id = {s.get("id"): s for s in tree.get("sources") or [] if isinstance(s, dict)}
+    grams: set[str] = set()
+    for ref in person.get("sources") or []:
+        src = by_id.get(ref.get("ref")) if isinstance(ref, dict) else None
+        if src:
+            grams |= _word_grams(f"{src.get('title') or ''} {src.get('citation') or ''}", 2)
+    return grams - noise
+
+
 def report_survey_surfaces_already_attached_fan_facts(before_state, text_response, test):
     """Tag-gated (issue #1948), tier 2 -- reporting only, per ADR-0011 /
     `unit-test-spec.md`: the harness can detect whether a non-subject
@@ -969,15 +991,20 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     whether surfacing it was that test's point.
 
     The tag gate carries more weight since issue #2208 widened the checked
-    population from source-ref'd facts to all recorded facts: across the 136
-    e2e starting trees that moves the demand from 12 persons to 772, up to 19
-    in one tree. Both tagged scenarios are hand-authored with a single
+    population from source-ref'd facts to all recorded facts, and to a
+    relative's person-level sources: on an imported tree that is nearly every
+    relative. Both tagged scenarios are hand-authored with a single
     checkable non-subject person, so nothing over-fires today -- but do NOT
     apply the `already-attached` tag to an imported tree without re-scoping
     this check, or it will demand a date-and-value for every relative and fire
     on every honest response. Note also that `surfaced` is satisfied by ANY of
     the person's facts, so widening the fact set made the per-person bar
     easier, not harder.
+
+    A person with person-level `sources` is checked on those instead: the
+    response must name them and carry a distinctive two-word gram from a
+    source's title or citation (question wording, fact places and person names
+    removed), because a name and a year can be written without reading it.
 
     Check: for each non-subject person with a fact the tree records --
     sourced or not (issue #2208; see the inline note at the loop) -- require
@@ -1048,6 +1075,7 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     subject_ids = set(research.get("project", {}).get("subject_person_ids") or [])
     response_lower = text_response.lower()
     paragraphs = [response_lower]
+    noise = _survey_noise_grams(research, tree)
 
     missed: list[str] = []
     for person in tree.get("persons", []) or []:
@@ -1057,24 +1085,25 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
         given = (person.get("names") or [{}])[0].get("given", "")
         if not given:
             continue
-        # EVERY fact the tree records, not only the source-ref'd ones (issue #2208,
-        # measured 2026-09-22). Simplified GedcomX has no person-level source field, so
-        # the only source<->person link is a fact-level `sources` ref -- and real
-        # FamilySearch imports do not write them: 3 of 136 e2e starting trees carry any
-        # (55 of 4,182 facts), against 62 of 99 hand-authored scenarios. Gating on
-        # `sources` made this check pass VACUOUSLY on the production shape, which is the
-        # shape the live report behind it (#2158) actually had: all 34 validators passed
-        # on a run the judge marked down 2 on Correctness and Completeness for exactly
-        # the miss this function exists to observe.
+        # EVERY fact the tree records, not only the source-ref'd ones (issue #2208): a
+        # fact's ref is no evidence the person was surveyed, and trees authored before
+        # project_create built from person_read (#3140) carry no refs at all.
         recorded_facts = list(person.get("facts") or [])
-        if not recorded_facts:
+        # A relative's own attachments live at the person level (#3066), referenced
+        # from `persons[].sources`, not from a fact. When there are any, their content
+        # -- not a name and a year -- is what shows the survey read them.
+        source_grams = _person_source_grams(person, tree, noise)
+        if not recorded_facts and not source_grams:
             continue  # nothing recorded for this person -- not in scope for this check
 
         name_pattern = rf"\b{re.escape(given.lower())}\b"
         name_present = bool(re.search(name_pattern, response_lower))
 
         surfaced = False
-        any_checkable = False
+        any_checkable = bool(source_grams)
+        if source_grams:
+            recorded_facts = []
+            surfaced = name_present and bool(source_grams & _word_grams(response_lower, 2))
         for fact in recorded_facts:
             date_tokens = {
                 t.lower() for t in (fact.get("date"), fact.get("standard_date")) if t

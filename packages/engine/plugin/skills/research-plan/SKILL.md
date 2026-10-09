@@ -88,7 +88,7 @@ and add plan items to verify them before relying on them.
 
 **Read the question person's FamilySearch profile first.** For each
 person the question is about whose tree entry has an `ark`, call
-`person_read({ personId })` with the id after the ark's last `:`, before
+`person_read({ personId, projectPath })` with the id after the ark's last `:`, before
 writing any plan item. Whatever it holds that the project tree lacks —
 parents, spouses, facts, attached sources — is a lead: state it in the
 rationale and plan items that test it, never searches that treat it as
@@ -97,10 +97,11 @@ missing. If the call fails, say so and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, read
-`tree.gedcomx.json` for the facts and relationships it already records
-for them — **every one, whether or not a source is attached to it.**
-For every one you find, **write down its date,
-place, and value before deciding what to plan for that person** —
+`tree.gedcomx.json` for the facts, relationships and person-level
+`sources` it already records for them — **every fact, whether or not a
+source is attached to it.** For every one you find, **write down its date,
+place, and value (for a source, what it records) before deciding what to
+plan for that person** —
 literally state what the fact records, in the plan's rationale,
 before the plan item. "Person X is already in the tree" is
 noticing they exist; it is not the survey. Neither is "review this

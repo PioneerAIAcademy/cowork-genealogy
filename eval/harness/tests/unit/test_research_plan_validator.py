@@ -856,6 +856,43 @@ BEFORE_STATE_NO_DATE_HAS_VALUE = {
 }
 
 
+_PSHAPE_DIR = (
+    Path(__file__).resolve().parents[4] / "eval/fixtures/scenarios/first-plan-fan-production-shape"
+)
+
+
+def _pshape_state():
+    return {
+        "research_json": json.loads((_PSHAPE_DIR / "research.json").read_text(encoding="utf-8")),
+        "tree_gedcomx_json": json.loads((_PSHAPE_DIR / "tree.gedcomx.json").read_text(encoding="utf-8")),
+    }
+
+
+def test_person_level_source_needs_its_content_not_name_and_year():
+    """The committed production-shaped scenario: Patrick's deed is a person-level
+    attachment and his fact carries only 1875 and the place. Naming him with the
+    year is what the question's own framing already gives away -- it must fire."""
+    response = (
+        "Patrick Sheahan (I2), Michael's brother, was in Schuylkill County by 1875. "
+        "Plan: 1880 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
+
+def test_person_level_source_passes_when_deed_content_stated():
+    response = (
+        "Patrick Sheahan (I2) bought land from James Kelly in 1875 (Deed Book 42, "
+        "p. 118, S2). Plan: 1880 census, church records, naturalization."
+    )
+    check(_pshape_state(), response, TAGGED)  # does not raise
+
+
+def test_person_level_source_content_without_the_person_fires():
+    response = "A land purchase is recorded in Deed Book 42, p. 118. Plan: 1880 census, church records."
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
 def test_passes_on_value_content_alone_when_fact_has_no_date():
     """`date` is optional in the schema (PR #2004 review, clack391): a
     sourced fact with no date at all previously failed unconditionally no

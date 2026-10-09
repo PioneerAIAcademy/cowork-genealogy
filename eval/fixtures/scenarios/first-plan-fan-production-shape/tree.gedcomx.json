@@ -4,19 +4,64 @@
       "id": "I1",
       "gender": "Male",
       "names": [
-        { "id": "N1", "preferred": true, "given": "Michael", "surname": "Sheahan", "type": "BirthName" }
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Michael",
+          "surname": "Sheahan",
+          "type": "BirthName"
+        }
       ],
       "facts": [
-        { "id": "F1", "type": "Residence", "date": "1870", "place": "Pennsylvania, United States" },
-        { "id": "F2", "type": "Residence", "date": "1882", "place": "Schuylkill County, Pennsylvania" },
-        { "id": "F3", "type": "Occupation", "value": "Miner", "date": "1882" }
+        {
+          "id": "F1",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Pennsylvania, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1882",
+          "place": "Schuylkill County, Pennsylvania",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Occupation",
+          "value": "Miner",
+          "date": "1882",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
       ]
     },
     {
       "id": "I2",
       "gender": "Male",
       "names": [
-        { "id": "N2", "preferred": true, "given": "Patrick", "surname": "Sheahan", "type": "BirthName" }
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Sheahan",
+          "type": "BirthName"
+        }
       ],
       "facts": [
         {
@@ -24,7 +69,17 @@
           "type": "Residence",
           "date": "1875",
           "place": "Schuylkill County, Pennsylvania",
-          "value": "Purchased land, Deed Book 42 p. 118"
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2"
         }
       ]
     },
@@ -32,17 +87,39 @@
       "id": "I3",
       "gender": "Unknown",
       "names": [
-        { "id": "N3", "preferred": true, "given": "", "surname": "Sheahan", "type": "BirthName" }
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "",
+          "surname": "Sheahan",
+          "type": "BirthName"
+        }
       ]
     }
   ],
   "relationships": [
-    { "id": "R1", "type": "ParentChild", "parent": "I3", "child": "I1" },
-    { "id": "R2", "type": "ParentChild", "parent": "I3", "child": "I2" }
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I2"
+    }
   ],
   "sources": [
     {
       "id": "S1",
+      "title": "FamilySearch Family Tree",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree, accessed 1 June 2026), read from the page of Michael Sheahan.",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
       "title": "Schuylkill County, Pennsylvania Deed Records, 1875, Patrick Sheahan purchase",
       "citation": "Schuylkill County, Pennsylvania, Recorder of Deeds, Deed Book 42, p. 118, Patrick Sheahan from James Kelly, 1875; FamilySearch digital images.",
       "url": "https://www.familysearch.org/ark:/61903/1:1:SYNTH-SHEAHAN-DEED-1875"
