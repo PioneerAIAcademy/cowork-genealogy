@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Deny raw Write/Edit/NotebookEdit on research.json and tree.gedcomx.json.
 
+Also on external-collections.json, which only `external_links_search` (given a
+`projectPath`) writes: it is the curated-collections list skills read back.
+
 Every write to those two files must go through the MCP writer tools, which
 validate before persisting. A direct file write never validates. `project_create`
 brings a project into being (both files, one validated call); `research_append`,
@@ -44,7 +47,7 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
@@ -248,7 +251,8 @@ REASON = (
     "must go through the writer tools. To CREATE a new project use project_create, "
     "which writes both files together; to add to an existing one use "
     "research_append, research_log_append, tree_edit or tree_correct. These "
-    "validate before persisting. Direct file writes never validate."
+    "validate before persisting. Direct file writes never validate. "
+    "external-collections.json is written only by external_links_search given a projectPath."
 )
 
 

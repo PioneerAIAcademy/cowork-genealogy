@@ -25,7 +25,10 @@
   },
   "mcp_fixtures": [
     "wiki-read-united-states-census",
-    "record-search-whitfield-1850-household"
+    "record-search-whitfield-1850-household",
+    "record-read-whitfield-1850-a1wf-dos",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "The 1850 U.S. Census has no relationship-to-head-of-household column (introduced in 1880). Every person in this household record — Amos Whitfield (the search subject), Nancy Doss (the person the record is filed under), Ezra Whitfield, Noah Whitfield, and Patrick Coyne — carries only Birth, Census, and Race facts. Nothing in the record states who is whose son, wife, head, or anything else.",
