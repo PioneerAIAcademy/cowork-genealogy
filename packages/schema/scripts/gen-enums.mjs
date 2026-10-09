@@ -7,7 +7,7 @@
 //
 // Only closed enums (a `$def` with an `enum` array) are emitted. Open enums use
 // `examples` and the *_recommended naming convention; they stay `string`.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -107,7 +107,19 @@ function main() {
 
 `
 
-  writeFileSync(outPath, header + blocks.join('\n\n') + '\n', 'utf8')
+  // `build` and `typecheck` both regenerate, and turbo runs this package's
+  // typecheck alongside consumers' typechecks that read the file. Rewriting it
+  // in place empties it for an instant, and a tsc reading then fails with
+  // TS2306 "is not a module". Leave an unchanged file alone; replace a changed
+  // one by rename, which a reader sees whole or not at all.
+  const content = header + blocks.join('\n\n') + '\n'
+  if (existsSync(outPath) && readFileSync(outPath, 'utf8') === content) {
+    console.log(`[gen-enums] src/enums.generated.ts unchanged — ${blocks.length} closed enums`)
+    return
+  }
+  const tmpPath = `${outPath}.${process.pid}.tmp`
+  writeFileSync(tmpPath, content, 'utf8')
+  renameSync(tmpPath, outPath)
   console.log(`[gen-enums] wrote src/enums.generated.ts — ${blocks.length} closed enums`)
 }
 
