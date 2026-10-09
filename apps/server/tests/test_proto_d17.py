@@ -58,6 +58,81 @@ def test_audit_counts_denied_attempts_separately_and_reads_beside_the_anchor_as_
     assert a.denied == {"Read": 1, "Bash": 1}
 
 
+def test_audit_normalises_dot_dot_and_relative_paths_against_the_anchor():
+    # '..' out of the anchor is an ordinary read; '..' back into it is a project read.
+    assert audit.audit([row("Read", path="/project/../etc/passwd", ms=1)], anchor="/project").criterion_3_ok
+    assert not audit.audit([row("Read", path="/opt/x/../../project/research.json", ms=1)],
+                           anchor="/project").criterion_3_ok
+    # A relative path resolves against the anchor (the agent's cwd), in or out of it.
+    assert audit.audit([row("Grep", path="results")], anchor="/project").project_reads_allowed == 1
+    assert audit.audit([row("Grep", path=".")], anchor="/project/").project_reads_allowed == 1
+    assert audit.audit([row("Grep", path="../opt/plugin")], anchor="/project").criterion_3_ok
+    # A doubled leading slash is the same directory to the kernel.
+    assert audit.audit([row("Read", path="//project/research.json", ms=1)],
+                       anchor="/project").project_reads_allowed == 1
+    assert audit.audit([row("Read", path="//projects/x.json", ms=1)], anchor="/project").criterion_3_ok
+
+
+def test_audit_counts_allowed_calls_by_bare_tool_name_and_buckets_other_decisions():
+    a = audit.audit([
+        row("mcp__genealogy__person_read", ms=1),
+        row("mcp__remote-devices__Genealogy_Research__person_read", ms=1),
+        row("mcp__Genealogy_Research__person_search", ms=1),
+        row("mcp__genealogy__person_ancestors", "deny"),
+        row("Task", ms=1),
+        row("Stop", "halt"),
+        row("Stop", "delivered"),
+        row("Stop", "delivered"),
+    ], anchor="/project")
+    assert a.allowed_by_tool == {"person_read": 2, "person_search": 1, "Task": 1}
+    assert a.other_decisions == {"halt": 1, "delivered": 2}
+    text = audit.report(a, ceiling_s=1800, session_id="s")
+    assert "person_read 2" in text and "person_search 1" in text and "person_quality 0" in text
+    assert "delivered 2" in text and "halt 1" in text
+
+
+def test_audit_load_filters_by_turn_and_session(monkeypatch):
+    seen: list[tuple] = []
+
+    class Conn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def execute(self, sql, params):
+            seen.append((sql, params))
+            return self
+
+        def fetchall(self):
+            return []
+
+    monkeypatch.setattr(audit.psycopg, "connect", lambda dsn: Conn())
+    audit.load("dsn", "s", turn_id="t")
+    audit.load("dsn", None, turn_id="t")
+    audit.load("dsn", None)
+    assert "session_id = %s AND turn_id = %s" in seen[0][0] and seen[0][1] == ("s", "t")
+    assert "WHERE turn_id = %s" in seen[1][0] and seen[1][1] == ("t",)
+    assert "WHERE" not in seen[2][0] and seen[2][1] == ()
+
+
+def test_audit_main_passes_the_turn_and_names_both_remedies_when_postgres_is_down(monkeypatch, capsys):
+    calls: list[tuple] = []
+    monkeypatch.setattr(audit, "load", lambda dsn, sid, turn_id=None: calls.append((sid, turn_id)) or [])
+    assert audit.main(["--turn", "t1"]) == 0
+    out = capsys.readouterr().out
+    assert calls == [(None, "t1")] and "rows (turn t1)" in out and "session turn" not in out
+
+    def down(dsn, sid, turn_id=None):
+        raise psycopg.OperationalError("connection refused")
+
+    monkeypatch.setattr(audit, "load", down)
+    assert audit.main([]) == 2
+    err = capsys.readouterr().err
+    assert "make proto-up" in err and "PGPASSFILE" in err and "bastion" in err
+
+
 def test_audit_report_names_the_verdict_and_the_ceiling():
     text = audit.report(audit.audit([row("Bash", ms=3)], anchor="/project"), ceiling_s=1800, session_id="s")
     assert "FAIL" in text and "session s" in text
