@@ -1105,11 +1105,14 @@ driver must wait.
 > Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
 > described the opposite and have been corrected** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
-> test. The flag **values** are unchanged; flipping them is separate work that
-> has to re-measure the tool mix before and after, and
-> `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
-> being on, so it is no longer a one-line experiment
-> (`gh issue list --state open --search "ENABLE_TOOL_SEARCH"`). The
+> test. The flag **values** are unchanged: on everywhere by default. Both eval
+> harnesses take an experiment-only off switch, `--no-tool-search` (`make e2e-run`
+> / `make eval-skill` with `TOOL_SEARCH=0`); an e2e run made with it must go to a
+> `RUNLOG_ROOT` outside `eval/runlogs/e2e/` (the harness refuses, CI rejects a
+> commit), and a unit run made with it is a `scratch_` log.
+> `eval/harness/e2e/mcp_health.py`'s mid-run backstop *depends* on deferral being
+> on and is inert under the switch. What off costs against on is recorded in
+> `docs/plan/cost-latency-10x.md` §5 once measured (T1.7). The
 > repo's own data corroborates the flag being live: ToolSearch is a steady few
 > percent of all tool calls across the committed e2e corpus *while the flag is
 > set to `true`*. This does not change the bare-name rule above, which is

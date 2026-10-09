@@ -191,8 +191,11 @@ Two pieces of work, in order:
 2. **Measure one e2e panel fixture with tool search off against the same fixture with
    it on**, on the harness, so the production gap is priced on this plan's basis. Do
    this before step 1 lands, because it decides how much of the gap is this lever's.
-   Both harnesses hard-code `"true"` (`env_for_sdk` in `eval/harness/harness/auth.py`
-   and the e2e orchestrator), so the off arm needs a switch.
+   Both harnesses take `--no-tool-search` (`make e2e-run TEST=<slug> TOOL_SEARCH=0
+   RUNLOG_ROOT=<dir outside the repo>`; `make eval-skill ... TOOL_SEARCH=0` for the
+   unit harness), which sends `ENABLE_TOOL_SEARCH=false` through `env_for_sdk` in
+   `eval/harness/harness/auth.py`. Read the pair with
+   `make e2e-compare BEFORE=<on.json> AFTER=<off.json>`.
 
 **Issue #2953 is the other half.** It marks the hot tools always-loaded (per-tool
 `_meta["anthropic/alwaysLoad"]`), which removes most of the corpus's median 12
