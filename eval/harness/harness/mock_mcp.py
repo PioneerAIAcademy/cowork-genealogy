@@ -12,11 +12,12 @@ contract for tool results.
 
 Some MCP tools are deterministic functions of local workspace state — their
 return value depends on what the skill just wrote. `project_create` resolves
-places (every place on a hand-built tree, and any place a staged read left
-without a `standard_place`) through the anonymous Places API; the mock gives the
-compiled resolver a table built from the test's own `place_search` fixtures
-(`_place_table`), so it stays offline and a place no fixture matches resolves to
-null. Canning their response as a fixture would be dishonest: a fixture
+places (every place the caller enters, and any place a staged read left without
+a `standard_place`) through the anonymous Places API; the mock gives the
+compiled resolver a table built from the test's own `place_search` fixtures for
+the places in the call's `tree` (`_place_table`), so it stays offline. A place
+not in the table resolves to null, which includes a staged read's unresolved
+place. Canning their response as a fixture would be dishonest: a fixture
 can't reflect the actual file content the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
@@ -1303,10 +1304,11 @@ def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str 
     """The place resolver's answers for one `project_create` call, from the test's
     own `place_search` fixtures.
 
-    `project_create` standardizes every place in a hand-built tree, and retries a
+    `project_create` standardizes every place the caller enters, and retries a
     read's unresolved ones, through the anonymous Places API. The harness stays
     offline, so the compiled resolver is given this table instead
-    (`__usePlaceTableForTests`): each place in the call's tree, matched against
+    (`__usePlaceTableForTests`): each place in the call's `tree` argument (a
+    staged read's places are not in it, so an unresolved one stays null), matched against
     the fixtures with the same `matches` a `place_search` call is, answered with
     the first result's `standardPlace`. A place no fixture matches resolves to
     null, as an unknown place does in production.
