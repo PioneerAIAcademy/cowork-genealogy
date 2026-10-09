@@ -27,8 +27,7 @@ def test_research_json_unmodified(before_state, after_state, test):
     another skill (e.g. conflict-resolution), which may legitimately
     modify project files as part of its own contract. Attributing those
     writes to check-warnings would be a false positive. Mirrors the
-    same guard in test_project_status.py and test_universal.py's
-    test_ownership_table.
+    same guard in test_universal.py's test_ownership_table.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests don't run the skill body")

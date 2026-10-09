@@ -445,8 +445,7 @@ def test_research_json_unmodified(before_state, after_state, test):
 
     Skipped on negative tests: the run is expected to route away to
     another skill, which may legitimately write as part of its own
-    contract. Mirrors the same guard in test_check_warnings.py and
-    test_project_status.py.
+    contract. Mirrors the same guard in test_check_warnings.py.
     """
     if test.get("type") != "positive":
         pytest.skip("negative tests don't run the skill body")
