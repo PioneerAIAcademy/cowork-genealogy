@@ -22,7 +22,7 @@ turns no advisory into a refusal; it only measures.
 | sources-without-assertions | `research_append`, `extraction_append` | a string in `validation.warnings` | `c8cc64250` (#1478) |
 | log-without-persistence | `research_log_append` | a string in `validation.warnings` | `c8cc64250` |
 
-## Five states, not two
+## Four states
 
 A call is sorted into exactly one of:
 
@@ -33,14 +33,16 @@ A call is sorted into exactly one of:
   "never held" — folding the two inflates the good-news number.
 - **fired → acted** — the field appeared and a later call did what it asked.
 - **fired → ignored** — the field appeared and nothing acted on it.
-- **fired → unlistable** (`unloggedSearches` only) — fired, but the note
-  summarised its refs rather than listing them, so "acted" cannot be checked.
 - **condition-never-held** — the call was observable and the field did not fire;
   the agent kept the invariant, so the nudge had no reason to.
 
-not-observable + never-held + fired = every emitter call, and
-fired = acted + ignored + unlistable. The report prints that accounting split by
-`agent_type`, with run and call denominators.
+not-observable + never-held + fired = every emitter call, and fired = acted +
+ignored. The report prints that accounting split by `agent_type`, with run and
+call denominators. Two asides sit alongside it: for `nilSearchNeedsLog`, how many
+"ignored" calls were in fact logged later in the run (a batched log after the
+next search, not neglect); and for `unloggedSearches`, the producer's "and N more"
+tail — refs it summarised rather than listed, which acted/ignored cannot check
+(the note always lists at least one ref, so the call's own verdict stands).
 
 ## Traps (each is a way to get a wrong number)
 
@@ -111,12 +113,17 @@ LOG_NO_PERSIST_MARKER = "logged with a positive outcome but no sources"
 # A staged-results ref as it appears in an `unloggedSearches` note and as a
 # `stagedResultsRef` on a later log append.
 _STAGING_REF_RE = re.compile(r"results/\.staging/[^\s,\"]+?\.json")
+# The producer's "…, and N more" tail (`formatUnloggedRefs`, results-staging.ts):
+# the refs it summarised instead of listing, which `_acted_unlogged` cannot check.
+_MORE_REFS_RE = re.compile(r"and (\d+) more")
 
-# The five mutually-exclusive per-call states.
+# The four mutually-exclusive per-call states. (The summarised "N more" refs an
+# `unloggedSearches` note omits are counted SEPARATELY on the row, not as a fifth
+# state — the producer always lists at least one ref, so acted/ignored is always
+# decidable on the listed ones.)
 NOT_OBSERVABLE = "not_observable"
 ACTED = "acted"
 IGNORED = "ignored"
-UNLISTABLE = "unlistable"
 NEVER_HELD = "never_held"
 
 
@@ -129,6 +136,14 @@ def _bare(call: dict) -> str:
 
 def _is_error(call: dict) -> bool:
     return bool(call.get("is_error"))
+
+
+def _as_dict(value: object) -> dict:
+    """`value` if it is a dict, else `{}` — so a malformed `args`/`ops` entry
+    (a string, a null, a list) is skipped rather than crashing the whole report
+    on a `.get`. Nothing in the corpus carries one yet; this is a guard, not a
+    fix for an observed shape."""
+    return value if isinstance(value, dict) else {}
 
 
 def agent_label(call: dict) -> str:
@@ -147,12 +162,12 @@ def writes_sections(call: dict) -> set[str]:
     different tool, or a non-sources/assertions section."""
     if _is_error(call) or _bare(call) not in SECTION_WRITERS:
         return set()
-    args = call.get("args") or {}
+    args = _as_dict(call.get("args"))
     out: set[str] = set()
     ops = args.get("ops")
     if isinstance(ops, list):
         for op in ops:
-            sec = (op or {}).get("section")
+            sec = _as_dict(op).get("section")
             if sec in ("sources", "assertions"):
                 out.add(sec)
     else:
@@ -165,12 +180,12 @@ def writes_sections(call: dict) -> set[str]:
 def log_entries(call: dict) -> list[dict]:
     """Each logged search as `{outcome, stagedResultsRef}`, flattening the two
     `research_log_append` arg shapes (flat and `ops: [...]`)."""
-    args = call.get("args") or {}
+    args = _as_dict(call.get("args"))
     ops = args.get("ops")
     if isinstance(ops, list):
         return [
-            {"outcome": (op or {}).get("outcome"),
-             "stagedResultsRef": (op or {}).get("stagedResultsRef")}
+            {"outcome": _as_dict(op).get("outcome"),
+             "stagedResultsRef": _as_dict(op).get("stagedResultsRef")}
             for op in ops
         ]
     return [{"outcome": args.get("outcome"),
@@ -262,7 +277,7 @@ class FieldSpec(NamedTuple):
     ship_date: date
     needs_validation_key: bool                 # validation.warnings note?
     fired: Callable[[dict], tuple[bool, dict | None]]  # (fired?, decoded doc)
-    acted: Callable[[list[dict], int, dict, dict | None], str]  # -> ACTED/IGNORED/UNLISTABLE
+    acted: Callable[[list[dict], int, dict, dict | None], str]  # -> ACTED/IGNORED
 
 
 def _fired_search_key(key: str) -> Callable[[dict], tuple[bool, dict | None]]:
@@ -292,28 +307,51 @@ def _fired_validation(marker: str) -> Callable[[dict], tuple[bool, dict | None]]
     return fired
 
 
+def _unlogged_note(fire_call: dict, doc: dict | None) -> str:
+    """The `unloggedSearches` note text, from the decoded doc or (on a truncated
+    decode) the raw summary."""
+    if isinstance(doc, dict) and isinstance(doc.get("unloggedSearches"), str):
+        return doc["unloggedSearches"]
+    raw = fire_call.get("response_summary") or ""
+    m = re.search(r"unloggedSearches\\?\"?\s*:\s*\\?\"(.*?)(?<!\\)\"", raw, re.S)
+    return m.group(1) if m else raw
+
+
 def _acted_unlogged(calls: list[dict], idx: int, fire_call: dict,
                     doc: dict | None) -> str:
     """A later successful `research_log_append` names one of the refs the note
-    listed. Refs the note only summarised cannot be checked -> UNLISTABLE."""
-    raw = fire_call.get("response_summary") or ""
-    note = ""
-    if isinstance(doc, dict) and isinstance(doc.get("unloggedSearches"), str):
-        note = doc["unloggedSearches"]
-    if not note:  # decode fell back to raw
-        m = re.search(r"unloggedSearches\\?\"?\s*:\s*\\?\"(.*?)(?<!\\)\"", raw, re.S)
-        note = m.group(1) if m else raw
-    refs = set(_STAGING_REF_RE.findall(note))
-    if not refs:
-        # The note summarised its refs ("N earlier staged…") without listing any,
-        # so there is nothing to match a later `stagedResultsRef` against.
-        return UNLISTABLE
+    listed. The producer (`formatUnloggedRefs`) always lists at least one ref, so
+    acted/ignored is always decidable; the summarised "N more" tail it may append
+    is counted separately on the row, never used to classify the call."""
+    refs = set(_STAGING_REF_RE.findall(_unlogged_note(fire_call, doc)))
     for later in calls[idx + 1:]:
         if _is_error(later) or _bare(later) != LOG_APPEND:
             continue
         if logged_refs(later) & refs:
             return ACTED
     return IGNORED
+
+
+def _summarised_more(fire_call: dict, doc: dict | None) -> int:
+    """The `N` in the note's "…, and N more" tail — refs the producer summarised
+    rather than listed, which cannot be matched against a later `stagedResultsRef`.
+    0 when the note listed every ref."""
+    m = _MORE_REFS_RE.search(_unlogged_note(fire_call, doc))
+    return int(m.group(1)) if m else 0
+
+
+def _nil_logged_later(calls: list[dict], idx: int) -> bool:
+    """Whether a qualifying negative log appears ANYWHERE later in the run, not
+    just before the next search. `_acted_nil`'s before-the-next-search cutoff
+    reads a batched "log after the next search" as ignored; this says whether the
+    nil was logged at all, so the ignored count is not misread as neglect."""
+    for later in calls[idx + 1:]:
+        if _is_error(later) or _bare(later) != LOG_APPEND:
+            continue
+        for entry in log_entries(later):
+            if entry.get("outcome") == "negative" and not entry.get("stagedResultsRef"):
+                return True
+    return False
 
 
 def _acted_nil(calls: list[dict], idx: int, fire_call: dict, doc: dict | None) -> str:
@@ -376,6 +414,10 @@ class CallRow(NamedTuple):
     field: str
     agent: str
     state: str
+    # Derived asides, populated only where they apply (defaults keep every other
+    # row and the sha-ladder tests constructing rows unaffected):
+    logged_later: bool = False   # a nil IGNORED call whose nil was logged later anyway
+    summarised_more: int = 0     # an unloggedSearches note's unchecked "and N more" tail
 
 
 def _capture_observable(call: dict, spec: FieldSpec) -> bool:
@@ -394,7 +436,7 @@ def _capture_observable(call: dict, spec: FieldSpec) -> bool:
 
 def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
     """One CallRow per (emitter call, field) in the run. not-observable, fired
-    (acted/ignored/unlistable) and never-held partition every emitter call."""
+    (acted/ignored) and never-held partition every emitter call."""
     run = f"{path.parent.name}/{path.stem}"
     calls = doc.get("tool_calls") or []
     rows: list[CallRow] = []
@@ -411,7 +453,11 @@ def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
             if not fired:
                 rows.append(CallRow(run, spec.key, agent, NEVER_HELD))
                 continue
-            rows.append(CallRow(run, spec.key, agent, spec.acted(calls, i, call, decoded)))
+            state = spec.acted(calls, i, call, decoded)
+            logged_later = (spec.key == "nilSearchNeedsLog" and state == IGNORED
+                            and _nil_logged_later(calls, i))
+            more = _summarised_more(call, decoded) if spec.key == "unloggedSearches" else 0
+            rows.append(CallRow(run, spec.key, agent, state, logged_later, more))
     return rows
 
 
@@ -470,11 +516,10 @@ def scan(paths: list[Path]) -> Scan:
     return Scan(rows, ratios, runs)
 
 
-_STATE_ORDER = [ACTED, IGNORED, UNLISTABLE, NEVER_HELD, NOT_OBSERVABLE]
+_STATE_ORDER = [ACTED, IGNORED, NEVER_HELD, NOT_OBSERVABLE]
 _STATE_LABEL = {
     ACTED: "fired → acted",
     IGNORED: "fired → ignored",
-    UNLISTABLE: "fired → unlistable",
     NEVER_HELD: "condition-never-held",
     NOT_OBSERVABLE: "not-observable",
 }
@@ -484,25 +529,39 @@ def _field_block(field: str, rows: list[CallRow]) -> list[str]:
     mine = [r for r in rows if r.field == field]
     calls = len(mine)
     runs_hit = len({r.run for r in mine})
-    fired = sum(1 for r in mine if r.state in (ACTED, IGNORED, UNLISTABLE))
+    fired = sum(1 for r in mine if r.state in (ACTED, IGNORED))
     lines = [
         f"### {field}",
         f"  {calls} emitter call(s) across {runs_hit} run(s); fired on {fired}.",
     ]
     by_state = Counter(r.state for r in mine)
     for state in _STATE_ORDER:
-        n = by_state.get(state, 0)
-        if state == UNLISTABLE and n == 0:
-            continue
-        lines.append(f"    {n:>5}  {_STATE_LABEL[state]}")
+        lines.append(f"    {by_state.get(state, 0):>5}  {_STATE_LABEL[state]}")
+    # nilSearchNeedsLog: how many "ignored" calls were in fact logged later in the
+    # run (a batched log after the next search). Without this the before-the-next-
+    # search cutoff reads batched logging as neglect.
+    if field == "nilSearchNeedsLog":
+        later = sum(1 for r in mine if r.state == IGNORED and r.logged_later)
+        ignored = by_state.get(IGNORED, 0)
+        if ignored:
+            lines.append(f"      of the {ignored} ignored, {later} were logged later in the run "
+                         "(batched after the next search), not never")
+    # unloggedSearches: the producer's "and N more" tail — refs it summarised
+    # rather than listed, counted separately (issue #3199) since acted/ignored
+    # above is decided on the listed refs only.
+    if field == "unloggedSearches":
+        notes = sum(1 for r in mine if r.summarised_more)
+        refs = sum(r.summarised_more for r in mine)
+        if notes:
+            lines.append(f"      plus {refs} summarised ref(s) across {notes} fired note(s) not "
+                         "checked (the producer's 'and N more' tail)")
     # Split by agent_type: the acted/ignored behaviour is the number the lead
     # decides on, and it differs between the main thread and each subagent.
     agents = sorted({r.agent for r in mine})
     if agents:
-        lines.append("  by agent_type (acted / ignored / unlistable / never-held / not-observable):")
+        lines.append("  by agent_type (acted / ignored / never-held / not-observable):")
         for agent in agents:
-            a = [r for r in mine if r.agent == agent]
-            counts = Counter(r.state for r in a)
+            counts = Counter(r.state for r in mine if r.agent == agent)
             lines.append(
                 f"    {agent:<24} "
                 + " / ".join(str(counts.get(s, 0)) for s in _STATE_ORDER)
@@ -515,7 +574,7 @@ def format_report(scanned: Scan) -> str:
     lines = [
         f"Advisory return-fields over {runs} committed e2e run(s) (issue #3199).",
         "Partition per field: not-observable + condition-never-held + fired = "
-        "emitter calls; fired = acted + ignored + unlistable.",
+        "emitter calls; fired = acted + ignored.",
         "",
     ]
     for spec in FIELDS:

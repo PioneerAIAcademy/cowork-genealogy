@@ -27,7 +27,6 @@ from e2e.advisory_report import (
     NOT_OBSERVABLE,
     SEARCH_SHIP_COMMIT,
     SRC_NO_ASSERT_MARKER,
-    UNLISTABLE,
     agent_label,
     classify_run,
     scan,
@@ -244,7 +243,7 @@ def test_src_without_assertions_ignored_when_next_write_is_sources(tmp_path):
     assert s[IGNORED] == 1 and s[ACTED] == 0  # the 2nd sources append is also an emitter -> not-observable
 
 
-# --- unloggedSearches: acted via listed ref, and the unlistable sub-state -----
+# --- unloggedSearches: acted on the listed ref, summarised tail counted apart --
 
 
 def test_unlogged_acted_when_a_listed_ref_is_logged(tmp_path):
@@ -259,11 +258,18 @@ def test_unlogged_acted_when_a_listed_ref_is_logged(tmp_path):
     assert _states(rows, "unloggedSearches") == Counter({ACTED: 1})
 
 
-def test_unlogged_unlistable_when_note_summarises_without_listing(tmp_path):
-    note = "3 earlier staged search response(s) in this project have no research.json log entry."
+def test_unlogged_summarised_tail_is_counted_separately_not_as_a_state(tmp_path):
+    # The producer lists the first refs then ", and N more". The call is still
+    # classified on the LISTED ref; the "N more" is recorded apart on the row.
+    ref = "results/.staging/8ea87945-5d95-460d-bddc-33bac80c9f73.json"
+    note = (f"6 earlier staged search response(s) in this project have no research.json "
+            f"log entry: {ref}, and 5 more. Call…")
     fired = {"totalMatches": 2, "unloggedSearches": note}
-    rows = scan([_write_run(tmp_path, [_search(fired)])]).rows
-    assert _states(rows, "unloggedSearches") == Counter({UNLISTABLE: 1})
+    calls = [_search(fired), _log_append(stagedResultsRef=ref)]
+    rows = [r for r in scan([_write_run(tmp_path, calls)]).rows if r.field == "unloggedSearches"]
+    assert len(rows) == 1
+    assert rows[0].state == ACTED          # decided on the listed ref, never "unlistable"
+    assert rows[0].summarised_more == 5    # the tail, counted apart
 
 
 # --- cross-cutting: agent_type, error-skip, partition identity ---------------
@@ -295,12 +301,12 @@ def test_error_firing_call_is_skipped_entirely(tmp_path):
 
 
 def test_partition_identity_holds(tmp_path):
-    # not-observable + never-held + fired(acted+ignored+unlistable) == emitter calls.
+    # not-observable + never-held + fired(acted+ignored) == emitter calls.
     nil_fire = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
     nil_clean = {"results": [{"id": 1}], "totalMatches": 1}
     calls = [
-        _search(nil_fire), _log_append(outcome="negative"),   # acted
-        _search(nil_fire),                                     # ignored (no qualifying append after)
+        _search(nil_fire), _log_append(outcome="negative"),   # acted (log before next search)
+        _search(nil_fire),                                     # ignored (next emitter is a search)
         _search(nil_clean),                                   # never-held
         {"tool": "mcp__genealogy__record_search"},            # not-observable (no summary)
     ]
@@ -308,7 +314,32 @@ def test_partition_identity_holds(tmp_path):
     nil = _states(rows, "nilSearchNeedsLog")
     emitter_calls = 4  # four record_search calls; the log_append is not an emitter
     assert sum(nil.values()) == emitter_calls
-    assert nil[ACTED] + nil[IGNORED] + nil.get(UNLISTABLE, 0) + nil[NEVER_HELD] + nil[NOT_OBSERVABLE] == emitter_calls
+    assert nil[ACTED] + nil[IGNORED] + nil[NEVER_HELD] + nil[NOT_OBSERVABLE] == emitter_calls
+
+
+def test_nil_ignored_but_logged_later_is_flagged(tmp_path):
+    # Nil fires; the next call is another search (so `_acted_nil` says ignored),
+    # but the nil IS logged after it — the row carries logged_later=True.
+    nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
+    calls = [
+        _search(nil_doc),                 # fires
+        _search(nil_doc),                 # next search -> ignored by the cutoff
+        _log_append(outcome="negative"),  # ...but logged here, later in the run
+    ]
+    rows = [r for r in scan([_write_run(tmp_path, calls)]).rows
+            if r.field == "nilSearchNeedsLog" and r.state == IGNORED]
+    assert len(rows) == 1 and rows[0].logged_later is True
+
+
+def test_non_dict_ops_entry_does_not_crash(tmp_path):
+    # A malformed ops entry (a string, not an object) must be skipped, not crash.
+    fired = {"ok": True, "validation": {"valid": False, "warnings": [_LOG_WARN]}}
+    calls = [
+        _log_resp(fired, as_text_block=False),
+        {"tool": "mcp__genealogy__research_append", "args": {"ops": ["oops", {"section": "assertions"}]}},
+    ]
+    rows = scan([_write_run(tmp_path, calls)]).rows
+    assert _states(rows, "log-without-persistence")[ACTED] == 1
 
 
 @pytest.mark.parametrize("as_text_block", [False, True])
