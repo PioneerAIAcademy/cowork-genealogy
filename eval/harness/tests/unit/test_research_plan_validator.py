@@ -1081,6 +1081,9 @@ def test_death_route_passes_a_mixed_plan_with_her_burial_item():
      "Barsebäck in 1718 (son christened there). Search Elena or Helena Asmundsdotter.", "1720-1790"),
     ("A targeted browse of the Barsebäck burial register recovers Elena's entry; her husband's "
      "burial is in the same volume.", "1718-1780"),
+    ("The subject's own death or burial entry is planned as a separate item when the birth parish is "
+     "unknown. Date window: Elena was last documented alive at her son Asmund's christening in 1718. "
+     "Search: Elena Asmundsdotter; also Elena wife of Jöns Jönsson.", "1718-1765"),
 ])
 def test_death_route_passes_legitimate_variants(rationale, date_range):
     """Reflowed wording, Swedish register terms, an en dash, a single year."""

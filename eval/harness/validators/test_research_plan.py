@@ -1086,6 +1086,7 @@ _YEAR_RE = re.compile(r"\b(1[5-9]\d\d)\b")
 
 
 _RELATIVE = r"(?:son|husband|father|mother|daughter|brother|sister|child|children|wife|spouse|parents?)"
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
 
 
 def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
@@ -1116,10 +1117,11 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
 
     An item counts only when its rationale or jurisdiction names the subject
     and a death/burial word, and its `date_range` starts after the subject's
-    birth window. An item naming a relative of hers ("Elena's son", "her
-    husband") counts only if it also ties the entry to her ("Elena's burial",
-    "her age at death"), so a son's, husband's or father's burial fails, as
-    does a baptism search whose rationale notes she later died.
+    birth window. When every sentence carrying a death word also names a
+    relative of hers ("Elena's son", "her husband"), the item counts only if
+    it ties the entry to her elsewhere ("Elena's burial", "her age at death"),
+    so a son's, husband's or father's burial fails, as does a baptism search
+    whose rationale notes she later died.
     """
     tags = test.get("tags") or []
     test_id = test.get("id")
@@ -1148,7 +1150,11 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
         text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
         if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
             return False
-        if relative.search(text) and not own.search(text):
+        death_sentences = [
+            s for s in _SENTENCE_SPLIT_RE.split(text)
+            if re.search(_DEATH_WORD, s, re.IGNORECASE)
+        ]
+        if all(relative.search(s) for s in death_sentences) and not own.search(text):
             return False
         years = [int(y) for y in _YEAR_RE.findall(str(item.get("date_range") or ""))]
         return bool(years) and min(years) >= earliest_start
