@@ -73,3 +73,11 @@ def test_the_job_path_still_fails_after_the_strip():
     with pytest.raises(AssertionError, match="job"):
         validator(_skill_calls("research", "question-selection", "image-reader",
                                "research-plan"), [], tagged)
+
+
+def test_the_filter_handles_the_router_appearing_later_too():
+    """clack391 on #3286: with the slice removed, only the `!= skill_under_test`
+    filter remains, so pin a shape where the router is NOT first. A slice would
+    have kept everything before `research` and failed here."""
+    tagged = dict(TAGS, skill="research")
+    validator(_skill_calls("image-reader", "research", "research-plan"), [], tagged)

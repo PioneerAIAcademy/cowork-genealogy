@@ -117,7 +117,10 @@ transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
 `search-records`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
-must not go. Deliver what was asked, and stop: one hand-off per deliverable.
+must not go. Deliver what was asked, and stop: at least one hand-off per
+deliverable, since one deliverable can need two (a record found goes on through
+`record-extraction`), and a status question is answered from `project_context`
+without a hand-off at all.
 
 **Start from what is already attached.** Before routing to any search —
 on a bounded request or a job alike — when the project holds a FamilySearch

@@ -10,11 +10,11 @@
       "delivers:image-reader",
       "delivers:research-plan"
     ],
-    "description": "Issue #2813 item 1. The bounded definition read \"the message asks for ONE deliverable\", so a message asking for TWO things that are each on the bounded list routed as a JOB. Reported in alpha feedback #3217, where the tester asked to evaluate a person's attached sources AND create a research plan. What that tester reported is the CLOSE, not dropped work: \"instead of coming out and saying 'objective reached, do you want to move forward' it said 'do you want to move forward'\". Here the message asks for a transcription AND a research plan, both on the list, so the turn is bounded. GRADING: deterministic, via `delivers:` rather than `routes-to:`. `routes-to:` asserts only the FIRST hand-off, so it passes a turn that delivers one deliverable and silently drops the other, which IS the pre-change behaviour this test exists to catch; a blind review proved that by executing the validator. `test_every_bounded_deliverable_is_handed_off` requires a hand-off for every `delivers:` tag, in any order (the body imposes none), and requires the FIRST hand-off to be one of them, which is how the job path shows up: on a project with no questions the table's first satisfiable row sends you to question-selection. Every callee is stubbed, as in ut_research_020, so no agent runs for real; the test declares no mcp_fixtures and image_transcribe is not in LIVE_TOOLS, so an unstubbed image-reader would be spawned with no transcription tool. SCENARIO: blyeberg-first-plan, which already has ONE REGISTERED QUESTION and no plan, and that is load-bearing. On a zero-question project research-plan is unreachable: research/SKILL.md:201 says a stated question 'is not a question until' question-selection registers it, and ownership.json gives `questions` to question-selection alone, so the plan deliverable could only be reached through the very step this test calls the failure. A blind review caught that; the first draft used empty-project-just-created and was unsatisfiable."
+    "description": "Issue #2813 item 1. The bounded definition read \"the message asks for ONE deliverable\", so a message asking for TWO things that are each on the bounded list routed as a JOB. Reported in alpha feedback #3217, where the tester asked to evaluate a person's attached sources AND create a research plan, and reported the CLOSE rather than dropped work: \"instead of coming out and saying 'objective reached, do you want to move forward' it said 'do you want to move forward'\". Here the message asks for a transcription AND a research plan, both on the list. GRADING: deterministic, via `delivers:` rather than `routes-to:`. `routes-to:` asserts only the FIRST hand-off, so it passes a turn that delivers one deliverable and drops the other, which IS the pre-change behaviour; a blind review proved that by executing the validator. `test_every_bounded_deliverable_is_handed_off` requires a hand-off for every `delivers:` tag, in any order (the body imposes none), and the FIRST to be one of them. SCENARIO: wilkins-first-plan, which has one registered question, NO plan and NO localities, and every one of those matters. The question is needed because a plan's `question_id` must reference a registered question (validator.ts:867) and research/SKILL.md:200 says a stated question is not one until question-selection writes it, so on a zero-question project the plan deliverable is unreachable except through the step this test calls the failure. The absent locality is what makes the assert discriminating: with one present the job path's first row is `research-plan` itself (SKILL.md:202, pinned by ut_research_013 on blyeberg-first-plan), which is also a `delivers:` tag, so a job run would pass. With none, the job path goes to `locality-guide` first (pinned by ut_research_012 on this scenario) and the first-hand-off assert fires. Both shapes were run against the real validator."
   },
   "input": {
-    "user_message": "/research Transcribe image 004022578_00190 for me, and also write the research plan for the Mikkel Blyeberg parentage question. Then leave it there.",
-    "scenario": "blyeberg-first-plan"
+    "user_message": "/research Transcribe image 004022578_00190 for me, and also write the research plan for the Elijah Wilkins death question.",
+    "scenario": "wilkins-first-plan"
   },
   "execution": {
     "max_turns": 20,
@@ -30,7 +30,7 @@
       },
       {
         "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+        "response": "Your delegation is recorded and counts as complete. It changed no project state. Carry on with whatever else this message asked for."
       },
       {
         "skill": "search-records",
@@ -76,8 +76,8 @@
   },
   "judge_context": [
     "Both asks are on the bounded list (a transcription, and a research plan), so the whole message is bounded. The correct turn hands off for each deliverable and ends when the last is met, naming each.",
-    "Routing to question-selection is the FAILURE this test exists to catch: that is the job path.",
-    "Do not grade what happens after the hand-offs, which the stubs end."
+    "On this scenario the JOB path's first hand-off is locality-guide (a question with no plan and no localities entry). That is the failure this test exists to catch.",
+    "Do not grade what happens after the hand-offs."
   ],
   "judge_reads_files": true
 }

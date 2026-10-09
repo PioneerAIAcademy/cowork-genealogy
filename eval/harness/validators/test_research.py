@@ -441,9 +441,12 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
 
     Order-independent among the deliverables, because the body imposes none ("two
     hand-offs, each to the step that owns it ... ends when the last one is met").
-    What it does forbid is the FIRST hand-off being something off the list, which
-    is how the job path shows up: on a project with no questions the table's first
-    satisfiable row sends you to question-selection.
+    What it does forbid is the FIRST hand-off being something off the list, which is
+    how the job path shows up. WHICH step that is depends on the project: with no
+    questions it is ``question-selection``; with a question and no localities entry
+    it is ``locality-guide``; with a localities entry it is ``research-plan``. A
+    scenario whose job-path head is itself a ``delivers:`` target cannot
+    discriminate, so pick one where it is not.
     """
     from harness.skill_runner import handoffs
 
@@ -458,12 +461,12 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
     # recorded first when entered as a slash command (issue #3116), so a raw
     # handed[0] is "research" and the first-hand-off assertion below would fail on
     # every real run. A claim audit caught this before a paid run did.
+    # The skill under test is recorded first when entered as a slash command
+    # (issue #3116), so a raw handed[0] is "research" and the assert below would
+    # fail on every real run. Filtering is enough; test_routes_to_expected_skill's
+    # extra slice is redundant beside it.
     skill_under_test = test.get("skill")
-    if skill_under_test and skill_under_test in handed:
-        tail = handed[handed.index(skill_under_test) + 1:]
-    else:
-        tail = list(handed)
-    delegations = [s for s in tail if s != skill_under_test]
+    delegations = [s for s in handed if s != skill_under_test]
 
     missing = [e for e in expected if e not in delegations]
     assert not missing, (
