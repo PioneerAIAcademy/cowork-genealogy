@@ -1,0 +1,438 @@
+{
+  "run_log": "v1_2026-10-08_21-00-01.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. All claims verified against tool responses — civil registration dates, repository names, 1922 Four Courts fire  impact all accurate. No fabrication."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Covers all major record classes for Cork 1830s-1840s, addresses the civil registration gap, names repositories, includes boundary-crossing advice."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with LLM. The wiki_read calls returned generic Ireland pages because the fixture's predicate matched — that's fixture behavior, not an argument error. The arguments themselves (specific Cork/Ireland URLs) were reasonable attempts. The external_links_search returning global resources is also a tool limitation. Arguments were semantically correct."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Cork County formation (1606), internal parish/barony structure, civil vs Catholic parish boundary distinction, relevant dioceses — all historically accurate."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Agree. Accurate start dates, correct repository attributions (NLI, RCBL, NAI), proper distinction between indexed and physical-only holdings."
+    },
+    {
+      "test_id": "ut_locality_guide_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Actionable search order, specific pitfalls (parish boundary misalignment, 1922 fire), concrete repository recommendations."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " Agree. The agent asserted Javorje was a filial of a mother parish and named candidate parishes (Sv. Kancijan, Sv. Jurij). The judge_context explicitly forbids this — \"must NOT state that Javorje was a filial of a mother parish, and must NOT name any mother parish.\" Material error, correctly scored. "
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. The agent searched catalog_search at Škofja Loka but not Gorenja Vas-Poljane. The judge_context requires reporting results at both levels. The coverage-gap report is incomplete — missing the 1931 and 1936 population censuses. "
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Three fixture_not_found errors from bad argument combinations (keywords without standardPlace, extra subject/count/hydrate args). The successful calls used standardPlace alone, which was the working pattern. The agent should have stuck with it."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Habsburg/French Illyrian Provinces (1809-1813) context is correct. Archdiocese of Ljubljana correctly identified. No boundary errors."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Parish registers correctly identified as primary source, archdiocesan archives named with contact details, Matricula Online correctly cited, 1829 duplicate mandate accurate."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. The strategy is undermined by the unsupported filial-parish claim, which directs the user to identify a mother parish — guidance grounded in nothing the tools returned. The judge_context requires presenting parish affiliation as unconfirmed. "
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with LLM. The judge itself says the statements are correct — \"This is correct.\" The guide correctly says town-level recording was mandated from 1639 (in the research tips section) AND correctly states 1841 for statewide. The \"implication\" the judge flags is not a factual error — both facts are stated accurately in different sections. No fabrication."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. All major record types covered, specific FamilySearch collections with IDs, browse-only volumes documented, border counties addressed."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. All calls matched fixtures, no fixture_not_found errors, semantically correct arguments throughout."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Berkshire County formation (1761 from Hampshire), stable boundaries 1820-1850, county seat Pittsfield, neighboring counties with correct formation dates."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Specific collection IDs, accurate start dates, correct repositories, proper distinction between indexed and browse-only volumes (0% and 12%)."
+    },
+    {
+      "test_id": "ut_locality_guide_026",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Clear search order, specific pitfalls (compliance variance, marriage intentions in multiple towns), browse-only volumes flagged, NEHGS and Berkshire Athenaeum recommended."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Spanish colonial context accurate, Arkansas Post correctly identified, Archivo General de Indias and PARES correctly named. No fabrication."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. All major colonial record types covered, specific repositories named, digitization status documented, locality entry persisted."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. All calls matched fixtures, arguments semantically correct."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. French-Spanish-American transitions correct, administrative hierarchy accurate, ecclesiastical jurisdiction identified."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Correct record classes with start dates, FamilySearch volume details accurate, proper distinction between digitized and physical."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Actionable search order, PARES recommended, Louisiana repositories correctly flagged, naming conventions and flood damage noted as pitfalls."
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. All jurisdictional transitions correct, collection IDs verified, no fabrication."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Comprehensive coverage of 1780-1819 period across four governing authorities."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with LLM. The judge says \"16 earlier tool calls were dropped for prompt size, making a complete assessment impossible\" — that's a judge limitation, not a skill defect. The visible calls used reasonable arguments. Wiki_read returning generic content is fixture behavior; the skill acknowledged this and recovered via alternative tools. Arguments were semantically correct."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. French, British, Spanish, Mississippi Territory, Alabama Territory transitions all accurate. Washington County filing advice is historically correct."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Correct start dates, proper repository attributions (ADAH, AGI, BLM GLO, NARA), territorial census details accurate."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. BLM GLO as starting point is correct, Mississippi Territory county name advice is a critical pitfall, foreign archive guidance is specific and actionable."
+    }
+  ]
+}
