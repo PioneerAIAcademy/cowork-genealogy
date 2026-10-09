@@ -1,4 +1,4 @@
-﻿# Skill rewrites for the structured-persistence + deterministic tools — Spec
+# Skill rewrites for the structured-persistence + deterministic tools — Spec
 
 > **Status:** Consolidated (2026-06-19). Supersedes the wave-1-only draft of this
 > file. Now covers **both** migration waves, organized **by skill** so every

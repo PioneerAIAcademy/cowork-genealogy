@@ -1,17 +1,9 @@
 {
-  "run_log": "v15_2026-10-08_22-49-28.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v15.json",
+  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
   "corrections": [
     {
-      "test_id": "ut_research_005",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -19,7 +11,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -35,15 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -51,15 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -75,15 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -91,15 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_013",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_013",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,7 +91,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_013",
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -115,12 +115,36 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Identified the father (Thomas Flynn) with evidence but left the mother entirely unidentified"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     }
   ]
 }
