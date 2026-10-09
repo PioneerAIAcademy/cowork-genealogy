@@ -141,6 +141,10 @@ export function findNestingAncestor(projectPath: string): Promise<string | null>
   return getProjectStore().findNestingAncestor(projectPath);
 }
 
+/** `readProjectJson`'s parse failure, as a type: the one failure a caller may
+ *  answer by rebuilding the file (a host-written cache) rather than reporting. */
+export class InvalidProjectJsonError extends Error {}
+
 /**
  * Read and parse one of the project's JSON documents.
  *
@@ -176,7 +180,7 @@ export async function readProjectJson(projectPath: string, filename: string): Pr
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`${filename} is not valid JSON`);
+    throw new InvalidProjectJsonError(`${filename} is not valid JSON`);
   }
 }
 

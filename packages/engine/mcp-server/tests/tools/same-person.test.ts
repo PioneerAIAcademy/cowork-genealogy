@@ -905,6 +905,14 @@ describe("buildRecordedScore", () => {
     expect(r?.record_source).toBe("record_read");
   });
 
+  it("reads as record_read for an accepted FamilySearch hint (search-hints, #2029)", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "ark:/61903/1:1:MABC", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "person_record_matches" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
   // ── and the cases that must NOT read as fetchable ──
   it("reads as projection for a full-text hit", () => {
     const r = buildRecordedScore(
