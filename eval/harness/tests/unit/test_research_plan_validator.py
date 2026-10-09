@@ -1018,6 +1018,20 @@ def test_death_route_fires_when_the_death_item_is_someone_elses():
         check_death_route(b, a, DTH)
 
 
+@pytest.mark.parametrize("rationale", [
+    "Burial of Asmund Jönsson, Elena's son, d. 1768.",
+    "Jöns Jönsson, Elena's husband, buried in Barsebäck; dates her widowhood.",
+    "Elena's son died young; his burial entry names the farm.",
+    "Elena's husband's burial entry, to date the widowhood.",
+])
+def test_death_route_fires_when_the_burial_only_names_her_as_a_relative(rationale):
+    """T-FEH's review on #3118: the name and a death word both present is not enough."""
+    other = _pli(2, "cemetery", "1718-1770", rationale)
+    b, a = _plan_states([BAPTISM, other])
+    with pytest.raises(AssertionError, match="own death or burial"):
+        check_death_route(b, a, DTH)
+
+
 def test_death_route_fires_when_death_is_mentioned_on_a_baptism_window_item():
     item = _pli(2, "church", "1675-1695", "Elena's baptism; she died in Barsebäck later.")
     b, a = _plan_states([BAPTISM, item])
@@ -1055,6 +1069,9 @@ def test_death_route_passes_a_mixed_plan_with_her_burial_item():
     ("Search the Sweden, Burials index for Elena Asmundsdotter.", "1712-1770"),
     ("Browse Barsebäck's Döde section for Elena's death entry.", "1718–1768"),
     ("ELENA'S BURIED entry — begravna, Barsebäck.", "1745"),
+    ("Elena's burial entry commonly states her age at death (yielding a birth year estimate).", "1718-1770"),
+    ("Elena Asmundsdotter’s own burial in the Barsebäck register.", "1718-1770"),
+    ("Burial entry of Elena in Barsebäck.", "1745"),
 ])
 def test_death_route_passes_legitimate_variants(rationale, date_range):
     """Reflowed wording, Swedish register terms, an en dash, a single year."""
