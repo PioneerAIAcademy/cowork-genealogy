@@ -48,8 +48,8 @@ fired = acted + ignored + unlistable. The report prints that accounting split by
   arrives in two envelopes and a naive substring misses the escaped one. The two
   SEARCH notes survive truncation (they sit before `results`), so when a search
   response is cut mid-document a bare-key fallback on the raw text is valid —
-  a validation note does not get that fallback (its absence past a cut is
-  not-observable, not never-held).
+  a validation note gets that fallback only when its marker survived the cut
+  (its absence past a cut is not-observable, not never-held).
 - **Tool names are prefixed** in the corpus (`mcp__genealogy__record_search`),
   never bare. Every comparison normalises through `bare_tool_name` first, or
   every detector silently returns zero.
@@ -102,7 +102,9 @@ LOG_APPEND = "research_log_append"
 
 # Producer-verified marker substrings (NOT corpus-derived — sources-without-
 # assertions never fires in the corpus, so only the producer can confirm the
-# string): `research-append.ts:1234` and `research-log-append.ts:75`.
+# string): `sourcesWithoutAssertionsWarning` (research-append.ts) and
+# `logWithoutPersistenceWarning` (research-log-append.ts), pinned by
+# `test_validation_marker_is_what_the_producer_writes`.
 SRC_NO_ASSERT_MARKER = "zero assertions drawn from them"
 LOG_NO_PERSIST_MARKER = "logged with a positive outcome but no sources"
 
@@ -278,9 +280,10 @@ def _fired_search_key(key: str) -> Callable[[dict], tuple[bool, dict | None]]:
 
 def _fired_validation(marker: str) -> Callable[[dict], tuple[bool, dict | None]]:
     def fired(call: dict) -> tuple[bool, dict | None]:
-        doc = unwrap(call.get("response_summary") or "")
+        raw = call.get("response_summary") or ""
+        doc = unwrap(raw)
         if not isinstance(doc, dict):
-            return False, None
+            return marker in raw, None
         val = doc.get("validation")
         warnings = val.get("warnings") if isinstance(val, dict) else None
         if not isinstance(warnings, list):
@@ -383,7 +386,9 @@ def _capture_observable(call: dict, spec: FieldSpec) -> bool:
         return False
     if spec.needs_validation_key:
         doc = unwrap(raw)
-        return isinstance(doc, dict) and "validation" in doc
+        if isinstance(doc, dict):
+            return "validation" in doc
+        return spec.fired(call)[0]
     return True
 
 

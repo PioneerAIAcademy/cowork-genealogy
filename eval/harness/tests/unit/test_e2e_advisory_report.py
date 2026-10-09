@@ -22,12 +22,17 @@ import pytest
 from e2e.advisory_report import (
     ACTED,
     IGNORED,
+    LOG_NO_PERSIST_MARKER,
     NEVER_HELD,
     NOT_OBSERVABLE,
+    SEARCH_SHIP_COMMIT,
+    SRC_NO_ASSERT_MARKER,
     UNLISTABLE,
     agent_label,
+    classify_run,
     scan,
 )
+from e2e.runlog_selection import REPO_ROOT
 
 # A date well after both ship dates, so the version gate passes on captured_at.
 RECENT = "2026-09-20_10-00-00"
@@ -304,3 +309,53 @@ def test_partition_identity_holds(tmp_path):
     emitter_calls = 4  # four record_search calls; the log_append is not an emitter
     assert sum(nil.values()) == emitter_calls
     assert nil[ACTED] + nil[IGNORED] + nil.get(UNLISTABLE, 0) + nil[NEVER_HELD] + nil[NOT_OBSERVABLE] == emitter_calls
+
+
+@pytest.mark.parametrize("as_text_block", [False, True])
+def test_logpersist_fired_when_the_capture_is_cut_after_the_note(tmp_path, as_text_block):
+    fired = {"ok": True, "validation": {"valid": True, "warnings": [_LOG_WARN + " When a search"]}}
+    raw = _doc_envelope(fired, as_text_block=as_text_block)
+    calls = [
+        {"tool": "mcp__genealogy__research_log_append", "args": {"outcome": "positive"},
+         "response_summary": raw[: raw.index("When a search")] + "..."},
+        {"tool": "mcp__genealogy__research_append", "args": {"ops": [{"section": "sources"}]}},
+    ]
+    rows = scan([_write_run(tmp_path, calls)]).rows
+    assert _states(rows, "log-without-persistence") == Counter({ACTED: 1})
+
+
+@pytest.mark.parametrize("rel, marker", [
+    ("packages/engine/mcp-server/src/tools/research-append.ts", SRC_NO_ASSERT_MARKER),
+    ("packages/engine/mcp-server/src/tools/research-log-append.ts", LOG_NO_PERSIST_MARKER),
+])
+def test_validation_marker_is_what_the_producer_writes(rel, marker):
+    assert marker in (REPO_ROOT / rel).read_text(encoding="utf-8"), rel
+
+
+class _StubProbe:
+    def __init__(self, contains):
+        self._contains = contains
+
+    def resolvable(self, sha):
+        return True
+
+    def contains(self, ship, sha):
+        return (ship, sha) in self._contains
+
+
+def test_resolvable_sha_decides_observability_over_captured_at(tmp_path):
+    nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
+    p = _write_run(tmp_path, [_search(nil_doc)])
+    doc = json.loads(p.read_text(encoding="utf-8"))
+    doc["git_sha"] = "pre-ship"
+    assert _states(classify_run(doc, p, _StubProbe(set())), "nilSearchNeedsLog") == Counter({NOT_OBSERVABLE: 1})
+    doc["git_sha"] = "post-ship"
+    rows = classify_run(doc, p, _StubProbe({(SEARCH_SHIP_COMMIT, "post-ship")}))
+    assert _states(rows, "nilSearchNeedsLog") == Counter({IGNORED: 1})
+
+
+def test_nil_fires_on_a_search_capture_cut_mid_document(tmp_path):
+    raw = _doc_envelope({"nilSearchNeedsLog": "Nothing returned", "results": []}, as_text_block=False)
+    calls = [{"tool": "mcp__genealogy__record_search", "response_summary": raw[:40] + "..."},
+             _log_append(outcome="negative")]
+    assert _states(scan([_write_run(tmp_path, calls)]).rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
