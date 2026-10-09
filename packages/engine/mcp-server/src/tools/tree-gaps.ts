@@ -28,6 +28,8 @@ const ACCEPT = "application/x-fs-v1+json";
 // Measured by dev/probe-descendancy.ts: ancestry caps at 8, descendancy at 4.
 const MAX_ANCESTOR_GENERATIONS = 8;
 const MAX_DESCENDANT_GENERATIONS = 4;
+// Couples within this many generations of the root are always read.
+const NEAR_TIER_DEPTH = 4;
 const DEFAULT_ANCESTOR_GENERATIONS = 8;
 const DEFAULT_DESCENDANT_GENERATIONS = 4;
 const DEFAULT_MAX_HOLES = 20;
@@ -62,9 +64,10 @@ export const treeGapsToolSchema = {
   description:
     "Survey a FamilySearch tree for holes FamilySearch may have records for, " +
     "before any research project exists. Reads the person's ancestors " +
-    "(default 8 generations), the descendants of the person and of the " +
-    "ancestors (default 4 generations down, which covers the direct line's " +
-    "siblings), and returns the HOLES it computed, not the tree: parents " +
+    "(default 8 generations), the person's own descendants (default 4 " +
+    "generations down) and each direct-line couple's household (the " +
+    "direct line's siblings), and returns the HOLES it computed, not the " +
+    "tree: parents " +
     "missing before the end of a line, a couple with no children, a gap of " +
     "more than 4 years between births, a last child born when the mother " +
     "was under 34 though she lived past 40, a deceased adult with no " +
@@ -236,14 +239,6 @@ function score(gaps: TreeGap[], catalog: FSCollectionEntry[]): void {
   }
 }
 
-// Anchor depths for the descendancy reads: the farthest ancestors, then every
-// 4 generations nearer, so each read's 4 levels meet the next one's.
-export function anchorDepths(ancestorGenerations: number): number[] {
-  const depths: number[] = [];
-  for (let a = ancestorGenerations; a > 0; a -= MAX_DESCENDANT_GENERATIONS) depths.push(a);
-  return depths.sort((x, y) => x - y);
-}
-
 export async function treeGapsTool(
   input: TreeGapsInput,
   principal: Principal,
@@ -287,13 +282,15 @@ export async function treeGapsTool(
   // Waves, nearest the root first, so a stop early keeps the closest holes.
   const waves: { depth: number; ids: string[] }[] = [];
   if (descendantGenerations > 0) waves.push({ depth: 0, ids: [rootPerson.id] });
-  const anchors = new Set(anchorDepths(ancestorGenerations));
+  // Every direct-line couple is read once, one level down: its household is the
+  // children (the direct line's siblings) and the spouses. The father is the
+  // anchor, or the mother when there is no father. Four-level reads from far
+  // ancestors are heavy enough that FamilySearch answers 503, so none is made.
   const byDepth = new Map<number, string[]>();
   for (const [n, id] of model.ancestors) {
+    if (n < 2 || (n % 2 === 1 && model.ancestors.has(n - 1))) continue;
     const d = Math.floor(Math.log2(n));
-    // No read from above reaches an ancestor whose line ends here.
-    const lineEnds = !model.ancestors.has(2 * n) && !model.ancestors.has(2 * n + 1);
-    if (d > 0 && (anchors.has(d) || lineEnds)) byDepth.set(d, [...(byDepth.get(d) ?? []), id]);
+    byDepth.set(d, [...(byDepth.get(d) ?? []), id]);
   }
   for (const d of [...byDepth.keys()].sort((a, b) => a - b)) {
     waves.push({ depth: d, ids: byDepth.get(d)! });
@@ -307,22 +304,15 @@ export async function treeGapsTool(
 
   for (const wave of waves) {
     if (stopReason) break;
-    // The near tier (the root's descendants and every anchor within 4
-    // generations) always runs: its holes outrank anything a far anchor adds,
+    // The near tier (the root's descendants and every couple within 4
+    // generations) always runs: its holes outrank anything a far couple adds,
     // and a pedigree edge alone can already hold maxHoles holes. Only the far
-    // anchors are skipped once maxHoles are in hand.
-    if (wave.depth > MAX_DESCENDANT_GENERATIONS && target() >= maxHoles) {
+    // couples are skipped once maxHoles are in hand.
+    if (wave.depth > NEAR_TIER_DEPTH && target() >= maxHoles) {
       stopReason = "maxHoles";
       break;
     }
-    // A line-end ancestor off the anchor depths is read for its own children only:
-    // four levels from it are heavy enough that FamilySearch answers 503.
-    const levels =
-      wave.depth === 0
-        ? descendantGenerations
-        : anchors.has(wave.depth)
-          ? Math.min(MAX_DESCENDANT_GENERATIONS, wave.depth)
-          : 1;
+    const levels = wave.depth === 0 ? descendantGenerations : 1;
     const room = MAX_DESCENDANCY_READS - reads;
     if (room <= 0) {
       stopReason = "readCap";

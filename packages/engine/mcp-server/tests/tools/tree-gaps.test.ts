@@ -12,7 +12,7 @@ vi.mock("../../src/auth/refresh.js", () => ({
 }));
 
 import { fsFetch } from "../../src/utils/fs-fetch.js";
-import { anchorDepths, catalogWaitMs, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
+import { catalogWaitMs, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
 import { clearCollectionsCache } from "../../src/tools/collections-search.js";
 
 const mockFetch = vi.fn();
@@ -47,14 +47,6 @@ function route(handlers: Record<string, () => unknown>) {
 beforeEach(() => {
   mockFetch.mockReset();
   clearCollectionsCache();
-});
-
-describe("anchorDepths", () => {
-  it("steps down from the cap every 4 generations, nearest first", () => {
-    expect(anchorDepths(8)).toEqual([4, 8]);
-    expect(anchorDepths(6)).toEqual([2, 6]);
-    expect(anchorDepths(3)).toEqual([3]);
-  });
 });
 
 describe("treeGapsTool", () => {
@@ -130,7 +122,7 @@ describe("treeGapsTool", () => {
     expect(r.notes.join(" ")).toMatch(/coverage was unavailable/);
   });
 
-  it("notes a failed ancestor-anchor read instead of dropping it silently", async () => {
+  it("notes a failed ancestor-household read instead of dropping it silently", async () => {
     const asc = (id: string, n: string) =>
       person(id, { ascendancyNumber: n, name: id, gender: Number(n) % 2 ? "Female" : "Male", birthDate: "1 May 1850", deathDate: "1 May 1920", lifespan: "1850-1920" });
     route({
@@ -141,7 +133,7 @@ describe("treeGapsTool", () => {
       "/service/search/hr/v2/collections": () => json({ entries: [] }),
     });
     const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
-    expect(r.notes.join(" ")).toMatch(/2 descendancy reads failed/);
+    expect(r.notes.join(" ")).toMatch(/1 descendancy read failed/);
   });
 
   // Ancestry with a deceased root and one ancestor at each of depths 4 and 8, so the
@@ -192,7 +184,7 @@ describe("treeGapsTool", () => {
 
   it("caps the descendancy reads at 60 and says so", async () => {
     route({
-      "/tree/ancestry": () => json(ancestryWithFarAnchors(70)),
+      "/tree/ancestry": () => json(ancestryWithFarAnchors(130)),
       "/tree/descendancy": () => json({ persons: [] }),
       "/service/search/hr/v2/collections": () => json({ entries: [] }),
     });
@@ -327,7 +319,7 @@ describe("treeGapsTool", () => {
     expect(urls.some((u) => u.includes("/tree/descendancy?person=DAD&generations=1"))).toBe(true);
   });
 
-  it("reads a line-end ancestor off the anchor depths for its own children only (one level)", async () => {
+  it("reads each direct-line couple one level down, never four", async () => {
     const base = { gender: "Male", birthDate: "1 May 1850", deathDate: "1 May 1920", lifespan: "1850-1920" };
     route({
       "/tree/ancestry": () =>
@@ -344,9 +336,47 @@ describe("treeGapsTool", () => {
     });
     await treeGapsTool({ personId: "R", ancestorGenerations: 4, descendantGenerations: 0 }, LOCAL);
     const urls = mockFetch.mock.calls.map((c) => String(c[0]));
-    // G4 is at depth 2 and its line ends there; anchors for a cap of 4 are {4}.
     expect(urls.some((u) => u.includes("/tree/descendancy?person=G4&generations=1"))).toBe(true);
-    expect(urls.some((u) => u.includes("/tree/descendancy?person=G4&generations=2"))).toBe(false);
+    expect(urls.filter((u) => u.includes("/tree/descendancy?person=") && !/generations=1&/.test(u))).toEqual([]);
+  });
+
+  it("reads the household of a couple between the root and brick-wall grandparents", async () => {
+    // Living root; deceased parents; four deceased grandparents with no parents of their own.
+    const d = (extra: Record<string, string>) => ({ gender: "Male", ...extra });
+    route({
+      "/tree/ancestry": () =>
+        json({
+          persons: [
+            person("R", { ascendancyNumber: "1", name: "R", ...d({ birthDate: "1 May 1960", lifespan: "1960-" }) }, true),
+            person("DAD", { ascendancyNumber: "2", name: "Dad", ...d({ birthDate: "1 May 1900", deathDate: "1 May 1980", lifespan: "1900-1980" }) }),
+            person("MOM", { ascendancyNumber: "3", name: "Mom", gender: "Female", birthDate: "1 May 1903", deathDate: "1 May 1985", lifespan: "1903-1985" }),
+            ...["4", "5", "6", "7"].map((n) =>
+              person(`G${n}`, { ascendancyNumber: n, name: `G${n}`, gender: Number(n) % 2 ? "Female" : "Male", birthDate: "1 May 1870", deathDate: "1 May 1940", lifespan: "1870-1940" }),
+            ),
+          ],
+        }),
+      "/tree/descendancy?person=R": () => json({ persons: [] }),
+      "/tree/descendancy?person=DAD": () =>
+        json({
+          persons: [
+            person("DAD", { descendancyNumber: "1", name: "Dad", ...d({ birthDate: "1 May 1900", deathDate: "1 May 1980", lifespan: "1900-1980", marriageDate: "1 May 1925" }) }),
+            person("MOM", { descendancyNumber: "1-S1", name: "Mom", gender: "Female", birthDate: "1 May 1903", deathDate: "1 May 1985", lifespan: "1903-1985" }),
+            person("K1", { descendancyNumber: "1.1", name: "K1", ...d({ birthDate: "1 May 1926", deathDate: "1 May 2000", lifespan: "1926-2000" }) }),
+            person("K2", { descendancyNumber: "1.2", name: "K2", ...d({ birthDate: "1 May 1940", deathDate: "1 May 2010", lifespan: "1940-2010" }) }),
+          ],
+        }),
+      "/tree/descendancy": () => json({ persons: [] }),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    const r = await treeGapsTool({ personId: "R", ancestorGenerations: 3, descendantGenerations: 0 }, LOCAL);
+    expect(r.gaps.find((g) => g.type === "child_gap")?.detail).toMatch(/1926 and 1940/);
+    const urls = mockFetch.mock.calls.map((c) => String(c[0]));
+    // The parents' household, and each grandparent couple's, one level down.
+    for (const id of ["DAD", "G4", "G6"]) {
+      expect(urls.some((u) => u.includes(`/tree/descendancy?person=${id}&generations=1&`))).toBe(true);
+    }
+    // One read per couple: the mothers are not read when the father is.
+    expect(urls.some((u) => u.includes("person=MOM"))).toBe(false);
   });
 
   describe("deadline", () => {
