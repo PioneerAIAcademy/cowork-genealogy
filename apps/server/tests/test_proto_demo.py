@@ -563,3 +563,61 @@ def test_run_fails_the_autonomous_arm_on_an_unfinished_project(monkeypatch, caps
     out = capsys.readouterr().out
     assert f"project.status={status}" in out, "the value the verdict used must be printed"
     assert ("PASS" if code == 0 else "FAIL") in out.splitlines()[-1]
+
+
+# ── seed_session: who creates the project ──
+
+
+class _SessionClient:
+    def __init__(self, calls: list):
+        self.calls = calls
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def post(self, path, json):
+        self.calls.append(("post", dict(json)))
+        return httpx.Response(200, json={"id": "sess_9"}, request=httpx.Request("POST", "http://t" + path))
+
+
+def _seed_fakes(monkeypatch, calls: list):
+    monkeypatch.setattr(demo.seed, "resolve_fixture", lambda name: Path("bagley-father-1884"))
+    monkeypatch.setattr(demo.seed, "plan_files", lambda fixture: [])
+    monkeypatch.setattr(demo.seed, "fixture_meta", lambda fixture: {"name": "Bagley"})
+    monkeypatch.setattr(demo.seed, "default_project_id", lambda fixture: "proj_chosen")
+    monkeypatch.setattr(demo.seed, "seed", lambda files, **kw: calls.append(("seed", kw["project_id"])) or 0)
+    monkeypatch.setattr(demo.turn, "signed_in_client", lambda base, email, **kw: _SessionClient(calls))
+    monkeypatch.setattr(demo, "rows", lambda dsn, sql, params: [("proj_tier_made",)])
+
+
+def _seed_args(**over):
+    return argparse.Namespace(**{"fixture": "bagley-father-1884", "project_id": None, "title": None,
+                                 "base": "http://t", "email": "e@x", "pg_dsn": "dsn", "s3_endpoint": "s3", **over})
+
+
+def test_seed_session_under_dev_login_seeds_the_chosen_id_then_claims_it(monkeypatch):
+    calls: list = []
+    monkeypatch.delenv(demo.turn.COOKIE_FILE_ENV, raising=False)
+    _seed_fakes(monkeypatch, calls)
+    assert demo.seed_session(_seed_args()) == ("sess_9", "proj_chosen", {"name": "Bagley"})
+    assert calls == [("seed", "proj_chosen"), ("post", {"title": "Bagley", "project_id": "proj_chosen"})]
+
+
+def test_seed_session_under_familysearch_signin_opens_the_session_first_and_seeds_its_project(monkeypatch):
+    calls: list = []
+    monkeypatch.setenv(demo.turn.COOKIE_FILE_ENV, "/cookie")
+    _seed_fakes(monkeypatch, calls)
+    assert demo.seed_session(_seed_args()) == ("sess_9", "proj_tier_made", {"name": "Bagley"})
+    assert calls == [("post", {"title": "Bagley"}), ("seed", "proj_tier_made")]
+
+
+def test_seed_session_under_familysearch_signin_refuses_a_chosen_project_id(monkeypatch):
+    calls: list = []
+    monkeypatch.setenv(demo.turn.COOKIE_FILE_ENV, "/cookie")
+    _seed_fakes(monkeypatch, calls)
+    with pytest.raises(RuntimeError, match="needs dev-login"):
+        demo.seed_session(_seed_args(project_id="proj_x"))
+    assert calls == []

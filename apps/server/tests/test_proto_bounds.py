@@ -633,11 +633,28 @@ def test_the_outage_cases_terminate_exactly_the_turns_backend(monkeypatch):
 # ── the probe texts and the make target ────────────────────────────────────────────────
 
 
+def test_kill_hold_names_one_record_and_matches_the_namespaced_extractor():
+    """A fresh seed cites nothing, so the generic extraction prompt searched for ~20 min first
+    and its first extraction_append came past the deadline (U13, 2026-10-08). The runtime
+    records the agent as ``genealogy-research:record-extractor``."""
+    text = bounds.KILL_HOLD_TEXT.read_text(encoding="utf-8")
+    assert re.search(r"ark:/61903/1:1:[A-Z0-9-]+", text) and "record-extractor" in text, text
+    assert "background" not in text.lower()
+    assert "agent_type LIKE '%%record-extractor'" in bounds.HOLD_ROW_SQL, bounds.HOLD_ROW_SQL
+    assert "agent_type = 'record-extractor'" not in bounds.HOLD_ROW_SQL
+
+
 def test_the_probe_texts_exist_and_the_delegation_one_never_asks_for_background():
-    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT):
+    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT, bounds.SPILL_TEXT, bounds.KILL_HOLD_TEXT):
         assert path.read_text(encoding="utf-8").strip(), path
     text = bounds.EXTRACTIONS_TEXT.read_text(encoding="utf-8").lower()
     assert "background" not in text and "record-extractor" in text
+    # Italy is measured past the 50,000-character spill; England never was. A count is in the
+    # 2 KB preview (totalForPlace), the last title only in the spilled tail.
+    spill = bounds.SPILL_TEXT.read_text(encoding="utf-8").lower()
+    assert '"italy"' in spill and "england" not in spill, spill
+    assert re.search(r"\btitle\b", spill) and re.search(r"\blast collection\b", spill), spill
+    assert "how many" not in spill, "a count is answerable from the preview without reading the spill"
 
 
 _NUDGES_3 = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:-3\}\1$""")
@@ -691,3 +708,32 @@ def test_bounds_py_runs_as_a_script_from_apps_server():
                           text=True, encoding="utf-8")
     assert proc.returncode == 0, proc.stderr
     assert "--case" in proc.stdout and "probe_resume" in proc.stdout
+
+
+def _closed(rep_ok: list) -> bool:
+    [ok] = [ok for n, ok, _ in rep_ok if ": closed, not " in n]
+    return ok
+
+
+def test_resume_checks_pass_no_progress_only_for_a_nudged_project_less_turn():
+    """Deployed probe turns run project-less with nudges on and close no_progress after two
+    empty nudges, at caps 60 and 3 alike (U13, 2026-10-08). That is not a stranded resume."""
+    snap = bounds.TurnSnap(turn_id="t1", row=(2, "now", "no_progress", 0.2))
+    kw = dict(sdk_before="s", sdk_after="s", entries_at_kill=1, entries_after=5)
+    assert _closed(bounds.resume_checks("x", snap, nudged_projectless=True, **kw))
+    assert not _closed(bounds.resume_checks("x", snap, **kw))
+    for outcome in ("retries_exhausted", "signin_required", "transcript_lost"):
+        bad = bounds.TurnSnap(turn_id="t1", row=(2, "now", outcome, 0.2))
+        assert not _closed(bounds.resume_checks("x", bad, nudged_projectless=True, **kw)), outcome
+
+
+def test_nudged_projectless_needs_both_a_nudge_and_no_research_json(monkeypatch):
+    ctx = bounds.Ctx(base="b", dsn="d", email="e", s3_endpoint="s", fixture="f", session=None, deadline_s=5.0,
+                     kill_after_s=10.0, pause_s=1.0, cap_usd=35.0, price_output=15.0)
+    nudged = [{"ev": "nudge", "turn_id": "t1", "n": 1}]
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 0 if sql == bounds.RESEARCH_DOC_SQL else None)
+    assert bounds.nudged_projectless(ctx, "s1", nudged, "t1")
+    assert not bounds.nudged_projectless(ctx, "s1", [], "t1"), "no nudge: a no_progress there is a real failure"
+    assert not bounds.nudged_projectless(ctx, "s1", [{"ev": "nudge", "turn_id": "t9"}], "t1")
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 1 if sql == bounds.RESEARCH_DOC_SQL else None)
+    assert not bounds.nudged_projectless(ctx, "s1", nudged, "t1"), "a seeded project's no_progress still fails"
