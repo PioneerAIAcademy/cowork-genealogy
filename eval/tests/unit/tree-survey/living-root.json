@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_tree_survey_008",
+    "skill": "tree-survey",
+    "name": "A living root whose descendants are all living",
+    "type": "positive",
+    "description": "tree_gaps returns no holes because every person it read is living. The agent must say so plainly and suggest nothing.",
+    "tags": [
+      "survey",
+      "no-holes",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Find gaps in my tree.\n\npersonId: TGAP-ROT"
+  },
+  "mcp_fixtures": [
+    "tree-gaps-living-root",
+    "collections-search-any",
+    "place-search-any",
+    "record-search-any",
+    "person-record-matches-any",
+    "person-quality-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
+    "tree_gaps returns gaps: [] for a 7-person tree of living people. The agent must say the tree shows no holes in what was read, and name how far it read. It must NOT invent suggestions, and must NOT search for records about people the tool did not flag.",
+    "Calling record_search, person_quality or person_record_matches here is a fault: there is no hole to check. A summary_for_user block is still expected, short, saying nothing was found to suggest."
+  ]
+}

@@ -1290,6 +1290,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # to it. Listed because the set is asserted equal to the shipped agent
         # files. `ownership.json` names `agent:survey-surname` on the `log` row.
         "survey-surname",
+        # A new agent (issue #3273): it surveys a tree before any project exists,
+        # so it writes nothing and no hook routes to it. Listed because the set is
+        # asserted equal to the shipped agent files. `ownership.json` names it on
+        # no row.
+        "tree-survey",
         # Same shape as search-images and citation (issue #2120): a
         # cost-motivated conversion, no hook route. It writes `log` entries via
         # `research_log_append` and updates `plan_items` status via

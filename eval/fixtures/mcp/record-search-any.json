@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "record_search catch-all -- matches ANY surname (predicate '~' = empty-substring match) so a record_search call not covered by a specific fixture degrades to an empty result instead of fixture_not_found. Order LAST in a test's mcp_fixtures.",
+  "args": {
+    "surname": "~"
+  },
+  "response": {
+    "query": {
+      "surname": "Smith"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

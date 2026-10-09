@@ -769,6 +769,8 @@ describe("agent delegation framing", () => {
     "survey-surname",
     "translation",
     "tree-edit",
+    // ARRIVED as a new agent (issue #3273); no skill directory of that name.
+    "tree-survey",
     "validate-schema",
   ];
 

@@ -1,0 +1,36 @@
+{
+  "tool": "person_quality",
+  "description": "person_quality catch-all -- matches ANY personId (predicate '~') and returns a clean, issue-free report. Order LAST in a test's mcp_fixtures.",
+  "args": {
+    "personId": "~"
+  },
+  "response": {
+    "personId": "",
+    "segment": "GREEN",
+    "overallScore": 1.0,
+    "issueCount": 0,
+    "categories": [
+      {
+        "scoreType": "COMPLETENESS",
+        "count": 0,
+        "score": 1.0
+      },
+      {
+        "scoreType": "VERIFIABILITY",
+        "count": 0,
+        "score": 1.0
+      },
+      {
+        "scoreType": "CONSISTENCY",
+        "count": 0,
+        "score": 1.0
+      },
+      {
+        "scoreType": "COHERENCE",
+        "count": 0,
+        "score": 1.0
+      }
+    ],
+    "issues": []
+  }
+}

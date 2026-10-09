@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_tree_survey_010",
+    "skill": "tree-survey",
+    "name": "Records for one named person: routed to search-records",
+    "type": "negative",
+    "description": "The request belongs to search-records. The agent should redirect in one sentence without calling any tool.",
+    "tags": [
+      "routing",
+      "negative",
+      "direct-arm"
+    ]
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "This is not a tree-wide survey before a project exists; it belongs to search-records."
+  },
+  "input": {
+    "delegation": "Find Edmund Dixon's 1850 census record."
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "This is a NEGATIVE test: the request belongs to search-records.",
+    "The agent should say it belongs to search-records and stop, WITHOUT calling any tool, not even tree_gaps.",
+    "A single tool call is a failure."
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_tree_survey_002",
+    "skill": "tree-survey",
+    "name": "Suggests a no_children hole from a surveyed tree",
+    "type": "positive",
+    "description": "tree_gaps returns exactly one hole, of type no_children. The agent should check what FamilySearch has for it and suggest that one person with a single-fact research question.",
+    "tags": [
+      "survey",
+      "no_children",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "What should I research in my tree?\n\npersonId: TGAP-ROT"
+  },
+  "mcp_fixtures": [
+    "tree-gaps-no-children",
+    "collections-search-any",
+    "place-search-any",
+    "record-search-any",
+    "person-record-matches-any",
+    "person-quality-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
+    "tree_gaps returns ONE hole: Ruth Ashby and Frank Ellery (TGAP-AUN): a married couple with no children; a childbearing window of 1906-1925 in Dayton, Ohio. The agent should call tree_gaps with personId TGAP-ROT and defaults, then check what FamilySearch has (person_record_matches, person_quality, record_search, collections_search) for that hole. The catch-all fixtures return empty results; an empty check is a result, not a fault, and the agent should still suggest the hole, saying plainly that nothing further was found.",
+    "The suggestion must name Ruth Ashby and Frank Ellery / TGAP-AUN and carry ONE research question that is a single fact, names the person, and scopes place and years, e.g. 'Who were the children of Frank Ellery and Ruth Ashby, married in Dayton, Ohio?'. A question that spans several facts or the whole family is a fail.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
+  ]
+}

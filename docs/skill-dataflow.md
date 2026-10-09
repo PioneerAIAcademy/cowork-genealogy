@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 8 skills and 24 agents. Besides the `research` orchestrator itself, its routing
+There are 8 skills and 25 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 6 fire only when the user asks — see
+name. The remaining 7 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
@@ -212,6 +212,7 @@ sibling skill.
 | **`search-wikipedia`** (an AGENT since issue #2795, not a skill) | A single-article encyclopedia lookup | The verbatim article extract — no paraphrase | `wikipedia_search` | `<title-slug>.md` in the working folder. **Not logged to `log[]`** |
 | **`validate-schema`** (an AGENT since issue #2798, not a skill) | "validate", "check the files" | Relaying validator errors in plain terms with a non-regressing fix each | `validate_research_schema` | Nothing. Never edits a file to fix an error |
 | **`survey-surname`** (an AGENT, issue #2065) | "find every Dixon family in Virginia censuses", tabulate a surname across censuses | Per-year `record_search` sweep, grouped by `recordArk`, sectioned by year and collection, with non-population schedules separate | `place_search`, `record_search` (with `projectPath`), `research_log_append` | `log[]` — `research_log_append`; writes `surname-survey-*.md` via `Write` |
+| **`tree-survey`** (an AGENT, issue #3273) | "what should I research in my tree?", "find gaps in my tree" — only when no project exists | The holes `tree_gaps` computed, ranked by what FamilySearch has for them (pending hints, search results, census issue, collections floor); 3-5 suggestions, one question each | `tree_gaps`, `person_record_matches`, `person_quality`, `record_search`, `collections_search`, `place_search` | nothing — writes no project state by design |
 | **`forget-and-rederive`** | Practice mode — the researcher asks for a known answer to be stripped | Removing a tree slice with cascade so it must be re-derived from records, and holding the rederivation to account | `project_context`; a `dryRun` read-back. **Forbidden** from reading `tree.gedcomx.json` | Tree slice removed and `.tree-before-forget.gedcomx.json` written — `tree_forget`. Touches no `research.json` |
 
 ---
@@ -251,7 +252,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only two skills hold `research_query`** — `research` and `search-records` — and six
-  of the twenty-four agents, `search-external-sites` among them. Everything else that needs project
+  of the twenty-five agents, `search-external-sites` among them. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in

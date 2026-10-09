@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_tree_survey_009",
+    "skill": "tree-survey",
+    "name": "A project already exists: routed to question-selection",
+    "type": "negative",
+    "description": "The request belongs to question-selection. The agent should redirect in one sentence without calling any tool.",
+    "tags": [
+      "routing",
+      "negative",
+      "direct-arm"
+    ]
+  },
+  "negative": {
+    "correct_skill": [],
+    "explanation": "This is not a tree-wide survey before a project exists; it belongs to question-selection."
+  },
+  "input": {
+    "delegation": "Pick the next research question for my project.\n\nprojectPath: <workspace>"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "This is a NEGATIVE test: the request belongs to question-selection.",
+    "The agent should say it belongs to question-selection and stop, WITHOUT calling any tool, not even tree_gaps.",
+    "A single tool call is a failure."
+  ]
+}

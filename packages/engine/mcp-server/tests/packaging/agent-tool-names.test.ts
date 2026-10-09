@@ -688,6 +688,22 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // New agent (issue #3273), not a conversion, no hook route. It surveys before a
+  // project exists, so it holds no `Read`, no `project_context` and no writer:
+  // there is no research.json to read or write. `tree_gaps` finds the holes;
+  // the other five check what FamilySearch has for them.
+  "tree-survey.md": {
+    tools: [
+      "collections_search",
+      "person_quality",
+      "person_record_matches",
+      "place_search",
+      "record_search",
+      "tree_gaps",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
