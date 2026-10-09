@@ -24,7 +24,11 @@ import re
 
 import pytest
 
-from validators_lib import bare_tool_name
+from validators_lib import (
+    _questions_by_id,
+    bare_tool_name,
+    check_no_gate_stop,
+)
 
 
 # --- Helpers ---------------------------------------------------------
@@ -40,10 +44,6 @@ REQUIRED_STOP_CRITERIA_KEYS = {
 }
 
 _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
-
-
-def _questions_by_id(state: dict) -> dict[str, dict]:
-    return {q.get("id"): q for q in (state or {}).get("questions") or [] if q.get("id")}
 
 
 def _questions_with_changed_declaration(before: dict, after: dict) -> list[dict]:
@@ -157,23 +157,10 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
     stopped_because value."""
     if "no-exhaustive-declaration" not in test.get("tags", []):
         pytest.skip("not a no-exhaustive-declaration scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
+    if before_state.get("research_json") is None or after_state.get("research_json") is None:
         pytest.skip("missing research.json for diff")
-    before_by_id = _questions_by_id(before)
-    bad: list[str] = []
-    for q in (after.get("questions") or []):
-        qid = q.get("id")
-        prev = before_by_id.get(qid, {})
-        prev_gate = (prev.get("search_stop") or {}).get("stopped_because") in _STOP_GATE_VALUES
-        new_gate = _is_gate_value(q)
-        if not prev_gate and new_gate:
-            sb = (q.get("search_stop") or {}).get("stopped_because")
-            bad.append(f"{qid}: set stop-gate stopped_because={sb!r} when decline expected")
-        if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
-            bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
-    assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
+    bad = check_no_gate_stop(before_state, after_state)
+    assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 
 # --- The registration start date is fetched, not carried as prose ----------

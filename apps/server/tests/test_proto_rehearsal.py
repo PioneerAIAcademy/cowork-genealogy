@@ -28,6 +28,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -244,7 +245,21 @@ class FakeAws:
                 self.drop("sg", g["name"])
 
     def ec2_describe_instances(self, rest):
+        ids = _flag_values(rest, "--instance-ids")
+        if ids:  # prove-empty's per-id look behind the tag index
+            states = {**{i["name"]: "running" for i in self.all("instance")}, **self.leftover.get("instance_states", {})}
+            if not any(i in states for i in ids):
+                raise AwsError("An error occurred (InvalidInstanceID.NotFound) when calling the DescribeInstances operation")
+            return {"Reservations": [{"Instances": [{"InstanceId": i, "State": {"Name": states[i]}}
+                                                    for i in ids if i in states]}]}
         return {"Reservations": [{"Instances": [{"InstanceId": i["name"]} for i in self.all("instance")]}]}
+
+    def ec2_describe_volumes(self, rest):
+        ids = _flag_values(rest, "--volume-ids")
+        live = [v for v in ids if v in self.leftover.get("volumes", [])]
+        if not live:
+            raise AwsError("An error occurred (InvalidVolume.NotFound) when calling the DescribeVolumes operation")
+        return {"Volumes": [{"VolumeId": v} for v in live]}
 
     def ec2_run_instances(self, rest):
         self.add("instance", "i-bastion")
@@ -943,7 +958,50 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "idle_session_60s"}
+        "refresh_age_0", "cap_1usd", "nudges_3", "no_telemetry", "idle_session_60s"}
+
+
+def test_every_case_has_a_row_in_the_readme_probe_table():
+    text = (REHEARSAL_DIR / "README.md").read_text(encoding="utf-8")
+    table = text.split("## Probe cases", 1)[1].split("\n## ", 1)[0]
+    rows = [line.split("|")[1] for line in table.splitlines() if line.startswith("| `")]
+    named = {n for cell in rows for n in re.findall(r"`([a-z0-9_]+)`", cell)}
+    assert named == set(rh.CASES)
+
+
+@pytest.mark.parametrize("case, tier, name, value", [
+    ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
+    ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
+])
+def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
+    """Neither name is in up's API layer, so the restore removes it: on web the template's
+    AUTONOMOUS_MAX_NUDGES=60 (01-web.config) applies again; the worker template sets neither."""
+    assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
+    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "60"
+    assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
+    env, fake, _ = stack
+    env_name = rh.ENV_NAMES[tier]
+    assert (rh.ENV_NS, name) not in rh.options_map(json.loads(
+        (env["work"] / "options" / f"{env_name}.json").read_text(encoding="utf-8")))
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", case, "--hold-s", "0")
+    assert rc == 0
+    apply, restore = _updates(fake, env_name)
+    assert fake.file_of(apply, "--option-settings") == [rh.opt(rh.ENV_NS, name, value)]
+    assert "--option-settings" not in restore
+    assert fake.file_of(restore, "--options-to-remove") == [{"Namespace": rh.ENV_NS, "OptionName": name}]
+    assert (rh.ENV_NS, name) not in fake.env_settings[env_name]
+
+
+def test_the_worker_hands_no_telemetry_to_the_cli():
+    """The SDK starts the CLI with the worker's environment overlaid with options.env, and
+    cli_env_blanks blanks every inherited name outside CLI_ENV_KEEP; a blanked name would
+    leave no_telemetry applied on Beanstalk and void."""
+    sys.path.insert(0, str(REPO / "apps" / "server"))
+    from proto.worker import options
+
+    for _, name, value in rh.CASES["no_telemetry"]["ops"]["worker"]:
+        assert options.cli_env_blanks({name: value, "PG_DSN": "x"}) == {"PG_DSN": ""}, name
 
 
 # ── probe cases ───────────────────────────────────────────────────────────────────────
@@ -1270,6 +1328,36 @@ def test_prove_empty_fails_on_anything_left(stack, leftover):
         fake.add("secret", "genealogy-u13/web/pg-dsn", arn="x")
     else:
         fake.leftover["eip"] = [{"PublicIp": "192.0.2.1"}]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1, lines
+    assert any("NOT EMPTY" in line for line in lines)
+
+
+def test_prove_empty_passes_tag_index_entries_ec2_reports_gone(stack):
+    """A terminated instance stays in the tag index for up to an hour, past the re-poll; on the
+    rehearsal prove-empty said NOT EMPTY for four terminated instances and a deleted volume
+    (U13, 2026-10-08). Those are verified gone through EC2 and pass."""
+    env, fake, _ = stack
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [f"arn:aws:ec2:us-east-1:{ACCOUNT}:instance/i-0aaa",
+                               f"arn:aws:ec2:us-east-1:{ACCOUNT}:volume/vol-0bbb"]
+    fake.leftover["instance_states"] = {"i-0aaa": "terminated"}
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 0, lines
+    assert any("EC2 reports gone" in line for line in lines)
+
+
+@pytest.mark.parametrize("arn_tail, states, volumes", [
+    ("instance/i-0aaa", {"i-0aaa": "stopped"}, []),
+    ("instance/i-0aaa", {"i-0aaa": "shutting-down"}, []),
+    ("volume/vol-0bbb", {}, ["vol-0bbb"]),
+])
+def test_prove_empty_still_fails_on_an_ec2_resource_that_is_not_gone(stack, arn_tail, states, volumes):
+    env, fake, _ = stack
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [f"arn:aws:ec2:us-east-1:{ACCOUNT}:{arn_tail}"]
+    fake.leftover["instance_states"] = states
+    fake.leftover["volumes"] = volumes
     rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
     assert rc == 1, lines
     assert any("NOT EMPTY" in line for line in lines)

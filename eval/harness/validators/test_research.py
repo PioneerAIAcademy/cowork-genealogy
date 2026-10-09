@@ -17,6 +17,7 @@ from __future__ import annotations
 import pytest
 
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import check_no_gate_stop
 
 _ROUTES_TO_PREFIX = "routes-to:"
 
@@ -315,6 +316,32 @@ def test_no_browse_executed_on_indexed_search(
     )
 
 
+def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_tool_calls, tool_calls, test):
+    """After a hint triage the router relays it and stops: whether to accept a
+    hint is the researcher's call (research/SKILL.md, "Hint review"). Spawning
+    search-hints a second time in the same run can only carry verdicts the
+    researcher never stated, and logging the hints itself skips the agent.
+
+    Tag-gated on ``stops-for-verdicts``. The test's search-hints stub returns a
+    realistic triage ending in "Awaiting verdicts", so the pull toward a second
+    spawn is real (issue #2029).
+    """
+    from harness.skill_runner import handoffs
+
+    if "stops-for-verdicts" not in test.get("tags", []):
+        pytest.skip("not a hint-review stop test")
+    spawns = [h for h in handoffs(skills_invoked, builtin_tool_calls) if h == "search-hints"]
+    assert len(spawns) == 1, (
+        f"search-hints was handed off {len(spawns)} time(s); the router spawns it once for "
+        "triage and then stops for the researcher's verdicts"
+    )
+    logs = [c for c in (tool_calls or []) if str(c.get("tool", "")).endswith("__research_log_append")]
+    assert not logs, (
+        f"the router logged {len(logs)} entry/entries itself after a hint triage; verdicts are "
+        "the researcher's, and recording them is search-hints' second spawn"
+    )
+
+
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
@@ -383,3 +410,18 @@ def test_reads_attachments_before_searching(
         "Handing off to a search step re-finds an already-attached record just as an "
         f"inline search call would. Hand-offs: {handed}"
     )
+
+
+# ── Moved from test_research_exhaustiveness.py (issue #2738) ───────────
+
+
+def test_no_gate_stop(before_state, after_state, test):
+    """Tag-gated: when the test expects the router to decline an
+    exhaustiveness request (near-miss negative), no question should
+    transition to `exhaustive_declared` or write a stop-gate `stopped_because`."""
+    if "no-exhaustive-declaration" not in test.get("tags", []):
+        pytest.skip("not a no-exhaustive-declaration scenario")
+    if before_state.get("research_json") is None or after_state.get("research_json") is None:
+        pytest.skip("missing research.json for diff")
+    bad = check_no_gate_stop(before_state, after_state)
+    assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)

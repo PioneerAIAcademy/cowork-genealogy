@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "user_message": "All planned searches for q_001 are complete. Three independent sources confirm Thomas Flynn as father: 1850 census co-enumeration, 1860 census co-enumeration, and the death certificate naming Thomas directly. The probate search returned negative (log_006). The birthplace conflict (c_001) is resolved. Overturn risk is low — no unsearched record type is likely to name a different father. Please evaluate whether research on q_001 is reasonably exhaustive and, if so, record the declaration: set search_stop.stopped_because to true, set status to exhaustive_declared, fill in all seven stop_criteria assessments, and validate the schema.",
-    "scenario": "flynn-exhaustive-ready"
+    "scenario": "flynn-exhaustive-ready",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `stopped_because: null` termination if they are not. The researcher reports all planned searches complete, three independent sources naming Thomas Flynn as father (the 1850 and 1860 census co-enumerations and the death certificate), a negative probate search at log_006, the birthplace conflict c_001 resolved, and overturn risk low.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "mcp_fixtures": [
     "validate-research-schema",

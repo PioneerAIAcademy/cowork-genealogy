@@ -466,6 +466,17 @@ describe("the guard script's decisions", () => {
   });
 
   it.each([
+    ["Write", "/project/external-collections.json"],
+    ["Edit", "C:\\Users\\Dell\\project\\external-collections.json"],
+  ])("denies %s on %s and names the tool that writes it", (tool, file_path) => {
+    const out = runGuard({ tool_name: tool, tool_input: { file_path } });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(
+      "external-collections.json is written only by external_links_search",
+    );
+  });
+
+  it.each([
     ["Read", { file_path: "/project/research.json" }],
     ["mcp__genealogy__research_append", { file_path: "/project/research.json" }],
     ["Bash", { command: "cat /project/research.json" }],

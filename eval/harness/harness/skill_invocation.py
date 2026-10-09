@@ -840,7 +840,10 @@ def _persona_reachable(
     - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
       so a persona was in hand when the assertion was extracted;
     - `record_search` with a retained `results_ref` — the sidecar result
-      carries the record's `gedcomx`.
+      carries the record's `gedcomx`;
+    - `person_record_matches` — an accepted FamilySearch hint (search-hints'
+      record mode). Its ark is a `1:1:` record persona that `record_read`
+      opens, which is how record-extraction fetched it.
 
     Everything else is unreachable: image-, external-site- and PDF-sourced
     assertions, a search whose sidecar was not retained, and **every**
@@ -882,7 +885,7 @@ def _persona_reachable(
     if not isinstance(entry, dict):
         return True  # no log entry — provenance unknown
     tool = entry.get("tool")
-    if tool == "record_read":
+    if tool in ("record_read", "person_record_matches"):
         return True
     if tool == "record_search" and entry.get("results_ref"):
         return True
@@ -1243,6 +1246,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # A new agent, not a conversion (issue #2029), and no hook route: it
+        # writes only `log` entries, one per researcher verdict on a hint. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
+        "search-hints",
         # Same shape as `citation` (issue #2792): a converted skill, no hook
         # route. It is listed because the set is asserted equal to the shipped
         # agent files, and because a `hypotheses` write arriving from it is
