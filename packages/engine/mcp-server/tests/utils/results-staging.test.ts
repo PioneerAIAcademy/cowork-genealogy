@@ -10,6 +10,7 @@ import {
   stripQueryPlumbing,
   readStagedEnvelopeQuery,
   resolveStagedRef,
+  readStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -509,5 +510,13 @@ describe("resolveStagedRef", () => {
     expect(await resolveStagedRef(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual({
       ref: at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"),
     });
+  });
+
+  it("reads a near-copy through readStagedResults, and still refuses a ref near nothing", async () => {
+    const good = "dbef78b1-1e5f-438a-ac1d-9bee233874f9";
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    await writeFile(join(dir, STAGING_SUBDIR, `${good}.json`), JSON.stringify({ payload: { results: [{ id: "R1" }] } }));
+    expect(await readStagedResults(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual([{ id: "R1" }]);
+    await expect(readStagedResults(dir, at("00000000-0000-4000-8000-000000000000"))).rejects.toThrow("does not exist");
   });
 });

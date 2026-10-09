@@ -552,7 +552,9 @@ function editDistance(a: string, b: string, cap: number): number {
  * Returns the ref unchanged when it exists, when it points outside
  * `results/.staging/`, or when zero or several staged files are near it — the
  * caller's own check then refuses it as before. Otherwise returns the one file's
- * ref and `correctedFrom`, which the caller reports; it never corrects silently.
+ * ref and `correctedFrom`. A writing caller reports the correction in its
+ * warnings; the read-only `readStagedResults` reads through without reporting it
+ * (search-result-staging-spec.md §6.0).
  */
 export async function resolveStagedRef(
   projectPath: string,
