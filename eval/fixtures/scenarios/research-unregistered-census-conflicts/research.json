@@ -1,0 +1,1873 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Jonathan Barker (FamilySearch MHGK-WT7), born about 1819 in London, England, who resided in Jasper County, Mississippi in 1850 and Smith County, Mississippi from 1860 through 1880.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-07",
+    "updated": "2026-10-07",
+    "title": "Jonathan Barker's parents"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where and in what household was Jonathan Barker (born about 1819 in England) enumerated in the 1850 U.S. federal census of Jasper County, Mississippi?",
+      "rationale": "Every fact on Jonathan Barker's FamilySearch profile is unsourced compiled-tree data, so the premise (identity, age, English birth, Mississippi residence) must be verified before parentage can be pursued. The 1850 census is his earliest claimed record and the first U.S. census to name every household member with age and birthplace, making it the gatekeeper: it should confirm his age and birthplace and reveal a wife and children whose own records (marriage, later censuses, death records) can carry indirect evidence of his origins and parents. It also anchors the 1819–1850 migration gap for later immigration/naturalization searches.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "created": "2026-10-07",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "created": "2026-10-07",
+      "question_id": "q_001",
+      "status": "active",
+      "items": [
+        {
+          "id": "pli_001",
+          "date_range": "1850",
+          "fallback_for": null,
+          "jurisdiction": "Jasper County, Mississippi",
+          "rationale": "United States Census, 1850 (FamilySearch, indexed with images) is the direct source the question asks about: it names every household member with age, sex, occupation and birthplace. Search 'Jonathan Barker', born ~1819 England, residence Jasper County; also try variants (Jno., John, Barkor/Barkers) since English-born heads are often mis-transcribed. Verify any hit against the original image and note the neighbors on the page for later FAN work.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 1,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "date_range": "1850",
+          "fallback_for": "pli_001",
+          "jurisdiction": "Smith, Jones, Wayne, Clarke, Newton and Scott Counties, Mississippi (neighbors of Jasper)",
+          "rationale": "The 1850 Jasper residence comes from an unsourced tree and may be wrong, or the household may sit just across a county line (he is in neighboring Smith County by 1860). Widen the 1850 search to all adjoining counties and to statewide Mississippi with an England birthplace filter.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 2,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_003",
+          "date_range": "1850",
+          "fallback_for": "pli_001",
+          "jurisdiction": "Jasper County, Mississippi",
+          "rationale": "Ancestry's 1850 census index is an independent transcription; a name FamilySearch's index garbled may be readable there. Index searching is free; image viewing needs a subscription or a FamilySearch Center/library visit.",
+          "record_type": "census",
+          "repository": "Ancestry",
+          "sequence": 3,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_004",
+          "date_range": "1846-1852",
+          "fallback_for": null,
+          "jurisdiction": "Jasper County, Mississippi",
+          "rationale": "Jasper County tax rolls 1834-1896 survive as browse-only images in 'Mississippi, State Archives, Various Records, 1818-1952' (collection 1919687). Annual rolls place Jonathan Barker in the county around 1850, corroborate the census entry, and can narrow when he arrived. Most Jasper courthouse records start only in 1904-1906, so tax rolls are one of the few local sources left for this period.",
+          "record_type": "tax",
+          "repository": "FamilySearch",
+          "sequence": 4,
+          "status": "skipped"
+        },
+        {
+          "id": "pli_005",
+          "date_range": "1845",
+          "fallback_for": null,
+          "jurisdiction": "Jasper County, Mississippi",
+          "rationale": "The 1845 Mississippi state census returns for Jasper County (browse-only images in collection 1919687) list heads of household with tallies of household members. A Jonathan Barker entry would corroborate residence before 1850 and the size of his household.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 5,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "date_range": "1860",
+          "fallback_for": null,
+          "jurisdiction": "Smith County, Mississippi",
+          "rationale": "Bridge record to confirm identity: the 1860 Smith County household (claimed on the tree) should list the same wife and the older children seen in 1850, with ages advanced 10 years. A matching household confirms the 1850 entry is the same man; it also helps if the 1850 entry is not found, since the children's ages and birthplaces show where the family lived in the 1840s.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 6,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-07T11:11:26.556Z",
+      "tool": "record_search",
+      "query": {
+        "birthYearFrom": 1814,
+        "birthYearTo": 1824,
+        "count": 50,
+        "givenName": "Jonathan",
+        "recordType": "census",
+        "residencePlace": "Mississippi, United States",
+        "residenceYearFrom": 1850,
+        "residenceYearTo": 1850,
+        "surname": "Barker"
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 8,
+      "notes": "Searched statewide Mississippi to cover Jasper and neighbors at once. Strong single match: Household of Jonathan Barker, Jasper Co., MS, 1850 census, born ~1820 England (ark:/61903/1:1:M4L8-3ST), match score 0.72; attached to a different tree person (possible duplicate of MHGK-WT7). All other hits score <0.002 (SC-born John Barker in Marshall Co.; slave schedules; directories). Passed to record_read/extraction."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-07T11:14:37.119Z",
+      "tool": "record_search",
+      "query": {
+        "birthYearFrom": 1814,
+        "birthYearTo": 1824,
+        "count": 50,
+        "givenName": "Jonathan",
+        "residencePlace": "Mississippi, United States",
+        "residenceYearFrom": 1860,
+        "residenceYearTo": 1880,
+        "surname": "Barker"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 5496,
+      "notes": "Broadened to 1860-1880 to cover the bridge census plus later life. Key hits: 1860 census Smith Co. household of Jonathan Barker b. ~1821 England (ark:/61903/1:1:M6GV-MG5); 1880 census Raleigh, Smith Co. 'John Barker' farmer b. ~1819 England (ark:/61903/1:1:M4P3-83T); 1866 MS state census Smith Co. 'Johnatha Barker' (ark:/61903/1:1:WDX9-3B3Z); several Confederate service-record entries for a Jonathan Barker (MS, 1862) and a Find a Grave Jonathan Barker d. 1863 Vicksburg (different man - our subject alive 1866-1880). Other hits are SC/KY/NC-born John Barkers."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-07T11:18:51.702Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "1919687",
+        "count": 50,
+        "givenName": "Jonathan",
+        "recordCountry": "United States",
+        "recordSubdivision": "Mississippi",
+        "surname": "Barker"
+      },
+      "outcome": "positive",
+      "results_examined": 22,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 22,
+      "notes": "Searched the indexed portion of 'Mississippi, State Archives, Various Records' (state censuses, tax rolls) statewide instead of browsing Jasper images. Found Jonathan Barker in the 1845 state census of SMITH County (ark:/61903/1:1:WD2C-XVN2) - not Jasper as planned - and 'Johnatha Barker' in the 1866 state census of Smith County (ark:/61903/1:1:WDX9-3B3Z). Index gives name/place/year only. No Jonathan Barker in Jasper County entries of this collection. Other hits are different John Barkers (Tippah, Jefferson, Tallahatchie, etc.)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "access_date": "2026-10-07",
+      "citation": "1850 U.S. census, Jasper County, Mississippi, population schedule, household of Jonathan Barker; imaged, \"United States, Census, 1850,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST : accessed 7 October 2026); citing NARA microfilm publication M432.",
+      "citation_detail": {
+        "what": "1850 U.S. census, population schedule, household of Jonathan Barker",
+        "when_accessed": "2026-10-07",
+        "when_created": "1850",
+        "where": "FamilySearch, \"United States, Census, 1850\" (collection 1401638)",
+        "where_within": "Jasper County, Mississippi; household of Jonathan Barker (page/dwelling not given in index; image ark:/61903/3:1:S3HY-DC1S-623)",
+        "who": "U.S. Census Office (enumerator for Jasper County)"
+      },
+      "gedcomx_source_description_id": "S2",
+      "log_entry_id": "log_001",
+      "notes": "Examined via FamilySearch index (derivative); original image at ark:/61903/3:1:S3HY-DC1S-623 not yet viewed. Index gives birth years computed from stated ages, not the ages themselves. FamilySearch standardized the census place incorrectly as 'Jasper, Alberta, Canada'; record text reads Jasper, Mississippi.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST"
+    },
+    {
+      "id": "src_002",
+      "access_date": "2026-10-07",
+      "citation": "1860 U.S. census, Smith County, Mississippi, population schedule, household of Jonathan Barker; imaged, \"United States, Census, 1860,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5 : accessed 7 October 2026); citing NARA microfilm publication M653.",
+      "citation_detail": {
+        "what": "1860 U.S. census, population schedule, household of Jonathan Barker",
+        "when_accessed": "2026-10-07",
+        "when_created": "1860",
+        "where": "FamilySearch, \"United States, Census, 1860\" (collection 1473181)",
+        "where_within": "Smith County, Mississippi; household of Jonathan Barker (image ark:/61903/3:1:33S7-9BSZ-H1W)",
+        "who": "U.S. Census Office (enumerator for Smith County)"
+      },
+      "gedcomx_source_description_id": "S3",
+      "log_entry_id": "log_002",
+      "notes": "Examined via FamilySearch index; image not yet viewed. Birth years computed from stated ages. FamilySearch mis-standardized place as Smith, New South Wales, Australia.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5"
+    },
+    {
+      "id": "src_003",
+      "access_date": "2026-10-07",
+      "citation": "1880 U.S. census, Smith County, Mississippi, population schedule, Raleigh (Beat 1), household of John Barker; imaged, \"United States, Census, 1880,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M4P3-83T : accessed 7 October 2026); citing NARA microfilm publication T9.",
+      "citation_detail": {
+        "what": "1880 U.S. census, population schedule, household of John Barker",
+        "when_accessed": "2026-10-07",
+        "when_created": "1880",
+        "where": "FamilySearch, \"United States, Census, 1880\" (collection 1417683)",
+        "where_within": "Raleigh, Smith County, Mississippi; household of John Barker (image ark:/61903/3:1:33S7-9YB8-HDX)",
+        "who": "U.S. Census Office (enumerator for Raleigh, Smith County)"
+      },
+      "gedcomx_source_description_id": "S4",
+      "log_entry_id": "log_002",
+      "notes": "Examined via FamilySearch index; image not yet viewed. The 1880 schedule has columns for each person's father's and mother's birthplaces and relationship to head, which the index returned only partly - the image should be checked for parents' birthplaces and the Delaney children's relationship. Place mis-standardized as Raleigh, Newfoundland.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T"
+    },
+    {
+      "id": "src_004",
+      "access_date": "2026-10-07",
+      "citation": "Mississippi, state census, 1845, Smith County, entry for Jonathan Barker; imaged, \"Mississippi, State Archives, Various Records, 1818-1952,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WD2C-XVN2 : accessed 7 October 2026); citing Mississippi Department of Archives and History, Jackson.",
+      "citation_detail": {
+        "what": "1845 state census return, entry for Jonathan Barker",
+        "when_accessed": "2026-10-07",
+        "when_created": "1845",
+        "where": "FamilySearch, \"Mississippi, State Archives, Various Records, 1818-1952\" (collection 1919687)",
+        "where_within": "Smith County, 1845 (image ark:/61903/3:1:33SQ-GPWR-CH)",
+        "who": "State of Mississippi (county census taker)"
+      },
+      "gedcomx_source_description_id": "S5",
+      "log_entry_id": "log_003",
+      "notes": "Index gives name, county and year only; image (tally of household by sex/age) not yet viewed.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:WD2C-XVN2"
+    },
+    {
+      "id": "src_005",
+      "access_date": "2026-10-07",
+      "citation": "Mississippi, state census, 1866, Smith County, entry for Johnatha[n] Barker; imaged, \"Mississippi, State Archives, Various Records, 1818-1952,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:WDX9-3B3Z : accessed 7 October 2026); citing Mississippi Department of Archives and History, Jackson.",
+      "citation_detail": {
+        "what": "1866 state census return, entry for Johnatha Barker",
+        "when_accessed": "2026-10-07",
+        "when_created": "1866",
+        "where": "FamilySearch, \"Mississippi, State Archives, Various Records, 1818-1952\" (collection 1919687)",
+        "where_within": "Smith County, 1866 (image ark:/61903/3:1:33SQ-GPWR-CD8)",
+        "who": "State of Mississippi (county census taker)"
+      },
+      "gedcomx_source_description_id": "S6",
+      "log_entry_id": "log_003",
+      "notes": "Index gives name, county and year only; 'Johnatha' is likely a truncated Jonathan.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:WDX9-3B3Z"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "1850 census does not identify the informant; an adult head typically answered for himself or his wife answered.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409786",
+      "record_role": "head_of_household",
+      "source_id": "src_001",
+      "structured_value": {
+        "given": "Jonathan",
+        "surname": "Barker"
+      },
+      "value": "Jonathan Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_002",
+      "date": "1820",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "Year derived from age as of census day; +/-1 year.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409786",
+      "record_role": "head_of_household",
+      "source_id": "src_001",
+      "structured_value": {
+        "year": 1820
+      },
+      "value": "born about 1820 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "Country only; no city. The tree's 'London' is not supported by this record.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409786",
+      "record_role": "head_of_household",
+      "source_id": "src_001",
+      "standard_place": "England, United Kingdom",
+      "structured_value": {
+        "place": "England"
+      },
+      "value": "England",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_004",
+      "date": "1850",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "residence",
+      "informant": "census enumerator",
+      "informant_bias_notes": "Enumerator visited the dwelling.",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "log_entry_id": "log_001",
+      "place": "Jasper, Mississippi, United States",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409786",
+      "record_role": "head_of_household",
+      "source_id": "src_001",
+      "standard_place": "Jasper, Mississippi, United States",
+      "structured_value": {
+        "place": "Jasper County, Mississippi"
+      },
+      "value": "Jasper County, Mississippi, 1850",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409787",
+      "record_role": "wife",
+      "source_id": "src_001",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Barker"
+      },
+      "value": "Elizabeth Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_006",
+      "date": "1823",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409787",
+      "record_role": "wife",
+      "source_id": "src_001",
+      "structured_value": {
+        "year": 1823
+      },
+      "value": "born about 1823 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "Both adults English-born suggests a marriage in England or among English immigrants before ~1846.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409787",
+      "record_role": "wife",
+      "source_id": "src_001",
+      "standard_place": "England, United Kingdom",
+      "structured_value": {
+        "place": "England"
+      },
+      "value": "England",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "1850 census has no relationship column; inferred from household order.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409787",
+      "record_role": "wife",
+      "source_id": "src_001",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "spouse_inferred"
+      },
+      "value": "listed second, adult female with same surname — position consistent with wife of head",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409788",
+      "record_role": "child_1",
+      "source_id": "src_001",
+      "structured_value": {
+        "given": "Sarah Martha",
+        "surname": "Barker"
+      },
+      "value": "Sarah Martha Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_010",
+      "date": "1846",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409788",
+      "record_role": "child_1",
+      "source_id": "src_001",
+      "structured_value": {
+        "year": 1846
+      },
+      "value": "born about 1846 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely a parent)",
+      "informant_bias_notes": "Places the family in Alabama about 1846 — a migration waypoint before Mississippi.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409788",
+      "record_role": "child_1",
+      "source_id": "src_001",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama"
+      },
+      "value": "Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "No relationship column in 1850.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409788",
+      "record_role": "child_1",
+      "source_id": "src_001",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "child_inferred"
+      },
+      "value": "young child with same surname listed after the couple — position consistent with child of head",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409789",
+      "record_role": "child_2",
+      "source_id": "src_001",
+      "structured_value": {
+        "given": "Amanda P",
+        "surname": "Barker"
+      },
+      "value": "Amanda P Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_014",
+      "date": "1848",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409789",
+      "record_role": "child_2",
+      "source_id": "src_001",
+      "structured_value": {
+        "year": 1848
+      },
+      "value": "born about 1848 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely a parent)",
+      "informant_bias_notes": "Brackets arrival in Mississippi between ~1846 and ~1848.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409789",
+      "record_role": "child_2",
+      "source_id": "src_001",
+      "standard_place": "Mississippi, United States",
+      "structured_value": {
+        "place": "Mississippi"
+      },
+      "value": "Mississippi",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "No relationship column in 1850.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "record_persona_id": "p_187409789",
+      "record_role": "child_2",
+      "source_id": "src_001",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "child_inferred"
+      },
+      "value": "young child with same surname listed after the couple — position consistent with child of head",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206684",
+      "record_role": "head_of_household",
+      "source_id": "src_002",
+      "structured_value": {
+        "given": "Jonathan",
+        "surname": "Barker"
+      },
+      "value": "Jonathan Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_018",
+      "date": "1821",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206684",
+      "record_role": "head_of_household",
+      "source_id": "src_002",
+      "structured_value": {
+        "year": 1821
+      },
+      "value": "born about 1821 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_019",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206684",
+      "record_role": "head_of_household",
+      "source_id": "src_002",
+      "standard_place": "England, United Kingdom",
+      "structured_value": {
+        "place": "England"
+      },
+      "value": "England",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_020",
+      "date": "1860",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "residence",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "log_entry_id": "log_002",
+      "place": "Smith, Mississippi, United States",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206684",
+      "record_role": "head_of_household",
+      "source_id": "src_002",
+      "standard_place": "Smith, Mississippi, United States",
+      "structured_value": {
+        "place": "Smith County, Mississippi"
+      },
+      "value": "Smith County, Mississippi, 1860",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_021",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206685",
+      "record_role": "wife",
+      "source_id": "src_002",
+      "structured_value": {
+        "given": "Elizabeth",
+        "surname": "Barker"
+      },
+      "value": "Elizabeth Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_022",
+      "date": "1824",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206685",
+      "record_role": "wife",
+      "source_id": "src_002",
+      "structured_value": {
+        "year": 1824
+      },
+      "value": "born about 1824 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "CONFLICT: 1850 census gave England for Elizabeth.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206685",
+      "record_role": "wife",
+      "source_id": "src_002",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama"
+      },
+      "value": "Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "1860 census has no relationship column; inferred from household position.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206685",
+      "record_role": "wife",
+      "source_id": "src_002",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "spouse_inferred"
+      },
+      "value": "adult female listed second with same surname - consistent with wife",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206686",
+      "record_role": "child_1",
+      "source_id": "src_002",
+      "structured_value": {
+        "given": "Sarah M",
+        "surname": "Barker"
+      },
+      "value": "Sarah M Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_026",
+      "date": "1846",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206686",
+      "record_role": "child_1",
+      "source_id": "src_002",
+      "structured_value": {
+        "year": 1846
+      },
+      "value": "born about 1846 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely a parent)",
+      "informant_bias_notes": "CONFLICT: 1850 census gave Alabama for Sarah Martha.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206686",
+      "record_role": "child_1",
+      "source_id": "src_002",
+      "standard_place": "Mississippi, United States",
+      "structured_value": {
+        "place": "Mississippi"
+      },
+      "value": "Mississippi",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_028",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "1860 census has no relationship column; inferred from household position.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206686",
+      "record_role": "child_1",
+      "source_id": "src_002",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "child_inferred"
+      },
+      "value": "child with same surname listed after the couple - consistent with child",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_029",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206687",
+      "record_role": "child_2",
+      "source_id": "src_002",
+      "structured_value": {
+        "given": "Amanda P",
+        "surname": "Barker"
+      },
+      "value": "Amanda P Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_030",
+      "date": "1849",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206687",
+      "record_role": "child_2",
+      "source_id": "src_002",
+      "structured_value": {
+        "year": 1849
+      },
+      "value": "born about 1849 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206687",
+      "record_role": "child_2",
+      "source_id": "src_002",
+      "standard_place": "Mississippi, United States",
+      "structured_value": {
+        "place": "Mississippi"
+      },
+      "value": "Mississippi",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "1860 census has no relationship column; inferred from household position.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206687",
+      "record_role": "child_2",
+      "source_id": "src_002",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "child_inferred"
+      },
+      "value": "child with same surname listed after the couple - consistent with child",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206688",
+      "record_role": "child_3",
+      "source_id": "src_002",
+      "structured_value": {
+        "given": "Pernesia A J",
+        "surname": "Barker"
+      },
+      "value": "Pernesia A J Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_034",
+      "date": "1855",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206688",
+      "record_role": "child_3",
+      "source_id": "src_002",
+      "structured_value": {
+        "year": 1855
+      },
+      "value": "born about 1855 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_035",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206688",
+      "record_role": "child_3",
+      "source_id": "src_002",
+      "standard_place": "Mississippi, United States",
+      "structured_value": {
+        "place": "Mississippi"
+      },
+      "value": "Mississippi",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "census enumerator",
+      "informant_bias_notes": "1860 census has no relationship column; inferred from household position.",
+      "informant_proximity": "witness",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5",
+      "record_persona_id": "p_334206688",
+      "record_role": "child_3",
+      "source_id": "src_002",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "child_inferred"
+      },
+      "value": "child with same surname listed after the couple - consistent with child",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_037",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "Indexed as 'John' (vs. Jonathan in 1850/1860) - likely abbreviation Jno. or informant variation. Same age, England birth, wife Elisabeth b. ~1824 Alabama and Smith County residence identify him with the 1860 Jonathan.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821016",
+      "record_role": "head_of_household",
+      "source_id": "src_003",
+      "structured_value": {
+        "given": "John",
+        "surname": "Barker"
+      },
+      "value": "John Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_038",
+      "date": "1819",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821016",
+      "record_role": "head_of_household",
+      "source_id": "src_003",
+      "structured_value": {
+        "year": 1819
+      },
+      "value": "born about 1819 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_039",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821016",
+      "record_role": "head_of_household",
+      "source_id": "src_003",
+      "standard_place": "England, United Kingdom",
+      "structured_value": {
+        "place": "England"
+      },
+      "value": "England",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_040",
+      "date": "1880",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "residence",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "information_quality": "primary",
+      "log_entry_id": "log_002",
+      "place": "Raleigh, Smith, Mississippi, United States",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821016",
+      "record_role": "head_of_household",
+      "source_id": "src_003",
+      "standard_place": "Raleigh, Smith, Mississippi, United States",
+      "structured_value": {
+        "place": "Raleigh, Smith County, Mississippi"
+      },
+      "value": "Raleigh, Smith County, Mississippi, 1880",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_041",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "occupation",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821016",
+      "record_role": "head_of_household",
+      "source_id": "src_003",
+      "structured_value": {
+        "occupation": "Farmer"
+      },
+      "value": "Farmer",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_042",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_003",
+      "structured_value": {
+        "given": "Elisabeth",
+        "surname": "Barker"
+      },
+      "value": "Elisabeth Barker",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_043",
+      "date": "1824",
+      "date_certainty": "calculated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_003",
+      "structured_value": {
+        "year": 1824
+      },
+      "value": "born about 1824 (index year computed from stated age)",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_044",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birthplace",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_003",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama"
+      },
+      "value": "Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_045",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "relationship",
+      "informant": "unknown household member (likely self or spouse)",
+      "informant_bias_notes": "1880 census states relationship to head; index returned a Couple relationship.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_003",
+      "structured_value": {
+        "related_person_role": "head_of_household",
+        "relationship_type": "spouse"
+      },
+      "value": "Wife of head (1880 schedule has a relationship-to-head column)",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_046",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member",
+      "informant_bias_notes": "Relationship to head not returned by index (possibly grandchild or boarder); check image.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821018",
+      "record_role": "household_member_1",
+      "source_id": "src_003",
+      "structured_value": {
+        "given": "Mary",
+        "surname": "Delaney"
+      },
+      "value": "Mary Delaney",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_047",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "name",
+      "informant": "unknown household member",
+      "informant_bias_notes": "Relationship to head not returned by index (possibly grandchild or boarder); check image.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
+      "record_persona_id": "p_188821019",
+      "record_role": "household_member_2",
+      "source_id": "src_003",
+      "structured_value": {
+        "given": "Edward",
+        "surname": "Delaney"
+      },
+      "value": "Edward Delaney",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_048",
+      "date": "1845",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "residence",
+      "informant": "state census taker",
+      "informant_bias_notes": "Places a Jonathan Barker in Smith Co. by 1845 - before the 1846 birth of Sarah Martha, which the 1850 census put in Alabama but the 1860 census put in Mississippi.",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "log_entry_id": "log_003",
+      "place": "Smith, Mississippi, United States",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:WD2C-XVN2",
+      "record_persona_id": "p_140461684700",
+      "record_role": "head_of_household",
+      "source_id": "src_004",
+      "standard_place": "Smith, Mississippi, United States",
+      "structured_value": {
+        "place": "Smith County, Mississippi"
+      },
+      "value": "Jonathan Barker enumerated in Smith County, Mississippi, 1845 state census",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_049",
+      "date": "1866",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "residence",
+      "informant": "state census taker",
+      "informant_bias_notes": "Shows the head survived the Civil War and remained in Smith County.",
+      "informant_proximity": "official_duty",
+      "information_quality": "primary",
+      "log_entry_id": "log_003",
+      "place": "Smith, Mississippi, United States",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:WDX9-3B3Z",
+      "record_persona_id": "p_140309116300",
+      "record_role": "head_of_household",
+      "source_id": "src_005",
+      "standard_place": "Smith, Mississippi, United States",
+      "structured_value": {
+        "place": "Smith County, Mississippi"
+      },
+      "value": "Johnatha Barker enumerated in Smith County, Mississippi, 1866 state census",
+      "record_basis": "stated"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "confidence": "confident",
+      "match_score": 0.717,
+      "person_id": "I1",
+      "rationale": "Head of an 1850 Jasper County, Mississippi household: name Jonathan Barker matches exactly; born ~1820 England vs tree 1819 London (consistent, record gives country only); Jasper County 1850 residence matches the tree's 1850 residence. FamilySearch matcher score 0.717 (strong). No conflicting identifiers.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "confidence": "confident",
+      "match_score": 0.717,
+      "person_id": "I1",
+      "rationale": "Head of an 1850 Jasper County, Mississippi household: name Jonathan Barker matches exactly; born ~1820 England vs tree 1819 London (consistent, record gives country only); Jasper County 1850 residence matches the tree's 1850 residence. FamilySearch matcher score 0.717 (strong). No conflicting identifiers.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "confidence": "confident",
+      "match_score": 0.717,
+      "person_id": "I1",
+      "rationale": "Head of an 1850 Jasper County, Mississippi household: name Jonathan Barker matches exactly; born ~1820 England vs tree 1819 London (consistent, record gives country only); Jasper County 1850 residence matches the tree's 1850 residence. FamilySearch matcher score 0.717 (strong). No conflicting identifiers.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "confidence": "confident",
+      "match_score": 0.717,
+      "person_id": "I1",
+      "rationale": "Head of an 1850 Jasper County, Mississippi household: name Jonathan Barker matches exactly; born ~1820 England vs tree 1819 London (consistent, record gives country only); Jasper County 1850 residence matches the tree's 1850 residence. FamilySearch matcher score 0.717 (strong). No conflicting identifiers.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Elizabeth Barker (b. ~1823 England) is listed in Jonathan Barker's 1850 Jasper County household (adult female listed second, consistent with wife). New stub I2 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Elizabeth Barker (b. ~1823 England) is listed in Jonathan Barker's 1850 Jasper County household (adult female listed second, consistent with wife). New stub I2 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Elizabeth Barker (b. ~1823 England) is listed in Jonathan Barker's 1850 Jasper County household (adult female listed second, consistent with wife). New stub I2 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Elizabeth Barker (b. ~1823 England) is listed in Jonathan Barker's 1850 Jasper County household (adult female listed second, consistent with wife). New stub I2 created from this single record; no independent corroboration yet, so probable. Relationship to head is inferred from household position (no 1850 relationship column).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Household-position relationship assertion bears on head Jonathan Barker (I1) as well as Elizabeth Barker (b. ~1823 England) (I2); inferred, not stated.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_009",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah Martha Barker (b. ~1846 Alabama) is listed in Jonathan Barker's 1850 Jasper County household (child_1). New stub I3 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_010",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah Martha Barker (b. ~1846 Alabama) is listed in Jonathan Barker's 1850 Jasper County household (child_1). New stub I3 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah Martha Barker (b. ~1846 Alabama) is listed in Jonathan Barker's 1850 Jasper County household (child_1). New stub I3 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah Martha Barker (b. ~1846 Alabama) is listed in Jonathan Barker's 1850 Jasper County household (child_1). New stub I3 created from this single record; no independent corroboration yet, so probable. Relationship to head is inferred from household position (no 1850 relationship column).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Household-position relationship assertion bears on head Jonathan Barker (I1) as well as Sarah Martha Barker (b. ~1846 Alabama) (I3); inferred, not stated.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker (b. ~1848 Mississippi) is listed in Jonathan Barker's 1850 Jasper County household (child_2). New stub I4 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_014",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker (b. ~1848 Mississippi) is listed in Jonathan Barker's 1850 Jasper County household (child_2). New stub I4 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_015",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker (b. ~1848 Mississippi) is listed in Jonathan Barker's 1850 Jasper County household (child_2). New stub I4 created from this single record; no independent corroboration yet, so probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_016",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker (b. ~1848 Mississippi) is listed in Jonathan Barker's 1850 Jasper County household (child_2). New stub I4 created from this single record; no independent corroboration yet, so probable. Relationship to head is inferred from household position (no 1850 relationship column).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Household-position relationship assertion bears on head Jonathan Barker (I1) as well as Amanda P Barker (b. ~1848 Mississippi) (I4); inferred, not stated.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1860 Smith Co., MS head Jonathan Barker: exact name; born ~1821 England (1850: ~1820 England); household contains Elizabeth b. ~1824 plus Sarah M b. ~1846 and Amanda P b. ~1849 - the same two daughters, aged ten years, as in his 1850 Jasper household; Smith County is adjacent to Jasper and matches the tree's 1860 residence. Strong multi-attribute correlation.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_018",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1860 Smith Co., MS head Jonathan Barker: exact name; born ~1821 England (1850: ~1820 England); household contains Elizabeth b. ~1824 plus Sarah M b. ~1846 and Amanda P b. ~1849 - the same two daughters, aged ten years, as in his 1850 Jasper household; Smith County is adjacent to Jasper and matches the tree's 1860 residence. Strong multi-attribute correlation.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_019",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1860 Smith Co., MS head Jonathan Barker: exact name; born ~1821 England (1850: ~1820 England); household contains Elizabeth b. ~1824 plus Sarah M b. ~1846 and Amanda P b. ~1849 - the same two daughters, aged ten years, as in his 1850 Jasper household; Smith County is adjacent to Jasper and matches the tree's 1860 residence. Strong multi-attribute correlation.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_020",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1860 Smith Co., MS head Jonathan Barker: exact name; born ~1821 England (1850: ~1820 England); household contains Elizabeth b. ~1824 plus Sarah M b. ~1846 and Amanda P b. ~1849 - the same two daughters, aged ten years, as in his 1850 Jasper household; Smith County is adjacent to Jasper and matches the tree's 1860 residence. Strong multi-attribute correlation.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_021",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1860 wife Elizabeth Barker, b. ~1824, in the household of Jonathan Barker with the same daughters as 1850 - consistent with the Elizabeth (I2) of 1850. Age agrees within 1 year. Birthplace conflict: 1860 says Alabama, 1850 said England (to be resolved in conflict-resolution). Probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_022",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1860 wife Elizabeth Barker, b. ~1824, in the household of Jonathan Barker with the same daughters as 1850 - consistent with the Elizabeth (I2) of 1850. Age agrees within 1 year. Birthplace conflict: 1860 says Alabama, 1850 said England (to be resolved in conflict-resolution). Probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_023",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1860 wife Elizabeth Barker, b. ~1824, in the household of Jonathan Barker with the same daughters as 1850 - consistent with the Elizabeth (I2) of 1850. Age agrees within 1 year. Birthplace conflict: 1860 says Alabama, 1850 said England (to be resolved in conflict-resolution). Probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_024",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1860 wife Elizabeth Barker, b. ~1824, in the household of Jonathan Barker with the same daughters as 1850 - consistent with the Elizabeth (I2) of 1850. Age agrees within 1 year. Birthplace conflict: 1860 says Alabama, 1850 said England (to be resolved in conflict-resolution). Probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Relationship assertion (wife inferred from position) also bears on head Jonathan Barker (I1).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah M Barker b. ~1846 in Jonathan & Elizabeth Barker's 1860 household = Sarah Martha b. ~1846 of the 1850 household (same given names/initial, same age, same parents). Birthplace conflict (1850 Alabama vs 1860 Mississippi) noted.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah M Barker b. ~1846 in Jonathan & Elizabeth Barker's 1860 household = Sarah Martha b. ~1846 of the 1850 household (same given names/initial, same age, same parents). Birthplace conflict (1850 Alabama vs 1860 Mississippi) noted.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_027",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah M Barker b. ~1846 in Jonathan & Elizabeth Barker's 1860 household = Sarah Martha b. ~1846 of the 1850 household (same given names/initial, same age, same parents). Birthplace conflict (1850 Alabama vs 1860 Mississippi) noted.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_028",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I3",
+      "rationale": "Sarah M Barker b. ~1846 in Jonathan & Elizabeth Barker's 1860 household = Sarah Martha b. ~1846 of the 1850 household (same given names/initial, same age, same parents). Birthplace conflict (1850 Alabama vs 1860 Mississippi) noted.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_028",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Child-inferred relationship assertion also bears on head Jonathan Barker (I1).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_029",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker b. ~1849 Mississippi in the 1860 household = Amanda P b. ~1848 Mississippi in 1850 (identical name with initial, age within 1 year, same birthplace, same parents).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_030",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker b. ~1849 Mississippi in the 1860 household = Amanda P b. ~1848 Mississippi in 1850 (identical name with initial, age within 1 year, same birthplace, same parents).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_031",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker b. ~1849 Mississippi in the 1860 household = Amanda P b. ~1848 Mississippi in 1850 (identical name with initial, age within 1 year, same birthplace, same parents).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_032",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I4",
+      "rationale": "Amanda P Barker b. ~1849 Mississippi in the 1860 household = Amanda P b. ~1848 Mississippi in 1850 (identical name with initial, age within 1 year, same birthplace, same parents).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_032",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Child-inferred relationship assertion also bears on head Jonathan Barker (I1).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_033",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Pernesia A J Barker b. ~1855 Mississippi, a child in Jonathan Barker's 1860 household (born after 1850). New stub I5 from this single record; probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_034",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Pernesia A J Barker b. ~1855 Mississippi, a child in Jonathan Barker's 1860 household (born after 1850). New stub I5 from this single record; probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_035",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Pernesia A J Barker b. ~1855 Mississippi, a child in Jonathan Barker's 1860 household (born after 1850). New stub I5 from this single record; probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_036",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Pernesia A J Barker b. ~1855 Mississippi, a child in Jonathan Barker's 1860 household (born after 1850). New stub I5 from this single record; probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_036",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Child-inferred relationship assertion also bears on head Jonathan Barker (I1).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_037",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1880 Raleigh, Smith Co. head indexed 'John Barker': born ~1819 England (matches 1850/1860 ages and birthplace), farmer, married to Elisabeth b. ~1824 Alabama (matches the 1860 wife's age and birthplace exactly), same county as 1860, and the tree's 1880 residence 'Beat 1 Raleigh, Smith'. 'John' vs 'Jonathan' is a common abbreviation/variant. Moderate-strong; probable pending image check.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_038",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1880 Raleigh, Smith Co. head indexed 'John Barker': born ~1819 England (matches 1850/1860 ages and birthplace), farmer, married to Elisabeth b. ~1824 Alabama (matches the 1860 wife's age and birthplace exactly), same county as 1860, and the tree's 1880 residence 'Beat 1 Raleigh, Smith'. 'John' vs 'Jonathan' is a common abbreviation/variant. Moderate-strong; probable pending image check.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_039",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1880 Raleigh, Smith Co. head indexed 'John Barker': born ~1819 England (matches 1850/1860 ages and birthplace), farmer, married to Elisabeth b. ~1824 Alabama (matches the 1860 wife's age and birthplace exactly), same county as 1860, and the tree's 1880 residence 'Beat 1 Raleigh, Smith'. 'John' vs 'Jonathan' is a common abbreviation/variant. Moderate-strong; probable pending image check.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_040",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1880 Raleigh, Smith Co. head indexed 'John Barker': born ~1819 England (matches 1850/1860 ages and birthplace), farmer, married to Elisabeth b. ~1824 Alabama (matches the 1860 wife's age and birthplace exactly), same county as 1860, and the tree's 1880 residence 'Beat 1 Raleigh, Smith'. 'John' vs 'Jonathan' is a common abbreviation/variant. Moderate-strong; probable pending image check.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_041",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1880 Raleigh, Smith Co. head indexed 'John Barker': born ~1819 England (matches 1850/1860 ages and birthplace), farmer, married to Elisabeth b. ~1824 Alabama (matches the 1860 wife's age and birthplace exactly), same county as 1860, and the tree's 1880 residence 'Beat 1 Raleigh, Smith'. 'John' vs 'Jonathan' is a common abbreviation/variant. Moderate-strong; probable pending image check.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_042",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1880 Elisabeth Barker, wife of head, b. ~1824 Alabama - matches the 1860 Elizabeth (I2) in age and birthplace; spouse of the man identified as I1.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_043",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1880 Elisabeth Barker, wife of head, b. ~1824 Alabama - matches the 1860 Elizabeth (I2) in age and birthplace; spouse of the man identified as I1.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_044",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1880 Elisabeth Barker, wife of head, b. ~1824 Alabama - matches the 1860 Elizabeth (I2) in age and birthplace; spouse of the man identified as I1.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_045",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "1880 Elisabeth Barker, wife of head, b. ~1824 Alabama - matches the 1860 Elizabeth (I2) in age and birthplace; spouse of the man identified as I1.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_045",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Stated spouse relationship also bears on head (I1).",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_048",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Same uncommon full name (Jonathan Barker) in Smith County in 1845; Smith adjoins Jasper (1850 residence) and is his documented home 1860-1880. Index carries no age/birthplace, so identity rests on name + place; no other Jonathan Barker appears in Mississippi censuses 1850-1880. Probable.",
+      "created": "2026-10-07"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_049",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "'Johnatha Barker' (truncated Jonathan) in Smith County 1866 state census, between his 1860 and 1880 Smith County federal census entries; no other Jonathan Barker known in the county. Name + place only; probable.",
+      "created": "2026-10-07"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

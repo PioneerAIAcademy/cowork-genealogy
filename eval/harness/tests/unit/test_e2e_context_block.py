@@ -253,6 +253,36 @@ def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypa
     assert sink["sub"] == {}
 
 
+def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
+    """The credential-read arm fires unconditionally — not behind --deny-shell or
+    --deny-project-reads — because the PR #2990 leak was a default run. Deleting
+    the `credential_read_denied(...)` call in pretool_hook must red this test."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    sink: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            ("cred", {"tool_name": "Read", "tool_input": {"file_path": "/home/user/.familysearch-mcp/tokens.json"}}),
+            ("plain", {"tool_name": "Read", "tool_input": {"file_path": str(tmp_path / "research.json")}}),
+        ]
+        return _HookDrivingAgent(
+            hook, inputs, [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()], sink
+        )
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy")))
+    assert sink["cred"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "credentials directory" in sink["cred"]["hookSpecificOutput"]["permissionDecisionReason"]
+    assert sink["plain"] == {}
+
+
 def _result(session="S1"):
     return ResultMessage(
         subtype="result",

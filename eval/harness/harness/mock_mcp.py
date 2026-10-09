@@ -102,9 +102,12 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Local-only: reads tree.gedcomx.json from the workspace. The compiled-tool
-    # handler computes every tag deterministically from the workspace tree, so a
-    # live handler is more faithful than a canned answer. Live since 2026-09-03
+    # Reads tree.gedcomx.json from the workspace. The compiled-tool handler
+    # computes every tag from the workspace tree, so a live handler is more
+    # faithful than a canned answer. Its one networked check
+    # (hasBirthFarFromParentsResidence) is switched off through
+    # `_COMPILED_TOOL_EXTRA_ARGS`: a unit run must not reach the Places API, and
+    # the tool skips that check when a lookup returns nothing. Live since 2026-09-03
     # (lead ruling on PR #2151). `person_quality` is NOT here and must not be:
     # it calls FamilySearch.
     "person_warnings",
@@ -1184,6 +1187,14 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: `principal` arrives `undefined`.
 _COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
 
+#: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
+#: `person_warnings` gets a place resolver that resolves nothing, so its
+#: birthplace-distance check never makes a network call and never fires here
+#: (lead ruling on issue #1962, 2026-09-27).
+_COMPILED_TOOL_EXTRA_ARGS: dict[str, str] = {
+    "person_warnings": "{ placeCoords: async () => null }",
+}
+
 
 def _make_live_handler(
     tool_name: str,
@@ -1544,6 +1555,8 @@ def _make_compiled_tool_handler(
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
             )
             call_args = "input, LOCAL" if takes_principal else "input"
+            if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
+                call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"
