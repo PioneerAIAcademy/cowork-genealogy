@@ -88,8 +88,8 @@
 ### The validated grain
 
 - Validated: **one queue message per patron turn**, now often a whole research run (PR #2870); the review proposes one model call. The time limit (handoff U26) changes the grain again: a run of at most 1,800 s, ended, not resumed.
-- **Visible queue depth is a poor scaling signal:** it reads zero while every worker is busy and rises only once patrons wait. No alternative is chosen.
-- **Packing and the review's ~$0.04 compute estimate** need re-deriving at U26's grain (a run of at most 1,800 s).
+- **Visible queue depth is a poor scaling signal:** it reads zero while every worker is busy and rises only once patrons wait. Proposed instead (handoff U18, [capacity](./search-agent-capacity.md)): slot utilisation, visible plus in-flight messages over instances × `HttpConnections`, with scale-in protection the worker sets on itself.
+- **Packing and the review's ~$0.04 compute estimate,** re-derived at U26's grain (U18, estimates): 4 turns on a t3.large or 8 on a t3.xlarge while CPU is unmeasured; the review's figure is the worker slot alone, and the 1,800 s cap leaves slot-time per session unchanged.
 - **Until U26 lands, sqsd must cut only a run past 10 h:** `InactivityTimeout` at Beanstalk's 36,000 s maximum, so receives after the first come only from a crash, a deploy or SIGTERM, or a 500 (an API error, Postgres down at claim, a `ResumeFailure`); a crashed worker's message can take ~10 h to return (handoff U5, which builds these values: `VisibilityTimeout` 36,300, `MaxRetries` 5, `ErrorVisibilityTimeout` 300, handoff step 11).
 
 ## Six measurements
@@ -159,7 +159,7 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 - **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4's worker half built, its tool-server half open).
 - **No time limit or fencing:** nothing ends a run by time; a cut attempt would keep running beside its redelivery; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U6, U26.
 - **Postgres backend (R14):** 4 of 41 store cases run in CI (2026-09-29); tool suites and evals use files. U15.
-- **Throughput:** ~166k tokens/min a session (2026-09-09 estimate); 50 sessions ≈ 0.5M–8.1M TPM, up to 4× the 2M default, depending on burndown and cache-read counting. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18.
+- **Throughput:** Bedrock counts input + cache write + 5× output for Sonnet 4.6 and exempts cache reads (documented; read back in our test account, 2026-10-09, n=1 per arm), so a session settles at ~26–43k tokens/min, not the ~166k that counted every token. 50 sessions ≈ 2M TPM against a 6M default; the 700M per-day default (~12 sessions around the clock) binds first. The throttle decides on a `max_tokens` reservation nobody has measured. The gateway is one 0.25 vCPU task, no autoscaling (2026-09-11). U18, [capacity](./search-agent-capacity.md).
 - **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. U16 counts them.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
 - **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
@@ -202,7 +202,7 @@ Numbers are the handoff's; Richard routes them inside FamilySearch. "Sent" means
 - **F2, APT:** a date for agentgateway ≥ v1.6.0 (tool search). Unblocks production cost. Drafted, not sent. FYI: the gateway also drops forced `tool_choice` and the 1 h TTL (upstream agentgateway issue #3670).
 - **F3, APT:** `maxBufferSize` 32 MiB; at 2 MiB a session dies at its third page scan. Unblocks U14 and image-heavy sessions. Drafted, not sent.
 - **F4, APT:** admit our three model ids; is Sonnet 5 enabled; pin no `model:`. Unblocks U14. Allowlist drafted, not sent; rest not yet asked.
-- **F5, APT:** which account, the invoke role (ETA December), where quota goes, gateway scaling. Unblocks U18. Account and role sent; scaling not yet asked.
+- **F5, APT:** which account, the invoke role (ETA December), where quota goes, gateway scaling; the account's applied quotas, the per-day quota raised with TPM, metric access for the load run, and whether the gateway retries or limits 429s itself. Unblocks U18. Account and role sent; the rest not yet asked.
 - **F6, APT:** `guardContent` for tool results: yes or no, and when? Unblocks the ARB injection answer. Sent.
 - **F7, InfoSec:** Langfuse keeps prompts at 100%: acceptable, and what retention? P3l (2026-09-25, local collector, n=1): tool results and images don't leave; patron names and record details do (~700k characters per 11-call turn). The sent ask wrongly said images leave. Unblocks security review. Correction and retention not sent.
 - **F9, ACE and FS legal:** may OCR stay on OpenRouter; record-custodian terms. Unblocks U20. Provider sent; the `bedrock-exception-*` role in the same ask withdrawn 2026-09-29, ACE not yet told; terms not yet asked.
@@ -214,7 +214,7 @@ Numbers are the handoff's; Richard routes them inside FamilySearch. "Sent" means
 - **F11, FS platform:** the SSE edge probe, only if F10 says they bypass DTM.
 - **F12, FS platform and DTL:** which Beanstalk platform and AMI; does Blueprint keep our sqsd and nginx overrides? Unblocks any FamilySearch deploy (R9: "weeks").
 - **F13, FS network:** VPC, egress and gateway allowlists, internal names past Imperva, HAProxy idle timer. Unblocks U14.
-- **F14, Blueprint:** Postgres, S3, SQS and DLQ, secrets, IAM; every worker-to-tools idle timeout, including the tool-server LB, ≥ 1,800 s; static S3 keys? Unblocks any deploy.
+- **F14, Blueprint:** Postgres, S3, SQS and DLQ, secrets, IAM; every worker-to-tools idle timeout, including the tool-server LB, ≥ 1,800 s; static S3 keys? For the scaling metric (U18): two Simple Scaling policies on different SQS metrics, a custom or metric-math metric, worker-set scale-in protection, the T3 credit mode. Unblocks any deploy.
 - **F15, FS OAuth owners (team unknown):** production client and redirect; confirm the 8 h / 24 h lifetime and revoke-on-refresh; re-sign-in past 24 h? Unblocks U2, U3.
 - **F16, fs-eng:** host `wiki-query-api` and Pop Stats. Unblocks four tools, which until then call a developer's personal host.
 - **F17, ARB, InfoSec, PRIA, AI Working Group, PM:** ARB scheduling, SLA exception, retention, DR, telemetry, service identity, CAS/TARS entitlement for the email allowlist, mobile. Unblocks go-live. Goes with U22.
