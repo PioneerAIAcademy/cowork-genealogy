@@ -329,7 +329,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -2149,7 +2149,8 @@ async def _run_agent(
                         "To CREATE a new project use project_create, which writes both "
                         "files together; to add to an existing one use research_append, "
                         "research_log_append, tree_edit or tree_correct. These validate "
-                        "before persisting. Direct file writes never validate."
+                        "before persisting. Direct file writes never validate. "
+                        "external-collections.json is written only by external_links_search given a projectPath."
                     ),
                 },
             }

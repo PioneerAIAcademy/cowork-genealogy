@@ -43,7 +43,8 @@ research_query({
   projectPath: string,
   section: "questions" | "plans" | "log" | "sources" | "assertions"
          | "person_evidence" | "conflicts" | "hypotheses" | "timelines"
-         | "proof_summaries" | "evaluations" | "localities",
+         | "proof_summaries" | "evaluations" | "localities"
+         | "external_collections",   // reads external-collections.json, not research.json — §2.4
   // well-known filters — only some apply to a given section; see §2.1
   recordId?: string,
   recordRole?: string,
@@ -96,6 +97,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `evaluations` | `targetId` | `target_id` | exact |
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
+| `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
+| | `recordType` | `record_types` | case-insensitive substring of any |
 
 **Sections not served, and why.** A completeness test
 (`tests/tools/research-query.test.ts`) derives the list of top-level array
@@ -156,6 +159,36 @@ it is absent from the §2.1 table and applies to every section uniformly.
 rejected (not coerced) otherwise — see §4. Omitting every filter returns the
 whole section, one 50-item page at a time.
 
+### 2.4 `external_collections`
+
+The curated external collections `external_links_search` stored for this project
+(`external-links-search-tool-spec.md`, "Stored list"). Served from
+`external-collections.json`, not `research.json`: it is not a schema section, so
+it is in neither the schema-derived completeness lists nor
+`RESEARCH_QUERY_OPTIONAL_SECTIONS`, and it has its own branch that runs before
+the `research.json` read. `no_project` is answered the same way as every other
+section.
+
+Each item is one stored row — `{ key, url, link_text, record_types, place, cost,
+content_type, start_year, end_year }` — and carries its own `place`. Items are
+ordered by place, then key; the order is sorted at read time, because a
+jsonb-backed store does not keep the written key order.
+
+- **`place`** matches the place and every enclosing jurisdiction, by dropping
+  leading comma segments: `Venango, Pennsylvania, United States` returns rows of
+  that county, of `Pennsylvania, United States` and of `United States` — and never
+  of a sibling county.
+- **`recordType`** is a case-insensitive substring of any of a row's
+  `record_types`. FamilySearch's record types are free text (one Pennsylvania
+  page holds `Cemeteries` and `Cemetery Records`, `Marriage` and `Marriages`), so
+  a substring is the honest match; there is no mapping table.
+
+`count: 0` does not say whether a place was fetched: no file, a fetched place
+with `rows: []`, and a place name in another form (`Pennsylvania` for the stored
+`Pennsylvania, United States`) all answer it. To tell "fetched, nothing here"
+from "never fetched", read `project_context`'s `externalCollections`, which lists
+every fetched place, `total: 0` included.
+
 ## 3. Decisions recorded
 
 **`assertionId` means two different things, and only one of them is "the
@@ -192,7 +225,7 @@ so that rule would be accepted and match nothing, ever.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: ten named parameters across twelve sections, not an arbitrary path
+  scope: twelve named parameters across thirteen sections, not an arbitrary path
   language.
 - **No filter on `localities`, deliberately.** None of the ten existing
   filter keys maps onto a locality field, so a filter would mean a new MCP
@@ -268,7 +301,9 @@ so that rule would be accepted and match nothing, ever.
 
 | Condition | Behavior |
 |---|---|
-| `section` not one of the twelve supported values | `{ ok: false, errors }` |
+| `section` not one of the thirteen supported values | `{ ok: false, errors }` |
+| `section: "external_collections"` and no `external-collections.json` yet | `{ ok: true, count: 0, items: [], truncated: false }` — nothing has been fetched for this project |
+| `external-collections.json` is invalid JSON, or not an object holding a `places` object | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |

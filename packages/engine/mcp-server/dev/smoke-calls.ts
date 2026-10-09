@@ -554,7 +554,22 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ standardPlace: "Pennsylvania, United States" }),
     expect: (res) => ({ ok: !res.isError && res.body?.error === undefined && !!res.body?.population, detail: brief(res) }),
   },
-  { tool: "external_links_search", args: () => ({ standardPlace: "England" }), expect: noError },
+  // With projectPath, so the hosted run writes external-collections.json through
+  // the bound store and reads it back. England (753 links) is under the 1,000-row cap.
+  {
+    tool: "external_links_search",
+    args: (ctx) => ({ standardPlace: "England, United Kingdom", projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok: !res.isError && (res.body?.stored?.places?.length ?? 0) > 0 && !res.body?.collectionsError,
+      detail: brief(res),
+    }),
+  },
+  {
+    tool: "research_query",
+    label: "research_query (external_collections)",
+    args: (ctx) => ({ projectPath: ctx.projectPath, section: "external_collections", place: "England, United Kingdom" }),
+    expect: (res) => ({ ok: !res.isError && res.body?.ok === true && res.body?.count > 0, detail: brief(res) }),
+  },
 ];
 
 // ─── Completeness guard ──────────────────────────────────────────────────────

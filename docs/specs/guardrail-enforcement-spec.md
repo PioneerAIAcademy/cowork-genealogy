@@ -167,7 +167,7 @@ depends on another shipping first.
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
-| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
+| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
@@ -1537,9 +1537,11 @@ present-and-empty. And it says nothing about overclaiming language in
 
 ## 6. Raw-write lockdown
 
-No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
-`tree.gedcomx.json`. Every write goes through a validating MCP tool
-(`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
+No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` or `external-collections.json`
+(`PROTECTED_PROJECT_FILES`). Every write goes through an MCP tool — a validating
+one (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`) for
+the first two, and `external_links_search` for `external-collections.json`; a
 direct file write never validates.
 
 Three shipping copies, plus the unit harness — which *imports* the plugin
