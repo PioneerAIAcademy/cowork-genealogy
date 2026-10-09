@@ -64,10 +64,11 @@ first two were built on.**
 
 The lead ruled on 2026-08-31 that `/research` spawns a paired agent **directly**
 — the Invoke cell of its routing table spells `@plugin:<agent>`, the same form
-the file already used for the mentor. The routing skill stays on disk, but it is
-now only two things: the entry point for a user who names it, and the entry
-point for its own unit-eval suite. **It is not loaded when the orchestrator
-delegates.**
+the file already used for the mentor. The routing skill was left on disk at the
+time, as two things only: the entry point for a user who names it, and the entry
+point for its own unit-eval suite. **It was not loaded when the orchestrator
+delegates.** The 2026-09-22 ruling at the top of this file then removed even
+that: no routing skill survives, and the agent is the only entry point.
 
 So a rule stated only in the routing skill's body is **off during production
 research**. The skill is not a layer in front of the agent. It is a second,
