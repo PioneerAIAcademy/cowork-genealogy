@@ -226,7 +226,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-five Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-four Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -248,7 +248,6 @@ don't load it explicitly.
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person; the tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
 | **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Writes nothing — it returns narrative context. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
-| **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
 | **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
 | **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
 | **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
@@ -281,7 +280,7 @@ don't load it explicitly.
                              (FAN pivot). If exhaustive, advance.
 11. proof-conclusion         Write the GPS conclusion
     tree-edit (agent)        Merge persons, correct facts
-12. project-status (agent)   "Where are we? What's next?"
+12. Ask "where are we?"      Answered by the main thread from the project state
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at
@@ -470,7 +469,7 @@ What's shipped:
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **25 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **24 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
@@ -492,11 +491,10 @@ What's shipped:
   `tree-edit` (direct corrections to the tree, and person merges after a proof
   conclusion), `hypothesis-tracking` (competing-candidate hypotheses, and the
   only writer of `hypotheses`), `source-evaluation` (read-only audit of the
-  sources attached to one FamilySearch profile), `project-status` (read-only
-  summary of where the research stands), `locality-guide` (the records survey for one
+  sources attached to one FamilySearch profile), `locality-guide` (the records survey for one
   place and period), `historical-context` (narrative historical context for
   interpreting records — boundary changes, naming conventions, migration),
-  `image-reader` (page OCR), `project-status` (a read-only report of where the research stands) and `survey-surname` (surname
+  `image-reader` (page OCR) and `survey-surname` (surname
   household tabulation across censuses).
 - **Researcher profile.** `init-project` asks only the research objective, in
   one non-blocking opening turn; the profile itself is fixed (`novice`, one

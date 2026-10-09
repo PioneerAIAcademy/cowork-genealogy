@@ -20,13 +20,14 @@ decay.
 
 `ut_research_001`, `004`, `012`, `013`, `014` and `015` were deleted on
 2026-10-01 (issue #2984) and are restored without their `xfail` markers. The
-first five were `xfail` for one defect: `research` and `project-status` both matched a
-"drive the workflow forward" request, so the orchestrator was skipped about half
-the time (issue #2927). `project-status`'s description now tells it not to drive
-the research workflow forward (#3092). `015`'s marker named a router shortcut
-instead; see "Paired rows". Each restored test was measured three times, on a
-branch rebased onto main, before it came back (#3119). `015` and `004` each
-needed one more change to pass.
+first five were `xfail` for one defect: `research` and a since-deleted status
+agent both matched a "drive the workflow forward" request, so the orchestrator
+was skipped about half the time (issue #2927). That agent was narrowed in
+#3092 and then deleted entirely in #3112; the main thread now answers status
+requests directly from `project_context`. `015`'s marker named
+a router shortcut instead; see "Paired rows". Each restored test was measured
+three times, on a branch rebased onto main, before it came back (#3119). `015`
+and `004` each needed one more change to pass.
 
 `004` (`investigate-person.json`) needed a change to `research`'s description.
 With #3092 in place it still missed, before any skill loaded: the main thread

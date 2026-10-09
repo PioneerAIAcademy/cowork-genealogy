@@ -825,15 +825,15 @@ def test_negative_passes_when_correct_skill_arrived_as_an_agent_spawn():
     well as the skills dir (issue #2793), so such a test loads. Matching the
     routing arm on `skills_invoked` alone made that acceptance a lie — the test
     ran and then failed however correctly the run routed. Live instance:
-    `ut_init_project_009` spawned `project-status`, an agent since 2026-10-03,
-    and was graded a routing failure for it.
+    `ut_init_project_009` spawned a converted agent and was graded a routing
+    failure for it.
     """
-    spec = _negative_spec(correct=["project-status"])
+    spec = _negative_spec(correct=["citation"])
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=False, skills_invoked=[],
         builtin_tool_calls=[
-            {"tool": "Agent", "args": {"subagent_type": "project-status",
+            {"tool": "Agent", "args": {"subagent_type": "citation",
                                        "prompt": "p"}}
         ],
     ) == "pass"
@@ -842,7 +842,7 @@ def test_negative_passes_when_correct_skill_arrived_as_an_agent_spawn():
 def test_negative_still_fails_when_the_spawn_is_a_different_agent():
     """The other direction: widening to hand-offs must not pass a run that
     spawned SOMETHING, only one that spawned an acceptable destination."""
-    spec = _negative_spec(correct=["project-status"])
+    spec = _negative_spec(correct=["citation"])
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=False, skills_invoked=[],
@@ -857,12 +857,12 @@ def test_negative_still_fails_when_the_correct_agent_was_spawned_by_a_subagent()
     """A hand-off is the caller's. A spawn carrying `agent_id` was made INSIDE
     another subagent, so it is not the routing decision under test and must not
     satisfy `correct_skill`."""
-    spec = _negative_spec(correct=["project-status"])
+    spec = _negative_spec(correct=["citation"])
     assert _compute_outcome(
         spec=spec, validators_passed=True, judge_dimensions=[],
         aborted_reason=None, activated=False, skills_invoked=[],
         builtin_tool_calls=[
-            {"tool": "Agent", "args": {"subagent_type": "project-status",
+            {"tool": "Agent", "args": {"subagent_type": "citation",
                                        "prompt": "p"},
              "agent_id": "a1"}
         ],

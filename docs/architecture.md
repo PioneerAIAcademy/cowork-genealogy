@@ -222,13 +222,13 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **8** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **25** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **24** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-five agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-four agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
-`hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
+`hypothesis-tracking`, `locality-guide`, `historical-context`,
 `search-external-sites`, `source-evaluation`, `survey-surname` and `search-hints`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
@@ -380,11 +380,10 @@ The same test pins the other direction: **a `SKILL.md` naming a `references/`
 file that is not on disk fails CI too**, since the agent is then told to read
 something it cannot open. **Nothing is exempt from this half** — its exemption
 list is empty, so a dangling pointer fails outright. The one entry it ever
-carried was `project-status` naming a render source for both its summaries that
-had never existed in this repo; both pointers were deleted rather than the file
-written, because `SKILL.md` already states what each summary must carry and
-`rubric.md` grades them on that coverage and on being distinct from each other,
-so there was no layout contract to lose.
+carried was the former status agent naming a render source for both its
+summaries that had never existed in this repo; both pointers were deleted
+rather than the file written, because the agent's own body stated what each
+summary must carry. (The agent itself has been deleted.)
 
 **Reachable is not read, and what gates it is the skill's reference-manifest
 block — not the file, and not the strength of the wording.** A file listed in the

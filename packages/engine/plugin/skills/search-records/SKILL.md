@@ -44,9 +44,8 @@ The bridge between planning (research-plan) and analysis (record-extraction).
 - "Search for X" / "Find X in Y records" / "Execute pli_001" → execute (proceed below)
 - "What should I search for?" / "What next?" / "How do I find X?" / "Is the research done?" → `Skill("research-plan")` immediately
 
-**CRITICAL — do NOT call `Skill("project-status")` before routing.** research-plan handles its own project reading; call it with no prior tool calls.
+**CRITICAL — call the routed Skill with no prior tool calls.** research-plan handles its own project reading.
 
-❌ WRONG: `Skill("project-status")` → read project → answer with research recommendations  
 ✅ CORRECT: `Skill("research-plan")` with no prior tool calls → stop
 
 After invoking any routed Skill, stop. Do not read files, call MCP tools, or provide supplementary information.

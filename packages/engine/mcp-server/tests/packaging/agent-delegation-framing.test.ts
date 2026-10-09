@@ -517,15 +517,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
   ["timeline -> person-evidence", ""],
-  // project-status lost its skills/<name>/ directory in the agent conversion
-  // (issue #2793), so the name entered agentOnly and every SKILL.md that still
-  // references it needs a registration. All are bare-name mentions — none
-  // spells `@plugin:project-status`, and none is edited to satisfy this test,
-  // because editing a SKILL.md buys that skill a paid eval run.
-  ["init-project -> project-status", ""],
-  ["research -> project-status", ""],
-  ["research-plan -> project-status", ""],
-  ["search-records -> project-status", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
@@ -772,7 +763,6 @@ describe("agent delegation framing", () => {
     "proof-conclusion",
     "person-evidence",
     "question-selection",
-    "project-status",
     "locality-guide",
     "record-extractor",
     // ARRIVED when issue #2802 deleted skills/search-external-sites/.

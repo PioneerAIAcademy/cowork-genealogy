@@ -11,8 +11,8 @@ description: >-
   rather than a specific action. Start it rather than first asking the user
   about the person: it reads what the project already records about them.
   Do NOT use when the user explicitly targets one step only (search-records,
-  research-plan, question-selection, etc.), wants only a status summary
-  (project-status), or has no project yet (init-project first).
+  research-plan, question-selection, etc.), only asks where the project stands
+  (answered from project_context, no skill), or has no project yet (init-project first).
 allowed-tools:
   - validate_research_schema
   - research_query
@@ -98,7 +98,8 @@ means drive this to completion, so the list below does not apply to it.
 finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
-a records-request letter; whether a person's children or siblings are complete.
+a records-request letter; whether a person's children or siblings are complete;
+where the project stands (answer from `project_context` in one paragraph).
 
 **A job** — everything else. Route it exactly as the rest of this file says.
 

@@ -4,27 +4,27 @@
     "skill": "init-project",
     "name": "Init-flavored 'start research' on an existing project must not re-init",
     "type": "negative",
-    "description": "The user says 'start research' — wording that is an explicit init-project trigger phrase — but a research.json already exists in the folder. The refuse-if-exists guard must hold against init-flavored wording (not just the 'add a question' phrasing covered by ut_init_project_003) and route to project-status. This is the second phrasing variant of the single named neighbor.",
+    "description": "The user says 'start research' — wording that is an explicit init-project trigger phrase — but a research.json already exists in the folder. The refuse-if-exists guard must hold against init-flavored wording (not just the 'add a question' phrasing covered by ut_init_project_003) and route to a research skill rather than re-running init.",
     "tags": [
       "near-miss",
-      "init-vs-project-status",
       "boundary",
       "refuse-if-exists"
     ]
   },
   "input": {
-    "user_message": "Start research on this project — where do things stand and what should I work on next?",
+    "user_message": "Start research on this project.",
     "scenario": "mid-research-flynn"
   },
   "negative": {
     "grade_on_invariant": true,
     "correct_skill": [
-      "project-status",
-      "research"
+      "research",
+      "question-selection"
     ],
-    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to project-status to review the existing project state. The skill must NOT re-run the initialization workflow or call person_read/person_search. WIDENED 2026-10-06 to accept `research` as well. The invariant this test guards is that init-project REFUSES when research.json exists, and that is what it must fail on. The message reads both ways on purpose -- 'Start research on this project' is the research router's territory and 'where do things stand' is project-status's -- so insisting on one of the two graded a coin-flip rather than the refusal. Measured: init-project declined in both the 2026-10-06 15:53 run (routed project-status, pass) and the 18:05 run (routed research, fail), with activated=False in each. A run where init-project ACTIVATES still fails, whichever destination follows, so the defect this test was built to catch is untouched. GRADED ON THE INVARIANT from 2026-10-07: a third destination appeared that no `correct_skill` list can contain -- the run invoked Claude Code's BUILT-IN `init` skill, which analysed the codebase and wrote a CLAUDE.md into the workspace. Across 16 committed runs the destination has been project-status (13x), research (1x), nothing (1x) and init (1x), and it only started moving when project-status became an agent on 2026-10-03; the invariant held in every one of them, including both failures. `test_existing_project_is_not_reinitialized` is what enforces it, and it asserts activation mechanically -- no person_read, person_search or project_create -- so grading on the invariant is not vacuous here: _compute_outcome only reaches the invariant branch once validators pass. correct_skill is kept so the reciprocity lint still reads this edge."  },
+    "explanation": "A research.json already exists (mid-research-flynn). init-project only creates a brand-new project from scratch; its guard clause refuses when research.json is present. Even though 'start research' is an init-project trigger phrase, the refuse-if-exists invariant must hold and route the user to the research skill (which reviews existing-project state) or question-selection (which picks the next question). The skill must NOT re-run the initialization workflow or call person_read/person_search. GRADED ON THE INVARIANT from 2026-10-07: the invariant this test guards is that init-project REFUSES when research.json exists; `test_existing_project_is_not_reinitialized` enforces that mechanically (no person_read, person_search or project_create), so grading on the invariant is not vacuous — _compute_outcome only reaches the invariant branch once validators pass. correct_skill is kept so the reciprocity lint still reads these edges."
+  },
   "judge_context": [
-    "Should decline to initialize (research.json already exists) and route to the research skill (which reviews the existing project's state) or the project-status agent, not re-run the init workflow",
+    "Should decline to initialize (research.json already exists) and route to the research skill (which reviews the existing project's state) or question-selection (next-question wording), not re-run the init workflow",
     "Should make no MCP tool calls — no person_read, no person_search, no place_search",
     "Judge the routing decision and the absence of init work only. Once the run routes, the harness stops it and `text_response` is empty, so there is no decline wording to weigh here — the guard clause's literal one-line text is not gradable on this test and must not be scored as present or absent."
   ],
@@ -44,10 +44,6 @@
       },
       {
         "skill": "research",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "project-status",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
       }
     ]

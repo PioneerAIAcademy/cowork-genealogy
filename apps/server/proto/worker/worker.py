@@ -266,7 +266,6 @@ EXPECTED_AGENTS = frozenset({
     "image-reader",
     "locality-guide",
     "person-evidence",
-    "project-status",
     "proof-conclusion",
     "question-selection",
     "record-extractor",

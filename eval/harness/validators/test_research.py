@@ -208,8 +208,9 @@ def test_no_browse_or_writes_on_planning_request(
     deterministic gate for the grade_on_invariant negative
     ut_research_016: which skill wins the route is a known-unstable
     model prior (the router picks research-plan directly on some runs,
-    search-images on others, project-status on others), but the state-harm
-    invariant holds under every one of those routes and is what we assert.
+    search-images on others, answers directly from project_context on
+    others), but the state-harm invariant holds under every one of those
+    routes and is what we assert.
 
     Since the pair conversion (issue #2121) the redirect lives in
     agents/search-images.md's ROUTING section, not in SKILL.md: the routing
@@ -425,3 +426,100 @@ def test_no_exhaustive_declaration(before_state, after_state, test):
         pytest.skip("missing research.json for diff")
     bad = check_no_exhaustive_declaration(before_state, after_state)
     assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
+
+
+# ---------------------------------------------------------------------------
+# `negative-status-question` tag (issue #3112)
+# ---------------------------------------------------------------------------
+
+import re  # noqa: E402  — grouped with the tag-gated validators below
+
+
+# Project id prefixes used in `mid-research-flynn` (verified by
+# `grep -oE '"[a-z]+_[0-9]+"' eval/fixtures/scenarios/mid-research-flynn/research.json`).
+# If a future fixture adds a new prefix, extend this list.
+_PROJECT_ID_PREFIXES = (
+    "a_", "c_", "h_", "log_", "pli_", "pl_", "pe_", "ps_",
+    "q_", "src_", "tl_", "rp_",
+)
+_PROJECT_ID_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+\b"
+)
+
+
+def _tool_bare_name(call: dict) -> str:
+    return (call.get("tool") or "").split("__")[-1]
+
+
+def test_status_question_answered_from_project_context_only(
+    tool_calls, builtin_tool_calls, before_state, after_state, text_response, test
+):
+    """Tag-gated (negative-status-question): a `"where are we?"` request is
+    answered by the main thread in one plain paragraph from `project_context`,
+    per the lead's 2026-10-06 ruling (issue #3112).
+
+    Deterministic assertions — none depend on judge wording:
+
+      1. `project_context` was called. (Advisory: ALWAYS_LOAD can mask this,
+         but a run with zero `project_context` calls is still a defect because
+         the description is what instructs the main thread to answer from it.)
+      2. No `Read` on `research.json` or `tree.gedcomx.json`. The ruling
+         explicitly forbids reading the raw project files; `project_context` is
+         the compact projection.
+      3. No `Agent` spawn in `builtin_tool_calls`. A status answer is a
+         main-thread paragraph; routing to any agent (research-exhaustiveness,
+         question-selection, etc.) is the behaviour the ruling retired.
+      4. No `research_append` call. A status question writes nothing.
+      5. No project identifier in the response text — no `<prefix>_<digits>`
+         for any prefix used in the project. The description says "No
+         identifiers, file names, tool names or field names."
+
+    This is the acceptance proof for issue #3112's description-clause landing.
+    If the clause is removed from `project-context.ts`, assertions 2-4 may still
+    hold on a given run (ALWAYS_LOAD means `project_context` is in context
+    anyway), but assertion 5 fires on any id-bearing paragraph.
+    """
+    if "negative-status-question" not in test.get("tags", []):
+        pytest.skip("not a negative-status-question scenario")
+
+    # 1. project_context was called.
+    pc_calls = [c for c in (tool_calls or []) if _tool_bare_name(c) == "project_context"]
+    assert pc_calls, (
+        "status question must call project_context — the tool's description "
+        "instructs the main thread to answer from it"
+    )
+
+    # 2. No Read of research.json or tree.gedcomx.json.
+    forbidden_reads = []
+    for c in (builtin_tool_calls or []):
+        if (c.get("tool") or "") != "Read":
+            continue
+        path = (c.get("args") or {}).get("file_path") or ""
+        if path.endswith("research.json") or path.endswith("tree.gedcomx.json"):
+            forbidden_reads.append(path)
+    assert not forbidden_reads, (
+        "status question must not Read raw project files; got: "
+        f"{forbidden_reads}"
+    )
+
+    # 3. No Agent spawn.
+    spawns = [c for c in (builtin_tool_calls or []) if (c.get("tool") or "") == "Agent"]
+    assert not spawns, (
+        "status question must be answered by the main thread, not delegated; got "
+        f"{[(c.get('args') or {}).get('subagent_type') for c in spawns]}"
+    )
+
+    # 4. No research_append write.
+    appends = [c for c in (tool_calls or []) if _tool_bare_name(c) == "research_append"]
+    assert not appends, (
+        "status question must not write to research.json; got "
+        f"{len(appends)} research_append call(s)"
+    )
+
+    # 5. No project identifier in the response text.
+    reply = text_response or ""
+    hits = _PROJECT_ID_RE.findall(reply)
+    assert not hits, (
+        "status answer must contain no project identifiers; found: "
+        f"{sorted(set(hits))}"
+    )

@@ -1097,10 +1097,10 @@ async def run_skill(
             # been CONVERTED to an agent. Without it such a negative can never
             # resolve -- `skills_invoked` records Skill calls only, so the run ends
             # with an empty list and the routing verdict reads as "went nowhere".
-            # That is how `ut_init_project_009` broke: project-status became an
-            # agent in #3092 (2026-10-03) and the next init-project run was three
-            # days later. The stub path already had this twin (issue #2825); the
-            # routing path did not.
+            # That is how `ut_init_project_009` broke: a converted agent took
+            # over its routing destination and the next init-project run failed
+            # the routing check. The stub path already had this twin (issue
+            # #2825); the routing path did not.
             skills_invoked.append(_spawned)
             routing_resolved["v"] = True
             routing_resolved["tool_use_id"] = tool_use_id

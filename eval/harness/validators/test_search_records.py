@@ -364,7 +364,7 @@ def test_no_search_or_writes_on_planning_request(
     question ("what should I search for next?") must not cause a search to
     be EXECUTED or its results to be persisted. This is the deterministic
     gate for the grade_on_invariant negative ut_search_records_005: the
-    routing (research-plan vs a project-status detour) is a known-unstable
+    routing (research-plan vs a direct-answer detour) is a known-unstable
     model prior, but the state-harm invariant always holds and is what we
     assert. See docs/specs/unit-test-spec.md.
 

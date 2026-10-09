@@ -15,8 +15,8 @@
  *
  * **Historical narration is deliberately NOT checked here.** It was in the
  * original ask and was dropped. The phrasings that would catch it also match
- * legitimate present-tense instruction (`project-status/SKILL.md`,
- * `conflict-resolution/SKILL.md` both read naturally that way), so the only
+ * legitimate present-tense instruction (`conflict-resolution/SKILL.md` reads
+ * naturally that way), so the only
  * safe form would be a warn-only assertion. The alternative it beat: a
  * warn-only vitest expectation, rejected because nobody reads vitest stdout in
  * CI, so it cannot fail — and CLAUDE.md's "a new lint must be proven to fail"

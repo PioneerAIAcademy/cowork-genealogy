@@ -183,8 +183,8 @@ def test_skill_refs_finds_every_declared_callee():
     callees = skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md")
     # search-external-sites left this list when it became an agent (issue
     # #2802): search-records now spawns it, so it is no `Skill()` callee.
+    # project-status left when issue #3112 deleted the agent.
     assert callees == [
-        "project-status",
         "record-extraction",
         "research-plan",
     ]

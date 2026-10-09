@@ -1915,8 +1915,8 @@ def _compute_outcome(
         # agents dir as well as the skills dir (issue #2793) — matching on
         # `skills_invoked` here is what made that acceptance a lie: the test
         # loaded and then failed however correctly the run routed. Observed on
-        # `ut_init_project_009`, which spawned `project-status` (an agent since
-        # 2026-10-03) and was graded a routing failure for it.
+        # `ut_init_project_009`, which spawned a converted agent and was graded
+        # a routing failure for it.
         if not any(s in handoffs(skills_invoked, builtin_tool_calls or []) for s in correct):
             # Skill didn't fire, but didn't route to an acceptable
             # alternative — the correct_skill array was not satisfied.

@@ -20,7 +20,7 @@ Two callers need this and neither can get it from the data alone:
   to tell a conclusion this session encoded from a fact that was already seeded.
   `research_append` loads only the *current* tree, so without the baseline it has
   no way to make that distinction.
-- **The viewer and `project_status`** want the same "what did this session change"
+- **The viewer and a status answer** want the same "what did this session change"
   delta for display.
 
 The tool is the shared, tested implementation both use, so neither re-derives a

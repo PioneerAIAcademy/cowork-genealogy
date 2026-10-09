@@ -307,7 +307,7 @@ def check_runnable(
     # reason for the xfail (see xfail_reason), not a typo to catch.
     # An entry naming a CONVERTED skill resolves to its agent file instead of a
     # skill directory (issue #2793, and the same shape as the `spec.skill`
-    # fallback above). The destination is still real — `project-status` is
+    # fallback above). The destination is still real — a converted agent is
     # reachable by auto-delegation from its own description — so requiring a
     # directory here would fail a correctly-routed test for a migration the
     # test is not about. A name matching NEITHER is still the typo this catches.

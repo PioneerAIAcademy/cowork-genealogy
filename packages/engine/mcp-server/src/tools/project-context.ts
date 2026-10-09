@@ -431,7 +431,13 @@ export const projectContextSchema = {
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
-    "a problem. Writes nothing.",
+    "a problem. Writes nothing. " +
+    "When the user asks where the project stands (\"where are we?\", \"summarize " +
+    "progress\", \"what have we found?\") or reopens a project, call this and answer " +
+    "from it in ONE plain-language paragraph: the objective, what is established, " +
+    "what is open or waiting on the researcher, and the next step. No identifiers, " +
+    "file names, tool names or field names. Do not read the project files and do " +
+    "not delegate.",
   inputSchema: {
     type: "object" as const,
     properties: {

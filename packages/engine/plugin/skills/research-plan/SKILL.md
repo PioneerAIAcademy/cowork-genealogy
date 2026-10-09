@@ -10,7 +10,7 @@ description: Creates, reviews, and revises a sequenced research plan (in researc
   or search-external-sites), to pick which question to research (question-selection),
   to analyze records already found (record-extraction), or — after a search comes back
   empty — to judge whether research is done ("are we done", "what's the next step" →
-  research-exhaustiveness or project-status).
+  research-exhaustiveness).
 allowed-tools:
   - collections_search
   - volume_search

@@ -28,17 +28,16 @@ import { fileURLToPath } from "node:url";
 // had already retired and one contradicting its own skill body.
 //
 // The mirror failure is a body naming a file that is not there — the agent is
-// told to read something it cannot open and improvises instead. `project-status`
-// did that for `output-formats.md`, a file that never existed in this repo's
-// history; issue #1750 settled it by deleting both pointers, since SKILL.md
-// already carries the content contract for both summaries and `rubric.md` grades
-// them on presence and distinctness rather than on a layout. That is why
-// MISSING_PENDING_ADJUDICATION is now empty.
+// told to read something it cannot open and improvises instead. A former
+// status agent did that for `output-formats.md`, a file that never existed in
+// this repo's history; issue #1750 settled it by deleting both pointers, since
+// the body already carried the content contract. (The agent itself was deleted
+// in issue #3112.) That is why MISSING_PENDING_ADJUDICATION is now empty.
 //
 // This is a REACHABILITY check, not a content check. Whether an unreached file's
 // text is right and whether it should be deleted or wired up are adjudications
 // issue #1112 owns — but the missing-pointer half was never in #1112's scope
-// ("Not in scope: the `project-status` pointer to a file that was never
+// ("Not in scope: the pointer to a file that was never
 // written"), so do not read the #1112 reference as covering both lists. What
 // this stops is a twelfth orphan or a new dangling pointer appearing while the
 // unreached-file adjudication is pending.

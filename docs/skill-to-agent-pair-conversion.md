@@ -524,13 +524,15 @@ up while the body ran on the main thread, and each cost a run to find.
    "Return contract" is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. Three agents are EXCLUDED from the contract rather than
+   pending list. Two agents are EXCLUDED from the contract rather than
    pending: `image-reader`, which by spec returns a transcription and nothing
-   else, and, under lead ruling "PS return: A" (2026-09-24, issue #2793),
-   `project-status` and `source-evaluation` (issue #2796), which write nothing,
-   so their id-bearing reports ARE their whole output — conforming would push
-   them below the caller's print line, where a production relay drops them.
-   Each goes in that test's `EXCLUDED` with its reason and carries no `---`
+   else, and, under lead ruling applying the "PS return: A" posture to
+   `source-evaluation` (2026-09-24, issue #2796), that agent — it writes
+   nothing, so its id-bearing report IS its whole output; conforming would push
+   it below the caller's print line, where a production relay drops it. (The
+   former `project-status` agent carried the same exemption; it was deleted
+   outright by issue #3112, which superseded the ruling for it.) Each goes in
+   that test's `EXCLUDED` with its reason and carries no `---`
    section. Exclusion silences the lint in both directions, so a green run
    says nothing about an excluded body; read it.
    **A request that belongs to another agent is handed back, never spawned**

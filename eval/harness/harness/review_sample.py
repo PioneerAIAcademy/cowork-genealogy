@@ -114,7 +114,7 @@ def is_gradeable(entry: dict[str, Any]) -> bool:
     `review_dimensions` is empty only when nothing was judged: the run
     aborted, or the judge raised. `rule3_completeness` iterates exactly that
     array, so such a test demands zero corrections. Sampling one wastes a
-    slot: on `project-status` 3 of 11 tests are empty, and **76 of the 79** empty
+    slot, and empty tests cluster in abort-heavy suites: **76 of the 79** empty
     tests in the corpus failed or aborted — which is exactly what `is_mandatory`
     matches — so without this filter the mandatory slot would be biased *toward*
     tests with nothing to annotate.

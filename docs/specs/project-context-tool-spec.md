@@ -391,6 +391,39 @@ cache file must never fail the whole projection.
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
 
+## 5.1 Status-answering clause
+
+The tool's `description` carries a second-paragraph instruction that reaches
+the main thread on every plane (the tool is `ALWAYS_LOAD` in
+`src/tool-schemas.ts`, and the unit harness serves the compiled production
+description in `eval/harness/harness/mock_mcp.py`):
+
+> When the user asks where the project stands ("where are we?", "summarize
+> progress", "what have we found?") or reopens a project, call this and answer
+> from it in ONE plain-language paragraph: the objective, what is established,
+> what is open or waiting on the researcher, and the next step. No
+> identifiers, file names, tool names or field names. Do not read the project
+> files and do not delegate.
+
+**Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
+request is answered by the main thread in one plain paragraph from
+`project_context`. Rests on four facts: a live Cowork session (2026-10-02)
+confirmed the main-thread read matched the agent's report and caught two
+defects the agent missed; the agent's detailed summary never reached the user
+through the relay (ut_project_status_010); `project_context` already returns
+objective, per-question state and next step, open conflicts, persons, sources
+and `awaitingUser`; and writer tools already refuse dangling ids
+(`validator.ts`), covering the broken-foreign-key half of the agent's job.
+Supersedes "PS return: A" (2026-09-24). Knowingly dropped: the agent's
+stale-plan detection — replaced only once phase 2 of
+`docs/plan/research-as-a-job-later.md` lands.
+
+**Decided (review-ready, 2026-10-06):** the clause goes in the tool's
+description, not in a router skill description. Making a router description
+claim status would start a full research run on "where are we?"; the tool
+description reaches the main thread on every plane and leaves routers
+untouched.
+
 ## 6. Consumers / wiring
 
 Standard MCP tool: `src/tools/project-context.ts`, schema in

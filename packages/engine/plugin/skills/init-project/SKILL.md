@@ -10,8 +10,7 @@ description: Initializes a new genealogy research project with GPS-conformant
   project", "start research", "research [person]", "find parents of",
   "begin researching", "I don't have their FamilySearch ID", or provides
   a FamilySearch person ID to start working with. Do NOT use when a
-  research.json file already exists in the folder — use project-status
-  instead to resume an existing project.
+  research.json file already exists in the folder — the project already exists.
 allowed-tools:
   - person_read
   - person_search
@@ -23,8 +22,8 @@ allowed-tools:
 # Init Project
 
 **Guard clause — run BEFORE anything else, including file reads:**
-If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Hand the turn off instead — **project-status** for status/resume wording, **question-selection** for next-question wording — and stop. If you cannot delegate, reply with exactly this and stop:
-> "This project already has a `research.json` — use **question-selection** to add a research question, or **project-status** to review the current state."
+If `research.json` already exists, do not initialize: make no MCP tool call and read no project file. Reply with exactly this and stop:
+> "This project already has a `research.json` — ask where things stand, or use **question-selection** to add a research question."
 
 **Narration** (initialize path only — the guard clause above reads nothing): the house style under "Researcher profile" below, verbatim. No preamble per action; one report when the project is written.
 

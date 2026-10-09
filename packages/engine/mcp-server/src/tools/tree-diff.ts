@@ -11,7 +11,7 @@
 // alone. The tree-encoding completion gate (issue #1490) diffs the final tree
 // against the write-once `starting-tree.gedcomx.json` baseline to tell a
 // conclusion this session encoded from a fact that was already seeded (see
-// `research-append.ts`); the viewer and `project_status` want the same session
+// `research-append.ts`); the viewer and a status answer want the same session
 // delta for display. Rather than each re-deriving a diff — and getting the
 // relationship landmines wrong — they call this.
 //
