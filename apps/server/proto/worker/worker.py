@@ -1292,7 +1292,8 @@ def require_start_config(env: Mapping[str, str]) -> str:
 
 
 def tmpdir_free_mb() -> int | None:
-    """Free MB under the temp dir, for the start line; no threshold until U13 measures it."""
+    """Free MB under the temp dir, for the start line. No threshold: `/tmp` is a 3,912 MB
+    tmpfs on the rehearsal's t3.large worker (U13, 2026-10-07)."""
     try:
         st = os.statvfs(tempfile.gettempdir())
     except (AttributeError, OSError):
