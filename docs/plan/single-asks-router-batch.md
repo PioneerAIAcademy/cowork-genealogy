@@ -193,10 +193,18 @@ found"). It does **not** hold for the fourth:
 
 > An extraction that gets interrupted is either finished or named in the reply as unsaved.
 
-`grep -rn interrupted packages/engine/plugin/skills/ packages/engine/plugin/agents/` returns
-**nothing**. That clause is implemented in no skill and no agent. It is not in this PR either,
-and this PR never claimed it: item 5 is out of scope here. What was wrong was the *reason*
-given for dropping it, which would have told the next reader there was nothing left to do.
+At the time this was written, `grep -rn interrupted packages/engine/plugin/skills/
+packages/engine/plugin/agents/` returned **nothing**, and the clause was implemented in no skill
+and no agent. It was not in this PR either, and this PR never claimed it: item 5 was out of scope
+here. What was wrong was the *reason* given for dropping it, which would have told the next reader
+there was nothing left to do.
+
+**Landed since (2026-10-07, PR #3235).** The clause now sits at the close of a bounded turn, in
+`research/SKILL.md` beside "When a bounded request is met, **end your turn**", together with
+clause 3. It is NOT delivered at the interruption site itself: `record-extraction/SKILL.md:257`
+still says only "report it and stop". Nothing mechanical enforces either clause; a validator was
+attempted in that PR and removed, because a word list cannot tell which record a "not saved" is
+about.
 
 Whoever picks item 5 up should also decide where it belongs, which is not obvious: the clause
 is a property of the REPLY, and the orchestrator writes the reply while `record-extraction`
@@ -317,8 +325,15 @@ a coverage hole and does not need a card to hold it.
 
 **What item 5's drop loses, recorded so it is not silently gone:** item 5 also carried a
 reply contract — "the reply names what was saved and where", and "an interrupted extraction
-is either finished or named in the reply as unsaved". That exists nowhere in
-`search-records` and is not covered by this batch.
+is either finished or named in the reply as unsaved". That existed nowhere in `search-records`
+and was not covered by this batch.
+
+**Both landed 2026-10-07 in PR #3235**, as one sentence at the bounded-turn close in
+`research/SKILL.md`, not in `search-records`. Item 5's clause 1 (a found record goes in as a
+source through `record-extraction`) is **not built on the BOUNDED path**: it exists as
+routing-table row `research/SKILL.md:186`, as this file says at :55-63, but a bounded request
+never walks that table (`research/SKILL.md:107`, "Do not walk the routing table from the top for
+one"). An earlier revision of this line said "built nowhere", which contradicted :55-63.
 
 Dropped from the first draft: *"a bounded first message creates a project with no questions
 and no plans"* — that is **item 3's** acceptance, because the web path's first message never
