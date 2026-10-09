@@ -606,10 +606,13 @@ proto-demo-aws: $(ENGINE_DEPS) ## U13: proto-demo against the rehearsal — BASE
 	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
 
 .PHONY: proto-audit-aws
-proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= [SESSION=]
-	@test -n "$(PG_DSN)" && test -n "$(RDS_CA)" || { echo "proto-audit-aws: PG_DSN=… and RDS_CA=… are required" >&2; exit 2; }
-	export PGSSLMODE=verify-full PGSSLROOTCERT='$(RDS_CA)'; cd apps/server && uv run python proto/audit.py \
-	  --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',)
+proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= PGPASSFILE= SESSION= and/or TURN=
+	$(foreach v,PG_DSN RDS_CA PGPASSFILE,$(if $($(v)),,$(error proto-audit-aws: $(v)=… is required; see the U13 block above proto-demo-aws)))
+	$(if $(SESSION)$(TURN),,$(error proto-audit-aws: SESSION=<id> or TURN=<id> is required))
+	$(if $(findstring password,$(PG_DSN))$(findstring sslmode,$(PG_DSN))$(findstring @,$(PG_DSN)),$(error proto-audit-aws: PG_DSN carries a password or sslmode; the password goes in PGPASSFILE and TLS in PGSSLMODE))
+	export PGSSLMODE=verify-full PGSSLROOTCERT='$(abspath $(RDS_CA))' PGPASSFILE='$(abspath $(PGPASSFILE))'; \
+	  cd apps/server && uv run python proto/audit.py --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',) \
+	  $(if $(TURN),--turn '$(TURN)',)
 
 .PHONY: proto-bounds-aws
 proto-bounds-aws: $(ENGINE_DEPS) ## U13: proto-bounds against the rehearsal — CASE= BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [PROFILE=] [SESSION=] ARGS=…
@@ -631,8 +634,8 @@ proto-seed: $(ENGINE_DEPS) ## D17 prep: load a fixture into the store and open a
 # reads the hook allowed, denied attempts, and every completed call's duration against
 # the step ceiling. Exit 1 when criterion 3 fails.
 .PHONY: proto-audit
-proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session)
-	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',)
+proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session) [TURN=<id>]
+	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',) $(if $(TURN),--turn '$(TURN)',)
 
 # D19: the D17 commands as one -- seed a fixture, post the harness's message for its
 # research question (`/research --autonomous …`), run to turn_done, print the acceptance
