@@ -127,7 +127,9 @@ something you wait for — their answer arrives as the next message.
 
 ## What to do
 
-1. **Query `research.json` — don't `Read` the whole file.** Use
+1. **Query `research.json` — don't `Read` the whole file.** Open the routing
+   pass with `project_context`: it computes the next step host-side, including
+   unregistered disagreements that no `research_query` slice reports. Then use
    `research_query` to pull just the slice you need: which questions
    exist, which have plans, which plans have log entries, which entries
    have produced assertions, which are classified, which are linked to
