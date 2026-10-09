@@ -544,6 +544,83 @@ describe("research_query", () => {
   });
 });
 
+// --- conflicts: unregistered disagreements (ut_research_h22) -------------
+
+describe("research_query — conflicts reports unregistered disagreements", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-disagree-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // I2's birthplace: England on one census, Alabama on another, for q_001.
+  // I3's birthplace disagrees too, but only on q_002's assertions.
+  const research = (conflicts: any[] = []) => ({
+    assertions: [
+      { id: "a_1", fact_type: "birth", place: "England", extracted_for_question_ids: ["q_001"] },
+      { id: "a_2", fact_type: "birth", place: "Alabama, United States", extracted_for_question_ids: ["q_001"] },
+      { id: "a_3", fact_type: "birth", place: "Alabama", extracted_for_question_ids: ["q_002"] },
+      { id: "a_4", fact_type: "birth", place: "Mississippi", extracted_for_question_ids: ["q_002"] },
+    ],
+    person_evidence: [
+      { id: "pe_1", person_id: "I2", assertion_id: "a_1" },
+      { id: "pe_2", person_id: "I2", assertion_id: "a_2" },
+      { id: "pe_3", person_id: "I3", assertion_id: "a_3" },
+      { id: "pe_4", person_id: "I3", assertion_id: "a_4" },
+    ],
+    conflicts,
+  });
+
+  async function query(extra: Record<string, unknown>, conflicts: any[] = []) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research(conflicts)), "utf-8");
+    const result = await researchQuery({ projectPath: dir, section: "conflicts", ...extra } as any);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("unreachable");
+    return result;
+  }
+
+  it("reports a disagreement nobody registered while count stays 0", async () => {
+    const result = await query({});
+    expect(result.count).toBe(0);
+    expect(result.unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2"] },
+      { personId: "I3", fact: "birth place", assertionIds: ["a_3", "a_4"] },
+    ]);
+  });
+
+  it("scopes to the question's own assertions under questionId", async () => {
+    const result = await query({ questionId: "q_001" });
+    expect(result.unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2"] },
+    ]);
+  });
+
+  it("drops a pair a conflicts entry already names", async () => {
+    const conflict = { id: "c_001", status: "unresolved", competing_assertion_ids: ["a_1", "a_2"] };
+    const result = await query({}, [conflict]);
+    expect(result.count).toBe(1);
+    expect(result.unregisteredDisagreements?.map((d) => d.personId)).toEqual(["I3"]);
+  });
+
+  it("narrows to disagreements naming assertionId", async () => {
+    const result = await query({ assertionId: "a_4" });
+    expect(result.unregisteredDisagreements?.map((d) => d.personId)).toEqual(["I3"]);
+  });
+
+  it("reports them under status 'unresolved' and omits them under any other status", async () => {
+    expect((await query({ status: "unresolved" })).unregisteredDisagreements).toHaveLength(2);
+    expect((await query({ status: "resolved" })).unregisteredDisagreements).toBeUndefined();
+  });
+
+  it("adds nothing to another section's read", async () => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research()), "utf-8");
+    const result = await researchQuery({ projectPath: dir, section: "assertions" });
+    expect(result.ok && "unregisteredDisagreements" in result).toBe(false);
+  });
+});
+
 // --- #2936: localities, and the completeness guard -----------------------
 
 describe("research_query — localities (#2936)", () => {

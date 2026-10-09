@@ -1,0 +1,78 @@
+{
+  "tool": "record_read",
+  "description": "record_read for hint MDEF, Patrick Flynn's 1908 Pennsylvania death certificate. The project already extracted this record as src_004 (log_005, assertions a_011–a_013, record_id ark:/61903/1:1:MDEF), and the persona here matches those assertions. Under mid-research-flynn, pe_005 links a_013 to Patrick, so triage finds it already in the project before reading it at all; under mid-research-flynn-unlinked nothing links it, so triage reads it (issue #2029).",
+  "args": {
+    "recordId": "~MDEF"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "MDEF",
+        "ark": "ark:/61903/1:1:MDEF",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Death",
+            "date": "12 March 1908",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1845",
+            "place": "Pennsylvania"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania Death Certificates, 1906-1967"
+          }
+        ]
+      },
+      {
+        "id": "MDEG",
+        "ark": "ark:/61903/1:1:MDEG",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania Death Certificates, 1906-1967"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "MDEG",
+        "child": "MDEF"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Pennsylvania Death Certificates, 1906-1967",
+        "citation": "\"Pennsylvania Death Certificates, 1906-1967,\" database with images, FamilySearch, certificate no. 4521, Patrick Flynn, 1908."
+      }
+    ]
+  }
+}
