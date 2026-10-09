@@ -189,6 +189,46 @@ describe("treeGapsTool", () => {
     expect(r.notes.join(" ")).toMatch(/read cap/);
   });
 
+  describe("time budget", () => {
+    const rootOnly = () =>
+      route({
+        "/tree/ancestry": () =>
+          json({ persons: [person("R", { ascendancyNumber: "1", name: "R", gender: "Male", lifespan: "1900-1970" })] }),
+        "/tree/descendancy": () => json({ persons: [] }),
+        "/service/search/hr/v2/collections": () => json({ entries: [] }),
+      });
+    // First Date.now() is the tool's start stamp; every later one reads `later`.
+    const clock = (later: number) => {
+      let calls = 0;
+      return vi.spyOn(Date, "now").mockImplementation(() => (calls++ === 0 ? 0 : later));
+    };
+
+    it("starts no read once 40 s have passed, and says so", async () => {
+      rootOnly();
+      const now = clock(40_001);
+      try {
+        const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
+        expect(r.scanned.stopReason).toBe("timeBudget");
+        expect(r.scanned.descendancyReads).toBe(0);
+        expect(r.notes.join(" ")).toMatch(/time budget/);
+      } finally {
+        now.mockRestore();
+      }
+    });
+
+    it("still reads when exactly 40 s have passed", async () => {
+      rootOnly();
+      const now = clock(40_000);
+      try {
+        const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
+        expect(r.scanned.stopReason).toBeNull();
+        expect(r.scanned.descendancyReads).toBe(1);
+      } finally {
+        now.mockRestore();
+      }
+    });
+  });
+
   it("scores a hole against the catalog: place scope, years and record type", async () => {
     const entry = (id: string, title: string, typeFacet: string) => ({
       content: {
