@@ -399,6 +399,8 @@ export interface RunLogFile {
   model: string;
   review_sample?: ReviewSample;
   judge_prompt_hash: string;
+  /** Judge model used for this run log. Optional — absent in logs pre-dating the field (issue #2479 PR 1). */
+  judge_model?: string;
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;
   tests: TestEntry[];
