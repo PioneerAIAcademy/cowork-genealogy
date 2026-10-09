@@ -1,0 +1,93 @@
+{
+  "tool": "record_read",
+  "description": "record_read for hint M70C, the 1870 U.S. Census, Schuylkill County: Patrick Flynn, 25, coal miner, born Ireland, in Thomas Flynn's household. New to the project, and agrees with the tree person on name, age, birthplace, county and father (search-hints suite, issue #2029).",
+  "args": {
+    "recordId": "~M70C"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "M70C",
+        "ark": "ark:/61903/1:1:M70C",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Patrick",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1845",
+            "place": "Ireland"
+          },
+          {
+            "type": "Occupation",
+            "value": "Coal miner"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1870 United States Federal Census"
+          }
+        ]
+      },
+      {
+        "id": "M70T",
+        "ark": "ark:/61903/1:1:M70T",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "type": "BirthName",
+            "given": "Thomas",
+            "surname": "Flynn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1870",
+            "place": "Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1818",
+            "place": "Ireland"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1870 United States Federal Census"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "M70T",
+        "child": "M70C"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "1870 United States Federal Census",
+        "citation": "\"United States Census, 1870,\" database, FamilySearch, Schuylkill County, Pennsylvania, Thomas Flynn household."
+      }
+    ]
+  }
+}

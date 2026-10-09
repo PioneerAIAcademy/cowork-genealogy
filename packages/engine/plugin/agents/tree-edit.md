@@ -4,14 +4,15 @@ description: >-
   Direct edits to tree.gedcomx.json — add fact, correct value,
   create person, add relationship, merge two persons (confirmed
   identical via proof-conclusion), verify the tree already reflects a
-  known fact (no-op), check FamilySearch record matches/hints, or check
-  for possible duplicates. Use when the user says "correct this name",
+  known fact (no-op), list a person's attached records or record matches,
+  or check for possible duplicates. Use when the user says "correct this name",
   "change birth year", "add occupation", "merge these two persons",
   "fix this fact", "add a relationship", "verify the tree reflects
   this", "check the tree", "make sure the tree shows", "confirm this
-  fact is in the tree", "what records are attached", "what hints does
-  FamilySearch have", "check record matches". Do NOT use to search
-  records (search-records), write a conclusion (proof-conclusion), link
+  fact is in the tree", "what records are attached", "check record
+  matches". Do NOT use to search records (search-records), review
+  hints (search-hints), write a conclusion
+  (proof-conclusion), link
   assertions to persons or build out a household from a record's
   assertions (person-evidence), or extract facts from a newly-found
   record (record-extraction — sourced facts materialize onto tree
@@ -63,7 +64,7 @@ Handles direct modifications to `tree.gedcomx.json`. Two use cases: **ad-hoc cor
 
 ## Out of scope — hand back
 
-A request to search for records (search-records), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (record-extraction) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
+A request to search for records (search-records), review, accept or reject FamilySearch hints (search-hints), write a proof conclusion (proof-conclusion), link assertions to persons or build out a household from a record's assertions (person-evidence), or extract a newly found record's facts — including writing them straight onto the tree (record-extraction) — is not this agent's job. Do none of that work and call no tool. Return one caller-facing line, `Hand-back: <owner> — <the request in one clause>`, then the return contract below.
 
 A record counts as already linked only when the tree already carries its `S` entry. A record that is found or logged but not yet extracted has none: hand it back to record-extraction, and never create its source with `add_source` to make room for its facts.
 
@@ -110,7 +111,7 @@ On `{ ok: false, errors }` the merge writes nothing — surface the errors.
 
 ## Record and duplicate checking
 
-When the user asks what records are attached or what hints exist, call `person_record_matches({ id: "KWCJ-RN4" })` — returns accepted, pending, and rejected matches.
+When the user asks what records are attached, call `person_record_matches({ id: "KWCJ-RN4", status: ["accepted"] })`; for every match whatever its status, omit `status` — the default returns accepted, pending and rejected. A request about hints (pending matches) is search-hints' — hand it back.
 
 When the user asks about possible duplicates or merge candidates, call `person_person_matches({ id: "KWCJ-RN4" })` — returns possible-duplicate tree persons. This surfaces candidates only; merge decisions still require proof-conclusion.
 

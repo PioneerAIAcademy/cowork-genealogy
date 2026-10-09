@@ -161,6 +161,7 @@ const NON_DOCUMENT_STORE_WRITERS: Readonly<Record<string, string>> = {
   "utils/project-io.ts": "the document writers themselves (atomicWriteJson, atomicWriteBoth)",
   "utils/results-staging.ts": "results/ sidecars and their staging files",
   "utils/image-store.ts": "images/ blobs and their pruning",
+  "utils/external-collections-store.ts": "external-collections.json",
   "utils/browse-budget.ts": "results/image-browse.jsonl, the image cap's distinct-image log",
   "tools/rank-search-matches.ts": "the ranker's score log",
   "tools/research-log-append.ts": "removes the staged result it just logged",
