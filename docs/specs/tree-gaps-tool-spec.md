@@ -36,8 +36,8 @@ header; re-run it before changing a limit.
 | Latency | Descendancy 0.26–0.36 s per call. Ancestry at 8 generations: 144 persons in 1.6 s. |
 | Coverage data | All 3,622 catalog entries carry `searchMetadata.typeFacet`, `startYear`/`endYear`, `placeIds`, `recordCount`. No new endpoint is needed. |
 
-Live runs of the finished tool: LZJW-C31 (large tree) 21–25 s with 9 descendancy
-reads and ~1,100–1,700 persons; a small personal tree 6 s with 16 reads.
+Live runs of the one-level design (2026-10-09, three runs): LZJW-C31 (large tree) 5.5–8 s, 12 descendancy reads, 0 failed, 318 persons; a small personal tree 6.4 s, 16 reads, 0 failed. (Earlier four-level design, superseded: LZJW-C31 21–25 s with 9 descendancy
+reads and ~1,100–1,700 persons; a small personal tree 6 s with 16 reads.)
 
 ## Decided (lead, 2026-10-09)
 
@@ -49,19 +49,23 @@ reads and ~1,100–1,700 persons; a small personal tree 6 s with 16 reads.
 ## What it reads
 
 1. **Ancestry**, one call: `generations=ancestorGenerations`, `personDetails=true`.
-2. **Descendancy** with `personDetails=true`, anchored so each read's levels meet
-   the next one's:
+2. **Descendancy** with `personDetails=true`:
    - the **root** with `descendantGenerations` levels (the root's own
      descendants), then
-   - the ancestors at depth `A`, `A−4`, … (`A` = `ancestorGenerations`), each with
-     `min(4, depth)` levels. A read from an ancestor 4 levels up reaches the root's
-     generation, so it returns the direct line's siblings and their lines without
-     one call per couple. With the defaults the anchors are depths 4 and 8.
-   - **every ancestor whose line ends in the pedigree** (neither parent returned),
-     at any depth 1 or more: no read from above reaches that couple, and a brick-wall
-     couple's own children are the most useful family to read. Off the anchor depths
-     it is read one level only (the couple's own children); four levels from it are
-     heavy enough that FamilySearch answers 503.
+   - **every direct-line couple once, one level down** (`generations=1`), nearest
+     the root first. The household is the couple's children (the direct line's
+     siblings) and their spouses. The anchor is the father (even Ahnentafel number),
+     or the mother when there is no father, so a couple is read once. A brick-wall
+     couple is read the same way as any other.
+
+   **No four-level read is made from an ancestor.** Measured 2026-10-09: on a large
+   tree FamilySearch answers `503` to concurrent four-level reads (6-10 of 13 failed
+   at 6 at a time, 4-6 at 2, none at 1 but 9 reads took 42 s), and longer retry
+   backoff did not help. One-level reads are light. The cost is that the children of
+   the direct line's siblings (cousins) are not read, so `child_gap`, `no_children`
+   and `early_last_child` are not reported for cousins' families; `no_spouse`,
+   `no_birth_info`, `no_death_date` and `missing_surname` still cover the siblings
+   themselves. If a later use wants cousins, add them as a separate light read.
 
 The tool does not use `person_read` (too heavy to walk a tree) and does not use
 `person_ancestors`' `descendants=true` (it drops people with no ascendancy number).
@@ -81,9 +85,9 @@ raising the timeout:
 - The catalog is fetched in parallel from the start and waited on for at most
   15 s; if it is late the holes are returned with `coverage: null` and a note.
 - **Early exit.** Waves run nearest the root first. The **near tier** — the root's
-  descendants and every anchor within 4 generations — always runs: its holes
+  descendants and every couple within 4 generations — always runs: its holes
   outrank anything farther out, and a pedigree edge alone can hold `maxHoles`
-  holes. The **far anchors** (depth > 4) are skipped once `maxHoles` holes
+  holes. The **far couples** (depth > 4) are skipped once `maxHoles` holes
   (not counting `no_death_date`, which is filler) are in hand
   (`stopReason: "maxHoles"`).
 
@@ -196,7 +200,7 @@ filter is a refinement, not a requirement.
 LLM-actionable, as `person_ancestors`: 401 → call `login`; 403/404/410 → the
 person is restricted / not found / deleted; 429 → wait and retry; 400 → the
 upstream message. A root that cannot be read fails the call. A failed
-descendancy read from an ancestor anchor is skipped and counted in `notes` (that anchor adds no
+descendancy read of an ancestor's household is skipped and counted in `notes` (that household adds no
 holes); a failed read of the root's own descendancy fails the call.
 
 ## Not in scope
