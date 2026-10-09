@@ -1,5 +1,14 @@
-import { describe, it, expect } from 'vitest'
-import { resolveFamilySearchTarget } from '../external-link'
+import { describe, it, expect, vi } from 'vitest'
+
+// `../external-link` does `import { shell } from 'electron'` at module scope, so
+// importing it for a PURE-function test pulls in the electron runtime and throws
+// "Electron failed to install correctly" wherever the binary was not downloaded.
+// CI happens to have it, which is the only reason this file passed there while
+// failing locally. The sibling external-link-handler.test.ts already mocks it;
+// this one did not.
+vi.mock('electron', () => ({ shell: { openExternal: vi.fn() } }))
+
+const { resolveFamilySearchTarget } = await import('../external-link')
 
 const FS = 'https://www.familysearch.org/'
 
