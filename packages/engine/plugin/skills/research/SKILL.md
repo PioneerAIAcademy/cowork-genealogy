@@ -122,12 +122,17 @@ and never offer to add a person who is already in the tree.
 
 When a bounded request is met, **end your turn**. Say what you produced first:
 the turn ends where you stop, so anything you were going to add afterwards never
-reaches the researcher. Then offer to take it further, and end. The offer is not
+reaches the researcher. Name what this turn saved and where — "Saved to Susan
+Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
+not save: the record and the person it was for, not "an extraction did not
+finish". Then offer to take it further, and end. The offer is not
 something you wait for — their answer arrives as the next message.
 
 ## What to do
 
-1. **Query `research.json` — don't `Read` the whole file.** Use
+1. **Query `research.json` — don't `Read` the whole file.** Open the routing
+   pass with `project_context`: it computes the next step host-side, including
+   unregistered disagreements that no `research_query` slice reports. Then use
    `research_query` to pull just the slice you need: which questions
    exist, which have plans, which plans have log entries, which entries
    have produced assertions, which are classified, which are linked to
