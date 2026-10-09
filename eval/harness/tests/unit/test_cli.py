@@ -2077,3 +2077,57 @@ def test_a_transient_abort_alone_still_mints_a_releasable_log(
     assert counter["n"] == n_tests, "a lone transient abort must not stop the suite"
     assert minted, "a lone transient abort still reaches the releasable write"
     assert rc == 3  # still an execution abort, just not a quota one
+
+
+def test_main_leaves_a_readable_report_beside_the_run_log(tmp_path, monkeypatch):
+    """A full `run_tests.main` run writes `<skill>/reports/<log-stem>.txt` next
+    to the log it saved — deleting the call in main() fails this, which a test
+    of the helper alone cannot."""
+    from pathlib import Path
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    (skill_dir / "t0.json").write_text(json.dumps({
+        "test": {"id": "ut_a_000", "skill": "skill-a", "name": "n",
+                  "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+    monkeypatch.setattr(run_tests, "run_one_test",
+                        lambda spec, **kw: _stub_log(spec.id, spec.skill, "pass"))
+    written: list[Path] = []
+
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(log), encoding="utf-8")
+        written.append(out)
+        return out
+
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a", "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+    ])
+
+    assert rc == 0 and written
+    report = written[0].parent / "reports" / f"{written[0].stem}.txt"
+    assert report.exists()
+    assert "ut_a_000  pass" in report.read_text(encoding="utf-8")

@@ -106,3 +106,76 @@ def test_an_unreadable_run_log_is_counted_not_swallowed(tmp_path):
     bad.write_text("{not json", encoding="utf-8")
     _, counters = collect([bad])
     assert counters["unreadable"] == 1
+
+
+# T1.3: the busiest moment, the squeezes, and the model. Same doctrine as the
+# spend columns — a spawn written before the fields existed is "not measured",
+# never a zero, because a 0 peak would read as "this helper is tiny".
+
+
+def test_shows_each_agents_busiest_moment_and_squeezes(tmp_path):
+    paths = [
+        _run(tmp_path, "fx", [
+            {"agent_type": "record-extractor", "usage": _usage(), "models": ["claude-sonnet-4-6"],
+             "peak_window_tokens": 180_000, "compactions": []},
+            {"agent_type": "record-extractor", "usage": _usage(), "models": ["claude-sonnet-4-6"],
+             "peak_window_tokens": 30_000,
+             "compactions": [{"trigger": "auto", "pre_tokens": 167_000, "post_tokens": None}]},
+            {"agent_type": "record-extractor", "usage": _usage(), "models": ["claude-sonnet-4-6"],
+             "peak_window_tokens": 90_000, "compactions": []},
+        ])
+    ]
+    text = format_report(*collect(paths))
+    row = next(line for line in text.splitlines()
+               if "record-extractor" in line and "180,000" in line)
+    # The typical is the MIDDLE value of 30k / 90k / 180k (90k), not the
+    # average (100k) — chosen so the two differ and a swap is caught.
+    assert "90,000" in row
+    assert "100,000" not in row
+    assert "1 of 3" in row  # squeezed
+
+
+def test_a_pre_change_spawn_is_not_measured_rather_than_a_zero_peak(tmp_path):
+    paths = [
+        _run(tmp_path, "fx", [
+            {"agent_type": "image-reader", "usage": _usage(), "peak_window_tokens": 40_000,
+             "compactions": []},
+            {"agent_type": "image-reader", "usage": _usage()},
+        ])
+    ]
+    text = format_report(*collect(paths))
+    row = next(line for line in text.splitlines() if "image-reader" in line and "40,000" in line)
+    assert "0 of 1" in row  # one measured spawn, not two
+    assert "MEASURED: 1/2" in text
+
+
+def test_says_so_when_no_spawn_carries_a_peak(tmp_path):
+    """Priced but pre-T1.3: no peak table of zeros, a sentence instead."""
+    paths = [_run(tmp_path, "fx", [{"agent_type": "image-reader", "usage": _usage()}])]
+    text = format_report(*collect(paths))
+    assert "No spawn records its busiest moment" in text
+    assert " 0 of " not in text
+
+
+def test_shows_the_models_each_agent_ran_on(tmp_path):
+    paths = [
+        _run(tmp_path, "fx", [
+            {"agent_type": "gps-mentor", "usage": _usage(), "models": ["claude-sonnet-5"]},
+            {"agent_type": "image-reader", "usage": _usage(), "models": ["claude-sonnet-4-6"]},
+            {"agent_type": "image-reader", "usage": _usage(), "models": ["claude-haiku-4-5-20251001"]},
+        ])
+    ]
+    text = format_report(*collect(paths))
+    mentor = next(line for line in text.splitlines() if line.strip().startswith("gps-mentor"))
+    reader = next(line for line in text.splitlines() if line.strip().startswith("image-reader"))
+    assert "claude-sonnet-5" in mentor
+    assert "claude-sonnet-4-6" in reader and "claude-haiku-4-5-20251001" in reader
+    # The price column ignores the model today; the report must say so.
+    assert "ONE flat Sonnet rate" in text
+
+
+def test_a_spawn_with_no_model_recorded_is_marked_unknown(tmp_path):
+    paths = [_run(tmp_path, "fx", [{"agent_type": "image-reader", "usage": _usage()}])]
+    text = format_report(*collect(paths))
+    reader = next(line for line in text.splitlines() if line.strip().startswith("image-reader"))
+    assert "(not recorded)" in reader
