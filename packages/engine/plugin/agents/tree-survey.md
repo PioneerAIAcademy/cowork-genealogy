@@ -101,6 +101,8 @@ what applies:
     (`fatherGivenName`/`fatherSurname`, `motherGivenName`/`motherSurname`), with the
     year range as the birth range and the place.
   - `no_spouse`: the person's name, with the year range as the marriage range.
+  - `missing_surname`: the husband's name plus `spouseGivenName` set to her given name, with the year range as the marriage range.
+  - `no_birth_info`: the person's name, with the year range as the birth range. No year range, no search.
   - `no_death_date`: the person's name, with the year range as the death range.
 
   Count the results the search reports. If the place is ambiguous, call
