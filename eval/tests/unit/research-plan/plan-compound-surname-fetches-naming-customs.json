@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "name": "Compound surname: the plan fetches the country's naming-customs page and reads the surname order from it",
     "type": "positive",
-    "description": "garcia-romero-compound-surname: q_001 asks for the parents of María Josefa García Romero (b. about 1843, Vélez-Málaga). Her two-surname name triggers SKILL.md Step 3's REQUIRED pre-work fetch of Spain_Naming_Customs (issue #2251, lead ruling 2026-09-27: research-plan fetches subject-triggered record-type pages itself). The plan must carry the parish baptism and a full-text co-occurrence item for the two surnames, routed to search-full-text, with the father's and mother's surname named as the page states.",
+    "description": "garcia-romero-compound-surname: q_001 asks for the parents of María Josefa García Romero (b. about 1843, Vélez-Málaga). Her two-surname name triggers SKILL.md Step 3's REQUIRED pre-work fetch of Spain_Naming_Customs (issue #2251, lead ruling 2026-09-27). The fetch itself is asserted deterministically by test_wiki_prework_fetches_triggered_pages; the judge grades that the plan applies the page's surname order and carries the parish baptism.",
     "tags": [
       "planning",
       "parentage",
@@ -31,7 +31,7 @@
   "judge_context": [
     "A `localities` entry (loc_001, Vélez-Málaga) is ALREADY in research.json. The skill should READ it; it should not survey the place.",
     "SKILL.md Step 3 pre-work REQUIRES a wiki_read of Spain_Naming_Customs for this subject (two surnames, 'García Romero'); the fixture is served. Do not mark that call down. No military-page fetch is expected: the subject is female.",
-    "THE CENTRAL REQUIREMENT. The plan MUST include an item that searches the two surnames as a co-occurrence (both required, as separate terms), routed to search-full-text, against the full-text-searchable Santa María registers or unscoped. Its rationale should say which surname is the father's and which the mother's, consistent with the fetched page (Spanish order: father's surname, then mother's: García is the father's, Romero the mother's), and should treat that order as a lead rather than settled, since clerks and transcribers can reverse the two. Whether such an item is present is what Record type selection turns on for this test.",
+    "THE CENTRAL REQUIREMENT: the plan applies the fetched naming-customs page. Wherever a rationale says which of the two surnames is the father's and which the mother's, it must match the page's Spanish order (father's surname first, then mother's: García is the father's, Romero the mother's). A plan that reverses them, or states an order the page does not, fails Record type selection. A plan that never needs to state the order passes on this point. A dedicated full-text co-occurrence item for the two surnames, routed to search-full-text, is good practice: credit it if present, but do NOT deduct for its absence on any dimension. That tactic belongs to the skill's reference layer, not to the naming-customs fetch this test measures.",
     "The plan should also carry the baptism itself in the Santa María registers (the 1841-1845 births volume is 96% name-indexed; the 1837+ registers are full-text searchable). A phrase search of the child's whole compound name is the wrong tactic and should not be the only full-text item.",
     "Do NOT expect parents' given names: none is in the before-state, and a plan item naming them would be fabricated evidence."
   ],
