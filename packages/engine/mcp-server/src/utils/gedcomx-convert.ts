@@ -380,7 +380,7 @@ function simplifySourceRef(
   const out: SimplifiedSourceReference = {};
   // `descriptionId` first, `description` second. They agree wherever both appear,
   // but `description` is a full URL on a RELATIVE's ref -- a URL never equals the
-  // bare id a fetched description carries, so `keepResolvablePersonSourceRefs`
+  // bare id a fetched description carries, so `keepResolvableSourceRefs`
   // (exact string match) would drop every relative source however many we fetch.
   // Preferring the id upstream already sends is what makes issue #1689 Half 3
   // work at all, and it cannot drift from the id it names the way parsing the
