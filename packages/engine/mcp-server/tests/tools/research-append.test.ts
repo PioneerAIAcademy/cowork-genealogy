@@ -2123,6 +2123,14 @@ describe("research_append (Phase 3)", () => {
     const denmarkEvents = [
       { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Denmark", standard_place: "Copenhagen, Denmark", assertion_ids: ["a_001"], distance_from_previous_km: null },
     ];
+    // An ordinary immigrant's own timeline: born outside the US, enumerated
+    // and died inside it. Found by the `--runs-per-test 3` stability check
+    // (ut_timeline_005, 2026-10-09): an `every` test over `standard_place`
+    // stayed silent here because the birth event alone broke unanimity.
+    const mixedEvents = [
+      { date: "~1845", date_certainty: "estimated", event_type: "birth", description: "born", place: "Ireland", standard_place: "Ireland", assertion_ids: ["a_000"], distance_from_previous_km: null },
+      { date: "1880", date_certainty: "exact", event_type: "census", description: "enumerated", place: "Pennsylvania", standard_place: "Schuylkill, Pennsylvania, United States", assertion_ids: ["a_001"], distance_from_previous_km: null },
+    ];
     const appendWithGap = (expectedEvents: string[], events: any[] = usEvents) =>
       researchAppend({
         projectPath: dir,
@@ -2178,6 +2186,23 @@ describe("research_append (Phase 3)", () => {
     it("allows an unattributed 1890 census entry when the timeline's events are not US-placed", async () => {
       await writeProject();
       const r = await appendWithGap(["census 1890"], denmarkEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("refuses an unattributed 1890 census entry on an immigrant's timeline (only SOME events are US-placed)", async () => {
+      await writeProject();
+      const r = await appendWithGap(["census 1890"], mixedEvents);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("census 1890");
+    });
+
+    it.each([
+      ["Swiss federal census", "1890 Swiss federal census"],
+      ["Mexican federal census", "Mexico Federal District census 1890"],
+    ])("allows a non-US %s on a non-US timeline (bare 'federal' is not a US signal)", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], denmarkEvents);
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
