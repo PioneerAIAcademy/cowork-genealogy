@@ -84,9 +84,12 @@ sidecar, which `record_read` and `rank_search_matches` read host-side. Each
 producer strips its own heavy field: `record_search` drops `gedcomx`,
 `fulltext_search` drops `textDocument` (the AI-transcribed page), and
 `external_links_search` bounds the inline `results[]` (optional `host` filter +
-a backstop cap) while staging the full year-filtered set. The strip is
-unconditional once staged (so the protection can't be forgotten) and never runs
-on an un-staged search (nothing was retained to re-read).
+a 200-row cap) while staging the full year-filtered set. The `record_search` and
+`fulltext_search` strips are unconditional once staged (so the protection can't be
+forgotten) and never run on an un-staged search (nothing was retained to re-read).
+`external_links_search`'s cap is the exception: it applies on every call, staged or
+not, because the tool also keeps the full list in `external-collections.json` and
+says when it cut (`inlineCapped`; `external-links-search-tool-spec.md`).
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and

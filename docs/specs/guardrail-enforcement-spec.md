@@ -65,6 +65,28 @@ Two bypass shapes are on record, both from committed runlogs:
 - **Untyped subagent** — a `Task`/`Agent` call with no `subagent_type` and a
   hand-written prompt standing in for the skill.
 
+A third shape is **sanctioned**, not a bypass:
+
+- **Direct typed spawn** — a `Task`/`Agent` call whose `subagent_type` names a
+  guardrail arm's agent, with no `Skill` call before it. This is the in-loop
+  route for a paired agent: `/research` spawns `research-exhaustiveness`,
+  `proof-conclusion` and `person-evidence` directly, and the same-named thin
+  skill, where one still exists, is only the direct-user and unit-eval entry
+  point. The `subagent_type` is what separates it from the untyped shape above.
+
+**The rule the detectors apply: credit a spawn by name.** A successful
+`Agent`/`Task` call whose `subagent_type`, with any `<plugin>:` namespace
+stripped, equals an arm's name puts that name in the invoked set exactly as a
+`Skill` call naming it does. An untyped or errored spawn credits nothing. There
+is no paired-agent map and nothing is derived from disk, because a set derived
+from "an agent with a same-named `SKILL.md`" silently drops each pair the day
+its thin skill is deleted, and two of the three thin skills already are. Agent
+names match the arm names by construction, so the rule covers any arm converted
+later with no harness edit. The namespace strip matters because Cowork and
+hosted feedback bundles log `genealogy-research:<agent>` while every committed
+e2e value is bare: a rule that forgot it would be green on the whole corpus and
+dead in production data.
+
 **Why attribution is hard.** The SDK's only context-scoping primitive is
 `agent_id`, present on `PreToolUseHookInput` only inside a `Task`-spawned
 subagent. A `Skill` invocation runs inline in the same session with no
@@ -145,7 +167,7 @@ depends on another shipping first.
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
-| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
+| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
@@ -538,7 +560,8 @@ tool-call ledger.
 
 **§7's status is a finding, not a queue position.** Its graduation was gated on a
 false-positive rate that cannot be measured while its success gate reads `Skill`
-launch acknowledgements — and no instrument available to the harness observes
+launch acknowledgements, and a typed spawn's result does not say whether the
+agent did the work either (§7) — and no instrument available to the harness observes
 skill *completion* (§7, "What the success gate can and cannot see"). Treat that
 row as settled unless one of the four skills becomes something that emits a
 completion signal; do not re-open it as a calibration task.
@@ -690,6 +713,7 @@ What the detector currently treats as deciding reachability:
 | non-null `record_persona_id` | yes | `research_append` verified it against the record's `gedcomx.persons[]` on write |
 | `record_read` | yes | returns a `SimplifiedGedcomX` with a persons array — the persona was in hand |
 | `record_search` with a retained `results_ref` | yes | the sidecar result carries the record's `gedcomx` |
+| `person_record_matches` | yes | an accepted FamilySearch hint (search-hints' record mode): its ark is a `1:1:` record persona, which record-extraction fetches with `record_read` |
 | `fulltext_search` | **no** | an FTS result carries transcript text, names and places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry `record_read` (which takes a `1:1:` record-persona ARK) cannot open |
 | image, external site, PDF | **no** | unstructured; no persons array |
 | a search whose sidecar was not retained | **no** | nothing to read the persona out of |
@@ -1513,9 +1537,11 @@ present-and-empty. And it says nothing about overclaiming language in
 
 ## 6. Raw-write lockdown
 
-No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
-`tree.gedcomx.json`. Every write goes through a validating MCP tool
-(`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
+No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` or `external-collections.json`
+(`PROTECTED_PROJECT_FILES`). Every write goes through an MCP tool — a validating
+one (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`) for
+the first two, and `external_links_search` for `external-collections.json`; a
 direct file write never validates.
 
 Three shipping copies, plus the unit harness — which *imports* the plugin
@@ -2205,7 +2231,13 @@ Design points that were paid for and should not be re-derived:
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no
   question id can be extracted, it falls back to a per-skill window and accepts
-  the imprecision.
+  the imprecision. A typed spawn's question id is read from its `description`
+  and `prompt`, and used only when exactly one distinct `q_` id appears there.
+- **A summons is a `Skill` call or a typed spawn of the owner's name** (§2, the
+  sanctioned third shape), and **a write made by the owning agent itself is
+  never flagged**: its own `agent_type`, namespace stripped, equals the owner.
+  The exemption is per owner, so a batch that also touches another owner's
+  section is still checked for that owner.
 - **Protected writes include the tree side**, not just `research.json`.
   `materialize_facts` can create a tree person and attach facts with no
   `person_evidence` entry existing at all, and `proof-conclusion` owns tree
@@ -2219,7 +2251,8 @@ got round to the calibration. It is that the calibration has no instrument.
 
 Graduating §7 was gated on a false-positive rate. That rate is not obtainable
 while "did the skill succeed" is read off `Skill` entries, because those entries
-carry launch acknowledgements — a census of the committed corpus returns 18
+carry launch acknowledgements (a typed spawn's `is_error` is no better; the end
+of this subsection says why) — a census of the committed corpus returns 18
 distinct values across 1,242 entries, all of the form `Launching skill: <name>`
 plus one unknown-skill error. Three candidate instruments were checked and none
 observes completion:
@@ -2243,8 +2276,18 @@ observes completion:
   `match_score` precedent at the top of this section.
 
 **What would change the answer:** giving a guardrail skill an identity that emits
-a completion signal — i.e. converting it to an agent, which §9 costs out. Absent
-that, do not re-open this as a tuning task; the window is not the variable. The
+a completion signal — i.e. converting it to an agent, which §9 costs out.
+**Crediting a typed spawn (§2, the sanctioned third shape) does not supply that
+signal.** A synchronous `Agent`/`Task` result returns after the agent stops, but
+its `is_error` does not say whether the agent did the work: an agent that hit
+the tool-call cap and wrote nothing returns `is_error: false`
+(`hannah-earnest-children/run-2026-10-05_23-36-27`, the two
+`research-exhaustiveness` spawns at calls 421 and 424, measured at 70bbe069d).
+A `run_in_background` spawn returns only a launch acknowledgement and is
+credited all the same. So the success gate still cannot see completion on
+either route, and `packages/engine/mcp-server/tests/guard-cases/registry.json`
+keeps its row as written.
+Either way, do not re-open this as a tuning task; the window is not the variable. The
 count barely moves from window 10 to 150 (§3), which was the early tell.
 
 The window itself stays at 40 and the layer stays instrumented, because the
@@ -2450,8 +2493,8 @@ this section before reopening one.
   the `agent-*.meta.json` that names the spawning `Agent` call.
 
   **The consumer SPLICES, and that is the whole risk in reading them.** The
-  summons is a `Skill` call in the parent stream and the write happens in the
-  child's, so `adapt_bundle` inserts a child's calls at the index of the
+  summons is a `Skill` call or a typed spawn of the owner's name in the parent
+  stream and the write happens in the child's, so `adapt_bundle` inserts a child's calls at the index of the
   `Agent`/`Task` call its meta names. Appending them instead would put the
   write outside its own skill's `window` entries and report a violation that
   never happened — a fabricated non-zero, worse than a known zero because it is
@@ -2501,12 +2544,26 @@ this section before reopening one.
 
   One limit stays, and it is measured rather than fixed: splicing puts a
   subagent's own calls inside the window, so a subagent making more than
-  `window` calls before its protected write pushes the parent's `Skill` call
-  back out. The e2e harness already carries subagent calls in one flat list
+  `window` calls before its protected write pushes the parent's summons back
+  out. The e2e harness already carries subagent calls in one flat list
   (its hook stamps `agent_id`/`agent_type` onto each), so changing the window
   for bundles alone would make the two corpora incomparable. Anchoring the window at the spawning call rather than the write
   is a change to `skill_invocation.py` and belongs to whichever measurement
   shows it is needed.
+
+  **Both risks apply only to a non-owner transcript.** A write whose own
+  `agent_type`, namespace stripped, is its owner (the `proof-conclusion` agent
+  writing `proof_summaries` or encoding its conclusion in the tree, the
+  `research-exhaustiveness` agent writing the declaration) is the owner doing
+  its own work with its doctrine in context, so `find_unguarded_protected_writes`
+  never flags it wherever it lands. For `proof_summaries`, `person_evidence` and
+  the declaration the hook additionally routes the write to that caller; the
+  tree writes (a `materialize_facts` mint included) are not hook-routed, and the
+  exemption rests on the writer's identity alone. So for those writes the bundle arms report 0 by construction, splice
+  order cannot change them, and `_window_overruns` does not count them. The
+  exemption is per owner: a batch the owning agent makes that also touches
+  another owner's section (a resolved `conflicts` op beside `proof_summaries`)
+  is still checked, and counted, for that other owner.
 
 - **Agent postconditions — "this agent must have made this tool call before it
   returns."** Rejected 2026-09-07 on measurement, not on cost. The mechanism

@@ -67,7 +67,7 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 }
 
 
-# ── The four deltas, and why each was made ─────────────────────────────────
+# ── The five deltas, and why each was made ─────────────────────────────────
 
 #: `localities` had a declared owner from the day the section shipped and was
 #: never once evaluated: the check iterated `REQUIRED_SECTIONS`, which the
@@ -92,7 +92,13 @@ WIDENED: dict[str, set[str]] = {
     #: each census-year search page. The `agent:survey-surname` caller was added to
     #: ownership.json's `callers` so the ownership validator resolves it when the
     #: agent is the suite subject.
-    "log": {"survey-surname"},
+    #:
+    #: `log` gains `search-hints` (issue #2029), a new agent. A hint the researcher
+    #: decided is a search result: its record-mode entry is what routes an accepted
+    #: hint to record-extraction, and before it a hint review persisted nothing. The
+    #: agent writes only through `research_log_append`, which takes no `section`, so
+    #: the widening adds a writer to an append-only, multi-writer section.
+    "log": {"survey-surname", "search-hints"},
     #: `sources` gains `init-project` (issue #2122). The skill always wrote one
     #: `sources` entry per transcribed memory through `research_append` (its
     #: Step 4a) with no row naming it; the agent's hook lane makes that write

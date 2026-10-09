@@ -71,6 +71,15 @@ repo's identifier-casing rule):
     storedStatus: string | null,         // questions[].status verbatim; null when
                                          //   absent or not a string. DERIVED vs
                                          //   REPORTED — see §2.2.
+    unregisteredDisagreements: [{        // linked vital-fact assertions that
+      personId: string,                  //   disagree with no conflict naming
+      fact: string,                      //   the pair — see §2.2.
+      assertionIds: string[],
+    }],
+    competingParentSets: [{              // in-scope tree persons with >2 birth parents
+      personId: string,                  //   and <2 hypotheses on the question
+      parentIds: string[],
+    }],
   }],
   persons: [{
     id: string,                          // I id (or FS id)
@@ -97,6 +106,9 @@ repo's identifier-casing rule):
     planItemId: string | null,
     performed: string | null,
   }],
+  externalCollections?: {                // stored curated collections, counts only — §2.4
+    [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
+  },
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -166,10 +178,53 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
-`nextStep` orders by what blocks what: an unresolved conflict outranks a missing
-critique, which outranks a missing resolve, which outranks a missing summary. A
-superseded verdict does not count — a replacement is itself present and satisfies
-the join; if nothing replaced it, the critique no longer stands.
+`nextStep` orders by what blocks what: an unresolved conflict outranks an
+unregistered disagreement, which outranks competing parent sets, which outrank a
+missing critique, which outranks a missing resolve, which outranks a missing
+summary. A superseded verdict does not count — a replacement is itself present and
+satisfies the join; if nothing replaced it, the critique no longer stands.
+
+**A conflict the evidence shows counts even when nobody registered it.** A
+`conflicts` entry is what `conflict-resolution` *produces*, so an empty
+`conflicts[]` cannot be the signal that routes there. `unregisteredDisagreements`
+reads the evidence instead: two assertions linked by `person_evidence` to the same
+person, about the same birth or death (`birth`/`birthplace`, `death`/`deathplace`),
+whose places disagree or whose years differ by more than two, with no conflict of
+any status listing both ids. A date is the span of years it allows, read from the
+standard form (`Bet 1836 and 1848` is 1836–1848), and two spans disagree only when
+more than two years separate them. A one-sided date is open on its unbounded side:
+`Bef 1880` has no lower bound and `Aft 1870` no upper one, so neither disagrees with
+an earlier or later year respectively. A bounded date the
+standard-date parser cannot read ("after 1870, before 1880") takes no part in the
+year comparison. At least one of the pair must be extracted for this
+question. Places agree when every component of the less specific one prefix-matches
+a component of the other, comparing the raw and standardized spellings separately
+and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
+England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
+On the committed corpus it fires on 11 e2e question-runs. An earlier count
+(2026-10-07, 12 hits over 206 final states, file selection not recorded) was
+spot-checked hit by hit and every one was a real disagreement (one borderline: a
+village against its municipality). It fires on no scenario
+except `research-unregistered-census-conflicts`, mined to need it.
+
+**How these figures are counted** (2026-10-08, `npx tsx
+dev/measure-question-state-signals.ts`, `--list` for every hit): the corpus is
+every scenario `research.json` plus every e2e `run-<ts>.final-research.json`
+(developer `scratch_` runs left out), each with its sibling tree, run through the
+shipped `questionStates`. That is 397 question entries — 154 across 113 scenarios
+and 243 across 203 e2e final states — and a hit is one question entry whose signal
+is non-empty. Comparing bounded dates as spans, leaving one-sided dates open, and
+counting only birth parents changed no hit on this corpus.
+
+`competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
+a person in scope — the project's `subject_person_ids` plus every person this
+question's assertions are linked to — who is the child of more than two birth-parent
+`ParentChild` relationships (no `subtype`, or `Biological` in any casing; `Step`,
+`Adoptive`, `Foster` and `Guardian` do not count), while fewer than two hypotheses list this question in
+`related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
+fires on 5 e2e question-runs (the two spot-checked are real: one father with two
+different mothers; two same-named mothers).
+Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
 disagree.** `state` is this tool's reading of the documents by the ladder above;
@@ -270,6 +325,24 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
+
+### 2.4 `externalCollections` — counts of the stored curated collections
+
+Present only when the project holds `external-collections.json` (written by
+`external_links_search`; `external-links-search-tool-spec.md`, "Stored list"):
+
+```typescript
+externalCollections?: {
+  [place: string]: { total: number, byRecordType: { [recordType: string]: number } }
+}
+```
+
+Counts only, never rows — the lists run to hundreds of rows per state, and the
+rows are read with `research_query({section: "external_collections", place,
+recordType})`. `byRecordType` counts a row once per record type it carries, so
+its values can sum past `total`. Places and record types are sorted. The field is
+absent when no list is stored, and also when the file cannot be read: a broken
+cache file must never fail the whole projection.
 
 ## 3. Decisions recorded
 
