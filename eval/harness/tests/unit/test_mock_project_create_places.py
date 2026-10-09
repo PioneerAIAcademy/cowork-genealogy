@@ -30,12 +30,23 @@ def _tree(place: str, standard_place: str | None = None) -> dict:
     }
 
 
-def _create(tmp_path: Path, tree: dict) -> dict:
-    _server, _log, tools = create_mock_server(["place-search-boston"], FIXTURES_DIR, workspace=tmp_path)
+def _create(tmp_path: Path, tree: dict, fixture: dict | None) -> dict:
+    """project_create through the mock, with at most one place_search fixture."""
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    names = []
+    if fixture is not None:
+        (fixtures / "place.json").write_text(json.dumps(fixture), encoding="utf-8")
+        names = ["place"]
+    workspace = tmp_path / "project"
+    workspace.mkdir()
+    _server, _log, tools = create_mock_server(names, fixtures, workspace=workspace)
     out = asyncio.run(tools["project_create"].handler({
-        "projectPath": str(tmp_path), "objective": "x", "subjectPersonIds": ["I1"], "tree": tree,
+        "projectPath": str(workspace), "objective": "x", "subjectPersonIds": ["I1"], "tree": tree,
     }))
-    return json.loads(out["content"][0]["text"])
+    result = json.loads(out["content"][0]["text"])
+    result["_written"] = json.loads((workspace / "tree.gedcomx.json").read_text(encoding="utf-8")) if result.get("ok") else None
+    return result
 
 
 def test_place_table_answers_from_the_fixture_with_its_own_matching():
@@ -46,18 +57,21 @@ def test_place_table_answers_from_the_fixture_with_its_own_matching():
     assert _place_table(predicated, {"tree": _tree("Ballyowen")}) == {"Ballyowen": None}
 
 
+# Each case below has an answer only the table can give, so neither passes if the
+# resolver reaches the live Places API: no real place is called "Nowhere
+# Testville", and a real Boston resolves there.
 @pytest.mark.requires_engine_build
-def test_a_typed_standard_place_is_replaced_by_the_fixtures_answer(tmp_path):
-    out = _create(tmp_path, _tree("Boston, Massachusetts", "Boston, Massachusetts, United States"))
+def test_a_place_resolves_from_the_fixture_alone(tmp_path):
+    fx = json.loads((FIXTURES_DIR / "place-search-boston.json").read_text(encoding="utf-8"))
+    fx["args"] = {"placeName": "Nowhere Testville"}
+    out = _create(tmp_path, _tree("Nowhere Testville", "Somewhere Else"), fx)
     assert out["ok"] is True
-    written = json.loads((tmp_path / "tree.gedcomx.json").read_text(encoding="utf-8"))
-    assert written["persons"][0]["facts"][0]["standard_place"] == BOSTON
+    assert out["_written"]["persons"][0]["facts"][0]["standard_place"] == BOSTON
     assert any("was replaced by" in w for w in out["validation"]["warnings"])
 
 
 @pytest.mark.requires_engine_build
-def test_a_place_no_fixture_matches_is_left_unset_offline(tmp_path):
-    out = _create(tmp_path, _tree("Ballyowen", "Ballyowen, Ireland"))
+def test_a_real_place_no_fixture_matches_is_left_unset(tmp_path):
+    out = _create(tmp_path, _tree("Boston, Massachusetts", "Boston, Massachusetts, United States"), None)
     assert out["ok"] is True
-    written = json.loads((tmp_path / "tree.gedcomx.json").read_text(encoding="utf-8"))
-    assert "standard_place" not in written["persons"][0]["facts"][0]
+    assert "standard_place" not in out["_written"]["persons"][0]["facts"][0]
