@@ -50,7 +50,7 @@ Check with one `Read` of `<projectPath>/research.json` (`limit: 1`), the only re
 
 Ask one thing in the opening turn, alongside the person ID/name request: the research objective. **Never stop and wait for it. Complete the full initialization in a single pass:**
 
-1. **If the user's message already states an objective** — keep going.
+1. **If the user's message already states an objective** — store it as `objective` in the user's own words. Never replace it with the generic default, and never add a direction, place, relative or record the user did not state. Anything the message asks to find out, research, analyze or check about the person is a stated objective, however general ("research the origins of Michael Brennan", "analyze his sources and look for errors"); the default is only for a message that names the person and asks nothing about them.
 2. **If not, ask it in your return's researcher paragraph, but do not wait for a reply before proceeding.** Store this exact text, verbatim, as `objective`: "General research: build out the tree and identify gaps and next steps." Never invent, infer, or default a *specific* research direction (a migration story, a disputed relationship, a name-origin theory) from the person's data alone — this verbatim generic default is the only fallback. Write the files now and say in the final summary that the objective was defaulted.
 
 Asking a question and then stopping to wait is a failure: the project never gets created.
@@ -65,7 +65,7 @@ A stated level in the message ("I'm a professional genealogist") is not persiste
 
 ## Known-holdings survey
 
-Surveys what the researcher already holds (family Bible, certificates, prior GEDCOM, oral history). GPS Step 2 requires this alongside the FamilySearch tree fetch.
+Surveys what the researcher already holds (family Bible, certificates, prior GEDCOM, oral history).
 
 **Same non-blocking rule — never pause to ask and wait:**
 1. If the user volunteers holdings, record each as a `known_holdings` entry in Step 4.
@@ -101,22 +101,12 @@ Create the project from the read exactly as you normally would: `project_create`
 builds every person, relationship, and documentary fact from it, *including the
 very slice they asked you to leave out*. Then finish init-project normally and tell the researcher the tree is
 complete and that forgetting is a **separate next step** they run with the
-**forget-and-rederive** skill. In this skill you do **not**:
+**forget-and-rederive** skill. You do **not**:
 
 - strip, omit, or leave out the fact or relationship under test;
 - write a `.tree-before-forget…` restore file or any partial tree;
 - call `tree_forget` or `project_context`, or otherwise begin forget-and-rederive
   in this turn — you don't have those tools, and the forgetting is not your step.
-
-Why the strip belongs to `tree_forget`, not a hand-omit: a conclusion is recorded
-in two places at once — as structure (a ParentChild or Couple relationship) *and*
-as a documentary fact on the subject's own record (a `Parents` or `Marriage` fact
-whose value names the relatives). Omit at build time and you drop the structure
-but keep the fact, so the answer survives. `tree_forget` removes both, writes a
-restore file so the researcher can undo it, and reports counts-only so the answer
-never re-enters context. A partial hand-build has none of that — which is why the
-**complete** tree, not a stripped one, is what init-project delivers. Do not treat
-"omit X" as an instruction to skip X during construction.
 
 ## Steps
 
@@ -128,7 +118,7 @@ The objective was captured in the opening-turn questions above (stated by the us
 
 Do NOT call `person_read` before the opening turn's questions are asked — asking about "this person" needs no lookup. Do NOT invent, assume, or default a *specific* objective from the person's data (e.g., a hallucinated "trace migration from Upper Canada" guessed from a birthplace fact) — the generic default from the opening-turn rule above is the only fallback; a wrong specific assumption sends the whole project in a direction the user didn't ask for.
 
-Objectives are broad (overarching goal, not a research question — those come later via question-selection). Classify as **relationship** or **event** for narrative guidance. If no ID, search by name (see below). If the stated objective is too vague (no named individual), create nothing and ask for clarification in your return — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
+If no ID, search by name (see below). If the stated objective is too vague (no named individual), create nothing and ask for clarification in your return — this is a distinct case from no objective at all, which gets the generic default, not a clarification request.
 
 ### Searching by name
 
@@ -164,8 +154,6 @@ Count attached sources from the read's top-level `sources` array, never from per
 
 **Stub only the people the user actually named or directly implied — no others.** A stated maiden name implies exactly one new person: that woman's parent (not specifically her father).
 
-**Correction path.** If evidence later identifies which parent it actually is, use `tree_correct`'s `remove` operation (`{ relationshipId }` — this never deletes the person) to drop the incorrect `ParentChild` relationship, then `tree_edit`'s `add_relationship` to link the correct parent. Do not use `merge_tree_persons` for this — that operation is for person-identity merges, not relationship reclassification.
-
 Worked example: "the maternal grandmother of Sarah Hennessy; Sarah's mother's maiden name was Mary Donovan" →
 
 **DO create:**
@@ -193,8 +181,6 @@ The result's `idMap` gives the tree ids assigned: `persons` (FamilySearch ID →
 
 If `project_create` refuses with `subject_person_ids contains '<the subject's FamilySearch ID>' which is not in tree.gedcomx.json persons`, the installed extension predates `personReadRef`: tell the user to update it, and stop. Any other refusal is about your call: fix it and call again.
 
-Then relay to the user that the project was created, naming the folder.
-
 ### 4a. Profile and holdings
 
 `research_append` runs after `project_create` — never before, and never bundled into it. Two sections to write; one call each or one call carrying both in an `ops` array, either is fine.
@@ -205,7 +191,7 @@ Then relay to the user that the project was created, naming the folder.
 - **The words name site access** (the delegation carries them): write `subscriptions` with each named item mapped onto the closed enum — case-fold, then `Ancestry`, `MyHeritage`, `FindMyPast`, `Newspapers.com`, `GenealogyBank`, `FindAGrave-Plus`, `LibraryAccess` (public library, family history centre, or affiliate library), `FamilySearch-Partner` only for a partner subscription the researcher says they hold through FamilySearch, or `other` for anything unrecognized. "FamilySearch" on its own is the free account everyone has: it maps to nothing.
 - **The words name no access, or only FamilySearch:** leave the field absent. Never write `["none"]` or `[]` — `["none"]` asserts the researcher told us they have nothing.
 
-**Memory sources** — for each `person_read` source that arrived with `text`, one. **A memory that arrived with no `text` gets no entry at all** — not an entry with an empty `transcription`, not a placeholder. Untranscribed means unrecorded here, and writing one anyway is what `test_init_empty_sections` fails. Then, for each with `text`: `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at `idMap.sources[<that source's id>]` — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
+**Memory sources** — for each `person_read` source that arrived with `text`, one. **A memory that arrived with no `text` gets no entry at all** — not an entry with an empty `transcription`, not a placeholder. Then, for each with `text`: `{ section: "sources", op: "append", entry: {...} }`. Put the `text` verbatim in `transcription`, the source's `image_ref` in `image_filename` (omit if absent), and point `gedcomx_source_description_id` at `idMap.sources[<that source's id>]` — never a second, duplicate entry for it. `source_classification` is `original` for a scanned record, `derivative` when the memory is a transcription or abstract of one, `authored` for a family-written story. Fill the rest from the memory itself:
 
 ```
 { "section": "sources", "op": "append", "entry": {
@@ -302,7 +288,6 @@ The caller prints everything after that `---` verbatim and nothing above it.
 # Simplified GedcomX Quick Reference
 
 This is a condensed reference for the `tree.gedcomx.json` format.
-Full spec: `docs/specs/simplified-gedcomx-spec.md`.
 
 ## File structure
 
@@ -337,7 +322,6 @@ Full spec: `docs/specs/simplified-gedcomx-spec.md`.
       "date": "~1845",
       "standard_date": "Abt 1845",
       "place": "Ireland",
-      "standard_place": "Ireland",
       "sources": [{ "ref": "S1", "page": "1850 Census, dwelling 84" }]
     }
   ]
