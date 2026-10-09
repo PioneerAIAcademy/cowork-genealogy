@@ -597,11 +597,17 @@ to `ark` above.
 "http://gedcomx.org/Couple"          → "Couple"
 ```
 
-For `data:,` prefix types (custom facts): strip `data:,` and use the
-remainder.
+For `data:,` prefix types (custom facts): strip `data:,`, decode the
+remainder, and tidy it into a type the tree accepts (gedcomx-convert-spec.md
+§5.5): a `+` is a space, one pair of wrapping quotes goes, a lowercase first
+letter is raised, and a label that still cannot start with an uppercase letter
+is kept behind `Custom: `.
 
 ```
-"data:,Elected" → "Elected"
+"data:,Elected"                  → "Elected"
+"data:,will"                     → "Will"
+"data:,%22Presented+to+Society%22" → "Presented to Society"
+"data:,100%25+english"           → "Custom: 100% english"
 ```
 
 #### 3. Facts

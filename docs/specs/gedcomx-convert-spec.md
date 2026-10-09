@@ -328,17 +328,36 @@ these to clean PascalCase / space-separated names:
 "http://gedcomx.org/Birth"                  →  "Birth"
 "data:,Baptism"                             →  "Baptism"
 "data:,Military%20Draft%20Registration"     →  "Military Draft Registration"
+"data:,Military+Draft+Registration"         →  "Military Draft Registration"
+"data:,will"                                →  "Will"
+"data:,%22Presented+to+Society%22"          →  "Presented to Society"
+"data:,100%25+english"                      →  "Custom: 100% english"
 "http://familysearch.org/v1/Foo"            →  "Foo"
 "Foo" (already a short name)                →  "Foo"
 ```
 
 Algorithm:
 1. If the value starts with `http://gedcomx.org/`, strip that prefix.
-2. Else if it starts with `data:,`, strip that prefix.
+2. Else if it starts with `data:,`, strip that prefix, and read each `+` in
+   what remains as a space (a literal plus arrives as `%2B`).
 3. Else if it contains `://`, take the trailing path segment.
 4. Otherwise pass through.
 5. URL-decode the result (`decodeURIComponent`). If decoding throws on a
-   malformed percent sequence, the undecoded value is returned.
+   malformed percent sequence, the undecoded value is kept.
+6. Tidy it into a type the tree accepts: trim, drop one pair of wrapping
+   quotes (straight or curly), and raise a lowercase first letter. If it
+   still does not start with an uppercase letter, prefix it with `Custom: `
+   (an empty one becomes `Custom`).
+
+Steps 2 and 6 exist because a `data:,` type is a label a FamilySearch user
+typed, so it arrives however they wrote it. One live tree (KNDX-MKG and its
+parents' reads, 2026-10-09) held the same label as both `Previous+Residence`
+and `Previous%20Residence`, and held `will`, `scholastic-achievement`,
+`"Presented to Society"` and `100% english`. The tree requires a fact type to
+start with an uppercase letter (`checkTreeFact`, simplified-gedcomx-spec.md),
+and one such fact on any relative made `project_create` refuse the whole
+starting tree. The `Custom: ` prefix keeps a label that cannot be tidied
+whole rather than drop the fact.
 
 `toGedcomX` re-prepends `http://gedcomx.org/` on the reverse path. Custom
 fact types that originated as `data:,X` round-trip to

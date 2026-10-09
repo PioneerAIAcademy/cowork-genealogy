@@ -393,6 +393,9 @@ catches is otherwise invisible: a lowercase `birth` copied across from
 `research.json` looks like a plausible value, passes every enum check that
 treats the list as open, and then hard-fails `tree_edit` mid-run. Name types
 carry no such constraint, but should follow the same PascalCase convention.
+A FamilySearch custom fact type is a label a user typed, so it can start with a
+lowercase letter, a quote or a digit; the converter tidies it to meet this rule
+before any tree is built from it (gedcomx-convert-spec.md §5.5).
 
 ---
 

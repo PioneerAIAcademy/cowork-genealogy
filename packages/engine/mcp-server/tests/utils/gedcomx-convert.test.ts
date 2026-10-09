@@ -1349,6 +1349,54 @@ describe("gedcomx-convert — fact-type URI cleanup on toSimplified", () => {
     });
     expect(result.persons?.[0].facts?.[0].type).toBe("Bad%ZZ");
   });
+
+  /** The custom types one live read held (KNDX-MKG and its parents, 2026-10-09). */
+  function typesOf(rawTypes: string[]): (string | undefined)[] {
+    const result = toSimplified({
+      persons: [{ id: "p1", facts: rawTypes.map((type) => ({ type })) }],
+    });
+    return result.persons?.[0].facts?.map((f) => f.type) ?? [];
+  }
+
+  it("reads `+` in a data: label as a space, so both spellings of one label agree", () => {
+    expect(typesOf(["data:,Previous+Residence", "data:,Previous%20Residence"])).toEqual([
+      "Previous Residence",
+      "Previous Residence",
+    ]);
+    expect(typesOf(["data:,C%2B%2B+Programmer"])).toEqual(["C++ Programmer"]);
+  });
+
+  it("raises a lowercase first letter, which the tree refuses", () => {
+    expect(typesOf(["data:,will", "data:,scholastic-achievement"])).toEqual([
+      "Will",
+      "Scholastic-achievement",
+    ]);
+  });
+
+  it("drops one pair of wrapping quotes and the space around the label", () => {
+    expect(typesOf(["data:,%22Presented+to+Society%22", "data:,+%E2%80%9CElected%E2%80%9D+"])).toEqual([
+      "Presented to Society",
+      "Elected",
+    ]);
+  });
+
+  it("keeps a label that cannot start with an uppercase letter whole, behind `Custom: `", () => {
+    expect(typesOf(["data:,100%25+english", "data:,%C3%A9lu", "data:,"])).toEqual([
+      "Custom: 100% english",
+      "Custom: élu",
+      "Custom",
+    ]);
+  });
+
+  it("returns a type the tree accepts for every custom label one live read held", () => {
+    const live = [
+      "data:,%22Presented+to+Society%22", "data:,100%25+english",
+      "data:,87.5%25english%2C+12.5%25+french", "data:,Alt.%20Death",
+      "data:,Alternate+death+place", "data:,Held+public+office", "data:,Probate%3B+will",
+      "data:,Will+probated", "data:,scholastic-achievement", "data:,will",
+    ];
+    for (const type of typesOf(live)) expect(type).toMatch(/^[A-Z]/);
+  });
 });
 
 describe("gedcomx-convert — fact.value preservation", () => {
