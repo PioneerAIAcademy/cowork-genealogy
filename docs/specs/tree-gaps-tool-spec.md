@@ -100,7 +100,7 @@ genealogist sets them**. The values below are proposals pending that review.
 | `child_gap` | Consecutive known births more than `CHILD_GAP_YEARS` (4) apart while the mother was 15–40 at the earlier one. | earlier+1 … later−1 | marriage place, else mother's birthplace |
 | `early_last_child` | The last known child was born when the mother was under `EARLY_LAST_CHILD_AGE` (34), she lived to ≥ 40, and the window to age 45 / her death / his death is ≥ 4 years. | last+1 … end of window | as above |
 | `no_spouse` | A deceased person who died at ≥ `NO_SPOUSE_MIN_DEATH_AGE` (25) and has no spouse in the tree. | birth+18 … death | birthplace |
-| `no_death_date` | `living` is false and no death date. | birth … birth+90 | birthplace |
+| `no_death_date` | `living` is false and no death date. | birth … `min(birth+90, this year)` | birthplace |
 
 The mother of a family is the person if female, else the single spouse if
 female; with a man and several spouses the mother is unknown and the
@@ -139,7 +139,7 @@ them. A living root whose descendants are all living yields no holes.
 `generation` is `anchor depth − steps down`: a direct ancestor at depth 3 is `3`,
 the root's sibling is `0`, the root's child is `−1`.
 
-**Selection.** Holes are sorted nearest the root first, then picked
+**Selection.** A couple-level hole (`no_children`, `child_gap`, `early_last_child`) found from both spouses, when both are line persons, is reported once. Holes are sorted nearest the root first, then picked
 **round-robin across types** so one common type (`no_spouse`) cannot fill the
 answer; `maxHoles` of them are returned, nearest first.
 

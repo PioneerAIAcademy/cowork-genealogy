@@ -249,3 +249,54 @@ describe("a man with several spouses", () => {
   });
 });
 
+
+describe("a couple whose spouses are both line persons", () => {
+  // DAD and MOM are each an anchor, so the couple is read twice, once from each side.
+  const bothSides = (kidBirths: number[]) => {
+    const m = emptyModel(1);
+    const kids = (n: string) => kidBirths.map((b, i) => dp(`K${i}`, `${n}.${i + 1}`, `Kid${i}`, "Male", b, 1950));
+    addDescendancy(
+      m,
+      [dp("DAD", "1", "Dad", "Male", 1850, 1920, { marriageDate: "1 May 1875" }), dp("MOM", "1-S1", "Mom", "Female", 1855, 1930), ...kids("1")],
+      1,
+      4,
+    );
+    addDescendancy(
+      m,
+      [dp("MOM", "1", "Mom", "Female", 1855, 1930), dp("DAD", "1-S1", "Dad", "Male", 1850, 1920, { marriageDate: "1 May 1875" }), ...kids("1")],
+      1,
+      4,
+    );
+    return detectGaps(m);
+  };
+
+  it("reports a couple's hole once, not once per spouse", () => {
+    const g = bothSides([1880]);
+    expect(g.filter((x) => x.type === "early_last_child")).toHaveLength(1);
+  });
+
+  it("keeps two different child gaps of the same couple", () => {
+    const g = bothSides([1876, 1884, 1895]).filter((x) => x.type === "child_gap");
+    expect(g.map((x) => x.yearRange)).toEqual([
+      { start: 1877, end: 1883 },
+      { start: 1885, end: 1894 },
+    ]);
+  });
+});
+
+describe("no_death_date window", () => {
+  it("ends at this year, not at birth + 90, for someone born recently", () => {
+    const year = new Date().getFullYear();
+    const m = emptyModel(1);
+    addAncestry(m, [ap("R", "1", year - 20, null, false)]);
+    const g = detectGaps(m).find((x) => x.type === "no_death_date")!;
+    expect(g.yearRange).toEqual({ start: year - 20, end: year });
+  });
+
+  it("still runs to birth + 90 for someone born long ago", () => {
+    const m = emptyModel(1);
+    addAncestry(m, [ap("R", "1", 1800, null, false)]);
+    const g = detectGaps(m).find((x) => x.type === "no_death_date")!;
+    expect(g.yearRange).toEqual({ start: 1800, end: 1890 });
+  });
+});

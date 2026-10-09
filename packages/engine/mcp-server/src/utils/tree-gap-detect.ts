@@ -383,7 +383,7 @@ function missingDeathDates(model: GapModel, out: TreeGap[]): void {
         "no_death_date",
         p,
         "Deceased, but the tree gives no death date.",
-        range(p.birthYear, p.birthYear + MAX_LIFESPAN),
+        range(p.birthYear, Math.min(p.birthYear + MAX_LIFESPAN, new Date().getFullYear())),
         p.birthPlace,
       ),
     );
@@ -397,20 +397,18 @@ export function detectGaps(model: GapModel): TreeGap[] {
   familyHoles(model, out);
   missingDeathDates(model, out);
 
+  out.sort(byDistance);
+  // A couple's hole is found once from each spouse when both are line persons
+  // (two ancestors): key it on the pair so it is reported once.
   const seen = new Set<string>();
-  const unique = out.filter((g) => {
-    const key = `${g.type}|${g.personId}|${g.yearRange?.start}|${g.yearRange?.end}`;
+  return out.filter((g) => {
+    const key = g.spouseId
+      ? `${g.type}|${[g.personId, g.spouseId].sort().join("+")}|${g.type === "child_gap" ? `${g.yearRange?.start}-${g.yearRange?.end}` : ""}`
+      : `${g.type}|${g.personId}|${g.yearRange?.start}|${g.yearRange?.end}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
-  return unique.sort(
-    (a, b) =>
-      Math.abs(a.generation) - Math.abs(b.generation) ||
-      b.generation - a.generation ||
-      TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type] ||
-      a.personId.localeCompare(b.personId),
-  );
 }
 
 const byDistance = (a: TreeGap, b: TreeGap): number =>
