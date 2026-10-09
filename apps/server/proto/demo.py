@@ -223,12 +223,32 @@ def preflight(base: str, dsn: str) -> str | None:
 
 
 def seed_session(args: argparse.Namespace) -> tuple[str, str, dict]:
-    """Seed the fixture and open a session on it; ``(session_id, project_id, fixture meta)``."""
+    """Seed the fixture and open a session on it; ``(session_id, project_id, fixture meta)``.
+
+    Under dev-login the tier hands the project seeded first to the signed-in patron. A
+    FamilySearch-signed-in tier (U13: a cookie file) never claims a client-chosen id, so
+    there the session comes first, on a project the tier creates and the patron owns, and
+    the fixture is seeded into it -- the store's writes upsert the projects row."""
     fixture = seed.resolve_fixture(args.fixture)
     files = seed.plan_files(fixture)
-    project_id = args.project_id or seed.default_project_id(fixture)
     meta = seed.fixture_meta(fixture)
     title = args.title or meta.get("name") or fixture.name
+    if os.environ.get(turn.COOKIE_FILE_ENV):
+        if args.project_id:
+            raise RuntimeError("--project-id needs dev-login: a FamilySearch-signed-in tier never claims a chosen id")
+        with turn.signed_in_client(args.base, args.email, timeout=10.0) as client:
+            r = client.post("/api/sessions", json={"title": title})
+            r.raise_for_status()
+        session_id = r.json()["id"]
+        found = rows(args.pg_dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
+        if not found:
+            raise RuntimeError(f"no session {session_id!r} in sessions")
+        project_id = found[0][0]
+        rc = seed.seed(files, project_id=project_id, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
+        if rc != 0:
+            raise RuntimeError(f"seed exited {rc}")
+        return session_id, project_id, meta
+    project_id = args.project_id or seed.default_project_id(fixture)
     rc = seed.seed(files, project_id=project_id, pg_dsn=args.pg_dsn, s3_endpoint=args.s3_endpoint)
     if rc != 0:
         raise RuntimeError(f"seed exited {rc}")
