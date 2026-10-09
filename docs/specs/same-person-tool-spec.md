@@ -303,7 +303,7 @@ Written host-side by the tool that computed it, so the payload never round-trips
 through the model on the legitimate path. That is what `match_score` alone never
 was (ADR-0009 constraint 2). **It is not yet unforgeable.**
 `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers `research.json`,
-`tree.gedcomx.json` and `starting-tree.gedcomx.json` only, so nothing stops a raw
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` and `external-collections.json` only, so nothing stops a raw
 `Write` to `results/.scores/` from inside the VM: the model cannot produce the
 payload, but it can author the file. Closing that is a precondition for the
 refusal step trusting this record, and it touches ADR-0005, which owns the list.

@@ -254,13 +254,23 @@ def test_blocks_when_stub_skills_names_a_nonexistent_skill(entry):
     assert "not an existing skill" in result.reason
 
 
-def test_blocks_stop_at_stub_with_nothing_stubbed():
+def test_allows_stub_skills_naming_a_real_skill():
+    result = _stub_check(
+        {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
+    )
+    assert result.runnable is True
+
+
+# --- execution.stop_at_stub (#3119) ---------------------------------------------
+
+
+def test_stop_at_stub_is_refused_with_nothing_stubbed():
     result = _stub_check({"stop_at_stub": True})
     assert result.runnable is False
     assert "requires a non-empty stub_skills" in result.reason
 
 
-def test_blocks_stop_at_stub_on_a_negative_test():
+def test_stop_at_stub_is_refused_on_a_negative_test():
     d = _runnable_test_dict()
     d["test"]["type"] = "negative"
     d["negative"] = {"correct_skill": ["search-records"], "explanation": "x"}
@@ -273,16 +283,29 @@ def test_blocks_stop_at_stub_on_a_negative_test():
     assert "positive tests only" in result.reason
 
 
-def test_allows_stop_at_stub_with_a_real_stub():
+def test_stop_at_stub_is_allowed_with_a_stub():
     result = _stub_check({"stop_at_stub": True, "stub_skills": ["search-records"]})
-    assert result.runnable is True
+    assert result.runnable is True, result.reason
 
 
-def test_allows_stub_skills_naming_a_real_skill():
-    result = _stub_check(
-        {"stub_skills": ["search-external-sites", {"skill": "record-extraction"}]}
+def test_a_no_shortcut_test_must_set_stop_at_stub():
+    """Its validator reads the first hand-off, and without the stop the router
+    walks on past it."""
+    d = _runnable_test_dict()
+    d["test"]["tags"] = ["no-shortcut"]
+    d["execution"] = {"stub_skills": ["search-records"]}
+    refused = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
     )
-    assert result.runnable is True
+    assert refused.runnable is False
+    assert "must set execution.stop_at_stub" in refused.reason
+    d["execution"]["stop_at_stub"] = True
+    allowed = check_runnable(
+        load_test_from_dict(d), scenarios_dir=SCENARIOS,
+        fixtures_dir=FIXTURES, skills_dir=SKILLS, tests_dir=TESTS,
+    )
+    assert allowed.runnable is True, allowed.reason
 
 
 def test_allows_stub_skills_naming_an_agent_with_no_skill_directory():
