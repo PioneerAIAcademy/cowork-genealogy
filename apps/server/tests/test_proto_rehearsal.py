@@ -90,10 +90,15 @@ class FakeAws:
         # describe-environments answers Launching/Updating this many times after a create
         # or update; Beanstalk refuses an update or terminate until the env is Ready.
         self.busy_polls = 0
+        self.openssl_calls: list[list[str]] = []
+        # delete-certificate answers ResourceInUseException this many times first.
+        self.cert_in_use = 0
 
     # plumbing
 
     def __call__(self, argv: list[str]):
+        if argv[0] == "openssl":
+            return self.openssl(argv)
         self.calls.append(list(argv))
         snap = {a: Path(a[len("file://"):]).read_text(encoding="utf-8") for a in argv if a.startswith("file://")}
         self.call_files.append(snap)
@@ -109,6 +114,15 @@ class FakeAws:
         except AwsError as exc:
             return subprocess.CompletedProcess(argv, 254, "", str(exc))
         return subprocess.CompletedProcess(argv, 0, body if isinstance(body, str) else json.dumps(body), "")
+
+    def openssl(self, argv: list[str]):
+        """`openssl req -x509`: writes a stand-in key and certificate where it was told."""
+        self.openssl_calls.append(list(argv))
+        if "openssl" in self.fail:
+            return subprocess.CompletedProcess(argv, 1, "", self.fail["openssl"])
+        Path(_flag(argv, "-keyout")).write_text("-----BEGIN PRIVATE KEY-----\nfake\n", encoding="utf-8")
+        Path(_flag(argv, "-out")).write_text("-----BEGIN CERTIFICATE-----\nfake\n", encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, "", "")
 
     def reset(self) -> None:
         self.calls.clear()
@@ -499,6 +513,26 @@ class FakeAws:
     def logs_delete_log_group(self, rest):
         self.drop("log", _flag(rest, "--log-group-name"))
 
+    def acm_import_certificate(self, rest):
+        arn = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/c{len(self.all('cert')) + 1}"
+        self.add("cert", arn)
+        return {"CertificateArn": arn}
+
+    def acm_describe_certificate(self, rest):
+        arn = _flag(rest, "--certificate-arn")
+        if not self.get("cert", arn):
+            raise AwsError(f"An error occurred (ResourceNotFoundException): Could not find certificate {arn}.")
+        return {"Certificate": {"CertificateArn": arn, "Type": "IMPORTED"}}
+
+    def acm_delete_certificate(self, rest):
+        arn = _flag(rest, "--certificate-arn")
+        if self.cert_in_use:
+            self.cert_in_use -= 1
+            raise AwsError(f"An error occurred (ResourceInUseException): Certificate {arn} is in use.")
+        if not self.get("cert", arn):
+            raise AwsError(f"An error occurred (ResourceNotFoundException): Could not find certificate {arn}.")
+        self.drop("cert", arn)
+
     def resourcegroupstaggingapi_get_resources(self, rest):
         return {"ResourceTagMappingList": [{"ResourceARN": a} for a in self.leftover.get("tagged", [])]}
 
@@ -798,6 +832,137 @@ def test_signin_phase_sets_loopback_with_space_separated_emails(stack):
     assert rh.EB_VALUE.match(web[(rh.ENV_NS, "ALLOWED_EMAILS")])
 
 
+def _https(env, fake, *extra):
+    return run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https", *extra)
+
+
+def test_signin_https_imports_a_self_signed_certificate_and_moves_the_listener_to_443(stack):
+    env, fake, _ = stack
+    fake.reset()
+    rc, lines = _https(env, fake)
+    assert rc == 0, lines[-5:]
+    host = "genealogy-u13-web.invalid"
+    [req] = fake.openssl_calls
+    assert req[:3] == ["openssl", "req", "-x509"] and f"subjectAltName=DNS:{host}" in req and f"/CN={host}" in req
+    key = env["work"] / "tls" / "web-key.pem"
+    assert key.is_file() and stat.S_IMODE(key.stat().st_mode) == 0o600
+    [imp] = fake.calls_to("acm", "import-certificate")
+    assert f"fileb://{key}" in imp and "Key=genealogy:rehearsal,Value=u13" in imp
+    web = options_file(env, rh.ENV_NAMES["web"])
+    [arn] = [c["name"] for c in fake.all("cert")]
+    assert web[(rh.ENV_NS, "PUBLIC_URL")] == f"https://{host}"
+    assert web[(rh.HTTPS_NS, "ListenerEnabled")] == "true" and web[(rh.HTTPS_NS, "Protocol")] == "HTTPS"
+    assert web[(rh.HTTPS_NS, "SSLCertificateArns")] == arn
+    assert web[(rh.HTTP_NS, "ListenerEnabled")] == "false", "D2: never plain http on the CNAME"
+    assert web[(rh.ENV_NS, "FAMILYSEARCH_WEB_ENABLED")] == "true"
+    assert web[(rh.ENV_NS, "ALLOWED_EMAILS")] == "a@example.invalid b@example.invalid"
+    assert fake.env_settings[rh.ENV_NAMES["web"]][(rh.HTTPS_NS, "SSLCertificateArns")] == arn
+
+
+def test_signin_https_rerun_reuses_the_certificate_and_a_web_redeploy_keeps_it(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    assert _https(env, fake)[0] == 0
+    assert len(fake.calls_to("acm", "import-certificate")) == 1 and len(fake.openssl_calls) == 1
+    fake.reset()
+    assert run(env, fake, "up", "--billed", "--phase", "web")[0] == 0
+    web = options_file(env, rh.ENV_NAMES["web"])
+    assert web[(rh.ENV_NS, "PUBLIC_URL")].startswith("https://") and (rh.HTTPS_NS, "SSLCertificateArns") in web
+
+
+def test_signin_https_reimports_when_acm_no_longer_has_the_certificate(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.drop("cert", fake.all("cert")[0]["name"])
+    assert _https(env, fake)[0] == 0
+    assert len(fake.calls_to("acm", "import-certificate")) == 2
+
+
+def test_leaving_https_turns_443_off_and_restores_port_80(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.reset()
+    rc, lines = run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "loopback")
+    assert rc == 0, lines[-3:]
+    [update] = fake.calls_to("elasticbeanstalk", "update-environment")
+    sent = {(o["Namespace"], o["OptionName"]) for o in fake.file_of(update, "--option-settings")}
+    removed = {(o["Namespace"], o["OptionName"]) for o in fake.file_of(update, "--options-to-remove")}
+    assert not sent & removed, "an option both set and removed in one call"
+    assert removed >= {(rh.HTTPS_NS, "Protocol"), (rh.HTTPS_NS, "SSLCertificateArns"), (rh.HTTP_NS, "ListenerEnabled")}
+    live = fake.env_settings[rh.ENV_NAMES["web"]]
+    assert live[(rh.ENV_NS, "PUBLIC_URL")] == "http://127.0.0.1:1837"
+    assert live[(rh.HTTPS_NS, "ListenerEnabled")] == "false"
+    assert (rh.HTTPS_NS, "SSLCertificateArns") not in live and (rh.HTTPS_NS, "Protocol") not in live
+    assert (rh.HTTP_NS, "ListenerEnabled") not in live
+
+
+def test_loopback_after_loopback_touches_no_listener(stack):
+    env, fake, _ = stack
+    fake.reset()
+    assert run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "loopback")[0] == 0
+    [update] = fake.calls_to("elasticbeanstalk", "update-environment")
+    assert "--options-to-remove" not in update
+    assert not {o["Namespace"] for o in fake.file_of(update, "--option-settings")} & {rh.HTTPS_NS, rh.HTTP_NS}
+
+
+def test_signin_https_refuses_before_the_web_environment_exists(env, capsys):
+    fake = FakeAws()
+    rc, _ = run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https")
+    assert rc == 2 and "run its `up` phase first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
+def test_signin_https_refuses_a_web_environment_with_no_recorded_address(stack, capsys):
+    """A failed `up --phase web` leaves the options snapshot but no CNAME in the inventory;
+    without this refusal the certificate would name CN=None and PUBLIC_URL https://None."""
+    env, fake, _ = stack
+    inv_path = env["work"] / "inventory.json"
+    inv = json.loads(inv_path.read_text(encoding="utf-8"))
+    del inv["state"]["envs"]["web"]
+    inv_path.write_text(json.dumps(inv), encoding="utf-8")
+    rc, _ = _https(env, fake)
+    assert rc == 2 and "run `up --phase web` first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
+def test_signin_https_stops_when_openssl_fails(stack, capsys):
+    env, fake, _ = stack
+    fake.fail["openssl"] = "req: unknown option -addext"
+    rc, _ = _https(env, fake)
+    assert rc == 1 and "openssl failed" in capsys.readouterr().err
+    assert not fake.calls_to("acm", "import-certificate")
+
+
+def test_down_deletes_the_certificate_after_the_environments_and_waits_out_in_use(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.cert_in_use = 2
+    fake.reset()
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+    ops = fake.ops()
+    assert ops.index(("elasticbeanstalk", "terminate-environment")) < ops.index(("acm", "delete-certificate"))
+    assert len(fake.calls_to("acm", "delete-certificate")) == 3 and not fake.all("cert")
+
+
+def test_prove_empty_fails_on_a_certificate_left_and_passes_one_acm_reports_gone(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    arn = fake.all("cert")[0]["name"]
+    fake.fail["acm delete-certificate"] = "An error occurred (AccessDeniedException)"
+    assert run(env, fake, "down", "--billed")[0] == 1
+    del fake.fail["acm delete-certificate"]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1 and any("NOT EMPTY acm" in line for line in lines), lines
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [arn]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 0, lines
+    fake.add("cert", arn)
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1, "a tagged certificate ACM still has stays NOT EMPTY"
+
+
 def test_secrets_shared_and_hex(stack):
     env, fake, _ = stack
     web, worker = options_file(env, rh.ENV_NAMES["web"]), options_file(env, rh.ENV_NAMES["worker"])
@@ -958,7 +1123,7 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "nudges_3", "no_telemetry", "idle_session_60s"}
+        "refresh_age_0", "cap_1usd", "nudges_3", "nudges_0", "no_telemetry", "idle_session_60s"}
 
 
 def test_every_case_has_a_row_in_the_readme_probe_table():
@@ -971,6 +1136,7 @@ def test_every_case_has_a_row_in_the_readme_probe_table():
 
 @pytest.mark.parametrize("case, tier, name, value", [
     ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
+    ("nudges_0", "web", "AUTONOMOUS_MAX_NUDGES", "0"),
     ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
 ])
 def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
@@ -1198,7 +1364,7 @@ DOWN = {
     "secret": ("secretsmanager", "delete-secret"), "ec2": ("ec2", "terminate-instances"),
     "app": ("elasticbeanstalk", "delete-application"), "eb-storage": ("s3api", "delete-bucket-policy"),
     "env": ("elasticbeanstalk", "terminate-environment"), "log-group": ("logs", "delete-log-group"),
-    "resolver": ("route53resolver", "delete-resolver-query-log-config"),
+    "resolver": ("route53resolver", "delete-resolver-query-log-config"), "acm": ("acm", "delete-certificate"),
 }
 PROOF = {
     "budget": ("budgets", "describe-budget"), "iam-role": ("iam", "list-roles"),
@@ -1208,12 +1374,13 @@ PROOF = {
     "secret": ("secretsmanager", "list-secrets"), "ec2": ("ec2", "describe-instances"),
     "app": ("elasticbeanstalk", "describe-applications"), "eb-storage": ("s3api", "head-bucket"),
     "env": ("elasticbeanstalk", "describe-environments"), "log-group": ("logs", "describe-log-groups"),
-    "resolver": ("route53resolver", "list-resolver-query-log-configs"),
+    "resolver": ("route53resolver", "list-resolver-query-log-configs"), "acm": ("acm", "describe-certificate"),
 }
 
 
 def test_up_down_and_proof_cover_the_same_kinds(stack):
     env, fake, _ = stack
+    assert run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https")[0] == 0
     assert set(DOWN) == set(PROOF) == set(rh.KINDS)
     inv = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))
     assert {r["kind"] for r in inv["resources"]} == set(rh.KINDS)
@@ -1344,7 +1511,7 @@ def test_prove_empty_passes_tag_index_entries_ec2_reports_gone(stack):
     fake.leftover["instance_states"] = {"i-0aaa": "terminated"}
     rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
     assert rc == 0, lines
-    assert any("EC2 reports gone" in line for line in lines)
+    assert any("EC2 or ACM reports gone" in line for line in lines)
 
 
 @pytest.mark.parametrize("arn_tail, states, volumes", [
