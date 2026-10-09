@@ -1106,6 +1106,14 @@ describe("project_create — hand-entered places are standardized by the tool", 
     expect(result.validation.warnings.join(" ")).toContain("standard_place \"Atlantis\" on a Birth fact with no place was not kept");
   });
 
+  it("treats an explicit null standard_place as none supplied, with no warning", async () => {
+    const tree = { persons: [person([{ type: "Birth", place: "Ballyowen", standard_place: null }])], relationships: [], sources: [] };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
+    expect(result.validation.warnings.join(" ")).not.toContain("standard_place null");
+  });
+
   it("standardizes an addition's place in ref mode, as hand-entered", async () => {
     const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
     const result: any = await projectCreate({

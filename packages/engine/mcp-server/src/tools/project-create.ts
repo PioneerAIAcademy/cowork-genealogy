@@ -256,7 +256,7 @@ export async function projectCreate(
     const placed = handFacts.filter(hasPlace) as unknown as SimplifiedFact[];
     const supplied = new Map<Record<string, unknown>, unknown>();
     for (const f of handFacts) {
-      if ("standard_place" in f) supplied.set(f, f.standard_place);
+      if (f.standard_place != null) supplied.set(f, f.standard_place);
       delete f.standard_place;
     }
     const fillAll = async () => {
