@@ -1,6 +1,7 @@
 # Cut e2e research cost and latency as far as they go
 
-**Status:** Not started. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
+**Status:** In progress — T1.3 (PR #3194), T1.4 (PR #3195), T1.11 (PR #3256) and
+T2.1 (PR #3230) landed. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
 **No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 
