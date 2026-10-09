@@ -331,7 +331,7 @@ these to clean PascalCase / space-separated names:
 "data:,Military+Draft+Registration"         →  "Military Draft Registration"
 "data:,will"                                →  "Will"
 "data:,%22Presented+to+Society%22"          →  "Presented to Society"
-"data:,100%25+english"                      →  "Custom: 100% english"
+"data:,100%25+english"                      →  "Custom 100% english"
 "http://familysearch.org/v1/Foo"            →  "Foo"
 "Foo" (already a short name)                →  "Foo"
 ```
@@ -346,8 +346,9 @@ Algorithm:
    malformed percent sequence, the undecoded value is kept.
 6. Tidy it into a type the tree accepts: trim, drop one pair of wrapping
    quotes (straight or curly), and raise a lowercase first letter. If it
-   still does not start with an uppercase letter, prefix it with `Custom: `
-   (an empty one becomes `Custom`).
+   still does not start with an uppercase letter, prefix it with `Custom `
+   (an empty one becomes `Custom`). No colon after `Custom`: the reverse path
+   reads a leading `word:` as a URI scheme and would not re-prefix the type.
 
 Steps 2 and 6 exist because a `data:,` type is a label a FamilySearch user
 typed, so it arrives however they wrote it. One live tree (KNDX-MKG and its
@@ -356,7 +357,7 @@ and `Previous%20Residence`, and held `will`, `scholastic-achievement`,
 `"Presented to Society"` and `100% english`. The tree requires a fact type to
 start with an uppercase letter (`checkTreeFact`, simplified-gedcomx-spec.md),
 and one such fact on any relative made `project_create` refuse the whole
-starting tree. The `Custom: ` prefix keeps a label that cannot be tidied
+starting tree. The `Custom ` prefix keeps a label that cannot be tidied
 whole rather than drop the fact.
 
 `toGedcomX` re-prepends `http://gedcomx.org/` on the reverse path. Custom

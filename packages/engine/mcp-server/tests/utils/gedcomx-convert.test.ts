@@ -1380,11 +1380,22 @@ describe("gedcomx-convert — fact-type URI cleanup on toSimplified", () => {
     ]);
   });
 
-  it("keeps a label that cannot start with an uppercase letter whole, behind `Custom: `", () => {
+  it("keeps a label that cannot start with an uppercase letter whole, behind `Custom `", () => {
     expect(typesOf(["data:,100%25+english", "data:,%C3%A9lu", "data:,"])).toEqual([
-      "Custom: 100% english",
-      "Custom: élu",
+      "Custom 100% english",
+      "Custom élu",
       "Custom",
+    ]);
+  });
+
+  it("round-trips a prefixed label under http://gedcomx.org/, like any other custom type", () => {
+    const simplified = toSimplified({
+      persons: [{ id: "p1", facts: [{ type: "data:,100%25+english" }, { type: "data:,will" }] }],
+    });
+    const back = toGedcomX(simplified);
+    expect(back.persons?.[0].facts?.map((f) => f.type)).toEqual([
+      "http://gedcomx.org/Custom 100% english",
+      "http://gedcomx.org/Will",
     ]);
   });
 

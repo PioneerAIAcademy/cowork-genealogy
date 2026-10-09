@@ -74,7 +74,7 @@ function stripUri(uri: string | undefined): string | undefined {
 //   "data:,Military+Draft+Registration"         → "Military Draft Registration"
 //   "data:,will"                                → "Will"
 //   "data:,%22Presented+to+Society%22"          → "Presented to Society"
-//   "data:,100%25+english"                      → "Custom: 100% english"
+//   "data:,100%25+english"                      → "Custom 100% english"
 //   "http://familysearch.org/v1/Foo"            → "Foo"
 //   "Foo" (already short)                       → "Foo"
 // Strips known URI prefixes, takes the trailing path segment otherwise,
@@ -111,15 +111,17 @@ function stripFactTypeUri(uri: string | undefined): string | undefined {
 // such fact on any relative made `project_create` refuse the whole starting
 // tree (KNDX-MKG, 2026-10-09). So: trim, drop one pair of wrapping quotes,
 // raise a lowercase first letter, and keep a label that still cannot start
-// with an uppercase letter ("100% english") whole behind a "Custom: " prefix
-// rather than lose the fact.
+// with an uppercase letter ("100% english") whole behind a "Custom " prefix
+// rather than lose the fact. No colon after "Custom": `addUri` reads a leading
+// `word:` as a URI scheme, so "Custom: ..." would not round-trip under
+// `http://gedcomx.org/` the way every other custom type does.
 function treeFactType(label: string): string {
   let out = label.trim();
   const quoted = /^["'“‘](.*)["'”’]$/s.exec(out);
   if (quoted) out = quoted[1].trim();
   if (/^[a-z]/.test(out)) out = out[0].toUpperCase() + out.slice(1);
   if (/^[A-Z]/.test(out)) return out;
-  return out === "" ? "Custom" : `Custom: ${out}`;
+  return out === "" ? "Custom" : `Custom ${out}`;
 }
 
 function addUri(value: string | undefined): string | undefined {
