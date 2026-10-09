@@ -1,0 +1,20 @@
+{
+  "tool": "place_search",
+  "description": "Harjager härad, Malmöhus, Sweden. Captured live 2026-10-09 for the elena-pre-register-birth scenario (issue #2251): a ut_research_plan_dth acceptance run called place_search('Harjager', contextName 'Malmöhus') with no fixture and the judge marked Tool Arguments down for it. Response verbatim.",
+  "args": {
+    "placeName": "~Harjager"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Harjager, Malmöhus, Sweden",
+        "type": "Town",
+        "dateRange": "/+1971",
+        "latitude": 55.7584,
+        "longitude": 13.0206,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Harjager&focusedId=3452299",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Harjager"
+      }
+    ]
+  }
+}
