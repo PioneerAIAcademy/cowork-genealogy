@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_tree_survey_013",
+    "skill": "tree-survey",
+    "name": "Suggests a no_birth_info hole from a surveyed tree",
+    "type": "positive",
+    "description": "tree_gaps returns exactly one hole, of type no_birth_info. The agent should check what FamilySearch has for it and suggest that one person with a single-fact research question.",
+    "tags": [
+      "survey",
+      "no_birth_info",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "What should I research in my tree?\n\npersonId: TGAP-ROT"
+  },
+  "mcp_fixtures": [
+    "tree-gaps-no-birth-info",
+    "collections-search-any",
+    "place-search-any",
+    "record-search-any",
+    "record-search-any-parents",
+    "record-search-any-country",
+    "person-record-matches-any",
+    "person-quality-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
+    "tree_gaps returns ONE hole: Heinrich Weis (TGAP-GF2), deceased, with no birth date or place in the tree; window 1815-1865, place Cincinnati, Ohio. The agent should call tree_gaps with personId TGAP-ROT and defaults, then check what FamilySearch has (person_record_matches, person_quality, record_search, collections_search) for that hole. The catch-all fixtures return empty results; an empty check is a result, not a fault, and the agent should still suggest the hole, saying plainly that nothing further was found.",
+    "The suggestion must name Heinrich Weis / TGAP-GF2 and carry ONE research question that is a single fact, e.g. 'When and where was Heinrich Weis born, between 1815 and 1865, near Cincinnati, Ohio?'. A question that spans several facts or the whole family is a fail.",
+    "The `coverage` counts (collections, records) in the tree_gaps response are a legitimate source for what the agent says FamilySearch holds; do not score a statement drawn from them as unsupported.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
+  ]
+}
