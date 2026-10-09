@@ -1311,9 +1311,10 @@ def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.checks += [("spill_kill: the result spilled (a tool-results Read/Grep in the turn, else void)", reads > 0,
                     "no Read/Grep of a tool-results path: the call failed or never spilled"),
                    redelivered_check("spill_kill", snap),
-                   ("spill_kill: not closed no_progress (unless nudged on a project-less session)",
+                   ("spill_kill: not closed no_progress (unless nudged on a project-less session after re-running the call)",
                     snap.row is not None and (snap.row[2] != TERMINAL_NO_PROGRESS
-                                              or nudged_projectless(ctx, rep.session_id, events_until(tid, closing_lines), tid)),
+                                              or (rerun > 0 and nudged_projectless(ctx, rep.session_id,
+                                                                                   events_until(tid, closing_lines), tid))),
                     f"row={snap.row}")]
     rep.findings.append("after the kill the agent " + (f"re-ran {SPILL_TOOL}" if rerun else
                                                         "read a tool-results path without re-running (stranded spill)"

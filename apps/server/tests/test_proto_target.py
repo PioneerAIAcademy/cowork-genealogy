@@ -492,11 +492,12 @@ def test_dead_letter_real_fails_when_nothing_released_the_held_turn(monkeypatch)
     assert not _released_ok(_dead_letter_run(monkeypatch, events))
 
 
-def _spill_run(monkeypatch, *, reads_after: int, rerun: int) -> tuple[bounds.Report, list[str]]:
+def _spill_run(monkeypatch, *, reads_after: int, rerun: int, outcome: str = "completed") -> tuple[bounds.Report, list[str]]:
     """spill_kill with the spilling call at id 7 and no read before the kill; ``reads_after``
-    tool-results reads and ``rerun`` calls after it."""
+    tool-results reads and ``rerun`` calls after it, closing ``outcome``."""
     order: list[str] = []
     _case_stack(monkeypatch, order)
+    monkeypatch.setattr(bounds, "snapshot", lambda ctx, s, t: bounds.TurnSnap(turn_id=t, row=(2, "now", outcome, 1.0)))
     monkeypatch.setattr(bounds.turn, "db", lambda dsn, sql, params: [(7, 1200)] if sql == bounds.SPILL_CALL_SQL else [])
 
     def one(dsn, sql, params):
@@ -533,6 +534,17 @@ def test_spill_kill_counts_a_tool_results_read_and_records_rerun_vs_stranded(mon
     assert _spilled(rep) is True
     assert rep.figures["tool_results_reads"] == 1 and rep.figures["reads_after_kill"] == 1
     assert rep.figures["rerun_calls"] == rerun and said in rep.findings[-1]
+
+
+@pytest.mark.parametrize("rerun, ok", [(0, False), (1, True)])
+def test_spill_kill_allows_a_nudged_no_progress_only_after_a_rerun(monkeypatch, rerun, ok):
+    """Every deployed spill_kill session is project-less and nudged, so the allowance alone
+    would pass a stranded spill; it holds only once the call was re-run (U13 review)."""
+    monkeypatch.setattr(bounds, "events_until", lambda tid, lines: [])
+    monkeypatch.setattr(bounds, "nudged_projectless", lambda *a: True)
+    rep, _order = _spill_run(monkeypatch, reads_after=1, rerun=rerun, outcome=bounds.TERMINAL_NO_PROGRESS)
+    [closed] = [c for n, c, _ in rep.checks if n.startswith("spill_kill: not closed no_progress")]
+    assert closed is ok
 
 
 def test_deployed_only_cases_refuse_compose():
