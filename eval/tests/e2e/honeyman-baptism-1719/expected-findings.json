@@ -18,13 +18,11 @@
     {
       "id": "f2",
       "type": "fact",
-      "description": "The Edinburgh baptism of 2 December 1716 (a William, son of William Honniman and Elizabeth Duncan) is rejected as belonging to a different child, not the Hutton Rudby William, and the rejection rests on records rather than on the tree's own notes.",
+      "description": "William Honeyman (Hunneman) no longer carries the family's claimed christening on 2 December 1716 at Edinburgh or the claimed birth in 1716 at Edinburgh: that Edinburgh baptism belongs to a different child (son of William Honniman and Elizabeth Duncan), and its removal rests on records rather than on the tree's own facts.",
       "details": {
         "subject_person": "William Honeyman (Hunneman), d. 1783 Hutton Rudby",
         "fact_type": "Christening",
-        "rejected_date": "2 December 1716",
-        "rejected_place": "Edinburgh, Midlothian, Scotland",
-        "rejected_parents": "William Honniman and Elizabeth Duncan"
+        "expected_outcome": "No 2 December 1716 Edinburgh christening and no 1716 Edinburgh birth on this person"
       },
       "supporting_sources": [
         "Scotland baptism index: William, son of William Honniman and Elizabeth Duncan, Edinburgh, 2 Dec 1716",
@@ -44,9 +42,9 @@
       },
       "supporting_sources": [
         "Scotland baptism indexes searched for William Honeyman c. 1670–1695: no Scoonie 1692 entry",
-        "Scoonie baptisms 1724–1729 of children of a William Honeyman and Janet Blyth, while the Hutton Rudby father was living in Yorkshire"
+        "Scoonie baptisms 1724–1729 of four children of a William Honeyman and Janet Blyth"
       ],
-      "required": true
+      "required": false
     }
   ]
 }
