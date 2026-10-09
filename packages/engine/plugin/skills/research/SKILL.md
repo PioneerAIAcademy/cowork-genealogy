@@ -94,11 +94,15 @@ destination: take it through "Hint review" below.
 **`--autonomous` is always a job**, whatever shape the question takes. The flag
 means drive this to completion, so the list below does not apply to it.
 
-**Bounded** — the message asks for ONE deliverable:
+**Bounded** — the message asks for one or more deliverables, every one of them
+from this list:
 finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete.
+Two of them in one message is still bounded: deliver each, name each, and end
+the turn when the last one is met. One deliverable off the list makes the whole
+message a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
 
@@ -111,7 +115,9 @@ transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
 `search-records`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
-must not go. Deliver the one thing, and stop.
+must not go. Deliver what was asked, and stop. Two bounded deliverables in one
+message means two hand-offs, each to the step that owns it, and the turn ends
+when the last one is met.
 
 **Start from what is already attached.** Before routing to any search —
 on a bounded request or a job alike — when the project holds a FamilySearch

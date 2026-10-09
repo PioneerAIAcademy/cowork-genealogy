@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_research_c1k",
+    "skill": "research",
+    "name": "Two bounded deliverables in one message are still bounded",
+    "type": "positive",
+    "tags": ["routing", "routes-to:image-reader", "bounded-request"],
+    "description": "Issue #2813 item 1, from alpha feedback #3217 and #3244. The bounded definition used to read 'the message asks for ONE deliverable', so a message asking for TWO things that are each on the bounded list routed as a JOB: question-selection wrote questions, a plan was written and never executed, and the close never applied. The tester heard 'do you want to move forward' instead of being told both parts were done. Here the message asks for a transcription AND a research plan, both on the list, so the turn is bounded and must not enter the question/plan chain a job walks. GRADING: deterministic. `routes-to:image-reader` asserts the FIRST hand-off from hook records, the transcription being named first; the judge cannot see agent spawns. A router that treats a compound ask as a job calls question-selection first, which is the failure this test exists to catch. Paired with ut_research_020, which pins the single-deliverable direction."
+  },
+  "input": {
+    "user_message": "/research Transcribe image 004022578_00190 for me, and also write me a research plan for Mary Hales. Then leave it there.",
+    "scenario": "empty-project-just-created"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "Both asks are on the bounded list (a transcription, and a research plan), so the whole message is bounded. The correct turn hands off to the step that owns each deliverable and ends when the last is met.",
+    "Routing to question-selection is the FAILURE this test exists to catch: that is the job path, and it is what produced the alpha complaints in #3217 and #3244.",
+    "Do not grade what happens after the first hand-off, which the stubs end."
+  ],
+  "judge_reads_files": true
+}
