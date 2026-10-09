@@ -503,9 +503,9 @@ plan, or run one search, you are mid-loop, not done. Do not end your
 turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
-**A bounded request has a fifth: its deliverable.** When the one thing
-the message asked for is produced, end the turn — see §"Bounded request
-or job".
+**A bounded request has a fifth: its deliverable.** When everything the
+message asked for is produced — one deliverable or several — end the turn;
+see §"Bounded request or job".
 
 ### Candidates, not verdicts
 
