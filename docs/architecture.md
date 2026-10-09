@@ -221,7 +221,7 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **9** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **8** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
 | **Plugin agents** — `packages/engine/plugin/agents/*.md` | **25** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
 The twenty-five agents are `gps-mentor`, `record-extractor`, `image-reader`,
@@ -353,7 +353,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-6 of the 9 skills carry a `references/` folder, loaded on demand, in-session,
+6 of the 8 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -804,10 +804,11 @@ There **is** an orchestrator, and it is a skill:
    and then hand-authoring the fields that skill would have written is not
    invoking it." The column is **mixed**, and the spelling is what says which:
    an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
-   every other entry is a `Skill` call. The paired rows —
+   every other entry is a `Skill` call. The formerly paired rows —
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
-   the spawn; their same-named thin skills stay on disk as the direct-user and
-   unit-eval entry points and are **not** on the in-loop route
+   the spawn, and their same-named thin skills have all been deleted:
+   the agent is now the only entry point, for the
+   orchestrator, for a user who names it, and for its unit-eval suite
    (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
@@ -886,6 +887,16 @@ back through the table anyway. The trigger corpus catches routing
 *into* `research` from the description, but not the internal routing table; a
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
+
+**A row spelled `@plugin:<name>` is an agent spawn, and the compliance
+detectors need no edit for it.** They credit a guardrail arm on either route: a
+`Skill` call naming it, or a typed `Agent`/`Task` spawn whose `subagent_type`
+(plugin namespace stripped) names it. So flipping a guardrail row from a skill
+to its agent, or converting another guardrail skill, keeps compliance green as
+long as the agent carries the arm's name. Adding the agent file still needs its
+name in `DEDICATED_AGENT_NAMES` (`eval/harness/harness/skill_invocation.py`),
+whose guard test goes red until it is there. An untyped spawn is still a bypass —
+the rule and its reason are in `docs/specs/guardrail-enforcement-spec.md` §2.
 
 The runlog CI gate now applies to `research` (armed by adding
 `eval/tests/unit/research/`). `forget-and-rederive` remains exempt
@@ -1487,8 +1498,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 9 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 8 of them as the first line of the body,
+All 8 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 7 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two

@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 9 skills and 25 agents. Besides the `research` orchestrator itself, its routing
+There are 8 skills and 25 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 6 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -23,13 +23,19 @@ likely to surprise you.
 
 **Thin router + agent.** The skill resolves the request to one id, delegates, and relays
 the result. It reads almost nothing and writes nothing; the agent holds the judgment and
-the writer tool. Four pairs today: `record-extraction` → `record-extractor`,
-`research-exhaustiveness` → `research-exhaustiveness`, `proof-conclusion` →
-`proof-conclusion`, `person-evidence` → `person-evidence` (paired 2026-09-09).
-All four split because only an agent carries an `agent_id`, which is what lets the
-`PreToolUse` hook route a section's writes to exactly one caller. `search-images`
-was formerly the fifth pair (paired 2026-09-21, deleted 2026-09-29 in issue #2268);
-the agent remains and is now reached directly by delegation from the orchestrator.
+the writer tool. **One pair today:** `record-extraction` → `record-extractor`,
+which is still routed as a skill. Two rationales reach a pair
+(`docs/skill-to-agent-pair-conversion.md`): **attribution** — only an agent carries an
+`agent_id`, which is what lets the `PreToolUse` hook route a section's writes to exactly
+one caller, and what every one of those pairs bought when it split — and **cost and
+context**, a `model:`/`effort:` pin and a body out of the orchestrator's context, which
+buys no attribution.
+
+Former pairs, all four now agent-only: `person-evidence` (paired 2026-09-09, skill
+deleted — issue #2821), `proof-conclusion` (skill deleted — issue #2822),
+`search-images` (paired 2026-09-21, skill deleted 2026-09-29 — issue #2268), and
+`research-exhaustiveness` (skill deleted 2026-10-08 — issue #2738). In each case the
+agent remains and is reached directly by delegation from the orchestrator.
 
 **Monolithic skill.** Reads state, does the work, writes its own section. Most skills.
 
@@ -84,21 +90,19 @@ flowchart TD
     RE["record-extraction<br/>log[] · acquires, triages, delegates"]
     RE ==> RX["record-extractor · agent<br/>sources[] + assertions[]<br/>classification is final here"]
 
-    RX --> PE["person-evidence<br/>person_evidence[] · tree persons + edges"]
+    RX --> PE["person-evidence · agent<br/>person_evidence[] · tree persons + edges"]
     PE --> CR["conflict-resolution<br/>conflicts[]"]
     PE --> HT["hypothesis-tracking · agent<br/>hypotheses[]"]
-    PE --> EX
-    CR --> EX
-    HT --> EX
+    PE --> EXA
+    CR --> EXA
+    HT --> EXA
 
-    EX["research-exhaustiveness<br/>thin router"]
-    EX ==> EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
+    EXA["research-exhaustiveness · agent<br/>questions[].exhaustive_declaration"]
     EXA -- "gap remains" --> RP
     EXA -- "FAN pivot" --> QS
-    EXA -- "declared" --> PC
+    EXA -- "declared" --> PCA
 
-    PC["proof-conclusion<br/>thin router"]
-    PC ==> PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
+    PCA["proof-conclusion · agent<br/>proof_summaries[] · resolves the question<br/>encodes the conclusion in the tree"]
     PCA --> GM["gps-mentor · agent<br/>evaluations[]"]
     GM --> GATE{"all questions resolved,<br/>tree encoded,<br/>critique on record?"}
     GATE -- no --> QS
@@ -114,8 +118,9 @@ flowchart TD
     class SF,ASK,U1,U2 unrouted
 ```
 
-Solid arrow: the orchestrator routes here on `research.json` state. Thick arrow: a skill
-delegates to its agent. Dotted: a prose handoff with no routing row behind it —
+Solid arrow: the orchestrator routes here on `research.json` state; where the target is
+an agent, the orchestrator spawns it directly. Thick arrow: a skill delegates to its
+agent — only `record-extraction` does that in the loop now. Dotted: a prose handoff with no routing row behind it —
 The `search-full-text` agent is drawn dashed for that reason, and everything in the bottom box is
 unreachable from an autonomous run.
 
@@ -360,13 +365,11 @@ autonomous run is unmeasured.
 agent reached by auto-delegation from its own `description`, and whether it fires in
 an autonomous run is unmeasured.
 
-One **thin skill half** of the paired rows joins this list. Row 10
-routes to `@plugin:research-exhaustiveness`, so `skills/research-exhaustiveness/`
-is no longer on the in-loop route — it stays on disk as the direct-user entry
-point and as the unit-eval entry point, and an autonomous run never enters it.
-(Rows 7 and 11 were the other two thin halves; their skill directories have
-been deleted — the agents are now the direct entry points and the unit-eval
-entry points.)
+All three **thin skill halves** of the former paired rows have been deleted:
+`skills/person-evidence/` (issue #2821), `skills/proof-conclusion/` (issue #2822),
+and `skills/research-exhaustiveness/` (issue #2738, 2026-10-08). In each case the
+agent is now the direct entry point and the unit-eval entry point. Only
+`record-extraction` (row 6) remains as a thin router.
 
 For most of them that is the intent — they are utilities the researcher asks for. Four
 are not obviously intentional:

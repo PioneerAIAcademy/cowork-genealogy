@@ -1201,8 +1201,9 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
-	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
-	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
+	# cannot see completion on either the Skill or the typed-spawn route — see
+	# guardrail-enforcement-spec.md §7 and `make e2e-skill-episodes`), so
+	# WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
 	# what runs stored: the seven post-hoc families (the §8 person_evidence
@@ -1287,7 +1288,7 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-detector-diff
-e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|same-person-provenance|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
