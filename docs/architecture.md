@@ -751,8 +751,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 
 > Touching *anything* under `packages/engine/plugin/skills/**` — including a
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
-> which **blocks the PR** unless the newest full-skill run log's snapshot matches
-> your branch and its `.ann.json` carries a correction for every dimension of
+> which **blocks the PR** unless the run log you add (or, if you add none, the
+> newest full-skill run log) has a snapshot that matches your branch and an
+> `.ann.json` that carries a correction for every dimension of
 > each **sampled** test — the tests named in the run log's `review_sample`
 > (3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the
 > count varies by run).
