@@ -1,0 +1,717 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Elizabeth Mariah",
+          "surname": "Turnbow",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1823-12-18",
+          "place": "Alabama, United States",
+          "standard_place": "Alabama, United States",
+          "sources": [
+            {
+              "quality": 1,
+              "ref": "S1"
+            },
+            {
+              "page": "1850 Jasper Co., image 73, Elizabeth 27, b. Alabama (original)",
+              "quality": 2,
+              "ref": "S2"
+            },
+            {
+              "quality": 1,
+              "ref": "S3"
+            },
+            {
+              "quality": 1,
+              "ref": "S4"
+            },
+            {
+              "quality": 1,
+              "ref": "S5"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper County, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F3",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith County, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Smith County, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Beat 1 Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Death",
+          "date": "1890",
+          "place": "Mississippi, United States",
+          "standard_place": "Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Jonathan",
+          "surname": "Barker",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "1819",
+          "place": "London, England, United Kingdom",
+          "standard_place": "London, England, United Kingdom",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Jasper County, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Smith County, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Residence",
+          "date": "1870",
+          "place": "Smith County, Mississippi, United States",
+          "standard_place": "Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Residence",
+          "date": "1880",
+          "place": "Beat 1 Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Robert Franklin",
+          "surname": "Turnbow",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F12",
+          "type": "Birth",
+          "date": "1793",
+          "place": "Kentucky, United States",
+          "standard_place": "Kentucky, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "MilitaryService",
+          "date": "1812-1815",
+          "place": "United States",
+          "standard_place": "United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Residence",
+          "date": "1830",
+          "place": "Rankin County, Mississippi, United States",
+          "standard_place": "Rankin, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "Residence",
+          "date": "1840",
+          "place": "Jones County, Mississippi, United States",
+          "standard_place": "Jones, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F16",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Choctaw County, Mississippi, United States",
+          "standard_place": "Choctaw, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "type": "Death",
+          "date": "1854-09",
+          "place": "Fannin County, Texas, United States",
+          "standard_place": "Fannin, Texas, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N4",
+          "preferred": true,
+          "given": "Sarah",
+          "surname": "Canterberry",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F18",
+          "type": "Birth",
+          "date": "1800",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Residence",
+          "date": "1850",
+          "place": "Choctaw County, Mississippi, United States",
+          "standard_place": "Choctaw, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Residence",
+          "date": "1860",
+          "place": "Fannin County, Texas, United States",
+          "standard_place": "Fannin, Texas, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Death",
+          "date": "after 1860",
+          "place": "Fannin County, Texas, United States",
+          "standard_place": "Fannin, Texas, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "preferred": true,
+          "given": "Sarah Martha",
+          "surname": "Barker",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F22",
+          "type": "Birth",
+          "date": "1845-12-07",
+          "place": "Mississippi, United States",
+          "standard_place": "Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Death",
+          "date": "1920-03-17",
+          "place": "Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F24",
+          "type": "Burial",
+          "date": "1920",
+          "place": "Raleigh Cemetery, Raleigh, Smith, Mississippi, United States",
+          "standard_place": "Raleigh Cemetery, Raleigh, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N6",
+          "preferred": true,
+          "given": "Amanda R",
+          "surname": "Barker",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F25",
+          "type": "Birth",
+          "date": "1848-11-07",
+          "place": "Jasper, Mississippi, United States",
+          "standard_place": "Jasper, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F26",
+          "type": "Death",
+          "date": "1932-11-16",
+          "place": "Taylorsville, Smith, Mississippi, United States",
+          "standard_place": "Taylorsville, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F27",
+          "type": "Burial",
+          "place": "Mount Zion Baptist Church Cemetery, Center Ridge, Smith, Mississippi, United States",
+          "standard_place": "Mount Zion Baptist Church Cemetery, Taylorsville, Smith, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N7",
+          "preferred": true,
+          "given": "Nicy",
+          "type": "BirthName",
+          "surname": "Barker"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F28",
+          "type": "Birth",
+          "date": "1850-01-16",
+          "place": "Mississippi, United States",
+          "standard_place": "Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F29",
+          "type": "Death",
+          "date": "1920-03-28",
+          "place": "Soso, Jones, Mississippi, United States",
+          "standard_place": "Soso, Jones, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F30",
+          "type": "Burial",
+          "date": "1920-03",
+          "place": "Union Line Cemetery, Soso, Jones, Mississippi, United States",
+          "standard_place": "Union Line Cemetery, Soso, Jones, Mississippi, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "I3",
+      "person2": "I4",
+      "facts": [
+        {
+          "id": "F31",
+          "type": "Marriage",
+          "date": "1816-09",
+          "place": "Madison County, Mississippi Territory",
+          "standard_place": "Madison, Alabama, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I5",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I6",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I7",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree",
+      "author": "FamilySearch contributors",
+      "citation": "\"FamilySearch Family Tree,\" database, FamilySearch (https://www.familysearch.org), entries for Elizabeth Mariah Turnbow (KWJ6-RPH), Jonathan Barker (MHGK-WT7) and relatives; accessed 9 Oct 2026.",
+      "url": "https://www.familysearch.org/tree/person/details/KWJ6-RPH"
+    },
+    {
+      "id": "S2",
+      "title": "United States, Census, 1850 — Jonathan Barker household, Jasper Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3ST",
+      "citation": "1850 U.S. census, Jasper County, Mississippi, population schedule, image 73 of 104, Jonathan Barker household (dwelling c. 490); digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623 : accessed 9 Oct 2026)."
+    },
+    {
+      "id": "S3",
+      "title": "United States, Census, 1860 — Jonathan Barker household, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MG5"
+    },
+    {
+      "id": "S4",
+      "title": "United States, Census, 1870 — Jonathan Barker household, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MFSR-DYX"
+    },
+    {
+      "id": "S5",
+      "title": "United States, Census, 1880 — John Barker household, Raleigh, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T"
+    },
+    {
+      "id": "S6",
+      "title": "1883-1885 Record of the Mississippi Conference of the Southern States Mission (LDS Record of Members, FHL film 1939)",
+      "url": "https://catalog.churchofjesuschrist.org/assets/4c01c269-2800-4ab8-a0fe-3379e4743be1/0/45?lang=eng"
+    },
+    {
+      "author": "U.S. Census Bureau",
+      "title": "United States, Census, 1880 — Asbery Ainsworth household, Beat 2, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4P3-HXG",
+      "id": "S7"
+    },
+    {
+      "author": "U.S. Census Bureau",
+      "title": "United States, Census, 1900 — Ag Ainsworth household, Beat 2 Summerland, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M9FS-YK8",
+      "id": "S8"
+    },
+    {
+      "author": "U.S. Census Bureau",
+      "title": "United States, Census, 1910 — Asbery S. Ainsworth household, Taylorsville, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MPDG-3ZJ",
+      "id": "S9"
+    },
+    {
+      "author": "U.S. Census Bureau",
+      "title": "United States, Census, 1850 — Robert Turnbow household, Choctaw Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4L4-L1G",
+      "id": "S10"
+    },
+    {
+      "author": "U.S. Census Bureau",
+      "title": "United States, Census, 1850 — John Turnbow and Joseph Turnbow households, Smith Co., Mississippi",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4LF-RNB",
+      "id": "S11"
+    }
+  ]
+}
