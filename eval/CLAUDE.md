@@ -342,9 +342,9 @@ Each e2e run also leaves a readable `reports/run-<ts>.txt` beside its log (gitig
 
 The skill harness pins a specific model per skill via `model:` in `packages/engine/plugin/skills/<skill>/SKILL.md` frontmatter (when set). Activating a run log restores that field along with the rest of the snapshot. The `model` field on the run log envelope records what the harness actually used.
 
-`judge_model` is project-global, not per-run-versioned — bumping the judge model is a separate decision that invalidates historical comparisons.
+`judge_model` is stamped on each run log at the envelope (issue #2479 PR 1, lead ruling 2026-10-06). This reverses the earlier "project-global, not per-run-versioned" rule: a judge-model bump is now a dated field on the artifact rather than a date we have to look up elsewhere, so a regrade or a mixed-era comparison can tell which model graded which log. The field is optional on the schema — logs committed before the field was added simply omit it, and the writer emits the key only when non-empty so historical bytes don't gain a stray `null`.
 
-Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — project-global like `judge_model`, not recorded per run. Adopted 2026-07-16: grades drawn before that date (at the API default of 1.0) are not comparable to grades after it.
+Judge temperature is pinned to 0 (`harness/judge.py::JUDGE_TEMPERATURE`) — project-global, not recorded per run. Adopted 2026-07-16: grades drawn before that date (at the API default of 1.0) are not comparable to grades after it.
 
 ## What This Framework Does NOT Cover
 

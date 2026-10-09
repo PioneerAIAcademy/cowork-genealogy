@@ -142,10 +142,15 @@ Activating an older version restores skill-only files; the UI tells
 the user that historical scores may differ from a re-run because the
 judge has moved on.
 
-**`judge_model` is removed from the run log entirely** — it's
-project-global, not a per-run choice worth versioning. If we change
-judge models, that's a separate decision tracked in CHANGELOG-class
-files, and we accept it invalidates historical comparisons.
+**`judge_model` is stamped on the run log envelope** (reversed by
+issue #2479 PR 1, lead ruling 2026-10-06). It was removed from the run
+log in the original versioning plan on the grounds that a judge-model
+bump was out-of-band tracked elsewhere; the reversal makes it a dated
+field on the artifact instead, so `make judge-regrade` can refresh it
+alongside `judge_prompt_hash` and a mixed-era corpus comparison can tell
+which model graded which log. The field is OPTIONAL — pre-reversal
+logs omit it and the writer only emits the key when it is non-empty, so
+no historical bytes change.
 
 ### A3. Path scheme
 

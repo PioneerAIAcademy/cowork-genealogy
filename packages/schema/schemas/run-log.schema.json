@@ -57,6 +57,10 @@
       "pattern": "^([a-f0-9]{64})?$",
       "description": "SHA-256 of eval/harness/judge/prompt.md after normalization. Empty when the judge prompt file is missing. Not part of the snapshot — the judge prompt is project-global, tracked separately so judge edits don't clobber every skill on activate."
     },
+    "judge_model": {
+      "type": "string",
+      "description": "Judge model used for this run log, e.g. 'claude-haiku-4-5-20251001'. Optional — absent in run logs committed before 2026-10 when the field was added (issue #2479 PR 1). Allows a judge-model change to be dated and compared rather than silently invalidating historical scores."
+    },
     "snapshot": {
       "type": "object",
       "additionalProperties": { "type": "string" },

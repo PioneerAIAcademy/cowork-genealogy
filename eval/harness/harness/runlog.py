@@ -606,6 +606,7 @@ def build_run_log(
     harness_version: str,
     model: str,
     judge_prompt_hash: str,
+    judge_model: str | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
     review_sample: dict[str, Any] | None = None,
@@ -648,6 +649,11 @@ def build_run_log(
         "tests": tests,
         "totals": totals,
     }
+    # judge_model is optional (issue #2479 PR 1) — absent on logs that pre-date
+    # the field. Omit the key entirely when unknown so historical logs stay
+    # byte-identical rather than gaining a stray `"judge_model": null`.
+    if judge_model:
+        envelope["judge_model"] = judge_model
     if review_sample is not None:
         envelope["review_sample"] = review_sample
     return envelope
