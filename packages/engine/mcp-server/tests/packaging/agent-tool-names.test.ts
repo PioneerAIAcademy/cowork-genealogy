@@ -648,6 +648,35 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // timeline (issue #2797) holds the five tools the skill it replaced declared,
+  // plus `Read` -- and plus `project_context` / `research_query`, which the
+  // skill USED on every run without declaring. A skill's `allowed-tools` is a
+  // grant, not a restriction (CLAUDE.md), so the skill held every registered
+  // tool; an agent's `tools:` is an exact-match restriction, so copying one
+  // into the other silently removed two. Measured: the skill called
+  // `project_context` once and `research_query` two-to-five times per run to
+  // read person_evidence and assertions; without them the agent read the raw
+  // JSON with `Read` and mis-reported which assertions were linked
+  // (ut_timeline_001, run v1_2026-10-05_11-57-10). `place_search` /
+  // `place_search_all` resolve event places, `place_distance` feeds the
+  // geographic-feasibility check that is this agent's own (check-warnings
+  // does not do geography), `wiki_read` fetches each residence country's
+  // census schedule, and `research_append` persists the one `timelines`
+  // entry the hook lane allows it.
+  "timeline.md": {
+    tools: [
+      "Read",
+      "place_distance",
+      "project_context",
+      "place_search",
+      "place_search_all",
+      "research_append",
+      "research_query",
+      "wiki_read",
+    ],
+    denies: [],
+  },
+
   // locality-guide (issue #2117) holds exactly the eleven tools the skill it
   // replaced declared, plus `Read`: Step 6 persists only when research.json
   // exists at the project path, and the narration line reads it.

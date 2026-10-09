@@ -465,8 +465,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
+  // (A research-exhaustiveness row left when issue #2738 deleted that skill
+  // directory on 2026-10-08, and a timeline row left when issue #2797 deleted
+  // its skill directory on 2026-10-06 -- both are agent files now, outside
+  // this arm's skillFiles scan, so neither mention is checked here any more.)
   ["conflict-resolution -> proof-conclusion", ""],
-  ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -496,7 +499,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["forget-and-rederive -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
-  ["timeline -> person-evidence", ""],
   // project-status lost its skills/<name>/ directory in the agent conversion
   // (issue #2793), so the name entered agentOnly and every SKILL.md that still
   // references it needs a registration. All are bare-name mentions — none
@@ -512,7 +514,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
-  ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
   // not a delegation; it does not spell `@plugin:tree-edit`.
@@ -530,18 +531,15 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["forget-and-rederive -> question-selection", ""],
   ["init-project -> question-selection", ""],
   ["research-plan -> question-selection", ""],
-  ["timeline -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
   // left worded as-is because each rewording buys that skill a paid run.
   ["research-plan -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
-  // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
-  // "suggest `hypothesis-tracking`" — and neither spells
-  // `@plugin:hypothesis-tracking`.
+  // directory. The one mention is a bare-name mention — "(use
+  // hypothesis-tracking)" — and does not spell `@plugin:hypothesis-tracking`.
   ["conflict-resolution -> hypothesis-tracking", ""],
-  ["timeline -> hypothesis-tracking", ""],
   // search-external-sites entered agentOnly when issue #2802 deleted its skill.
   // The one entry is routing-boundary prose naming it as the owner of an
   // external-site search ("use search-external-sites"), not a delegation.
@@ -557,6 +555,24 @@ const PROSE_MENTIONS = new Map<string, string>([
   // attached ... is source-evaluation's; name it, never audit them here"), not
   // a delegation; it does not spell `@plugin:source-evaluation`.
   ["init-project -> source-evaluation", ""],
+  // timeline entered agentOnly when issue #2797 deleted its skill directory.
+  // None of these three spells `@plugin:timeline`, and they split in two:
+  //
+  // Routing-boundary mention of the AGENT, verified per file —
+  // conflict-resolution "build a timeline (use timeline)" and "(timeline)",
+  // forget-and-rederive listing it among the sections a forget touches.
+  // (A project-status row left when issue #2793 deleted that skill
+  // directory, and a question-selection row left when issue #2115 deleted
+  // that skill directory -- both are agent files now, outside this arm's
+  // skillFiles scan.)
+  ["conflict-resolution -> timeline", ""],
+  ["forget-and-rederive -> timeline", ""],
+  //
+  // The other names no agent at all. It matches only because `namesAgent`'s
+  // token matcher reads the research.json SECTION word -- init-project's
+  // "never restate a timeline". Listed because the matcher cannot tell a
+  // data noun from an agent name, not because the file routes anywhere.
+  ["init-project -> timeline", ""],
   // research-exhaustiveness entered agentOnly when issue #2738 deleted its
   // skill directory. Both mentions below are bare-name mentions — neither
   // spells `@plugin:research-exhaustiveness`. (A third, from
@@ -746,6 +762,8 @@ describe("agent delegation framing", () => {
     "historical-context",
     // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
     "hypothesis-tracking",
+    // ARRIVED when issue #2797 deleted skills/timeline/.
+    "timeline",
     "image-reader",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
     // now unambiguous, so the prose arm starts policing its bare-name mentions.

@@ -10,11 +10,13 @@
       "after-death",
       "defer-to-check-warnings",
       "boundary",
-      "I1"
+      "I1",
+      "terse-delegation",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Build a timeline for Patrick Flynn.",
+    "delegation": "Timeline for Patrick Flynn\n\nprojectPath: <workspace>",
     "scenario": "flynn-impossibility"
   },
   "mcp_fixtures": [

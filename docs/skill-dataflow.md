@@ -11,7 +11,7 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 8 skills and 24 agents. Besides the `research` orchestrator itself, its routing
+There are 7 skills and 25 agents. Besides the `research` orchestrator itself, its routing
 table names 13 of them, and 5 more are reached by delegation from a skill the table does
 name. The remaining 6 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
@@ -110,7 +110,7 @@ flowchart TD
 
     subgraph ASK ["Reached only by asking — no routing row"]
         direction LR
-        U1["timeline · historical-context · convert-dates"]
+        U1["historical-context · convert-dates"]
         U2["forget-and-rederive · the two wiki searches"]
     end
 
@@ -200,7 +200,7 @@ sibling skill.
 | Skill | Triggered by | Owns | Reads | Writes |
 |---|---|---|---|---|
 | **`project-status`** (an AGENT since issue #2793, not a skill) | "where are we", opening an existing project | The resume summary — plain-language first, then GPS state — plus broken-foreign-key detection | Whole-file `Read` of both project files, deliberately | Nothing |
-| **`timeline`** | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `research.json` `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` by whole-file `Read`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
+| **`timeline`** (an AGENT since issue #2797, not a skill) | "build a timeline"; handoffs from `person-evidence`, `conflict-resolution`, `hypothesis-tracking` | `timelines` — regenerated wholesale, never edited entry by entry — with gaps and geographic feasibility | `person_evidence`, `assertions`, `hypotheses`, `timelines`, `conflicts` via `research_query` (paged until `truncated` is false); `project_context`; `place_search`, `place_distance` | `timelines[]` — `research_append` |
 | **`citation`** (an AGENT since issue #2799, not a skill) | "fix this citation", "format to Evidence Explained" | Refining `citation` and the six `citation_detail` fields on a source that already exists. **Never creates one**. Fetches the creating office for a probate record from `{State}_Probate_Records` rather than carrying one jurisdiction's offices in its body | Whole-file `Read` of `research.json` `sources` and `log`; tree source descriptions; `wiki_read` | `sources[].citation`, `.citation_detail`, `.notes` — `research_append` `op: "update"` only |
 | **`check-warnings`** (an AGENT since issue #2118, not a skill) | On every person `init-project` imports; "check for problems". **Not** after every tree edit or merge any more — the writers refuse a write that introduces an unjustified warning | Running the offline impossibility check and interpreting it for a single person's own data. Hands a source conflict, a source audit or a schema check back to its owner instead of doing it. Never fixes anything | `person_warnings` (deterministic and offline, except one check that looks up place coordinates and is skipped when the lookup fails) for the person ids the caller names; no file reads | Nothing |
 | **`source-evaluation`** (an AGENT since issue #2796, not a skill) | "evaluate / audit / review the sources on this profile", "are these sources right" | Auditing the sources **already attached** to a person: classifying each finding as an index error (re-read and correct), a misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do), and reporting the kind as undecided where the profile alone cannot settle it. A precise source refining a vague conclusion is an improvement, not a finding. A **source-vs-source** disagreement the audit turns up is characterised — both values, both record types, what would settle it — with no winner picked and nothing written; a request to *resolve* one still routes to `conflict-resolution` at the front door. Never fixes anything, never extracts | `person_read` (with `sourceDescriptions`), `record_read`, `source_attachments`, `person_quality` (`detail: true`, FamilySearch-shaped ids only). Reads no images — it holds no image tool, and none of those four returns an image id | Nothing |
@@ -235,7 +235,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | | `person_evidence` | `person-evidence` | — | `research_append` | unit + tool — `extraction_append` does not accept the section, which is what holds the extraction lane off it |
 | | `conflicts` | `conflict-resolution` | — | `research_append` | unit, on two checks since 2026-09-02: `test_ownership_table` (detects, keyed on the calling skill) and `test_no_out_of_lane_section_writes` (denies, keyed on the calling agent — issue #2022). The hook also keeps both writing agents out of the section, but it cannot bind a skill — a section owned by a skill has no agent to permit |
 | | `hypotheses` | `hypothesis-tracking` (agent) | — | `research_append` | unit |
-| | `timelines` | `timeline` | — | `research_append` | unit |
+| | `timelines` | `timeline` (agent) | — | `research_append` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append` | unit + hook — the hook denies the op unless the caller is the proof-conclusion **agent** |
 | | `evaluations` | `gps-mentor` (agent) | — | `research_append` | **nothing** in the shipped hook: `evaluations` is in no owner map. But since 2026-09-02 the unit plane records the hook's `owner_denied` verdict (issue #2022), and `evaluations` is outside `proof-conclusion`'s lane, so a `proof-conclusion` write there IS now denied and gated on that plane — the "can only see a calling *skill*" limit no longer holds |
 | | `localities` | `locality-guide` (agent) | — | `research_append` | unit |
@@ -250,8 +250,8 @@ Two consequences worth holding onto:
   actually bind are the writer tool's own preconditions, an agent's `tools:`,
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
-- **Only two skills hold `research_query`** — `research` and `search-records` — and six
-  of the twenty-four agents, `search-external-sites` among them. Everything else that needs project
+- **Only two skills hold `research_query`** — `research` and `search-records` — and seven
+  of the twenty-five agents, `search-external-sites` among them. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
@@ -340,7 +340,7 @@ touch either side.
 
 No routing-table row names these, so an autonomous `/research` run never enters them:
 
-`timeline` · `forget-and-rederive` ·
+`forget-and-rederive` ·
 `init-project` (named in prose, not in the table)
 
 `citation` left this list on 2026-09-23 by ceasing to be a skill (issue #2799),
@@ -363,6 +363,10 @@ autonomous run is unmeasured.
 `source-evaluation` left it on 2026-10-01 (issue #2796), same caveat: it is now an
 agent reached by auto-delegation from its own `description`, and whether it fires in
 an autonomous run is unmeasured.
+
+`timeline` left it on 2026-10-06 (issue #2797), same caveat: it is now an agent
+reached by auto-delegation from its own `description`, and whether it fires in an
+autonomous run is unmeasured.
 
 All three **thin skill halves** of the former paired rows have been deleted:
 `skills/person-evidence/` (issue #2821), `skills/proof-conclusion/` (issue #2822),

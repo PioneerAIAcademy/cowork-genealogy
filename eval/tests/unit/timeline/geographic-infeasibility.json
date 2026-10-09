@@ -10,11 +10,12 @@
       "geographic-feasibility",
       "place_distance",
       "travel-plausibility",
-      "I1"
+      "I1",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Build a timeline for Patrick Flynn.",
+    "delegation": "Build the timeline for Patrick Flynn (person I1).\n\nprojectPath: <workspace>",
     "scenario": "flynn-distant-events"
   },
   "mcp_fixtures": [

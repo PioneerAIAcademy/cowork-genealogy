@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for the bare state 'Pennsylvania' — the companion fixture place-distance-within-pennsylvania.json already anticipates an agent resolving this state-level standard place, but no place_search fixture produced it, so a legitimate 'Pennsylvania' lookup (e.g. to standardize a death certificate's stated birthplace) hit fixture_not_found instead of the county-level place-search-schuylkill-county.json.",
+  "args": {
+    "placeName": "Pennsylvania"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Pennsylvania, United States",
+        "type": "State",
+        "dateRange": "+1681/",
+        "latitude": 41.2,
+        "longitude": -77.2,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pennsylvania&focusedId=7041"
+      }
+    ]
+  }
+}

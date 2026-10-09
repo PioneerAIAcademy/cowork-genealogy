@@ -34,10 +34,10 @@ def _spawn(agent: str) -> dict:
     return {"tool": "Agent", "args": {"subagent_type": agent, "prompt": "p"}}
 
 
-def test_premise_the_deleted_skill_has_no_directory_and_timeline_does():
+def test_premise_the_deleted_skill_has_no_directory_and_a_live_one_does():
     # Without this the must-fail cases below could pass for the wrong reason.
     assert not (DEFAULT_PLUGIN_SKILLS / "check-warnings").exists()
-    assert (DEFAULT_PLUGIN_SKILLS / "timeline" / "SKILL.md").is_file()
+    assert (DEFAULT_PLUGIN_SKILLS / "conflict-resolution" / "SKILL.md").is_file()
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def test_premise_the_deleted_skill_has_no_directory_and_timeline_does():
         [_skill("check-warnings")],
         [_skill("genealogy-research:check-warnings")],
         [_skill("check-warnings", key="name")],
-        [_skill("timeline"), _skill("check-warnings")],
+        [_skill("conflict-resolution"), _skill("check-warnings")],
     ],
     ids=["bare", "namespaced", "name-key", "second-of-two"],
 )
@@ -60,8 +60,8 @@ def test_a_skill_call_to_a_deleted_skill_fails(calls):
     [
         [],
         None,
-        [_skill("timeline")],
-        [_skill("genealogy-research:timeline")],
+        [_skill("conflict-resolution")],
+        [_skill("genealogy-research:conflict-resolution")],
         [_spawn("check-warnings")],
         [_skill("check-warnings", agent_id="a1")],
         [{"tool": "Skill", "args": {}}],

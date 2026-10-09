@@ -12,11 +12,12 @@
       "mode-b",
       "hypothesis",
       "I1",
-      "I3"
+      "I3",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "We found a Patrick Flynn in the 1870 and 1880 Schuylkill County censuses, born about 1845 in Ireland. Build a candidate timeline to test whether he is the same man as our Patrick Flynn. Do these records fit one life?",
+    "delegation": "Build a candidate timeline for hypothesis h_002, covering persons I1 and I3.\n\nprojectPath: <workspace>",
     "scenario": "flynn-one-life"
   },
   "mcp_fixtures": [

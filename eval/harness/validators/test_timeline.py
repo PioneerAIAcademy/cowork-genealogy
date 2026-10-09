@@ -1,4 +1,4 @@
-"""Skill-specific validators for the timeline skill.
+"""Validators for the timeline agent.
 
 timeline builds a chronological timeline_entry from existing assertions
 in research.json. Narrative-quality dimensions (chronological ordering
@@ -21,7 +21,7 @@ import pytest
 
 from validators_lib import assert_foreign_keys_valid
 
-# US federal decennial census years, per SKILL.md's own list. A non-US life
+# US federal decennial census years, per the agent body's own list. A non-US life
 # must expect its residence jurisdiction's schedule instead (issue #2261).
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
@@ -31,7 +31,7 @@ _PAREN_RE = re.compile(r"\([^()]*\)")
 # --- Helpers ----------------------------------------------------------
 
 def _produced_timelines(before_state, after_state) -> list[dict]:
-    """Return timelines the skill added or modified.
+    """Return timelines the agent added or modified.
 
     A refresh (Mode C) replaces an existing timeline in-place — the ID is
     present both before and after, but the content changes. Structural
@@ -71,7 +71,7 @@ def _event_sort_key(e: dict) -> str:
     return raw.lstrip("~<> \t")
 
 
-# --- Structural rules from SKILL.md -----------------------------------
+# --- Structural rules from the agent body -----------------------------------
 
 def test_positive_produces_timeline(before_state, after_state, test):
     """Positive timeline tests must add or refresh at least one timeline_entry
@@ -112,7 +112,7 @@ def test_events_have_non_empty_assertion_ids(before_state, after_state, test):
 def test_event_assertion_ids_resolve(before_state, after_state, test):
     """Every assertion_id on a new event must point to an existing
     assertion in research.json. Catches references to assertions the
-    skill imagined into being."""
+    agent imagined into being."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests produce timelines")
     after = after_state.get("research_json")
@@ -230,18 +230,60 @@ def _census_year_of_entry(entry: str) -> int | None:
     mentions (e.g. "1861 England census enumeration (married 1859, died 1874)")
     is not the census year and must not be counted (finding A). Returns None when
     the entry names no `census` or carries no year."""
-    # Blank parenthesised asides first, preserving offsets. A bounding year in a
+    # Parenthesised years are DEPRIORITISED, not erased. A bounding year in a
     # SHORT trailing parenthetical sits closer to the word `census` than the
     # census year does — "1870 US federal census (b. 1861)" picks 1861 at
     # distance 11 over 1870 at 16 — so nearest-token alone inverts on exactly
     # the shape #2261 is about: a US federal year on a non-US life then passes
     # a Tier-1 gate. The longer asides in the finding-A shapes hid this.
-    text = _PAREN_RE.sub(lambda m: " " * len(m.group(0)), entry)
-    census_at = [m.start() for m in re.finditer("census", text.lower())]
-    years = [(m.start(), int(m.group(1))) for m in _YEAR_RE.finditer(text)]
-    if not census_at or not years:
+    #
+    # Blanking the asides outright fixed that and broke the opposite shape: when
+    # the census year lives ONLY inside the parenthetical — "census (1861,
+    # England & Wales)", which names the very jurisdiction the provenance check
+    # below needs — nothing was left to find, the entry read as naming no census
+    # year, and a correct timeline failed the gate with "produced no census gap
+    # naming a year" (#2797). A flat penalty keeps both: any year outside the
+    # parens still beats any year inside them, and an inside year is still found
+    # when it is the only one there.
+    blanked = _PAREN_RE.sub(lambda m: " " * len(m.group(0)), entry)
+    census_at = [m.start() for m in re.finditer("census", blanked.lower())]
+    if not census_at:
         return None
-    return min(years, key=lambda py: min(abs(py[0] - c) for c in census_at))[1]
+    # A parenthetical names the census year only when the year IS its first
+    # token. Any word before the year makes it that word's year, not the
+    # census's — "(married 1859)", "(m. 1859)", "(bapt. 1859)", "(buried
+    # 1870)", "(widowed 1859)", "(emigrated 1859)" are all a bounding life
+    # event's year and must not be returned as the census year (finding #4).
+    # This is a structural rule, not a word list: it needs no enumeration of
+    # every way a genealogist might phrase a life event, and it still accepts
+    # "(1861, England & Wales)" — the year opens that parenthetical, which is
+    # the shape the jurisdiction check below depends on staying eligible.
+    def _opens_with_year(paren_text: str) -> bool:
+        inner = paren_text[1:-1].lstrip()
+        return _YEAR_RE.match(inner) is not None
+
+    bounding_spans = [
+        m.span() for m in _PAREN_RE.finditer(entry) if not _opens_with_year(m.group(0))
+    ]
+
+    def _in_bounding_span(pos: int) -> bool:
+        return any(start <= pos < end for start, end in bounding_spans)
+
+    # Wider than any entry, so the ordering is by in/out-of-parens first and
+    # distance only within a group.
+    _OUTSIDE_WINS = 10_000
+    years = [
+        (
+            m.start(),
+            int(m.group(1)),
+            _OUTSIDE_WINS if blanked[m.start() : m.end()].strip() == "" else 0,
+        )
+        for m in _YEAR_RE.finditer(entry)
+        if not _in_bounding_span(m.start())
+    ]
+    if not years:
+        return None
+    return min(years, key=lambda pyp: pyp[2] + min(abs(pyp[0] - c) for c in census_at))[1]
 
 
 def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test):
