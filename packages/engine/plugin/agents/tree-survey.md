@@ -104,11 +104,14 @@ what applies:
   - `missing_surname`: the husband's name plus `spouseGivenName` set to her given name, with the year range as the marriage range.
   - `no_birth_info`: the person's name, with the year range as the birth range. No year range, no search.
   - `no_death_date`: the person's name, with the year range as the death range.
+  - `missing_surname`: her given name with her husband's surname as `spouseSurname`, the year range as the marriage range.
+  - `no_birth_info`: the person's name, with the year range as the birth range (the death range when the hole gives a death window).
 
   Count the results the search reports. If the place is ambiguous, call
   `place_search` first.
 - **Collections floor.** `collections_search({ standardPlace, startYear, endYear })`
-  when `coverage` is null and the hole has a place and a year range.
+  when `coverage` is null and the hole has a place and a year range. A non-empty
+  `coverage.censusYears` means a census search is possible for that window.
 
 Make each call once. A search that returns nothing is a result, not a reason to
 retry.
