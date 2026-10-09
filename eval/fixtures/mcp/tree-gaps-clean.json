@@ -1,0 +1,23 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- a tree with no holes: gaps is empty. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 63,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}
