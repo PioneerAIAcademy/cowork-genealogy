@@ -11,7 +11,15 @@ the parents' residence).
 
 Decided (lead, 2026-09-27): no live mode — the live mode added for a
 no-project profile audit had no caller, and such an audit runs local mode
-over a scratch project instead.
+over the project init-project creates in the working folder; see issue #2942.
+Decided (lead, 2026-10-06): no inline `tree` and no staged handle either — a
+live `person_read` is ~115–121 KB, which the model would re-type on every
+audit. The project lives in the session's own folder (`/project` on the hosted
+path), and init-project, not
+source-evaluation, creates it: `project_create` keeps its single caller and
+source-evaluation stays read-only. Where the working folder's project does not
+hold the audited person, source-evaluation skips the check and says so in one
+line rather than adding the person to a project the user did not ask to change.
 
 Adapted from FamilySearch's `MobWarnings.java`, plus two project rules
 (`hasEventInOtherCountry`, `hasBirthFarFromParentsResidence`) that are not

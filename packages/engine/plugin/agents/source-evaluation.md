@@ -28,6 +28,9 @@ tools:
   - mcp__genealogy__person_quality
   - mcp__remote-devices__Genealogy_Research__person_quality
   - mcp__Genealogy_Research__person_quality
+  - mcp__genealogy__person_warnings
+  - mcp__remote-devices__Genealogy_Research__person_warnings
+  - mcp__Genealogy_Research__person_warnings
 ---
 
 # Source Evaluation
@@ -68,6 +71,8 @@ If the delegation gives a name rather than an id, read `tree.gedcomx.json` and m
 Audit no other entry. An empty audit list is a finished audit with one finding: nothing is attached to this person. Say so and stop.
 
 When the `personId` is a FamilySearch ID — four characters, a hyphen, three characters — also call `person_quality({ personId, detail: true })` **once, for the person named in the request only**. Never for a person you read at step 4(b) to check where else an ARK is attached. Its `detail.conflicts[]` is FamilySearch's own answer to “which two attached sources disagree, and about what”, which step 3's sweep would otherwise find by hand; its `issues[]` are the profile checklist step 5 reports separately. Skip the call for a synthetic id and say nothing about skipping it.
+
+For the same FamilySearch ID, also run the impossible-date check over the project tree. `projectPath` is the absolute path of the current working directory. Read `<projectPath>/tree.gedcomx.json` and find the person whose `id` is the subject's id (`persons[0].id` from `person_read`), or whose `ark` ends in `4:1:<that id>`. If one matches, call `person_warnings({ projectPath, personId: <that tree person's id> })` once — the tree person's own id, which may be `I1` rather than the FamilySearch ID. If the file is missing or no person matches, call nothing and say in one line: "Impossible-date checks run only on a project that holds this person."
 
 ### 2. Read each attached source's indexed record
 
@@ -126,6 +131,8 @@ Open with the count of **user-actionable** findings — neither backend metadata
 
 Close with the audit-list sources you could not check and why. A relative's source is not one of them — it was never in scope, so it is not reported as unchecked.
 
+**Then, if `person_warnings` returned any warnings, one block after the findings, before the checklist block, and outside the count.** Head it as the impossible-date check on the project tree. For each warning give its `severity`, its `message` verbatim, and its `facts` by `type` and `date` exactly as returned. Narrate no cause and recommend nothing beyond what the `message` says; never renumber a warning as a finding. If `warningCount` is 0, print no block at all.
+
 **Then, if `person_quality` returned any `issues[]`, one block after the findings and outside the count.** Head it so the researcher knows whose list it is and that it is not a defect list — these are FamilySearch's suggestions for the profile, not errors in a source, and nothing here carries a recommended action. Group the issues by their `scoreType`, using that code as the heading verbatim, and order the groups **COHERENCE, CONSISTENCY, VERIFIABILITY, COMPLETENESS**, dropping any with no issues. Print each issue's `sentence` as returned, except an issue that names the same fact and the same source as a finding above: for that issue print only a pointer to the finding ("FamilySearch flags this death date too — finding 1 above") and never its `sentence`, not even beside the pointer. The block never files a finding as a suggestion, and the pointer carries no action. State no score, no band and no percentage. Where several issues share a `sentence` **and** their `conclusionType` matches more than one fact on the profile, collapse them to one line with a count ("Five residences have no tagged sources") — the response carries nothing else to tell them apart. Where the type matches a single fact, name that fact instead. If `issues[]` is empty, print no block at all — not a heading, not "none found".
 
 If any backend metadata came up, one closing sentence of context — not a list, not a to-do — and give the number of **kinds** omitted.
@@ -154,6 +161,11 @@ SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
 Could not check: 2 user-uploaded documents and 1 FindAGrave
 link, none of which carry a readable record id.
 
+Impossible-date check on the project tree:
+  · Contradiction — An event is dated more than 1 year after
+    this person's latest death-like fact. (Death 1890;
+    Residence 1895)
+
 From FamilySearch's own profile checklist — suggestions, not
 errors, and not counted above:
   CONSISTENCY
@@ -172,7 +184,7 @@ from you. 1 kind of storage artifact, omitted above.)
 
 - **Re-read before detach.** For a fact conflict that looks like a transcription or indexing error, the first-line recommendation is always to re-read the original and correct the index. **Write the two in that order, and never join them with "or".** "Consult the original, then use the index-correction path if needed" is the remedy; "use the index-correction path, or consult the original" is the same two actions inverted, and it asks the user to file a correction before anyone has read what the record says. Detaching is reserved for a source genuinely about a different person.
 - **Never present backend metadata as a to-do.** It is context at most, and usually nothing.
-- **You do not read images.** You hold no image tool, and none of your four tools returns an image id, so there is no scan you could open. Report what the index says and name what the researcher should go back to.
+- **You do not read images.** You hold no image tool, and none of your five tools returns an image id, so there is no scan you could open. Report what the index says and name what the researcher should go back to.
 - **Write nothing.** No `research_append`, no `tree_edit`. If the audit turns up a genuine source-vs-source conflict worth recording, say so in the report and let the user take it to the conflict workflow; do not record it yourself.
 - **Never assert what a source says without having read it.** A source you could not read is reported as unchecked, not as clean.
 

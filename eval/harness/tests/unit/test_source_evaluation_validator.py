@@ -782,3 +782,101 @@ def test_a_detach_sentence_that_names_no_record_still_fails():
         except AssertionError:
             continue
         raise AssertionError(f"a detach left attributed to the protected source passed: {reply!r}")
+
+
+# --- person_warnings over the project tree (issue #2942) ------------------
+
+_pw_called = _VALIDATOR.test_project_warnings_called_on_tree_person
+_pw_verbatim = _VALIDATOR.test_project_warning_reported_verbatim
+_pw_skipped = _VALIDATOR.test_no_warnings_call_without_tree_person
+_PW_TEST = {"tags": ["project-warnings", "direct-arm"], "delegation": "audit KD96-TV2"}
+_NP_TEST = {"tags": ["no-project-person", "direct-arm"], "delegation": "audit KD96-TV2"}
+_PW_MESSAGE = "An event is dated more than 1 year after this person's latest death-like fact."
+_PW_RESPONSE = {
+    "warningCount": 1,
+    "warnings": [{
+        "issueType": "hasEventAfterDeath1", "severity": "contradiction", "personId": "I1",
+        "facts": [{"id": "F9", "type": "Death", "date": "1945-06-10"},
+                  {"id": "F17", "type": "Residence", "date": "1950"}],
+        "message": _PW_MESSAGE,
+    }],
+}
+_READ = {"tool": "mcp__genealogy__person_read", "args": {"personId": "KD96-TV2"}}
+
+
+def _pw_call(args, response=_PW_RESPONSE):
+    return {"tool": "mcp__genealogy__person_warnings", "args": args, "response": response}
+
+
+def _fails(fn, *args, why, **kwargs):
+    try:
+        fn(*args, **kwargs)
+    except AssertionError:
+        return
+    raise AssertionError(f"passed on {why}")
+
+
+def test_warnings_call_on_the_tree_person_passes_in_any_key_order():
+    for args in ({"projectPath": "/w", "personId": "I1"}, {"personId": "I1", "projectPath": "/w"}):
+        _pw_called([_READ, _pw_call(args)], _PW_TEST)
+
+
+def test_warnings_call_fails_on_a_wrong_or_missing_call():
+    good = {"projectPath": "/w", "personId": "I1"}
+    for calls, why in (
+        ([_READ], "no person_warnings call"),
+        ([_pw_call({"projectPath": "/w", "personId": "KD96-TV2"})], "the FamilySearch id"),
+        ([_pw_call({"personId": "I1"})], "no projectPath"),
+        ([_pw_call(good), _pw_call(good)], "two calls"),
+    ):
+        _fails(_pw_called, calls, _PW_TEST, why=why)
+
+
+def test_warning_reported_verbatim_passes_embedded_or_rewrapped():
+    calls = [_pw_call({"projectPath": "/w", "personId": "I1"})]
+    for reply in (
+        f"Impossible-date check on the project tree:\n  · Contradiction — {_PW_MESSAGE} (Death 1945-06-10; Residence 1950)",
+        "  · Contradiction — An event is dated more than 1 year after\n    this person's latest death-like fact.",
+    ):
+        _pw_verbatim(calls, "", _PW_TEST, agent_returns=_returns(reply))
+
+
+def test_warning_reported_verbatim_fails_on_a_paraphrase_or_no_block():
+    calls = [_pw_call({"projectPath": "/w", "personId": "I1"})]
+    for reply in (
+        "Contradiction — he has a residence after he died.",
+        "SOURCES ON: Christian P. Hole (KD96-TV2) — 4 attached, 2 findings",
+    ):
+        _fails(_pw_verbatim, calls, "", _PW_TEST, agent_returns=_returns(reply), why=repr(reply))
+
+
+def test_warning_guard_fails_when_no_warning_reached_the_run():
+    errored = _pw_call({"projectPath": "/w", "personId": "KD96-TV2"},
+                       response={"ok": False, "errors": ["person_warnings: Person 'KD96-TV2' not found"]})
+    for calls in ([], [errored]):
+        try:
+            _pw_verbatim(calls, "", _PW_TEST, agent_returns=_returns("no block"))
+        except AssertionError as exc:
+            assert "checks nothing" in str(exc)
+            continue
+        raise AssertionError(f"an empty sweep passed: {calls!r}")
+
+
+def test_no_project_person_passes_an_audit_with_no_warnings_call():
+    _pw_skipped([_READ, {"tool": "mcp__genealogy__record_read", "args": {"recordId": "x"}}], _NP_TEST)
+
+
+def test_no_project_person_fails_on_a_call_or_on_doing_nothing():
+    _fails(_pw_skipped, [_READ, _pw_call({"projectPath": "/w", "personId": "KD96-TV2"})], _NP_TEST,
+           why="a person_warnings call")
+    _fails(_pw_skipped, [], _NP_TEST, why="no calls at all")
+
+
+def test_warnings_guards_skip_an_untagged_test():
+    import pytest
+
+    for fn, args in ((_pw_called, ([], {"tags": []})), (_pw_skipped, ([], {"tags": []}))):
+        with pytest.raises(pytest.skip.Exception):
+            fn(*args)
+    with pytest.raises(pytest.skip.Exception):
+        _pw_verbatim([], "", {"tags": []})

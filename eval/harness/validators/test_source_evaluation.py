@@ -679,6 +679,89 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
     assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
 
 
+# --- person_warnings over the project tree (issue #2942) -------------------
+
+#: The audited person's own id in `christian-hole-after-death-residence`'s tree.
+#: It differs from the FamilySearch id (KD96-TV2), as in every tree init-project
+#: builds, so a call keyed on the FamilySearch id fails here.
+_WARNINGS_TREE_PERSON_ID = "I1"
+
+
+def _person_warnings_calls(tool_calls):
+    return [c for c in (tool_calls or []) if (c.get("tool") or "").endswith("person_warnings")]
+
+
+def test_project_warnings_called_on_tree_person(tool_calls, test):
+    """Tag-gated (`project-warnings`), issue #2942.
+
+    The project tree holds the audited person, so the agent calls
+    `person_warnings` once, with a `projectPath` and the tree person's own id.
+    Reads the model's own `args`, which the harness logs before it rewrites
+    `projectPath` for the live tool.
+    """
+    if "project-warnings" not in (test.get("tags") or []):
+        pytest.skip("test does not declare project-warnings")
+    calls = _person_warnings_calls(tool_calls)
+    assert len(calls) == 1, (
+        f"expected exactly one person_warnings call; got {len(calls)}: "
+        f"{[(c.get('args') or {}) for c in calls]}"
+    )
+    args = calls[0].get("args") or {}
+    assert args.get("projectPath"), f"person_warnings was called without a projectPath: {args}"
+    assert args.get("personId") == _WARNINGS_TREE_PERSON_ID, (
+        f"person_warnings must name the tree person's own id {_WARNINGS_TREE_PERSON_ID!r}, "
+        f"not the FamilySearch id; got {args.get('personId')!r}"
+    )
+
+
+def test_project_warning_reported_verbatim(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (`project-warnings`), issue #2942.
+
+    Every warning `message` the run's own `person_warnings` response carries
+    appears in the agent's reply, verbatim up to whitespace. Read off the
+    response rather than written into the test, so it cannot drift from what
+    the tool returned. Fails when no message reached the run, since then it
+    checks nothing.
+    """
+    if "project-warnings" not in (test.get("tags") or []):
+        pytest.skip("test does not declare project-warnings")
+    messages = [
+        w["message"]
+        for c in _person_warnings_calls(tool_calls)
+        if isinstance(c.get("response"), dict)
+        for w in c["response"].get("warnings") or []
+        if w.get("message")
+    ]
+    assert messages, (
+        "no person_warnings warning reached the run, so this guard checks nothing: "
+        "either person_warnings was not called, it errored, or the scenario lost its impossibility"
+    )
+    from harness.skill_runner import subject_reply_text
+
+    reply = " ".join(subject_reply_text(agent_returns, text_response, "source-evaluation", test).split())
+    missing = [m for m in messages if " ".join(m.split()) not in reply]
+    assert not missing, f"a person_warnings message is not in the reply verbatim: {missing[0][:160]!r}"
+
+
+def test_no_warnings_call_without_tree_person(tool_calls, test):
+    """Tag-gated (`no-project-person`), issue #2942.
+
+    The working folder's project does not hold the audited person, so the
+    agent calls no `person_warnings`. Also requires a `person_read`, so an
+    agent that did nothing at all does not pass.
+    """
+    if "no-project-person" not in (test.get("tags") or []):
+        pytest.skip("test does not declare no-project-person")
+    assert any((c.get("tool") or "").endswith("person_read") for c in (tool_calls or [])), (
+        "no person_read call in the run, so the audit never started and this guard checks nothing"
+    )
+    calls = _person_warnings_calls(tool_calls)
+    assert not calls, (
+        "person_warnings was called although the project tree does not hold the audited person: "
+        f"{[(c.get('args') or {}) for c in calls]}"
+    )
+
+
 # A validator that tried to pin "name no person you have not read" lived here and
 # was REMOVED after misfiring twice, at the cost of two paid runs.
 #

@@ -834,9 +834,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded source-evaluation skill (issue #2796) holds the four tools that
   // skill declared, plus `Read` for the Narration line's read of research.json
-  // and the name match against tree.gedcomx.json. Writes nothing, so no hook
-  // route. A request belonging to conflict-resolution, check-warnings or
-  // record-extraction is handed back by name, so no spawn tool.
+  // and the name match against tree.gedcomx.json. `person_warnings` (issue
+  // #2942) runs the impossible-date check over the project tree when it holds
+  // the audited person; it reads the tree and writes nothing. Writes nothing,
+  // so no hook route. A request belonging to conflict-resolution,
+  // check-warnings or record-extraction is handed back by name, so no spawn
+  // tool.
   "source-evaluation.md": {
     tools: [
       "Read",
@@ -844,6 +847,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "record_read",
       "source_attachments",
       "person_quality",
+      "person_warnings",
     ],
     denies: [],
   },

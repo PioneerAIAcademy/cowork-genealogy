@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_n2k",
+    "skill": "source-evaluation",
+    "name": "An audit in a project that does not hold the person skips person_warnings and says so in one line",
+    "type": "positive",
+    "description": "Issue #2942, the other direction. The working folder holds a project for a different person (Patrick Flynn, I1, no ark), so its tree has no one whose id is KD96-TV2 or whose ark ends in 4:1:KD96-TV2. The impossible-date check runs only over a project tree that holds the audited person, so person_warnings must not be called -- and the person must not be added to this project, which the user did not ask to change. The agent says in one line that the check runs only on a project that holds this person, and the source audit proceeds exactly as it would anywhere else.",
+    "tags": [
+      "no-project-person",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me whether they are right.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
+  ],
+  "judge_context": [
+    "Should call person_read for KD96-TV2, record_read each source carrying a record ARK, and person_quality with detail: true for KD96-TV2. It must NOT call person_warnings: the project in the working folder is about Patrick Flynn and holds no one matching KD96-TV2.",
+    "The reply should say, in one line, that impossible-date checks run only on a project that holds this person. It must not suggest adding Christian Hole to this project, and must not invent warnings.",
+    "The source audit itself is the Hole corpus: the Minnesota Death Index is an index error (1954 against 1945, a nine-year difference) to be re-read, not detached; the 1885 Minnesota State Census is misattributed and is the one source to detach; the 1900 census birth-year drift is ordinary variance; the uploaded funeral card is reported as unchecked. Grade the audit against the four-fact profile person_read returned.",
+    "The Hole profile also carries SD-HOLE-E, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all."
+  ]
+}

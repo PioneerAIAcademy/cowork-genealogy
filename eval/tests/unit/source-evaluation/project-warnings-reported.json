@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_h5w",
+    "skill": "source-evaluation",
+    "name": "An audit inside a project that holds the person runs person_warnings on the tree person's own id and reports the warning outside the findings",
+    "type": "positive",
+    "description": "Issue #2942. The project tree holds the audited person under the local id I1 with ark ark:/61903/4:1:KD96-TV2 -- the shape every init-project tree has -- and that tree carries a Residence dated 1950, after his 10 June 1945 death. person_warnings runs live over the workspace tree and returns exactly one warning for I1: hasEventAfterDeath1, a contradiction (measured 2026-10-09). Called with the FamilySearch id KD96-TV2 instead, the tool answers 'not found', so the id matters. The person_read fixture is FamilySearch's profile and deliberately lacks the 1950 residence: the warning comes from the project tree, not from any attached source, so it is reported in its own block outside the findings count and is not a finding about a source. The rest of the audit is the shipped Hole corpus.",
+    "tags": [
+      "project-warnings",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me whether they are right.\n\nprojectPath: <workspace>",
+    "scenario": "christian-hole-after-death-residence"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
+  ],
+  "judge_context": [
+    "Should call person_read for KD96-TV2, record_read each source carrying a record ARK, person_quality with detail: true for KD96-TV2, and person_warnings with the projectPath and personId I1 -- the tree person's own id, found by the ark ending in 4:1:KD96-TV2. A person_warnings call with KD96-TV2 is the wrong id and returns an error.",
+    "The reply must report the one warning person_warnings returned: a contradiction, with the tool's message 'An event is dated more than 1 year after this person's latest death-like fact.' given verbatim, and the facts it names by type and date as returned (the 1945-06-10 death and the 1950 residence among them).",
+    "The warnings block must sit after the numbered findings, before FamilySearch's profile checklist, and outside the stated findings count. It is about the project tree, not about an attached source, so a reply that numbers it as a finding, classifies it as an index error or misattribution, or attaches a detach or re-read remedy to it has merged two things the agent keeps separate.",
+    "The reply must not narrate a cause for the warning (a clerk's error, a wrong year typed in) -- the tool says what is impossible, not how it happened.",
+    "The source audit itself is the Hole corpus: the Minnesota Death Index is an index error (1954 against 1945, a nine-year difference) to be re-read, not detached; the 1885 Minnesota State Census is misattributed and is the one source to detach; the 1900 census birth-year drift is ordinary variance; the uploaded funeral card is reported as unchecked. Grade the audit against the four-fact profile person_read returned, not against the project tree's facts.",
+    "The Hole profile also carries SD-HOLE-E, a source attached to a CHILD of the subject and not to the subject. It is outside the audit list, so the reply must not report it at all."
+  ]
+}
