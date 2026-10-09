@@ -58,3 +58,18 @@ def test_an_untagged_test_skips():
 def test_an_empty_tag_value_is_rejected():
     with pytest.raises(AssertionError, match="empty"):
         validator(_skill_calls("image-reader"), [], {"tags": ["delivers:"]})
+
+
+def test_the_skill_under_test_is_stripped_from_the_front():
+    """A slash-command entry records `research` FIRST (issue #3116), so a raw
+    handed[0] is the router itself and the first-hand-off assertion would fail on
+    every real run. A claim audit caught this before a paid run did."""
+    tagged = dict(TAGS, skill="research")
+    validator(_skill_calls("research", "image-reader", "research-plan"), [], tagged)
+
+
+def test_the_job_path_still_fails_after_the_strip():
+    tagged = dict(TAGS, skill="research")
+    with pytest.raises(AssertionError, match="job"):
+        validator(_skill_calls("research", "question-selection", "image-reader",
+                               "research-plan"), [], tagged)

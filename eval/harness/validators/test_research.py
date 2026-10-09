@@ -454,14 +454,25 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
     assert all(expected), f"empty {_DELIVERS_PREFIX} tag value — name the skill or remove the tag"
 
     handed = handoffs(skills_invoked, builtin_tool_calls)
-    missing = [e for e in expected if e not in handed]
+    # Strip the skill under test the way test_routes_to_expected_skill does: it is
+    # recorded first when entered as a slash command (issue #3116), so a raw
+    # handed[0] is "research" and the first-hand-off assertion below would fail on
+    # every real run. A claim audit caught this before a paid run did.
+    skill_under_test = test.get("skill")
+    if skill_under_test and skill_under_test in handed:
+        tail = handed[handed.index(skill_under_test) + 1:]
+    else:
+        tail = list(handed)
+    delegations = [s for s in tail if s != skill_under_test]
+
+    missing = [e for e in expected if e not in delegations]
     assert not missing, (
         "a compound bounded ask must hand off for EVERY deliverable it names. "
-        f"Never handed off: {missing}. Hand-offs seen: {handed}. Delivering one and "
+        f"Never handed off: {missing}. Hand-offs seen: {delegations}. Delivering one and "
         "dropping the rest is the behaviour the one-or-more rule replaced."
     )
-    assert handed and handed[0] in expected, (
+    assert delegations and delegations[0] in expected, (
         f"the first hand-off must be one of the deliverables {expected}, got "
-        f"{handed[0] if handed else 'none'}. A hand-off off that list is the job "
+        f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
         "path, which a bounded request must not enter."
     )
