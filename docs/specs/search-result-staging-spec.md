@@ -191,6 +191,29 @@ part of `staged`.
 
 ## 6. Finalize handshake with `research_log_append`
 
+### 6.0 Near-copy resolution (`resolveStagedRef`)
+
+Every consumer of a staged ref — `research_log_append` (each op), `project_create`
+(`personReadRef`), and the read-only `readStagedResults` behind `record_read` and
+`rank_search_matches` — first maps a mis-copied ref onto the one staged file it
+names, then runs its own checks on that canonical ref.
+
+- An existing ref is used unchanged.
+- A ref whose directory is absent (a bare `<uuid>` or `<uuid>.json`) or `.staging/`
+  is read as `results/.staging/<name>`.
+- Otherwise the ref's name is compared with every `results/.staging/*.json` name: a
+  name within **3 edits**, or a name the ref is a prefix of when the ref has **at
+  least 8 characters**, is a candidate.
+- **Exactly one candidate** is used. Zero or several, a ref naming any other
+  directory, or a ref containing `..`, is left unchanged and refused by the
+  consumer's own check as before — the resolver never guesses.
+- A writing consumer reports each correction in `validation.warnings`
+  (`<field> '<given>' matched no staged file; used '<canonical>', ...`); the
+  read-only `readStagedResults` reads through without persisting anything.
+
+A staged name is a random v4 UUID, so two staged files within 3 edits of each other
+do not occur in practice; the single-candidate rule still refuses that case.
+
 When the log editor is called with `stagedResultsRef`, it (host-side):
 
 1. Resolves `stagedResultsRef` and **rejects anything not inside

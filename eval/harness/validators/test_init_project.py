@@ -96,6 +96,43 @@ def test_objective_default_verbatim(after_state, test):
     )
 
 
+#: Words an objective may use that the user's message need not contain: function
+#: words, and the connectives a sentence of the user's own words needs.
+_OBJECTIVE_FUNCTION_WORDS = frozenset({
+    "about", "after", "also", "and", "around", "before", "from", "into", "that",
+    "their", "them", "then", "there", "these", "they", "this", "were", "what",
+    "when", "where", "which", "while", "with", "came",
+})
+
+
+def _content_words(text: str) -> list[str]:
+    return [w for w in re.findall(r"[a-z0-9]+", text.lower())
+            if len(w) > 3 and w not in _OBJECTIVE_FUNCTION_WORDS]
+
+
+def test_objective_kept_in_the_users_words(after_state, test):
+    """Tag-gated on `objective-stated`: when the user's message states an
+    objective, the stored `project.objective` is that objective in their own
+    words. It is never the generic default, and it adds no direction the user
+    did not state: every content word in it appears in the user's message."""
+    if "objective-stated" not in test.get("tags", []):
+        pytest.skip("not an objective-stated scenario")
+    stated = test.get("delegation") or test.get("user_message") or ""
+    assert stated, "objective-stated requires the user's message"
+    research = after_state.get("research_json")
+    assert research is not None, "objective-stated requires research.json to exist"
+    objective = (research.get("project") or {}).get("objective") or ""
+    assert objective and objective != _DEFAULT_OBJECTIVE, (
+        f"the user stated an objective, so the generic default must not replace it; got: {objective!r}"
+    )
+    said = set(re.findall(r"[a-z0-9]+", stated.lower()))
+    added = sorted({w for w in _content_words(objective) if w not in said})
+    assert not added, (
+        f"the objective adds words the user did not say ({', '.join(added)}); "
+        f"store it in the user's own words. Objective: {objective!r}"
+    )
+
+
 def test_profile_defaults_when_all_default(after_state, test):
     """Tag-gated on `opening-turn-all-defaults`: when the test's premise is
     that the user answered nothing, `researcher_profile.experience_level` must
@@ -688,8 +725,14 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
     matched on the fact's owner (by FamilySearch PID), type and raw `place`,
     which the build carries unchanged, and only for facts that really arrived
     unresolved, and only for the value the build wrote into the write-once
-    `starting-tree.gedcomx.json`. A copy of the fact's own free-text `place` is none of these --
-    that is the 56-value defect this closes.
+    `starting-tree.gedcomx.json`. Fourth: every hand-entered place (the whole
+    tree without `personReadRef`, an addition with one) `project_create`
+    standardizes itself and reports in `placesFilled`, once per place however
+    else it was spelled (trimmed, case-folded, spaces collapsed); such a value
+    is accepted for that place only, and only as written into the starting
+    tree. A copy of the
+    fact's own free-text `place` is none of these -- that is the 56-value defect
+    this closes.
     """
     tree = _written_tree(after_state)
     written = [
@@ -743,6 +786,18 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
                 for f in holder.get("facts") or []:
                     if isinstance(f, dict) and f.get("place") and not f.get("standard_place"):
                         host_filled.add((owner, f.get("type"), f.get("place")))
+    # What a successful project_create resolved itself, by place as its
+    # resolver groups them.
+    def place_key(place):
+        return " ".join(place.lower().split()) if isinstance(place, str) else place
+
+    hand_filled = set()
+    for c in tool_calls or []:
+        resp = c.get("response")
+        if _tool(c) == "project_create" and isinstance(resp, dict) and resp.get("ok") is True:
+            for item in resp.get("placesFilled") or []:
+                if isinstance(item, dict):
+                    hand_filled.add((place_key(item.get("place")), item.get("standardPlace")))
     owner_of = {id(f): owner for owner, f in _tree_fact_owners(tree)}
     # What the host build actually wrote: the write-once starting tree. A value
     # on that fact now that differs from it (a copy of `place`, or anything a
@@ -768,6 +823,8 @@ def test_standard_place_came_from_a_tool(after_state, tool_calls):
         # here: the fact arrived unresolved and the host resolver filled it.
         key = (owner_of.get(id(fact)), fact.get("type"), fact.get("place"))
         if key in host_filled and (*key, value) in baseline:
+            continue
+        if (place_key(fact.get("place")), value) in hand_filled and (*key, value) in baseline:
             continue
         note = (
             " (a copy of the fact's own free-text place)"

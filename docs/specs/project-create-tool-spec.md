@@ -121,8 +121,8 @@ and in this build's place retry.
   when every fact has one. Bounded at 20s (the Cowork bridge aborts any call at
   60s), and run on copies, so an answer that arrives after the budget never
   reaches a tree that is already being written. A place nothing resolves keeps
-  `place` alone. An addition's place is the caller's to resolve (`place_search`).
-  The build does not run it: `project_create` runs it after every refusal below
+  `place` alone. An addition's place is hand-entered and is resolved as below, in
+  the same budget. The build does not run it: `project_create` runs it after every refusal below
   and after validation, just before the write, so a refused call never waits on
   the network. It only adds a `standard_place` string, which validation admits.
 
@@ -156,13 +156,28 @@ source refs, `subjectPersonIds`), so a minted id never turns a dangling
 reference into a valid one. Anything with no source is cited to the
 researcher's statement as above. A `tree` that is not an object is refused.
 
+**Hand-entered places** — every fact on the objective-only build, and every fact
+an addition brings in ref mode — are the tool's to standardize, never the
+caller's. Every such fact, on a person or a relationship, has any
+caller-supplied `standard_place` cleared, including a fact with no `place`. Each
+one with a `place` is then resolved with the same resolver `person_read` and
+`tree_edit` use, after every refusal and validation, in the same call and budget
+as the ref path's retry. A person or fact entry that is not an object is skipped
+here and left for validation to refuse at its own index. A resolved value is
+reported in `placesFilled`. A caller-supplied value that the resolver replaced or
+could not confirm, or that sat on a fact with no `place`, is named in
+`validation.warnings`; one that did not resolve — no match, a failed lookup, or
+the budget running out — is left unset, never kept.
+
 **The result** carries `idMap`: `persons` (FamilySearch PID → `I` id),
 `sources` (FamilySearch source id → `S` id), `additions` (label → `I` id),
 `familySearchTreeSource`, and `statementSource` when one was created. It also
-carries `placesFilled`, `[{place, standardPlace}]`, for each place the retry
-resolved that the read had not (absent when none), so the caller can tell the
+carries `placesFilled`, `[{place, standardPlace}]`, for each place this create
+standardized — one the read had left unresolved, or one entered by hand (absent
+when none). One resolution is listed once, in the spelling first met, however
+else the same place was written (trimmed, case-folded, spaces collapsed), so the caller can tell the
 researcher which places it standardized without being asked.
-`personReadRef` is trimmed before it is resolved. In ref mode a refusal raised
+`personReadRef` is trimmed before it is resolved, and a near-copy of a staged ref is mapped onto the one staged file it names, reported in `validation.warnings` (`search-result-staging-spec.md` §6.0). In ref mode a refusal raised
 after the build (a forged `assertion_id`, a validation error) names which minted
 id and `persons[i]` index each addition label became, since no `idMap` comes
 back with a refusal. A relationship is described by its type and endpoints. A later

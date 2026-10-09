@@ -10,37 +10,24 @@
       "researcher-profile",
       "volunteered-access",
       "normalization",
-      "enum-boundary"
+      "enum-boundary",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "init-project: Start a new project to find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF. I have some research under my belt. I won't be short of records either -- I've got Ancestry, I use my local family history centre, and FamilySearch of course.",
+    "delegation": "init-project: Start a new project to find the parents of Patrick Flynn, FamilySearch ID LZNY-BRF. I have some research under my belt. I won't be short of records either -- I've got Ancestry, I use my local family history centre, and FamilySearch of course.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [
     "person-read-flynn"],
   "judge_context": [
-    "The skill must NOT ask the user about site access -- the question was dropped. Recording what the user volunteered is correct; prompting for it, or asking a follow-up to confirm it, is not",
+    "The agent must NOT ask the user about site access -- the question was dropped. Recording what the user volunteered is correct; prompting for it, or asking a follow-up to confirm it, is not",
     "The stored `researcher_profile.subscriptions` values are checked by a deterministic validator, not by this judge. Do not re-derive or grade them, and do not lower any score over how the reply lists the access the user volunteered, including a mention of their FamilySearch account",
     "`researcher_profile.experience_level` should be `novice` and `narration_guidance` the fixed house-style string. The user's 'some research under my belt' is NOT persisted as a level: the profile is fixed and never asked (lead ruling 2026-09-18).",
     "Should still create both research.json and tree.gedcomx.json in a single pass and seed the Patrick Flynn stub from person-read-flynn -- volunteered access must not stop or delay the initialization"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 600
   },
   "judge_reads_files": true
 }

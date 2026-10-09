@@ -11,11 +11,12 @@
       "rederive",
       "no-hand-omit",
       "handoff",
-      "familysearch"
+      "familysearch",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.",
+    "delegation": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [
@@ -28,21 +29,6 @@
     "It should write a normal, complete research.json (objective reflecting the user's stated goal) alongside the full tree.gedcomx.json — the standard init deliverables, unchanged by the fact that a rederive test is planned.",
     "Must not fabricate an omission mechanism or leave any part of the survey incomplete on the grounds that a slice is 'being left out' — 'omit X' is not an instruction to skip X during construction."
   ],
-  "execution": {
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
-  },
+  "execution": {},
   "judge_reads_files": true
 }

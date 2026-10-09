@@ -169,7 +169,7 @@ export async function assertResearchProject(folderPath: string): Promise<void> {
     throw new Error(formatNestedPicker(nested))
   }
   throw new Error(
-    'Not a research project — research.json not found. Run the init-project skill to create a new project, or pick a folder that already has one.'
+    'Not a research project — research.json not found. Ask Claude to start a new project (init-project), or pick a folder that already has one.'
   )
 }
 

@@ -1595,7 +1595,7 @@ def test_summary_ignores_non_judge_warning_kinds():
 #: EVERY harness file — closing the file-blindness of the retired two-file
 #: scan — without tripping on these. The guardrail-shadow kinds are built from
 #: constants (``"kind": SOME_KIND``), so the literal regex never sees them.
-_NON_WARNING_KIND_LITERALS = {"none", "predicate", "queue", "queue_reused", "live"}
+_NON_WARNING_KIND_LITERALS = {"none", "predicate", "queue", "queue_reused", "live", "staged_ref_refused"}
 
 
 def test_every_literal_warning_kind_in_the_harness_is_registered():

@@ -56,10 +56,12 @@ export interface BuiltTree {
   tree: { persons: Obj[]; relationships: Obj[]; sources: Obj[] };
   idMap: IdMap;
   subjectPersonIds: string[];
-  /** The place retry for the read's facts. Not run by the build: the caller
-   *  runs it once every refusal of its own has passed, so a refused call never
-   *  waits on the network. */
-  fillPlaces: () => Promise<FilledPlace[]>;
+  /** The facts the caller's additions brought, in the tree as built. */
+  additionFacts: Obj[];
+  /** The place retry for the read's facts, plus any `extra` facts in the same
+   *  time budget. Not run by the build: the caller runs it once every refusal
+   *  of its own has passed, so a refused call never waits on the network. */
+  fillPlaces: (extra?: SimplifiedFact[]) => Promise<FilledPlace[]>;
 }
 
 /** How long the place retry may run. `project_create` is one MCP call, and the
@@ -92,6 +94,12 @@ class Minter {
 
 const isObj = (v: unknown): v is Obj => !!v && typeof v === "object" && !Array.isArray(v);
 const arr = (v: unknown): Obj[] => (Array.isArray(v) ? v.filter(isObj) : []);
+
+/** Every fact on a tree's persons and relationships. Safe on a tree the
+ *  validator has not seen yet: an entry that is not an object is skipped. */
+export function factsOf(tree: { persons?: unknown; relationships?: unknown }): Obj[] {
+  return [...arr(tree.persons), ...arr(tree.relationships)].flatMap((o) => arr(o.facts));
+}
 
 /** An addition collection: absent is empty, anything but an array of objects
  *  is refused. `arr` drops a bad entry, which for a citation would silently
@@ -292,10 +300,13 @@ export async function buildFromStagedRead(args: {
 
   const tree = { persons, relationships, sources };
   const subjectId = idMap.persons[subjectPid];
-  // The read's facts, captured before additions join: the retry covers only
-  // these, and runs LAST so every refusal below is instant.
+  // The read's facts, captured before additions join so the caller can treat
+  // the additions' facts as hand-entered. The retry runs LAST so every refusal
+  // below is instant.
   const readFacts = collectFacts(tree as never) as SimplifiedFact[];
   const labels = mergeAdditions(tree, args.additions, minter, idMap, index, now);
+  const fromRead = new Set<object>(readFacts);
+  const additionFacts = factsOf(tree).filter((f) => !fromRead.has(f));
 
   // subjectPersonIds: a staged PID or an addition label; defaults to the subject.
   let subjectPersonIds: string[];
@@ -319,7 +330,13 @@ export async function buildFromStagedRead(args: {
     });
   }
 
-  return { tree, idMap, subjectPersonIds, fillPlaces: () => retryUnresolvedPlaces(readFacts) };
+  return {
+    tree,
+    idMap,
+    subjectPersonIds,
+    additionFacts,
+    fillPlaces: (extra = []) => retryUnresolvedPlaces([...readFacts, ...extra]),
+  };
 }
 
 /** A place the retry resolved: the fact's raw `place` and what it now carries. */
@@ -333,13 +350,14 @@ export interface FilledPlace {
  * converter's soft cap on a large pedigree): one more try, through the same
  * resolver. A no-op, with no network traffic, when every fact already has one.
  *
- * Only the READ's facts: a stub's place is the caller's, resolved with
- * place_search. And on copies: `standardizePlaces` mutates in place and keeps
+ * On the read path, only the READ's facts; on the hand-built path
+ * `project_create` passes every fact, having cleared each `standard_place`
+ * first. And on copies: `standardizePlaces` mutates in place and keeps
  * running past the budget, so a late answer must not land on a tree that has
  * already been validated and written (it would reach one of the two files and
  * not the other).
  */
-async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
+export async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
   const copies = facts.map((f) => ({ ...f }));
   await Promise.race([
     standardizePlaces(copies),
