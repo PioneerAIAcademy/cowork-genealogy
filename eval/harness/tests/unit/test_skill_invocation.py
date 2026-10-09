@@ -339,7 +339,7 @@ def test_typed_spawn_predicate_strips_the_namespace_and_refuses_untyped():
     "research,arm",
     [
         ({"proof_summaries": [{"id": "ps_001"}]}, "proof-conclusion"),
-        ({"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}]}, "research-exhaustiveness"),
+        ({"questions": [{"id": "q_001", "search_stop": {"stopped_because": "question_answered", "log_entry_ids": [], "stop_criteria": None, "not_reached": []}}]}, "research-exhaustiveness"),
         ({"conflicts": [{"id": "c_001", "status": "resolved"}]}, "conflict-resolution"),
     ],
     ids=["proof-conclusion", "research-exhaustiveness", "conflict-resolution"],
@@ -438,7 +438,7 @@ def test_each_never_invoked_message_names_only_its_own_arm_and_classifies_there(
 
     research = {
         "proof_summaries": [{"id": "ps_001"}],
-        "questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}],
+        "questions": [{"id": "q_001", "search_stop": {"stopped_because": "question_answered", "log_entry_ids": [], "stop_criteria": None, "not_reached": []}}],
         "conflicts": [{"id": "c_001", "status": "resolved"}],
         "person_evidence": [],
     }
