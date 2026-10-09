@@ -1085,15 +1085,22 @@ _DEATH_WORD = r"(?:death|died|burial|buried|bur\.|d[öo]d|d[öo]de|begrav\w*|beg
 _YEAR_RE = re.compile(r"\b(1[5-9]\d\d)\b")
 
 
-def _own_death_re(given: str) -> re.Pattern:
-    """A death word tied to the subject: "Elena's burial", "Elena
-    Asmundsdotter's own death", or "burials index for Elena"."""
+_RELATIVE = r"(?:son|husband|father|mother|daughter|brother|sister|child|children|wife|spouse|parents?)"
+
+
+def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
+    """(own, relative): `own` ties the entry to the subject ("Elena's burial",
+    "burials index for Elena", "her age at death", "Elena's entry");
+    `relative` names a relative of hers ("Elena's son", "her husband")."""
     g = re.escape(given)
-    return re.compile(
-        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?{_DEATH_WORD}"
-        rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b",
+    own = re.compile(
+        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
+        rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b"
+        rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
         re.IGNORECASE,
     )
+    relative = re.compile(rf"(?:\b{g}['’]s|\bher)\s+{_RELATIVE}\b", re.IGNORECASE)
+    return own, relative
 
 
 def test_pre_register_birth_plans_death_route(before_state, after_state, test):
@@ -1107,11 +1114,12 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
     agent never opened the register section where her 1745 death entry states
     her birthplace. Both defects are asserted here.
 
-    An item counts only when its rationale or jurisdiction ties a death/burial
-    word to the subject ("Elena's burial", "burials index for Elena"), and its
-    `date_range` starts after the subject's birth window. A son's or husband's
-    burial that merely names her ("Elena's son, buried 1768"), or a baptism
-    search whose rationale notes she later died, fails.
+    An item counts only when its rationale or jurisdiction names the subject
+    and a death/burial word, and its `date_range` starts after the subject's
+    birth window. An item naming a relative of hers ("Elena's son", "her
+    husband") counts only if it also ties the entry to her ("Elena's burial",
+    "her age at death"), so a son's, husband's or father's burial fails, as
+    does a baptism search whose rationale notes she later died.
     """
     tags = test.get("tags") or []
     test_id = test.get("id")
@@ -1134,11 +1142,13 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
     items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
     assert items, "no new plan items were written"
 
-    own_death = _own_death_re(given)
+    own, relative = _death_route_res(given)
 
     def _qualifies(item: dict) -> bool:
         text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
-        if not own_death.search(text):
+        if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
+            return False
+        if relative.search(text) and not own.search(text):
             return False
         years = [int(y) for y in _YEAR_RE.findall(str(item.get("date_range") or ""))]
         return bool(years) and min(years) >= earliest_start

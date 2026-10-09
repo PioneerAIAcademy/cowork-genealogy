@@ -1023,6 +1023,8 @@ def test_death_route_fires_when_the_death_item_is_someone_elses():
     "Jöns Jönsson, Elena's husband, buried in Barsebäck; dates her widowhood.",
     "Elena's son died young; his burial entry names the farm.",
     "Elena's husband's burial entry, to date the widowhood.",
+    "A burial entry for Asmund (Elena's father) would confirm his parish, age at death, and identity.",
+    "Burial of her son Asmund Jönsson in Barsebäck; Elena is named as his mother.",
 ])
 def test_death_route_fires_when_the_burial_only_names_her_as_a_relative(rationale):
     """T-FEH's review on #3118: the name and a death word both present is not enough."""
@@ -1072,6 +1074,13 @@ def test_death_route_passes_a_mixed_plan_with_her_burial_item():
     ("Elena's burial entry commonly states her age at death (yielding a birth year estimate).", "1718-1770"),
     ("Elena Asmundsdotter’s own burial in the Barsebäck register.", "1718-1770"),
     ("Burial entry of Elena in Barsebäck.", "1745"),
+    ("Elena was alive in Barsebäck at least through 1718 (son Asmund's christening). Swedish burial "
+     "entries routinely record the deceased's age. Search for Elena in Barsebäck or Malmöhus; she may "
+     "appear as Elena Jönsdotter (wife of Jöns Jönsson).", "1718-1780"),
+    ("A burial entry would give her age at death and may name her home parish. She was living in "
+     "Barsebäck in 1718 (son christened there). Search Elena or Helena Asmundsdotter.", "1720-1790"),
+    ("A targeted browse of the Barsebäck burial register recovers Elena's entry; her husband's "
+     "burial is in the same volume.", "1718-1780"),
 ])
 def test_death_route_passes_legitimate_variants(rationale, date_range):
     """Reflowed wording, Swedish register terms, an en dash, a single year."""
