@@ -627,6 +627,17 @@ graded** — a direct test is a separate file with its own `test.id`, not a seco
 arm over an existing one, because a duplicated `test_id` in one envelope corrupts
 annotations, which key on `(test_id, dimension_source, dimension_name)`.
 
+> **How much of an agent's return actually reaches the user is not graded, and
+> deliberately so.** Reply-shape grading reads the agent's own return; nothing
+> compares it with the main thread's `text_response`. (Tier-2 `report_*`
+> validators *are* handed `text_response` and some read it — e.g.
+> `report_unsourced_year_in_response` — which is exactly why a new one here
+> would be the wrong instrument: on this arm that text is the harness's
+> dispatcher, not the subject, so the judge would be charged an observation
+> about the harness.) `make unit-relay-fidelity` measures it offline over the
+> committed run logs instead — a report, never a gate, whose direct block is
+> dispatcher fidelity rather than a statement about production.
+
 **A converted suite is the one case where the direct test keeps the original
 `test.id`.** Once a skill is deleted outright rather than thinned into a router
 (the lead's ruling of 2026-09-22: every skill becomes an agent and the skill is
@@ -640,6 +651,21 @@ across the conversion; minting new ids would orphan every prior grade on the
 `(test_id, dimension_source, dimension_name)` key this section already names.
 The "separate file, own id" rule above still governs a **pair** — a routing
 skill that still ships — because there both arms exist and both are graded.
+
+**The paired-skill pattern is retired (lead ruling 2026-09-22, restated
+2026-09-29).** A conversion now ends with the agent authored and
+`skills/<name>/` deleted in the same PR. What it beat was keeping
+the thin routing skill on disk as the direct-user and unit-eval entry point —
+the shape §0 of `docs/skill-to-agent-pair-conversion.md` was written for, which
+left a rule stated only in the routing skill's body switched off during
+production research while still billing its tokens.
+
+Four of the five pairs are gone: `search-images` (2026-09-29),
+`person-evidence`, `proof-conclusion` and `research-exhaustiveness`
+(2026-10-08). Only `record-extraction` →
+`record-extractor` remains, under the 2026-09-21 exemption. The conversion
+rules and the direct-agent arm still apply to that suite and to any future
+pair, but the population they govern has shrunk from five pairs to one.
 
 **A negative converts too, when its outcome does not depend on routing.** The
 conversion doc says negatives get no twin, and for a pair that is right: routing

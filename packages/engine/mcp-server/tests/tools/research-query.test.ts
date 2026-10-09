@@ -9,6 +9,7 @@ import {
   RESEARCH_QUERY_SECTIONS,
   RESEARCH_QUERY_EXCLUDED,
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
+  SECTION_FILTERS,
 } from "../../src/tools/research-query.js";
 
 describe("research_query", () => {
@@ -46,6 +47,105 @@ describe("research_query", () => {
     expect(result.count).toBe(1);
     expect(result.items.map((i) => i.id)).toEqual(["a_001"]);
     expect(result.truncated).toBe(false);
+  });
+
+  it("filters assertions by assertionId — an EXACT match on the assertion's own id", async () => {
+    // The field is `id`. An assertion object has no `assertion_id` key — that
+    // is person_evidence's POINTER to one — so a rule on `assertion_id` here
+    // is accepted by the tool and matches nothing, ever, returning a silent
+    // `count: 0` indistinguishable from "no such assertion".
+    //
+    // Two assertions, and the assertion is on EXACTLY one: a test that only
+    // checked "did not throw", or "returned something", passes under the wrong
+    // field (0 items) and under a widened mode.
+    await writeResearch({
+      assertions: [
+        { id: "a_001", record_id: "REC1", record_role: "principal", fact_type: "birth" },
+        { id: "a_002", record_id: "REC2", record_role: "child", fact_type: "death" },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      assertionId: "a_002",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(1);
+    expect(result.items.map((i) => i.id)).toEqual(["a_002"]);
+  });
+
+  it("every SECTION_FILTERS field names a real property on that section's schema", async () => {
+    // The class guard, not a second one-off. A rule naming a field the section
+    // does not have compiles, passes every test, is accepted by the tool, and
+    // returns `count: 0` forever -- the exact defect the `assertionId`/
+    // `assertion_id` comment warns about in prose. CLAUDE.md: when the bug is
+    // the second instance of a class, write one shared guard.
+    const schema = JSON.parse(
+      readFileSync(
+        join(__dirname, "..", "..", "..", "..", "..", "docs", "specs", "schemas", "research.schema.json"),
+        "utf-8",
+      ),
+    );
+    const bad: string[] = [];
+    for (const [section, filters] of Object.entries(SECTION_FILTERS)) {
+      const ref = schema.properties?.[section]?.items?.$ref;
+      if (!ref) continue; // not an array-of-objects section; nothing to check
+      const def = schema.$defs?.[ref.replace("#/$defs/", "")];
+      const props = def?.properties ?? {};
+      for (const [key, rule] of Object.entries(filters as Record<string, any>)) {
+        for (const f of rule.fields ?? [rule.field]) {
+          if (f && !(f in props)) bad.push(`${section}.${key} -> ${f}`);
+        }
+      }
+    }
+    expect(
+      bad,
+      `these filter rules name a field the section's schema does not have, so ` +
+        `they are accepted by the tool and match nothing, ever: ${bad.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("keeps assertionId mapped to a DIFFERENT field on each sibling section", async () => {
+    // Five sections take `assertionId` and it means two different things: on
+    // `assertions` the item's own `id`, everywhere else a field REFERENCING an
+    // assertion. Only `assertions` and `hypotheses` were pinned, so an editor
+    // seeing `{field:"id"}` directly above `person_evidence: {field:
+    // "assertion_id"}` could "fix the inconsistency" to `id` — after which
+    // person_evidence matches nothing ever (a pe_ entry's id starts with pe_),
+    // person-evidence's "an empty result IS the answer: unlinked" idiom calls
+    // every assertion unlinked, and the suite stays green.
+    await writeResearch({
+      assertions: [{ id: "a_001", fact_type: "birth" }],
+      person_evidence: [{ id: "pe_001", person_id: "P1", assertion_id: "a_001" }],
+      conflicts: [{ id: "c_001", competing_assertion_ids: ["a_001"], status: "open" }],
+      proof_summaries: [{ id: "ps_001", supporting_assertion_ids: ["a_001"] }],
+    });
+
+    for (const [section, id] of [
+      ["person_evidence", "pe_001"],
+      ["conflicts", "c_001"],
+      ["proof_summaries", "ps_001"],
+    ] as const) {
+      const r = await researchQuery({ projectPath: dir, section, assertionId: "a_001" });
+      expect(r.ok, section).toBe(true);
+      if (!r.ok) return;
+      expect(r.count, section).toBe(1);
+      expect(r.items.map((i) => i.id), section).toEqual([id]);
+    }
+
+    // ...and the same id on `assertions` returns the assertion itself, not
+    // anything referencing it.
+    const own = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      assertionId: "a_001",
+    });
+    expect(own.ok).toBe(true);
+    if (!own.ok) return;
+    expect(own.items.map((i) => i.id)).toEqual(["a_001"]);
   });
 
   it("filters assertions by questionId — a CONTAINS match on extracted_for_question_ids", async () => {

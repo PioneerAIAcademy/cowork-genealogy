@@ -133,6 +133,19 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
+        "file": "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json",
+        "tool": "tree_correct",
+        "quotes": [
+            "nothing in this agent's toolset can raise the gender afterwards, since `tree_correct update_person` is not granted to it",
+        ],
+        "reason": (
+            "negative mention: names the tool to say the agent lacks it - "
+            "'nothing in this agent's toolset can raise the gender "
+            "afterwards, since `tree_correct update_person` is not granted "
+            "to it'"
+        ),
+    },
+    {
         "file": "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json",
         "tool": "record_search",
         "quotes": [
@@ -336,22 +349,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/research-exhaustiveness/declare-exhaustive-complete.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
-            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
-        ],
-        "reason": (
-            "not-needed, naming the allowed-tools fact outright - 'Claude "
-            "does not need to call validate_research_schema - it is not in "
-            "this skill's allowed-tools, and per SKILL.md, research_append "
-            "validates-before-persist ... Do NOT penalize Tool Arguments or "
-            "Completeness for the absence of a separate "
-            "validate_research_schema call'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/research-exhaustiveness/direct-declare-exhaustive-complete.json",
         "tool": "validate_research_schema",
         "quotes": [
@@ -433,18 +430,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
     },
     {
         "file": "eval/tests/unit/research-exhaustiveness/direct-refuse-while-in-progress.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
-        ],
-        "reason": (
-            "not-needed - 'If Claude does call validate_research_schema "
-            "that is acceptable but not required since no changes were "
-            "made'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/research-exhaustiveness/refuse-while-in-progress.json",
         "tool": "validate_research_schema",
         "quotes": [
             "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",

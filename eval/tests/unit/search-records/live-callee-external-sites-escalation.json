@@ -29,7 +29,9 @@
     "place-search-schuylkill-county",
     "place-search-schuylkill-by-name",
     "collections-search-schuylkill",
-    "external-links-search-pa-census"
+    "external-links-search-pa-census",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_turns": 35,

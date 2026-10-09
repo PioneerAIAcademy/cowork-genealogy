@@ -2,9 +2,11 @@
 
 docs/specs/guardrail-enforcement-spec.md §7, GitHub issue #1463 — §7's recency
 check credits a guardrail skill through `recently_succeeded`, which reads
-`is_error` on `Skill` ledger entries. Every `Skill` result in the corpus is a
-*launch acknowledgement*, so that gate can only ever observe an unknown-skill
-launch failure, never "the skill ran and produced nothing." Closing that would
+`is_error` on `Skill` ledger entries and on typed `Agent`/`Task` spawns of the
+owner's name. Every `Skill` result in the corpus is a *launch acknowledgement*,
+so on the `Skill` route that gate can only ever observe an unknown-skill launch
+failure, never "the skill ran and produced nothing." This report measures the
+`Skill` route only: an episode is bounded by `Skill` entries. Closing that would
 need an instrument observing skill **completion**.
 
 The cheapest candidate instrument is the trace: between a skill's launch and the
@@ -198,9 +200,11 @@ def skill_launches(tool_calls: list[Any]) -> list[tuple[int, str]]:
     """`(index, skill_name)` for every `Skill` entry, in ledger order.
 
     Delegates the "is this a skill launch" test to
-    `skill_invocation.skill_name_if_skill_call`, which is what §7's own detector
-    uses. A second definition here would let this report and the check it exists
-    to judge drift apart on the one predicate they must agree about.
+    `skill_invocation.skill_name_if_skill_call`, the `Skill` half of what §7's
+    own detector uses (`invoked_skill_name` adds typed spawns, which this
+    report deliberately does not measure). A second definition here would let
+    this report and the check it exists to judge drift apart on the one
+    predicate they must agree about.
     """
     out: list[tuple[int, str]] = []
     for i, entry in enumerate(tool_calls):

@@ -65,6 +65,28 @@ Two bypass shapes are on record, both from committed runlogs:
 - **Untyped subagent** — a `Task`/`Agent` call with no `subagent_type` and a
   hand-written prompt standing in for the skill.
 
+A third shape is **sanctioned**, not a bypass:
+
+- **Direct typed spawn** — a `Task`/`Agent` call whose `subagent_type` names a
+  guardrail arm's agent, with no `Skill` call before it. This is the in-loop
+  route for a paired agent: `/research` spawns `research-exhaustiveness`,
+  `proof-conclusion` and `person-evidence` directly, and the same-named thin
+  skill, where one still exists, is only the direct-user and unit-eval entry
+  point. The `subagent_type` is what separates it from the untyped shape above.
+
+**The rule the detectors apply: credit a spawn by name.** A successful
+`Agent`/`Task` call whose `subagent_type`, with any `<plugin>:` namespace
+stripped, equals an arm's name puts that name in the invoked set exactly as a
+`Skill` call naming it does. An untyped or errored spawn credits nothing. There
+is no paired-agent map and nothing is derived from disk, because a set derived
+from "an agent with a same-named `SKILL.md`" silently drops each pair the day
+its thin skill is deleted, and two of the three thin skills already are. Agent
+names match the arm names by construction, so the rule covers any arm converted
+later with no harness edit. The namespace strip matters because Cowork and
+hosted feedback bundles log `genealogy-research:<agent>` while every committed
+e2e value is bare: a rule that forgot it would be green on the whole corpus and
+dead in production data.
+
 **Why attribution is hard.** The SDK's only context-scoping primitive is
 `agent_id`, present on `PreToolUseHookInput` only inside a `Task`-spawned
 subagent. A `Skill` invocation runs inline in the same session with no
@@ -156,6 +178,7 @@ depends on another shipping first.
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: a link made through a relationship assertion is bound on the date arm only, and only when another link ties a one-party assertion of the same record party to the same person. One with no such sibling, including a relationship link written before its party's one-party link, is still not bound, because which of the two people it is about is not decidable from the documents |
+| §5 | An unexplained move between countries caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident` whose record places the linked party in a recognized country other than every country the tree person's Residence/Census facts attest, with no `move_bridge` | **enforcing** (since this change). **Refuses 0 of 5,893** committed confident links (2,617 comparable). Its limits: it compares countries, never states, so a long move inside one country is the prose cap's to catch; it cannot judge whether the quoted `move_bridge` actually explains the move, only that one was named; and a place whose last segment names no recognized country is not checked |
 | §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
 | §5 | A resolution in prose must reach `conflicts[]` | engine (MCP tool) — so Cowork, hosted, both harnesses; the harness detector `find_unpersisted_conflict_resolutions` stays as the document-plane reading | a `proof_summaries` write whose question's `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict was resolved while `conflicts[]` holds no record of it — empty, or not holding the `c_` id the stop-criterion names. Scoped to the summary written, read live, not tier-gated; a recorded but open conflict is not this miss. Every other conflict gate iterates `conflicts[]` and passes vacuously when it is empty, which is how a tester's project reached `completed` with the Conflicts section blank | **enforcing** (since 2026-09-28; the first guard graduated under ADR-0011's labelled-case rule, its cases in `packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`, replayed by both planes. **Refuses 10 summaries across 9 of 194 committed e2e final states**, measured at 0b65122bc by `packages/engine/mcp-server/dev/measure-unpersisted-conflict-guard.ts`, which names the same runs, summaries and questions as the harness replay. Every one has an empty `conflicts[]`. All 10 read individually per ADR-0011 limit 2: 9 true positives — two records weighed and settled in prose, or a spelling, index-reading or premise discrepancy of the tester's own class — and 1 borderline, a `cruz-corona-ancestry` run that fires on an illegible surname reading settled by a sibling's record, accepted as a satisfiable cost of one conflict entry. What it lets through is in `unpersistedConflictResolutionInvariants`: a stop-criterion reading "no conflicts remain", rewording to that, a resolution claim written after the summary, and — wider than the rule before it graduated — any `conflicts[]` entry at all backing an id-less claim, so one recorded conflict in a multi-question project turns it off for every other question's id-less claim) |
 | §5 | Hard image cap | engine (MCP tool) — so Cowork, hosted, both harnesses | a 21st distinct `imageId` from one image group in one project, read through `image_read`, `image_transcribe` or `volume_bisect` (one shared count, persisted in `results/image-browse.jsonl`). Thrown before the fetch; instrument: `src/utils/browse-budget.ts`, spec `image-transcribe-tool-spec.md` §5.8. Corpus replay 2026-10-01: 69 distinct images refused (74 calls) in 6 groups over 5 runs, none on an image backing a correct finding | **enforcing** (since 2026-10-01) |
@@ -537,7 +560,8 @@ tool-call ledger.
 
 **§7's status is a finding, not a queue position.** Its graduation was gated on a
 false-positive rate that cannot be measured while its success gate reads `Skill`
-launch acknowledgements — and no instrument available to the harness observes
+launch acknowledgements, and a typed spawn's result does not say whether the
+agent did the work either (§7) — and no instrument available to the harness observes
 skill *completion* (§7, "What the success gate can and cannot see"). Treat that
 row as settled unless one of the four skills becomes something that emits a
 completion signal; do not re-open it as a calibration task.
@@ -2204,7 +2228,13 @@ Design points that were paid for and should not be re-derived:
   skill name alone: in a multi-question project a `Skill(proof-conclusion)` for
   question A would otherwise cover an inline write for question B. Where no
   question id can be extracted, it falls back to a per-skill window and accepts
-  the imprecision.
+  the imprecision. A typed spawn's question id is read from its `description`
+  and `prompt`, and used only when exactly one distinct `q_` id appears there.
+- **A summons is a `Skill` call or a typed spawn of the owner's name** (§2, the
+  sanctioned third shape), and **a write made by the owning agent itself is
+  never flagged**: its own `agent_type`, namespace stripped, equals the owner.
+  The exemption is per owner, so a batch that also touches another owner's
+  section is still checked for that owner.
 - **Protected writes include the tree side**, not just `research.json`.
   `materialize_facts` can create a tree person and attach facts with no
   `person_evidence` entry existing at all, and `proof-conclusion` owns tree
@@ -2218,7 +2248,8 @@ got round to the calibration. It is that the calibration has no instrument.
 
 Graduating §7 was gated on a false-positive rate. That rate is not obtainable
 while "did the skill succeed" is read off `Skill` entries, because those entries
-carry launch acknowledgements — a census of the committed corpus returns 18
+carry launch acknowledgements (a typed spawn's `is_error` is no better; the end
+of this subsection says why) — a census of the committed corpus returns 18
 distinct values across 1,242 entries, all of the form `Launching skill: <name>`
 plus one unknown-skill error. Three candidate instruments were checked and none
 observes completion:
@@ -2242,8 +2273,18 @@ observes completion:
   `match_score` precedent at the top of this section.
 
 **What would change the answer:** giving a guardrail skill an identity that emits
-a completion signal — i.e. converting it to an agent, which §9 costs out. Absent
-that, do not re-open this as a tuning task; the window is not the variable. The
+a completion signal — i.e. converting it to an agent, which §9 costs out.
+**Crediting a typed spawn (§2, the sanctioned third shape) does not supply that
+signal.** A synchronous `Agent`/`Task` result returns after the agent stops, but
+its `is_error` does not say whether the agent did the work: an agent that hit
+the tool-call cap and wrote nothing returns `is_error: false`
+(`hannah-earnest-children/run-2026-10-05_23-36-27`, the two
+`research-exhaustiveness` spawns at calls 421 and 424, measured at 70bbe069d).
+A `run_in_background` spawn returns only a launch acknowledgement and is
+credited all the same. So the success gate still cannot see completion on
+either route, and `packages/engine/mcp-server/tests/guard-cases/registry.json`
+keeps its row as written.
+Either way, do not re-open this as a tuning task; the window is not the variable. The
 count barely moves from window 10 to 150 (§3), which was the early tell.
 
 The window itself stays at 40 and the layer stays instrumented, because the
@@ -2449,8 +2490,8 @@ this section before reopening one.
   the `agent-*.meta.json` that names the spawning `Agent` call.
 
   **The consumer SPLICES, and that is the whole risk in reading them.** The
-  summons is a `Skill` call in the parent stream and the write happens in the
-  child's, so `adapt_bundle` inserts a child's calls at the index of the
+  summons is a `Skill` call or a typed spawn of the owner's name in the parent
+  stream and the write happens in the child's, so `adapt_bundle` inserts a child's calls at the index of the
   `Agent`/`Task` call its meta names. Appending them instead would put the
   write outside its own skill's `window` entries and report a violation that
   never happened — a fabricated non-zero, worse than a known zero because it is
@@ -2500,12 +2541,26 @@ this section before reopening one.
 
   One limit stays, and it is measured rather than fixed: splicing puts a
   subagent's own calls inside the window, so a subagent making more than
-  `window` calls before its protected write pushes the parent's `Skill` call
-  back out. The e2e harness already carries subagent calls in one flat list
+  `window` calls before its protected write pushes the parent's summons back
+  out. The e2e harness already carries subagent calls in one flat list
   (its hook stamps `agent_id`/`agent_type` onto each), so changing the window
   for bundles alone would make the two corpora incomparable. Anchoring the window at the spawning call rather than the write
   is a change to `skill_invocation.py` and belongs to whichever measurement
   shows it is needed.
+
+  **Both risks apply only to a non-owner transcript.** A write whose own
+  `agent_type`, namespace stripped, is its owner (the `proof-conclusion` agent
+  writing `proof_summaries` or encoding its conclusion in the tree, the
+  `research-exhaustiveness` agent writing the declaration) is the owner doing
+  its own work with its doctrine in context, so `find_unguarded_protected_writes`
+  never flags it wherever it lands. For `proof_summaries`, `person_evidence` and
+  the declaration the hook additionally routes the write to that caller; the
+  tree writes (a `materialize_facts` mint included) are not hook-routed, and the
+  exemption rests on the writer's identity alone. So for those writes the bundle arms report 0 by construction, splice
+  order cannot change them, and `_window_overruns` does not count them. The
+  exemption is per owner: a batch the owning agent makes that also touches
+  another owner's section (a resolved `conflicts` op beside `proof_summaries`)
+  is still checked, and counted, for that other owner.
 
 - **Agent postconditions — "this agent must have made this tool call before it
   returns."** Rejected 2026-09-07 on measurement, not on cost. The mechanism
