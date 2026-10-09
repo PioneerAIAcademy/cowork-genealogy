@@ -140,7 +140,13 @@ describe("treeGapsTool", () => {
   // Ancestry with a deceased root and one ancestor at each of depths 4 and 8, so the
   // near tier has an anchor and the far tier has an anchor.
   function ancestryWithFarAnchors(extraDepth8: number) {
-    const base = { gender: "Male", birthDate: "1 May 1700", deathDate: "1 May 1770", lifespan: "1700-1770" };
+    const base = {
+      gender: "Male",
+      birthDate: "1 May 1700",
+      birthPlace: "Dayton, Ohio, United States",
+      deathDate: "1 May 1770",
+      lifespan: "1700-1770",
+    };
     const persons = [
       person("R", { ascendancyNumber: "1", name: "R", ...base }),
       person("A4", { ascendancyNumber: "16", name: "A4", ...base }),
@@ -230,14 +236,14 @@ describe("treeGapsTool", () => {
   });
 
   it("scores a hole against the catalog: place scope, years and record type", async () => {
-    const entry = (id: string, title: string, typeFacet: string) => ({
+    const entry = (id: string, title: string, typeFacet: string, years: [number, number] = [1850, 1950]) => ({
       content: {
         gedcomx: {
           collections: [
             {
               id,
               title,
-              searchMetadata: [{ startYear: 1850, endYear: 1950, typeFacet, recordCount: 1000 }],
+              searchMetadata: [{ startYear: years[0], endYear: years[1], typeFacet, recordCount: 1000 }],
             },
           ],
         },
@@ -264,12 +270,22 @@ describe("treeGapsTool", () => {
             entry("1", "Ohio, Births and Christenings, 1850-1950", "VITAL"),
             entry("2", "Ohio, Military Rolls, 1850-1950", "MILITARY"),
             entry("3", "Texas, Births, 1850-1950", "VITAL"),
+            entry("4", "Ohio Census, 1920", "CENSUS", [1920, 1920]),
+            entry("5", "Ohio Census, 1850", "CENSUS", [1850, 1850]),
+            entry("6", "Ohio Census Index, 1900-1950", "CENSUS", [1900, 1950]),
           ],
         }),
     });
     const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
     const hole = r.gaps.find((g) => g.type === "no_death_date")!;
-    // Only the Ohio VITAL collection counts: Texas is the wrong place, MILITARY the wrong type.
-    expect(hole.coverage).toEqual({ collections: 1, records: 1000, recordTypes: ["VITAL"] });
+    // Texas is the wrong place, MILITARY the wrong type, and the 1850 census is outside 1900-1990; a multi-year census index counts as a collection but names no census year.
+    expect(hole.coverage).toEqual({
+      collections: 3,
+      records: 3000,
+      recordTypes: ["CENSUS", "VITAL"],
+      censusYears: [1920],
+      placeLevel: "locality",
+      score: 2,
+    });
   });
 });

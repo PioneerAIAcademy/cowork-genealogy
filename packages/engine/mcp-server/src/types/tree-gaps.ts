@@ -18,10 +18,15 @@ export interface FSGapDisplay {
   marriagePlace?: string;
 }
 
+export interface FSGapName {
+  nameForms?: { fullText?: string; parts?: { type?: string; value?: string }[] }[];
+}
+
 export interface FSGapPerson {
   id?: string;
   living?: boolean;
   display?: FSGapDisplay;
+  names?: FSGapName[];
 }
 
 export interface FSGapResponse {
@@ -46,6 +51,8 @@ export type TreeGapType =
   | "no_children"
   | "child_gap"
   | "early_last_child"
+  | "missing_surname"
+  | "no_birth_info"
   | "no_spouse"
   | "no_death_date";
 
@@ -53,6 +60,11 @@ export interface TreeGapYearRange {
   start: number;
   end: number;
 }
+
+// How specific a place string is, by its comma-separated parts: "Ghana" is a
+// country, "Central, Ghana" a region, a three-part place a county or district,
+// anything longer a locality.
+export type PlaceLevel = "country" | "region" | "county" | "locality";
 
 // How many catalog collections could hold the record the hole needs. Scored
 // from the cached collections catalog: title match on the place's collection
@@ -62,6 +74,13 @@ export interface TreeGapCoverage {
   collections: number;
   records: number;
   recordTypes: string[];
+  // Census years inside the hole's window, from census collections the catalog
+  // lists for the place (single-year collections only).
+  censusYears: number[];
+  placeLevel: PlaceLevel;
+  // 0 when no collection matches; else 1 (+1 when a census year falls in the
+  // window), times the place-level weight (locality 1 ... country 0.25).
+  score: number;
 }
 
 export interface TreeGap {

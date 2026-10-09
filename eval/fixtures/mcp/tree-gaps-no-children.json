@@ -29,7 +29,13 @@
             "CENSUS",
             "CHURCH_RECORD",
             "VITAL"
-          ]
+          ],
+          "censusYears": [
+            1910,
+            1920
+          ],
+          "placeLevel": "locality",
+          "score": 2
         },
         "spouseId": "TGAP-AUS",
         "spouseName": "Frank Ellery"

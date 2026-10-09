@@ -2,8 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   addAncestry,
   addDescendancy,
+  coverageScore,
   detectGaps,
   emptyModel,
+  placeLevel,
   selectGaps,
   yearOf,
 } from "../../src/utils/tree-gap-detect.js";
@@ -49,6 +51,7 @@ function ap(
       name: id,
       gender: Number(asc) % 2 === 0 ? "Male" : "Female",
       birthDate: birth ? `1 May ${birth}` : undefined,
+      birthPlace: birth ? "Dayton, Ohio, United States" : undefined,
       deathDate: death ? `1 May ${death}` : undefined,
       lifespan: `${birth ?? ""}-${death ?? ""}`,
     },
@@ -284,6 +287,26 @@ describe("a couple whose spouses are both line persons", () => {
   });
 });
 
+describe("a mother with two husbands", () => {
+  it("reports the same child gap once, though her own read names no single spouse", () => {
+    const m = emptyModel(1);
+    const kids = [dp("K0", "1.1", "Kid0", "Male", 1876, 1950), dp("K1", "1.2", "Kid1", "Male", 1890, 1950)];
+    addDescendancy(m, [dp("DAD", "1", "Dad", "Male", 1850, 1920), dp("MOM", "1-S1", "Mom", "Female", 1855, 1930), ...kids], 1, 4);
+    addDescendancy(
+      m,
+      [
+        dp("MOM", "1", "Mom", "Female", 1855, 1930),
+        dp("DAD", "1-S1", "Dad", "Male", 1850, 1920),
+        dp("DAD2", "1-S2", "Dad Two", "Male", 1845, 1915),
+        ...kids,
+      ],
+      1,
+      4,
+    );
+    expect(detectGaps(m).filter((x) => x.type === "child_gap")).toHaveLength(1);
+  });
+});
+
 describe("no_death_date window", () => {
   it("ends at this year, not at birth + 90, for someone born recently", () => {
     const year = new Date().getFullYear();
@@ -298,5 +321,148 @@ describe("no_death_date window", () => {
     addAncestry(m, [ap("R", "1", 1800, null, false)]);
     const g = detectGaps(m).find((x) => x.type === "no_death_date")!;
     expect(g.yearRange).toEqual({ start: 1800, end: 1890 });
+  });
+});
+
+const named = (p: FSGapPerson, parts: { type: string; value: string }[]): FSGapPerson => ({
+  ...p,
+  names: [{ nameForms: [{ fullText: p.display?.name, parts }] }],
+});
+const GIVEN = { type: "http://gedcomx.org/Given", value: "Efua" };
+const surname = (value: string) => ({ type: "http://gedcomx.org/Surname", value });
+
+describe("missing_surname", () => {
+  const wifeModel = (parts: { type: string; value: string }[] | null, marriage?: string, kids: number[] = []) => {
+    const m = emptyModel(1);
+    const mom = dp("MOM", "1-S1", "Efua", "Female", 1855, 1930);
+    addDescendancy(
+      m,
+      [
+        dp("DAD", "1", "Dad", "Male", 1850, 1920, marriage ? { marriageDate: marriage } : {}),
+        parts ? named(mom, parts) : mom,
+        ...kids.map((b, i) => dp(`K${i}`, `1.${i + 1}`, `Kid${i}`, "Male", b, 1950)),
+      ],
+      1,
+      4,
+    );
+    return detectGaps(m).filter((x) => x.type === "missing_surname");
+  };
+
+  it("flags a deceased wife whose name has no surname part, windowed on the marriage", () => {
+    const g = wifeModel([GIVEN], "1 May 1875");
+    expect(g).toHaveLength(1);
+    expect(g[0].personId).toBe("MOM");
+    expect(g[0].spouseId).toBe("DAD");
+    expect(g[0].yearRange).toEqual({ start: 1874, end: 1876 });
+  });
+
+  it("falls back to her first child's birth when no marriage year is known", () => {
+    expect(wifeModel([GIVEN], undefined, [1880, 1884])[0].yearRange).toEqual({ start: 1879, end: 1881 });
+  });
+
+  it("flags a placeholder surname such as Unknown", () => {
+    expect(wifeModel([GIVEN, surname("Unknown")], "1 May 1875")).toHaveLength(1);
+    expect(wifeModel([GIVEN, surname("[unknown]")], "1 May 1875")).toHaveLength(1);
+    expect(wifeModel([GIVEN, surname("")], "1 May 1875")).toHaveLength(1);
+  });
+
+  it("does not flag a wife who has a real surname", () => {
+    expect(wifeModel([GIVEN, surname("Forson")], "1 May 1875")).toEqual([]);
+  });
+
+  it("does not flag a husband with no surname part, only a wife", () => {
+    const m = emptyModel(1);
+    addDescendancy(
+      m,
+      [
+        named(dp("DAD", "1", "Kojo", "Male", 1850, 1920, { marriageDate: "1 May 1875" }), [{ type: "http://gedcomx.org/Given", value: "Kojo" }]),
+        named(dp("MOM", "1-S1", "Efua Forson", "Female", 1855, 1930), [GIVEN, surname("Forson")]),
+      ],
+      1,
+      4,
+    );
+    expect(detectGaps(m).filter((x) => x.type === "missing_surname")).toEqual([]);
+  });
+
+  it("does not flag someone recorded as male even in a mother's pedigree slot", () => {
+    const m = emptyModel(2);
+    const odd = named(ap("ODD", "3", 1875, 1950), [GIVEN]);
+    odd.display = { ...odd.display, gender: "Male" };
+    addAncestry(m, [ap("R", "1", 1900, 1970), odd]);
+    expect(detectGaps(m).filter((x) => x.type === "missing_surname")).toEqual([]);
+  });
+
+  it("does not flag when the response carried no name parts at all", () => {
+    expect(wifeModel(null, "1 May 1875")).toEqual([]);
+  });
+
+  it("flags a mother in the pedigree, and never a man or a living wife", () => {
+    const m = emptyModel(2);
+    const mother = named(ap("MOM", "3", 1875, 1950), [GIVEN]);
+    const father = named(ap("DAD", "2", 1870, 1940), [{ type: "http://gedcomx.org/Given", value: "Kojo" }]);
+    const livingMom = named(ap("LMOM", "5", 1900, null, true), [GIVEN]);
+    addAncestry(m, [ap("R", "1", 1900, 1970), father, mother, livingMom]);
+    const g = detectGaps(m).filter((x) => x.type === "missing_surname");
+    expect(g.map((x) => x.personId)).toEqual(["MOM"]);
+  });
+});
+
+describe("no_birth_info", () => {
+  const one = (p: FSGapPerson, kids: number[] = []) => {
+    const m = emptyModel(1);
+    addDescendancy(
+      m,
+      [p, ...kids.map((b, i) => dp(`K${i}`, `1.${i + 1}`, `Kid${i}`, "Male", b, 1950))],
+      1,
+      4,
+    );
+    return detectGaps(m).filter((x) => x.type === "no_birth_info" && x.personId === p.id);
+  };
+
+  it("flags a father with no birth date or place, windowed on his first child (age 15-65)", () => {
+    const g = one(dp("DAD", "1", "Dad", "Male", null, 1920), [1880, 1884]);
+    expect(g).toHaveLength(1);
+    expect(g[0].detail).toMatch(/no birth date or place/);
+    expect(g[0].yearRange).toEqual({ start: 1815, end: 1865 });
+  });
+
+  it("windows a mother on ages 15-45", () => {
+    expect(one(dp("MOM", "1", "Mom", "Female", null, 1930), [1880])[0].yearRange).toEqual({ start: 1835, end: 1865 });
+  });
+
+  it("falls back to the death year when there are no children", () => {
+    expect(one(dp("DAD", "1", "Dad", "Male", null, 1920))[0].yearRange).toEqual({ start: 1830, end: 1920 });
+  });
+
+  it("says which half is missing", () => {
+    const noPlace = dp("A", "1", "A", "Male", 1850, 1920, { birthPlace: undefined });
+    const g = one(noPlace);
+    expect(g[0].detail).toMatch(/no birth place/);
+    expect(g[0].yearRange).toEqual({ start: 1849, end: 1853 });
+    const noDate = dp("B", "1", "B", "Male", null, 1920, { birthPlace: "Cape Coast, Ghana" });
+    expect(one(noDate)[0].detail).toMatch(/no birth date\./);
+  });
+
+  it("does not flag a person who has both, or a living person", () => {
+    expect(one(dp("A", "1", "A", "Male", 1850, 1920))).toEqual([]);
+    expect(one(dp("L", "1", "L", "Male", null, null, {}, true))).toEqual([]);
+  });
+});
+
+describe("placeLevel and coverageScore", () => {
+  it("reads the level from the number of place parts", () => {
+    expect(placeLevel("Ghana")).toBe("country");
+    expect(placeLevel("Central, Ghana")).toBe("region");
+    expect(placeLevel("Cape Coast Metropolitan, Central, Ghana")).toBe("county");
+    expect(placeLevel("Cape Coast, Cape Coast Metropolitan, Central, Ghana")).toBe("locality");
+  });
+
+  it("is 0 with no collection, doubles with a census year, and shrinks as the place gets coarser", () => {
+    expect(coverageScore(0, 2, "locality")).toBe(0);
+    expect(coverageScore(3, 0, "locality")).toBe(1);
+    expect(coverageScore(3, 1, "locality")).toBe(2);
+    expect(coverageScore(3, 1, "county")).toBe(1.5);
+    expect(coverageScore(3, 1, "region")).toBe(1);
+    expect(coverageScore(3, 1, "country")).toBe(0.5);
   });
 });

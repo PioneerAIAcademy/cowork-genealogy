@@ -5,6 +5,7 @@
 
 import type {
   FSGapPerson,
+  PlaceLevel,
   TreeGap,
   TreeGapType,
   TreeGapYearRange,
@@ -31,14 +32,27 @@ export const NO_SPOUSE_MIN_DEATH_AGE = 25;
 export const MARRIAGE_SEARCH_MIN_AGE = 18;
 /** Assumed maximum lifespan when scoping a missing death date. */
 export const MAX_LIFESPAN = 90;
+/** A mother's age at a child's birth, bounding when she was born. */
+export const MOTHER_AGE_RANGE: readonly [number, number] = [15, 45];
+/** A father's age at a child's birth, bounding when he was born. */
+export const FATHER_AGE_RANGE: readonly [number, number] = [15, 65];
+/** How specific a place is: a locality is worth more to a record search than a country. */
+export const PLACE_LEVEL_WEIGHT: Record<PlaceLevel, number> = {
+  locality: 1,
+  county: 0.75,
+  region: 0.5,
+  country: 0.25,
+};
 
 const TYPE_PRIORITY: Record<TreeGapType, number> = {
   missing_parents: 0,
   no_children: 1,
   child_gap: 2,
   early_last_child: 3,
-  no_spouse: 4,
-  no_death_date: 5,
+  missing_surname: 4,
+  no_birth_info: 5,
+  no_spouse: 6,
+  no_death_date: 7,
 };
 
 // ─── Model ──────────────────────────────────────────────────────────────────
@@ -55,6 +69,11 @@ export interface GapPerson {
   hasDeathDate: boolean;
   marriageYear: number | null;
   marriagePlace: string | null;
+  deathPlace: string | null;
+  hasBirthDate: boolean;
+  hasBirthPlace: boolean;
+  /** False only when the name parts were read and carry no real surname. */
+  hasSurname: boolean;
 }
 
 /** One line person's family as read from a descendancy tree. */
@@ -96,6 +115,25 @@ export function yearOf(s: string | undefined | null): number | null {
   return m ? Number(m[1]) : null;
 }
 
+const NO_SURNAME = /^[\s\[\]()?_.-]*(unknown|unk|nn|n\.n|none|no surname)?[\s\[\]()?_.-]*$/i;
+
+/**
+ * Whether the person's name parts carry a surname. Unknown (no `names` block in
+ * the response) counts as having one: a hole is never reported on what the
+ * endpoint did not show.
+ */
+function hasSurnamePart(p: FSGapPerson): boolean {
+  if (!p.names) return true;
+  for (const n of p.names) {
+    for (const f of n.nameForms ?? []) {
+      for (const part of f.parts ?? []) {
+        if (part.type?.endsWith("/Surname") && !NO_SURNAME.test(part.value ?? "")) return true;
+      }
+    }
+  }
+  return false;
+}
+
 export function toGapPerson(p: FSGapPerson): GapPerson | null {
   if (typeof p.id !== "string" || p.id === "") return null;
   const d = p.display ?? {};
@@ -115,7 +153,23 @@ export function toGapPerson(p: FSGapPerson): GapPerson | null {
     hasDeathDate: !!d.deathDate,
     marriageYear: yearOf(d.marriageDate),
     marriagePlace: d.marriagePlace ?? null,
+    deathPlace: d.deathPlace ?? null,
+    hasBirthDate: !!d.birthDate,
+    hasBirthPlace: !!d.birthPlace,
+    hasSurname: hasSurnamePart(p),
   };
+}
+
+/** Level of a place string by its comma-separated parts. */
+export function placeLevel(place: string): PlaceLevel {
+  const n = place.split(",").filter((x) => x.trim() !== "").length;
+  return n >= 4 ? "locality" : n === 3 ? "county" : n === 2 ? "region" : "country";
+}
+
+/** 0 with no matching collection; else 1 (+1 with a census year in the window), weighted by place level. */
+export function coverageScore(collections: number, censusYears: number, level: PlaceLevel): number {
+  if (collections <= 0) return 0;
+  return Math.round((1 + (censusYears > 0 ? 1 : 0)) * PLACE_LEVEL_WEIGHT[level] * 100) / 100;
 }
 
 /** Ahnentafel depth of number n: 1 -> 0, 2-3 -> 1, 4-7 -> 2. */
@@ -220,6 +274,10 @@ function gap(
   return out;
 }
 
+// The mother a family hole is about, so the same hole found from either spouse
+// of a couple (or from her own read with several husbands) collapses to one.
+const motherKey = new WeakMap<TreeGap, string>();
+
 function range(start: number, end: number): TreeGapYearRange | null {
   return end >= start ? { start, end } : null;
 }
@@ -313,6 +371,10 @@ function familyHoles(model: GapModel, out: TreeGap[]): void {
     }
     const place = p.marriagePlace ?? mother.birthPlace;
     const couple = spouses.length === 1 ? spouses[0] : undefined;
+    const add = (g: TreeGap): void => {
+      motherKey.set(g, mother.id);
+      out.push(g);
+    };
 
     const births = [...f.childIds]
       .map((id) => model.people.get(id)?.birthYear)
@@ -323,7 +385,7 @@ function familyHoles(model: GapModel, out: TreeGap[]): void {
       const start = Math.max(mb + FERTILE_MIN_AGE, p.marriageYear ?? 0);
       const r = fertileEnd - start >= MIN_WINDOW_YEARS ? range(start, fertileEnd) : null;
       if (r) {
-        out.push(
+        add(
           gap(model, "no_children", p, "A married couple with no children in the tree.", r, place, couple),
         );
       }
@@ -335,7 +397,7 @@ function familyHoles(model: GapModel, out: TreeGap[]): void {
       const b = births[i + 1];
       const ageAtA = a - mb;
       if (b - a > CHILD_GAP_YEARS && ageAtA >= FERTILE_MIN_AGE && ageAtA <= CHILD_GAP_MAX_MOTHER_AGE) {
-        out.push(
+        add(
           gap(
             model,
             "child_gap",
@@ -358,7 +420,7 @@ function familyHoles(model: GapModel, out: TreeGap[]): void {
         lived >= EARLY_LAST_CHILD_MIN_LIFESPAN &&
         fertileEnd - (last + 1) >= MIN_WINDOW_YEARS
       ) {
-        out.push(
+        add(
           gap(
             model,
             "early_last_child",
@@ -371,6 +433,87 @@ function familyHoles(model: GapModel, out: TreeGap[]): void {
         );
       }
     }
+  }
+}
+
+/** Every family in which `id` is a spouse (not the line person). */
+function familiesAsSpouse(model: GapModel, id: string): GapFamily[] {
+  return [...model.families.values()].filter((f) => f.spouseIds.has(id));
+}
+
+/** Deceased wives whose name parts show no real surname: the maiden name is the hole. */
+function missingSurnames(model: GapModel, out: TreeGap[]): void {
+  const wives = new Set<string>();
+  for (const [n, id] of model.ancestors) {
+    if (n >= 3 && n % 2 === 1) wives.add(id);
+  }
+  for (const f of model.families.values()) {
+    const line = model.people.get(f.personId);
+    if (line?.gender === "female" && f.spouseIds.size > 0) wives.add(line.id);
+    for (const sid of f.spouseIds) {
+      if (model.people.get(sid)?.gender === "female") wives.add(sid);
+    }
+  }
+  for (const id of wives) {
+    const p = model.people.get(id);
+    if (!p || p.living || p.gender !== "female" || p.hasSurname) continue;
+    const theirs = [...familiesAsSpouse(model, id), ...(model.families.has(id) ? [model.families.get(id)!] : [])];
+    const husbands = [...new Set(familiesAsSpouse(model, id).map((f) => f.personId))]
+      .map((hid) => model.people.get(hid))
+      .filter((h): h is GapPerson => !!h);
+    const husband = husbands.length === 1 ? husbands[0] : undefined;
+    const marriage = p.marriageYear ?? husband?.marriageYear ?? null;
+    const kids = theirs.flatMap((f) => [...f.childIds]);
+    const births = kids
+      .map((k) => model.people.get(k)?.birthYear)
+      .filter((y): y is number => typeof y === "number");
+    let window: TreeGapYearRange | null = null;
+    if (marriage != null) window = range(marriage - 1, marriage + 1);
+    else if (births.length > 0) {
+      const first = Math.min(...births);
+      window = range(first - 1, first + 1);
+    } else if (p.birthYear != null) window = range(p.birthYear + FERTILE_MIN_AGE, p.birthYear + 35);
+    out.push(
+      gap(
+        model,
+        "missing_surname",
+        p,
+        "The wife's surname (maiden name) is missing from the tree.",
+        window,
+        p.marriagePlace ?? husband?.marriagePlace ?? p.birthPlace ?? p.deathPlace,
+        husband,
+      ),
+    );
+  }
+}
+
+/** Deceased people with no birth date and/or no birth place. */
+function missingBirthInfo(model: GapModel, out: TreeGap[]): void {
+  const now = new Date().getFullYear();
+  for (const p of model.people.values()) {
+    if (p.living || (p.hasBirthDate && p.hasBirthPlace)) continue;
+    const missing = !p.hasBirthDate && !p.hasBirthPlace ? "date or place" : !p.hasBirthDate ? "date" : "place";
+    let window: TreeGapYearRange | null = null;
+    const kids = [...(model.families.get(p.id)?.childIds ?? [])]
+      .map((k) => model.people.get(k)?.birthYear)
+      .filter((y): y is number => typeof y === "number");
+    if (p.birthYear != null) window = range(p.birthYear - 1, p.birthYear + 3);
+    else if (kids.length > 0) {
+      const first = Math.min(...kids);
+      const [lo, hi] = p.gender === "female" ? MOTHER_AGE_RANGE : FATHER_AGE_RANGE;
+      window = range(first - hi, first - lo);
+    } else if (p.deathYear != null) window = range(p.deathYear - MAX_LIFESPAN, p.deathYear);
+    if (window && window.end > now) window = range(window.start, now);
+    out.push(
+      gap(
+        model,
+        "no_birth_info",
+        p,
+        `Deceased, but the tree gives no birth ${missing}.`,
+        window,
+        p.birthPlace ?? p.deathPlace ?? p.marriagePlace,
+      ),
+    );
   }
 }
 
@@ -395,6 +538,8 @@ export function detectGaps(model: GapModel): TreeGap[] {
   const out: TreeGap[] = [];
   missingParents(model, out);
   familyHoles(model, out);
+  missingSurnames(model, out);
+  missingBirthInfo(model, out);
   missingDeathDates(model, out);
 
   out.sort(byDistance);
@@ -402,9 +547,13 @@ export function detectGaps(model: GapModel): TreeGap[] {
   // (two ancestors): key it on the pair so it is reported once.
   const seen = new Set<string>();
   return out.filter((g) => {
-    const key = g.spouseId
-      ? `${g.type}|${[g.personId, g.spouseId].sort().join("+")}|${g.type === "child_gap" ? `${g.yearRange?.start}-${g.yearRange?.end}` : ""}`
-      : `${g.type}|${g.personId}|${g.yearRange?.start}|${g.yearRange?.end}`;
+    const span = `${g.yearRange?.start}-${g.yearRange?.end}`;
+    const mother = motherKey.get(g);
+    const key = mother
+      ? `${g.type}|mother:${mother}|${g.type === "child_gap" ? span : ""}`
+      : g.spouseId
+        ? `${g.type}|${[g.personId, g.spouseId].sort().join("+")}|${g.type === "child_gap" ? span : ""}`
+        : `${g.type}|${g.personId}|${span}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
