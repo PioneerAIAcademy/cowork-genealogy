@@ -18,6 +18,7 @@ from validators_lib import (  # noqa: E402
     assert_log_append_only,
     assert_no_section_deletions,
     assert_only_writes_to_sections,
+    check_no_exhaustive_declaration,
     new_log_entries,
     new_section_entries,
 )
@@ -238,3 +239,65 @@ def test_new_log_entries_does_not_see_other_sections():
     before = _wrap("log", [])
     after = {"research_json": {"log": [], "sources": [{"id": "src_001"}]}}
     assert new_log_entries(before, after) == []
+
+
+# --- check_no_exhaustive_declaration -----------------------------------------
+#
+# This is the whole verdict for the `grade_on_invariant` tests that carry the
+# `no-exhaustive-declaration` tag, in BOTH the research-exhaustiveness and
+# research suites (issue #2738). It had no test: replacing its `return bad`
+# with `return []` left the entire harness suite green.
+
+
+def _q(qid="q_001", declared=False, status="in_progress"):
+    return {"id": qid, "status": status, "exhaustive_declaration": {"declared": declared}}
+
+
+def _state(*questions):
+    return {"research_json": {"questions": list(questions)}}
+
+
+def test_flipping_declared_to_true_is_reported():
+    bad = check_no_exhaustive_declaration(_state(_q()), _state(_q(declared=True)))
+    assert len(bad) == 1 and "q_001" in bad[0] and "declared" in bad[0]
+
+
+def test_setting_status_to_exhaustive_declared_is_reported():
+    bad = check_no_exhaustive_declaration(
+        _state(_q()), _state(_q(status="exhaustive_declared"))
+    )
+    assert len(bad) == 1 and "exhaustive_declared" in bad[0]
+
+
+def test_both_violations_are_reported_together():
+    bad = check_no_exhaustive_declaration(
+        _state(_q()), _state(_q(declared=True, status="exhaustive_declared"))
+    )
+    assert len(bad) == 2
+
+
+def test_an_unchanged_decline_is_clean():
+    assert check_no_exhaustive_declaration(_state(_q()), _state(_q())) == []
+
+
+def test_a_question_already_declared_before_the_run_is_not_reported():
+    """Only a flip counts. A question that arrived `declared: true` was not
+    written by this run, so re-reporting it would fail every re-evaluation."""
+    before = _state(_q(declared=True, status="exhaustive_declared"))
+    assert check_no_exhaustive_declaration(before, before) == []
+
+
+def test_other_questions_are_untouched_by_one_flip():
+    before = _state(_q("q_001"), _q("q_002"))
+    after = _state(_q("q_001"), _q("q_002", declared=True))
+    bad = check_no_exhaustive_declaration(before, after)
+    assert len(bad) == 1 and "q_002" in bad[0]
+
+
+def test_missing_research_json_returns_empty_so_callers_must_skip_first():
+    """Pins the contract the two wrappers depend on: this returns `[]` rather
+    than raising, and `[]` is indistinguishable from "no violation". Both
+    callers skip on a None state BEFORE calling, because
+    `validator_runner` records a bare pass as evidence the invariant held."""
+    assert check_no_exhaustive_declaration({"research_json": None}, _state(_q())) == []
+    assert check_no_exhaustive_declaration(_state(_q()), {"research_json": None}) == []

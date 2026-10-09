@@ -355,6 +355,33 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
     return set(correct) or None
 
 
+def _stop_at_stub(spec: TestSpec) -> bool:
+    """Whether a positive test ends at its first stubbed hand-off (#3119).
+
+    `execution.stop_at_stub`: for a test whose verdict is that hand-off, such
+    as a `no-shortcut` router test. The router is then told to walk on down
+    its table, which no stub can stop: a stub's text reaches the model as a
+    tool result, and stubs write nothing. So run_skill ends the run once the
+    turn that made the hand-off is over, the way a negative test stops at its
+    routing. The runnability gate refuses it on a negative test and with
+    nothing stubbed.
+    """
+    return spec.type == "positive" and bool((spec.execution or {}).get("stop_at_stub"))
+
+
+def _stopped_at_a_handoff(spec: TestSpec, result: SkillRunResult) -> bool:
+    """Whether the `stop_at_stub` stop ended this run on a stubbed hand-off.
+
+    Such a run never reaches the skill's own summary, so the hand-off is its
+    activation evidence (`derive_activated`, unit-test-spec.md §6).
+    """
+    if not _stop_at_stub(spec):
+        return False
+    stubbed = parse_stub_skills(spec.execution)
+    handed = handoffs(result.skills_invoked, result.builtin_tool_calls)
+    return any(name in stubbed for name in handed)
+
+
 def _stub_skills(spec: TestSpec) -> dict[str, str | None] | None:
     """Sub-skills a POSITIVE test declares it doesn't want executed.
 
@@ -373,8 +400,9 @@ def _stub_agents(spec: TestSpec, skills_dir: Path) -> dict[str, str | None] | No
 
     Exactly the entries with no skill directory: a callee converted from a skill
     to an agent (issue #2825), which the router now spawns rather than loads. A
-    name that is still a skill keeps its `Skill`-call stub only — the paired
-    agents in `route-shortcut-guard.json` rely on their spawn running.
+    name that is still a skill keeps its `Skill`-call stub only, so its agent
+    half can still be spawned for real. (`route-shortcut-guard.json`, which
+    motivated this, now ends at its first stubbed hand-off instead: `stop_at_stub`.)
     """
     stubbed = parse_stub_skills(spec.execution)
     return {n: r for n, r in stubbed.items() if not (skills_dir / n).is_dir()} or None
@@ -514,6 +542,7 @@ async def _execute_single_run(
         routing_short_circuit_skills=routing_short_circuit,
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
+        stop_at_stub=_stop_at_stub(spec),
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -556,7 +585,7 @@ async def _execute_single_run(
     file_changes = file_changes or None
 
     # Set of every *other* skill name in the packages/engine/plugin/skills/ directory —
-    # used by rule 4 to detect "routing to another skill" patterns in
+    # used by rule 3 to detect "routing to another skill" patterns in
     # short responses without false-flagging legitimate concise outputs.
     other_skill_names = {
         d.name for d in paths.skills_dir.iterdir()
@@ -572,6 +601,7 @@ async def _execute_single_run(
         text_response=result.text_response,
         other_skill_names=other_skill_names,
         agents_spawned=agents_spawned if spec.is_direct else None,
+        handed_off=_stopped_at_a_handoff(spec, result),
     )
 
     # --- Extract usage early — validators may need num_turns / output_tokens
@@ -823,6 +853,9 @@ async def _execute_single_run(
         model_usage=per_model,
         no_result_message=result.no_result_message,
         suppressed_post_deny_calls=result.suppressed_post_deny_calls,
+        subagents=result.subagents,
+        subagent_capture_status=result.subagent_capture_status,
+        main_thread=result.main_thread,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
@@ -909,6 +942,36 @@ def _is_zero_progress_timeout(result) -> bool:
     return (result.usage or {}).get("num_turns") == 0
 
 
+# What a unit run log keeps of each subagent summary. `turns` (one entry per
+# record) and `transcript` (a local cache filename) are dropped: unit logs are
+# committed in bulk, and neither is read by anything downstream of them.
+_UNIT_SUBAGENT_DROP = ("turns", "transcript")
+
+
+def _capture_context_meters(result, workspace: Path) -> None:
+    """Attach the busiest-moment capture to `result`. Never raises.
+
+    Must run BEFORE `cleanup_session_store(workspace)`: that deletes the very
+    SDK cache directory these transcripts live in. Both readers resolve the
+    directory with the SDK's own `project_key_for_directory`, the same key the
+    cleanup deletes. Imported here, not at module top, so a broken e2e package
+    can never stop the orchestrator loading.
+    """
+    try:
+        from e2e.subagent_capture import collect_main_thread, collect_subagents
+
+        subagents, status = collect_subagents(workspace)
+        result.subagents = [
+            {k: v for k, v in s.items() if k not in _UNIT_SUBAGENT_DROP}
+            for s in subagents
+        ]
+        result.subagent_capture_status = status
+        result.main_thread = collect_main_thread(workspace)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        result.subagents = []
+        result.subagent_capture_status = "error"
+
+
 def _is_retryable_abort(result) -> bool:
     """Whether a failed skill run should be retried (see the two helpers and
     `_execute_skill_with_retry`'s docstring)."""
@@ -928,6 +991,7 @@ async def _execute_skill_with_retry(
     routing_short_circuit_skills: set[str] | None = None,
     stub_skills: dict[str, str | None] | None = None,
     stub_agents: dict[str, str | None] | None = None,
+    stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
@@ -1017,6 +1081,7 @@ async def _execute_skill_with_retry(
                         routing_short_circuit_skills=routing_short_circuit_skills,
                         stub_skills=stub_skills,
                         stub_agents=stub_agents,
+                        stop_at_stub=stop_at_stub,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.
@@ -1025,6 +1090,7 @@ async def _execute_skill_with_retry(
                         ),
                     )
                     after_snapshot = snapshot_files(workspace)
+                    _capture_context_meters(result, workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
