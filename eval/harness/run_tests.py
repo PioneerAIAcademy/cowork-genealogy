@@ -1302,6 +1302,7 @@ def main(argv: list[str] | None = None) -> int:
             if pp.exists():
                 sp = promote_partial_to_scratch(pp, timestamp=invocation_timestamp)
                 print(f"  → wrote {_format_path(sp)} (partial)")
+                _write_readable_report(sp)
                 promoted = True
         if not promoted:
             print("  (no tests finished — nothing to save)")
@@ -1355,6 +1356,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")
+        _write_readable_report(path)
 
     # The final run logs supersede the in-progress partials; remove them.
     for pp in partial_paths.values():
@@ -1372,6 +1374,26 @@ def main(argv: list[str] | None = None) -> int:
     if saw_exec_abort:
         return 3
     return 0
+
+
+def _write_readable_report(log_path: Path) -> None:
+    """Write `log_path`'s readable `.txt` beside it and drop orphaned reports.
+
+    `make unit-report` does the same on demand; doing it here means every run
+    leaves one. A report that fails to render must never fail a run whose log
+    is already safely written, so this only prints.
+    """
+    try:
+        from unit_run_report import prune_orphan_reports, write_reports
+
+        written, _skipped, unreadable = write_reports([log_path], force=True)
+        for report in written:
+            print(f"  → wrote {_format_path(report)} (readable report)")
+        if unreadable:
+            print(f"  (no readable report: {_format_path(log_path)} could not be read)")
+        prune_orphan_reports(log_path.parent)
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
 
 
 if __name__ == "__main__":
