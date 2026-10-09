@@ -1,0 +1,46 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: an ancestor two generations up whose parents are missing. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "missing_parents",
+        "personId": "TGAP-GM2",
+        "name": "Hannah Pruitt",
+        "lifespan": "1861-1934",
+        "generation": 2,
+        "detail": "Father and mother are both missing from the tree.",
+        "yearRange": {
+          "start": 1860,
+          "end": 1864
+        },
+        "place": "Lancaster, Pennsylvania, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ]
+        }
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 40,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}

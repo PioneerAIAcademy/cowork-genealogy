@@ -169,7 +169,7 @@ function toCollection(data: FSCollectionData): Collection {
 // A collection overlaps [startYear, endYear] when its searchMetadata year span
 // intersects the window. A collection with no year span (undated) is always
 // included, mirroring the rest of the place-search family.
-function overlapsYears(
+export function overlapsYears(
   data: FSCollectionData,
   startYear: number,
   endYear: number
@@ -181,6 +181,35 @@ function overlapsYears(
   const effectiveStart = cStart ?? (cEnd as number);
   const effectiveEnd = cEnd ?? (cStart as number);
   return effectiveStart <= endYear && effectiveEnd >= startYear;
+}
+
+/**
+ * Score how well the catalog covers a place and period: how many collections
+ * (and indexed records) match the place's collection scope, overlap the years,
+ * and, when `typeFacets` is given, carry one of those record-type facets
+ * (VITAL, CENSUS, CHURCH_RECORD, ...). Pure over the already-fetched catalog.
+ */
+export function collectionCoverage(
+  entries: FSCollectionEntry[],
+  standardPlace: string,
+  startYear: number,
+  endYear: number,
+  typeFacets?: readonly string[],
+): { collections: number; records: number; recordTypes: string[] } {
+  const scope = standardPlaceToCollectionsQuery(standardPlace);
+  const types = new Set<string>();
+  let records = 0;
+  let collections = 0;
+  for (const c of filterByQuery(entries, scope)) {
+    if (!overlapsYears(c, startYear, endYear)) continue;
+    const meta = c.searchMetadata?.[0];
+    const facet = meta?.typeFacet;
+    if (typeFacets && (!facet || !typeFacets.includes(facet))) continue;
+    collections += 1;
+    records += meta?.recordCount ?? getCount(c.content, "/Record");
+    if (facet) types.add(facet);
+  }
+  return { collections, records, recordTypes: [...types].sort() };
 }
 
 // ---------- Tool entry point ----------

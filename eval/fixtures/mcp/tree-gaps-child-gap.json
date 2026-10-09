@@ -1,0 +1,48 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: 7 years between consecutive children. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "child_gap",
+        "personId": "TGAP-GF1",
+        "name": "Edmund Ashby",
+        "lifespan": "1850-1919",
+        "generation": 1,
+        "detail": "7 years between children born 1880 and 1887.",
+        "yearRange": {
+          "start": 1881,
+          "end": 1886
+        },
+        "place": "Dayton, Montgomery, Ohio, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ]
+        },
+        "spouseId": "TGAP-GM1",
+        "spouseName": "Clara Weis"
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 40,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}
