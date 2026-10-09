@@ -865,6 +865,18 @@ def test_passes_on_value_content_alone_when_fact_has_no_date():
     check(BEFORE_STATE_NO_DATE_HAS_VALUE, response, TAGGED)  # does not raise
 
 
+def test_fires_when_dateless_fact_value_never_surfaced_on_production_shape():
+    """The red side of the no-date case, on a tree with no fact-level source
+    ref (issue #2208): a fact with a `value` and no date is still checked,
+    not skipped into a vacuous pass."""
+    person = TREE_NO_DATE_HAS_VALUE["persons"][1]
+    fact = {k: v for k, v in person["facts"][0].items() if k != "sources"}
+    tree = {"persons": [TREE_NO_DATE_HAS_VALUE["persons"][0], {**person, "facts": [fact]}]}
+    response = "Patrick Sheahan (I2) lived in Schuylkill County. Plan: church records, tax lists."
+    with pytest.raises(AssertionError, match="I2"):
+        check({"research_json": RESEARCH, "tree_gedcomx_json": tree}, response, TAGGED)
+
+
 TREE_NO_DATE_NO_VALUE = {
     "persons": [
         {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
@@ -979,6 +991,38 @@ def test_profile_skips_untagged():
     with pytest.raises(pytest.skip.Exception):
         check_profile(_PROFILE_STATE, [], {"tags": []})
 
+
+def test_profile_passes_on_read_before_and_after_plan_write():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-TH2"), _write(), _read("ZZKR-TH2")], _PROFILE_TEST
+    )
+
+
+def test_profile_refused_write_is_not_the_first_write():
+    refused = _write()
+    refused["response"] = {"ok": False, "errors": ["schema"]}
+    check_profile(_PROFILE_STATE, [refused, _read("ZZKR-TH2"), _write()], _PROFILE_TEST)
+
+
+def test_profile_closed_question_person_does_not_count():
+    state = {
+        **_PROFILE_STATE,
+        "research_json": {"questions": _PROFILE_STATE["research_json"]["questions"] + [
+            {"id": "q_000", "status": "resolved", "question": "When was Bridget Kerrigan born?"}
+        ]},
+    }
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_shared_given_name_without_surname_does_not_count():
+    tree = {"persons": _PROFILE_STATE["tree_gedcomx_json"]["persons"] + [
+        {"id": "I9", "ark": "ark:/61903/4:1:ZZOT-TH9",
+         "names": [{"preferred": True, "given": "Thomas", "surname": "Walsh"}]}
+    ]}
+    state = {**_PROFILE_STATE, "tree_gedcomx_json": tree}
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZOT-TH9"), _write()], _PROFILE_TEST)
 
 def test_v1_grounds_ark_served_by_person_read():
     served = [_call("person_read", {"sources": [

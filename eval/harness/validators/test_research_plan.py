@@ -632,6 +632,7 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
     what tells a fixture hit from a `fixture_not_found`. A read counts only if
     it matched and its `personId` is a question person's `ark` PID, and only if
     it comes before the first `research_append` writing `plans`/`plan_items`.
+    A refused write (`ok: false`) wrote nothing, so it is not the first write.
     A tagged run with no plan write fails: it planned nothing."""
     if "profile-reread" not in test.get("tags", []):
         pytest.skip("not a profile-reread test")
@@ -649,6 +650,7 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
             for i, c in enumerate(calls)
             if _bare(c.get("tool", "")) == "research_append"
             and isinstance(c.get("args"), dict)
+            and (c.get("response") or {}).get("ok") is not False
             and any(
                 op.get("section") in {"plans", "plan_items"}
                 for op in _plan_write_ops(c["args"])
