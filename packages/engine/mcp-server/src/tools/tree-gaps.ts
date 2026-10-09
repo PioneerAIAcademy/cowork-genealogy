@@ -254,6 +254,7 @@ export async function treeGapsTool(
   }
 
   let reads = 0;
+  let failedReads = 0;
   let stopReason: TreeGapsResult["scanned"]["stopReason"] = null;
   const target = (): number =>
     detectGaps(model).filter((g) => g.type !== "no_death_date").length;
@@ -287,6 +288,7 @@ export async function treeGapsTool(
         );
       } catch (e) {
         if (wave.depth === 0) throw e;
+        failedReads += 1;
         return null;
       }
     });
@@ -314,6 +316,12 @@ export async function treeGapsTool(
     score(gaps, catalog);
   } else {
     notes.push("Collection coverage was unavailable; `coverage` is null on every hole.");
+  }
+  if (failedReads > 0) {
+    notes.push(
+      `${failedReads} descendancy read${failedReads === 1 ? "" : "s"} failed and ` +
+        "were skipped; holes in those lines may be missing.",
+    );
   }
   if (stopReason === "readCap") {
     notes.push("The read cap was reached; holes further from the root may be missing.");

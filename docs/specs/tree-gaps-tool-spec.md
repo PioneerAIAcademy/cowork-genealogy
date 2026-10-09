@@ -172,7 +172,7 @@ filter is a refinement, not a requirement.
 LLM-actionable, as `person_ancestors`: 401 → call `login`; 403/404/410 → the
 person is restricted / not found / deleted; 429 → wait and retry; 400 → the
 upstream message. A root that cannot be read fails the call. A failed
-descendancy read from an ancestor anchor is skipped (that anchor adds no
+descendancy read from an ancestor anchor is skipped and counted in `notes` (that anchor adds no
 holes); a failed read of the root's own descendancy fails the call.
 
 ## Not in scope

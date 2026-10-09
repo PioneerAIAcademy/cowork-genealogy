@@ -122,4 +122,18 @@ describe("treeGapsTool", () => {
     expect(r.gaps.every((g) => g.coverage === null)).toBe(true);
     expect(r.notes.join(" ")).toMatch(/coverage was unavailable/);
   });
+
+  it("notes a failed ancestor-anchor read instead of dropping it silently", async () => {
+    const asc = (id: string, n: string) =>
+      person(id, { ascendancyNumber: n, name: id, gender: Number(n) % 2 ? "Female" : "Male", birthDate: "1 May 1850", deathDate: "1 May 1920", lifespan: "1850-1920" });
+    route({
+      "/tree/ancestry": () => json({ persons: [asc("R", "1"), asc("F", "2"), asc("M", "3")] }),
+      "/tree/descendancy?person=R": () => json({ persons: [] }),
+      "/tree/descendancy?person=F": () => json({}, 500),
+      "/tree/descendancy?person=M": () => json({}, 500),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
+    expect(r.notes.join(" ")).toMatch(/2 descendancy reads failed/);
+  });
 });
