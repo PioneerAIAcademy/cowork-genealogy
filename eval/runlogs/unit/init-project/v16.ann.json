@@ -200,7 +200,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "First project_create used wrong relationship keys (person1/person2 instead of parent/child); Claude caught the validation error and corrected it on the next call. Partial (2) is right — the retry policy scores a clean single recovery as partial, not full."
     },
     {
       "test_id": "ut_init_project_002",
@@ -238,6 +238,22 @@
       "test_id": "ut_init_project_002",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
