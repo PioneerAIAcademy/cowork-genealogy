@@ -32,6 +32,7 @@ header; re-run it before changing a limit.
 | Ancestry depth | ≤ **8**; 9 returns 400. |
 | Vitals on each person | Every person carries `living` and a `display` block. Birth date/place appear in `display` only with `personDetails=true`; so do death date/place and marriage date. |
 | Structure | Descendancy relationships are `Couple` only, and may name a person absent from `persons[]`. Parentage is in `display.descendancyNumber`: `1.2.3` is the third child of `1.2`; `1.2-S1` is a spouse of `1.2`. Ancestry gives `ascendancyNumber` (Ahnentafel). |
+| Spouses at the last level | A person on the last level of a descendancy read still comes back with spouses: `generations=1` on LZJW-C31 returns `1.1` and `1.1-S1` (measured 2026-10-09). `no_spouse` therefore needs no children-read guard. |
 | Latency | Descendancy 0.26–0.36 s per call. Ancestry at 8 generations: 144 persons in 1.6 s. |
 | Coverage data | All 3,622 catalog entries carry `searchMetadata.typeFacet`, `startYear`/`endYear`, `placeIds`, `recordCount`. No new endpoint is needed. |
 
@@ -56,6 +57,11 @@ reads and ~1,100–1,700 persons; a small personal tree 6 s with 16 reads.
      `min(4, depth)` levels. A read from an ancestor 4 levels up reaches the root's
      generation, so it returns the direct line's siblings and their lines without
      one call per couple. With the defaults the anchors are depths 4 and 8.
+   - **every ancestor whose line ends in the pedigree** (neither parent returned),
+     at any depth 1 or more: no read from above reaches that couple, and a brick-wall
+     couple's own children are the most useful family to read. Off the anchor depths
+     it is read one level only (the couple's own children); four levels from it are
+     heavy enough that FamilySearch answers 503.
 
 The tool does not use `person_read` (too heavy to walk a tree) and does not use
 `person_ancestors`' `descendants=true` (it drops people with no ascendancy number).
@@ -68,6 +74,10 @@ raising the timeout:
 - At most **60** descendancy reads, run with `mapWithConcurrency` (6 at a time).
 - A **40 s** time budget; reads not started by then are skipped and the result
   says so (`stopReason: "timeBudget"`).
+- A **50 s** hard deadline for everything. Each FamilySearch read gets half the
+  time left as its timeout and half as its retry budget, so a read started at 39.9 s
+  cannot run past it, and a read with under 2 s left is not started. The catalog
+  wait is the lesser of 15 s and the time left.
 - The catalog is fetched in parallel from the start and waited on for at most
   15 s; if it is late the holes are returned with `coverage: null` and a note.
 - **Early exit.** Waves run nearest the root first. The **near tier** — the root's
@@ -91,7 +101,7 @@ Out-of-range values throw; they are not clamped.
 ## Hole types
 
 The thresholds are named constants in `src/utils/tree-gap-detect.ts`; **a
-genealogist sets them**. The values below are proposals pending that review.
+genealogist sets them**. Reviewed and accepted by a senior genealogist on 2026-10-09; all 40 holes on a live tree were kept, and no values changed.
 
 | Type | Fires when | Search range | Place |
 |---|---|---|---|

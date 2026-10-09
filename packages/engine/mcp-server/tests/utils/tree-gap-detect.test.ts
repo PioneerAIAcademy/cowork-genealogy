@@ -456,3 +456,21 @@ describe("placeLevel", () => {
     expect(placeLevel("Cape Coast, Cape Coast Metropolitan, Central, Ghana")).toBe("locality");
   });
 });
+
+describe("no_spouse at the bottom level of a read", () => {
+  it("does not flag a leaf whose spouse the endpoint listed (measured: spouses come back on the last level)", () => {
+    const m = emptyModel(1);
+    addDescendancy(
+      m,
+      [
+        dp("A", "1", "A", "Male", 1850, 1920),
+        dp("B", "1.1", "B", "Male", 1880, 1950),
+        dp("BW", "1.1-S1", "BW", "Female", 1882, 1960),
+      ],
+      1,
+      1,
+    );
+    expect(detectGaps(m).filter((x) => x.type === "no_spouse" && x.personId === "B")).toEqual([]);
+  });
+});
+
