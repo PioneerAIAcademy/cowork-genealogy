@@ -285,7 +285,6 @@ describe("treeGapsTool", () => {
       recordTypes: ["CENSUS", "VITAL"],
       censusYears: [1920],
       placeLevel: "locality",
-      score: 2,
     });
   });
 });

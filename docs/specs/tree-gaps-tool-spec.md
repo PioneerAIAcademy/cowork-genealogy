@@ -100,7 +100,7 @@ genealogist sets them**. The values below are proposals pending that review.
 | `child_gap` | Consecutive known births more than `CHILD_GAP_YEARS` (4) apart while the mother was 15–40 at the earlier one. | earlier+1 … later−1 | marriage place, else mother's birthplace |
 | `early_last_child` | The last known child was born when the mother was under `EARLY_LAST_CHILD_AGE` (34), she lived to ≥ 40, and the window to age 45 / her death / his death is ≥ 4 years. | last+1 … end of window | as above |
 | `missing_surname` | A **deceased wife** (a mother in the pedigree, or a woman who is a spouse in a family read) whose name parts carry no surname, or only a placeholder (`Unknown`, `[unknown]`, empty). Judged from `names[].nameForms[].parts`; a response with no `names` block is treated as having one. | her marriage year −1 … +1; else her first child's birth −1 … +1; else her birth+15 … +35 | marriage place, else husband's marriage place, else her birthplace |
-| `no_birth_info` | A deceased person with **no birth date, or no birth place, or neither**. The detail says which. | birth −1 … +3 when a year is known; else first child's birth − 65 … − 15 for a man (− 45 … − 15 for a woman); else death − 90 … death | birthplace, else death place, else marriage place |
+| `no_birth_info` | A deceased person with **no birth date, or no birth place, or neither**. The detail says which. | birth −1 … +3 when a year is known; else death − 90 … death; else none | birthplace, else death place, else marriage place |
 | `no_spouse` | A deceased person who died at ≥ `NO_SPOUSE_MIN_DEATH_AGE` (25) and has no spouse in the tree. | birth+18 … death | birthplace |
 | `no_death_date` | `living` is false and no death date. | birth … `min(birth+90, this year)` | birthplace |
 
@@ -130,7 +130,7 @@ them. A living root whose descendants are all living yields no holes.
     detail,                     // plain words
     yearRange: {start,end}|null,
     place: string|null,
-    coverage: {collections, records, recordTypes[], censusYears[], placeLevel, score}|null
+    coverage: {collections, records, recordTypes[], censusYears[], placeLevel}|null
   }],
   scanned: { ancestorGenerations, descendantGenerations, persons,
              descendancyReads, stoppedEarly, stopReason },
@@ -159,22 +159,17 @@ facet that could hold the record:
 | `no_children`, `child_gap`, `early_last_child`, `no_birth_info` | `VITAL`, `CHURCH_RECORD`, `CENSUS` |
 | `no_death_date` | `VITAL`, `CHURCH_RECORD`, `CENSUS`, `NEWSPAPER` |
 
-Two more fields say how likely a search is to land. **They are proposals for a
-genealogist to tune** (`PLACE_LEVEL_WEIGHT`, `coverageScore` in
-`tree-gap-detect.ts`):
+Two more fields say how likely a search is to land:
 
 - `censusYears` — census years inside the hole's window, read from the catalog's
   census collections for the place (`typeFacet` `CENSUS`, single-year
   collections only, so a multi-year census index counts as a collection but
   names no year). A census names the whole household, so this is computed for
   every hole type, not only those listing `CENSUS` above.
-- `placeLevel` and `score` — `placeLevel` is how specific the hole's place is,
-  by its comma-separated parts: 1 `country`, 2 `region`, 3 `county`, 4+
-  `locality`. `score` is 0 when no collection matches, else 1 (+1 when a census
-  year falls in the window) times a weight of 1 (locality), 0.75 (county), 0.5
-  (region) or 0.25 (country), because a record search at a country is far less
-  likely to land than one at a parish. The tool reports it; it does not reorder
-  holes by it.
+- `placeLevel` — how specific the hole's place is, by its comma-separated parts:
+  1 `country`, 2 `region`, 3 `county`, 4+ `locality`. A search at a country is far
+  less likely to land than one at a parish. It is a label; the tool does not
+  weight or reorder holes by it.
 
 `coverage` is `null` when the hole has no place or no year range, or when the
 catalog was unavailable. **It is a floor, not a verdict:** the catalog counts

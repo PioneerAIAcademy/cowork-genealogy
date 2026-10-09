@@ -32,17 +32,6 @@ export const NO_SPOUSE_MIN_DEATH_AGE = 25;
 export const MARRIAGE_SEARCH_MIN_AGE = 18;
 /** Assumed maximum lifespan when scoping a missing death date. */
 export const MAX_LIFESPAN = 90;
-/** A mother's age at a child's birth, bounding when she was born. */
-export const MOTHER_AGE_RANGE: readonly [number, number] = [15, 45];
-/** A father's age at a child's birth, bounding when he was born. */
-export const FATHER_AGE_RANGE: readonly [number, number] = [15, 65];
-/** How specific a place is: a locality is worth more to a record search than a country. */
-export const PLACE_LEVEL_WEIGHT: Record<PlaceLevel, number> = {
-  locality: 1,
-  county: 0.75,
-  region: 0.5,
-  country: 0.25,
-};
 
 const TYPE_PRIORITY: Record<TreeGapType, number> = {
   missing_parents: 0,
@@ -166,11 +155,6 @@ export function placeLevel(place: string): PlaceLevel {
   return n >= 4 ? "locality" : n === 3 ? "county" : n === 2 ? "region" : "country";
 }
 
-/** 0 with no matching collection; else 1 (+1 with a census year in the window), weighted by place level. */
-export function coverageScore(collections: number, censusYears: number, level: PlaceLevel): number {
-  if (collections <= 0) return 0;
-  return Math.round((1 + (censusYears > 0 ? 1 : 0)) * PLACE_LEVEL_WEIGHT[level] * 100) / 100;
-}
 
 /** Ahnentafel depth of number n: 1 -> 0, 2-3 -> 1, 4-7 -> 2. */
 export function ahnentafelDepth(n: number): number {
@@ -494,15 +478,8 @@ function missingBirthInfo(model: GapModel, out: TreeGap[]): void {
     if (p.living || (p.hasBirthDate && p.hasBirthPlace)) continue;
     const missing = !p.hasBirthDate && !p.hasBirthPlace ? "date or place" : !p.hasBirthDate ? "date" : "place";
     let window: TreeGapYearRange | null = null;
-    const kids = [...(model.families.get(p.id)?.childIds ?? [])]
-      .map((k) => model.people.get(k)?.birthYear)
-      .filter((y): y is number => typeof y === "number");
     if (p.birthYear != null) window = range(p.birthYear - 1, p.birthYear + 3);
-    else if (kids.length > 0) {
-      const first = Math.min(...kids);
-      const [lo, hi] = p.gender === "female" ? MOTHER_AGE_RANGE : FATHER_AGE_RANGE;
-      window = range(first - hi, first - lo);
-    } else if (p.deathYear != null) window = range(p.deathYear - MAX_LIFESPAN, p.deathYear);
+    else if (p.deathYear != null) window = range(p.deathYear - MAX_LIFESPAN, p.deathYear);
     if (window && window.end > now) window = range(window.start, now);
     out.push(
       gap(

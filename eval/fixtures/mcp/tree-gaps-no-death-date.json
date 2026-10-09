@@ -29,8 +29,7 @@
             "CHURCH_RECORD"
           ],
           "censusYears": [],
-          "placeLevel": "region",
-          "score": 0.5
+          "placeLevel": "region"
         }
       }
     ],

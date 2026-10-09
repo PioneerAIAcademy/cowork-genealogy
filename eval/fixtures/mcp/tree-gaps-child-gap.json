@@ -31,8 +31,7 @@
             "VITAL"
           ],
           "censusYears": [],
-          "placeLevel": "locality",
-          "score": 1
+          "placeLevel": "locality"
         },
         "spouseId": "TGAP-GM1",
         "spouseName": "Clara Weis"

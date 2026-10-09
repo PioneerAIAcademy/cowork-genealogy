@@ -78,9 +78,6 @@ export interface TreeGapCoverage {
   // lists for the place (single-year collections only).
   censusYears: number[];
   placeLevel: PlaceLevel;
-  // 0 when no collection matches; else 1 (+1 when a census year falls in the
-  // window), times the place-level weight (locality 1 ... country 0.25).
-  score: number;
 }
 
 export interface TreeGap {
