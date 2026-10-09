@@ -36,7 +36,7 @@
     "packages/engine/plugin/skills/init-project/SKILL.md": 28378,
     "packages/engine/plugin/skills/record-extraction/SKILL.md": 16029,
     "packages/engine/plugin/skills/research-plan/SKILL.md": 33383,
-    "packages/engine/plugin/skills/research/SKILL.md": 37303,
+    "packages/engine/plugin/skills/research/SKILL.md": 37835,
     "packages/engine/plugin/skills/search-records/SKILL.md": 64492,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833
   },
@@ -77,7 +77,7 @@
     "tool:record_record_matches": 1093,
     "tool:record_search": 20624,
     "tool:research_append": 6283,
-    "tool:research_delivered": 666,
+    "tool:research_delivered": 703,
     "tool:research_log_append": 5216,
     "tool:research_query": 5038,
     "tool:same_person": 4324,
