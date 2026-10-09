@@ -606,10 +606,13 @@ proto-demo-aws: $(ENGINE_DEPS) ## U13: proto-demo against the rehearsal — BASE
 	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
 
 .PHONY: proto-audit-aws
-proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= [SESSION=]
-	@test -n "$(PG_DSN)" && test -n "$(RDS_CA)" || { echo "proto-audit-aws: PG_DSN=… and RDS_CA=… are required" >&2; exit 2; }
-	export PGSSLMODE=verify-full PGSSLROOTCERT='$(RDS_CA)'; cd apps/server && uv run python proto/audit.py \
-	  --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',)
+proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= PGPASSFILE= SESSION= and/or TURN=
+	$(foreach v,PG_DSN RDS_CA PGPASSFILE,$(if $($(v)),,$(error proto-audit-aws: $(v)=… is required; see the U13 block above proto-demo-aws)))
+	$(if $(SESSION)$(TURN),,$(error proto-audit-aws: SESSION=<id> or TURN=<id> is required))
+	$(if $(findstring password,$(PG_DSN))$(findstring sslmode,$(PG_DSN))$(findstring @,$(PG_DSN)),$(error proto-audit-aws: PG_DSN carries a password or sslmode; the password goes in PGPASSFILE and TLS in PGSSLMODE))
+	export PGSSLMODE=verify-full PGSSLROOTCERT='$(abspath $(RDS_CA))' PGPASSFILE='$(abspath $(PGPASSFILE))'; \
+	  cd apps/server && uv run python proto/audit.py --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',) \
+	  $(if $(TURN),--turn '$(TURN)',)
 
 .PHONY: proto-bounds-aws
 proto-bounds-aws: $(ENGINE_DEPS) ## U13: proto-bounds against the rehearsal — CASE= BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [PROFILE=] [SESSION=] ARGS=…
@@ -631,8 +634,8 @@ proto-seed: $(ENGINE_DEPS) ## D17 prep: load a fixture into the store and open a
 # reads the hook allowed, denied attempts, and every completed call's duration against
 # the step ceiling. Exit 1 when criterion 3 fails.
 .PHONY: proto-audit
-proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session)
-	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',)
+proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session) [TURN=<id>]
+	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',) $(if $(TURN),--turn '$(TURN)',)
 
 # D19: the D17 commands as one -- seed a fixture, post the harness's message for its
 # research question (`/research --autonomous …`), run to turn_done, print the acceptance
@@ -847,6 +850,13 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# only as new runs age in. Read the current number from a run, not from this
 	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
+
+.PHONY: unit-relay-fidelity
+unit-relay-fidelity: ## How much of an agent's return survives the main thread's relay — offline report over committed unit run logs, never a gate
+	# NOT replay-check above, which is one letter away and replays e2e runs.
+	# Report only: the direct block measures the HARNESS DISPATCHER, not
+	# production, so nothing here gates a build or reaches the judge (#3188).
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py
 
 .PHONY: replay-sizes
 replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
@@ -1194,8 +1204,9 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
-	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
-	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
+	# cannot see completion on either the Skill or the typed-spawn route — see
+	# guardrail-enforcement-spec.md §7 and `make e2e-skill-episodes`), so
+	# WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
 	# what runs stored: the seven post-hoc families (the §8 person_evidence
@@ -1280,7 +1291,7 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-detector-diff
-e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|same-person-provenance|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
@@ -1307,12 +1318,33 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 	# distributed over its calls two stated ways (see the module docstring).
 	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
-.PHONY: e2e-compaction
+.PHONY: e2e-report
+e2e-report: ## Readable .txt per e2e run, into eval/runlogs/e2e/<slug>/reports/: make e2e-report [TEST=<slug>] [FORCE=1]
+	# Every run already writes its own; this backfills the newest five runs per
+	# fixture (older reports are deleted; run logs are all kept). Pure
+	# formatting, no API. The judge's verdict, recall and findings stay HIDDEN
+	# until the run's .ann.json exists (spec §7.4 — runs are graded blind); a
+	# hidden report is re-rendered here once its run is graded. Gitignored.
+	cd eval/harness && uv run python -m e2e.run_report $(if $(TEST),--test $(TEST),) $(if $(FORCE),--force,)
+
+.PHONY: e2e-compare
+e2e-compare: ## Two runs of one e2e fixture side by side, saved as comparison/NN_comparison.txt: make e2e-compare TEST=<slug> | BEFORE=<run.json> AFTER=<run.json>
+	# Default: the fixture's two newest runs. Printed, and saved as the next
+	# numbered file in eval/runlogs/e2e/<slug>/comparison/ (newest five kept,
+	# gitignored). Verdict/recall only when BOTH runs are graded (spec §7.4).
+	cd eval/harness && uv run python -m e2e.run_compare $(if $(and $(BEFORE),$(AFTER)),--before $(abspath $(BEFORE)) --after $(abspath $(AFTER)),--test $(TEST))
+
+.PHONY: e2e-agent-spend
 e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>
 	# Pure analysis, no API: reads committed run JSONs' subagents[].usage.
-	# Two columns per agent -- what it spends and whether it is in trouble --
+	# Per agent: what it spends, the models it ran on, whether it is in
+	# trouble, and its busiest moment (peak window) and compaction count --
 	# which is what Wave 4 of docs/plan/cost-latency-10x.md needs to decide
-	# which agent gets which model rung.
+	# which agent gets which model rung. A spawn from before a field existed
+	# is counted as not measured for that column, never as zero. Cost is per
+	# model (T1.11): each spawn at its recorded model's rate; a spawn with no
+	# model recorded at the flat Sonnet table, labelled; a model with no rate
+	# is listed as unpriced, never $0. Corpus basis (1-hour cache writes).
 	#
 	# Runs committed before #2582 carry no subagents[].usage. They are counted
 	# as UNCOVERED, never as zero: a $0.00 row would read as "this agent is
@@ -1322,6 +1354,7 @@ e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): ma
 	# rule, not by agent; some rule names merely coincide with an agent name.
 	cd eval/harness && uv run python -m e2e.agent_spend_report $(if $(TEST),--test $(TEST),)
 
+.PHONY: e2e-compaction
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
 	# tool_calls. A run is segmentable only from a run committed after
@@ -1397,6 +1430,24 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
 		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,)) \
 		$(if $(SINCE),--since $(SINCE),)
+
+.PHONY: unit-report
+unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/reports/: make unit-report [SKILL=<name>] [FORCE=1]
+	# Every harness run already writes its own report; this backfills older logs.
+	# Pure formatting, no API. Per test: result, turns, cost by model (the SDK's
+	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
+	# thread's busiest moment. Removes reports whose run log was pruned (same
+	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
+	# rewrites them (needed after a log is rehashed or released under a new name).
+	# The reports/ folders are gitignored — regenerate, don't commit.
+	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
+
+.PHONY: unit-compare
+unit-compare: ## Compare a skill's newest unit run with the one before it, printed: make unit-compare SKILL=<name> | BEFORE=a.json AFTER=b.json
+	# Pure formatting, no API. Per test in BOTH runs: result, cost, change %,
+	# turns, seconds, busiest moment; plus which files the runs depended on
+	# changed between them. Totals cover only tests present in both runs.
+	cd eval/harness && uv run python -m unit_run_compare $(if $(and $(BEFORE),$(AFTER)),--before $(abspath $(BEFORE)) --after $(abspath $(AFTER)),--skill $(SKILL))
 
 .PHONY: e2e-scratch
 e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death

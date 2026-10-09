@@ -1,0 +1,1 @@
+Extract this record now: https://www.familysearch.org/ark:/61903/1:1:MC26-FP9 (United States Census, 1850). Hand it to the record-extractor agent in one delegation before you do anything else, then stop and reply in one line with how many assertions it wrote.

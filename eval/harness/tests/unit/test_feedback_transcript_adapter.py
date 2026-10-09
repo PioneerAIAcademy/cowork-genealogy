@@ -565,14 +565,17 @@ def test_main_warns_instead_of_printing_a_confident_zero_for_a_case_dir(tmp_path
 
 # --- subagent transcripts: splice, do not append (issue #1880) --------------
 #
-# The summons and the write live in different streams. `research/SKILL.md`
-# invokes `proof-conclusion` as a `Skill` call, and that skill's body delegates
-# to the agent of the same name, which does the protected write inside its own
-# transcript. `find_unguarded_protected_writes` walks ONE flat list and scans
-# the 40 entries BY INDEX before each write for that `Skill` call
-# (`skill_name_if_skill_call` matches `tool == "Skill"` only, so the `Agent`
-# call is not a summons). Append the child after a long parent and the write
-# lands far from its summons: a violation that never happened.
+# The summons and the write live in different streams. The summons is in the
+# parent: a `Skill` call, or a typed `Agent`/`Task` spawn of the owner's name.
+# The protected write is in the child's own transcript.
+# `find_unguarded_protected_writes` walks ONE flat list and scans the 40
+# entries BY INDEX before each write for that summons. Append the child after a
+# long parent and the write lands far from its summons: a violation that never
+# happened.
+#
+# A write whose own `agent_type` IS the owner is guarded by definition and
+# never flagged wherever it lands, so the splice test below uses a non-owner
+# child (`general-purpose`): with the owner's name it could not fail.
 
 _PROOF_WRITE = {
     "type": "tool_use", "id": "w", "name": "mcp__genealogy__research_append",
@@ -628,12 +631,29 @@ def _subagent_bundle(
 def test_the_subagent_write_is_spliced_beside_its_own_summons(tmp_path):
     """The whole point. 41 parent calls sit AFTER the spawn, so an appending
     implementation would put the write >40 entries from its `Skill` call and
-    report a violation that never happened."""
-    bundle = _subagent_bundle(tmp_path / "post-split", parent_tail=41)
+    report a violation that never happened. The child is a non-owner, so only
+    the summons in the window can clear the write."""
+    bundle = _subagent_bundle(tmp_path / "post-split", parent_tail=41, agent_type="general-purpose")
     adapted = adapt_bundle(bundle)
     tools = [c["tool"] for c in adapted["tool_calls"]]
     assert any("research_append" in t for t in tools), "the agent-owned write must be visible"
     assert find_unguarded_protected_writes(adapted["tool_calls"], window=40) == []
+
+
+def test_a_write_by_the_owning_agent_is_cleared_wherever_it_lands(tmp_path):
+    """The owner rule, not the splice, clears this one: move the spliced write
+    41 calls past its summons and it is still not a violation, while the same
+    move under a non-owner child is one."""
+    def _moved(agent_type):
+        bundle = _subagent_bundle(tmp_path / agent_type, agent_type=agent_type)
+        calls = adapt_bundle(bundle)["tool_calls"]
+        write = next(c for c in calls if "research_append" in c["tool"])
+        rest = [c for c in calls if c is not write]
+        filler = [{"tool": "record_search", "args": {}}] * 41
+        return rest + filler + [write]
+
+    assert find_unguarded_protected_writes(_moved("proof-conclusion"), window=40) == []
+    assert len(find_unguarded_protected_writes(_moved("general-purpose"), window=40)) == 1
 
 
 def test_appending_the_subagent_stream_would_report_a_false_violation(tmp_path):
@@ -884,15 +904,38 @@ def test_a_subagent_that_overruns_the_window_is_counted_not_hidden(tmp_path):
     """Splicing puts the child's own calls inside the window, so a subagent
     making more than `window` calls before its write pushes the parent's Skill
     call back out. Not fixed here (the e2e corpus has the same flat shape), so
-    it has to be COUNTED — the trigger for changing it is a measurement."""
-    bundle = _subagent_bundle(tmp_path / "chatty")
-    _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
-        _assistant([{"type": "tool_use", "id": f"c{i}", "name": "record_search",
-                     "input": {}}])
-        for i in range(45)
-    ] + [_assistant([_PROOF_WRITE])])
-    result = scan_feedback_bundle(bundle)
+    it has to be COUNTED — the trigger for changing it is a measurement. Only a
+    non-owner child can overrun: the owning agent's write is guarded by
+    definition, so it is neither counted nor a finding."""
+    def _chatty(agent_type, write=_PROOF_WRITE):
+        bundle = _subagent_bundle(tmp_path / agent_type.replace(":", "_"), agent_type=agent_type)
+        _write_jsonl(bundle / "_feedback" / "subagents" / "agent-a1.jsonl", [
+            _assistant([{"type": "tool_use", "id": f"c{i}", "name": "record_search",
+                         "input": {}}])
+            for i in range(45)
+        ] + [_assistant([write])])
+        return scan_feedback_bundle(bundle)
+
+    result = _chatty("general-purpose")
     assert result["window_overruns"] == 1
     assert result["subagent_transcripts_anchored"] == 1
     # And the finding it produces is exactly the one the count warns about.
     assert len(result["unguarded_writes"]) == 1
+
+    # The namespaced spelling is what the SDK plugin path logs.
+    for owner_type in ("proof-conclusion", "genealogy-research:proof-conclusion"):
+        owner = _chatty(owner_type)
+        assert owner["window_overruns"] == 0, owner_type
+        assert owner["unguarded_writes"] == [], owner_type
+
+    # The exemption is per owner: a batch the owner makes that also resolves a
+    # conflict is still a conflict-resolution finding, and still an overrun.
+    mixed = _chatty("proof-conclusion", write={
+        "type": "tool_use", "id": "w", "name": "mcp__genealogy__research_append",
+        "input": {"ops": [
+            {"section": "proof_summaries", "op": "append", "entry": {"id": "ps_1"}},
+            {"section": "conflicts", "op": "update", "entryId": "c_1", "fields": {"status": "resolved"}},
+        ]},
+    })
+    assert [w["required_skill"] for w in mixed["unguarded_writes"]] == ["conflict-resolution"]
+    assert mixed["window_overruns"] == 1

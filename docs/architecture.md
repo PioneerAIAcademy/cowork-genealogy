@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **9** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **24** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **8** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **25** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-four agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-five agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation` and `survey-surname`.
+`search-external-sites`, `source-evaluation`, `survey-surname` and `search-hints`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -354,7 +354,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-6 of the 9 skills carry a `references/` folder, loaded on demand, in-session,
+6 of the 8 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -805,10 +805,11 @@ There **is** an orchestrator, and it is a skill:
    and then hand-authoring the fields that skill would have written is not
    invoking it." The column is **mixed**, and the spelling is what says which:
    an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
-   every other entry is a `Skill` call. The paired rows —
+   every other entry is a `Skill` call. The formerly paired rows —
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
-   the spawn; their same-named thin skills stay on disk as the direct-user and
-   unit-eval entry points and are **not** on the in-loop route
+   the spawn, and their same-named thin skills have all been deleted:
+   the agent is now the only entry point, for the
+   orchestrator, for a user who names it, and for its unit-eval suite
    (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
@@ -888,6 +889,16 @@ back through the table anyway. The trigger corpus catches routing
 *into* `research` from the description, but not the internal routing table; a
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
+
+**A row spelled `@plugin:<name>` is an agent spawn, and the compliance
+detectors need no edit for it.** They credit a guardrail arm on either route: a
+`Skill` call naming it, or a typed `Agent`/`Task` spawn whose `subagent_type`
+(plugin namespace stripped) names it. So flipping a guardrail row from a skill
+to its agent, or converting another guardrail skill, keeps compliance green as
+long as the agent carries the arm's name. Adding the agent file still needs its
+name in `DEDICATED_AGENT_NAMES` (`eval/harness/harness/skill_invocation.py`),
+whose guard test goes red until it is there. An untyped spawn is still a bypass —
+the rule and its reason are in `docs/specs/guardrail-enforcement-spec.md` §2.
 
 The runlog CI gate now applies to `research` (armed by adding
 `eval/tests/unit/research/`). `forget-and-rederive` remains exempt
@@ -1168,7 +1179,8 @@ the file-write tools, because two of the three rules act on `research_append`
 itself:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
-   `research.json` and `tree.gedcomx.json` (`PROTECTED_PROJECT_FILES`), matched
+   `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
+   `external-collections.json` (`PROTECTED_PROJECT_FILES`), matched
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
@@ -1369,6 +1381,7 @@ trustworthy rather than merely present:
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
+| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`. At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
 check lists `results/` non-recursively and errors on any top-level `*.json` no
@@ -1489,8 +1502,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 9 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 8 of them as the first line of the body,
+All 8 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 7 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two

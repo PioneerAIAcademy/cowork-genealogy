@@ -142,3 +142,19 @@ def test_no_final_tree_stays_skipped_and_scratch(tmp_path, monkeypatch):
 
     assert result.verdict == "skipped"
     assert paths["result"].name.startswith("scratch_")
+
+
+def test_every_run_leaves_a_readable_report_with_the_grade_hidden(tmp_path, monkeypatch):
+    """The orchestrator writes `<runlog dir>/reports/<stem>.txt` right after the
+    run log — and, ungraded, it must not carry the judge's verdict (§7.4)."""
+
+    def judged(**kwargs):
+        return {"verdict": "pass", "recall_required": 1.0, "recall_total": 1.0,
+                "per_finding": [{"finding_id": "f1", "matched": "true"}]}
+
+    _result, paths = _drive(tmp_path, monkeypatch, judge=judged, final_tree={"persons": []})
+    report = paths["result"].parent / "reports" / f"{paths['result'].stem}.txt"
+    assert report.exists()
+    text = report.read_text(encoding="utf-8")
+    assert "grade hidden until this run is graded" in text
+    assert "verdict" not in text and "recall" not in text

@@ -105,6 +105,7 @@ from e2e.stop_checker import (
 )
 from e2e.subagent_capture import (
     collect_subagents,
+    find_session_transcript,
     find_subagent_transcripts,
     pair_tool_calls,
     parse_jsonl,
@@ -328,7 +329,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -342,6 +343,18 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.
 # Mirrored in all three lockdown copies even though only the plugin one ever
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# The credential-read arm's directory marker and the tools it inspects.
+# A path that has `.familysearch-mcp` as a SEGMENT (not a substring) is a
+# credential read. No `os`/`posixpath`/`re` inside the predicate: the parity
+# test's `_load` lifts only literal assignments and `_`-prefixed functions
+# with no imports.
+_CREDENTIAL_DIR = ".familysearch-mcp"
+_CREDENTIAL_READ_TOOLS = {
+    "Read": ("file_path",),
+    "Grep": ("path", "glob"),
+    "Glob": ("path", "pattern"),
+}
 
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
@@ -416,6 +429,30 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
+
+
+def credential_read_denied(tool_name: str, tool_input) -> str | None:
+    """The tool name if a read targets the credentials directory, else None.
+
+    Inspects Read.file_path, Grep.path, Grep.glob, Glob.path, Glob.pattern.
+    Denies when any path argument, with backslashes folded to forward slashes
+    and lowercased, has a path segment equal to `.familysearch-mcp`.
+
+    Never raises: a non-string or missing argument means allow.
+    No os/posixpath/re — the parity test's _load runs no imports.
+    """
+    keys = _CREDENTIAL_READ_TOOLS.get(tool_name)
+    if keys is None:
+        return None
+    input_dict = tool_input if isinstance(tool_input, dict) else {}
+    for key in keys:
+        value = input_dict.get(key)
+        if not isinstance(value, str):
+            continue
+        segments = value.replace("\\", "/").lower().split("/")
+        if _CREDENTIAL_DIR in segments:
+            return tool_name
+    return None
 
 
 # --- P2: the two opt-in filesystem denials (--deny-shell, --deny-project-reads)
@@ -2112,10 +2149,26 @@ async def _run_agent(
                         "To CREATE a new project use project_create, which writes both "
                         "files together; to add to an existing one use research_append, "
                         "research_log_append, tree_edit or tree_correct. These validate "
-                        "before persisting. Direct file writes never validate."
+                        "before persisting. Direct file writes never validate. "
+                        "external-collections.json is written only by external_links_search given a projectPath."
                     ),
                 },
             }
+
+        # Credential-read lockdown (unconditional). Deny Read/Grep/Glob on
+        # ~/.familysearch-mcp/ — the agent must not read FamilySearch tokens
+        # or the OpenRouter key. Auth goes through the login tool; a missing
+        # key is reported by image_transcribe itself. After the write lockdown
+        # and OUTSIDE the opt-in filesystem denials below, because the
+        # PR #2990 leak was a default run.
+        cred_denied = credential_read_denied(tool_name, input_data.get("tool_input") or {})
+        if cred_denied:
+            _emit(f"[blocked credential read] {tool_name}")
+            return _pretool_deny(
+                f"{tool_name} on the credentials directory is not permitted. "
+                "FamilySearch auth goes through the login flow, and a missing "
+                "OpenRouter key is reported by image_transcribe itself."
+            )
 
         # P2 — the two opt-in filesystem denials (--deny-shell,
         # --deny-project-reads). After the write lockdown, which is
@@ -3048,6 +3101,11 @@ async def _run_agent(
                         "total_cost_usd": message.total_cost_usd,
                         "usage": message.usage,
                     }
+                    # The SDK's own per-model ledger, helpers included (T1.11):
+                    # the reconciliation source for per-model pricing. Only
+                    # written when the SDK supplied it — absent, never null or {}.
+                    if isinstance(getattr(message, "model_usage", None), dict):
+                        usage["model_usage"] = message.model_usage
                     if message.is_error and aborted_reason is None:
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*
@@ -3239,7 +3297,7 @@ async def _run_agent(
     if guardrail_shadow_violations:
         _emit(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
-            "with no recent matching Skill invocation (shadow mode — not denied)"
+            "with no recent matching Skill call or typed agent spawn (shadow mode — not denied)"
         )
     # issue #963 — fold in the hook-sourced provenance gaps collected live in
     # pretool_hook. Same list because both answer "a guardrail's effect landed
@@ -3361,6 +3419,26 @@ def collect_post_hoc_shadow(
     return out
 
 
+def _write_readable_report(result_path: Path) -> None:
+    """Write the run's readable `.txt` into `<runlog dir>/reports/`. Never raises.
+
+    Beside the run log it describes, so a run redirected with `--runlog-root`
+    stays self-contained. The grade stays hidden in it until the run is graded
+    (spec §7.4) — see `e2e.run_report`. A report that fails to render must never
+    cost a run whose log is already written, so this only prints.
+    """
+    try:
+        from e2e.run_report import write_reports
+
+        written, _skipped, unreadable = write_reports([result_path], force=True)
+        for report in written:
+            print(f"  readable report: {report}")
+        if unreadable:
+            print(f"  (no readable report: {result_path} could not be read)")
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
+
+
 def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
@@ -3380,17 +3458,11 @@ def _find_session_transcript(workspace: Path) -> Path | None:
 
     Returns the newest matching JSONL, or None if none is found. Never raises:
     a failure here must not cost the run its log.
+
+    The lookup itself is `subagent_capture.find_session_transcript`, shared with
+    the unit harness's main-thread capture.
     """
-    try:
-        cache = sdk_cache_dir(workspace)
-        if cache is None:
-            return None
-        candidates = list(cache.glob("*.jsonl"))
-        if not candidates:
-            return None
-        return max(candidates, key=lambda p: p.stat().st_mtime)
-    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
-        return None
+    return find_session_transcript(workspace)
 
 
 async def run_e2e_test(
@@ -3721,6 +3793,7 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+        _write_readable_report(paths["result"])
 
         # Copy the raw SDK session transcript next to the runlog. The runlog
         # carries a summarized trace; this JSONL carries per-message
