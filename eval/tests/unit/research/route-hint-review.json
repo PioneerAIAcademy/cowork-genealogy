@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_research_018",
+    "id": "ut_research_zfp",
     "skill": "research",
     "name": "Routes a hint-review request to the search-hints agent",
     "type": "positive",
