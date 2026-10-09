@@ -11,15 +11,16 @@ the parents' residence).
 
 Decided (lead, 2026-09-27): no live mode — the live mode added for a
 no-project profile audit had no caller, and such an audit runs local mode
-over the project init-project creates in the working folder; see issue #2942.
+over the project init-project creates in the working folder.
 Decided (lead, 2026-10-06): no inline `tree` and no staged handle either — a
 live `person_read` is ~115–121 KB, which the model would re-type on every
 audit. The project lives in the session's own folder (`/project` on the hosted
 path), and init-project, not
 source-evaluation, creates it: `project_create` keeps its single caller and
 source-evaluation stays read-only. Where the working folder's project does not
-hold the audited person, source-evaluation skips the check and says so in one
-line rather than adding the person to a project the user did not ask to change.
+hold the audited person, the tool answers "not found" and source-evaluation
+says so in one line rather than adding the person to a project the user did not
+ask to change.
 
 Adapted from FamilySearch's `MobWarnings.java`, plus two project rules
 (`hasEventInOtherCountry`, `hasBirthFarFromParentsResidence`) that are not
@@ -58,12 +59,28 @@ The relative-variant tags in § Warning Definitions are the evidence.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `projectPath` | string | Yes | Absolute path to the directory containing `tree.gedcomx.json`. |
-| `personId` | string | Yes | The anchor person to check. Names the target; warnings are evaluated over this person and their one-hop relatives |
+| `personId` | string | Yes | The anchor person to check: a tree person id, or a FamilySearch id a tree person's `ark` links to. Names the target; warnings are evaluated over this person and their one-hop relatives |
 
 Example:
 ```json
 { "projectPath": "/home/user/projects/flynn", "personId": "I1" }
 ```
+
+**Resolving `personId`.** A tree person whose `id` equals
+`personId` wins. Otherwise the anchor is the one tree person whose `ark`, in
+any spelling `toArk` normalizes (a bare `ark:/61903/4:1:…`, a resolver URL, a
+`4:1:` prefix), names `ark:/61903/4:1:<personId>`, compared case-insensitively
+with any query string dropped. A `1:1:` record-persona ark never matches. Two
+persons linked to the same FamilySearch id is a pending merge, so the tool
+throws naming both ids rather than picking one; no match throws
+`Person '<id>' not found in tree.gedcomx.json.` init-project keys imported
+persons `I1`, `I2`… and keeps the FamilySearch id in `ark`, so a caller that
+holds only the FamilySearch id — source-evaluation, auditing a profile —
+reaches them without reading the tree. Measured on a source-evaluation unit run
+(`v2_2026-10-09_17-07-52`): told to read the tree and pass its own
+id, the agent skipped the read in two of three tests and passed the FamilySearch
+id, which a tree keyed `I1` refused. `person_quality` resolves the other way
+(local id → FamilySearch id) for the same reason.
 
 ---
 

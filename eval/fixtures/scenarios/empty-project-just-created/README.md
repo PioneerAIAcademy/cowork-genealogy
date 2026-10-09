@@ -16,7 +16,7 @@ Project state immediately after `init-project` runs successfully: the objective 
 
 - `question-selection` tests where the skill must derive a first research question from the objective rather than choose from an existing question list.
 - `research-plan` tests where the skill must produce a plan for a question that has no prior search log.
-- `source-evaluation`'s `project-without-person-skips-warnings`: the audited person (KD96-TV2) is not in this tree, so `person_warnings` must not be called.
+- `source-evaluation`'s `project-without-person-skips-warnings`: the audited person (KD96-TV2) is not in this tree, so `person_warnings` answers "not found" and no warning may be reported.
 - Any skill whose behavior on a freshly-initialized project differs from mid-research behavior.
 
 ## What this scenario tests boundary-wise

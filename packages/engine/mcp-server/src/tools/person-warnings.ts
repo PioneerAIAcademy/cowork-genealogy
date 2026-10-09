@@ -6,6 +6,7 @@
 // No network, no auth.
 
 import { getProjectStore } from "../store/project-store.js";
+import { toArk } from "../utils/ark.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
@@ -117,12 +118,32 @@ async function loadAnchor(
     throw new Error(`No persons found in ${TREE_FILE}.`);
   }
 
-  const anchor = tree.persons.find((p) => p.id === personId);
-  if (!anchor) {
-    throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
-  }
+  return { tree, anchor: findAnchor(tree.persons, personId) };
+}
 
-  return { tree, anchor };
+/**
+ * The tree person `personId` names: by tree id first, else (issue #2942) the
+ * one person whose FamilySearch link (`ark`, `4:1:` in any spelling) carries
+ * that id. init-project keys imported persons `I1`, `I2`… and keeps their
+ * FamilySearch id in `ark`, so a caller holding only the FamilySearch id still
+ * reaches them. Two persons linked to the same id is a pending merge, not a
+ * choice to make silently.
+ */
+function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
+  const byId = persons.find((p) => p.id === personId);
+  if (byId) return byId;
+  const wanted = `ark:/61903/4:1:${personId}`.toLowerCase();
+  const linked = persons.filter(
+    (p) => typeof p.ark === "string" && toArk(p.ark).replace(/[?#].*$/, "").toLowerCase() === wanted,
+  );
+  if (linked.length === 1) return linked[0];
+  if (linked.length > 1) {
+    throw new Error(
+      `FamilySearch id '${personId}' is linked to more than one person in ${TREE_FILE} ` +
+        `(${linked.map((p) => p.id).join(", ")}); pass one of those ids.`,
+    );
+  }
+  throw new Error(`Person '${personId}' not found in ${TREE_FILE}.`);
 }
 
 export const personWarningsToolSchema = {
@@ -145,7 +166,7 @@ export const personWarningsToolSchema = {
       personId: {
         type: "string",
         description:
-          "The anchor person to check. Warnings are evaluated over this person and their one-hop relatives.",
+          "The anchor person to check: a tree person id (e.g. I1), or a FamilySearch id (e.g. KWCJ-RN4) that a tree person's ark links to. Warnings are evaluated over this person and their one-hop relatives.",
       },
     },
     required: ["personId", "projectPath"],

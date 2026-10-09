@@ -681,21 +681,24 @@ def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=
 
 # --- person_warnings over the project tree (issue #2942) -------------------
 
-#: The audited person's own id in `christian-hole-after-death-residence`'s tree.
-#: It differs from the FamilySearch id (KD96-TV2), as in every tree init-project
-#: builds, so a call keyed on the FamilySearch id fails here.
-_WARNINGS_TREE_PERSON_ID = "I1"
-
 
 def _person_warnings_calls(tool_calls):
     return [c for c in (tool_calls or []) if (c.get("tool") or "").endswith("person_warnings")]
+
+
+def _resolved(call) -> bool:
+    """The live call found its anchor: the response carries `warnings`, not `ok: False`."""
+    response = call.get("response")
+    return isinstance(response, dict) and isinstance(response.get("warnings"), list)
 
 
 def test_project_warnings_called_on_tree_person(tool_calls, test):
     """Tag-gated (`project-warnings`), issue #2942.
 
     The project tree holds the audited person, so the agent calls
-    `person_warnings` once, with a `projectPath` and the tree person's own id.
+    `person_warnings` once, with a `projectPath`, and the call finds that
+    person. The scenario keys the person `I1` with a `4:1:` link to the
+    FamilySearch id, so either id resolves; any other id answers "not found".
     Reads the model's own `args`, which the harness logs before it rewrites
     `projectPath` for the live tool.
     """
@@ -708,9 +711,8 @@ def test_project_warnings_called_on_tree_person(tool_calls, test):
     )
     args = calls[0].get("args") or {}
     assert args.get("projectPath"), f"person_warnings was called without a projectPath: {args}"
-    assert args.get("personId") == _WARNINGS_TREE_PERSON_ID, (
-        f"person_warnings must name the tree person's own id {_WARNINGS_TREE_PERSON_ID!r}, "
-        f"not the FamilySearch id; got {args.get('personId')!r}"
+    assert _resolved(calls[0]), (
+        f"person_warnings did not find the audited person (args {args}): {calls[0].get('response')}"
     )
 
 
@@ -743,12 +745,15 @@ def test_project_warning_reported_verbatim(tool_calls, text_response, test, agen
     assert not missing, f"a person_warnings message is not in the reply verbatim: {missing[0][:160]!r}"
 
 
-def test_no_warnings_call_without_tree_person(tool_calls, test):
+def test_no_warnings_without_tree_person(tool_calls, test):
     """Tag-gated (`no-project-person`), issue #2942.
 
-    The working folder's project does not hold the audited person, so the
-    agent calls no `person_warnings`. Also requires a `person_read`, so an
-    agent that did nothing at all does not pass.
+    The working folder's project does not hold the audited person. The agent
+    may ask `person_warnings` once -- the tool answers "not found" -- but no
+    call may come back with warnings, which would mean the person was checked
+    under some other id. Also requires a `person_read`, so an agent that did
+    nothing at all does not pass. That the person was not added to the project
+    is the two unmodified-state validators' job.
     """
     if "no-project-person" not in (test.get("tags") or []):
         pytest.skip("test does not declare no-project-person")
@@ -756,9 +761,13 @@ def test_no_warnings_call_without_tree_person(tool_calls, test):
         "no person_read call in the run, so the audit never started and this guard checks nothing"
     )
     calls = _person_warnings_calls(tool_calls)
-    assert not calls, (
-        "person_warnings was called although the project tree does not hold the audited person: "
-        f"{[(c.get('args') or {}) for c in calls]}"
+    assert len(calls) <= 1, (
+        f"person_warnings was retried after 'not found': {[(c.get('args') or {}) for c in calls]}"
+    )
+    checked = [c for c in calls if _resolved(c)]
+    assert not checked, (
+        "person_warnings found someone in a project that does not hold the audited person: "
+        f"{[(c.get('args') or {}) for c in checked]}"
     )
 
 

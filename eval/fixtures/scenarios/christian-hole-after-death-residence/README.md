@@ -12,11 +12,11 @@ harness (places resolver off).
 - **GedcomX persons:**
   - `I1` — **Christian P. Hole** (subject), with
     `ark: "ark:/61903/4:1:KD96-TV2"`. The **local id differs from the
-    FamilySearch id**, as in every tree init-project builds, so
-    `person_warnings` must be called with `I1`; called with `KD96-TV2` it
-    answers "Person 'KD96-TV2' not found". Facts as in the parent, plus a
+    FamilySearch id**, as in every tree init-project builds;
+    `person_warnings` resolves `KD96-TV2` to `I1` through that ark (issue
+    #2942), and either id reaches him. Facts as in the parent, plus a
     **Residence dated 1950 (F17) after his 10 June 1945 death**.
-    `person_warnings({ personId: "I1" })` returns exactly one warning:
+    `person_warnings({ personId: "I1" | "KD96-TV2" })` returns exactly one warning:
     `hasEventAfterDeath1`, severity `contradiction`, message "An event is
     dated more than 1 year after this person's latest death-like fact."
     (measured 2026-10-09).
