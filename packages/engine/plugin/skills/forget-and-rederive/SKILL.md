@@ -105,7 +105,8 @@ relationship but keeps the documentary fact that carries the same conclusion (a
 that does.
 
 If the researcher hasn't seeded a project yet, run `@plugin:init-project` first
-(which builds the full tree). This skill edits an existing tree; it does not create one.
+(which builds the full tree), passing the researcher's own words verbatim, plus
+`projectPath`, and nothing else. This skill edits an existing tree; it does not create one.
 
 ### 2. Always dry-run first
 
