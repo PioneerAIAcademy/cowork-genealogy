@@ -411,6 +411,9 @@ CASES: dict[str, dict] = {
         (ENV_NS, "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS", "20000")]}},
     "refresh_age_0": {"measures": "grant refresh every turn", "ops": {"web": [(ENV_NS, "FS_GRANT_REFRESH_AGE_S", "0")]}},
     "cap_1usd": {"measures": "session spend cap", "ops": {"worker": [(ENV_NS, "SESSION_SPEND_CAP_USD", "1")]}},
+    "nudges_3": {"measures": "web nudge cap at compose's 3", "ops": {"web": [(ENV_NS, "AUTONOMOUS_MAX_NUDGES", "3")]}},
+    "no_telemetry": {"measures": "CLI nonessential egress off", "ops": {"worker": [
+        (ENV_NS, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")]}},
     "idle_session_60s": {"measures": "Postgres idle-session timeout", "rds_param": ("idle_session_timeout", "60000")},
 }
 
@@ -1782,7 +1785,11 @@ U13PY
             self.note("tagged resources remain; the tag index lags deletes, so re-polling once")
             self.sleep(getattr(self.args, "repoll_s", 600))
             tagged = self.tagged()
-        found("tagged", "resourcegroupstaggingapi", tagged)
+        gone = [arn for arn in tagged if self.verified_gone(arn)] if not self.dry else []
+        if gone:
+            self.note(f"tag index still lists {len(gone)} resource(s) EC2 reports gone (terminated "
+                      f"instances stay listed for up to an hour): {gone}")
+        found("tagged", "resourcegroupstaggingapi", [arn for arn in tagged if arn not in gone])
         apps = self.aws("elasticbeanstalk", "describe-applications", "--application-names", APP,
                         placeholder={"Applications": []})
         found("app", APP, [a["ApplicationName"] for a in apps.get("Applications", [])])
@@ -1858,6 +1865,23 @@ U13PY
             self.out(f"NOT EMPTY {line}")
         self.out("prove-empty: " + ("not empty" if left else "empty"))
         return 1 if left else 0
+
+    def verified_gone(self, arn: str) -> bool:
+        """An EC2 instance or volume the tag index still lists but EC2 itself reports gone:
+        a terminated instance stays in the index for up to an hour, past prove-empty's
+        re-poll (U13, 2026-10-08). Any other ARN, or an instance in any other state, stays."""
+        kind, _, rid = arn.rpartition(":")[2].partition("/")
+        if not arn.startswith("arn:aws:ec2:") or not rid:
+            return False
+        if kind == "instance":
+            got = self.aws("ec2", "describe-instances", "--instance-ids", rid, ok=NOT_FOUND, placeholder=None)
+            if got is None:
+                return True
+            states = [i.get("State", {}).get("Name") for r in got.get("Reservations", []) for i in r["Instances"]]
+            return bool(states) and all(st == "terminated" for st in states)
+        if kind == "volume":
+            return self.aws("ec2", "describe-volumes", "--volume-ids", rid, ok=NOT_FOUND, placeholder=None) is None
+        return False
 
     def tagged(self) -> list[str]:
         got = self.aws("resourcegroupstaggingapi", "get-resources", "--tag-filters",
