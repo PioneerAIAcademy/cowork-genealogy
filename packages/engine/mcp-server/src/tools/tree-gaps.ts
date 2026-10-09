@@ -36,6 +36,9 @@ const MAX_MAX_HOLES = 50;
 // Cowork cuts every MCP call at 60s. Stay well inside it, and cap the fan-out.
 const TIME_BUDGET_MS = 40_000;
 const CATALOG_WAIT_MS = 15_000;
+// Nothing may run past this: the whole call must return inside Cowork's 60 s.
+const DEADLINE_MS = 50_000;
+const MIN_READ_MS = 2_000;
 const MAX_DESCENDANCY_READS = 60;
 const CONCURRENCY = 6;
 
@@ -119,14 +122,39 @@ function intInRange(
   return value;
 }
 
+// Time left for one read: half is the per-attempt timeout and half the retry
+// budget, so a retry started late still ends before the deadline. Null when too
+// little is left to try.
+export function readWindow(
+  elapsedMs: number,
+): { timeoutMs: number; budgetMs: number } | null {
+  const remaining = DEADLINE_MS - elapsedMs;
+  if (remaining < MIN_READ_MS) return null;
+  const half = Math.floor(remaining / 2);
+  return { timeoutMs: half, budgetMs: half };
+}
+
+export function catalogWaitMs(elapsedMs: number): number {
+  return Math.max(0, Math.min(CATALOG_WAIT_MS, DEADLINE_MS - elapsedMs));
+}
+
 async function readJson(
   principal: Principal,
   path: string,
   what: string,
+  started: number,
 ): Promise<FSGapResponse | null> {
-  const res = await fsFetch(principal, `${API}${path}`, {
-    headers: { Accept: ACCEPT },
-  });
+  const window = readWindow(Date.now() - started);
+  if (!window) {
+    throw new Error("The time limit was reached before FamilySearch answered.");
+  }
+  const res = await fsFetch(
+    principal,
+    `${API}${path}`,
+    { headers: { Accept: ACCEPT } },
+    window.timeoutMs,
+    { budgetMs: window.budgetMs },
+  );
   if (res.status === 204) return null;
   if (res.status === 401) {
     throw new Error(
@@ -154,9 +182,14 @@ async function readJson(
 }
 
 async function currentUserPersonId(principal: Principal): Promise<string> {
-  const res = await fsFetch(principal, `${API}/users/current`, {
-    headers: { Accept: ACCEPT },
-  });
+  const window = readWindow(0);
+  const res = await fsFetch(
+    principal,
+    `${API}/users/current`,
+    { headers: { Accept: ACCEPT } },
+    window?.timeoutMs,
+    { budgetMs: window?.budgetMs },
+  );
   if (res.status === 401) {
     throw new Error(
       "FamilySearch rejected the access token (401). The session may have " +
@@ -243,6 +276,7 @@ export async function treeGapsTool(
     principal,
     `/tree/ancestry?person=${encodeURIComponent(rootId)}&generations=${ancestorGenerations}&personDetails=true`,
     `Person ${rootId}`,
+    started,
   );
   addAncestry(model, ancestry?.persons ?? []);
   const rootPerson = model.people.get(model.ancestors.get(1) ?? rootId);
@@ -253,12 +287,16 @@ export async function treeGapsTool(
   // Waves, nearest the root first, so a stop early keeps the closest holes.
   const waves: { depth: number; ids: string[] }[] = [];
   if (descendantGenerations > 0) waves.push({ depth: 0, ids: [rootPerson.id] });
-  for (const depth of anchorDepths(ancestorGenerations)) {
-    const ids: string[] = [];
-    for (const [n, id] of model.ancestors) {
-      if (Math.floor(Math.log2(n)) === depth) ids.push(id);
-    }
-    if (ids.length > 0) waves.push({ depth, ids });
+  const anchors = new Set(anchorDepths(ancestorGenerations));
+  const byDepth = new Map<number, string[]>();
+  for (const [n, id] of model.ancestors) {
+    const d = Math.floor(Math.log2(n));
+    // No read from above reaches an ancestor whose line ends here.
+    const lineEnds = !model.ancestors.has(2 * n) && !model.ancestors.has(2 * n + 1);
+    if (d > 0 && (anchors.has(d) || lineEnds)) byDepth.set(d, [...(byDepth.get(d) ?? []), id]);
+  }
+  for (const d of [...byDepth.keys()].sort((a, b) => a - b)) {
+    waves.push({ depth: d, ids: byDepth.get(d)! });
   }
 
   let reads = 0;
@@ -277,8 +315,14 @@ export async function treeGapsTool(
       stopReason = "maxHoles";
       break;
     }
+    // A line-end ancestor off the anchor depths is read for its own children only:
+    // four levels from it are heavy enough that FamilySearch answers 503.
     const levels =
-      wave.depth === 0 ? descendantGenerations : Math.min(MAX_DESCENDANT_GENERATIONS, wave.depth);
+      wave.depth === 0
+        ? descendantGenerations
+        : anchors.has(wave.depth)
+          ? Math.min(MAX_DESCENDANT_GENERATIONS, wave.depth)
+          : 1;
     const room = MAX_DESCENDANCY_READS - reads;
     if (room <= 0) {
       stopReason = "readCap";
@@ -293,6 +337,7 @@ export async function treeGapsTool(
           principal,
           `/tree/descendancy?person=${encodeURIComponent(id)}&generations=${levels}&personDetails=true`,
           `Person ${id}`,
+          started,
         );
       } catch (e) {
         if (wave.depth === 0) throw e;
@@ -316,7 +361,7 @@ export async function treeGapsTool(
   const catalog = await Promise.race([
     catalogPromise,
     new Promise<null>((r) => {
-      waitTimer = setTimeout(() => r(null), CATALOG_WAIT_MS);
+      waitTimer = setTimeout(() => r(null), catalogWaitMs(Date.now() - started));
     }),
   ]);
   clearTimeout(waitTimer);

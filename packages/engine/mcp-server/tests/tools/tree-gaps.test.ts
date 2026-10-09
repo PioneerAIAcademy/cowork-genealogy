@@ -1,11 +1,18 @@
 import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// Spy on the real fsFetch so a test can read the timeout and retry budget it was given.
+vi.mock("../../src/utils/fs-fetch.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/fs-fetch.js")>();
+  return { ...actual, fsFetch: vi.fn(actual.fsFetch) };
+});
+
 vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn().mockResolvedValue("test-token"),
 }));
 
-import { anchorDepths, treeGapsTool } from "../../src/tools/tree-gaps.js";
+import { fsFetch } from "../../src/utils/fs-fetch.js";
+import { anchorDepths, catalogWaitMs, readWindow, treeGapsTool } from "../../src/tools/tree-gaps.js";
 import { clearCollectionsCache } from "../../src/tools/collections-search.js";
 
 const mockFetch = vi.fn();
@@ -287,4 +294,92 @@ describe("treeGapsTool", () => {
       placeLevel: "locality",
     });
   });
+
+  it("reads the family of a couple whose line ends early, even when no anchor depth reaches them", async () => {
+    // Living root; deceased parents (depth 1) with no parents of their own. Depth 1 is
+    // neither 4 nor 8, so only the line-end rule sends a read to them.
+    const base = { birthPlace: "Dayton, Montgomery, Ohio, United States" };
+    route({
+      "/tree/ancestry": () =>
+        json({
+          persons: [
+            person("R", { ascendancyNumber: "1", name: "R", gender: "Male", birthDate: "1 May 1960", lifespan: "1960-" }, true),
+            person("DAD", { ascendancyNumber: "2", name: "Dad", gender: "Male", birthDate: "1 May 1900", deathDate: "1 May 1980", lifespan: "1900-1980", ...base }),
+            person("MOM", { ascendancyNumber: "3", name: "Mom", gender: "Female", birthDate: "1 May 1903", deathDate: "1 May 1985", lifespan: "1903-1985", ...base }),
+          ],
+        }),
+      "/tree/descendancy?person=R": () => json({ persons: [] }),
+      "/tree/descendancy?person=DAD": () =>
+        json({
+          persons: [
+            person("DAD", { descendancyNumber: "1", name: "Dad", gender: "Male", birthDate: "1 May 1900", deathDate: "1 May 1980", lifespan: "1900-1980", marriageDate: "1 May 1925" }),
+            person("MOM", { descendancyNumber: "1-S1", name: "Mom", gender: "Female", birthDate: "1 May 1903", deathDate: "1 May 1985", lifespan: "1903-1985" }),
+            person("K1", { descendancyNumber: "1.1", name: "K1", gender: "Male", birthDate: "1 May 1926", deathDate: "1 May 2000", lifespan: "1926-2000" }),
+            person("K2", { descendancyNumber: "1.2", name: "K2", gender: "Male", birthDate: "1 May 1940", deathDate: "1 May 2010", lifespan: "1940-2010" }),
+          ],
+        }),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    const r = await treeGapsTool({ personId: "R", ancestorGenerations: 3, descendantGenerations: 0 }, LOCAL);
+    const gap = r.gaps.find((g) => g.type === "child_gap");
+    expect(gap?.detail).toMatch(/1926 and 1940/);
+    const urls = mockFetch.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes("/tree/descendancy?person=DAD&generations=1"))).toBe(true);
+  });
+
+  it("reads a line-end ancestor off the anchor depths for its own children only (one level)", async () => {
+    const base = { gender: "Male", birthDate: "1 May 1850", deathDate: "1 May 1920", lifespan: "1850-1920" };
+    route({
+      "/tree/ancestry": () =>
+        json({
+          persons: [
+            person("R", { ascendancyNumber: "1", name: "R", ...base }),
+            person("P2", { ascendancyNumber: "2", name: "P2", ...base }),
+            person("P3", { ascendancyNumber: "3", name: "P3", ...base }),
+            person("G4", { ascendancyNumber: "4", name: "G4", ...base }),
+          ],
+        }),
+      "/tree/descendancy": () => json({ persons: [] }),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    await treeGapsTool({ personId: "R", ancestorGenerations: 4, descendantGenerations: 0 }, LOCAL);
+    const urls = mockFetch.mock.calls.map((c) => String(c[0]));
+    // G4 is at depth 2 and its line ends there; anchors for a cap of 4 are {4}.
+    expect(urls.some((u) => u.includes("/tree/descendancy?person=G4&generations=1"))).toBe(true);
+    expect(urls.some((u) => u.includes("/tree/descendancy?person=G4&generations=2"))).toBe(false);
+  });
+
+  describe("deadline", () => {
+    it("gives a read half the time left as its timeout and half as its retry budget", () => {
+      expect(readWindow(0)).toEqual({ timeoutMs: 25_000, budgetMs: 25_000 });
+      expect(readWindow(30_000)).toEqual({ timeoutMs: 10_000, budgetMs: 10_000 });
+    });
+    it("starts no read with under 2 s left", () => {
+      expect(readWindow(47_999)).not.toBeNull();
+      expect(readWindow(48_001)).toBeNull();
+    });
+    it("hands every FamilySearch read its timeout and retry budget", async () => {
+      route({
+        "/tree/ancestry": () =>
+          json({ persons: [person("R", { ascendancyNumber: "1", name: "R", gender: "Male", lifespan: "1900-1970" })] }),
+        "/tree/descendancy": () => json({ persons: [] }),
+        "/service/search/hr/v2/collections": () => json({ entries: [] }),
+      });
+      vi.mocked(fsFetch).mockClear();
+      await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
+      const tree = vi.mocked(fsFetch).mock.calls.filter((c) => String(c[1]).includes("/tree/"));
+      expect(tree.length).toBeGreaterThanOrEqual(2);
+      for (const c of tree) {
+        expect(c[3]).toBeGreaterThan(0);
+        expect(c[3]).toBeLessThanOrEqual(25_000);
+        expect(c[4]).toEqual({ budgetMs: c[3] });
+      }
+    });
+    it("waits for the catalog no longer than the time left, nor 15 s", () => {
+      expect(catalogWaitMs(0)).toBe(15_000);
+      expect(catalogWaitMs(40_000)).toBe(10_000);
+      expect(catalogWaitMs(55_000)).toBe(0);
+    });
+  });
 });
+
