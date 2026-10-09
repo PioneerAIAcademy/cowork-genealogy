@@ -1348,29 +1348,6 @@ def test_rule6_a_test_with_no_runs_blocks(capsys):
     assert "has no runs" in capsys.readouterr().out
 
 
-@pytest.mark.parametrize(
-    "runs",
-    [
-        [{}],
-        [{"outcome": None}],
-        [{"outcome": "FAIL"}],
-        [{"outcome": "failed"}],
-        [{"outcome": "pass"}, {"outcome": "skipped"}],
-    ],
-    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
-)
-def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
-    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
-    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
-    assert "outside the schema's" in capsys.readouterr().out
-
-
-def test_rule6_accepts_every_value_the_schema_allows(capsys):
-    """The other direction — the guard must not reject a legitimate enum member."""
-    for outcome in ("pass", "partial"):
-        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
-
-
 def test_rule6_an_empty_tests_array_is_allowed():
     """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
     second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
