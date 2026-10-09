@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_001",
-    "objective": "Identify the father of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "objective": "Identify the father of Patrick Flynn, born ca. 1845 in Pennsylvania, died ca. 1898 in Schuylkill County, PA",
     "subject_person_ids": ["I1"],
     "status": "active",
     "created": "2026-05-01",
@@ -11,7 +11,7 @@
   "questions": [
     {
       "id": "q_001",
-      "question": "Who was the father of Patrick Flynn (b. ~1845, PA, d. 1908)?",
+      "question": "Who was the father of Patrick Flynn (b. ~1845, PA, d. ca. 1898)?",
       "rationale": "Identifying Patrick's father is the primary research objective. The mother remains unidentified and would be a separate follow-on question.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
@@ -121,7 +121,7 @@
           "sequence": 2,
           "record_type": "vital_record",
           "jurisdiction": "Schuylkill County, Pennsylvania",
-          "date_range": "1908",
+          "date_range": "1898",
           "repository": "FamilySearch",
           "rationale": "Death certificate may name parents directly. However, Schuylkill County death records for the pre-1906 county filing period were destroyed in a 1920 courthouse fire, and the Pennsylvania State Archives does not hold duplicate copies for this county and period. No online or mail-order access path exists.",
           "fallback_for": null,
@@ -685,7 +685,7 @@
       "gaps": [
         {
           "start": "1870-01-01",
-          "end": "1908-03-12",
+          "end": "1898-03-12",
           "expected_events": ["marriage", "1880_census", "1900_census", "residence", "occupation", "death"],
           "severity": "high"
         }
@@ -703,7 +703,7 @@
       "supporting_assertion_ids": ["a_004", "a_010", "a_014"],
       "resolved_conflict_ids": [],
       "exhaustive_search_summary": "Searched 1850 census (FamilySearch, Ancestry, MyHeritage — log_001, log_002, log_003), 1860 census (FamilySearch — log_004), probate records 1870-1890 (FamilySearch — log_006, will found), and later censuses 1870-1900 (FamilySearch — log_007, corroborative). Death certificate search skipped — records destroyed in 1920 courthouse fire, no duplicate copies available.",
-      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845-1908)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). Indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Indirect evidence of parentage.\n\n3. **Thomas Flynn's Will (1881)** (Original Source). Will names 'my eldest son Patrick Flynn' as principal heir. Direct evidence, primary informant (Thomas Flynn himself).\n\n### Skipped Search\n\nDeath certificate search skipped — Schuylkill County death records for the pre-1906 county filing period were destroyed in a 1920 courthouse fire. No duplicate copies available from the Pennsylvania State Archives.\n\n### Assessment\n\nRated **Probable** pending exhaustive declaration."
+      "narrative_markdown": "## Parentage of Patrick Flynn (ca. 1845-1898)\n\nPatrick Flynn is **Probably** the son of Thomas Flynn of Schuylkill County, Pennsylvania.\n\n### Evidence Summary\n\nThree independent lines of evidence support this conclusion:\n\n1. **1850 U.S. Census** (Original Source). Patrick Flynn, age 5, born Ireland, appears in the household of Thomas Flynn, age 32, born Ireland, in Schuylkill County, Pennsylvania (dwelling 84, family 91). Indirect evidence of parentage.\n\n2. **1860 U.S. Census** (Original Source). Patrick Flynn, age 15, born Ireland, appears in the household of Thomas Flynn in Schuylkill County (dwelling 112, family 119). Indirect evidence of parentage.\n\n3. **Thomas Flynn's Will (1881)** (Original Source). Will names 'my eldest son Patrick Flynn' as principal heir. Direct evidence, primary informant (Thomas Flynn himself).\n\n### Skipped Search\n\nDeath certificate search skipped — Schuylkill County death records for the pre-1906 county filing period were destroyed in a 1920 courthouse fire. No duplicate copies available from the Pennsylvania State Archives.\n\n### Assessment\n\nRated **Probable** pending exhaustive declaration."
     }
   ],
   "evaluations": []

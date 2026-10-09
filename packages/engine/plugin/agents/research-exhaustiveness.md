@@ -166,7 +166,7 @@ named in `justification`.
 | `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried, and FAN research attempted where direct evidence is insufficient? |
 | `original_substitution` | Derivatives replaced with originals where available? |
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
-| `evidence_class` | At least one original record with primary information? |
+| `evidence_class` | At least one original record with primary information? A record type **searched and found absent** is negative evidence, not a missing class — it does not block. |
 | `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
 | `overturn_risk` | Could an unsearched source plausibly change the conclusion? |
 
@@ -178,16 +178,13 @@ named in `justification`.
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
-  - A skipped item with **no `skip_category`** is judged on its recorded
-    reason, exactly as before the field existed. Most skipped items on a real
-    project are this shape. A missing value is **not** evidence the source was
-    unsearched, and must never be read as one.
-  - When a `skip_category` IS present it routes the item: `inaccessible` and
-    `no_coverage` are eligible for the exception below, and the exception's own
-    conditions still decide. `answered`, `fallback_not_triggered`,
-    `out_of_scope` and `user_declined` are not — those were disposed of with
-    the source reachable. `premise_invalidated` says the plan wants revising:
-    recommend `research-plan`.
+  - A skipped item's recorded reason is **fact**. Accept it as written. Most
+    skipped items carry no `skip_category`; its absence says nothing. A
+    skipped **decisive** record still gates (below) unless its recorded reason
+    is inaccessibility.
+  - A present `skip_category` changes only two things: `premise_invalidated`
+    means recommend `research-plan`; `inaccessible` and `no_coverage` make the
+    item eligible for the exception below, whose own conditions still decide.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
