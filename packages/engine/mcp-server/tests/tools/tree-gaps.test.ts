@@ -136,4 +136,100 @@ describe("treeGapsTool", () => {
     const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
     expect(r.notes.join(" ")).toMatch(/2 descendancy reads failed/);
   });
+
+  // Ancestry with a deceased root and one ancestor at each of depths 4 and 8, so the
+  // near tier has an anchor and the far tier has an anchor.
+  function ancestryWithFarAnchors(extraDepth8: number) {
+    const base = { gender: "Male", birthDate: "1 May 1700", deathDate: "1 May 1770", lifespan: "1700-1770" };
+    const persons = [
+      person("R", { ascendancyNumber: "1", name: "R", ...base }),
+      person("A4", { ascendancyNumber: "16", name: "A4", ...base }),
+    ];
+    for (let i = 0; i < extraDepth8; i++) {
+      persons.push(person(`A8-${i}`, { ascendancyNumber: String(256 + i), name: `A8-${i}`, ...base }));
+    }
+    return { persons };
+  }
+
+  it("stops before the far anchors once maxHoles are in hand (early exit)", async () => {
+    route({
+      "/tree/ancestry": () => json(ancestryWithFarAnchors(1)),
+      "/tree/descendancy": () => json({ persons: [] }),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    // R (depth 0) and A4 (depth 4 < 8) both lack parents: two holes at once.
+    const r = await treeGapsTool({ personId: "R", maxHoles: 1 }, LOCAL);
+    expect(r.scanned.stopReason).toBe("maxHoles");
+    expect(r.scanned.stoppedEarly).toBe(true);
+    // The root's descendants and the depth-4 anchor ran; the depth-8 anchor did not.
+    expect(r.scanned.descendancyReads).toBe(2);
+    expect(r.gaps).toHaveLength(1);
+  });
+
+  it("reads the far anchors when maxHoles is not reached", async () => {
+    route({
+      "/tree/ancestry": () => json(ancestryWithFarAnchors(1)),
+      "/tree/descendancy": () => json({ persons: [] }),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    const r = await treeGapsTool({ personId: "R", maxHoles: 50 }, LOCAL);
+    expect(r.scanned.descendancyReads).toBe(3);
+    expect(r.scanned.stopReason).toBeNull();
+  });
+
+  it("caps the descendancy reads at 60 and says so", async () => {
+    route({
+      "/tree/ancestry": () => json(ancestryWithFarAnchors(70)),
+      "/tree/descendancy": () => json({ persons: [] }),
+      "/service/search/hr/v2/collections": () => json({ entries: [] }),
+    });
+    const r = await treeGapsTool({ personId: "R", maxHoles: 50 }, LOCAL);
+    expect(r.scanned.stopReason).toBe("readCap");
+    expect(r.scanned.descendancyReads).toBe(60);
+    expect(r.notes.join(" ")).toMatch(/read cap/);
+  });
+
+  it("scores a hole against the catalog: place scope, years and record type", async () => {
+    const entry = (id: string, title: string, typeFacet: string) => ({
+      content: {
+        gedcomx: {
+          collections: [
+            {
+              id,
+              title,
+              searchMetadata: [{ startYear: 1850, endYear: 1950, typeFacet, recordCount: 1000 }],
+            },
+          ],
+        },
+      },
+    });
+    route({
+      "/tree/ancestry": () =>
+        json({
+          persons: [
+            person("R", {
+              ascendancyNumber: "1",
+              name: "R",
+              gender: "Male",
+              birthDate: "1 May 1900",
+              birthPlace: "Dayton, Montgomery, Ohio, United States",
+              lifespan: "1900-1990",
+            }),
+          ],
+        }),
+      "/tree/descendancy": () => json({ persons: [] }),
+      "/service/search/hr/v2/collections": () =>
+        json({
+          entries: [
+            entry("1", "Ohio, Births and Christenings, 1850-1950", "VITAL"),
+            entry("2", "Ohio, Military Rolls, 1850-1950", "MILITARY"),
+            entry("3", "Texas, Births, 1850-1950", "VITAL"),
+          ],
+        }),
+    });
+    const r = await treeGapsTool({ personId: "R", ancestorGenerations: 1 }, LOCAL);
+    const hole = r.gaps.find((g) => g.type === "no_death_date")!;
+    // Only the Ohio VITAL collection counts: Texas is the wrong place, MILITARY the wrong type.
+    expect(hole.coverage).toEqual({ collections: 1, records: 1000, recordTypes: ["VITAL"] });
+  });
 });

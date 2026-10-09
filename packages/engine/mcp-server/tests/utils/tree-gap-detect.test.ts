@@ -216,3 +216,36 @@ describe("selectGaps", () => {
     expect(new Set(picked.map((g) => g.type)).size).toBeGreaterThan(1);
   });
 });
+
+describe("living flag", () => {
+  it("treats a person with no `living` flag as living, so no hole is reported on them", () => {
+    const m = emptyModel(1);
+    addAncestry(m, [
+      { id: "R", display: { ascendancyNumber: "1", name: "R", gender: "Male", birthDate: "1 May 1900", lifespan: "1900-" } },
+    ]);
+    expect(detectGaps(m)).toEqual([]);
+  });
+});
+
+describe("a man with several spouses", () => {
+  it("skips the interval-based holes, since the endpoint does not say which spouse bore which child", () => {
+    const m = emptyModel(1);
+    addDescendancy(
+      m,
+      [
+        dp("DAD", "1", "Dad", "Male", 1850, 1920, { marriageDate: "1 May 1875" }),
+        dp("W1", "1-S1", "W1", "Female", 1855, 1880),
+        dp("W2", "1-S2", "W2", "Female", 1860, 1930),
+        dp("K0", "1.1", "K0", "Male", 1876, 1950),
+        dp("K1", "1.2", "K1", "Male", 1890, 1950),
+      ],
+      1,
+      4,
+    );
+    const t = types(m);
+    expect(t).not.toContain("child_gap");
+    expect(t).not.toContain("early_last_child");
+    expect(t).not.toContain("no_children");
+  });
+});
+

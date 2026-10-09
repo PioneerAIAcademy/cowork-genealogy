@@ -60,9 +60,9 @@ export const treeGapsToolSchema = {
     "ancestors (default 4 generations down, which covers the direct line's " +
     "siblings), and returns the HOLES it computed, not the tree: parents " +
     "missing before the end of a line, a couple with no children, a gap of " +
-    "more than 4 years between births, a last child born well before the " +
-    "mother was 40, a deceased adult with no spouse, a deceased person with " +
-    "no death date. Each hole gives the person's ID, name, life years, the " +
+    "more than 4 years between births, a last child born when the mother " +
+    "was under 34 though she lived past 40, a deceased adult with no " +
+    "spouse, a deceased person with no death date. Each hole gives the person's ID, name, life years, the " +
     "year range and place to search, and a `coverage` count of catalog " +
     "collections that could hold the record. Living people never carry a " +
     "hole. If personId is omitted it uses the logged-in user; for anyone " +
