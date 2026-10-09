@@ -16,7 +16,8 @@ they run against a fake `aws`.
   - `account`: the 12-digit account the caller must be in. `--expect-account` overrides it.
   - `alert-email`: the address the budget alerts go to.
   - `allowed-emails`: the patrons who may sign in (space- or comma-separated).
-  - `zone`, `host`: kept for when the hostname and certificate are decided.
+  - `zone`, `host`: kept for a public hostname. `signin --mode https` uses neither: it
+    serves the web environment's own CNAME with a self-signed certificate.
 
   The account id, the zone and any hostname never go in a tracked file, a test, a commit
   message or a PR body. Write `<account>`, `<zone>` and `<host>` instead.
@@ -86,7 +87,8 @@ they run against a fake `aws`.
 | `queue` | Reads the worker's `WorkerQueue` URL and sets it as `QUEUE_URL` (the two-step: the worker exits 2 at `step=queue_url` until then). |
 | `web` | The web environment, with an internet-facing application load balancer and `QUEUE_URL`. It has no `PUBLIC_URL`, no sign-in and no dev login on first boot. |
 | `migrate` | Over SSM on the web instance, under a transient policy whose `Resource` is exactly the master secret and web's DSN secret, removed in `finally`. Runs `migrate.py`, creates or updates the DML role and its grants, then runs `migrate.py --status`. |
-| `signin --mode loopback` (optional) | `PUBLIC_URL=http://127.0.0.1:1837`, `FAMILYSEARCH_WEB_ENABLED=true` and `ALLOWED_EMAILS` (space-separated) on web. `--mode off` removes them. `--mode https` is refused until the hostname and certificate are decided. |
+| `signin --mode loopback` (optional) | `PUBLIC_URL=http://127.0.0.1:1837`, `FAMILYSEARCH_WEB_ENABLED=true` and `ALLOWED_EMAILS` (space-separated) on web. `--mode off` removes them. |
+| `signin --mode https` (optional) | A self-signed certificate for the web environment's CNAME, made with `openssl` in the work dir and imported into ACM, tagged. Then on web: the 443 listener (`aws:elbv2:listener:443`, `Protocol=HTTPS`, `SSLCertificateArns`), the port-80 listener off, `PUBLIC_URL=https://<web-cname>`, and the same sign-in settings. A re-run reuses the certificate. Leaving `https` turns 443 off and port 80 back on. See "https" below. |
 | `resolver` (optional) | A Route 53 Resolver query log on the default VPC, written to `/genealogy-u13/resolver`, to record which hosts the tiers resolve. |
 
 Every tier gets its security group and instance profile through
@@ -106,6 +108,19 @@ aws ssm start-session --target <web instance id> \
 ```
 
 Then open `http://127.0.0.1:1837`.
+
+### https
+
+`signin --mode https` proves list 3's step 18 listener without a hostname of our own: the
+account's one public zone belongs to another team, so no public certificate can be
+validated. The listener settings are the guide's. Only the chain differs: it is not publicly
+trusted, so pass `--cacert <work dir>/tls/web-cert.pem` to curl.
+
+FamilySearch sends the browser back only to the dev key's registered loopback callback, so
+sign-in never completes on `https://<web-cname>`. Sign in through loopback first and reuse
+that session cookie over https. The tier signs it with the same `SESSION_SECRET`. Run
+anything that needs the loopback `PUBLIC_URL` before switching. The https sign-in itself is
+F15's client on F18's host.
 
 ### Postgres from the laptop
 
@@ -144,6 +159,7 @@ goes to `--options-to-remove`, so the bundle's template value (if any) applies a
 | `debug_hold` | `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` on tools | The hold acceptance step 4 kills the worker within |
 | `refresh_age_0` | `FS_GRANT_REFRESH_AGE_S=0` on web | A FamilySearch grant refresh on every turn |
 | `cap_1usd` | `SESSION_SPEND_CAP_USD=1` on the worker | That the session spend cap stops a turn |
+| `nudges_0` | `AUTONOMOUS_MAX_NUDGES=0` on web, so the worker runs no Stop hook (removed on restore) | A case measured with nudges off, as compose's kill recipes run it (`probe_resume`) |
 | `nudges_3` | `AUTONOMOUS_MAX_NUDGES=3` on web (the template's 60 applies again on restore) | Whether a kill case's `no_progress` close comes from web's 60-nudge cap: the same case at compose's 3 |
 | `no_telemetry` | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` on the worker (kept for the CLI by `CLI_ENV_KEEP_PREFIXES`) | The CLI's egress with its nonessential traffic (the Datadog intake) off |
 | `idle_session_60s` | The parameter group's `idle_session_timeout=60000`. It waits for `in-sync`, then restores with `reset-db-parameter-group`. Never during the acceptance turn. | What a Postgres idle-session timeout does to the tiers' pools |
@@ -163,19 +179,23 @@ already gone:
    only `genealogy-u13/` and the keys that name a recorded environment id.
 5. Force-delete the secrets.
 6. Empty and delete the data bucket.
-7. Delete the security groups `rds`, then `tools-alb`, `web`, `worker` and `tools`, retrying
+7. Delete the imported certificates, retrying for up to 15 minutes while ACM still reports
+   one in use.
+8. Delete the security groups `rds`, then `tools-alb`, `web`, `worker` and `tools`, retrying
    on DependencyViolation for up to 10 minutes.
-8. Delete the instance profiles, then the roles. Service-linked roles are left in place.
-9. Delete the budget.
-10. Remove the Resolver query log (disassociate, delete) and its log group.
-11. Delete the `/aws/elasticbeanstalk/genealogy-u13-*` log groups.
+9. Delete the instance profiles, then the roles. Service-linked roles are left in place.
+10. Delete the budget.
+11. Remove the Resolver query log (disassociate, delete) and its log group.
+12. Delete the `/aws/elasticbeanstalk/genealogy-u13-*` log groups.
 
 Then remove the `/etc/hosts` line and delete the work dir. `prove-empty` checks the tag
 index (re-polled after `--repoll-s`, since it lags deletes), the application and
 environments, the recorded stacks, load balancers and queues, Elastic IPs, instances,
 security groups, the RDS trio, the secrets, the data bucket, the storage bucket (`head-bucket`
 must answer 404 when this run created it; anything else counts as not empty), the IAM path,
-the budget, the Resolver config and both log-group prefixes.
+the budget, the recorded certificates, the Resolver config and both log-group prefixes. A tag
+index entry for an EC2 instance or volume, or a certificate, passes when EC2 or ACM itself
+reports it gone.
 
 ## Leak check
 
