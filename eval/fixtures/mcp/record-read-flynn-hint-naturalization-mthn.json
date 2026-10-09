@@ -1,0 +1,46 @@
+{
+  "tool": "record_read",
+  "description": "record_read for hint MTHN: a naturalization index entry for 'Thos. Flinn', 1856, Pennsylvania — no county, no age or birthplace, no relatives, no image. Nothing in it confirms or contradicts the tree's Thomas Flynn (b. ~1818, Ireland; Schuylkill County 1850-1860), so the right answer is not enough information to judge (issue #2029).",
+  "args": {
+    "recordId": "~MTHN"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "MTHN",
+        "ark": "ark:/61903/1:1:MTHN",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "type": "BirthName",
+            "given": "Thos.",
+            "surname": "Flinn"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Naturalization",
+            "date": "1856",
+            "place": "Pennsylvania, United States"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania, Naturalization Records, 1795-1931"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Pennsylvania, Naturalization Records, 1795-1931",
+        "citation": "\"Pennsylvania, Naturalization Records, 1795-1931,\" index, FamilySearch, Thos. Flinn, 1856."
+      }
+    ]
+  }
+}

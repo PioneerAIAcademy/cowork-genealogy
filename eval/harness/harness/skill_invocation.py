@@ -13,6 +13,13 @@ main-thread call and only meaningful once spec §11's ledger-attribution lands;
 older runlogs simply lack the keys) plus the project's persisted
 `research.json`/`tree.gedcomx.json`.
 
+A guardrail skill counts as invoked on either of two routes: a `Skill` call
+naming it, or a typed `Agent`/`Task` spawn whose `subagent_type` (plugin
+namespace stripped) names it — the direct spawn of a paired agent is the
+sanctioned in-loop route (docs/specs/guardrail-enforcement-spec.md §2, the
+third shape). `invoked_skill_name` is that rule; an untyped spawn credits
+nothing.
+
 Three consumers, all described in the plan:
   - `owning_skills` + `recently_succeeded` — the live, shadow-mode caller-id
     check (§4.1): before a protected write is allowed to proceed, was its
@@ -56,6 +63,33 @@ def skill_name_if_skill_call(tool: str, args: dict[str, Any] | None) -> str | No
     return name if isinstance(name, str) and name else None
 
 
+def skill_name_if_typed_spawn(tool: str, args: dict[str, Any] | None) -> str | None:
+    """The bare agent name if this tool call is a typed `Agent`/`Task` spawn,
+    else None.
+
+    A sibling of `skill_name_if_skill_call`, not a widening of it: two
+    consumers (`skill_episode_report`, `guardrail_shadow_report`) genuinely mean
+    a literal `Skill` call. The plugin namespace is stripped because Cowork and
+    hosted feedback bundles log `genealogy-research:<agent>` while every
+    committed e2e value is bare. An untyped spawn returns None — it is a
+    recorded bypass shape, not a route.
+    """
+    if tool not in ("Agent", "Task"):
+        return None
+    name = strip_agent_namespace((args or {}).get("subagent_type"))
+    return name if name else None
+
+
+def invoked_skill_name(tool: str, args: dict[str, Any] | None) -> str | None:
+    """The guardrail name this call invokes, on either sanctioned route: a
+    `Skill` call, or a typed `Agent`/`Task` spawn credited by its stripped
+    `subagent_type`. Both names are namespace-stripped, since Cowork lists
+    plugin skills as `genealogy-research:<skill>` too. Callers keep their own
+    errored-call gate."""
+    skill = strip_agent_namespace(skill_name_if_skill_call(tool, args))
+    return skill or skill_name_if_typed_spawn(tool, args)
+
+
 def _iter_ops(args: dict[str, Any]) -> list[dict[str, Any]]:
     """Normalize a tool call's single-op vs batch-op (`ops: [...]`) form."""
     ops = args.get("ops")
@@ -75,6 +109,21 @@ def _question_id_from_skill_call(args: dict[str, Any] | None) -> str | None:
         return None
     m = _QUESTION_ID_RE.search(text)
     return m.group(0) if m else None
+
+
+def _question_id_from_spawn(args: dict[str, Any] | None) -> str | None:
+    """Best-effort question id from a typed spawn's free-text `description` and
+    `prompt` (an `Agent` entry carries no structured question field). Used only
+    when exactly one distinct id appears; zero or several return None, which
+    callers treat as "unknown," the same contract as
+    `_question_id_from_skill_call`."""
+    args = args or {}
+    ids: set[str] = set()
+    for key in ("description", "prompt"):
+        text = args.get(key)
+        if isinstance(text, str):
+            ids.update(_QUESTION_ID_RE.findall(text))
+    return next(iter(ids)) if len(ids) == 1 else None
 
 
 def _question_id_from_op(op: dict[str, Any]) -> str | None:
@@ -158,21 +207,26 @@ def recently_succeeded(
     question_id: str | None = None,
 ) -> bool:
     """Was `skill` successfully invoked within `window` calls before
-    `before_index`? When `question_id` is given AND a candidate `Skill` call's
-    own question id is derivable, they must match; when either side's
-    question id can't be derived, falls back to a skill-only match (the
-    "generous, not per-question-airtight" behavior documented in the plan)."""
+    `before_index`, by a `Skill` call or a typed spawn (`invoked_skill_name`)?
+    When `question_id` is given AND a candidate call's own question id is
+    derivable, they must match; when either side's question id can't be
+    derived, falls back to a skill-only match (the "generous, not
+    per-question-airtight" behavior documented in the plan)."""
     lo = max(0, before_index - window)
     for i in range(lo, before_index):
         entry = tool_calls[i]
         if entry.get("is_error") is True:
             continue
-        name = skill_name_if_skill_call(entry.get("tool", ""), entry.get("args"))
+        tool = entry.get("tool", "")
+        name = invoked_skill_name(tool, entry.get("args"))
         if name != skill:
             continue
         if question_id is None:
             return True
-        candidate_q = _question_id_from_skill_call(entry.get("args"))
+        if tool == "Skill":
+            candidate_q = _question_id_from_skill_call(entry.get("args"))
+        else:
+            candidate_q = _question_id_from_spawn(entry.get("args"))
         if candidate_q is None or candidate_q == question_id:
             return True
     return False
@@ -292,7 +346,13 @@ def find_unguarded_protected_writes(
     window: int,
 ) -> list[dict[str, Any]]:
     """Shadow-mode scan (§4.1): every protected write with no matching
-    successful skill invocation in its trailing window. Returns violation
+    successful skill invocation in its trailing window. A write made BY the
+    owning agent (its own stripped `agent_type` equals the owner) is that
+    owner doing its own work and is never flagged whatever the window holds.
+    For `proof_summaries`, `person_evidence` and the exhaustiveness
+    declaration the hook also routes the write to that caller; the tree writes
+    (including a `materialize_facts` mint) are not hook-routed, and the
+    exemption rests on the writer's identity alone. Returns violation
     records (never denies anything itself — that's the caller's call, and the
     plan mandates shadow mode — log, don't deny — until the false-positive
     rate is measured)."""
@@ -310,7 +370,10 @@ def find_unguarded_protected_writes(
             qid = _question_id_from_op(op)
             if qid:
                 break
+        bare_agent_type = strip_agent_namespace(entry.get("agent_type"))
         for owner in owners:
+            if bare_agent_type == owner:
+                continue
             if not recently_succeeded(owner, tool_calls, before_index=i, window=window, question_id=qid):
                 violations.append(
                     {
@@ -489,7 +552,7 @@ def find_effects_without_invocation(
     for entry in tool_calls:
         if entry.get("is_error") is True:
             continue
-        name = skill_name_if_skill_call(entry.get("tool", ""), entry.get("args"))
+        name = invoked_skill_name(entry.get("tool", ""), entry.get("args"))
         if name:
             invoked.add(name)
 
@@ -501,6 +564,7 @@ def find_effects_without_invocation(
         violations.append(
             "research.json has a question with exhaustive_declaration.declared=true "
             "but 'research-exhaustiveness' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     proof_summaries = research.get("proof_summaries") if isinstance(research.get("proof_summaries"), list) else []
@@ -563,6 +627,7 @@ def find_effects_without_invocation(
             "research.json/tree.gedcomx.json shows a proof_summaries entry and/or an encoded "
             "conclusion (a primary fact, or a ParentChild/Couple relationship) new this run but "
             "'proof-conclusion' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
@@ -596,6 +661,7 @@ def find_effects_without_invocation(
             f"tree.gedcomx.json has {len(unlinked)} person(s) with new facts/names this run and no "
             "person_evidence entry linking them (e.g. materialize_facts minting a person directly) "
             "but 'person-evidence' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     conflicts = research.get("conflicts") if isinstance(research.get("conflicts"), list) else []
@@ -606,6 +672,7 @@ def find_effects_without_invocation(
             "research.json has a conflict carrying conflict-resolution's analytical product "
             f"({', '.join(CONFLICT_ANALYSIS_FIELDS)}, or status='resolved') but "
             "'conflict-resolution' was never successfully invoked in this run"
+            " (no Skill call and no typed Agent/Task spawn of that name)"
         )
 
     return violations
@@ -774,7 +841,10 @@ def _persona_reachable(
     - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
       so a persona was in hand when the assertion was extracted;
     - `record_search` with a retained `results_ref` — the sidecar result
-      carries the record's `gedcomx`.
+      carries the record's `gedcomx`;
+    - `person_record_matches` — an accepted FamilySearch hint (search-hints'
+      record mode). Its ark is a `1:1:` record persona that `record_read`
+      opens, which is how record-extraction fetched it.
 
     Everything else is unreachable: image-, external-site- and PDF-sourced
     assertions, a search whose sidecar was not retained, and **every**
@@ -816,7 +886,7 @@ def _persona_reachable(
     if not isinstance(entry, dict):
         return True  # no log entry — provenance unknown
     tool = entry.get("tool")
-    if tool == "record_read":
+    if tool in ("record_read", "person_record_matches"):
         return True
     if tool == "record_search" and entry.get("results_ref"):
         return True
@@ -1177,6 +1247,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # A new agent, not a conversion (issue #2029), and no hook route: it
+        # writes only `log` entries, one per researcher verdict on a hint. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
+        "search-hints",
         # Same shape as `citation` (issue #2792): a converted skill, no hook
         # route. It is listed because the set is asserted equal to the shipped
         # agent files, and because a `hypotheses` write arriving from it is

@@ -1,0 +1,30 @@
+{
+  "tool": "person_record_matches",
+  "description": "Thomas Flynn's FamilySearch hints (LZNY-TF1), pending only: one naturalization index entry, confidence 2, so thin it cannot be judged — no county, no birth details, no image. The search-hints suite's not-enough-information case (issue #2029).",
+  "args": {
+    "id": "LZNY-TF1",
+    "status": [
+      "pending"
+    ]
+  },
+  "response": {
+    "queryArk": "ark:/61903/4:1:LZNY-TF1",
+    "resultCount": 1,
+    "returned": 1,
+    "title": "Matches for ark:/61903/4:1:LZNY-TF1",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MTHN",
+        "pid": "MTHN",
+        "arkType": "1:1:",
+        "confidence": 2,
+        "score": 0.51,
+        "title": "Pennsylvania, Naturalization Records, 1795-1931",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      }
+    ]
+  }
+}

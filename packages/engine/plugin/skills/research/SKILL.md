@@ -84,6 +84,9 @@ names. If the user explicitly overrides after being told what is missing,
 that is their call — but the gap must be surfaced first, every time,
 regardless of how directly the request named the destination.
 
+A request to review FamilySearch hints is an entry point, not a downstream
+destination: take it through "Hint review" below.
+
 ## Bounded request or job
 
 **Decide this first, before any `research_query`.**
@@ -119,12 +122,17 @@ and never offer to add a person who is already in the tree.
 
 When a bounded request is met, **end your turn**. Say what you produced first:
 the turn ends where you stop, so anything you were going to add afterwards never
-reaches the researcher. Then offer to take it further, and end. The offer is not
+reaches the researcher. Name what this turn saved and where — "Saved to Susan
+Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
+not save: the record and the person it was for, not "an extraction did not
+finish". Then offer to take it further, and end. The offer is not
 something you wait for — their answer arrives as the next message.
 
 ## What to do
 
-1. **Query `research.json` — don't `Read` the whole file.** Use
+1. **Query `research.json` — don't `Read` the whole file.** Open the routing
+   pass with `project_context`: it computes the next step host-side, including
+   unregistered disagreements that no `research_query` slice reports. Then use
    `research_query` to pull just the slice you need: which questions
    exist, which have plans, which plans have log entries, which entries
    have produced assertions, which are classified, which are linked to
@@ -250,10 +258,11 @@ something you wait for — their answer arrives as the next message.
    `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, the place and period for
-   `@plugin:locality-guide`, and the `planItemId` (plus the parish page as
+   `@plugin:locality-guide`, the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
-   file path or the results text) for `@plugin:search-external-sites`. The agent
-   runs in fresh context and reads the
+   file path or the results text) for `@plugin:search-external-sites`, and the
+   `personId` (and, on the second spawn, the researcher's verdicts) for
+   `@plugin:search-hints`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
@@ -447,6 +456,17 @@ would a senior genealogist say?", "mentor", "second opinion", or
 any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
 and `target_id` set to the most recent question, proof summary, or
 the literal string `"project"` if no specific target is implied.
+
+## Hint review
+
+When the user asks to check, review or validate the FamilySearch hints on a
+person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay its
+return as-is, and stop: whether to accept a hint is the researcher's decision,
+which only the user can supply (§"When to stop"). When the researcher answers,
+spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
+verdicts as `{ark, verdict}` per hint, verbatim. Never pass a verdict the
+researcher did not state — a triage recommendation is not one. The accepted
+hints' positive log entries then route to `record-extraction` through the table.
 
 ## When to stop
 
