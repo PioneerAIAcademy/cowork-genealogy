@@ -1865,3 +1865,108 @@ def test_rule8_pinned_in_main(tmp_path, monkeypatch, capsys):
     assert rc == 1
     captured = capsys.readouterr().out
     assert "rule 8:" in captured
+
+
+# --- Rule 2b (judge-prompt hash) — issue #2479 PR 1 ------------------------
+#
+# Rule 2b was warn-only. It now BLOCKS on a judge-prompt-only PR, with a
+# warn-only fallback for a run log that is already skill-side stale (rule 2
+# blocks for its own reason there; a regrade cannot satisfy an inactive log).
+
+_ACTIVE_SNAPSHOT_LOG = {
+    "snapshot": {},
+    "judge_prompt_hash": "a" * 64,
+}
+_STALE_SNAPSHOT_LOG = {
+    "snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"},
+    "judge_prompt_hash": "a" * 64,
+}
+
+
+def _stub_current_prompt_hash(monkeypatch, hex_digest: str) -> None:
+    monkeypatch.setattr(
+        check_runlogs,
+        "hash_file",
+        lambda _label, _path: hex_digest,
+    )
+
+
+def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):
+    """Hash mismatch + skill-side-active log → BLOCK and name the regrade target."""
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_prompt("demo", _ACTIVE_SNAPSHOT_LOG, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "`make judge-regrade`" in out
+    assert "older judge prompt" in out
+
+
+def test_rule2b_warns_when_log_is_already_skill_side_stale(monkeypatch, capsys):
+    """2026-10-06 ruling: rule 2 blocks for its own reason; rule 2b warns."""
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_prompt("demo", _STALE_SNAPSHOT_LOG, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "cannot satisfy" in out
+
+
+def test_rule2b_passes_silently_when_hash_matches(monkeypatch, capsys):
+    _stub_current_prompt_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_prompt("demo", _ACTIVE_SNAPSHOT_LOG, "v1.json")
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule2b_passes_when_log_has_no_stored_hash(monkeypatch, capsys):
+    """Older run logs predate the field; the rule is a no-op on them."""
+    _stub_current_prompt_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_prompt("demo", {"snapshot": {}}, "v1.json")
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_path):
+    """Judge-prompt arm populates judge_prompt_touched_skills from RUNLOGS_DIR.
+
+    Verifies the second direction of the lint too: a diff that does NOT touch
+    `eval/harness/judge/prompt.md` leaves `judge_prompt_touched_skills` empty
+    and rule 2b never fires, even if the committed logs have stale hashes.
+    """
+    # Seed a tmp RUNLOGS_DIR with one skill whose log has a mismatched hash.
+    skill_dir = tmp_path / "demo"
+    skill_dir.mkdir()
+    log = {
+        "schema_version": 3,
+        "skill": "demo",
+        "snapshot": {},
+        "judge_prompt_hash": "a" * 64,
+        "tests": [],
+    }
+    (skill_dir / "v1_2026-10-09_00-00-00.json").write_text(
+        json.dumps(log), encoding="utf-8"
+    )
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+
+    # No prompt in diff → judge_prompt_touched_skills empty → no rule 2b fire.
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "`make judge-regrade`" not in out
+    assert rc == 0
+
+    # Now simulate a prompt-only PR → rule 2b fires and blocks.
+    monkeypatch.setattr(
+        check_runlogs,
+        "git_diff_touched_paths",
+        lambda: ["eval/harness/judge/prompt.md"],
+    )
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "`make judge-regrade`" in out
+    assert rc == 1
