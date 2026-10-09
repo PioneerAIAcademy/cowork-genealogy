@@ -2,11 +2,12 @@
   "test": {
     "id": "ut_init_project_q7b",
     "skill": "init-project",
-    "name": "Invoke check-warnings on every imported relative and relay a split-point finding",
+    "name": "Import a relative's timeline impossibility unchanged, and leave it unreviewed",
     "type": "positive",
     "description": "init-project imports the tree and reports the import; it reviews nothing (lead ruling on issue #2122, 2026-10-08: error checking is check-warnings', gaps are question-selection's). The fixture's wife, Bridget Doyle, carries a genuine timeline impossibility (Death 1875, Residence 1880) on a NON-subject relative: both facts must reach the tree unchanged, and the reply must not analyse them, correct them, or hand them to check-warnings.",
     "tags": [
       "initialization",
+      "objective-stated",
       "familysearch",
       "identity-conflation",
       "relatives",
@@ -22,21 +23,7 @@
     "person-read-doyle-relative-impossibility"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 600
   },
   "judge_context": [
     "Should import the read and report the import only. The agent does not run, invoke or hand back to check-warnings, and its reply carries no `Hand-back: check-warnings` line: error checking is not this agent's job.",

@@ -30,21 +30,7 @@
     "Should NOT extract the holdings into `sources` or `assertions` — at init they are lightweight survey notes only"
   ],
   "execution": {
-    "max_wall_clock_seconds": 480,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 480
   },
   "judge_reads_files": true
 }

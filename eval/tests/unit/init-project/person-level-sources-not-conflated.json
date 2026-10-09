@@ -2,11 +2,12 @@
   "test": {
     "id": "ut_init_project_vqx",
     "skill": "init-project",
-    "name": "Person-level sources must not be conflated with empty fact-level sources; error detection stays within the documented list",
+    "name": "Person-level sources must not be conflated with empty fact-level sources, and nothing is called an error",
     "type": "positive",
-    "description": "Regression test for a live alpha-feedback report (issue #1901): the skill told the researcher a person had zero attached sources when 52 were actually returned, because it read the (correctly absent) per-fact `sources` refs instead of the top-level `sources` array the tool actually populates. The same session also flagged two things as 'structural errors' that are not on init-project's documented error-detection list (a shared given name between two children, and a relationship with no explicit subtype) and the researcher pushed back that neither was an error. This fixture reproduces both shapes at once: a top-level `sources` array of 6 real source descriptions with zero fact-level source refs anywhere, plus two siblings and two ParentChild links (Josephine's, one to each parent) with no `subtype`.",
+    "description": "Regression test for a live alpha-feedback report (issue #1901): the skill told the researcher a person had zero attached sources when 52 were actually returned, because it read the (correctly absent) per-fact `sources` refs instead of the top-level `sources` array the tool actually populates. The same session also called two things 'structural errors' (a shared given name between two children, and a relationship with no explicit subtype), and the researcher pushed back that neither was an error; init-project now reviews nothing, so the reply calls neither an error. This fixture reproduces both shapes at once: a top-level `sources` array of 6 real source descriptions with zero fact-level source refs anywhere, plus two siblings and two ParentChild links (Josephine's, one to each parent) with no `subtype`.",
     "tags": [
       "initialization",
+      "objective-stated",
       "familysearch",
       "tree",
       "sources",
@@ -30,21 +31,7 @@
     "Two of the returned children (Henri and Josephine) do not share a name with each other or their parents in this fixture, so there is no same-name-sibling pattern to (correctly or incorrectly) flag here — if the response nonetheless raises a naming-pattern concern about persons in this family, that is out-of-scope invention regardless of framing."
   ],
   "execution": {
-    "max_wall_clock_seconds": 600,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 600
   },
   "judge_reads_files": true
 }

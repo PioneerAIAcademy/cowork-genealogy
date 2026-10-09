@@ -110,8 +110,8 @@ so grading dates on every test, is a rubric change the genealogist should make
 deliberately rather than inherit as a side effect of a wording fix.
 
 **Tool-supplied places.** When a `person_read` fact arrives carrying a
-`standard_place`, that value is **kept verbatim**. NOT calling
-`place_search` on it is the correct behavior and must never be penalized
+`standard_place`, that value is **kept verbatim**. Not refining it is the
+correct behavior and must never be penalized
 as a "missed opportunity," even if the place is only country-level (e.g.
 "Ireland"). Init-project does not refine or enrich tree-supplied places.
 "Kept as-is" means the value the tool returned, not a string the agent

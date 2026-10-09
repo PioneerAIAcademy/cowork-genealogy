@@ -2,11 +2,12 @@
   "test": {
     "id": "ut_init_project_006",
     "skill": "init-project",
-    "name": "Standardize a hand-entered place via place_search",
+    "name": "A hand-entered place is standardized by project_create, not typed by the agent",
     "type": "positive",
     "description": "No FamilySearch ID: the agent builds a stub for Michael Brennan, born ~1850 in Boston, from the objective text alone. project_create standardizes every place in a hand-built tree, so the written fact's `standard_place` is the resolver's, not one the agent typed (provenance graded by test_standard_place_came_from_a_tool).",
     "tags": [
       "initialization",
+      "objective-stated",
       "place-standardization",
       "objective-only",
       "single-turn-decomposition",
@@ -30,21 +31,7 @@
     "Should not pretend to have FamilySearch tree data — there is no person_read in this scenario"
   ],
   "execution": {
-    "max_wall_clock_seconds": 480,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 480
   },
   "judge_reads_files": true
 }
