@@ -304,7 +304,7 @@ def test_a_transcript_batch_racing_an_uncommitted_claim_waits_and_is_refused(pg_
         b_claim = GatedClaim(pg_dsn, row, 2)
         try:
             batch = asyncio.create_task(store.append(key(row), entries("racing", 3)))
-            await lock_waiter(pg_dsn, "%session_entries%FOR SHARE%",
+            await lock_waiter(pg_dsn, "%FOR SHARE%INSERT INTO session_entries%",
                               "A's transcript batch never waited on B's uncommitted claim")
         finally:
             b = b_claim.finish()

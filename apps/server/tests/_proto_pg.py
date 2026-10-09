@@ -1,5 +1,5 @@
 """What the real-Postgres prototype suites share (test_proto_grants_pg.py, test_proto_migrate_pg.py,
-test_proto_queue_pg.py, test_proto_fencing_pg.py).
+test_proto_queue_pg.py, test_proto_fencing_pg.py, test_proto_session_store_pg.py).
 
 Each test or module gets a database of its own, created from ``PROTO_TEST_PG_DSN`` and
 dropped ``WITH (FORCE)`` at teardown, with the schema applied the way every deploy applies

@@ -25,6 +25,16 @@ the same event loop (``record_nudge``, ``reset_zero_progress``, ``complete()``'s
 blocks on the row -- a self-deadlock. No ``completed_at`` term: the closer's own trailing
 flush must land. ``load``, ``list_subkeys`` and ``has_entries`` stay unfenced; they are
 reads by the current claimer.
+
+Idempotent by ``entry["uuid"]``, as the SDK's ``SessionStore.append`` contract asks: it
+retries a failed batch (3 attempts, sequentially), and a batch can commit while its client
+sees an error, so the retry would store it twice. Both paths are one statement that skips
+an entry whose uuid is already stored under the key, or appears earlier in the same batch
+(the uuid is an idempotency key, so the first occurrence is the entry); an entry with no
+uuid (a title, a tag, a mode marker) is always inserted. ``011``'s index serves the probe;
+it is not unique, and nothing here deletes a duplicate an earlier build stored. The fenced
+statement reports whether the fence passed apart from how many rows it inserted, so a
+fully-deduped retry of the current epoch is a success, not ``superseded``.
 """
 
 from __future__ import annotations
@@ -40,16 +50,28 @@ from claude_agent_sdk.types import (
     SessionStoreEntry,
 )
 
-_INSERT = (
-    "INSERT INTO session_entries (project_key, session_id, subpath, entry) "
-    "VALUES (%s, %s, %s, %s)"
+# One statement per batch, ORDER BY n so seq follows batch order. The NOT EXISTS against
+# session_entries sees the statement's snapshot, never the rows it inserts itself, which is
+# why a uuid repeated within the batch needs the second NOT EXISTS.
+_DEDUPED_INSERT = (
+    "ins AS (INSERT INTO session_entries (project_key, session_id, subpath, entry) "
+    "SELECT %(project_key)s, %(session_id)s, %(subpath)s, b.e FROM batch b "
+    "WHERE {fence}(b.u IS NULL OR ("
+    "NOT EXISTS (SELECT 1 FROM batch d WHERE d.u = b.u AND d.n < b.n) "
+    "AND NOT EXISTS (SELECT 1 FROM session_entries s WHERE s.project_key = %(project_key)s "
+    "AND s.session_id = %(session_id)s AND s.subpath = %(subpath)s AND (s.entry->>'uuid') = b.u))) "
+    "ORDER BY b.n RETURNING 1)"
 )
-# U6: the batch lands only while (turn_id, claim_epoch) is the turn's current claim.
+_BATCH = "batch AS (SELECT e, n, e->>'uuid' AS u FROM unnest(%(entries)s::jsonb[]) WITH ORDINALITY AS t(e, n))"
+_INSERT = f"WITH {_BATCH}, {_DEDUPED_INSERT.format(fence='')} SELECT true, (SELECT count(*) FROM ins)"
+# U6: the batch lands only while (turn_id, claim_epoch) is the turn's current claim. The
+# first column is the fence's own verdict, so 0 rows inserted by a passing fence (every
+# entry already stored) is told apart from a refusal.
 _FENCED_INSERT = (
-    "INSERT INTO session_entries (project_key, session_id, subpath, entry) "
-    "SELECT %s, %s, %s, e FROM unnest(%s::jsonb[]) WITH ORDINALITY AS t(e, n) "
-    "WHERE EXISTS (SELECT 1 FROM turns WHERE turn_id = %s AND claim_epoch = %s FOR SHARE) "
-    "ORDER BY n"
+    "WITH fence AS MATERIALIZED (SELECT 1 FROM turns WHERE turn_id = %(turn_id)s "
+    "AND claim_epoch = %(claim_epoch)s FOR SHARE), "
+    f"{_BATCH}, {_DEDUPED_INSERT.format(fence='EXISTS (SELECT 1 FROM fence) AND ')} "
+    "SELECT EXISTS (SELECT 1 FROM fence), (SELECT count(*) FROM ins)"
 )
 _SELECT = (
     "SELECT entry FROM session_entries "
@@ -90,7 +112,11 @@ class PgSessionStore(SessionStore):
         self.superseded = False
         self.calls: dict[str, int] = {
             "append": 0,
+            # Entries a successful append now holds, inserted or already stored: the
+            # transcript-lost guard reads it, and a fully-deduped retry is not a loss.
             "entries_appended": 0,
+            # Of those, the ones skipped as already stored (or repeated in the batch).
+            "entries_deduped": 0,
             "load": 0,
             "entries_loaded": 0,
             "load_none": 0,
@@ -101,27 +127,31 @@ class PgSessionStore(SessionStore):
     async def append(self, key: SessionKey, entries: list[SessionStoreEntry]) -> None:
         self.calls["append"] += 1
         rows = entry_rows(self.project_id, key, entries)
-        if rows and self.turn_id is not None:
+        if not rows:
+            return
+        params = {"project_key": self.project_id, "session_id": key["session_id"],
+                  "subpath": key.get("subpath") or "", "entries": [row[3] for row in rows]}
+        if self.turn_id is not None:
             # Autocommit: the one statement is its own transaction, so the share lock is
             # released at the statement's end, never held across an await.
             async with await psycopg.AsyncConnection.connect(self.dsn, autocommit=True) as conn:
                 async with conn.cursor() as cur:
-                    await cur.execute(_FENCED_INSERT, (
-                        self.project_id, key["session_id"], key.get("subpath") or "",
-                        [row[3] for row in rows], self.turn_id, self.claim_epoch,
-                    ))
-                    landed = cur.rowcount
-            if landed == 0:
+                    await cur.execute(_FENCED_INSERT, {**params, "turn_id": self.turn_id,
+                                                       "claim_epoch": self.claim_epoch})
+                    fenced, inserted = await cur.fetchone()
+            if not fenced:
                 self.superseded = True
                 raise RuntimeError(f"claim epoch {self.claim_epoch} of turn {self.turn_id} is superseded; "
                                    "transcript append refused")
-        elif rows:
+        else:
             # ``async with`` commits on a clean exit and rolls back on an exception, so a
             # batch lands whole or not at all.
             async with await psycopg.AsyncConnection.connect(self.dsn) as conn:
                 async with conn.cursor() as cur:
-                    await cur.executemany(_INSERT, rows)
+                    await cur.execute(_INSERT, params)
+                    _, inserted = await cur.fetchone()
         self.calls["entries_appended"] += len(rows)
+        self.calls["entries_deduped"] += len(rows) - inserted
 
     async def load(self, key: SessionKey) -> list[SessionStoreEntry] | None:
         self.calls["load"] += 1

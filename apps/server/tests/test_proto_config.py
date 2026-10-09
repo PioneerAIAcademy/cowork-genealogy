@@ -1138,6 +1138,16 @@ def test_010_is_idempotent():
                     statements[0]), f"not idempotent: {statements[0]}"
 
 
+def test_011_is_idempotent_and_not_unique():
+    """011 re-runs on an unledgered database (U9), so its one statement is an IF NOT EXISTS
+    index; non-unique, so it builds on a database that already holds a duplicate entry, and
+    keyed on the exact ``entry->>'uuid'`` expression the append's dedupe probes."""
+    statements = _statements(SQL_DIR / "011_session_entries_uuid_index.sql")
+    assert len(statements) == 1, statements
+    assert re.match(r"CREATE INDEX IF NOT EXISTS session_entries_uuid_idx ON session_entries "
+                    r"\(project_key, session_id, subpath, \(entry->>'uuid'\)\)$", statements[0]), statements[0]
+
+
 def _proto_imports(source: str, *, packaged: bool) -> set[str]:
     """The proto/<name>.py modules a source imports. ``packaged`` (the worker's layout):
     ``from proto import X``, ``from proto.X import ...`` and ``import proto.X``; otherwise
