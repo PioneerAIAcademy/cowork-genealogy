@@ -968,7 +968,7 @@ def _heavy(monkeypatch, *, n: int = 2, in_window: int = 3, claim_at=None, close_
     window_params: list[tuple] = []
     _db(monkeypatch, {bounds.RECLAIM_ANY_SQL: reclaim,
                       bounds.RECLAIM_SQL: lambda p: pytest.fail("one ANY query per pass, not one per turn"),
-                      bounds.PG_NOW_SQL: lambda p: [(T0 + timedelta(seconds=clock[0]),)],
+                      bounds.PG_NOW_SQL: lambda p: blip() or [(T0 + timedelta(seconds=clock[0]),)],
                       bounds.SUBAGENT_ROWS_SQL: [(in_window + 2,)],
                       bounds.WINDOW_SUBAGENT_SQL: lambda p: window_params.append(p) or (
                           [(in_window,)] if len(window_params) > window_fails
@@ -1261,6 +1261,14 @@ def test_concurrent_rss_heavy_rides_out_failed_reads_after_the_window(monkeypatc
     assert not _failed(rep), rep.checks
     assert rep.figures["subagent_rows_in_window"] == 3 and len(window_params) == bounds.DB_TRIES
     assert any("throttle figures not read: OperationalError: rate-limit read lost" in f for f in rep.findings)
+
+
+@pytest.mark.parametrize("at", [0.0, 600.0], ids=["window_open", "window_due"])
+def test_concurrent_rss_heavy_rides_out_a_failed_read_of_the_window_bounds(monkeypatch, at):
+    rep, order, _ = _heavy(monkeypatch, db_fails_at=(at,))
+    assert not _failed(rep), rep.checks
+    assert [o.split(" at ")[0] for o in _stops(order)] == ["stop sess_1", "stop sess_2"], "db_one's retry, then the Stop"
+    assert rep.figures["cpu_samples"] > 2
 
 
 def test_concurrent_rss_heavy_rides_out_a_failed_database_read(monkeypatch):

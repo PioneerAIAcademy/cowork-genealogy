@@ -2160,9 +2160,9 @@ def heavy_idle(ctx: Ctx, rep: Report, host: dict) -> None:
         t = time.monotonic()
         s.take(ctx, pass_i)
         if window_at is None:
-            window_at, window_from = t, turn.one(ctx.dsn, PG_NOW_SQL, ())
+            window_at, window_from = t, db_one(ctx, PG_NOW_SQL, ())
         if t - window_at >= ctx.window_s:
-            window_to = turn.one(ctx.dsn, PG_NOW_SQL, ())
+            window_to = db_one(ctx, PG_NOW_SQL, ())
             break
         pass_i += 1
         time.sleep(max(0.0, RSS_EVERY_S - (time.monotonic() - t)))
@@ -2237,7 +2237,7 @@ def case_concurrent_rss_heavy(ctx: Ctx, client: httpx.Client, rep: Report) -> No
             open_ = [tid in rows and rows[tid][2] is not None and not c for tid, c in zip(tids, closed)]
             overlapped = overlapped or all(open_)
             if window_at is None and overlapped:
-                window_at, window_from = t, turn.one(ctx.dsn, PG_NOW_SQL, ())
+                window_at, window_from = t, db_one(ctx, PG_NOW_SQL, ())
                 passes = [pass_i]
             void_now = False
             if window_at is not None and not stopping:
@@ -2250,7 +2250,7 @@ def case_concurrent_rss_heavy(ctx: Ctx, client: httpx.Client, rep: Report) -> No
             if not stopping and (due or never or void_now):
                 stopping = True
                 if window_at is not None:
-                    window_to = turn.one(ctx.dsn, PG_NOW_SQL, ())
+                    window_to = db_one(ctx, PG_NOW_SQL, ())
                     passes.append(pass_i)
                 for sid, still in zip(sessions, open_):
                     if still:
