@@ -52,7 +52,9 @@ they run against a fake `aws`.
   Beanstalk's environment-value set, more than 4,096 bytes of properties, and any sign-in
   setting except from the `signin` phase. Everywhere, an sqsd option that has a mirror
   (`MaxRetries`, `VisibilityTimeout`, `RetentionPeriod`) is set together with its `SQSD_*`
-  variable, at the same value.
+  variable, at the same value. On the worker, `WORKER_TURN_USERS` must name one distinct user
+  per sqsd `HttpConnections` (either one falling back to its template), and every name must be
+  one the worker hook's `TURN_USERS` creates, so a slot case is refused before any AWS call.
 - **`--dry-run`** on any subcommand calls nothing. It prints each command as a pasteable
   line and shows secrets as `file://` paths. It writes its JSON files under `<work-dir>/dry-run/`,
   never over the probe snapshots.
@@ -63,8 +65,9 @@ they run against a fake `aws`.
 |---|---|
 | `plan` | Prints names, phases and cases, then every command `up --phase all` would run. It makes no AWS call. |
 | `up --phase <p>` | Runs one or more phases in the order given. `all` is the twelve below. |
-| `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live. |
+| `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live, or when the worker's `WORKER_TURN_USERS` is set and differs from `02-worker.config`'s (a slot case not restored; absent counts as the template's). |
 | `probe --case <c>` | Applies cases (repeatable), holds, then restores in reverse order in `finally`. Enter, Ctrl-C, an exception or `--hold-s N` all lead to the restore, which first waits for the environment to leave `Launching` or `Updating`. |
+| `cpu [--start <iso>] [--end <iso>] [--worker-instance <id>]` | Read-only and unbilled. CloudWatch's 5-minute `CPUUtilization`, `CPUCreditBalance`, `CPUCreditUsage`, `CPUSurplusCreditBalance` and `CPUSurplusCreditsCharged` (period 300, Average and Maximum) for the worker and tools instances and for RDS, plus each instance's credit mode (`describe-instance-credit-specifications`), as `k=v` lines; a metric with no point prints `<scope>.<metric>=no_data` (the surplus pair, or a non-burstable RDS class, may never publish). The window defaults to the last hour. With `--end`, it exits 1 while no worker `CPUUtilization` point reaches it yet, so a run made too soon is not taken for the result. `--worker-instance` reads a released instance (CloudWatch keeps a terminated instance's metrics). |
 | `down` | Tears everything down in order. It is idempotent. |
 | `pause` | Between sessions: the three tiers to ASG 0/0, then RDS and the bastion stopped, and `paused` recorded so `status` does not report the ASG sizes as drift. AWS restarts a stopped RDS instance after seven days. |
 | `resume` | Undoes `pause`: RDS (waits for `available`), the bastion, then the tiers back to 1/1. |
@@ -92,7 +95,7 @@ they run against a fake `aws`.
 | `resolver` (optional) | A Route 53 Resolver query log on the default VPC, written to `/genealogy-u13/resolver`, to record which hosts the tiers resolve. |
 
 Every tier gets its security group and instance profile through
-`aws:autoscaling:launchconfiguration`, along with `InstanceTypes`, ASG 1/1,
+`aws:autoscaling:launchconfiguration`, its `InstanceTypes` through `aws:ec2:instances`, ASG 1/1,
 `ManagedActionsEnabled=false` and enhanced health. `--env <tier>:NAME=VALUE` adds a non-secret
 operator setting, which the same guard checks.
 
@@ -163,6 +166,37 @@ goes to `--options-to-remove`, so the bundle's template value (if any) applies a
 | `nudges_3` | `AUTONOMOUS_MAX_NUDGES=3` on web (the template's 60 applies again on restore) | Whether a kill case's `no_progress` close comes from web's 60-nudge cap: the same case at compose's 3 |
 | `no_telemetry` | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` on the worker (kept for the CLI by `CLI_ENV_KEEP_PREFIXES`) | The CLI's egress with its nonessential traffic (the Datadog intake) off |
 | `idle_session_60s` | The parameter group's `idle_session_timeout=60000`. It waits for `in-sync`, then restores with `reset-db-parameter-group`. Never during the acceptance turn. | What a Postgres idle-session timeout does to the tiers' pools |
+| `slots_4`, `slots_8` | sqsd `HttpConnections` 4 or 8 and `WORKER_TURN_USERS` the first 4 or 8 of the hook's `genealogy-turn-0` … `-7`, in one update (a configuration deploy: the worker and sqsd restart). The restore sets `HttpConnections` back to 2 and removes `WORKER_TURN_USERS`, so `02-worker.config`'s two names apply again. Queue idle; deploy the Part A worker bundle first, since its hook creates the eight users. | Worker CPU, memory and Postgres connections at 4 and 8 concurrent turns (U18) |
+| `worker_xlarge` | `InstanceTypes=t3.xlarge` on the worker (`aws:ec2:instances`); the instance is replaced, and replaced back to t3.large on restore. Refused before any update unless every subnet in the worker's `Subnets` is in a zone offering t3.xlarge. Queue idle. | The same at four vCPUs, on one instance and one credit balance for the baselines and both slot cases |
+
+A case waits for its environment to be `Ready` before it sends, so a slot case applied while
+`worker_xlarge`'s replacement is in flight waits rather than fails. Two `probe` processes held
+at once (Terminal 1 and 2 below) share no state: each keeps its own restore in memory, and the
+cases touch different options, so either restore leaves the other case in place. Nothing locks
+this. While any case is held, do not `pause`. Refresh the SSO login before releasing one: a
+restore that fails on expired credentials leaves the case live, and the recovery is
+`probe --case <c> --hold-s 0` (apply again, restore at once). Run `status` after each slot
+release: it reports a `WORKER_TURN_USERS` the restore left behind.
+
+### The U18 CPU measurement (Part B)
+
+On the stack already up, with the Part A worker bundle deployed:
+
+0. Signed in. If sign-in was left off, `up --phase signin --mode loopback` first.
+1. Queue idle. Terminal 1: `probe --billed --case worker_xlarge` (held); the instance is
+   replaced. Then `cpu` for the credit mode and starting balance. Wait at least 10 minutes
+   after the new instance boots.
+2. `make proto-bounds-aws CASE=concurrent_rss_heavy ARGS="--sessions 0 --window-s 900
+   --expect-instance-type t3.xlarge"` (0 turns; the same `--expect-instance-type` on every
+   run below).
+3. The same with `--sessions 1 --window-s 1800`, at the default 2 slots.
+4. Terminal 2: `probe --billed --case slots_4` (held); bounds with `--sessions 4 --window-s 1800`;
+   release; `status`.
+5. `probe --billed --case slots_8` (held); bounds with `--sessions 8 --window-s 1800`; release;
+   `status`.
+6. After each window, `cpu --worker-instance <id> --start <iso> --end <iso>`: bounds prints
+   the line, ending `--work-dir <dir>` for you to fill in. It exits 1 until CloudWatch has a point reaching the window's end.
+7. Release `worker_xlarge` (queue idle). `status` shows no drift.
 
 ## Teardown
 

@@ -1,0 +1,72 @@
+{
+  "tool": "collections_search",
+  "description": "Sweden-scope collections, 1670-1750. Captured live 2026-10-02 for the elena-pre-register-birth scenario (issue #2251). Six of the 28 returned collections kept verbatim (the three national indexes, Malmöhus and the two neighbouring southern counties); the other 22 are county church-record collections for counties far from Skåne. totalForPlace is the live value.",
+  "args": {
+    "standardPlace": "~Sweden"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Västra Karaby, Harjager, Malmöhus, Sweden",
+      "startYear": 1670,
+      "endYear": 1750
+    },
+    "scope": "Sweden",
+    "totalForPlace": 30,
+    "results": [
+      {
+        "id": "1520594",
+        "title": "Sweden, Baptisms, 1611-1920",
+        "dateRange": "1611-1920",
+        "recordCount": 7060829,
+        "personCount": 20057677,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1520594"
+      },
+      {
+        "id": "1520597",
+        "title": "Sweden, Burials, 1649-1920",
+        "dateRange": "1649-1920",
+        "recordCount": 1159598,
+        "personCount": 2861902,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1520597"
+      },
+      {
+        "id": "1520596",
+        "title": "Sweden, Marriages, 1630-1920",
+        "dateRange": "1630-1920",
+        "recordCount": 1713651,
+        "personCount": 3603816,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1520596"
+      },
+      {
+        "id": "1974200",
+        "title": "Sweden, Malmöhus, Church Records, 1541-1918; index 1646-1860",
+        "dateRange": "1541-1918",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 1639027,
+        "url": "https://www.familysearch.org/search/collection/1974200"
+      },
+      {
+        "id": "1978124",
+        "title": "Sweden, Kristianstad, Church Records, 1585-1910; index 1646-1860",
+        "dateRange": "1585-1910",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 856990,
+        "url": "https://www.familysearch.org/search/collection/1978124"
+      },
+      {
+        "id": "1978341",
+        "title": "Sweden, Halland, Church Records, 1615-1904; index 1615-1860",
+        "dateRange": "1615-1904",
+        "recordCount": 756226,
+        "personCount": 1747046,
+        "imageCount": 352747,
+        "url": "https://www.familysearch.org/search/collection/1978341"
+      }
+    ]
+  }
+}

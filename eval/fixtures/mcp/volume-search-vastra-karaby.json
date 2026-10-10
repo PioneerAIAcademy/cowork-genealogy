@@ -1,0 +1,245 @@
+{
+  "tool": "volume_search",
+  "description": "Västra Karaby parish register volumes, 1670-1750. Captured live 2026-10-02 for the elena-pre-register-birth scenario (issue #2251, the death-record route to a pre-register birth). Response verbatim. 0% name-indexed; coverage rows begin 1687/1688, except one 1662-1850 row on image group 004523021.",
+  "args": {
+    "standardPlace": "~Karaby"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Västra Karaby, Harjager, Malmöhus, Sweden",
+      "startYear": 1670,
+      "endYear": 1750
+    },
+    "totalResults": 5,
+    "results": [
+      {
+        "imageGroupNumber": "004523021_004_M9S4-CS2",
+        "imageGroupPrefix": "004523021",
+        "imageCount": 221,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1662,
+            "endYear": 1850,
+            "dateRange": "1662-1850",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Saxtorp, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004523021_002_M9S4-CSN",
+        "imageGroupPrefix": "004523021",
+        "imageCount": 143,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1662,
+            "endYear": 1850,
+            "dateRange": "1662-1850",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Saxtorp, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004523021_003_M9S4-CSV",
+        "imageGroupPrefix": "004523021",
+        "imageCount": 198,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1662,
+            "endYear": 1850,
+            "dateRange": "1662-1850",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Saxtorp, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004523021_001_M9S4-CSX",
+        "imageGroupPrefix": "004523021",
+        "imageCount": 25,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1662,
+            "endYear": 1850,
+            "dateRange": "1662-1850",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Saxtorp, Harjager, Malmöhus, Sweden",
+            "startYear": 1687,
+            "endYear": 1729,
+            "dateRange": "1687-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004523018",
+        "imageGroupPrefix": "004523018",
+        "imageCount": 777,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1691,
+            "endYear": 1804,
+            "dateRange": "1691-1804",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1722,
+            "endYear": 1805,
+            "dateRange": "1722-1805",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1720,
+            "dateRange": "1696-1720",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1688,
+            "endYear": 1804,
+            "dateRange": "1688-1804",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1844,
+            "endYear": 1863,
+            "dateRange": "1844-1863",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1848,
+            "endYear": 1864,
+            "dateRange": "1848-1864",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1801,
+            "endYear": 1845,
+            "dateRange": "1801-1845",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Vestra Karaby, Harjager, Malmöhus, Sweden",
+            "startYear": 1691,
+            "endYear": 1693,
+            "dateRange": "1691-1693",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Saxtorp, Harjager, Malmöhus, Sweden",
+            "startYear": 1801,
+            "endYear": 1845,
+            "dateRange": "1801-1845",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      }
+    ]
+  }
+}

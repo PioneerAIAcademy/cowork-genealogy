@@ -540,7 +540,7 @@ def test_research_plan_fallback_for_in_same_plan(before_state, after_state):
     )
 
 
-# --- V2: research-plan calls no MCP tool outside its six --------------------
+# --- V2: research-plan calls none of locality-guide's place-survey tools ----
 
 _FORBIDDEN_TOOLS = {"wiki_search", "wiki_place_page", "place_population"}
 _FORBIDDEN_SKILL = "locality-guide"
@@ -549,10 +549,11 @@ _FORBIDDEN_SKILL = "locality-guide"
 def test_research_plan_no_out_of_lane_tools(
     tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls=None
 ):
-    """research-plan owns six tools and states "You have no wiki/place-fact
-    tools of your own" (SKILL.md 137). Fail on any call OR attempt of
-    wiki_search / wiki_place_page / place_population, or delegation to
-    locality-guide (SKILL.md 128, 499). Issue #1866 V2.
+    """research-plan states "You have no place-survey tools" (SKILL.md Step 2).
+    Fail on any call OR attempt of wiki_search / wiki_place_page /
+    place_population, or delegation to locality-guide. Issue #1866 V2.
+    `wiki_read` is granted since issue #2251 for the Step 3 record-type
+    pre-work and is deliberately not in the prohibition.
 
     Named prohibition, not the complement of the six: project_context is
     attempted by sibling skills and forbidden by nothing, so a complement
@@ -578,7 +579,13 @@ def test_research_plan_no_out_of_lane_tools(
 
 # --- V1: identifiers in a rationale must trace to a served response ---------
 
-_TRACEABLE_ID_TOOLS = {"collections_search", "volume_search", "external_links_search"}
+# wiki_read joined with issue #2251's Step 3 pre-work: a fetched record-type
+# page links collection ids (the Denmark_Military_Records fixture links
+# collection/2243379), and SKILL.md lets a rationale cite an id "a tool
+# returned this session", so a page-quoted id is served, not invented.
+_TRACEABLE_ID_TOOLS = {
+    "collections_search", "volume_search", "external_links_search", "wiki_read",
+}
 
 
 # Grounding is deliberately more permissive than candidate_identifiers. A
@@ -686,7 +693,10 @@ def test_research_plan_rationale_identifiers_traceable(
 
 # --- V5: an availability claim must match the returned personCount ----------
 
-_INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
+# "name-searchable" is SKILL.md's prescribed phrase for personCount > 0
+# (issue #2251), so it is an indexed claim too; without it a mislabel written in
+# the new phrasing would pass unseen.
+_INDEXED_RE = re.compile(r"\b(?:(?:fully\s+)?indexed|name[\s-]searchable)\b", re.I)
 # "no indexed name search is possible" and "not name-indexed" both negate the
 # indexed claim.  Allow an optional adjective between "not" and "indexed"
 # (e.g. "not name-indexed", "not record-indexed") and keep "no indexed" and
@@ -695,8 +705,14 @@ _INDEXED_RE = re.compile(r"\b(?:fully\s+)?indexed\b", re.I)
 # ut_research_plan_q7m, v1_2026-09-25_08-29-32, pli_003: "not name-indexed"
 # "not fully indexed" is a PARTIAL-indexing claim (personCount > 0), not a
 # browse-only claim — exclude it with a negative lookahead on "fully".
+# An article may sit before the adjective: ut_research_plan_007,
+# v3_2026-10-07_16-40-45, pli_014: "…returned personCount 0, confirming this is
+# an image browse … not a name-indexed search" was charged with calling
+# 1999196 "indexed" because the one optional word was spent on "a".
 _UNINDEXED_RE = re.compile(
-    r"\b(?:un-?indexed|not\s+(?!fully\s)(?:\w+[\s-])?indexed|no\s+indexed)\b", re.I
+    r"\b(?:un-?indexed|not\s+(?:(?:a|an|the)\s+)?(?!fully\s)(?:\w+[\s-])?indexed"
+    r"|not\s+(?:(?:a|an|the)\s+)?name[\s-]searchable|no\s+indexed)\b",
+    re.I,
 )
 _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 # A browse/unindexed adjective sitting directly on a non-collection noun ("the
@@ -988,4 +1004,180 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     assert not missed, (
         "already-attached FAN-cluster fact(s) never surfaced in the "
         "response:\n  - " + "\n  - ".join(missed)
+    )
+
+
+# --- Step 3 pre-work: the subject-triggered wiki pages are actually fetched --
+
+# Maps a `wiki-prework` test to the wiki_read fixture stems its subject
+# triggers (SKILL.md Step 3 pre-work; issue #2251, lead ruling 2026-09-27).
+# Hardcoded rather than read from the spec: the `test` fixture carries only the
+# inner "test" block, not top-level `mcp_fixtures` (validator_runner.py) --
+# the same reason test_search_full_text.py keeps _TOPICAL_FIXTURES_BY_TEST_ID.
+# Add an entry whenever "wiki-prework" is added to a research-plan test.
+_WIKI_FIXTURES_BY_TEST_ID = {
+    "ut_research_plan_015": (
+        "wiki-read-denmark-military-records",
+        "wiki-read-denmark-naming-customs",
+    ),
+    "ut_research_plan_dth": ("wiki-read-sweden-naming-customs",),
+    "ut_research_plan_csn": ("wiki-read-spain-naming-customs",),
+}
+
+
+def test_wiki_prework_fetches_triggered_pages(tool_calls, test):
+    """A `wiki-prework` test must fetch every record-type page its subject
+    triggers, and land on the page, not beside it.
+
+    ADR-0012, "Name the fetch so it runs": `gps-mentor` named the wiki tools at
+    five sites and made zero calls in 91 invocations, so prose that names a
+    call is not a call. Matching on the served fixture stem rather than on
+    "some wiki_read happened" is what makes a guessed slug fail: a 404 slug
+    (`Denmark_Military_Record`, `Spain_Names,_Personal`) misses the page's
+    predicate and is served no fixture, and a sibling tool (`wiki_search`)
+    never serves a wiki_read stem at all.
+
+    Asserts only that the page was READ. Whether its content reached the plan
+    is the judge's, per each test's judge_context.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    # Map -> tag direction BEFORE the skip, or the skip swallows it: dropping
+    # the tag from a spec would silently disarm this guard.
+    assert test_id not in _WIKI_FIXTURES_BY_TEST_ID or "wiki-prework" in tags, (
+        f"{test_id} has a _WIKI_FIXTURES_BY_TEST_ID entry but no 'wiki-prework' "
+        "tag - restore the tag or delete the entry"
+    )
+    if "wiki-prework" not in tags:
+        pytest.skip("not a wiki-prework test")
+    expected = _WIKI_FIXTURES_BY_TEST_ID.get(test_id)
+    assert expected, (
+        f"{test_id} carries 'wiki-prework' but has no entry in "
+        "_WIKI_FIXTURES_BY_TEST_ID - add the wiki_read stems its subject triggers"
+    )
+    hit = {
+        c.get("response_fixture")
+        for c in (tool_calls or [])
+        if _bare(c.get("tool", "")) == "wiki_read" and c.get("response_fixture")
+    }
+    missing = [stem for stem in expected if stem not in hit]
+    assert not missing, (
+        f"{test_id}: SKILL.md Step 3 pre-work requires {list(expected)}, and "
+        f"{missing} was never served -- the page was not fetched, or was "
+        f"fetched under a slug its predicate does not match. wiki_read "
+        f"fixtures served: {sorted(hit) or '(none)'}"
+    )
+
+
+# --- Pre-register birth: the plan works back from the subject's death --------
+
+# test id -> (subject's given name, earliest start year a death or burial item
+# may carry). The bound sits after the subject's birth window, which is what
+# separates a search for her own death entry from a baptism-window search whose
+# rationale merely mentions a death. Elena: born c. 1680-1692 per q_001, married
+# 1712, alive 1718; a burial search starting 1712 or 1718 passes, one starting
+# 1675 does not.
+_DEATH_ROUTE_BY_TEST_ID = {
+    "ut_research_plan_dth": ("Elena", 1700),
+}
+
+_DEATH_WORD = r"(?:death|died|burial|buried|bur\.|d[öo]d|d[öo]de|begrav\w*|begraf\w*)"
+_YEAR_RE = re.compile(r"\b(1[5-9]\d\d)\b")
+
+
+_RELATIVE = r"(?:(?:grand|step)?(?:son|daughter|child|children|father|mother|parents?)|husband|brother|sister|wife|spouse)"
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
+
+
+def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
+    """(own, relative): `own` ties the entry to the subject ("Elena's burial",
+    "burials index for Elena", "her age at death", "Elena's entry");
+    `relative` names a relative of hers ("Elena's son", "her husband")."""
+    g = re.escape(given)
+    own = re.compile(
+        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
+        rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b(?!['’]s)"
+        rf"|(?<!\bof\s)\b{g}(?:\s+\w+)?,?\s+(?:was\s+)?(?:buried|died)\b"
+        rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
+        re.IGNORECASE,
+    )
+    relative = re.compile(
+        rf"(?:\b{g}['’]s|\bher)\s+{_RELATIVE}\b|\b{_RELATIVE}\s+of\s+{g}\b",
+        re.IGNORECASE,
+    )
+    return own, relative
+
+
+def test_pre_register_birth_plans_death_route(before_state, after_state, test):
+    """When the birth predates the register, the plan must carry the
+    subject's OWN death or burial entry as its own item, and must not be one
+    record type throughout.
+
+    The e2e evidence (issue #2676, merged into #2251): on
+    elena-asmundsdotter-origin run-2026-09-18_21-35-53 the one active plan held
+    ten items, all `record_type: "church"`, with no death or burial item, so the
+    agent never opened the register section where her 1745 death entry states
+    her birthplace. Both defects are asserted here.
+
+    An item counts only when its rationale or jurisdiction names the subject
+    and a death/burial word, and its `date_range` starts after the subject's
+    birth window. When every sentence carrying a death word also names a
+    relative of hers ("Elena's son", "her husband"), the item counts only if
+    it ties the entry to her elsewhere ("Elena's burial", "her age at death"),
+    so a son's, husband's or father's burial fails, as does a baptism search
+    whose rationale notes she later died.
+    """
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _DEATH_ROUTE_BY_TEST_ID or "pre-register-birth" in tags, (
+        f"{test_id} has a _DEATH_ROUTE_BY_TEST_ID entry but no "
+        "'pre-register-birth' tag - restore the tag or delete the entry"
+    )
+    if "pre-register-birth" not in tags:
+        pytest.skip("not a pre-register-birth test")
+    spec = _DEATH_ROUTE_BY_TEST_ID.get(test_id)
+    assert spec, (
+        f"{test_id} carries 'pre-register-birth' but has no entry in "
+        "_DEATH_ROUTE_BY_TEST_ID"
+    )
+    given, earliest_start = spec
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    own, relative = _death_route_res(given)
+
+    def _qualifies(item: dict) -> bool:
+        text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
+        if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
+            return False
+        death_sentences = [
+            s for s in _SENTENCE_SPLIT_RE.split(text)
+            if re.search(_DEATH_WORD, s, re.IGNORECASE)
+        ]
+        if all(relative.search(s) for s in death_sentences) and not own.search(text):
+            return False
+        years = [int(y) for y in _YEAR_RE.findall(str(item.get("date_range") or ""))]
+        return bool(years) and min(years) >= earliest_start
+
+    problems: list[str] = []
+    if not any(_qualifies(i) for i in items):
+        problems.append(
+            f"no item targets {given}'s own death or burial entry dated from "
+            f"{earliest_start} on (items: "
+            + "; ".join(
+                f"{i.get('id')} {i.get('record_type')} {i.get('date_range')}"
+                for i in items
+            )
+            + ")"
+        )
+    types = {i.get("record_type") for i in items}
+    if len(types) < 2:
+        problems.append(f"every item shares one record_type: {sorted(map(str, types))}")
+    assert not problems, (
+        "pre-register birth planned as if a baptism could be found:\n  - "
+        + "\n  - ".join(problems)
     )
