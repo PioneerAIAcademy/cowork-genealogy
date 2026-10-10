@@ -5,8 +5,8 @@ Provisioner, teardown, empty-proof, probe cases and the account-id leak check, i
 script that shells out to the ``aws`` CLI (no boto3). Usage and the rules it enforces:
 README.md beside this file; the plan is docs/plan/familysearch-handoff.md, section 3.
 
-Subcommands: plan, up --phase ..., status, probe --case ..., down, prove-empty, leak-check.
-Every mutating subcommand takes --dry-run, which calls nothing and prints pasteable
+Subcommands: plan, up --phase ..., status, probe --case ..., cpu, pause, resume, down, prove-empty,
+leak-check. Every AWS subcommand takes --dry-run, which calls nothing and prints pasteable
 commands. Secret values and option settings reach the CLI only as 0600 ``file://`` paths
 under --work-dir, never as argv.
 """
@@ -55,6 +55,10 @@ RDS_PARAM_GROUP = f"{PREFIX}-pg16"
 RDS_CLASS = "db.t4g.micro"
 RDS_ENGINE_VERSION = "16.13"
 RDS_FAMILY = "postgres16"
+# `cpu`: CloudWatch's basic-monitoring points; the surplus pair publishes only in unlimited mode.
+CPU_METRICS = ("CPUUtilization", "CPUCreditBalance", "CPUCreditUsage", "CPUSurplusCreditBalance",
+               "CPUSurplusCreditsCharged")
+CPU_PERIOD_S = 300
 DB_NAME = "genealogy"
 DB_OWNER = "genealogy_owner"
 DB_DML = "genealogy_dml"
@@ -100,6 +104,8 @@ HEALTH_NS = "aws:elasticbeanstalk:healthreporting:system"
 MIRRORS = {"MaxRetries": "SQSD_MAX_RETRIES", "VisibilityTimeout": "SQSD_VISIBILITY_TIMEOUT_S",
            "RetentionPeriod": "SQSD_RETENTION_PERIOD_S"}
 SQSD_CONFIG = PROTO / "eb-worker" / ".ebextensions" / "01-sqsd.config"
+# The predeploy hook whose TURN_USERS literal creates every slot user a worker may be told to run as.
+WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh"
 
 # test_proto_bundles.py's EB_VALUE and SECRET_NAME; the test pins these copies equal.
 EB_VALUE = re.compile(r"""^[A-Za-z0-9 _.:/=+\\\-@'"]*$""")
@@ -216,6 +222,17 @@ def template_env(tier: str) -> dict[str, str]:
     return env
 
 
+def hook_turn_users() -> list[str]:
+    """The users the worker hook creates (test_proto_bundles.py reads the same literal)."""
+    m = re.search(r'^TURN_USERS="([^"]+)"$', WORKER_HOOK.read_text(encoding="utf-8"), re.MULTILINE)
+    return m.group(1).split() if m else []
+
+
+def turn_user_names(value: str) -> list[str]:
+    """WORKER_TURN_USERS as the worker splits it (turn_users.py)."""
+    return [n for n in re.split(r"[,\s]+", value) if n]
+
+
 def opt(namespace: str, name: str, value) -> dict:
     return {"Namespace": namespace, "OptionName": name, "Value": str(value)}
 
@@ -257,7 +274,8 @@ def check_options(tier: str, options: list[dict], *, signin: bool = False, case:
     Outside a case: no dev-only name or value (layout.py), no secret-shaped name in the
     plain environment, every value inside Beanstalk's character set, and no sign-in
     setting except from the signin phase. Everywhere: each sqsd option with a mirror is set
-    with that mirror, at the same value."""
+    with that mirror, at the same value; on the worker, one distinct WORKER_TURN_USERS name
+    per sqsd HttpConnections (either falling back to its template), each a user the hook makes."""
     problems = []
     names = options_map(options)
     if dry:
@@ -279,6 +297,8 @@ def check_options(tier: str, options: list[dict], *, signin: bool = False, case:
         a, b = names.get((SQSD_NS, option)), names.get((ENV_NS, mirror))
         if (a is None) != (b is None) or (a is not None and int(a) != int(b)):
             problems.append(f"sqsd {option}={a} and its mirror {mirror}={b} must be set together, equal")
+    if tier == "worker":
+        problems += slot_problems(names)
     if not (case and case.get("charset_probe")):
         env = dict(template_env(tier))
         env.update({n: v for (ns, n), v in names.items() if ns == ENV_NS})
@@ -287,6 +307,26 @@ def check_options(tier: str, options: list[dict], *, signin: bool = False, case:
             problems.append(f"environment properties total {total} bytes, over {EB_ENV_TOTAL_BYTES}")
     if problems:
         raise Die(f"{tier}: refusing option settings:\n  " + "\n  ".join(problems))
+
+
+def slot_problems(names: dict[tuple[str, str], str]) -> list[str]:
+    """A worker given more users than connections leaves slots idle; fewer refuses start; a
+    name the hook never made refuses start (no such user)."""
+    users_raw = names.get((ENV_NS, "WORKER_TURN_USERS"), template_env("worker").get("WORKER_TURN_USERS", ""))
+    conns_raw = names.get((SQSD_NS, "HttpConnections"), sqsd_template()[SQSD_NS].get("HttpConnections", ""))
+    users, problems = turn_user_names(users_raw), []
+    if not re.fullmatch(r"[1-9]\d*", conns_raw):
+        return [f"sqsd HttpConnections={conns_raw!r} is not a positive integer"]
+    if len(users) != int(conns_raw):
+        problems.append(f"WORKER_TURN_USERS names {len(users)} user(s) for HttpConnections={conns_raw}; "
+                        "set both together, one user per connection")
+    if len(set(users)) != len(users):
+        problems.append(f"WORKER_TURN_USERS {users_raw!r} names a user twice")
+    made = set(hook_turn_users())
+    unknown = [u for u in users if u not in made]
+    if unknown:
+        problems.append(f"WORKER_TURN_USERS names {unknown}, which {WORKER_HOOK.name}'s TURN_USERS does not create")
+    return problems
 
 
 def read_local(name: str, local_dir: Path = LOCAL_DIR) -> str | None:
@@ -424,6 +464,16 @@ CASES: dict[str, dict] = {
     "no_telemetry": {"measures": "CLI nonessential egress off", "ops": {"worker": [
         (ENV_NS, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")]}},
     "idle_session_60s": {"measures": "Postgres idle-session timeout", "rds_param": ("idle_session_timeout", "60000")},
+    # U18: the slot count is the sqsd connections and as many of the hook's users, in one update.
+    "slots_4": {"measures": "worker CPU and memory at 4 concurrent turns", "ops": {"worker": [
+        (SQSD_NS, "HttpConnections", "4"),
+        (ENV_NS, "WORKER_TURN_USERS", "genealogy-turn-0 genealogy-turn-1 genealogy-turn-2 genealogy-turn-3")]}},
+    "slots_8": {"measures": "worker CPU and memory at 8 concurrent turns", "ops": {"worker": [
+        (SQSD_NS, "HttpConnections", "8"),
+        (ENV_NS, "WORKER_TURN_USERS", "genealogy-turn-0 genealogy-turn-1 genealogy-turn-2 genealogy-turn-3 "
+                                      "genealogy-turn-4 genealogy-turn-5 genealogy-turn-6 genealogy-turn-7")]}},
+    "worker_xlarge": {"measures": "worker CPU headroom on a replacement t3.xlarge instance", "ops": {"worker": [
+        (INSTANCES_NS, "InstanceTypes", "t3.xlarge")]}},
 }
 
 
@@ -736,6 +786,16 @@ class Rehearsal:
             azs = {x["SubnetId"]: x["AvailabilityZone"] for x in got.get("Subnets", [])}
             self.state["subnet_azs"] = azs
             self.save()
+        offered = self.az_offerings(instance_type)
+        if self.dry:
+            return subnets
+        ids = [s for s in subnets if azs.get(s) in offered]
+        if len(ids) < 2:
+            raise Die(f"{instance_type} is offered in fewer than two of the default subnets' zones")
+        return ids
+
+    def az_offerings(self, instance_type: str) -> list[str]:
+        """The zones offering ``instance_type``, looked up once and kept in the inventory."""
         offered = self.state.setdefault("az_offerings", {})
         if instance_type not in offered:
             got = self.aws("ec2", "describe-instance-type-offerings", "--location-type", "availability-zone",
@@ -743,12 +803,24 @@ class Rehearsal:
                                "InstanceTypeOfferings": [{"Location": "<az>"}]})
             offered[instance_type] = sorted({o["Location"] for o in got.get("InstanceTypeOfferings", [])})
             self.save()
+        return offered[instance_type]
+
+    def check_instance_type(self, env_name: str, snapshot: list[dict], instance_type: str) -> None:
+        """Refuse a resize whose type a zone of the environment's Subnets lacks: Beanstalk would
+        fail the replacement instance there (us-east-1e has no t3; t3.xlarge is offered in fewer)."""
+        offered = self.az_offerings(instance_type)
+        subnets = [s for s in options_map(snapshot).get((VPC_NS, "Subnets"), "").split(",") if s]
         if self.dry:
-            return subnets
-        ids = [s for s in subnets if azs.get(s) in offered[instance_type]]
-        if len(ids) < 2:
-            raise Die(f"{instance_type} is offered in fewer than two of the default subnets' zones")
-        return ids
+            self.note(f"dry-run: {env_name}'s Subnets are not checked against {instance_type}'s zones")
+            return
+        if not subnets:
+            raise Die(f"{env_name}'s snapshot names no Subnets; cannot check {instance_type}'s zones")
+        got = self.aws("ec2", "describe-subnets", "--subnet-ids", *subnets)
+        azs = {x["SubnetId"]: x["AvailabilityZone"] for x in got.get("Subnets", [])}
+        missing = [f"{s} ({azs.get(s, 'zone unknown')})" for s in subnets if azs.get(s) not in offered]
+        if missing:
+            raise Die(f"{env_name}: {instance_type} is not offered in the zone of subnet(s) {', '.join(missing)}; "
+                      "refusing before any update")
 
     def network(self) -> tuple[str, list[str]]:
         if "vpc_id" not in self.state:
@@ -1442,18 +1514,25 @@ U13PY
             env_name = ENV_NAMES[tier]
             snapshot = self.snapshot(env_name) if not self.dry else []
             sets, removes = case_options(case, tier)
+            for o in sets:
+                if (o["Namespace"], o["OptionName"]) == (INSTANCES_NS, "InstanceTypes"):
+                    self.check_instance_type(env_name, snapshot, o["Value"])
             touched = [(o["Namespace"], o["OptionName"]) for o in sets + removes]
-            undo.append(("env", env_name, snapshot, touched))
             merged = {**options_map(snapshot), **{(o["Namespace"], o["OptionName"]): o["Value"] for o in sets}}
             for r in removes:
                 merged.pop((r["Namespace"], r["OptionName"]), None)
             check_options(tier, [opt(ns, n, v) for (ns, n), v in merged.items()], case=case,
                           signin=bool(self.state.get("signin")), dry=self.dry)
+            # After the guard: a refused tier sends no restore either (a config deploy restarts
+            # the worker under any measurement held beside it).
+            undo.append(("env", env_name, snapshot, touched))
             call = ["elasticbeanstalk", "update-environment", "--environment-name", env_name]
             if sets:
                 call += ["--option-settings", self.file(f"case-{name}-{tier}.json", sets)]
             if removes:
                 call += ["--options-to-remove", self.file(f"case-{name}-{tier}-remove.json", removes)]
+            # Another probe's update (worker_xlarge's replacement) may be in flight: wait, not die.
+            self.wait_env(env_name)
             since = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             self.aws(*call)
             self.wait_env(env_name)
@@ -1592,7 +1671,91 @@ U13PY
         out += [f"{n} is set ({ns}); no case is running" for (ns, n) in live
                 if ns == ENV_NS and (n.startswith(("U13_PROBE_",) + tuple(layout.DEV_PREFIXES))
                                      or n in layout.DEV_VARIABLES)]
+        if env_name == ENV_NAMES["worker"]:
+            # Not in up's API layer: a slot case's restore removes it, and the template's applies
+            # again. Absent counts as the template's (whether the merged view lists .ebextensions
+            # values is unproven); a left-over API value is present and different either way.
+            want = template_env("worker").get("WORKER_TURN_USERS", "")
+            value = live.get((ENV_NS, "WORKER_TURN_USERS"))
+            if value is not None and turn_user_names(value) != turn_user_names(want):
+                out.append(f"{ENV_NS} WORKER_TURN_USERS: {value!r}, expected the template's {want!r} "
+                           "(a slot case not restored?)")
         return out
+
+    # ── cpu ──────────────────────────────────────────────────────────────────────────
+
+    def cpu_window(self) -> tuple[dt.datetime, dt.datetime, bool]:
+        """(start, end, end_given). No --end: the last hour up to now, for the credit mode and balance."""
+        def parse(flag: str, raw: str) -> dt.datetime:
+            try:
+                when = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                raise Die(f"--{flag} {raw!r}: expected an ISO time such as 2026-10-10T12:00:00Z") from None
+            if when.tzinfo is None:
+                raise Die(f"--{flag} {raw!r}: give a UTC offset or Z")
+            return when.astimezone(dt.timezone.utc)
+
+        end_raw, start_raw = getattr(self.args, "end", None), getattr(self.args, "start", None)
+        end = parse("end", end_raw) if end_raw else dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+        start = parse("start", start_raw) if start_raw else end - dt.timedelta(seconds=3600)
+        if start >= end:
+            raise Die(f"--start {start:%Y-%m-%dT%H:%M:%SZ} is not before --end {end:%Y-%m-%dT%H:%M:%SZ}")
+        return start, end, bool(end_raw)
+
+    def instance_of(self, tier: str) -> str | None:
+        res = self.aws("elasticbeanstalk", "describe-environment-resources", "--environment-name", ENV_NAMES[tier],
+                       ok=NOT_FOUND, placeholder={"EnvironmentResources": {"Instances": [{"Id": f"<{tier}-instance>"}]}})
+        ids = [i["Id"] for i in (res or {}).get("EnvironmentResources", {}).get("Instances", [])]
+        return ids[0] if ids else None
+
+    def cpu(self) -> int:
+        """Read-only, unbilled: CloudWatch's 5-minute CPU and credit points for the worker, tools
+        and RDS over a window, and each instance's credit mode. Exits 1 only when --end is given
+        and no worker CPUUtilization point reaches it yet (CloudWatch publishes minutes late)."""
+        start, end, end_given = self.cpu_window()
+        worker_id = getattr(self.args, "worker_instance", None)
+        if worker_id and not re.fullmatch(r"i-[0-9a-f]{8,17}", worker_id):
+            raise Die(f"--worker-instance {worker_id!r}: expected an instance id i-…")
+        self.guard()
+        self.out(f"window_start={iso(start)}")
+        self.out(f"window_end={iso(end)}")
+        scopes = [("worker", "AWS/EC2", "InstanceId", worker_id or self.instance_of("worker")),
+                  ("tools", "AWS/EC2", "InstanceId", self.instance_of("tools")),
+                  ("rds", "AWS/RDS", "DBInstanceIdentifier", RDS_ID)]
+        covered = False
+        for scope, namespace, dim, value in scopes:
+            self.out(f"{scope}_id={value or 'none'}")
+            if scope != "rds" and value:
+                spec = self.aws("ec2", "describe-instance-credit-specifications", "--instance-ids", value,
+                                ok=NOT_FOUND, placeholder={"InstanceCreditSpecifications": [{"CpuCredits": "<mode>"}]})
+                modes = [s.get("CpuCredits") for s in (spec or {}).get("InstanceCreditSpecifications", [])]
+                self.out(f"{scope}.credits={modes[0] if modes else 'unknown'}")
+            for metric in CPU_METRICS:
+                points = []
+                if value:
+                    got = self.aws("cloudwatch", "get-metric-statistics", "--namespace", namespace, "--metric-name",
+                                   metric, "--dimensions", f"Name={dim},Value={value}", "--start-time", iso(start),
+                                   "--end-time", iso(end), "--period", CPU_PERIOD_S, "--statistics", "Average",
+                                   "Maximum", placeholder={"Datapoints": []})
+                    points = sorted((got or {}).get("Datapoints", []), key=lambda p: p["Timestamp"])
+                key = f"{scope}.{metric}"
+                if not points:
+                    self.out(f"{key}=no_data")
+                    continue
+                last_at = dt.datetime.fromisoformat(points[-1]["Timestamp"].replace("Z", "+00:00"))
+                self.out(f"{key}.points={len(points)}")
+                self.out(f"{key}.first={points[0]['Average']:g}")
+                self.out(f"{key}.last={points[-1]['Average']:g}")
+                self.out(f"{key}.avg={sum(p['Average'] for p in points) / len(points):g}")
+                self.out(f"{key}.max={max(p['Maximum'] for p in points):g}")
+                self.out(f"{key}.last_at={iso(last_at.astimezone(dt.timezone.utc))}")
+                if (scope, metric) == ("worker", "CPUUtilization"):
+                    covered = last_at + dt.timedelta(seconds=CPU_PERIOD_S) >= end
+        if self.dry or not end_given or covered:
+            return 0
+        self.out(f"worker.CPUUtilization: no data point reaches --end {iso(end)} yet; CloudWatch publishes "
+                 "5-minute points minutes late, so re-run in a few minutes")
+        return 1
 
     # ── pause / resume ───────────────────────────────────────────────────────────────
 
@@ -2008,6 +2171,10 @@ U13PY
         return 0
 
 
+def iso(when: dt.datetime) -> str:
+    return when.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 # ── leak check ───────────────────────────────────────────────────────────────────────────
 
 
@@ -2113,6 +2280,10 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--case", action="append", help=f"one of {', '.join(CASES)}; repeatable")
     probe.add_argument("--hold-s", type=float, help="restore after this many seconds instead of on Enter")
     probe.add_argument("--bundles-dir", help="ebext_naming copies eb-tools.zip from here")
+    cpu = sub.add_parser("cpu", parents=[common], help="CloudWatch CPU and credit points and the credit mode; read-only")
+    cpu.add_argument("--start", help="window start, ISO with Z or an offset (default: an hour before --end)")
+    cpu.add_argument("--end", help="window end (default now); exits 1 while no worker CPU point reaches it")
+    cpu.add_argument("--worker-instance", help="the worker instance id (a released worker_xlarge's stays readable)")
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
     sub.add_parser("pause", parents=[common, billed], help="between sessions: tiers to 0/0, RDS and the bastion stopped")
     sub.add_parser("resume", parents=[common, billed], help="undo pause: RDS, the bastion, then the tiers to 1/1")
@@ -2136,7 +2307,7 @@ def main(argv: list[str] | None = None, *, runner=None, sleep=time.sleep, out=No
         if args.cmd == "leak-check":
             return leak_check(args, local_dir=local_dir, repo=repo, out=printer)
         r = Rehearsal(args, runner=runner, sleep=sleep, out=printer, local_dir=local_dir, repo=repo)
-        return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "down": r.down,
+        return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "cpu": r.cpu, "down": r.down,
                 "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
     except Die as exc:
         print(f"rehearse.py: {exc}", file=sys.stderr)
