@@ -18,6 +18,7 @@ Two independent sets of proof-of-failure tests live here:
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +33,7 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
+    test_research_plan_reads_question_person_profile as check_profile,
     report_survey_surfaces_already_attached_fan_facts as check,
 )
 
@@ -567,6 +569,67 @@ TREE = {
 
 BEFORE_STATE = {"research_json": RESEARCH, "tree_gedcomx_json": TREE}
 
+# TREE with the fact->source ref deleted and nothing else changed: the shape a
+# real FamilySearch import produces. Simplified GedcomX has no person-level
+# source field, so the only source<->person link is a fact-level `sources` ref,
+# and real imports do not write them -- 3 of 136 e2e starting trees carry any
+# (55 of 4,182 facts) against 62 of 99 hand-authored scenarios (issue #2208,
+# measured 2026-09-22). Every fixture above carries the ref, so before this one
+# no test told the source-ref-gated version of the check apart from the current
+# one: reverting the widening left the whole suite green.
+TREE_NO_SOURCE_REF = {
+    "persons": [
+        {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
+        {
+            "id": "I2",
+            "names": [{"given": "Patrick", "surname": "Sheahan"}],
+            "facts": [
+                {
+                    "type": "Residence",
+                    "date": "1875",
+                    "place": "Schuylkill County, Pennsylvania",
+                    "value": "Purchased land, Deed Book 42 p. 118",
+                }
+            ],
+        },
+        {
+            "id": "I3",
+            "names": [{"given": "", "surname": "Sheahan"}],
+        },
+    ]
+}
+
+BEFORE_STATE_NO_SOURCE_REF = {
+    "research_json": RESEARCH,
+    "tree_gedcomx_json": TREE_NO_SOURCE_REF,
+}
+
+
+def test_fires_on_production_shape_when_fact_never_surfaced():
+    """The mutation guard for issue #2208's widening. With the fact->source
+    ref gone, the pre-change check skipped this person entirely and passed
+    silently -- the blind spot, on the shape 133 of 136 real trees have.
+    Reverting `sourced_facts` to the source-ref-filtered comprehension must
+    turn this test red."""
+    response = (
+        "Here is the plan for Michael Sheahan's move to Schuylkill County: "
+        "1880 census, 1900 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)
+
+
+def test_passes_on_production_shape_when_content_present():
+    """The other direction: the widening must not fail a response that does
+    state the fact's content, or it would red every honest plan on a
+    production-shaped tree."""
+    response = (
+        "Patrick Sheahan (I2) purchased land in Schuylkill County in 1875 "
+        "(Deed Book 42, p. 118) -- seven years before Michael's own "
+        "documented arrival. Plan: 1880 census, 1900 census, church records."
+    )
+    check(BEFORE_STATE_NO_SOURCE_REF, response, TAGGED)  # does not raise
+
 
 def test_fires_when_fact_never_surfaced():
     """Proves the check actually fails: a response that never mentions
@@ -711,20 +774,27 @@ def test_skipped_when_not_tagged():
         check(BEFORE_STATE, response, UNTAGGED)
 
 
-def test_passes_vacuously_when_no_sourced_fan_facts():
-    """A tree with no already-sourced non-subject fact has nothing to
-    check -- must pass vacuously (nothing in scope), not fail. Named for
+def test_passes_vacuously_when_non_subject_persons_have_no_facts():
+    """A tree whose non-subject persons carry no facts at all has nothing
+    to check -- must pass vacuously (nothing in scope), not fail. Named for
     what actually happens: the validator has no `pytest.skip()` branch for
     this case, it just finds nothing to add to `missed` (PR #2004 review,
-    clack391 -- the previous name/docstring here claimed a skip that the
-    code never performed)."""
-    tree_no_sources = {
+    clack391 -- an earlier name/docstring here claimed a skip that the code
+    never performed).
+
+    Renamed for issue #2208: the old name said "no sourced fan facts",
+    which stopped describing this fixture once the check widened from
+    source-ref'd facts to all recorded facts. These persons have no facts,
+    which is why it still passes; a person with an UNSOURCED fact is now in
+    scope and is covered by
+    `test_fires_on_production_shape_when_fact_never_surfaced`."""
+    tree_no_facts = {
         "persons": [
             {"id": "I1", "names": [{"given": "Michael", "surname": "Sheahan"}]},
             {"id": "I2", "names": [{"given": "Patrick", "surname": "Sheahan"}]},
         ]
     }
-    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_sources}
+    before_state = {"research_json": RESEARCH, "tree_gedcomx_json": tree_no_facts}
     response = "No mention of anyone."
     check(before_state, response, TAGGED)  # does not raise (nothing in scope)
 
@@ -786,6 +856,43 @@ BEFORE_STATE_NO_DATE_HAS_VALUE = {
 }
 
 
+_PSHAPE_DIR = (
+    Path(__file__).resolve().parents[4] / "eval/fixtures/scenarios/first-plan-fan-production-shape"
+)
+
+
+def _pshape_state():
+    return {
+        "research_json": json.loads((_PSHAPE_DIR / "research.json").read_text(encoding="utf-8")),
+        "tree_gedcomx_json": json.loads((_PSHAPE_DIR / "tree.gedcomx.json").read_text(encoding="utf-8")),
+    }
+
+
+def test_person_level_source_needs_its_content_not_name_and_year():
+    """The committed production-shaped scenario: Patrick's deed is a person-level
+    attachment and his fact carries only 1875 and the place. Naming him with the
+    year is what the question's own framing already gives away -- it must fire."""
+    response = (
+        "Patrick Sheahan (I2), Michael's brother, was in Schuylkill County by 1875. "
+        "Plan: 1880 census, church records, naturalization."
+    )
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
+
+def test_person_level_source_passes_when_deed_content_stated():
+    response = (
+        "Patrick Sheahan (I2) bought land from James Kelly in 1875 (Deed Book 42, "
+        "p. 118, S2). Plan: 1880 census, church records, naturalization."
+    )
+    check(_pshape_state(), response, TAGGED)  # does not raise
+
+
+def test_person_level_source_content_without_the_person_fires():
+    response = "A land purchase is recorded in Deed Book 42, p. 118. Plan: 1880 census, church records."
+    with pytest.raises(AssertionError, match="I2"):
+        check(_pshape_state(), response, TAGGED)
+
 def test_passes_on_value_content_alone_when_fact_has_no_date():
     """`date` is optional in the schema (PR #2004 review, clack391): a
     sourced fact with no date at all previously failed unconditionally no
@@ -793,6 +900,18 @@ def test_passes_on_value_content_alone_when_fact_has_no_date():
     still be satisfiable -- by the value content alone."""
     response = "Patrick Sheahan (I2) is already documented as a coal miner in the tree."
     check(BEFORE_STATE_NO_DATE_HAS_VALUE, response, TAGGED)  # does not raise
+
+
+def test_fires_when_dateless_fact_value_never_surfaced_on_production_shape():
+    """The red side of the no-date case, on a tree with no fact-level source
+    ref (issue #2208): a fact with a `value` and no date is still checked,
+    not skipped into a vacuous pass."""
+    person = TREE_NO_DATE_HAS_VALUE["persons"][1]
+    fact = {k: v for k, v in person["facts"][0].items() if k != "sources"}
+    tree = {"persons": [TREE_NO_DATE_HAS_VALUE["persons"][0], {**person, "facts": [fact]}]}
+    response = "Patrick Sheahan (I2) lived in Schuylkill County. Plan: church records, tax lists."
+    with pytest.raises(AssertionError, match="I2"):
+        check({"research_json": RESEARCH, "tree_gedcomx_json": tree}, response, TAGGED)
 
 
 TREE_NO_DATE_NO_VALUE = {
@@ -824,3 +943,127 @@ def test_passes_vacuously_when_fact_has_neither_date_nor_value():
     not raise even though the response never mentions Patrick."""
     response = "No mention of anyone."
     check(BEFORE_STATE_NO_DATE_NO_VALUE, response, TAGGED)  # does not raise
+
+
+# --- profile-reread (issue #2208, alpha report #3244) ----------------------
+
+_PROFILE_TEST = {"tags": ["profile-reread"]}
+_PROFILE_STATE = {
+    "research_json": {
+        "questions": [
+            {"id": "q_001", "status": "open", "question": "Who were the parents of Thomas Kerrigan (I2)?"}
+        ]
+    },
+    "tree_gedcomx_json": {
+        "persons": [
+            {"id": "I1", "ark": "ark:/61903/4:1:ZZKR-BR1",
+             "names": [{"preferred": True, "given": "Bridget", "surname": "Kerrigan"}]},
+            {"id": "I2", "ark": "ark:/61903/4:1:ZZKR-TH2",
+             "names": [{"preferred": True, "given": "Thomas", "surname": "Kerrigan"}]},
+        ]
+    },
+}
+
+
+def _read(pid, *, matched=True):
+    c = _call("person_read", {"persons": []} if matched else {"error": "fixture_not_found"},
+              {"personId": pid})
+    c["matched"] = {"kind": "predicate" if matched else "none", "index": 0 if matched else None}
+    return c
+
+
+_PLAN_OPS = [{"section": "plans", "op": "append", "entry": {"question_id": "q_001"}}]
+
+
+def _write(shape="list"):
+    if shape == "string":
+        return _call("research_append", None, {"ops": json.dumps(_PLAN_OPS)})
+    if shape == "single":
+        return _call("research_append", None, dict(_PLAN_OPS[0]))
+    return _call("research_append", None, {"ops": _PLAN_OPS})
+
+
+@pytest.mark.parametrize("shape", ["list", "string", "single"])
+def test_profile_passes_on_matched_read_before_plan_write(shape):
+    check_profile(_PROFILE_STATE, [_read("ZZKR-TH2"), _write(shape)], _PROFILE_TEST)
+
+
+def test_profile_passes_with_extra_subject_read():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-BR1"), _read("ZZKR-TH2"), _write()], _PROFILE_TEST
+    )
+
+
+def test_profile_fires_on_no_read():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_call("collections_search"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_unmatched_read():
+    # Every mock call reaches tool_calls; an unmatched one is told apart only by matched.kind.
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-TH2", matched=False), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_subject_read_only():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_on_read_after_plan_write():
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(_PROFILE_STATE, [_write(), _read("ZZKR-TH2")], _PROFILE_TEST)
+
+
+def test_profile_fires_on_no_plan_write():
+    with pytest.raises(AssertionError, match="no research_append wrote plans"):
+        check_profile(
+            _PROFILE_STATE,
+            [_read("ZZKR-TH2"), _call("research_append", None, {"ops": [{"section": "log"}]})],
+            _PROFILE_TEST,
+        )
+
+
+def test_profile_skips_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_profile(_PROFILE_STATE, [], {"tags": []})
+
+
+def test_profile_passes_on_read_before_and_after_plan_write():
+    check_profile(
+        _PROFILE_STATE, [_read("ZZKR-TH2"), _write(), _read("ZZKR-TH2")], _PROFILE_TEST
+    )
+
+
+def test_profile_refused_write_is_not_the_first_write():
+    refused = _write()
+    refused["response"] = {"ok": False, "errors": ["schema"]}
+    check_profile(_PROFILE_STATE, [refused, _read("ZZKR-TH2"), _write()], _PROFILE_TEST)
+
+
+def test_profile_closed_question_person_does_not_count():
+    state = {
+        **_PROFILE_STATE,
+        "research_json": {"questions": _PROFILE_STATE["research_json"]["questions"] + [
+            {"id": "q_000", "status": "resolved", "question": "When was Bridget Kerrigan born?"}
+        ]},
+    }
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
+def test_profile_shared_given_name_without_surname_does_not_count():
+    tree = {"persons": _PROFILE_STATE["tree_gedcomx_json"]["persons"] + [
+        {"id": "I9", "ark": "ark:/61903/4:1:ZZOT-TH9",
+         "names": [{"preferred": True, "given": "Thomas", "surname": "Walsh"}]}
+    ]}
+    state = {**_PROFILE_STATE, "tree_gedcomx_json": tree}
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZOT-TH9"), _write()], _PROFILE_TEST)
+
+def test_v1_grounds_ark_served_by_person_read():
+    served = [_call("person_read", {"sources": [
+        {"id": "SD1", "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"}]})]
+    before, after = _states([_item("pli_010", rationale="Extract the attached baptism, ark:/61903/1:1:JQ4M-2XS.")])
+    check_v1(before, after, served)
+
