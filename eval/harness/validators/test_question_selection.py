@@ -654,6 +654,60 @@ def test_premise_question_names_fact(before_state, after_state, test):
     )
 
 
+# --- Tag-gated: a motivation objective is decomposed, not asked (#2003). ---
+#
+# A "why" objective is answered narratively from historical context, so the
+# question written must be a relationship or event question its answer rests
+# on. These match a question whose answer would be a reason: a bare "why", a
+# "what led/prompted/caused" form, and a yes/no hypothesis about the cause of a
+# move ("Did he move to Schuylkill County for coal work?").
+_MOTIVATION_PATTERNS = (
+    r"\bwhy\b",
+    r"\bfor what (?:reason|purpose)\b",
+    r"\breasons?\b",
+    r"\bmotivat",
+    r"\bwhat (?:led|prompted|caused|drove|induced|motivated)\b",
+    r"\bbecause\b",
+    r"\b(?:move|moved|relocate|relocated|migrate|migrated|settle|settled|leave|left|emigrate|emigrated)\b[^?]*\b(?:for|to (?:find|seek|join|escape|take up))\b[^?]{0,40}?\b(?:work|employment|jobs?|land|wages|mining|mines|opportunit\w*|relatives|kin|family)\b",
+)
+
+
+def _asks_motivation(text: str) -> str | None:
+    for pattern in _MOTIVATION_PATTERNS:
+        if re.search(pattern, text, re.IGNORECASE):
+            return pattern
+    return None
+
+
+def test_motivation_objective_decomposed(before_state, after_state, test):
+    """Tag-gated: on a "why" objective, a question must be written and none of
+    the written questions may ask for the reason itself (#2003). The reply's
+    narrative-treatment sentence is prose, so the judge grades it."""
+    if "motivation-objective-decomposed" not in test.get("tags", []):
+        pytest.skip("not a motivation-objective scenario")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    new = _new_questions(before, after)
+    assert new, (
+        "expected a relationship or event question decomposed from the "
+        "motivation objective; none was written"
+    )
+    offenders = []
+    for q in new:
+        text = q.get("question") or ""
+        hit = _asks_motivation(text)
+        if hit:
+            offenders.append(f"{q.get('id')}: {text!r} (matched /{hit}/)")
+    assert not offenders, (
+        "a motivation objective must be decomposed into the relationship or "
+        "event facts its answer rests on, not asked as a question -- the reason "
+        "is explained from historical context, not researched:\n  - "
+        + "\n  - ".join(offenders)
+    )
+
+
 # --- Tag-gated: a single-fact objective naming a paired fact must not be
 #     narrowed to one side (#1394 review -- ut_002 "parents" -> "father"). ----
 #

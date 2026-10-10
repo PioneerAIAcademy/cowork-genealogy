@@ -31,6 +31,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_question_selection import (  # noqa: E402
     test_disputed_parents_missing_info_handled as check_missing_info,
     test_first_question_tests_disputed_parents as check_disputed_parents,
+    test_motivation_objective_decomposed as check_motivation,
     test_new_question_not_vague as check_not_vague,
     test_premise_question_names_fact as check_premise,
     test_single_fact_objective_not_narrowed as check_single_fact,
@@ -361,3 +362,63 @@ def test_single_fact_accepts_paired_restatement(question):
 def test_single_fact_rejects_one_side_narrowing(question):
     with pytest.raises(AssertionError, match="narrowed to"):
         check_single_fact(_EMPTY_PARENTS, _parents_after(question), _SINGLE_FACT_TAGS)
+
+
+# --- test_motivation_objective_decomposed: the #2003 "why" guard ----------
+
+_MOTIVATION_TAGS = {"tags": ["motivation-objective-decomposed"]}
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Why did Patrick Flynn's family move to Schuylkill County between 1850 and 1880?",
+        "WHY did the Morgans move to Texas?",
+        "What led Patrick Flynn's family to settle in Schuylkill County?",
+        "For what reason did the family leave Ireland?",
+        "What were the reasons the Flynn family relocated to Pennsylvania?",
+        "Did Michael Sheahan move to Schuylkill County, Pennsylvania around 1882 for anthracite coal-mining work, as family tradition holds?",
+        "Did the Morgans move to Texas to join relatives already living there?",
+        "Did the family migrate because of the 1883 death of Eugene McElwee?",
+    ],
+)
+def test_motivation_rejects_a_question_asking_the_reason(question):
+    after = _state([_q("q_001", question)])
+    with pytest.raises(AssertionError, match="motivation objective"):
+        check_motivation(_EMPTY, after, _MOTIVATION_TAGS)
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "When did Patrick Flynn's family arrive in Schuylkill County, Pennsylvania?",
+        "Where did Patrick Flynn's family live before Schuylkill County?",
+        "Who were Patrick Flynn's parents, b. ca. 1845, Pennsylvania?",
+        "Which of Clorinda Sleeper's brothers were living in the Texas county before 1880?",
+        "Did Patrick Flynn's parents move to Schuylkill County before 1860?",
+        "When did the Morgan family arrive in Texas?",
+    ],
+)
+def test_motivation_accepts_a_relationship_or_event_question(question):
+    after = _state([_q("q_001", question)])
+    check_motivation(_EMPTY, after, _MOTIVATION_TAGS)
+
+
+def test_motivation_fails_when_no_question_is_written():
+    with pytest.raises(AssertionError, match="none was written"):
+        check_motivation(_EMPTY, _EMPTY, _MOTIVATION_TAGS)
+
+
+def test_motivation_one_bad_question_is_not_masked_by_a_good_one():
+    after = _state([
+        _q("q_001", "When did the Morgan family arrive in Texas?"),
+        _q("q_002", "Why did the Morgans move to Texas?"),
+    ])
+    with pytest.raises(AssertionError, match="q_002"):
+        check_motivation(_EMPTY, after, _MOTIVATION_TAGS)
+
+
+def test_motivation_skips_without_its_tag():
+    after = _state([_q("q_001", "Why did the Morgans move to Texas?")])
+    with pytest.raises(pytest.skip.Exception):
+        check_motivation(_EMPTY, after, {"tags": []})
