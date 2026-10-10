@@ -377,7 +377,9 @@ that matters here: a redelivered message carries the same `turn_id`, and that cl
 be granted immediately — that *is* the resume path, and refusing it stalls every
 kill-resume iteration at D14 and D17.
 
-**Everything else about locking is deferred to R8, deliberately.** An earlier draft
+**Everything else about locking is deferred to R8, deliberately** (now built: R8's
+status note, U6). The redelivery is still granted immediately; the earlier attempt is the
+one fenced out. An earlier draft
 specified a full protocol here — `claim_epoch` fencing, epoch-conditioned release,
 completion-record-before-claim, a 409 refusal arm and four named residuals. That protocol
 is textbook code with no unknowns in it, and this section's own conclusion is that the
@@ -393,7 +395,10 @@ every round it existed. It belongs in code with tests, not in prose.
    one-token `converse` on `us.anthropic.claude-sonnet-4-6` in `us-east-1` returned.
 2. **Service Quotas increase request** for Claude input TPM. Takes days. A single
    session runs ~166k tokens/min against a 2M TPM default, so 50 concurrent
-   sessions is not a default-quota workload.
+   sessions is not a default-quota workload. (Superseded 2026-10-09, handoff U18:
+   Bedrock exempts cache reads and counts output 5×, so a session settles at
+   ~26–43k; the Sonnet 4.6 default is 6M; the per-day quota binds first.
+   `docs/search-agent-capacity.md`.)
 
 3. **Two emails** (drafted separately): one to FS AI Platform covering the Agent
    Gateway's API surface, prompt-caching behaviour, token quota, and Guardrails
@@ -1627,7 +1632,7 @@ without whichever Bedrock refuses.
   ~90 s mock iteration, so the message would go visible again mid-turn and — because a
   redelivery carries the same body and therefore the same `turn_id`, which the lock now
   grants immediately — a second worker would be handed the lock and start the
-  same turn. The production `VisibilityTimeout` is asserted by a config
+  same turn (since U6 its claim fences the first attempt's writes; R8). The production `VisibilityTimeout` is asserted by a config
   test, not exercised in the loop. Kill the **worker container** — the shim is a separate
   service and survives to issue `ChangeMessageVisibility(0)`. Not `kill -9` on the
   worker PID, which orphans the `claude` child, which keeps
@@ -2713,7 +2718,9 @@ anything measured in integ before then is the shared pool. Which account is unse
 (the fulltext P25 accounts if the agent counts as the same product, else a new one via
 a GEM intake). The burndown multiplier and whether cache reads are exempt are unknown
 and the largest variable in the estimate (50 sessions is ~0.5M or ~8.1M TPM); the
-information is in the responses, we test it ourselves. Do not let a `model:` be pinned
+information is in the responses, we test it ourselves. (Answered 2026-10-09, handoff
+U18: 5× output, cache reads exempt, documented and read back from
+`EstimatedTPMQuotaUsage`; ~2M for 50 sessions. `docs/search-agent-capacity.md`.) Do not let a `model:` be pinned
 in our provider block — it overrides the client's model and breaks per-agent selection.
 Gateway capacity is one 0.25 vCPU / 512 MB task per environment, `desiredCount: 1`,
 no autoscaling, parsing and re-serialising every body for every tenant; per-account
@@ -2805,6 +2812,18 @@ mismatched write is a no-op and that worker aborts. One column, two `WHERE` clau
 roughly one to two days with a two-worker integration test. It is textbook, which is why
 it was cut from the build plan rather than from this register.
 *Owner: us; needs a two-instance test before production.*
+**Status:** resolved by U6 (PR #3299; `familysearch-handoff.md`, U6). One column,
+`turns.claim_epoch` (`010_claim_epoch.sql`), minted by every claim of an open turn; claims
+are still granted immediately. A stale close raises rather than returning, so it never
+releases a held message; the zero-progress counter is conditioned on the epoch; the
+transcript append and every tool-server commit take a `FOR SHARE` fence on the turn row,
+so a write that races the newer claim waits for it and then rolls back. **Deviation from
+the wording above:** no heartbeat column or lease, since claims are never refused and
+nothing would read one; the epoch check before every tool call and the fenced append are
+the conditioned touch, the sweep's epoch bump is the expiry (as is the web tier's
+`fail_turn`, an epoch-less close), and ending an overlong live
+attempt stays U26's time limit. Proven against real Postgres with two worker claims and
+two tool-server processes (2026-10-09, n=1). Scaling past one instance still waits on U18.
 
 **R9 — Blueprint provisioner coverage and the custom AMI check.** The architecture
 document's own first blocker: with no FamilySearch-baked AMI for Python 3.12 / Node 24

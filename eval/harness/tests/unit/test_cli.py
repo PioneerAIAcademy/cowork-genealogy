@@ -214,6 +214,79 @@ def test_main_runs_per_test_end_to_end(
     assert names and names[0].startswith("scratch_") is want_scratch
 
 
+@pytest.mark.parametrize(
+    "extra, want_tool_search, want_scratch",
+    [
+        (["--no-tool-search"], False, True),  # off -> scratch log, recorded false
+        ([], True, False),  # default -> releasable v{N} log, recorded true
+        (["--tool-search"], True, False),
+    ],
+)
+def test_main_tool_search_end_to_end(
+    tmp_path, monkeypatch, capsys, extra, want_tool_search, want_scratch
+):
+    """Drives main() as the --runs-per-test test above does: the flag must reach
+    the run, the releasability decision, the banner and the envelope. A dropped
+    `tool_search=` at any of those four sites reds one assertion here."""
+    from pathlib import Path
+    from harness.auth import AuthConfig
+
+    root = tmp_path / "unit"
+    skill_dir = root / "skill-a"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "rubric.md").write_text(
+        "# skill-a\n\n## Dim1\n\n- **pass:** ok\n- **partial:** mid\n- **fail:** no\n",
+        encoding="utf-8",
+    )
+    (skill_dir / "t0.json").write_text(json.dumps({
+        "test": {"id": "ut_a_000", "skill": "skill-a", "name": "n",
+                  "type": "positive", "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "judge_context": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(
+        run_tests, "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    _stub_anthropic_ok(monkeypatch)
+
+    seen: list = []
+    logs: list[tuple[str, dict]] = []
+
+    def fake_run(spec, **kwargs):
+        seen.append(kwargs.get("tool_search", "MISSING"))
+        return _stub_log(spec.id, spec.skill, "pass")
+
+    def fake_write(log, *, runlogs_root, filename, **kwargs):
+        logs.append((filename, log))
+        out = Path(runlogs_root) / "unit" / log["skill"] / filename
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text("{}", encoding="utf-8")
+        return out
+
+    monkeypatch.setattr(run_tests, "run_one_test", fake_run)
+    monkeypatch.setattr(run_tests, "write_run_log", fake_write)
+    monkeypatch.setattr(
+        run_tests, "write_partial_runlog",
+        lambda log, *, runlogs_root, skill, timestamp:
+            Path(runlogs_root) / "unit" / skill / f".partial_{timestamp}.json",
+    )
+    runlogs = tmp_path / "runlogs"
+    runlogs.mkdir()
+    rc = run_tests.main([
+        "--skill", "skill-a",
+        "--tests-dir", str(root), "--runlogs-root", str(runlogs),
+        *extra,
+    ])
+
+    assert rc == 0
+    assert seen == [want_tool_search]
+    filename, log = logs[0]
+    assert filename.startswith("scratch_") is want_scratch
+    assert log["tool_search"] is want_tool_search
+    assert ("tool search: OFF (scratch log)" in capsys.readouterr().out) is not want_tool_search
+
+
 def _stub_log(test_id, skill, outcome, expected_outcome="pass", aborted_reason=None):
     """Return a minimal test ENTRY for exit-code logic tests.
 

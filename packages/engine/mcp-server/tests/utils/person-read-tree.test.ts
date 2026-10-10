@@ -136,6 +136,48 @@ describe("buildFromStagedRead — the place retry's time budget", () => {
   }, 5_000);
 });
 
+// A PIN, green before the change that made `person_read` carry relationship refs, because
+// `remapRefs` already treated a relationship's refs like a person's. It is here because the
+// failure it guards is silent: a ref that stops being re-pointed vanishes at this step with
+// no error, and the built tree is exactly as unsourced as it was (issue #3229).
+describe("buildFromStagedRead — a relationship's own source refs", () => {
+  const person = (id: string, given: string) => ({
+    id,
+    gender: "Male",
+    living: false,
+    names: [{ given, surname: "Flynn" }],
+  });
+  const staged = () => ({
+    personId: "LZNY-BRF",
+    requestedId: "LZNY-BRF",
+    gedcomx: {
+      persons: [person("LZNY-BRF", "Patrick"), person("LZNY-DAD", "Joseph")],
+      relationships: [
+        {
+          type: "ParentChild",
+          parent: "LZNY-DAD",
+          child: "LZNY-BRF",
+          sources: [{ ref: "SRC-BAPTISM" }, { ref: "SRC-NOT-IN-THE-READ" }],
+        },
+      ],
+      sources: [{ id: "SRC-BAPTISM", title: "A baptism" }],
+    },
+  });
+
+  it("keeps an edge's FamilySearch source as its S id, beside the S1 ref, and drops one that resolves nowhere", async () => {
+    const { tree, idMap } = await buildFromStagedRead({ staged: staged(), now: NOW });
+    const own = idMap.sources["SRC-BAPTISM"];
+    expect(own).toBeDefined();
+    expect(own).not.toBe(idMap.familySearchTreeSource);
+    expect(tree.sources.find((s) => s.id === own)).toMatchObject({ title: "A baptism" });
+    expect(tree.relationships[0].sources).toEqual([
+      { ref: own },
+      { ref: idMap.familySearchTreeSource, quality: 1 },
+    ]);
+    expect(idMap.familySearchTreeSource).toBe("S1");
+  });
+});
+
 describe("accessDate", () => {
   it("renders the Evidence Explained access-date form in UTC", () => {
     expect(accessDate(new Date("2026-10-01T23:30:00Z"))).toBe("1 October 2026");
