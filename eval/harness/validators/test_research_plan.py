@@ -1085,7 +1085,7 @@ _DEATH_WORD = r"(?:death|died|burial|buried|bur\.|d[öo]d|d[öo]de|begrav\w*|beg
 _YEAR_RE = re.compile(r"\b(1[5-9]\d\d)\b")
 
 
-_RELATIVE = r"(?:son|husband|father|mother|daughter|brother|sister|child|children|wife|spouse|parents?)"
+_RELATIVE = r"(?:(?:grand|step)?(?:son|daughter|child|children|father|mother|parents?)|husband|brother|sister|wife|spouse)"
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
 
 
@@ -1096,11 +1096,15 @@ def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
     g = re.escape(given)
     own = re.compile(
         rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
-        rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b"
+        rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b(?!['’]s)"
+        rf"|(?<!\bof\s)\b{g}(?:\s+\w+)?,?\s+(?:was\s+)?(?:buried|died)\b"
         rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
         re.IGNORECASE,
     )
-    relative = re.compile(rf"(?:\b{g}['’]s|\bher)\s+{_RELATIVE}\b", re.IGNORECASE)
+    relative = re.compile(
+        rf"(?:\b{g}['’]s|\bher)\s+{_RELATIVE}\b|\b{_RELATIVE}\s+of\s+{g}\b",
+        re.IGNORECASE,
+    )
     return own, relative
 
 

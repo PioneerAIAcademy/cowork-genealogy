@@ -1025,6 +1025,13 @@ def test_death_route_fires_when_the_death_item_is_someone_elses():
     "Elena's husband's burial entry, to date the widowhood.",
     "A burial entry for Asmund (Elena's father) would confirm his parish, age at death, and identity.",
     "Burial of her son Asmund Jönsson in Barsebäck; Elena is named as his mother.",
+    "Burial of Elena's son Asmund, 1720.",
+    "Burials for Elena's son Asmund in the Barsebäck register.",
+    "Death entry of Elena's father Asmund in Barsebäck.",
+    "Asmund Jönsson, son of Elena, was buried in 1720 in Barsebäck.",
+    "Per Nilsson (husband of Elena) burial entry, to date the widowhood.",
+    "Her grandson's burial entry in Barsebäck; Elena is named.",
+    "Her stepson died in 1740; his burial entry names the farm.",
 ])
 def test_death_route_fires_when_the_burial_only_names_her_as_a_relative(rationale):
     """T-FEH's review on #3118: the name and a death word both present is not enough."""
@@ -1068,6 +1075,8 @@ def test_death_route_passes_a_mixed_plan_with_her_burial_item():
 
 
 @pytest.mark.parametrize("rationale,date_range", [
+    ("Elena Asmundsdotter, buried beside her son in Barsebäck.", "1718-1770"),
+    ("Elena Asmundsdotter, buried beside her son in Barsebäck; the entry gives her age.", "1718-1770"),
     ("Search the Sweden, Burials index for Elena Asmundsdotter.", "1712-1770"),
     ("Browse Barsebäck's Döde section for Elena's death entry.", "1718–1768"),
     ("ELENA'S BURIED entry — begravna, Barsebäck.", "1745"),
