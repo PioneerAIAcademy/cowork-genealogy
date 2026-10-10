@@ -2283,10 +2283,12 @@ async def _run_agent(
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
-                    f"`{bare}` denied on `{owned_section}` — declaring a question "
-                    f"exhaustive is routed to the {agent} agent. Creating a question "
-                    "and recording an honest `declared: false` termination are both "
-                    "unaffected; delegate the claim rather than making it here."
+                    f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
+                    f"`stopped_because` value is routed to the {agent} agent. "
+                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "values (`resources_spent`, `blocked_by_conflict`) are both "
+                    "unaffected; delegate the stop-gate claim rather than making "
+                    "it here."
                 )
             elif rule == "owned_field":
                 owned_section, _, field = owned.partition(".")
