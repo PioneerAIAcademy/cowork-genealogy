@@ -90,10 +90,18 @@ class FakeAws:
         # describe-environments answers Launching/Updating this many times after a create
         # or update; Beanstalk refuses an update or terminate until the env is Ready.
         self.busy_polls = 0
+        self.openssl_calls: list[list[str]] = []
+        # delete-certificate answers ResourceInUseException this many times first.
+        self.cert_in_use = 0
+        # get-metric-statistics: {(namespace, metric, dimension value): [datapoint, ...]}
+        self.metrics: dict[tuple[str, str, str], list[dict]] = {}
+        self.credit_modes = {"i-genealogy-u13-worker": "unlimited", "i-genealogy-u13-tools": "standard"}
 
     # plumbing
 
     def __call__(self, argv: list[str]):
+        if argv[0] == "openssl":
+            return self.openssl(argv)
         self.calls.append(list(argv))
         snap = {a: Path(a[len("file://"):]).read_text(encoding="utf-8") for a in argv if a.startswith("file://")}
         self.call_files.append(snap)
@@ -109,6 +117,15 @@ class FakeAws:
         except AwsError as exc:
             return subprocess.CompletedProcess(argv, 254, "", str(exc))
         return subprocess.CompletedProcess(argv, 0, body if isinstance(body, str) else json.dumps(body), "")
+
+    def openssl(self, argv: list[str]):
+        """`openssl req -x509`: writes a stand-in key and certificate where it was told."""
+        self.openssl_calls.append(list(argv))
+        if "openssl" in self.fail:
+            return subprocess.CompletedProcess(argv, 1, "", self.fail["openssl"])
+        Path(_flag(argv, "-keyout")).write_text("-----BEGIN PRIVATE KEY-----\nfake\n", encoding="utf-8")
+        Path(_flag(argv, "-out")).write_text("-----BEGIN CERTIFICATE-----\nfake\n", encoding="utf-8")
+        return subprocess.CompletedProcess(argv, 0, "", "")
 
     def reset(self) -> None:
         self.calls.clear()
@@ -211,16 +228,34 @@ class FakeAws:
 
     SUBNET_AZS = {"subnet-a": "us-east-1a", "subnet-b": "us-east-1b"}
     NO_T3_AZ = "us-east-1e"
+    # Not a default subnet (never listed), but describable by id: its zone offers t3.large, not t3.xlarge.
+    OTHER_SUBNET_AZS = {"subnet-c": "us-east-1c"}
+    NO_T3_XLARGE_AZ = "us-east-1c"
 
     def ec2_describe_subnets(self, rest):
         ids = rest[rest.index("--subnet-ids") + 1:] if "--subnet-ids" in rest else sorted(self.SUBNET_AZS)[::-1]
-        return {"Subnets": [{"SubnetId": i, "AvailabilityZone": self.SUBNET_AZS[i]} for i in ids]}
+        azs = {**self.OTHER_SUBNET_AZS, **self.SUBNET_AZS}
+        return {"Subnets": [{"SubnetId": i, "AvailabilityZone": azs[i]} for i in ids]}
 
     def ec2_describe_instance_type_offerings(self, rest):
-        azs = set(self.SUBNET_AZS.values()) | {"us-east-1e"}
+        azs = set(self.SUBNET_AZS.values()) | {"us-east-1e", self.NO_T3_XLARGE_AZ}
         if "Name=instance-type,Values=t3." in " ".join(rest):
             azs.discard(self.NO_T3_AZ)
+        if "Name=instance-type,Values=t3.xlarge" in rest:
+            azs.discard(self.NO_T3_XLARGE_AZ)
         return {"InstanceTypeOfferings": [{"Location": az} for az in sorted(azs)]}
+
+    def cloudwatch_get_metric_statistics(self, rest):
+        dim = _flag(rest, "--dimensions").split("Value=", 1)[1]
+        return {"Label": _flag(rest, "--metric-name"),
+                "Datapoints": self.metrics.get((_flag(rest, "--namespace"), _flag(rest, "--metric-name"), dim), [])}
+
+    def ec2_describe_instance_credit_specifications(self, rest):
+        ids = _flag_values(rest, "--instance-ids")
+        if not all(i in self.credit_modes for i in ids):
+            raise AwsError("An error occurred (InvalidInstanceID.NotFound) when calling the "
+                           "DescribeInstanceCreditSpecifications operation")
+        return {"InstanceCreditSpecifications": [{"InstanceId": i, "CpuCredits": self.credit_modes[i]} for i in ids]}
 
     def ec2_describe_security_groups(self, rest):
         if "--group-ids" in rest:
@@ -498,6 +533,26 @@ class FakeAws:
 
     def logs_delete_log_group(self, rest):
         self.drop("log", _flag(rest, "--log-group-name"))
+
+    def acm_import_certificate(self, rest):
+        arn = f"arn:aws:acm:us-east-1:{ACCOUNT}:certificate/c{len(self.all('cert')) + 1}"
+        self.add("cert", arn)
+        return {"CertificateArn": arn}
+
+    def acm_describe_certificate(self, rest):
+        arn = _flag(rest, "--certificate-arn")
+        if not self.get("cert", arn):
+            raise AwsError(f"An error occurred (ResourceNotFoundException): Could not find certificate {arn}.")
+        return {"Certificate": {"CertificateArn": arn, "Type": "IMPORTED"}}
+
+    def acm_delete_certificate(self, rest):
+        arn = _flag(rest, "--certificate-arn")
+        if self.cert_in_use:
+            self.cert_in_use -= 1
+            raise AwsError(f"An error occurred (ResourceInUseException): Certificate {arn} is in use.")
+        if not self.get("cert", arn):
+            raise AwsError(f"An error occurred (ResourceNotFoundException): Could not find certificate {arn}.")
+        self.drop("cert", arn)
 
     def resourcegroupstaggingapi_get_resources(self, rest):
         return {"ResourceTagMappingList": [{"ResourceARN": a} for a in self.leftover.get("tagged", [])]}
@@ -798,6 +853,137 @@ def test_signin_phase_sets_loopback_with_space_separated_emails(stack):
     assert rh.EB_VALUE.match(web[(rh.ENV_NS, "ALLOWED_EMAILS")])
 
 
+def _https(env, fake, *extra):
+    return run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https", *extra)
+
+
+def test_signin_https_imports_a_self_signed_certificate_and_moves_the_listener_to_443(stack):
+    env, fake, _ = stack
+    fake.reset()
+    rc, lines = _https(env, fake)
+    assert rc == 0, lines[-5:]
+    host = "genealogy-u13-web.invalid"
+    [req] = fake.openssl_calls
+    assert req[:3] == ["openssl", "req", "-x509"] and f"subjectAltName=DNS:{host}" in req and f"/CN={host}" in req
+    key = env["work"] / "tls" / "web-key.pem"
+    assert key.is_file() and stat.S_IMODE(key.stat().st_mode) == 0o600
+    [imp] = fake.calls_to("acm", "import-certificate")
+    assert f"fileb://{key}" in imp and "Key=genealogy:rehearsal,Value=u13" in imp
+    web = options_file(env, rh.ENV_NAMES["web"])
+    [arn] = [c["name"] for c in fake.all("cert")]
+    assert web[(rh.ENV_NS, "PUBLIC_URL")] == f"https://{host}"
+    assert web[(rh.HTTPS_NS, "ListenerEnabled")] == "true" and web[(rh.HTTPS_NS, "Protocol")] == "HTTPS"
+    assert web[(rh.HTTPS_NS, "SSLCertificateArns")] == arn
+    assert web[(rh.HTTP_NS, "ListenerEnabled")] == "false", "D2: never plain http on the CNAME"
+    assert web[(rh.ENV_NS, "FAMILYSEARCH_WEB_ENABLED")] == "true"
+    assert web[(rh.ENV_NS, "ALLOWED_EMAILS")] == "a@example.invalid b@example.invalid"
+    assert fake.env_settings[rh.ENV_NAMES["web"]][(rh.HTTPS_NS, "SSLCertificateArns")] == arn
+
+
+def test_signin_https_rerun_reuses_the_certificate_and_a_web_redeploy_keeps_it(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    assert _https(env, fake)[0] == 0
+    assert len(fake.calls_to("acm", "import-certificate")) == 1 and len(fake.openssl_calls) == 1
+    fake.reset()
+    assert run(env, fake, "up", "--billed", "--phase", "web")[0] == 0
+    web = options_file(env, rh.ENV_NAMES["web"])
+    assert web[(rh.ENV_NS, "PUBLIC_URL")].startswith("https://") and (rh.HTTPS_NS, "SSLCertificateArns") in web
+
+
+def test_signin_https_reimports_when_acm_no_longer_has_the_certificate(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.drop("cert", fake.all("cert")[0]["name"])
+    assert _https(env, fake)[0] == 0
+    assert len(fake.calls_to("acm", "import-certificate")) == 2
+
+
+def test_leaving_https_turns_443_off_and_restores_port_80(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.reset()
+    rc, lines = run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "loopback")
+    assert rc == 0, lines[-3:]
+    [update] = fake.calls_to("elasticbeanstalk", "update-environment")
+    sent = {(o["Namespace"], o["OptionName"]) for o in fake.file_of(update, "--option-settings")}
+    removed = {(o["Namespace"], o["OptionName"]) for o in fake.file_of(update, "--options-to-remove")}
+    assert not sent & removed, "an option both set and removed in one call"
+    assert removed >= {(rh.HTTPS_NS, "Protocol"), (rh.HTTPS_NS, "SSLCertificateArns"), (rh.HTTP_NS, "ListenerEnabled")}
+    live = fake.env_settings[rh.ENV_NAMES["web"]]
+    assert live[(rh.ENV_NS, "PUBLIC_URL")] == "http://127.0.0.1:1837"
+    assert live[(rh.HTTPS_NS, "ListenerEnabled")] == "false"
+    assert (rh.HTTPS_NS, "SSLCertificateArns") not in live and (rh.HTTPS_NS, "Protocol") not in live
+    assert (rh.HTTP_NS, "ListenerEnabled") not in live
+
+
+def test_loopback_after_loopback_touches_no_listener(stack):
+    env, fake, _ = stack
+    fake.reset()
+    assert run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "loopback")[0] == 0
+    [update] = fake.calls_to("elasticbeanstalk", "update-environment")
+    assert "--options-to-remove" not in update
+    assert not {o["Namespace"] for o in fake.file_of(update, "--option-settings")} & {rh.HTTPS_NS, rh.HTTP_NS}
+
+
+def test_signin_https_refuses_before_the_web_environment_exists(env, capsys):
+    fake = FakeAws()
+    rc, _ = run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https")
+    assert rc == 2 and "run its `up` phase first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
+def test_signin_https_refuses_a_web_environment_with_no_recorded_address(stack, capsys):
+    """A failed `up --phase web` leaves the options snapshot but no CNAME in the inventory;
+    without this refusal the certificate would name CN=None and PUBLIC_URL https://None."""
+    env, fake, _ = stack
+    inv_path = env["work"] / "inventory.json"
+    inv = json.loads(inv_path.read_text(encoding="utf-8"))
+    del inv["state"]["envs"]["web"]
+    inv_path.write_text(json.dumps(inv), encoding="utf-8")
+    rc, _ = _https(env, fake)
+    assert rc == 2 and "run `up --phase web` first" in capsys.readouterr().err
+    assert not fake.openssl_calls and not fake.calls_to("acm", "import-certificate")
+
+
+def test_signin_https_stops_when_openssl_fails(stack, capsys):
+    env, fake, _ = stack
+    fake.fail["openssl"] = "req: unknown option -addext"
+    rc, _ = _https(env, fake)
+    assert rc == 1 and "openssl failed" in capsys.readouterr().err
+    assert not fake.calls_to("acm", "import-certificate")
+
+
+def test_down_deletes_the_certificate_after_the_environments_and_waits_out_in_use(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    fake.cert_in_use = 2
+    fake.reset()
+    rc, lines = run(env, fake, "down", "--billed")
+    assert rc == 0, lines[-3:]
+    ops = fake.ops()
+    assert ops.index(("elasticbeanstalk", "terminate-environment")) < ops.index(("acm", "delete-certificate"))
+    assert len(fake.calls_to("acm", "delete-certificate")) == 3 and not fake.all("cert")
+
+
+def test_prove_empty_fails_on_a_certificate_left_and_passes_one_acm_reports_gone(stack):
+    env, fake, _ = stack
+    assert _https(env, fake)[0] == 0
+    arn = fake.all("cert")[0]["name"]
+    fake.fail["acm delete-certificate"] = "An error occurred (AccessDeniedException)"
+    assert run(env, fake, "down", "--billed")[0] == 1
+    del fake.fail["acm delete-certificate"]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1 and any("NOT EMPTY acm" in line for line in lines), lines
+    assert run(env, fake, "down", "--billed")[0] == 0
+    fake.leftover["tagged"] = [arn]
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 0, lines
+    fake.add("cert", arn)
+    rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
+    assert rc == 1, "a tagged certificate ACM still has stays NOT EMPTY"
+
+
 def test_secrets_shared_and_hex(stack):
     env, fake, _ = stack
     web, worker = options_file(env, rh.ENV_NAMES["web"]), options_file(env, rh.ENV_NAMES["worker"])
@@ -958,7 +1144,8 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "nudges_3", "no_telemetry", "idle_session_60s"}
+        "refresh_age_0", "cap_1usd", "nudges_3", "nudges_0", "no_telemetry", "idle_session_60s",
+        "slots_4", "slots_8", "worker_xlarge"}
 
 
 def test_every_case_has_a_row_in_the_readme_probe_table():
@@ -971,6 +1158,7 @@ def test_every_case_has_a_row_in_the_readme_probe_table():
 
 @pytest.mark.parametrize("case, tier, name, value", [
     ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
+    ("nudges_0", "web", "AUTONOMOUS_MAX_NUDGES", "0"),
     ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
 ])
 def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
@@ -1151,6 +1339,138 @@ def test_probe_restores_when_a_later_case_fails(stack):
     assert fake.calls_to("rds", "reset-db-parameter-group"), "the failed case's own restore still runs"
 
 
+# ── U18: the slot and instance-type cases ─────────────────────────────────────────────
+
+
+SLOT_USERS = {n: " ".join(f"genealogy-turn-{i}" for i in range(n)) for n in (2, 4, 8)}
+
+
+def _slot_opts(users: str | None, conns: str) -> list[dict]:
+    """up's worker options with HttpConnections replaced and WORKER_TURN_USERS set (None: the template's)."""
+    out = [o for o in _worker_opts() if o["OptionName"] != "HttpConnections"]
+    out.append(rh.opt(rh.SQSD_NS, "HttpConnections", conns))
+    return out + ([rh.opt(rh.ENV_NS, "WORKER_TURN_USERS", users)] if users is not None else [])
+
+
+@pytest.mark.parametrize("case, n", [("slots_4", 4), ("slots_8", 8)])
+def test_slot_case_applies_both_options_and_restores_them(stack, case, n):
+    """HttpConnections is in up's snapshot, so it is set back to 2; WORKER_TURN_USERS is not,
+    so it is removed and 02-worker.config's two names apply again."""
+    env, fake, _ = stack
+    worker = rh.ENV_NAMES["worker"]
+    snapshot = options_file(env, worker)
+    assert snapshot[(rh.SQSD_NS, "HttpConnections")] == "2" and (rh.ENV_NS, "WORKER_TURN_USERS") not in snapshot
+    fake.reset()
+    rc, lines = run(env, fake, "probe", "--billed", "--case", case, "--hold-s", "0")
+    assert rc == 0, lines[-5:]
+    apply, restore = _updates(fake, worker)
+    assert {(o["Namespace"], o["OptionName"]): o["Value"] for o in fake.file_of(apply, "--option-settings")} == {
+        (rh.SQSD_NS, "HttpConnections"): str(n), (rh.ENV_NS, "WORKER_TURN_USERS"): SLOT_USERS[n]}
+    assert "--options-to-remove" not in apply
+    assert fake.file_of(restore, "--option-settings") == [rh.opt(rh.SQSD_NS, "HttpConnections", "2")]
+    assert fake.file_of(restore, "--options-to-remove") == [{"Namespace": rh.ENV_NS, "OptionName": "WORKER_TURN_USERS"}]
+    live = fake.env_settings[worker]
+    assert live[(rh.SQSD_NS, "HttpConnections")] == "2" and (rh.ENV_NS, "WORKER_TURN_USERS") not in live
+    assert run(env, fake, "status")[0] == 0, "a restored slot case leaves no drift"
+
+
+@pytest.mark.parametrize("users, conns, message", [
+    (SLOT_USERS[4], "2", r"names 4 user\(s\) for HttpConnections=2"),
+    (None, "4", r"names 2 user\(s\) for HttpConnections=4"),
+    (SLOT_USERS[2], "4", r"names 2 user\(s\) for HttpConnections=4"),
+    ("genealogy-turn-0 genealogy-turn-0", "2", "names a user twice"),
+    ("genealogy-turn-0 genealogy-turn-8", "2", r"\['genealogy-turn-8'\], which 01-worker-layout.sh"),
+    ("genealogy-turn-0 webapp", "2", r"\['webapp'\], which 01-worker-layout.sh's TURN_USERS does not create"),
+    (SLOT_USERS[2], "0", "not a positive integer"),
+])
+def test_check_options_refuses_users_that_do_not_match_connections(users, conns, message):
+    with pytest.raises(rh.Die, match=message):
+        rh.check_options("worker", _slot_opts(users, conns))
+
+
+@pytest.mark.parametrize("opts, dry", [
+    (_worker_opts(), False),  # up's 2/2: 01-sqsd.config's connections, 02-worker.config's users
+    (_slot_opts(SLOT_USERS[2], "2"), False),
+    (_slot_opts("genealogy-turn-0   genealogy-turn-1", "2"), False),  # split as the worker splits it
+    (_slot_opts(None, "2"), False),
+] + [(_worker_opts() + rh.case_options(rh.CASES[c], "worker")[0], False) for c in ("slots_4", "slots_8")] + [
+    # dry mode merges an empty snapshot: only the case's own settings, the rest from the templates
+    (rh.case_options(rh.CASES[c], "worker")[0], True) for c in ("slots_4", "slots_8", "worker_xlarge", "fast_errors")])
+def test_check_options_accepts_users_that_match_connections(opts, dry):
+    rh.check_options("worker", opts, dry=dry)
+
+
+def test_the_slot_rule_binds_only_the_worker():
+    rh.check_options("web", [rh.opt(rh.SQSD_NS, "HttpConnections", "4")])
+
+
+def test_a_mismatched_slot_case_is_refused_before_its_update_is_sent(stack, monkeypatch, capsys):
+    env, fake, _ = stack
+    monkeypatch.setitem(rh.CASES, "slots_bad", {"measures": "x", "ops": {"worker": [
+        (rh.SQSD_NS, "HttpConnections", "2"), (rh.ENV_NS, "WORKER_TURN_USERS", SLOT_USERS[4])]}})
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", "slots_bad", "--hold-s", "0")
+    assert rc == 2 and "names 4 user(s) for HttpConnections=2" in capsys.readouterr().err
+    assert _updates(fake, rh.ENV_NAMES["worker"]) == [], "neither the apply nor a restore was sent"
+    assert (rh.ENV_NS, "WORKER_TURN_USERS") not in fake.env_settings[rh.ENV_NAMES["worker"]]
+
+
+def test_worker_xlarge_resizes_and_restores_the_instance_type(stack):
+    env, fake, _ = stack
+    worker = rh.ENV_NAMES["worker"]
+    fake.reset()
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "worker_xlarge", "--hold-s", "0")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    [offers] = fake.calls_to("ec2", "describe-instance-type-offerings")
+    assert "Name=instance-type,Values=t3.xlarge" in offers
+    assert ops.index(("ec2", "describe-subnets")) < ops.index(("elasticbeanstalk", "update-environment"))
+    apply, restore = _updates(fake, worker)
+    assert fake.file_of(apply, "--option-settings") == [rh.opt(rh.INSTANCES_NS, "InstanceTypes", "t3.xlarge")]
+    assert fake.file_of(restore, "--option-settings") == [rh.opt(rh.INSTANCES_NS, "InstanceTypes", "t3.large")]
+    assert "--options-to-remove" not in apply and "--options-to-remove" not in restore
+    assert fake.env_settings[worker][(rh.INSTANCES_NS, "InstanceTypes")] == "t3.large"
+    inv = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))
+    assert inv["state"]["az_offerings"]["t3.xlarge"] == ["us-east-1a", "us-east-1b"]
+
+
+def _plant_subnet(env, subnet: str) -> None:
+    path = env["work"] / "options" / f"{rh.ENV_NAMES['worker']}.json"
+    snapshot = json.loads(path.read_text(encoding="utf-8"))
+    for o in snapshot:
+        if (o["Namespace"], o["OptionName"]) == (rh.VPC_NS, "Subnets"):
+            o["Value"] += f",{subnet}"
+    path.write_text(json.dumps(snapshot), encoding="utf-8")
+
+
+def test_worker_xlarge_refuses_a_subnet_without_the_type(stack, capsys):
+    """subnet-c's zone offers t3.large (up placed the worker there) but not t3.xlarge: the
+    replacement instance would fail, so the case is refused before any update or restore."""
+    env, fake, _ = stack
+    _plant_subnet(env, "subnet-c")
+    fake.reset()
+    rc, _ = run(env, fake, "probe", "--billed", "--case", "worker_xlarge", "--hold-s", "0")
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "t3.xlarge is not offered in the zone of subnet(s) subnet-c (us-east-1c)" in err, err
+    assert not fake.calls_to("elasticbeanstalk", "update-environment")
+    fake.OTHER_SUBNET_AZS = {"subnet-c": "us-east-1b"}
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "worker_xlarge", "--hold-s", "0")
+    assert rc == 0, "a planted subnet in a zone that offers t3.xlarge passes"
+
+
+def test_a_case_waits_for_ready_before_it_sends(stack):
+    """worker_xlarge's replacement still Updating when Terminal 2 applies a slot case."""
+    env, fake, _ = stack
+    fake.get("env", rh.ENV_NAMES["worker"])["busy"] = 2
+    fake.reset()
+    rc, lines = run(env, fake, "probe", "--billed", "--case", "slots_4", "--hold-s", "0")
+    assert rc == 0, lines[-5:]
+    ops = fake.ops()
+    assert ops[:ops.index(("elasticbeanstalk", "update-environment"))].count(
+        ("elasticbeanstalk", "describe-environments")) == 3
+
+
 # ── migrate ───────────────────────────────────────────────────────────────────────────
 
 
@@ -1198,7 +1518,7 @@ DOWN = {
     "secret": ("secretsmanager", "delete-secret"), "ec2": ("ec2", "terminate-instances"),
     "app": ("elasticbeanstalk", "delete-application"), "eb-storage": ("s3api", "delete-bucket-policy"),
     "env": ("elasticbeanstalk", "terminate-environment"), "log-group": ("logs", "delete-log-group"),
-    "resolver": ("route53resolver", "delete-resolver-query-log-config"),
+    "resolver": ("route53resolver", "delete-resolver-query-log-config"), "acm": ("acm", "delete-certificate"),
 }
 PROOF = {
     "budget": ("budgets", "describe-budget"), "iam-role": ("iam", "list-roles"),
@@ -1208,12 +1528,13 @@ PROOF = {
     "secret": ("secretsmanager", "list-secrets"), "ec2": ("ec2", "describe-instances"),
     "app": ("elasticbeanstalk", "describe-applications"), "eb-storage": ("s3api", "head-bucket"),
     "env": ("elasticbeanstalk", "describe-environments"), "log-group": ("logs", "describe-log-groups"),
-    "resolver": ("route53resolver", "list-resolver-query-log-configs"),
+    "resolver": ("route53resolver", "list-resolver-query-log-configs"), "acm": ("acm", "describe-certificate"),
 }
 
 
 def test_up_down_and_proof_cover_the_same_kinds(stack):
     env, fake, _ = stack
+    assert run(env, fake, "up", "--billed", "--phase", "signin", "--mode", "https")[0] == 0
     assert set(DOWN) == set(PROOF) == set(rh.KINDS)
     inv = json.loads((env["work"] / "inventory.json").read_text(encoding="utf-8"))
     assert {r["kind"] for r in inv["resources"]} == set(rh.KINDS)
@@ -1344,7 +1665,7 @@ def test_prove_empty_passes_tag_index_entries_ec2_reports_gone(stack):
     fake.leftover["instance_states"] = {"i-0aaa": "terminated"}
     rc, lines = run(env, fake, "prove-empty", "--repoll-s", "0")
     assert rc == 0, lines
-    assert any("EC2 reports gone" in line for line in lines)
+    assert any("EC2 or ACM reports gone" in line for line in lines)
 
 
 @pytest.mark.parametrize("arn_tail, states, volumes", [
@@ -1406,6 +1727,25 @@ def test_status_reads_options_as_beanstalk_reports_them(stack):
     assert sum("drift" in line for line in lines) == 2
 
 
+@pytest.mark.parametrize("value, drift", [
+    (SLOT_USERS[4], True),
+    ("genealogy-turn-0", True),
+    (SLOT_USERS[2], False),  # 02-worker.config's own value
+    ("genealogy-turn-0,genealogy-turn-1", False),  # split as the worker splits it
+    (None, False),  # absent: the template's applies
+])
+def test_drift_reports_a_left_over_worker_turn_users(stack, value, drift):
+    assert rh.template_env("worker")["WORKER_TURN_USERS"] == SLOT_USERS[2]
+    env, fake, _ = stack
+    live = fake.env_settings[rh.ENV_NAMES["worker"]]
+    live.pop((rh.ENV_NS, "WORKER_TURN_USERS"), None)
+    if value is not None:
+        live[(rh.ENV_NS, "WORKER_TURN_USERS")] = value
+    rc, lines = run(env, fake, "status")
+    found = [line for line in lines if line.startswith("  drift:") and "WORKER_TURN_USERS" in line]
+    assert (rc, len(found)) == ((1, 1) if drift else (0, 0)), lines
+
+
 def test_probe_reports_an_update_beanstalk_rejected_and_still_restores(stack):
     """Live 2026-10-07: env_4096's update was refused (EnvironmentVariables over 4,096 bytes),
     the environment ended Ready on its old configuration, and the probe exited 0."""
@@ -1461,6 +1801,90 @@ def test_resume_starts_rds_before_the_bastion_and_the_tiers(stack):
         assert opts == {(rh.ASG_NS, "MinSize"): "1", (rh.ASG_NS, "MaxSize"): "1"}
 
 
+# ── cpu ───────────────────────────────────────────────────────────────────────────────
+
+
+WORKER_I, TOOLS_I = "i-genealogy-u13-worker", "i-genealogy-u13-tools"
+WINDOW = ("--start", "2026-10-10T12:00:00Z", "--end", "2026-10-10T12:30:00Z")
+
+
+def _points(*rows):
+    """(minute past 12:00, Average, Maximum) per 5-minute point, as the CLI prints them."""
+    return [{"Timestamp": f"2026-10-10T12:{m:02d}:00+00:00", "Average": a, "Maximum": x, "Unit": "Percent"}
+            for m, a, x in rows]
+
+
+def _kv(lines):
+    return dict(line.split("=", 1) for line in lines if "=" in line and not line.startswith(("+ ", "# ")))
+
+
+def test_cpu_reads_cloudwatch_and_credit_mode(stack):
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points((0, 40.0, 70.0), (25, 60.0, 90.0)),
+                    ("AWS/EC2", "CPUCreditBalance", WORKER_I): _points((25, 80.0, 80.0), (0, 100.0, 100.0)),
+                    ("AWS/EC2", "CPUUtilization", TOOLS_I): _points((25, 2.0, 5.0)),
+                    ("AWS/RDS", "CPUUtilization", rh.RDS_ID): _points((25, 10.0, 30.0))}
+    fake.reset()
+    rc, lines = run(env, fake, "cpu", *WINDOW)
+    assert rc == 0, lines
+    assert fake.ops()[0] == ("sts", "get-caller-identity")
+    assert all(op.startswith(("describe-", "get-")) for _, op in fake.ops()), "read-only"
+    stats = fake.calls_to("cloudwatch", "get-metric-statistics")
+    assert len(stats) == 3 * len(rh.CPU_METRICS)
+    seen = set()
+    for a in stats:
+        assert (_flag(a, "--start-time"), _flag(a, "--end-time")) == ("2026-10-10T12:00:00Z", "2026-10-10T12:30:00Z")
+        assert _flag(a, "--period") == "300" and _flag_values(a, "--statistics") == ["Average", "Maximum"]
+        seen.add((_flag(a, "--namespace"), _flag(a, "--metric-name"), _flag(a, "--dimensions")))
+    assert seen == {(ns, m, f"Name={dim},Value={v}") for m in rh.CPU_METRICS for ns, dim, v in (
+        ("AWS/EC2", "InstanceId", WORKER_I), ("AWS/EC2", "InstanceId", TOOLS_I),
+        ("AWS/RDS", "DBInstanceIdentifier", rh.RDS_ID))}
+    assert [_flag_values(a, "--instance-ids") for a in fake.calls_to("ec2", "describe-instance-credit-specifications")] \
+        == [[WORKER_I], [TOOLS_I]]
+    out = _kv(lines)
+    assert (out["window_start"], out["window_end"]) == ("2026-10-10T12:00:00Z", "2026-10-10T12:30:00Z")
+    assert (out["worker_id"], out["tools_id"], out["rds_id"]) == (WORKER_I, TOOLS_I, rh.RDS_ID)
+    assert (out["worker.credits"], out["tools.credits"]) == ("unlimited", "standard")
+    assert {k: out[f"worker.CPUUtilization.{k}"] for k in ("points", "first", "last", "avg", "max", "last_at")} == {
+        "points": "2", "first": "40", "last": "60", "avg": "50", "max": "90", "last_at": "2026-10-10T12:25:00Z"}
+    assert (out["worker.CPUCreditBalance.first"], out["worker.CPUCreditBalance.last"]) == ("100", "80"), "time order"
+    assert out["rds.CPUUtilization.max"] == "30" and out["tools.CPUUtilization.avg"] == "2"
+    assert out["worker.CPUSurplusCreditsCharged"] == "no_data" and out["rds.CPUCreditBalance"] == "no_data"
+
+
+@pytest.mark.parametrize("points, end_flag, rc", [
+    (((0, 40.0, 70.0), (25, 60.0, 90.0)), True, 0),  # 12:25's point reaches 12:30
+    (((0, 40.0, 70.0), (20, 60.0, 90.0)), True, 1),  # the last one ends at 12:25: not yet
+    ((), True, 1),
+    ((), False, 0),  # no --end: a credit-mode and balance read, never "not yet"
+])
+def test_cpu_exits_nonzero_until_a_worker_point_reaches_the_end(stack, points, end_flag, rc):
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points(*points)}
+    got, lines = run(env, fake, "cpu", *(WINDOW if end_flag else ()))
+    assert got == rc, lines
+    assert any("no data point reaches --end" in line for line in lines) == (rc == 1)
+
+
+def test_cpu_reads_a_released_worker_by_id(stack, capsys):
+    env, fake, _ = stack
+    gone = "i-0123456789abcdef0"
+    fake.metrics = {("AWS/EC2", "CPUUtilization", gone): _points((25, 1.0, 2.0))}
+    fake.reset()
+    rc, lines = run(env, fake, "cpu", *WINDOW, "--worker-instance", gone)
+    assert rc == 0, lines
+    out = _kv(lines)
+    assert out["worker_id"] == gone and out["worker.credits"] == "unknown" and out["worker.CPUUtilization.max"] == "2"
+    assert [_flag(a, "--environment-name") for a in fake.calls_to("elasticbeanstalk", "describe-environment-resources")] \
+        == [rh.ENV_NAMES["tools"]]
+    for bad in (("--worker-instance", "genealogy-u13-worker"), ("--start", "2026-10-10T12:00:00"),
+                ("--start", "2026-10-10T12:30:00Z", "--end", "2026-10-10T12:00:00Z")):
+        fake.reset()
+        assert run(env, fake, "cpu", *bad)[0] == 2, bad
+        assert not fake.calls, "refused before any call"
+    capsys.readouterr()
+
+
 # ── dry-run ───────────────────────────────────────────────────────────────────────────
 
 
@@ -1471,7 +1895,10 @@ def _no_aws(argv):
 @pytest.mark.parametrize("cmd", [["plan"], ["up", "--phase", "all", "--phase", "signin", "--phase", "resolver",
                                             "--dry-run"],
                                  ["down", "--dry-run"], ["probe", "--case", "kill_window", "--case",
-                                                         "idle_session_60s", "--case", "graviton_boot", "--dry-run"]])
+                                                         "idle_session_60s", "--case", "graviton_boot", "--dry-run"],
+                                 ["probe", "--case", "slots_4", "--case", "worker_xlarge", "--dry-run"],
+                                 ["cpu", "--start", "2026-10-10T12:00:00Z", "--end", "2026-10-10T12:30:00Z", "--dry-run"],
+                                 ["cpu", "--dry-run"]])
 def test_dry_run_calls_nothing_and_prints_pasteable_commands(env, cmd):
     rc, lines = run(env, _no_aws, *cmd)
     assert rc == 0, lines[-3:]

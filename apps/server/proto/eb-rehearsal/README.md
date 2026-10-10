@@ -16,7 +16,8 @@ they run against a fake `aws`.
   - `account`: the 12-digit account the caller must be in. `--expect-account` overrides it.
   - `alert-email`: the address the budget alerts go to.
   - `allowed-emails`: the patrons who may sign in (space- or comma-separated).
-  - `zone`, `host`: kept for when the hostname and certificate are decided.
+  - `zone`, `host`: kept for a public hostname. `signin --mode https` uses neither: it
+    serves the web environment's own CNAME with a self-signed certificate.
 
   The account id, the zone and any hostname never go in a tracked file, a test, a commit
   message or a PR body. Write `<account>`, `<zone>` and `<host>` instead.
@@ -51,7 +52,9 @@ they run against a fake `aws`.
   Beanstalk's environment-value set, more than 4,096 bytes of properties, and any sign-in
   setting except from the `signin` phase. Everywhere, an sqsd option that has a mirror
   (`MaxRetries`, `VisibilityTimeout`, `RetentionPeriod`) is set together with its `SQSD_*`
-  variable, at the same value.
+  variable, at the same value. On the worker, `WORKER_TURN_USERS` must name one distinct user
+  per sqsd `HttpConnections` (either one falling back to its template), and every name must be
+  one the worker hook's `TURN_USERS` creates, so a slot case is refused before any AWS call.
 - **`--dry-run`** on any subcommand calls nothing. It prints each command as a pasteable
   line and shows secrets as `file://` paths. It writes its JSON files under `<work-dir>/dry-run/`,
   never over the probe snapshots.
@@ -62,8 +65,9 @@ they run against a fake `aws`.
 |---|---|
 | `plan` | Prints names, phases and cases, then every command `up --phase all` would run. It makes no AWS call. |
 | `up --phase <p>` | Runs one or more phases in the order given. `all` is the twelve below. |
-| `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live. |
+| `status` | Prints yesterday's and today's daily cost (always), the budget's actual spend, each environment's status and health, and the RDS forward command. It exits 1 on drift between an environment and the option-settings file `up` wrote, or when a dev-only or `U13_PROBE_*` variable is live, or when the worker's `WORKER_TURN_USERS` is set and differs from `02-worker.config`'s (a slot case not restored; absent counts as the template's). |
 | `probe --case <c>` | Applies cases (repeatable), holds, then restores in reverse order in `finally`. Enter, Ctrl-C, an exception or `--hold-s N` all lead to the restore, which first waits for the environment to leave `Launching` or `Updating`. |
+| `cpu [--start <iso>] [--end <iso>] [--worker-instance <id>]` | Read-only and unbilled. CloudWatch's 5-minute `CPUUtilization`, `CPUCreditBalance`, `CPUCreditUsage`, `CPUSurplusCreditBalance` and `CPUSurplusCreditsCharged` (period 300, Average and Maximum) for the worker and tools instances and for RDS, plus each instance's credit mode (`describe-instance-credit-specifications`), as `k=v` lines; a metric with no point prints `<scope>.<metric>=no_data` (the surplus pair, or a non-burstable RDS class, may never publish). The window defaults to the last hour. With `--end`, it exits 1 while no worker `CPUUtilization` point reaches it yet, so a run made too soon is not taken for the result. `--worker-instance` reads a released instance (CloudWatch keeps a terminated instance's metrics). |
 | `down` | Tears everything down in order. It is idempotent. |
 | `pause` | Between sessions: the three tiers to ASG 0/0, then RDS and the bastion stopped, and `paused` recorded so `status` does not report the ASG sizes as drift. AWS restarts a stopped RDS instance after seven days. |
 | `resume` | Undoes `pause`: RDS (waits for `available`), the bastion, then the tiers back to 1/1. |
@@ -86,11 +90,12 @@ they run against a fake `aws`.
 | `queue` | Reads the worker's `WorkerQueue` URL and sets it as `QUEUE_URL` (the two-step: the worker exits 2 at `step=queue_url` until then). |
 | `web` | The web environment, with an internet-facing application load balancer and `QUEUE_URL`. It has no `PUBLIC_URL`, no sign-in and no dev login on first boot. |
 | `migrate` | Over SSM on the web instance, under a transient policy whose `Resource` is exactly the master secret and web's DSN secret, removed in `finally`. Runs `migrate.py`, creates or updates the DML role and its grants, then runs `migrate.py --status`. |
-| `signin --mode loopback` (optional) | `PUBLIC_URL=http://127.0.0.1:1837`, `FAMILYSEARCH_WEB_ENABLED=true` and `ALLOWED_EMAILS` (space-separated) on web. `--mode off` removes them. `--mode https` is refused until the hostname and certificate are decided. |
+| `signin --mode loopback` (optional) | `PUBLIC_URL=http://127.0.0.1:1837`, `FAMILYSEARCH_WEB_ENABLED=true` and `ALLOWED_EMAILS` (space-separated) on web. `--mode off` removes them. |
+| `signin --mode https` (optional) | A self-signed certificate for the web environment's CNAME, made with `openssl` in the work dir and imported into ACM, tagged. Then on web: the 443 listener (`aws:elbv2:listener:443`, `Protocol=HTTPS`, `SSLCertificateArns`), the port-80 listener off, `PUBLIC_URL=https://<web-cname>`, and the same sign-in settings. A re-run reuses the certificate. Leaving `https` turns 443 off and port 80 back on. See "https" below. |
 | `resolver` (optional) | A Route 53 Resolver query log on the default VPC, written to `/genealogy-u13/resolver`, to record which hosts the tiers resolve. |
 
 Every tier gets its security group and instance profile through
-`aws:autoscaling:launchconfiguration`, along with `InstanceTypes`, ASG 1/1,
+`aws:autoscaling:launchconfiguration`, its `InstanceTypes` through `aws:ec2:instances`, ASG 1/1,
 `ManagedActionsEnabled=false` and enhanced health. `--env <tier>:NAME=VALUE` adds a non-secret
 operator setting, which the same guard checks.
 
@@ -106,6 +111,19 @@ aws ssm start-session --target <web instance id> \
 ```
 
 Then open `http://127.0.0.1:1837`.
+
+### https
+
+`signin --mode https` proves list 3's step 18 listener without a hostname of our own: the
+account's one public zone belongs to another team, so no public certificate can be
+validated. The listener settings are the guide's. Only the chain differs: it is not publicly
+trusted, so pass `--cacert <work dir>/tls/web-cert.pem` to curl.
+
+FamilySearch sends the browser back only to the dev key's registered loopback callback, so
+sign-in never completes on `https://<web-cname>`. Sign in through loopback first and reuse
+that session cookie over https. The tier signs it with the same `SESSION_SECRET`. Run
+anything that needs the loopback `PUBLIC_URL` before switching. The https sign-in itself is
+F15's client on F18's host.
 
 ### Postgres from the laptop
 
@@ -144,9 +162,41 @@ goes to `--options-to-remove`, so the bundle's template value (if any) applies a
 | `debug_hold` | `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` on tools | The hold acceptance step 4 kills the worker within |
 | `refresh_age_0` | `FS_GRANT_REFRESH_AGE_S=0` on web | A FamilySearch grant refresh on every turn |
 | `cap_1usd` | `SESSION_SPEND_CAP_USD=1` on the worker | That the session spend cap stops a turn |
+| `nudges_0` | `AUTONOMOUS_MAX_NUDGES=0` on web, so the worker runs no Stop hook (removed on restore) | A case measured with nudges off, as compose's kill recipes run it (`probe_resume`) |
 | `nudges_3` | `AUTONOMOUS_MAX_NUDGES=3` on web (the template's 60 applies again on restore) | Whether a kill case's `no_progress` close comes from web's 60-nudge cap: the same case at compose's 3 |
 | `no_telemetry` | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` on the worker (kept for the CLI by `CLI_ENV_KEEP_PREFIXES`) | The CLI's egress with its nonessential traffic (the Datadog intake) off |
 | `idle_session_60s` | The parameter group's `idle_session_timeout=60000`. It waits for `in-sync`, then restores with `reset-db-parameter-group`. Never during the acceptance turn. | What a Postgres idle-session timeout does to the tiers' pools |
+| `slots_4`, `slots_8` | sqsd `HttpConnections` 4 or 8 and `WORKER_TURN_USERS` the first 4 or 8 of the hook's `genealogy-turn-0` … `-7`, in one update (a configuration deploy: the worker and sqsd restart). The restore sets `HttpConnections` back to 2 and removes `WORKER_TURN_USERS`, so `02-worker.config`'s two names apply again. Queue idle; deploy the Part A worker bundle first, since its hook creates the eight users. | Worker CPU, memory and Postgres connections at 4 and 8 concurrent turns (U18) |
+| `worker_xlarge` | `InstanceTypes=t3.xlarge` on the worker (`aws:ec2:instances`); the instance is replaced, and replaced back to t3.large on restore. Refused before any update unless every subnet in the worker's `Subnets` is in a zone offering t3.xlarge. Queue idle. | The same at four vCPUs, on one instance and one credit balance for the baselines and both slot cases |
+
+A case waits for its environment to be `Ready` before it sends, so a slot case applied while
+`worker_xlarge`'s replacement is in flight waits rather than fails. Two `probe` processes held
+at once (Terminal 1 and 2 below) share no state: each keeps its own restore in memory, and the
+cases touch different options, so either restore leaves the other case in place. Nothing locks
+this. While any case is held, do not `pause`. Refresh the SSO login before releasing one: a
+restore that fails on expired credentials leaves the case live, and the recovery is
+`probe --case <c> --hold-s 0` (apply again, restore at once). Run `status` after each slot
+release: it reports a `WORKER_TURN_USERS` the restore left behind.
+
+### The U18 CPU measurement (Part B)
+
+On the stack already up, with the Part A worker bundle deployed:
+
+0. Signed in. If sign-in was left off, `up --phase signin --mode loopback` first.
+1. Queue idle. Terminal 1: `probe --billed --case worker_xlarge` (held); the instance is
+   replaced. Then `cpu` for the credit mode and starting balance. Wait at least 10 minutes
+   after the new instance boots.
+2. `make proto-bounds-aws CASE=concurrent_rss_heavy ARGS="--sessions 0 --window-s 900
+   --expect-instance-type t3.xlarge"` (0 turns; the same `--expect-instance-type` on every
+   run below).
+3. The same with `--sessions 1 --window-s 1800`, at the default 2 slots.
+4. Terminal 2: `probe --billed --case slots_4` (held); bounds with `--sessions 4 --window-s 1800`;
+   release; `status`.
+5. `probe --billed --case slots_8` (held); bounds with `--sessions 8 --window-s 1800`; release;
+   `status`.
+6. After each window, `cpu --worker-instance <id> --start <iso> --end <iso>`: bounds prints
+   the line, ending `--work-dir <dir>` for you to fill in. It exits 1 until CloudWatch has a point reaching the window's end.
+7. Release `worker_xlarge` (queue idle). `status` shows no drift.
 
 ## Teardown
 
@@ -163,19 +213,23 @@ already gone:
    only `genealogy-u13/` and the keys that name a recorded environment id.
 5. Force-delete the secrets.
 6. Empty and delete the data bucket.
-7. Delete the security groups `rds`, then `tools-alb`, `web`, `worker` and `tools`, retrying
+7. Delete the imported certificates, retrying for up to 15 minutes while ACM still reports
+   one in use.
+8. Delete the security groups `rds`, then `tools-alb`, `web`, `worker` and `tools`, retrying
    on DependencyViolation for up to 10 minutes.
-8. Delete the instance profiles, then the roles. Service-linked roles are left in place.
-9. Delete the budget.
-10. Remove the Resolver query log (disassociate, delete) and its log group.
-11. Delete the `/aws/elasticbeanstalk/genealogy-u13-*` log groups.
+9. Delete the instance profiles, then the roles. Service-linked roles are left in place.
+10. Delete the budget.
+11. Remove the Resolver query log (disassociate, delete) and its log group.
+12. Delete the `/aws/elasticbeanstalk/genealogy-u13-*` log groups.
 
 Then remove the `/etc/hosts` line and delete the work dir. `prove-empty` checks the tag
 index (re-polled after `--repoll-s`, since it lags deletes), the application and
 environments, the recorded stacks, load balancers and queues, Elastic IPs, instances,
 security groups, the RDS trio, the secrets, the data bucket, the storage bucket (`head-bucket`
 must answer 404 when this run created it; anything else counts as not empty), the IAM path,
-the budget, the Resolver config and both log-group prefixes.
+the budget, the recorded certificates, the Resolver config and both log-group prefixes. A tag
+index entry for an EC2 instance or volume, or a certificate, passes when EC2 or ACM itself
+reports it gone.
 
 ## Leak check
 

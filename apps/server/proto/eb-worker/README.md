@@ -44,8 +44,10 @@ files, and the hook carries `set -euo pipefail` and the git exec bit.
   a first `python3` there that is missing or below 3.10; `ev=start` logs `hook_python`.
 - **Why the hook chowns staging** (R-b in the U12 plan): a `/var/app/current` the agent
   could write would let one patron's turn rewrite the code another's loads.
-- **One user per turn** (U3): the hook creates `genealogy-turn-0` and `-1` (group
-  `genealogy-turn`; `WORKER_TURN_USERS` in `02-worker.config` names the same two) and a
+- **One user per turn** (U3): the hook creates `genealogy-turn-0` to `-7` (group
+  `genealogy-turn`; `WORKER_TURN_USERS` in `02-worker.config` names the first two, one per
+  sqsd `HttpConnections`, and the rehearsal's `slots_4`/`slots_8` probe cases name the first
+  four or eight with a matching `HttpConnections`, U18) and a
   `web.service` drop-in that runs the worker as root, so it can launch each turn's CLI as
   its own slot user. The kernel then keeps one patron's turn out of another's files and the
   worker's `/proc`. The drop-in is written under `/usr/lib/systemd/system/web.service.d/`:

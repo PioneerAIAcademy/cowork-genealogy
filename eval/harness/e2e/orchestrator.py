@@ -78,6 +78,7 @@ from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
     GENEALOGY_SERVER_NAME,
+    TOOL_SEARCH_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -1939,6 +1940,7 @@ async def _run_agent(
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -2080,6 +2082,11 @@ async def _run_agent(
     # discrepancy can be checked against a version delta (the local CLI the SDK
     # spawns may differ from Cowork's bundled one).
     cli_version: dict[str, str | None] = {"v": None}
+    # Whether the FIRST init's `tools` list offered ToolSearch; None when that
+    # init carried no list. Listed at init; blind to the per-model gate (see
+    # env_for_sdk) — `False` proves tool search was off, `True` does not prove
+    # it was on.
+    tool_search_offered: dict[str, Any] = {"v": None, "seen": False}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
 
@@ -2651,25 +2658,16 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
-        # say "forcing tool search off" while setting "true"; the polarity is
-        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
-        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
-        # `auto:N` is the adaptive variant, and only a FALSY value
-        # (`false|0|no|off`) selects "standard" mode, where every schema is
-        # loaded up front. Unset also lands on tool-search mode, so deleting the
-        # variable eager-loads nothing. (Additionally forced off on a
-        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
-        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
-        #
-        # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
-        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
-        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
-        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
-        # is a separate, tracked decision that requires re-measuring the tool
-        # mix, so the value is left as it has been running. `env` MERGES onto
-        # the inherited environment (claude_agent_sdk
+        # ENABLE_TOOL_SEARCH has ONE source, env_for_sdk (its docstring holds
+        # the polarity: truthy or unset = on, falsy = off). `tool_search`
+        # (default True; `--no-tool-search` turns it off, experiment-only)
+        # picks the value. On, the ~38-tool genealogy server's schemas are
+        # deferred (except ALWAYS_LOAD in tool-schemas.ts) and re-discovered via
+        # ToolSearch mid-session. Off, every schema is loaded up front and the
+        # #941 mid-run backstop below is inert: it counts no-match ToolSearch
+        # replies, and there are none. A literal "true" used to sit in this dict
+        # ahead of env_for_sdk's own key, which always won, so it set nothing.
+        # `env` MERGES onto the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2686,9 +2684,8 @@ async def _run_agent(
         # fills the output budget with thinking (see subagent_capture); recorded
         # in the runlog. Applies session-wide (parent + every subagent).
         env={
-            "ENABLE_TOOL_SEARCH": "true",
             **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
-            **env_for_sdk(resolve_auth()),
+            **env_for_sdk(resolve_auth(), tool_search=tool_search),
         },
         # Parent model: the --agent-model override (also applied to staged
         # subagents in build_workspace) or the fixture's default.
@@ -3000,9 +2997,25 @@ async def _run_agent(
                     sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
-                    ver = data.get("version") or data.get("cli_version")
+                    # 2.1.139's init carries `claude_code_version`; the other
+                    # two keys are kept for a CLI that spells it either way.
+                    ver = (
+                        data.get("claude_code_version")
+                        or data.get("version")
+                        or data.get("cli_version")
+                    )
                     if ver:
                         cli_version["v"] = ver
+                    # First init only: a resume re-spawns the CLI with the same
+                    # env, so a later list says nothing new.
+                    if message.subtype == "init" and not tool_search_offered["seen"]:
+                        tool_search_offered["seen"] = True
+                        tools_listed = data.get("tools")
+                        tool_search_offered["v"] = (
+                            TOOL_SEARCH_NAME in tools_listed
+                            if isinstance(tools_listed, list)
+                            else None
+                        )
                     timeline.append(
                         [
                             round(now - run_started, 1),
@@ -3063,6 +3076,10 @@ async def _run_agent(
                             "inconclusive": (
                                 "still connecting (normal at init); the "
                                 "ToolSearch backstop covers it from here"
+                                if tool_search
+                                else "still connecting (normal at init); tool "
+                                "search is OFF, so the ToolSearch backstop is "
+                                "inactive — watch for zero genealogy calls"
                             ),
                             "unavailable": (
                                 "UNAVAILABLE — aborting"
@@ -3285,6 +3302,10 @@ async def _run_agent(
         # means the CLI default (sonnet-5 -> 32000).
         "max_output_tokens": max_output_tokens,
         "cli_version": cli_version["v"],
+        # What the CLI offered at init, not what took effect: blind to the
+        # per-model gate — `false` proves off, `true` does not prove on.
+        # `tool_search` (what was asked for) is added in run_e2e_test.
+        "tool_search_offered": tool_search_offered["v"],
         "caps": {
             "wall_clock_seconds": fixture.caps.wall_clock_seconds,
             "inactivity_seconds": fixture.caps.inactivity_seconds,
@@ -3490,6 +3511,7 @@ async def run_e2e_test(
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -3562,6 +3584,7 @@ async def run_e2e_test(
             deny_shell=deny_shell,
             deny_project_reads=deny_project_reads,
             context_1m=context_1m,
+            tool_search=tool_search,
         )
 
         final_research = read_research_json(workspace)
@@ -3747,6 +3770,11 @@ async def run_e2e_test(
             # compacts differently from the corpus, so a reader comparing runs
             # has to be able to see it without inferring it from the numbers.
             "betas": list(_BETAS_1M) if context_1m else [],
+            # What `--no-tool-search` asked for; `tool_search_offered` (from
+            # _run_agent) is what the CLI offered. Off is not comparable to the
+            # corpus — every schema is loaded up front — and CI rejects a run
+            # with either one False committed under eval/runlogs/e2e/.
+            "tool_search": tool_search,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)

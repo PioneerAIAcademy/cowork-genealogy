@@ -160,6 +160,7 @@ def run_one_test(
     model: str = DEFAULT_MODEL,
     judge_model: str = DEFAULT_JUDGE_MODEL,
     timestamp: str | None = None,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     """Run a single test; return the per-test entry dict for the envelope.
 
@@ -180,6 +181,7 @@ def run_one_test(
             model=model,
             judge_model=judge_model,
             timestamp=ts,
+            tool_search=tool_search,
         )
     )
 
@@ -192,6 +194,7 @@ async def _run_one_test_async(
     model: str,
     judge_model: str,
     timestamp: str,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     # --- Runnability gate -----------------------------------------------
     gate = check_runnable(
@@ -312,6 +315,7 @@ async def _run_one_test_async(
             auth=auth,
             model=model,
             judge_model=judge_model,
+            tool_search=tool_search,
         )
         runs.append(single)
         if n_runs > 1:
@@ -518,6 +522,7 @@ async def _execute_single_run(
     auth: AuthConfig,
     model: str,
     judge_model: str,
+    tool_search: bool = True,
 ) -> SingleRun:
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
@@ -543,6 +548,7 @@ async def _execute_single_run(
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
         stop_at_stub=_stop_at_stub(spec),
+        tool_search=tool_search,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -994,6 +1000,7 @@ async def _execute_skill_with_retry(
     stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
+    tool_search: bool = True,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
     failures with exponential backoff. See `_is_retryable_abort`.
@@ -1088,6 +1095,7 @@ async def _execute_skill_with_retry(
                         declared_tools=declared_skill_tools(
                             spec.skill, paths.skills_dir
                         ),
+                        tool_search=tool_search,
                     )
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)

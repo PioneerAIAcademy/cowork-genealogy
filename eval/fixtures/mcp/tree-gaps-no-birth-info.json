@@ -1,0 +1,51 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased man with no birth date or place, windowed on his death year (death-90 to death). Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "no_birth_info",
+        "personId": "TGAP-GF2",
+        "name": "Heinrich Weis",
+        "lifespan": "-1902",
+        "generation": 2,
+        "detail": "Deceased, but the tree gives no birth date or place.",
+        "yearRange": {
+          "start": 1812,
+          "end": 1902
+        },
+        "place": "Cincinnati, Hamilton, Ohio, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1850,
+            1860
+          ],
+          "placeLevel": "locality"
+        }
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 40,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}
