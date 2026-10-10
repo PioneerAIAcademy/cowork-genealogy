@@ -23,7 +23,7 @@
       "resolved": null,
       "resolution_assertion_ids": [],
       "search_stop": {
-        "stopped_because": "question_answered",
+        "stopped_because": "record_exhausted",
         "justification": "Searched the 1850 census (which produced two competing candidate households), the 1860 census (located adult Patrick as a boarder, living with no Flynn), the 1908 death certificate (father not recorded), and Catholic parish/baptismal registers for Schuylkill County and the Tipperary emigrant cohort (no baptism naming a father located). The records that could disambiguate the two candidate childhood households have been checked; none link adult Patrick back to either.",
         "log_entry_ids": [
           "log_001",

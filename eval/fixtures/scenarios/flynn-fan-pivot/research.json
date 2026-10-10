@@ -23,7 +23,7 @@
       "resolved": null,
       "resolution_assertion_ids": [],
       "search_stop": {
-        "stopped_because": "question_answered",
+        "stopped_because": "record_exhausted",
         "justification": "All planned direct record types searched: 1850 census (FamilySearch, Ancestry, MyHeritage), 1860 census (FamilySearch), death certificate (FamilySearch), 1870/1880/1900 census (FamilySearch — all negative), probate Schuylkill County 1870–1900 (FamilySearch — negative), Catholic church records Schuylkill County 1840–1870 (FamilySearch — negative). No further direct record types remain unsearched for this question. FAN research is the only avenue not yet explored.",
         "log_entry_ids": [
           "log_001",

@@ -32,7 +32,7 @@
       "resolved": null,
       "resolution_assertion_ids": [],
       "search_stop": {
-        "stopped_because": "question_answered",
+        "stopped_because": "nothing_further_reachable",
         "justification": "Searched FamilySearch-indexed South Dakota death records with two surname spelling variants (log_003, log_004); both returned negative. Find a Grave index and WPA Grave Registration records are the only accessible FamilySearch sources recording this individual's death. South Dakota vital records archives and unindexed microfilm are outside the accessible FamilySearch scope and represent the next research avenue if the certificate is needed.",
         "log_entry_ids": [
           "log_001",
@@ -49,7 +49,20 @@
           "conflict_resolution": "No conflicts.",
           "overturn_risk": "Moderate. An indexed death certificate would provide primary information and could refine or contradict the 1935 date. Not accessible through FamilySearch indexing."
         },
-        "not_reached": []
+        "not_reached": [
+          {
+            "kind": "browse_only",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Unindexed FamilySearch microfilm for South Dakota death records not searched; images may exist for manual browsing but no index exists to query them"
+          },
+          {
+            "kind": "paywalled",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "South Dakota State Archives vital records not accessible through FamilySearch; original death certificate may be held there but requires a separate request"
+          }
+        ]
       }
     }
   ],
