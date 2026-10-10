@@ -10,9 +10,9 @@ contextual factors that affect availability.
 
 | Goal | Primary record types | Secondary/fallback |
 |------|---------------------|-------------------|
-| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), conscription/levy rolls (sons in conscription countries — e.g. Danish lægdsruller) | Military pension, immigration, land deeds (witnesses) |
+| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
 | Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
-| Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary) | Military records, immigration, delayed birth cert |
+| Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary); the subject's own death, burial or marriage entry when the birth predates the register or the birth parish is unknown | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
 | Find marriage | Vital records (marriage cert), church (marriage register), newspaper (announcement) | Census (married status), county bonds/licenses |
 | Track migration | Census (residence across decades), land records, tax records, county/state histories (biographical sketches often name the origin place — a lead to verify, not evidence), migration-corridor databases where one applies (e.g. Utah, Mormon Pioneer Overland Travel Database, 1847-1868; Saints by Sea for the ocean leg) | Church transfers, newspaper, city directories |
@@ -49,22 +49,27 @@ but cannot stand as its sole basis. This item belongs in essentially every
 parentage plan, even when a parent already appears in the tree from
 indirect evidence.
 
-**Identifying parents — sons in conscription countries: plan the levy
-rolls.** Where a national conscription system enrolled boys from birth
-or early childhood (Denmark and Norway's *lægdsruller* from 1789;
-similar muster systems elsewhere in continental Europe), the levy roll
-is **direct parentage evidence for a son**: each boy is entered under
-his father's name (in the Danish rolls the father's name is written
-directly above the son's), and session notations track the father's
-death (*gl. M. S.* "old man's son", *GBES* "widow's son") and the
-son's residence and occupation year by year. For a male subject in
-such a jurisdiction and era, add a dedicated conscription-roll plan
+**Identifying parents — sons enrolled under their father: plan the levy
+rolls.** Where the fetched `{Country}_Military_Records` page or the
+`localities` entry shows that a levy or conscription system enrolled boys
+under their father's name, the roll is **direct parentage evidence for a
+son**, and later sessions can track the father's death and the son's
+moves year by year. Which countries kept such rolls, from which year, and
+how they are reached come from the page, not from this file. For a male
+subject in such a jurisdiction and era, add a dedicated levy-roll plan
 item (`record_type: military`) alongside the baptism and the parents'
 marriage — not as an afterthought or fallback. Access caveat for the
-rationale: many roll collections are browse-only image series, and in
-large indexed roll collections the place fields may rank rather than
-filter results — pair the item with a `volume_search`/browse fallback
-when the indexed search underdelivers.
+rationale: in large indexed roll collections the place fields may rank
+rather than filter results — pair the item with a `volume_search`/browse
+fallback when the indexed search underdelivers.
+
+**Identifying parents or a birthplace — when no baptism can be expected,
+work back from the end of the life.** Where the birth predates the
+register of the parish the subject was born in or first appears in, or the
+birth parish is itself the unknown, the subject's own death or burial
+entry and each marriage entry are the records most likely to state an age,
+a home parish or a birthplace. Plan each as its own item, dated to the
+years the subject was alive there, not folded into a baptism search.
 
 **Emigrant origin or an unindexed parish register — plan a full-text
 co-occurrence search, routed to the search-full-text skill.** When the
@@ -76,13 +81,13 @@ text. Add a plan item whose `record_type` is `church` and whose rationale
 names the tactic explicitly: a **full-text search on the surnames as a
 co-occurrence** (both required as separate terms), run **unscoped**
 across the whole corpus, executed via the **search-full-text** skill. For
-a compound (Iberian / Latin-American) surname `Given Paterno Materno`,
-the two surnames are the father's and the mother's — so the co-occurrence
-`+Paterno +Materno` lands the parents' own acts (the child's baptism, a
-parent's burial or marriage). Priests, clerks and later transcribers do
-reverse or conflate the two surnames, so treat which one is paterno as
-unsettled until a record names the parents separately — that widens the
-candidate set, it does not license a match. Do **not** plan this as a phrase
+a compound surname, which word is the father's and which the mother's,
+and in what order, comes from the fetched `{Country}_Naming_Customs` page;
+the co-occurrence of the two lands the parents' own acts (the child's
+baptism, a parent's burial or marriage). Priests, clerks and later
+transcribers do reverse or conflate the two surnames, so treat which one
+is the father's as unsettled until a record names the parents separately
+— that widens the candidate set, it does not license a match. Do **not** plan this as a phrase
 search of the child's compound name, and do **not** scope it to a record
 collection id. This is the highest-yield item for "where was X from / who
 were X's parents" once indexed search has stalled.
@@ -116,9 +121,9 @@ Before finalizing record selection, verify these factors:
   creating jurisdiction.
 - [ ] **Record availability dates:** When did civil registration begin
   in this jurisdiction? Earlier events require church or other records.
-- [ ] **Record destruction:** Known courthouse fires, floods, or
-  wartime losses? Plan substitute sources (tax lists for census,
-  church records for vital records, state copies of county records).
+- [ ] **Record destruction:** Does the `localities` entry record a
+  courthouse fire, flood, or wartime loss? Plan the substitute sources
+  it names for the lost series.
 - [ ] **Wars and military service:** Was the subject of service age
   during a conflict? Check military service, pension, and draft records.
 - [ ] **Migration:** Evidence of relocation? Check records along the

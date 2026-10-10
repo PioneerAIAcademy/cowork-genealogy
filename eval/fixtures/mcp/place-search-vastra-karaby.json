@@ -1,0 +1,36 @@
+{
+  "tool": "place_search",
+  "description": "Västra Karaby parish, Sweden. Captured live 2026-10-02 for the elena-pre-register-birth scenario (issue #2251, the death-record route to a pre-register birth). Response verbatim.",
+  "args": {
+    "placeName": "~Karaby"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Västra Karaby, Skåne, Sweden",
+        "type": "Populated Place",
+        "latitude": 55.8126,
+        "longitude": 13.0534,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=V%C3%A4stra%20Karaby&focusedId=1657379"
+      },
+      {
+        "standardPlace": "Västra Karaby, Skåne, Sweden",
+        "type": "Lutheran Parish",
+        "dateRange": "+1997/",
+        "latitude": 55.8087,
+        "longitude": 13.0319,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=V%C3%A4stra%20Karaby&focusedId=12038149",
+        "wikipediaUrl": "https://sv.wikipedia.org/wiki/Västra_Karaby_socken"
+      },
+      {
+        "standardPlace": "Västra Karaby, Harjager, Malmöhus, Sweden",
+        "type": "Lutheran Parish",
+        "dateRange": "+1688/+1996",
+        "latitude": 55.8087,
+        "longitude": 13.0319,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=V%C3%A4stra%20Karaby&focusedId=3468257",
+        "wikipediaUrl": "https://sv.wikipedia.org/wiki/Västra_Karaby_socken"
+      }
+    ]
+  }
+}

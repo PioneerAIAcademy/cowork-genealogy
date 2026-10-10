@@ -1,0 +1,31 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "María Josefa",
+          "surname": "García Romero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "about 1843",
+          "standard_date": "Abt 1843",
+          "place": "Vélez-Málaga, Málaga, Spain",
+          "standard_place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+          "sources": []
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

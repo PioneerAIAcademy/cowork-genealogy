@@ -1,0 +1,100 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Elena",
+          "surname": "Asmundsdotter",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Jöns",
+          "surname": "Jönsson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Asmund",
+          "surname": "Jönsson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Christening",
+          "primary": true,
+          "date": "11 September 1718",
+          "standard_date": "11 Sep 1718",
+          "place": "Barsebäck, Malmöhus, Sweden",
+          "standard_place": "Barsebäck, Harjager, Malmöhus, Sweden",
+          "sources": []
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "4 February 1768",
+          "standard_date": "4 Feb 1768",
+          "place": "Barsebäck, Malmöhus, Sweden",
+          "standard_place": "Barsebäck, Harjager, Malmöhus, Sweden",
+          "sources": []
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I1",
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Marriage",
+          "date": "29 December 1712",
+          "standard_date": "29 Dec 1712",
+          "place": "Västra Karaby, Malmöhus, Sweden",
+          "standard_place": "Västra Karaby, Harjager, Malmöhus, Sweden",
+          "sources": []
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I3",
+      "sources": []
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": []
+    }
+  ],
+  "sources": []
+}

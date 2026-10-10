@@ -1,0 +1,72 @@
+{
+  "tool": "collections_search",
+  "description": "Spain-scope collections, 1810-1860. Captured live 2026-10-02 for the garcia-romero-compound-surname scenario (issue #2251, the {Country}_Naming_Customs pre-work fetch). Six of the 41 returned collections kept verbatim (the national indexes, Catholic Church Records, Málaga's municipal records and the neighbouring Granada pre-marriage files); the rest are other provinces and dioceses. totalForPlace is the live value.",
+  "args": {
+    "standardPlace": "~"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Spain",
+      "startYear": 1810,
+      "endYear": 1860
+    },
+    "scope": "Spain",
+    "totalForPlace": 48,
+    "results": [
+      {
+        "id": "1500692",
+        "title": "Spain, Baptisms, 1502-1940",
+        "dateRange": "1501-1940",
+        "recordCount": 8624140,
+        "personCount": 37000120,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1500692"
+      },
+      {
+        "id": "1784529",
+        "title": "Spain, Catholic Church Records, 1307-2005",
+        "dateRange": "1306-2005",
+        "recordCount": 21013485,
+        "personCount": 273493289,
+        "imageCount": 3008340,
+        "url": "https://www.familysearch.org/search/collection/1784529"
+      },
+      {
+        "id": "1500693",
+        "title": "Spain, Marriages, 1565-1950",
+        "dateRange": "1565-1950",
+        "recordCount": 2387821,
+        "personCount": 8882946,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1500693"
+      },
+      {
+        "id": "1500694",
+        "title": "Spain, Deaths, 1600-1920",
+        "dateRange": "1600-1920",
+        "recordCount": 265902,
+        "personCount": 555867,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1500694"
+      },
+      {
+        "id": "2015362",
+        "title": "Spain, Málaga, Municipal Records, 1760-1956",
+        "dateRange": "1760-1956",
+        "recordCount": 308744,
+        "personCount": 973923,
+        "imageCount": 768125,
+        "url": "https://www.familysearch.org/search/collection/2015362"
+      },
+      {
+        "id": "1865748",
+        "title": "Spain, Granada, Catholic Pre-Marriage Investigation Files, 1556-1899",
+        "dateRange": "1555-1899",
+        "recordCount": 456927,
+        "personCount": 914506,
+        "imageCount": 0,
+        "url": "https://www.familysearch.org/search/collection/1865748"
+      }
+    ]
+  }
+}
