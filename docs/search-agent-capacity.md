@@ -220,11 +220,15 @@ largest single process was `claude` at 347.5 MB. `MemAvailable` never fell below
   worker instance at N slots. Fifty concurrent runs need ~150 worker connections plus web
   and tools. U13's db.t3.micro allows ~112 by the RDS formula (not measured); a
   db.r7g.large is far above.
-- **Changing the slot count:** `HttpConnections` (step 11), `WORKER_TURN_USERS` in
-  `02-worker.config` and `TURN_USERS` in the predeploy hook must name the same N.
-  `test_proto_bundles.py` pins the last two together. An API-level `WORKER_TURN_USERS`
-  names users the hook never creates, and the worker refuses to start. More connections
-  than users answers 500 and spends a `MaxRetries` receive.
+- **Changing the slot count:** the predeploy hook creates eight slot users,
+  `genealogy-turn-0` to `-7`. `HttpConnections` (step 11) and `WORKER_TURN_USERS` must name
+  the same N, the first N of those eight: `02-worker.config` sets 2 and 2, and the U13
+  rehearsal's `slots_4` and `slots_8` probe cases set both at API level in one configuration
+  update (`check_options` refuses a pair that disagrees). `test_proto_bundles.py` pins the
+  template's users as a prefix of the hook's, their count to `HttpConnections`, and the
+  hook's count to the largest slot case. Past eight, grow the hook's list first: a name the
+  hook never creates refuses start. More connections than users answers 500 and spends a
+  `MaxRetries` receive.
 
 ## 4. Compute cost
 

@@ -402,6 +402,19 @@ START = {"ev": "start", "spend_cap_usd": 35.0, "prices": {"output": 15.0}}
     (("--case", "cap_main_real",), {**START, "spend_cap_usd": 0}, "lowered"),
     (("--case", "cap_main",), {**START, "spend_cap_usd": 0}, "off"),
     (("--case", "outage_pause", "--pause-s", "0"), START, "positive"),
+    # concurrent_rss_heavy's flags: in range, and on no other case (--target deployed, so
+    # DEPLOYED_ONLY is not what refuses).
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--sessions", "9"), START, "--sessions must be 0-8"),
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--sessions", "-1"), START, "--sessions must be 0-8"),
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--window-s", "0"), START, "--window-s must be 1-1800"),
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--window-s", "1801"), START, "--window-s must be 1-1800"),
+    (("--case", "concurrent_rss", "--target", "deployed", "--sessions", "2"), START,
+     "--sessions is for concurrent_rss_heavy, not concurrent_rss"),
+    (("--case", "concurrent_rss", "--target", "deployed", "--window-s", "600"), START,
+     "--window-s is for concurrent_rss_heavy"),
+    (("--case", "kill_hold", "--target", "deployed", "--expect-instance-type", "t3.xlarge"), START,
+     "--expect-instance-type is for concurrent_rss_heavy"),
+    (("--case", "stop_main", "--allow-standard-credits"), START, "--allow-standard-credits is for concurrent_rss_heavy"),
 ])
 def test_make_ctx_refuses(argv, start, said):
     with pytest.raises(ValueError, match=said):
@@ -417,6 +430,23 @@ def test_make_ctx_refuses(argv, start, said):
 def test_make_ctx_accepts(argv, start):
     ctx = bounds.make_ctx(_args(*argv), start)
     assert ctx.cap_usd == start["spend_cap_usd"]
+
+
+@pytest.mark.parametrize("argv, sessions, window_s, expect, allow", [
+    ((), 2, 600.0, None, False),
+    (("--sessions", "0", "--window-s", "900"), 0, 900.0, None, False),
+    (("--sessions", "8", "--window-s", "1800", "--expect-instance-type", "t3.xlarge"), 8, 1800.0, "t3.xlarge", False),
+    (("--sessions", "1", "--window-s", "1", "--allow-standard-credits"), 1, 1.0, None, True),
+])
+def test_make_ctx_accepts_the_heavy_flags(argv, sessions, window_s, expect, allow):
+    ctx = bounds.make_ctx(_args("--case", "concurrent_rss_heavy", "--target", "deployed", *argv), START)
+    assert (ctx.sessions, ctx.window_s, ctx.expect_instance_type, ctx.allow_standard_credits) == (
+        sessions, window_s, expect, allow)
+
+
+def test_make_ctx_leaves_the_heavy_defaults_on_other_cases():
+    ctx = bounds.make_ctx(_args("--case", "concurrent_rss", "--target", "deployed"), START)
+    assert (ctx.sessions, ctx.window_s) == (bounds.HEAVY_SESSIONS, bounds.HEAVY_WINDOW_S)
 
 
 def test_the_case_list_is_closed():
