@@ -1918,13 +1918,12 @@ function declarationStatusInvariants(entry: any): string[] {
  *  a researcher who believes the search is done has no way to say so. Issue
  *  #1821 owns that fix.
  *
- *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
- *  routes here deliberately before the plan is drained — "even with plan items
- *  still `planned` → research-exhaustiveness (consult the stop criteria before
- *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
- *  across 31 declarations that are all correct. The skill body's opening
- *  sentence is stricter than its own operative rule; the operative rule and the
- *  orchestrator agree, and this follows them.
+ *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
+ *  then. The prior ruling rested on a skip having nowhere to record its reason —
+ *  the same ruling deferred the skip-reason field to #1830 because it was a
+ *  schema change. `skip_category` is that field, so the premise lapsed and the
+ *  ruling with it. An undisposed `planned` item cannot be told from a forgotten
+ *  one, and a declaration resting on either is unfalsifiable.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -1944,30 +1943,65 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (!isStopGateSatisfied(entry)) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
-    (item) => item.itemId,
+  // Of `plan_item_status`'s four, the two that are not disposed. Derived from
+  // the enum rather than listed so a status added later blocks by default: this
+  // gate should not wave through an item whose disposition it has never heard
+  // of, and a block here is recoverable — the plan's owner disposes of it —
+  // where a silent pass is the exhaustive declaration #1830 exists to stop.
+  const blocking = activePlanItems(
+    preCallResearch,
+    (plan) => plan.question_id === qid,
+    [...VALIDATOR_ENUMS.plan_item_status].filter((s) => s !== "completed" && s !== "skipped"),
   );
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  const inFlight = blocking.filter((i) => i.status === "in_progress").map((i) => i.itemId);
+  const undisposed = blocking.filter((i) => i.status === "planned").map((i) => i.itemId);
+  if (inFlight.length === 0 && undisposed.length === 0) return [];
+
+  // Both arms name the blocking items and stop. Neither tells the caller to
+  // change a status: the exhaustiveness agent holds `questions` and no
+  // `plan_items` write, so a refusal naming an action it cannot take names a
+  // locked door. Disposal is the plan owner's, reached through research/SKILL.md's
+  // route for a refused declaration.
+  const clauses: string[] = [];
+  if (inFlight.length > 0) {
+    const ids = inFlight.sort().join(", ");
+    clauses.push(
+      `${ids} ${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+        "search has not finished, so the declaration would rest on work still running",
+    );
+  }
+  if (undisposed.length > 0) {
+    const ids = undisposed.sort().join(", ");
+    const one = undisposed.length === 1;
+    clauses.push(
+      `${ids} ${one ? "is" : "are"} still 'planned' — ${one ? "it has" : "they have"} not been ` +
+        `disposed of, so the record cannot say whether ${one ? "it was" : "they were"} answered ` +
+        `by what you already hold or simply never run (#1830)`,
+    );
+  }
   return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
+    `question '${qid}' cannot be declared exhaustive while ${clauses.join("; and ")}. ` +
+      `Report ${inFlight.length + undisposed.length === 1 ? "this item" : "these items"} as the ` +
+      "blocker and hand back; the plan's owner disposes of what is left, and declaring is " +
+      "available on the next call once the plan reflects it.",
   ];
 }
 
-/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
- *  the given snapshot. Shared by the two in-flight gates so which plans and
- *  items count as in flight is decided once. */
-function activePlanInProgressItems(
+/** Every item on an ACTIVE plan the predicate accepts whose status is in
+ *  `statuses`, read from the given snapshot. Shared by the in-flight gates so
+ *  which plans and items count is decided once.
+ *
+ *  `statuses` defaults to `["in_progress"]`, which is what the new-question
+ *  gate below asks for. `planCompleteInvariants` additionally passes `planned`
+ *  (issue #1830): an undisposed item leaves the record unable to say whether it
+ *  was answered by what is already held or simply never run. The two gates ask
+ *  different questions of the same plan, so the status set is the caller's. */
+function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
-): { itemId: string; questionId: unknown }[] {
-  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  statuses: readonly string[] = ["in_progress"],
+): { itemId: string; status: string; questionId: unknown }[] {
+  const result: { itemId: string; status: string; questionId: unknown }[] = [];
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -1983,12 +2017,12 @@ function activePlanInProgressItems(
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      if (typeof item?.id === "string" && statuses.includes(item?.status)) {
+        result.push({ itemId: item.id, status: item.status, questionId: plan.question_id });
       }
     }
   }
-  return inFlight;
+  return result;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -2022,7 +2056,7 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused = activePlanInProgressItems(
+  const refused = activePlanItems(
     preCallResearch,
     (plan) =>
       unresolvedQuestions.has(plan.question_id) &&
