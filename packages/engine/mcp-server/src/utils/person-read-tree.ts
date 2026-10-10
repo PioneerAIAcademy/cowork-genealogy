@@ -11,9 +11,10 @@
 // The build follows the rules init-project's Step 3 gave the model: local
 // `I`/`N`/`F`/`R`/`S` ids, the canonical `ark`, the response-only source fields
 // dropped, one FamilySearch-tree source as `S1` with a `quality: 1` ref on every
-// fact and relationship, and the person-level refs re-pointed. Step 3 never fixed
-// that source's wording; it names the Family Tree and the page the read came
-// from, not one person, since it is cited on every relative's facts too.
+// fact and relationship, and the person-level and relationship-level refs
+// re-pointed. Step 3 never fixed that source's wording; it names the Family Tree
+// and the page the read came from, not one person, since it is cited on every
+// relative's facts too.
 //
 // Stubs the researcher's own statements imply (a maiden name's parent) arrive as
 // ADDITIONS. The model cannot see the ids minted here, so in ref mode every id

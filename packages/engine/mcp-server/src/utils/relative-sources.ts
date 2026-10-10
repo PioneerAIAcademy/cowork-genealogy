@@ -32,6 +32,12 @@
  * already IN FLIGHT. Without the second, a read beginning just under the deadline runs on
  * `fsFetch`'s own 30s default plus its retry budget and can push the whole call past the
  * 60s Cowork bridge abort — losing the subject, not merely the enrichment.
+ *
+ * DESCRIPTIONS BY ID (`fetchSourceDescriptions`, issue #3229). A source ref on a
+ * RELATIONSHIP names its description by `descriptionId`, and the tree-read body does not
+ * hold it, as with a relative's refs. `GET /platform/sources/descriptions/{id}` returns it
+ * in about a quarter to half a second (`dev/probe-relationship-sources.ts`). Same
+ * concurrency, per-read cap and shared deadline as above, so it is bounded the same way.
  */
 import type { Principal } from "../auth/principal.js";
 import type { GedcomXSourceDescription } from "../types/gedcomx.js";
@@ -40,10 +46,11 @@ import { fsFetch } from "./fs-fetch.js";
 import { mapWithConcurrency } from "./place-resolver.js";
 
 const TREE_BASE = "https://api.familysearch.org/platform/tree/persons";
+const DESCRIPTIONS_BASE = "https://api.familysearch.org/platform/sources/descriptions";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
 
 /**
- * How many relatives are read at once. Bounded because a 63-child subject would
+ * How many reads are in flight at once. Bounded because a 63-child subject would
  * otherwise open 63 sockets against one host, and FamilySearch sits behind Imperva.
  */
 const CONCURRENCY = 6;
@@ -55,15 +62,16 @@ const RELATIVE_READ_TIMEOUT_MS = 30_000;
 export interface RelativeSourcesResult {
   /** RAW FamilySearch descriptions, deduped by id. The caller shapes them — see below. */
   descriptions: GedcomXSourceDescription[];
-  /** Relatives whose read failed or was cut short. The caller reports the count in
-   *  the response's `notes[]`; this is not diagnostic-only. */
+  /** Relatives whose read failed or was cut short (from `fetchSourceDescriptions`: the
+   *  description ids). The caller reports the count in the response's `notes[]`; this is
+   *  not diagnostic-only. */
   skipped: string[];
 }
 
-/** One person's attached descriptions. Never throws: a relative we cannot read is
- *  skipped, not fatal, because the tree read itself already succeeded. */
+/** The `sourceDescriptions` one read of `url` returns. Never throws: a read we cannot
+ *  make is skipped, not fatal, because the tree read itself already succeeded. */
 async function fetchOne(
-  personId: string,
+  url: string,
   principal: Principal,
   deadline: number,
 ): Promise<GedcomXSourceDescription[] | null> {
@@ -72,7 +80,7 @@ async function fetchOne(
   try {
     const res = await fsFetch(
       principal,
-      `${TREE_BASE}/${encodeURIComponent(personId)}/sources`,
+      url,
       {
         headers: {
           Accept: ACCEPT_HEADER,
@@ -87,7 +95,8 @@ async function fetchOne(
       },
       Math.min(RELATIVE_READ_TIMEOUT_MS, left),
     );
-    // 204 is a person with no sources — an answer, not a failure.
+    // 204 is a person with no sources — an answer, not a failure. (For a description
+    // read it is a miss, which `fetchSourceDescriptions` counts as one.)
     if (res.status === 204) return [];
     if (!res.ok) return null;
     const body = (await res.json()) as { sourceDescriptions?: GedcomXSourceDescription[] };
@@ -123,9 +132,38 @@ export async function fetchRelativeSources(
 ): Promise<RelativeSourcesResult> {
   const queue = [...new Set(personIds)];
   const results = await mapWithConcurrency(queue, CONCURRENCY, (pid) =>
-    fetchOne(pid, principal, deadline),
+    fetchOne(`${TREE_BASE}/${encodeURIComponent(pid)}/sources`, principal, deadline),
   );
+  return collect(queue, results);
+}
 
+/**
+ * Read the description behind each id in `descriptionIds`: one read per distinct id.
+ * Returns what `fetchRelativeSources` does, raw for the same reason, with `skipped`
+ * naming description ids rather than persons.
+ *
+ * An id that comes back with no description is skipped, not treated as "none attached":
+ * the id was named by a ref, so a description exists for it, and the ref is pruned
+ * (`keepResolvableSourceRefs`) either way. Counting it is what keeps that visible.
+ */
+export async function fetchSourceDescriptions(
+  descriptionIds: string[],
+  principal: Principal,
+  deadline: number,
+): Promise<RelativeSourcesResult> {
+  const queue = [...new Set(descriptionIds)];
+  const results = await mapWithConcurrency(queue, CONCURRENCY, async (id) => {
+    const got = await fetchOne(`${DESCRIPTIONS_BASE}/${encodeURIComponent(id)}`, principal, deadline);
+    return got !== null && got.length === 0 ? null : got;
+  });
+  return collect(queue, results);
+}
+
+/** Dedupe the answers by description id, and list the `queue` entries that got none. */
+function collect(
+  queue: string[],
+  results: Array<GedcomXSourceDescription[] | null>,
+): RelativeSourcesResult {
   const byId = new Map<string, GedcomXSourceDescription>();
   const skipped: string[] = [];
   results.forEach((got, i) => {

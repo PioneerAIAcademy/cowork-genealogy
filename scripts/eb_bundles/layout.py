@@ -9,8 +9,8 @@ from __future__ import annotations
 
 TIERS = ("web", "worker", "tools")
 
-# Beanstalk's AppDeployDir on the AL2023 platforms (unmeasured on the target account;
-# U13 confirms it with `get-config platformconfig`).
+# Beanstalk's AppDeployDir on the AL2023 platforms: `get-config platformconfig` read
+# `/var/app/current/` on the rehearsal's worker (U13, 2026-10-07).
 APP_DIR = "/var/app/current"
 
 # The RDS CA bundle, shipped in every tier, and the absolute path its template names.

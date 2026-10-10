@@ -86,6 +86,12 @@ INSTANCES_NS = "aws:ec2:instances"
 VPC_NS = "aws:ec2:vpc"
 EBENV_NS = "aws:elasticbeanstalk:environment"
 ELBV2_NS = "aws:elbv2:loadbalancer"
+HTTPS_NS = "aws:elbv2:listener:443"
+HTTP_NS = "aws:elbv2:listener:default"
+# A self-signed certificate for the web environment's own CNAME, imported into ACM (free):
+# the account has no zone of ours, so no public certificate can be validated (U13 D2). The
+# listener is configured exactly as list 3's step 18 has it; only the chain is untrusted.
+CERT_DAYS = 30
 MANAGED_NS = "aws:elasticbeanstalk:managedactions"
 HEALTH_NS = "aws:elasticbeanstalk:healthreporting:system"
 
@@ -130,7 +136,7 @@ PHASES = ("guard", "iam", "net", "stores", "secrets", "bastion", "versions", "to
 OPTIONAL_PHASES = ("signin", "resolver")
 # Every kind `up` records; `down` deletes each and `prove-empty` checks each.
 KINDS = ("budget", "iam-role", "instance-profile", "sg", "db-subnet-group", "db-param-group", "rds",
-         "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver")
+         "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver", "acm")
 
 # Beanstalk answers a missing environment or application with InvalidParameterValue and
 # "No Environment found for EnvironmentName = '...'" / "No Application named '...' found."
@@ -143,6 +149,7 @@ ALREADY = re.compile(r"AlreadyExists|BucketAlreadyOwnedByYou|InvalidPermission\.
                      r"DuplicateRecord|EntityAlreadyExists|ResourceExistsException|DuplicateRecordException",
                      re.I)
 DEPENDENCY = re.compile(r"DependencyViolation", re.I)
+IN_USE = re.compile(r"ResourceInUseException|in use", re.I)
 REMOVE = object()
 
 
@@ -412,6 +419,8 @@ CASES: dict[str, dict] = {
     "refresh_age_0": {"measures": "grant refresh every turn", "ops": {"web": [(ENV_NS, "FS_GRANT_REFRESH_AGE_S", "0")]}},
     "cap_1usd": {"measures": "session spend cap", "ops": {"worker": [(ENV_NS, "SESSION_SPEND_CAP_USD", "1")]}},
     "nudges_3": {"measures": "web nudge cap at compose's 3", "ops": {"web": [(ENV_NS, "AUTONOMOUS_MAX_NUDGES", "3")]}},
+    "nudges_0": {"measures": "web nudges off, as compose's kill recipes run", "ops": {"web": [
+        (ENV_NS, "AUTONOMOUS_MAX_NUDGES", "0")]}},
     "no_telemetry": {"measures": "CLI nonessential egress off", "ops": {"worker": [
         (ENV_NS, "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1")]}},
     "idle_session_60s": {"measures": "Postgres idle-session timeout", "rds_param": ("idle_session_timeout", "60000")},
@@ -1046,13 +1055,20 @@ class Rehearsal:
         return out + self.signin_options() + self.extra_env("web")
 
     def signin_options(self) -> list[dict]:
-        """The loopback sign-in settings, present only once `up --phase
-        signin` has run; off on first boot."""
+        """The sign-in settings, present only once `up --phase signin` has run; off on
+        first boot. https adds the 443 listener and turns the port-80 one off (D2: never
+        plain http on the CNAME); sign-in itself still completes only through loopback."""
         signin = self.state.get("signin") or {}
-        if signin.get("mode") != "loopback":
-            return []
-        return [opt(ENV_NS, "PUBLIC_URL", LOOPBACK_PUBLIC_URL), opt(ENV_NS, "FAMILYSEARCH_WEB_ENABLED", "true"),
-                opt(ENV_NS, "ALLOWED_EMAILS", signin["emails"])]
+        if signin.get("mode") == "loopback":
+            return [opt(ENV_NS, "PUBLIC_URL", LOOPBACK_PUBLIC_URL), opt(ENV_NS, "FAMILYSEARCH_WEB_ENABLED", "true"),
+                    opt(ENV_NS, "ALLOWED_EMAILS", signin["emails"])]
+        if signin.get("mode") == "https":
+            return [opt(ENV_NS, "PUBLIC_URL", f"https://{signin['host']}"),
+                    opt(ENV_NS, "FAMILYSEARCH_WEB_ENABLED", "true"), opt(ENV_NS, "ALLOWED_EMAILS", signin["emails"]),
+                    opt(HTTPS_NS, "ListenerEnabled", "true"), opt(HTTPS_NS, "Protocol", "HTTPS"),
+                    opt(HTTPS_NS, "SSLCertificateArns", signin["cert_arn"]),
+                    opt(HTTP_NS, "ListenerEnabled", "false")]
+        return []
 
     def options_path(self, env_name: str) -> Path:
         return self.work / "options" / f"{env_name}.json"
@@ -1258,28 +1274,72 @@ U13PY
         finally:
             self.aws("iam", "delete-role-policy", "--role-name", role, "--policy-name", MIGRATE_POLICY, ok=NOT_FOUND)
 
+    def allowed_emails(self, mode: str) -> str:
+        emails = getattr(self.args, "allowed_emails", None) or read_local("allowed-emails", self.local_dir) or (
+            "<email> <email>" if self.dry else None)
+        if not emails:
+            raise Die(f"{mode} sign-in needs --allowed-emails or .local/allowed-emails")
+        return " ".join(e for e in re.split(r"[,\s]+", emails) if e)
+
+    def local_cmd(self, argv: list[str]) -> None:
+        """A non-aws command (openssl), through the same runner so tests can fake it."""
+        self.out("+ " + shlex.join(argv))
+        if self.dry:
+            return
+        result = self.runner(argv)
+        if result.returncode != 0:
+            raise Die(f"{argv[0]} failed (rc {result.returncode}): {(result.stderr or '').strip()[:1500]}", rc=1)
+
+    def certificate(self, host: str) -> str:
+        """The ARN of an imported self-signed certificate for host: a recorded one ACM still
+        has, else a new key and certificate in the work dir (0600), imported and tagged."""
+        for cert in self.recorded("acm"):
+            if cert.get("host") == host and self.aws("acm", "describe-certificate", "--certificate-arn", cert["id"],
+                                                     ok=NOT_FOUND, placeholder=None) is not None:
+                return cert["id"]
+        tls = secure_dir(self.work / "tls")
+        key, crt = tls / "web-key.pem", tls / "web-cert.pem"
+        self.local_cmd(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-sha256", "-days", str(CERT_DAYS),
+                        "-subj", f"/CN={host}", "-addext", f"subjectAltName=DNS:{host}",
+                        "-keyout", str(key), "-out", str(crt)])
+        if key.exists():
+            os.chmod(key, 0o600)
+        made = self.aws("acm", "import-certificate", "--certificate", f"fileb://{crt}", "--private-key",
+                        f"fileb://{key}", "--tags", *self.tags_kv(),
+                        placeholder={"CertificateArn": "<certificate-arn>"})
+        arn = made["CertificateArn"]
+        self.record("acm", arn, host=host)
+        self.note(f"the certificate is self-signed: pass --cacert {crt} to curl")
+        return arn
+
     def phase_signin(self) -> None:
         mode = getattr(self.args, "mode", None) or "loopback"
-        if mode == "https":
-            raise Die("--mode https needs a hostname and certificate; deferred until the hostname is decided")
+        if mode not in ("loopback", "https", "off"):
+            raise Die(f"--mode {mode}: loopback, https or off")
         name = ENV_NAMES["web"]
+        was_https = (self.state.get("signin") or {}).get("mode") == "https"
         base = [o for o in (self.snapshot(name) if not self.dry else self.web_options())
-                if not (o["Namespace"] == ENV_NS and o["OptionName"] in SIGNIN_NAMES)]
+                if not (o["Namespace"] == ENV_NS and o["OptionName"] in SIGNIN_NAMES)
+                and o["Namespace"] not in (HTTPS_NS, HTTP_NS)]
         removes = []
         if mode == "off":
             self.state["signin"] = None
             removes = [{"Namespace": ENV_NS, "OptionName": n} for n in SIGNIN_NAMES]
         elif mode == "loopback":
-            emails = getattr(self.args, "allowed_emails", None) or read_local("allowed-emails", self.local_dir) or (
-                "<email> <email>" if self.dry else None)
-            if not emails:
-                raise Die("loopback sign-in needs --allowed-emails or .local/allowed-emails")
-            joined = " ".join(e for e in re.split(r"[,\s]+", emails) if e)
-            self.state["signin"] = {"mode": "loopback", "emails": joined}
+            self.state["signin"] = {"mode": "loopback", "emails": self.allowed_emails(mode)}
         else:
-            raise Die(f"--mode {mode}: loopback, https or off")
+            host = (self.state.get("envs", {}).get("web") or {}).get("cname") or ("<web-cname>" if self.dry else None)
+            if not host:
+                raise Die("--mode https needs the web environment: run `up --phase web` first")
+            emails = self.allowed_emails(mode)
+            self.state["signin"] = {"mode": "https", "emails": emails, "host": host, "cert_arn": self.certificate(host)}
+        if was_https and mode != "https":
+            # Turn the 443 listener off rather than drop its options, and put port 80 back.
+            base.append(opt(HTTPS_NS, "ListenerEnabled", "false"))
+            removes += [{"Namespace": HTTPS_NS, "OptionName": n} for n in ("Protocol", "SSLCertificateArns")]
+            removes.append({"Namespace": HTTP_NS, "OptionName": "ListenerEnabled"})
         options = base + self.signin_options()
-        check_options("web", options, signin=mode == "loopback", dry=self.dry)
+        check_options("web", options, signin=mode != "off", dry=self.dry)
         call = ["elasticbeanstalk", "update-environment", "--environment-name", name, "--option-settings",
                 self.write_options(name, options)]
         if removes:
@@ -1289,6 +1349,9 @@ U13PY
         self.wait_env(name)
         if mode == "loopback":
             self.note("then forward laptop 1837 to the web instance's port 8000 (README, 'Loopback sign-in')")
+        elif mode == "https":
+            self.note(f"https://{self.state['signin']['host']} serves the tier; sign in through loopback first "
+                      "and reuse its session cookie (README, 'https')")
 
     def phase_resolver(self) -> None:
         vpc, _ = self.network()
@@ -1583,8 +1646,8 @@ U13PY
         steps = [
             ("env", self.down_envs), ("ec2", self.down_bastion), ("rds", self.down_rds),
             ("app", self.down_app), ("secret", self.down_secrets), ("s3", self.down_data_bucket),
-            ("sg", self.down_security_groups), ("iam", self.down_iam), ("budget", self.down_budget),
-            ("resolver", self.down_resolver), ("log-group", self.down_log_groups),
+            ("acm", self.down_certificates), ("sg", self.down_security_groups), ("iam", self.down_iam),
+            ("budget", self.down_budget), ("resolver", self.down_resolver), ("log-group", self.down_log_groups),
         ]
         for label, step in steps:
             self.out(f"== down: {label}")
@@ -1612,6 +1675,23 @@ U13PY
                 self.aws("elasticbeanstalk", "terminate-environment", "--environment-name", name, ok=NOT_FOUND)
         for name in sorted(set(live) | {r["id"] for r in self.recorded("env")}):
             self.wait_env_gone(name)
+
+    def down_certificates(self) -> None:
+        """After the environments: ACM refuses to delete a certificate a listener still uses,
+        and the load balancer goes only with its environment."""
+        for cert in self.recorded("acm"):
+            def deleted(arn=cert["id"]) -> bool:
+                try:
+                    self.aws("acm", "delete-certificate", "--certificate-arn", arn, ok=NOT_FOUND)
+                except Die as exc:
+                    if IN_USE.search(str(exc)):
+                        return False
+                    raise
+                return True
+            if self.dry:
+                deleted()
+            else:
+                self.poll(f"certificate {cert['id']} released", deleted, every_s=30, timeout_s=900)
 
     def down_bastion(self) -> None:
         got = self.aws("ec2", "describe-instances", "--filters", f"Name=tag:{TAG_REHEARSAL[0]},Values={TAG_REHEARSAL[1]}",
@@ -1787,7 +1867,7 @@ U13PY
             tagged = self.tagged()
         gone = [arn for arn in tagged if self.verified_gone(arn)] if not self.dry else []
         if gone:
-            self.note(f"tag index still lists {len(gone)} resource(s) EC2 reports gone (terminated "
+            self.note(f"tag index still lists {len(gone)} resource(s) EC2 or ACM reports gone (terminated "
                       f"instances stay listed for up to an hour): {gone}")
         found("tagged", "resourcegroupstaggingapi", [arn for arn in tagged if arn not in gone])
         apps = self.aws("elasticbeanstalk", "describe-applications", "--application-names", APP,
@@ -1854,6 +1934,10 @@ U13PY
         if self.aws("budgets", "describe-budget", "--account-id", self.account, "--budget-name", BUDGET_NAME,
                     ok=NOT_FOUND, placeholder=None) is not None:
             found("budget", "budget", [BUDGET_NAME])
+        for cert in self.recorded("acm"):
+            if self.aws("acm", "describe-certificate", "--certificate-arn", cert["id"], ok=NOT_FOUND,
+                        placeholder=None) is not None:
+                found("acm", "certificate", [cert["id"]])
         configs = self.aws("route53resolver", "list-resolver-query-log-configs", "--filters",
                            f"Name=Name,Values={RESOLVER_NAME}", placeholder={"ResolverQueryLogConfigs": []})
         found("resolver", "query-log configs", [c["Id"] for c in configs.get("ResolverQueryLogConfigs", [])])
@@ -1869,7 +1953,11 @@ U13PY
     def verified_gone(self, arn: str) -> bool:
         """An EC2 instance or volume the tag index still lists but EC2 itself reports gone:
         a terminated instance stays in the index for up to an hour, past prove-empty's
-        re-poll (U13, 2026-10-08). Any other ARN, or an instance in any other state, stays."""
+        re-poll (U13, 2026-10-08). A certificate ACM itself no longer has passes the same way.
+        Any other ARN, or an instance in any other state, stays."""
+        if arn.startswith("arn:aws:acm:"):
+            return self.aws("acm", "describe-certificate", "--certificate-arn", arn, ok=NOT_FOUND,
+                            placeholder=None) is None
         kind, _, rid = arn.rpartition(":")[2].partition("/")
         if not arn.startswith("arn:aws:ec2:") or not rid:
             return False

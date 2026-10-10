@@ -17,6 +17,7 @@ import {
 } from "../utils/memories.js";
 import {
   fetchRelativeSources,
+  fetchSourceDescriptions,
   type RelativeSourcesResult,
 } from "../utils/relative-sources.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
@@ -27,6 +28,8 @@ import type {
   GedcomX,
   GedcomXFact,
   GedcomXRelationship,
+  GedcomXSourceDescription,
+  GedcomXSourceReference,
   SimplifiedGedcomX,
   SimplifiedPerson,
   SimplifiedRelationship,
@@ -61,9 +64,9 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the person AND to each relative, each linked from that person's own " +
-    "`sources` refs — so what is attached to the SUBJECT is the entries its own " +
-    "refs point at, plus any carrying `artifact_url`. For a " +
+    "to the person AND to each relative, each linked from a person's or a " +
+    "relationship's own `sources` refs — so what is attached to the SUBJECT is " +
+    "the entries its own refs point at, plus any carrying `artifact_url`. For a " +
     "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
@@ -165,6 +168,18 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
         }))
       : Promise.resolve({ descriptions: [], skipped: [] });
 
+  // Issue #3229: the descriptions behind the refs on the EDGES, which the body does not
+  // hold either. Started beside `relativesPending` for the same reason, on the same
+  // deadline, and with the same load-bearing `.catch`.
+  const edgeDescriptionIds = unresolvedEdgeRefs(result);
+  const edgeDescriptionsPending: Promise<RelativeSourcesResult> =
+    edgeDescriptionIds.length > 0
+      ? fetchSourceDescriptions(edgeDescriptionIds, principal, deadline).catch(() => ({
+          descriptions: [],
+          skipped: edgeDescriptionIds,
+        }))
+      : Promise.resolve({ descriptions: [], skipped: [] });
+
   if (result.persons.some((p) => p.id === resolvedId && !p.living)) {
     result.sources = await mergeMemories(
       resolvedId,
@@ -175,9 +190,10 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
     );
   }
 
-  // MUST be applied BEFORE `keepResolvablePersonSourceRefs`: that function drops every
-  // person-level ref whose target is not already in `sources[]`, so merging after it
-  // would fetch every relative's sources and throw them away, all tests still green.
+  // MUST be applied BEFORE `keepResolvableSourceRefs`: that function drops every
+  // person-level and relationship-level ref whose target is not already in `sources[]`,
+  // so merging after it would fetch every description and throw them away, all tests
+  // still green.
   try {
     result.sources = applyRelativeSources(
       result,
@@ -191,8 +207,20 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
         `returning tree sources only: ${String(err)}\n`,
     );
   }
+  try {
+    result.sources = applyEdgeDescriptions(
+      result,
+      await edgeDescriptionsPending,
+      edgeDescriptionIds.length,
+    );
+  } catch (err) {
+    process.stderr.write(
+      `person_read: relationship sources failed for ${resolvedId}, ` +
+        `returning tree sources only: ${String(err)}\n`,
+    );
+  }
 
-  keepResolvablePersonSourceRefs(result);
+  keepResolvableSourceRefs(result);
 
   // Staged AFTER the memories merge, so the staged document is exactly what this
   // call returns. Issue #2944: `project_create` builds the starting tree from
@@ -486,12 +514,7 @@ async function mergeMemories(
  * body and resolve from it (17/17 and 24/24, probe 2026-09-30).
  *
  * Ordinary entries, no discriminator, no new top-level key (lead, 2026-08-27).
- *
- * SHAPED THROUGH `shapeSources`, never `simplifySourceDescription` alone. The simplified
- * form carries `resource_type` and `coverage` — not allowed tree-source fields — may omit
- * `title`, and skips the `SD_*` metadata filter. `project_create` validates without
- * sanitizing, so one stray key refuses the whole project: shaping these the short way
- * produced 180 validation errors on a real subject.
+ * Shaped by `mergeDescriptions`, which the edges' descriptions go through too.
  */
 function applyRelativeSources(
   result: PersonReadResult,
@@ -521,17 +544,82 @@ function applyRelativeSources(
         `not be read, so their sources are missing from this response.`,
     ];
   }
-  if (fetched.descriptions.length === 0) return result.sources;
+  return mergeDescriptions(result.sources, fetched.descriptions);
+}
 
-  const have = new Set(result.sources.map((s) => s.id));
+/**
+ * Fold the descriptions behind the edges' refs into `sources[]` (issue #3229), the way a
+ * relative's are: ordinary entries, shaped through `mergeDescriptions`.
+ *
+ * A description that could not be read leaves its ref to be pruned, so it is counted in
+ * `notes[]` and named on stderr, as a skipped relative is: an edge missing a source it
+ * holds in FamilySearch must not look like an edge that has none.
+ */
+function applyEdgeDescriptions(
+  result: PersonReadResult,
+  fetched: RelativeSourcesResult,
+  describedCount: number,
+): TreeSource[] {
+  if (fetched.skipped.length > 0) {
+    process.stderr.write(
+      `person_read: relationship source descriptions unread for ${fetched.skipped.length} of ` +
+        `${describedCount}: ${fetched.skipped.join(", ")}\n`,
+    );
+    result.notes = [
+      ...(result.notes ?? []),
+      `${fetched.skipped.length} of ${describedCount} source descriptions cited by ` +
+        `relationships could not be read, so those sources are missing from this response's ` +
+        `relationships.`,
+    ];
+  }
+  return mergeDescriptions(result.sources, fetched.descriptions);
+}
+
+/**
+ * Shape fetched descriptions and add the ones `sources` does not hold. The one place a
+ * fetched description becomes a `sources[]` entry, for the relatives' read and the edges'
+ * alike.
+ *
+ * SHAPED THROUGH `shapeSources`, never `simplifySourceDescription` alone. The simplified
+ * form carries `resource_type` and `coverage` — not allowed tree-source fields — may omit
+ * `title`, and skips the `SD_*` metadata filter. `project_create` validates without
+ * sanitizing, so one stray key refuses the whole project: shaping these the short way
+ * produced 180 validation errors on a real subject.
+ */
+function mergeDescriptions(
+  sources: TreeSource[],
+  descriptions: GedcomXSourceDescription[],
+): TreeSource[] {
+  if (descriptions.length === 0) return sources;
+
+  const have = new Set(sources.map((s) => s.id));
   const shaped = shapeSources(
-    fetched.descriptions.map(simplifySourceDescription),
-    fetched.descriptions as FSSourceDescription[],
+    descriptions.map(simplifySourceDescription),
+    descriptions as FSSourceDescription[],
   );
   // A source attached to BOTH the subject and a relative is the common case for a
   // marriage record, and the subject's copy is already in `sources[]`.
   const added = shaped.filter((d) => !have.has(d.id));
-  return added.length > 0 ? [...result.sources, ...added] : result.sources;
+  return added.length > 0 ? [...sources, ...added] : sources;
+}
+
+/**
+ * The description ids the edges cite that `sources[]` does not hold, each once.
+ *
+ * An edge's ref names its description by `descriptionId`, and the tree-read body does not
+ * carry it (`dev/probe-relationship-sources.ts`), so each is read by id. Not worth a read:
+ * an `SD_*` id, which `shapeSources` filters out so the ref could never resolve, and the
+ * empty ref `toTreeSourceRef` writes for an upstream ref that names no description.
+ */
+function unresolvedEdgeRefs(result: PersonReadResult): string[] {
+  const have = new Set(result.sources.map((s) => s.id));
+  const ids = new Set<string>();
+  for (const rel of result.relationships) {
+    for (const { ref } of rel.sources ?? []) {
+      if (ref !== "" && !have.has(ref) && !isMetadataSource(ref)) ids.add(ref);
+    }
+  }
+  return [...ids];
 }
 
 /**
@@ -882,14 +970,61 @@ async function mergeSiblings(
     }
   });
 
+  // Refs a parent's read holds for a relationship the subject's read holds without them.
+  const refs = parentSourceRefs(parentBodies);
   return {
     ...body,
     persons,
+    relationships: fillSourceRefs(body.relationships ?? [], refs),
     childAndParentsRelationships: [
-      ...(body.childAndParentsRelationships ?? []),
+      ...fillSourceRefs(body.childAndParentsRelationships ?? [], refs),
       ...pruneCaprs(candidateCaprs, known, edgeKeysOf(body)),
     ],
   };
+}
+
+/** The source refs each parent's read holds, by relationship id; the first read to hold
+ *  any for an id wins. */
+function parentSourceRefs(
+  parentBodies: Array<ParentRead | null>,
+): Map<string, GedcomXSourceReference[]> {
+  const out = new Map<string, GedcomXSourceReference[]>();
+  for (const read of parentBodies) {
+    if (!read) continue;
+    for (const rel of [
+      ...(read.body.relationships ?? []),
+      ...(read.body.childAndParentsRelationships ?? []),
+    ]) {
+      if (rel?.id && Array.isArray(rel.sources) && rel.sources.length > 0 && !out.has(rel.id)) {
+        out.set(rel.id, rel.sources);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * `rels`, with the refs `refs` holds for any relationship that has none. Matched by
+ * relationship id ONLY: nothing the subject's read does not already hold is added here,
+ * so the fan-out's "children of that parent only" rule is untouched.
+ *
+ * WHY THIS EXISTS. A person read carries a relationship's refs only when the relationship
+ * names that person (`dev/probe-relationship-sources.ts`), so one naming a parent and not
+ * the subject (the parents' Couple, a sibling's child-and-parents relationship) comes back
+ * from the subject's read WITHOUT them, and the parent's read is the only one that has
+ * them. The Couple is never merged from a parent's read at all. A sibling CAPR is, but the
+ * subject's read already holds it by id, so `pruneCaprs` drops the parent's copy as already
+ * emitted, refs and all. A CAPR the subject's read lacks still arrives whole through
+ * `pruneCaprs`.
+ */
+function fillSourceRefs<T extends { id?: string; sources?: GedcomXSourceReference[] }>(
+  rels: T[],
+  refs: Map<string, GedcomXSourceReference[]>,
+): T[] {
+  return rels.map((rel) => {
+    const found = rel.id ? refs.get(rel.id) : undefined;
+    return found && !(rel.sources && rel.sources.length > 0) ? { ...rel, sources: found } : rel;
+  });
 }
 
 /**
@@ -1145,6 +1280,7 @@ function normalizeCoupleRelationship(r: FSRelationship): GedcomXRelationship {
   if (p1) out.person1 = p1;
   if (p2) out.person2 = p2;
   if (r.facts) out.facts = r.facts as GedcomXFact[];
+  if (r.sources) out.sources = r.sources;
   return out;
 }
 
@@ -1170,6 +1306,8 @@ function synthesizeParentChild(
         person1: { resource: `#${parentId}` },
         person2: { resource: `#${childId}` },
         facts: facts as GedcomXFact[] | undefined,
+        // BOTH parent edges: the sources are on the relationship, which is the pair.
+        sources: capr.sources,
       });
     }
   }
@@ -1214,7 +1352,7 @@ function shapePersons(
         ? { facts: sp.facts.filter((f): f is TreeFact => typeof f.type === "string") }
         : {}),
       // Unfiltered here: which refs resolve is only known once `sources[]` is
-      // final, so `keepResolvablePersonSourceRefs` prunes them after the merge.
+      // final, so `keepResolvableSourceRefs` prunes them after the merge.
       ...(sp.sources && sp.sources.length > 0 ? { sources: sp.sources.map(toTreeSourceRef) } : {}),
     });
   }
@@ -1232,9 +1370,9 @@ function toTreeSourceRef(r: { ref?: string; page?: string; quality?: number }): 
 }
 
 /**
- * Drop every person-level source ref whose `ref` is not an id in this result's
- * own `sources[]`, and the key when none survive. Run once `sources[]` is final
- * (after the memories merge) and before staging, so the staged copy agrees.
+ * Drop every person-level and relationship-level source ref whose `ref` is not an id in
+ * this result's own `sources[]`, and the key when none survive. Run once `sources[]` is
+ * final (after the memories merge) and before staging, so the staged copy agrees.
  *
  * A dangling ref would make `project_create` refuse the whole tree. Measured
  * live (2026-09-30): the subject's refs are `#<id>` fragments that all resolve
@@ -1247,14 +1385,18 @@ function toTreeSourceRef(r: { ref?: string; page?: string; quality?: number }): 
  * prefers `descriptionId` over the full-URL `description` (`gedcomx-convert.ts`), which
  * is what makes a relative's ref comparable to a description id at all. Run this after
  * the merge, never before.
+ *
+ * An edge's refs go through the same pass, not a second one: their descriptions are
+ * fetched by id before this runs, and a ref whose description could not be read is
+ * pruned here, leaving the edge and its other refs.
  */
-function keepResolvablePersonSourceRefs(result: PersonReadResult): void {
+function keepResolvableSourceRefs(result: PersonReadResult): void {
   const ids = new Set(result.sources.map((s) => s.id));
-  for (const person of result.persons) {
-    if (!person.sources) continue;
-    const kept = person.sources.filter((r) => ids.has(r.ref));
-    if (kept.length > 0) person.sources = kept;
-    else delete person.sources;
+  for (const holder of [...result.persons, ...result.relationships]) {
+    if (!holder.sources) continue;
+    const kept = holder.sources.filter((r) => ids.has(r.ref));
+    if (kept.length > 0) holder.sources = kept;
+    else delete holder.sources;
   }
 }
 
@@ -1264,6 +1406,10 @@ function shapeRelationships(
   simplifiedRelationships: SimplifiedRelationship[],
 ): TreeRelationship[] {
   const out: TreeRelationship[] = [];
+  // Refs are unfiltered here, as on persons: `keepResolvableSourceRefs` prunes them once
+  // `sources[]` is final. Relationship `notes` are not carried: FamilySearch never sends
+  // them in a person read (each relationship read links them), so carrying them would
+  // cost a read per edge, and this change is sources only.
   for (const sr of simplifiedRelationships) {
     if (sr.type === "ParentChild") {
       if (!sr.parent || !sr.child) continue;
@@ -1272,6 +1418,9 @@ function shapeRelationships(
         parent: extractPersonRef(sr.parent),
         child: extractPersonRef(sr.child),
         ...(sr.subtype ? { subtype: sr.subtype } : {}),
+        ...(sr.sources && sr.sources.length > 0
+          ? { sources: sr.sources.map(toTreeSourceRef) }
+          : {}),
       });
     } else if (sr.type === "Couple") {
       if (!sr.person1 || !sr.person2) continue;
@@ -1282,6 +1431,9 @@ function shapeRelationships(
       };
       if (sr.facts && sr.facts.length > 0) {
         rel.facts = sr.facts.filter((f): f is TreeFact => typeof f.type === "string");
+      }
+      if (sr.sources && sr.sources.length > 0) {
+        rel.sources = sr.sources.map(toTreeSourceRef);
       }
       out.push(rel);
     }
@@ -1301,6 +1453,11 @@ function extractPersonRef(ref: string): string {
 
 // ─── Shape sources ───────────────────────────────────────────────────────
 
+/** FamilySearch's own `SD_*` entries are metadata, not sources. */
+function isMetadataSource(id: string): boolean {
+  return id.startsWith("SD_");
+}
+
 function shapeSources(
   simplifiedSources: SimplifiedGedcomX["sources"] = [],
   rawSources: FSSourceDescription[],
@@ -1314,7 +1471,7 @@ function shapeSources(
     const id = s.id;
     if (!id) continue;
     // Skip FS metadata entries.
-    if (id.startsWith("SD_")) continue;
+    if (isMetadataSource(id)) continue;
     const raw = rawById.get(id);
     const notes = collectNotes(raw?.notes);
     out.push({
