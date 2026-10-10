@@ -1724,6 +1724,47 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     assert not any(w["kind"] == "uncovered_tool_call" for w in warnings)
 
 
+@pytest.mark.parametrize("passed, expected", [({"tool_search": False}, False), ({}, True)])
+def test_tool_search_reaches_run_skill(tmp_path, monkeypatch, passed, expected):
+    """`--no-tool-search` crosses four call sites to reach `run_skill`; a
+    dropped hop leaves the default True there and the run quietly runs ON."""
+    from harness.skill_runner import SkillRunResult
+    from harness.judge import JudgeOutput
+
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    seen: list = []
+
+    async def fake_run_skill(**kwargs):
+        seen.append(kwargs.get("tool_search", "MISSING"))
+        return SkillRunResult(
+            text_response="ok", skills_invoked=["record-extraction"], tool_calls=[],
+            duration_ms=1.0, usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", lambda **kw: JudgeOutput(
+        dimensions=[], cost_usd=0.0, input_tokens=0, cached_input_tokens=0,
+        output_tokens=0, prompt_hash="stub-hash",
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=_positive_spec(),
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        paths=OrchestratorPaths(runlogs_root=tmp_path),
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-09_10-30-00",
+        **passed,
+    ))
+    assert seen == [expected]
+
+
 # --- intentionally_invalid: file-validity validators are not counted -----
 
 from dataclasses import dataclass as _dataclass

@@ -1945,7 +1945,9 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `effort_level` | Pinned via a project setting; default `high`. |
 | `max_output_tokens` | Via `CLAUDE_CODE_MAX_OUTPUT_TOKENS`; null = CLI default. |
 | `betas` | SDK betas the run requested (`--context-1m` → `["context-1m-2025-08-07"]`); `[]` when off. **A run with a non-empty `betas` is not comparable to the corpus** — a 1M window changes the compaction count and the cache-gap structure, which is what `e2e-compaction` and `e2e-cache-window` measure. Not one of the five reasoning-config fields below: it changes the context budget, not the reasoning. **Enforced:** `check_e2e_fixtures.py` rejects a PR-added-or-renamed run log under `eval/runlogs/e2e/` whose `betas` is non-empty. |
-| `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. |
+| `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. Read from the init message's `claude_code_version` (the key CLI 2.1.139 writes), falling back to `version` / `cli_version`; `null` on every run before that read was added. |
+| `tool_search` | `true` (default) / `false` — what `--tool-search` / `--no-tool-search` asked for, sent to the CLI as `ENABLE_TOOL_SEARCH`. Absent on runs before the flag. **A run with this `false` is not comparable to the corpus:** every tool schema is loaded up front, so its first call's context, its cache figures and its ToolSearch count all move. `run_e2e.py` refuses `--no-tool-search` under the default run-log root, and the mid-run dead-server backstop (`tool_search_miss_streak`) is inert under it (no ToolSearch reply to count). **Enforced:** `check_e2e_fixtures.py` rejects a PR-added-or-renamed run log under `eval/runlogs/e2e/` whose `tool_search` or `tool_search_offered` is `false`. |
+| `tool_search_offered` | Whether the FIRST init message's `tools` list included `ToolSearch`; `null` when that init carried no list. **Listed at init; blind to the per-model gate — `false` proves off, `true` does not prove on:** a model on the CLI's unsupported list (default `["haiku"]`) defers nothing yet is still offered ToolSearch. The only proof that tool search took effect is the size of the first `"main"` row of `message_usage`. |
 | `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
@@ -1962,7 +1964,9 @@ reasoning knob — it records an enforcement posture, and is the one field here
 that changes what a *verdict* means rather than what produced it. `deny_shell`
 and `deny_project_reads` are the same kind of field — an enforcement posture,
 not a reasoning knob — and are there so a run that had no shell, or no direct
-project reads, is never compared against one that did.
+project reads, is never compared against one that did. `tool_search` and
+`tool_search_offered` sit outside the reasoning set too, like `betas`: they change
+what the context carries, not the reasoning.
 
 #### 8.1.1 `tool_calls[]` — the joined keys
 
@@ -2444,14 +2448,19 @@ flag an unvalidated fixture — an earlier advisory `check-e2e-fixtures`
 warning was removed because it re-flagged every un-run fixture in the repo on
 every e2e PR (pure noise).
 
-The `check-e2e-fixtures` workflow instead runs two **blocking** checks, both
-scoped to run logs *added in the PR, or renamed into it*. The **grading gate**:
-one that produced a final tree must ship its `run-<ts>.ann.json` in the same PR
-(a treeless crash/skip run is exempt). The **1M-window gate**: one whose
-`usage.betas` is non-empty — a run made with `--context-1m` — is rejected,
-because a 1M window is not comparable to the rest of the corpus; keep it in a
-sibling directory outside `eval/runlogs/e2e/`. Both read only committed files
-and neither triggers a live e2e run (those stay out of CI per §12).
+The `check-e2e-fixtures` workflow instead runs four **blocking** run-log
+checks (plus annotation validation). Three are scoped to run logs *added in the
+PR, or renamed into it*. The **grading gate**: one that produced a final tree
+must ship its `run-<ts>.ann.json` in the same PR (a treeless crash/skip run is
+exempt). The **1M-window gate**: one whose `usage.betas` is non-empty — a run
+made with `--context-1m` — is rejected, because a 1M window is not comparable to
+the rest of the corpus; keep it in a sibling directory outside
+`eval/runlogs/e2e/`. The **tool-search-off gate**: one whose `usage.tool_search`
+or `usage.tool_search_offered` is `false` is rejected for the same reason —
+every tool schema was loaded up front. The fourth, the **credential gate**, also
+reads run logs *modified* in the PR, and rejects one carrying a live credential.
+All four read only committed files and none triggers a live e2e run (those stay
+out of CI per §12).
 
 ---
 
