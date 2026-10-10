@@ -1,8 +1,9 @@
 # Search agent capacity: quota, scaling, packing, compute
 
-**2026-10-09, handoff U18.** For Richard and the FamilySearch leads he routes it to. It
-covers U18's offline half: the model quota, a scaling metric, worker packing and the
-compute cost at U26's 1,800 s grain. The gateway load run is still open. It waits on F1
+**2026-10-09, handoff U18; §3's CPU run 2026-10-10.** For Richard and the FamilySearch leads
+he routes it to. It covers U18's offline half: the model quota, a scaling metric, worker
+packing and the compute cost at U26's 1,800 s grain, plus packing's CPU run on AWS (§3).
+The gateway load run is still open. It waits on F1
 and F5 ([the handoff](./plan/familysearch-handoff.md)). The review is FamilySearch's
 architecture review draft (SC-12457, 2026-09-07 copy, not in this repo). Rates are tokens a
 minute per session, not per run. Settled means after a call ends. Unless marked
@@ -25,8 +26,9 @@ minute per session, not per run. Settled means after a call ends. Unless marked
   two-alarm fallback if Blueprint can express only one SQS metric per policy. Visible
   depth alone cannot scale in.
 - **Packing:** memory allows ~10 turns on a t3.large and ~21 on a t3.xlarge. Propose
-  `HttpConnections` 4 and 8 respectively, until a CPU measurement says otherwise. CPU has
-  never been measured.
+  `HttpConnections` 4 and 8 respectively. 8 on a t3.xlarge is measured: 0.89 cores
+  average, under its 1.6-core credit baseline, with no surplus credits charged (U18,
+  2026-10-10, n=1). 4 on a t3.large is not measured.
 - **Compute:** the review's ~$0.04 is the worker slot alone. The 1,800 s cap leaves
   slot-time per session unchanged. At 8 slots per t3.xlarge a 75.7-minute session holds
   ≥ $0.026 of slot-time. The whole fleet at 50 concurrent runs is ~$0.06 a session, under
@@ -196,30 +198,74 @@ turns overlapping 599 s with 58 subagent calls peaked at 520.3 MB in `web.servic
 largest single process was `claude` at 347.5 MB. `MemAvailable` never fell below
 6,635.8 MB. Light turns peaked at 471.3 MB.
 
+From U18's CPU run (2026-10-10, n=1 per count): `concurrent_rss_heavy` on one t3.xlarge
+(4 vCPU, 15.4 GiB, credit mode `unlimited`, the first time the mode was recorded) under the
+`worker_xlarge` case (worker bundle from PR #3302, the cases' tooling), slots set by
+`slots_4` and `slots_8`, 1 turn at the default 2. Windows
+were 900 s at 0 turns and 1,800 s otherwise. Every turn was seeded on one patron's
+FamilySearch grant, all ran at once, and each was received once. bounds passed 12/12, 19/19,
+28/28 and 40/40. Across 8 concurrent sessions on one patron: 0 rate-limit tool results and 0
+reauth hits (bounds does not log CLI-internal retries). Model spend $58.89 against the ~$64
+estimate.
+
+`web.service` cgroup (`cpu.stat`) and host samples. RSS is a whole-host total; Postgres is
+`pg_stat_activity` across the whole database (web, tools, worker and RDS internals, excluding
+bounds' own), with the `turn:`-tagged connections in brackets:
+
+| Turns | CPU avg, cores (core-s) | CPU peak, cores | load1 peak | steal | Peak total RSS | cgroup RSS | Largest process | Min available | Postgres peak (turn) | Model spend |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | 0.000 (0.2) | 0.002 | 0.36 | 0.08% | 604 MB | 67 MB | 130 MB (CloudWatch agent) | 15.0 GB | 7 (0) | $0 |
+| 1 | 0.107 (192.5) | 0.252 | 0.52 | 0.18% | 959 MB | 307 MB | 349 MB `claude` | 14.8 GB | 10 (1) | $4.75 |
+| 4 | 0.448 (807.3) | 1.055 | 1.92 | 0.5% | 2,010 MB | 1,020 MB | 366 MB `claude` | 14.1 GB | 17 (4) | $17.62 |
+| 8 | 0.89 (1,603.2) | 1.987 | 2.26 | 0.85% | 3,361 MB | 1,925 MB | 362 MB `claude` | 13.2 GB | 25 (8) | $36.52 |
+
+CloudWatch, worker instance, over the whole 5-minute grid buckets inside each window (each
+basic-monitoring point covers the 5 minutes after its :00/:05 stamp). "avg" is the mean of the
+5-minute Average points; "max" is the largest Maximum statistic, not a 5-minute average:
+
+| Turns | `CPUUtilization` avg | `CPUUtilization` max | `CPUCreditBalance` | `CPUSurplusCreditsCharged` | RDS CPU avg / max |
+|---|---|---|---|---|---|
+| 0 | 1.1% | 1.2% | 44 → 52 | 0 | 4.5% / 5.5% |
+| 1 | 4.3% | 7.7% | 75 → 104 | 0 | 4.5% / 6.3% |
+| 4 | 13.3% | 25.2% | 282 → 303 | 0 | 4.9% / 7.1% |
+| 8 | 25.4% | 46.4% | 241 → 251 | 0 | 5.1% / 6.7% |
+
 - **Per turn:** one `claude` process. Subagents run inside it, MCP goes over HTTP to tools,
   and plugin-hook interpreters are short-lived. Plan on **512 MB a turn**, a round
   allowance for growth to 1,800 s that was not measured over time, and ~700 MB fixed per
   instance. With 25% headroom, memory allows **~10 turns on a t3.large and ~21 on a
-  t3.xlarge**. `/tmp` (half the RAM) peaked at 40 MB for two turns.
-- **CPU was never measured.** No `cpu.stat`, load average or CPU-credit metric was
-  recorded, and the T3 credit mode was not recorded either. One Python process upserts
+  t3.xlarge**. `/tmp` (half the RAM) peaked at 40 MB for two turns. Against that allowance
+  (1.2 / 2.75 / 4.8 GB at 1 / 4 / 8 turns), the measured peak total RSS was lower at every
+  count: 0.96 / 2.0 / 3.4 GB (U18, 2026-10-10, n=1).
+- **CPU:** about 0.11 cores a turn, roughly linear (U18, 2026-10-10, n=1; tables above). A
+  t3.xlarge's credit baseline is 40% of its 4 vCPU, 1.6 cores. At 8 turns the average was
+  under it, and two Maximum readings (46.4% and 46.3%) went over it, in the window's first
+  10 minutes. No
+  surplus credits were charged at any count. One Python process upserts
   every streamed delta for every slot. Each U26 continuation restarts the CLI and reloads
   the transcript.
 - **Proposal:** `HttpConnections` **4 on a t3.large, 8 on a t3.xlarge**, below the memory
-  ceilings until CPU is measured. Fewer slots also means fewer runs cut by a deploy or a
+  ceilings. 8 on a t3.xlarge is confirmed for CPU, memory and Postgres at n=1 (U18,
+  2026-10-10): `CPUUtilization` averaged 25.4% against the 40% baseline, with a peak of
+  46.4% (CloudWatch Maximum statistic) in the window's first 10 minutes. 4 on a t3.large is not measured:
+  its 0.6-core baseline is above the 0.448 cores measured at 4 turns on the t3.xlarge, but
+  that is inference. Fewer slots also means fewer runs cut by a deploy or a
   lost instance (U13 M35). If sustained CPU exceeds the T3 baseline, move to a
   non-burstable 4 vCPU / 16 GiB type rather than cutting slots.
-- **The measurement that confirms it:** a U13 `concurrent_rss_heavy` at 4 and 8 slots on a
-  t3.xlarge, held for the full 1,800 s. Take 0-turn and 1-turn baselines first. Record cgroup
+- **The measurement that confirmed it for the t3.xlarge** (run 2026-10-10, tables above):
+  a U13 `concurrent_rss_heavy` at 4 and 8 slots on a t3.xlarge, held for the full 1,800 s,
+  after 0-turn and 1-turn baselines. It recorded cgroup
   `cpu.stat`, load average, per-process RSS and CPU time, CloudWatch `CPUUtilization` and
   `CPUCreditBalance`, and a `pg_stat_activity` count. Estimated model spend: ~$21 at 4 slots,
-  ~$43 at 8.
+  ~$43 at 8; measured $17.62 at 4, $36.52 at 8 and $58.89 with the 1-turn baseline.
 - **Postgres:** each turn holds two connections for its whole life: the turn's own, and the
   grant connection holding the patron's session-level advisory lock, which a transaction
   pooler cannot share. The session store opens one more per append. Plan on ~3N + 3 per
   worker instance at N slots. Fifty concurrent runs need ~150 worker connections plus web
   and tools. U13's db.t3.micro allows ~112 by the RDS formula (not measured); a
-  db.r7g.large is far above.
+  db.r7g.large is far above. Measured at 8 turns (U18, 2026-10-10, n=1): the whole-database
+  peak was 25 connections, one of them `turn:`-tagged per turn, below the 27 this estimates
+  for one worker at N=8; the per-worker 3N + 3 itself was not isolated.
 - **Changing the slot count:** the predeploy hook creates eight slot users,
   `genealogy-turn-0` to `-7`. `HttpConnections` (step 11) and `WORKER_TURN_USERS` must name
   the same N, the first N of those eight: `02-worker.config` sets 2 and 2, and the U13
@@ -253,9 +299,10 @@ t3.xlarge $0.1664/h, m7i.xlarge $0.2016/h.
   concurrent run, ~$0.14 at 10. The database price is a stand-in: Aurora r7g.large was not
   found.
 - **What this does not move:** model spend is still essentially all of the cost. Two
-  unmeasured effects move it the other way. Each U26 continuation re-writes an expired cache
-  and ends with a forced summary, which raises model cost per session. And T3 Unlimited
-  credits would add up to ~70% to a worker instance if turns burn CPU.
+  effects move it the other way. Each U26 continuation re-writes an expired cache and ends
+  with a forced summary, which raises model cost per session (unmeasured). And T3 Unlimited
+  credits would add up to ~70% to a worker instance if turns burn CPU; at 8 turns on a
+  t3.xlarge they did not: no surplus credits were charged (U18, 2026-10-10, n=1).
 
 ## 5. The load run (still open)
 
