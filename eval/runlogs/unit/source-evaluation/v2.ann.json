@@ -5,14 +5,6 @@
     {
       "test_id": "ut_source_evaluation_k9t",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_k9t",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -345,6 +337,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Three genuine findings are identified correctly, but the 1851 census discussion overstates what the missing indexed details establish."
     }
   ]
 }
