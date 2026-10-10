@@ -340,18 +340,26 @@ def _summarised_more(fire_call: dict, doc: dict | None) -> int:
     return int(m.group(1)) if m else 0
 
 
-def _nil_logged_later(calls: list[dict], idx: int) -> bool:
-    """Whether a qualifying negative log appears ANYWHERE later in the run, not
-    just before the next search. `_acted_nil`'s before-the-next-search cutoff
-    reads a batched "log after the next search" as ignored; this says whether the
-    nil was logged at all, so the ignored count is not misread as neglect."""
-    for later in calls[idx + 1:]:
-        if _is_error(later) or _bare(later) != LOG_APPEND:
+def _nil_logged_later(calls: list[dict], fire_idxs: list[int]) -> set[int]:
+    """The nil fires that got their OWN negative log later in the run. Each
+    qualifying log entry is credited to the most recent still-unlogged fire before
+    it, so one entry covers one nil (never every earlier one) and an acted fire
+    keeps the log that made it acted. `_acted_nil`'s before-the-next-search cutoff
+    reads a batched "log after the next search" as ignored; this says how many
+    ignored nils were logged at all."""
+    fires = set(fire_idxs)
+    pending: list[int] = []
+    logged: set[int] = set()
+    for i, call in enumerate(calls):
+        if i in fires:
+            pending.append(i)
             continue
-        for entry in log_entries(later):
-            if entry.get("outcome") == "negative" and not entry.get("stagedResultsRef"):
-                return True
-    return False
+        if _is_error(call) or _bare(call) != LOG_APPEND:
+            continue
+        for entry in log_entries(call):
+            if pending and entry.get("outcome") == "negative" and not entry.get("stagedResultsRef"):
+                logged.add(pending.pop())
+    return logged
 
 
 def _acted_nil(calls: list[dict], idx: int, fire_call: dict, doc: dict | None) -> str:
@@ -442,6 +450,7 @@ def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
     rows: list[CallRow] = []
     for spec in FIELDS:
         version_ok = version_observable(doc, path, spec.ship_commit, spec.ship_date, probe)
+        fired_at: dict[int, int] = {}  # call index -> its row's position
         for i, call in enumerate(calls):
             if _is_error(call) or _bare(call) not in spec.emitters:
                 continue
@@ -453,11 +462,15 @@ def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
             if not fired:
                 rows.append(CallRow(run, spec.key, agent, NEVER_HELD))
                 continue
+            fired_at[i] = len(rows)
             state = spec.acted(calls, i, call, decoded)
-            logged_later = (spec.key == "nilSearchNeedsLog" and state == IGNORED
-                            and _nil_logged_later(calls, i))
             more = _summarised_more(call, decoded) if spec.key == "unloggedSearches" else 0
-            rows.append(CallRow(run, spec.key, agent, state, logged_later, more))
+            rows.append(CallRow(run, spec.key, agent, state, False, more))
+        if spec.key == "nilSearchNeedsLog":
+            for i in _nil_logged_later(calls, list(fired_at)):
+                k = fired_at[i]
+                if rows[k].state == IGNORED:
+                    rows[k] = rows[k]._replace(logged_later=True)
     return rows
 
 

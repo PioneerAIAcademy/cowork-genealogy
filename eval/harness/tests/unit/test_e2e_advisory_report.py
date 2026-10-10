@@ -317,18 +317,17 @@ def test_partition_identity_holds(tmp_path):
     assert nil[ACTED] + nil[IGNORED] + nil[NEVER_HELD] + nil[NOT_OBSERVABLE] == emitter_calls
 
 
-def test_nil_ignored_but_logged_later_is_flagged(tmp_path):
-    # Nil fires; the next call is another search (so `_acted_nil` says ignored),
-    # but the nil IS logged after it — the row carries logged_later=True.
+@pytest.mark.parametrize("entries, flagged", [(2, True), (1, False)])
+def test_nil_logged_later_credits_one_log_entry_per_nil(tmp_path, entries, flagged):
+    # Two nils, then ONE batched append. The 2nd nil is acted (no search between it
+    # and the append) and keeps one entry; the 1st is ignored by the cutoff and is
+    # "logged later" only if a SECOND entry is there for it.
     nil_doc = {"results": [], "totalMatches": 0, "nilSearchNeedsLog": "…"}
-    calls = [
-        _search(nil_doc),                 # fires
-        _search(nil_doc),                 # next search -> ignored by the cutoff
-        _log_append(outcome="negative"),  # ...but logged here, later in the run
-    ]
+    ops = [{"outcome": "negative"}] * entries
+    calls = [_search(nil_doc), _search(nil_doc), _log_append(ops=ops)]
     rows = [r for r in scan([_write_run(tmp_path, calls)]).rows
             if r.field == "nilSearchNeedsLog" and r.state == IGNORED]
-    assert len(rows) == 1 and rows[0].logged_later is True
+    assert len(rows) == 1 and rows[0].logged_later is flagged
 
 
 def test_non_dict_ops_entry_does_not_crash(tmp_path):
