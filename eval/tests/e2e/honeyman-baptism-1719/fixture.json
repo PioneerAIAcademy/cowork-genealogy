@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "PID-less: ground truth is a Cowork run on 8 Oct 2026 graded by the fixture author, not the tree. The starting tree holds the family's old claim (1716 Edinburgh baptism, Fife-born father); a pass rejects the first and leaves the second unproved, on cited parish records rather than tree notes."
+  "notes": "PID-less: ground truth is a Cowork run on 8 Oct 2026 graded by the fixture author, not the tree. The starting tree holds the family's old claim (1716 Edinburgh baptism, Fife-born father); a pass needs only the first rejected, on cited parish records rather than tree notes (the 1719 Hutton Rudby christening, f1, and the 1716 Edinburgh claim removed, f2). Leaving the Fife origin unproved (f3) is graded but not required."
 }
