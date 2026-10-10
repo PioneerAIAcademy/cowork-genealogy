@@ -12,7 +12,7 @@ to each zip's root. Plan: docs/plan/familysearch-handoff.md, U12; the interface 
 - U11: no file under a template directory but its README, and no tier ``Dockerfile``,
   names one of ``layout.py``'s dev-only variables outside a comment;
 - the logs block, the health paths, nginx at 1800 s for tools, one instance for worker
-  and tools;
+  and tools until U18 chooses the scaling metric (U6's fencing is built);
 - the worker's ``ENGINE_PLUGIN_DIR`` is where its predeploy hook puts the plugin, and the
   hook is executable in git and runs under ``set -euo pipefail``;
 - the CA variable names ``/var/app/current/`` plus the bundle's CA path.
@@ -291,7 +291,9 @@ def test_tools_alb_idle_timeout_is_alone_in_its_file():
 
 
 @pytest.mark.parametrize("tier", ["worker", "tools"])
-def test_one_instance_until_u6(tier):
+def test_one_instance_until_u18(tier):
+    """Handoff step 13: U6's claim fencing is built, so the gate on a second instance
+    is now U18's scaling metric. The templates stay 1/1 until then."""
     asg = _settings(tier, ASG_NS)
     assert (asg.get("MinSize"), asg.get("MaxSize")) == ("1", "1"), (tier, asg)
 
