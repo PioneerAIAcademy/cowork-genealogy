@@ -215,14 +215,6 @@
     {
       "test_id": "ut_research_exhaustiveness_012",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Reviewed and confirmed: partial result matches expected outcome for this scenario."
-    },
-    {
-      "test_id": "ut_research_exhaustiveness_012",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3
@@ -254,7 +246,15 @@
       "dimension_name": "Stop criteria coverage",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Reviewed and confirmed: partial result matches expected outcome for this scenario."
+      "comment": "The AI assessed all seven stop criteria with substantive rationale, but the conflict_resolution entry conflated absence of conflicts with the narrative error in the proof summary, making that criterion’s assessment muddied rather than clear."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI declaration and seven-point assessment are correct, but it noted the proof summary’s “courthouse fire” attribution was a narrative error without correcting the persisted text."
     }
   ]
 }
