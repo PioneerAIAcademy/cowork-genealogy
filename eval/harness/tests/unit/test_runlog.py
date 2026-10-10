@@ -322,6 +322,37 @@ def test_validate_rejects_retired_outcome_values(retired):
         validate_run_log(log)
 
 
+@pytest.mark.parametrize("tool_search", [True, False])
+def test_envelope_records_tool_search_and_validates(tool_search):
+    """The schema is `additionalProperties: false`, so a recorded setting the
+    schema does not list fails the write — here, mid-run, after the money."""
+    log = build_run_log(
+        skill="search-familysearch-wiki", version=None, released=False,
+        releasable=False, invocation="skill", timestamp="2026-10-09_10-30-00",
+        harness_version="0.2.0", model="claude-sonnet-4-6",
+        judge_prompt_hash="b" * 64, snapshot={}, tests=[_make_entry()],
+        tool_search=tool_search,
+    )
+    assert log["tool_search"] is tool_search
+    validate_run_log(log)
+
+
+def test_envelope_omits_tool_search_when_not_given():
+    """Absent is the shape of every log written before the field."""
+    log = _wrap_envelope(_make_entry())
+    assert "tool_search" not in log
+    validate_run_log(log)
+
+
+def test_validate_rejects_a_non_boolean_tool_search():
+    import jsonschema
+
+    log = _wrap_envelope(_make_entry())
+    log["tool_search"] = "false"
+    with pytest.raises(jsonschema.ValidationError):
+        validate_run_log(log)
+
+
 def test_envelope_totals_sum_across_tests():
     e1 = _make_entry(test_id="ut_001")
     e2 = _make_entry(test_id="ut_002")
