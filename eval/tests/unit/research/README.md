@@ -64,12 +64,13 @@ any stubbed name is denied too and ends the run.
 
 ## What is NOT covered (and why)
 
-Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
-
-- **Row 14 post-verdict**: the `address_first` verdict handler has two
-  contradictory tables. The routing decision TO `proof-critique` is testable;
-  the handler for its return is not.
-- **Row 16**: who writes `project.status = "completed"` — the routing table,
+- **Second-opinion hand-off and verdict handling**: gps-mentor is not a
+  routing row; it runs only on request. Neither the on-demand hand-off nor what
+  the router does with the returned verdict is tested. A `/research` entry
+  never records `research` as invoked, so a positive test of the hand-off fails
+  even when it routes correctly; a bare second-opinion request bypasses the
+  router and spawns gps-mentor directly (9 of 9 scratch runs, three wordings).
+- **Row 16** (blocked on #1492, research/SKILL.md reconciliation): who writes `project.status = "completed"` — the routing table,
   the ownership validator, the tool comments, and the empirical run logs all
   disagree. Cannot test until the ruling lands.
 

@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_c3s",
+    "skill": "proof-conclusion",
+    "name": "The completing summary names what was not searched and offers a second opinion (direct-agent arm)",
+    "type": "positive",
+    "description": "q_001 is the project's only question, so concluding it resolves the last question and sets project.status to completed in the same invocation. The user-facing summary after the `---` must end its first paragraph with one plain sentence on what was not searched, restated from the summary's own exhaustive_search_summary, and its second paragraph must be one sentence telling the user the research is finished and that they can ask for a second opinion. gps-mentor is no longer run by default, so that sentence is the user's only route to it.",
+    "tags": [
+      "proof",
+      "marriage",
+      "summary-for-user",
+      "summary-for-user-completion",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run your preconditions gate and then conclude question q_001 — when and where Anders Monsen married Unna Halsteinsdatter — at whatever tier the evidence supports, declining only if the gate itself fails.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "anders-unna-marriage-proof"
+  },
+  "judge_context": [
+    "Ground truth: q_001 is the only question. Concluding it resolves the last question, so this invocation should also set project.status to completed. A deterministic validator (test_completion_summary_offers_second_opinion) checks the status, the second-opinion offer and the banned words. Do not re-grade those.",
+    "Grade the first paragraph after the `---`: it should close with one plain sentence on what was not searched, drawn from the unsearched part of the written summary's exhaustive_search_summary (in this project, for example, that the church-book page itself was not viewed) — or, if that summary names nothing unsearched, a sentence saying every place the answer was likely to be recorded was searched. A sentence that invents a search the project never recorded, or names a record type the summary does not mention, is wrong.",
+    "The paragraph should say how sure the finding is in plain words ('likely' at probable, 'well established' at proved), with no identifiers, file names, tool names or field names.",
+    "Tier: single derivative source with primary information, no conflicts, and q_001's exhaustive_declaration explains why no second contemporaneous source type exists for 1786 Norwegian marriages. 'probable' is the appropriate tier; do not penalize for not reaching 'proved'.",
+    "Do not require the skill to mention whether an image of the church-book page is accessible; only an affirmative, unsupported accessibility claim is wrong."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

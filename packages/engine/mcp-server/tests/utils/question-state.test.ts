@@ -59,11 +59,24 @@ describe("questionStatus — the state ladder", () => {
     expect(s.nextStep).toMatch(/research-exhaustiveness/);
   });
 
-  it("concluded: a proof summary exists but carries no critique", () => {
+  it("concluded, uncritiqued, unresolved: the next step is marking it resolved", () => {
+    // gps-mentor runs only on request (issue #2951), so an uncritiqued summary
+    // is not a step. What is still outstanding is the `resolved` write.
     const d = doc({ proof_summaries: [{ id: "ps_001", question_id: Q }] });
     const s = questionStatus(d, question());
     expect(s.state).toBe("concluded");
-    expect(s.nextStep).toMatch(/gps-mentor.*ps_001/);
+    expect(s.nextStep).toMatch(/mark the question resolved/);
+    expect(s.nextStep).not.toMatch(/gps-mentor/);
+  });
+
+  it("concluded AND resolved, with no critique, has nothing outstanding", () => {
+    const d = doc({
+      questions: [question({ status: "resolved" })],
+      proof_summaries: [{ id: "ps_001", question_id: Q }],
+    });
+    const s = questionStatus(d, question({ status: "resolved" }));
+    expect(s.state).toBe("concluded");
+    expect(s.nextStep).toBeNull();
   });
 
   it("critiqued: every summary carries a live proof-critique verdict", () => {
@@ -73,12 +86,12 @@ describe("questionStatus — the state ladder", () => {
     });
     const s = questionStatus(d, question());
     expect(s.state).toBe("critiqued");
-    // Critiqued is the last rung, not the end of the work: the `resolved` write
-    // is still outstanding, and it is the transition no skill body claims.
+    // An on-demand critique does not change what is outstanding: the `resolved`
+    // write, the transition no skill body claims.
     expect(s.nextStep).toMatch(/mark the question resolved/);
   });
 
-  it("critiqued AND resolved is the only state with nothing outstanding", () => {
+  it("critiqued AND resolved has nothing outstanding", () => {
     const d = doc({
       questions: [question({ status: "resolved" })],
       proof_summaries: [{ id: "ps_001", question_id: Q }],
