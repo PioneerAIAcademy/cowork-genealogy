@@ -1525,6 +1525,8 @@ This composition cleanly handles all edge cases:
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
+`run_tests.py --no-tool-search` (Makefile `eval-skill ... TOOL_SEARCH=0`) is the other CLI-only override: it sends `ENABLE_TOOL_SEARCH=false`, so every tool schema is loaded up front instead of deferred behind ToolSearch. It is experiment-only — the invocation is non-releasable and writes a `scratch_` log, by the same mechanism as `--runs-per-test N` — and the run log records it as `tool_search: false` (see "Field details").
+
 So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and judge cost (every non-aborted run is judged). Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
@@ -1905,6 +1907,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **`tool_search`** (envelope) — `true`, or `false` under `--no-tool-search`. Written on every log the harness writes, the default included; optional in the schema and absent on logs written before it existed, which all ran with tool search on and are read that way. Recorded so `make unit-compare` names a differing setting ("run settings that differ") instead of reporting a cost move with no changed file as wobble.
 - **Every token field covers every model the run touched** — the main thread plus
   any plugin agent it delegated to. They are read from the SDK's per-model ledger
   (`model_usage`), which the CLI documents as covering the same calls as

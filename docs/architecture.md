@@ -648,7 +648,8 @@ Architecturally:
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header) are entrypoints that only connect
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim when
+  `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` are sent) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -751,8 +752,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 
 > Touching *anything* under `packages/engine/plugin/skills/**` — including a
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
-> which **blocks the PR** unless the newest full-skill run log's snapshot matches
-> your branch and its `.ann.json` carries a correction for every dimension of
+> which **blocks the PR** unless the run log you add (or, if you add none, the
+> newest full-skill run log) has a snapshot that matches your branch and an
+> `.ann.json` that carries a correction for every dimension of
 > each **sampled** test — the tests named in the run log's `review_sample`
 > (3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the
 > count varies by run).
@@ -1107,11 +1109,14 @@ driver must wait.
 > Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
 > described the opposite and have been corrected** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
-> test. The flag **values** are unchanged; flipping them is separate work that
-> has to re-measure the tool mix before and after, and
-> `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
-> being on, so it is no longer a one-line experiment
-> (`gh issue list --state open --search "ENABLE_TOOL_SEARCH"`). The
+> test. The flag **values** are unchanged: on everywhere by default. Both eval
+> harnesses take an experiment-only off switch, `--no-tool-search` (`make e2e-run`
+> / `make eval-skill` with `TOOL_SEARCH=0`); an e2e run made with it must go to a
+> `RUNLOG_ROOT` outside `eval/runlogs/e2e/` (the harness refuses, CI rejects a
+> commit), and a unit run made with it is a `scratch_` log.
+> `eval/harness/e2e/mcp_health.py`'s mid-run backstop *depends* on deferral being
+> on and is inert under the switch. What off costs against on is recorded in
+> `docs/plan/cost-latency-10x.md` §5 once measured (T1.7). The
 > repo's own data corroborates the flag being live: ToolSearch is a steady few
 > percent of all tool calls across the committed e2e corpus *while the flag is
 > set to `true`*. This does not change the bare-name rule above, which is
@@ -1804,7 +1809,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the

@@ -37,6 +37,9 @@ dev = [
     # from the proto-web/proto-worker exports of this lock (below). It sits here, not in
     # [project], so deploy/Dockerfile's `uv sync --no-dev` image does not grow.
     "botocore>=1.40",
+    # tests/test_proto_fencing_pg.py (U6) calls the real tool server through the Python MCP
+    # client. Already present transitively (claude-agent-sdk); declared because we import it.
+    "mcp>=1.28.1",
 ]
 # proto/drive.py --embedded-pg: a pip-installed PostgreSQL 16 so the D11-13 acceptance
 # runs on a machine with neither Docker nor Postgres. Its own group, never installed by

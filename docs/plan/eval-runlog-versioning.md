@@ -52,8 +52,9 @@ it as a self-contained, reproducible artifact.
    invocations (`--test`, `--tag`) produce **scratch runs** that are
    gitignored, never released, never compared, never activated.
 5. **`.ann.json` is sparse**: entries only for dimensions the junior
-   has explicitly reviewed. GH Action enforces the latest full-skill
-   run's `.ann.json` has an entry for every dimension before merge.
+   has explicitly reviewed. GH Action enforces that the `.ann.json` of
+   the run the PR adds (else the latest full-skill run) has an entry
+   for every dimension before merge.
 6. **Active detection is per-skill, lazy**: only computed when viewing
    that skill's results page. No dashboard-wide check.
 7. **Score-correction view**: integrated test-centric page (trace +
@@ -476,11 +477,13 @@ catches new files, `R` catches the dev → released rename. Filtering
 on `--diff-filter=A` alone (today's pattern) misses every renamed
 release; this is the fix.
 
-**Rule 2 (blocking)**: The latest full-skill run log (released
-`v{N}.json` if added in this PR, else the highest `v{N}_<ts>.json`
-from this PR or main) is **active on skill-side files** — its
-snapshot matches the current PR-branch state of all snapshot-tracked
-files, normalized per §A7.
+**Rule 2 (blocking)**: The run log this PR adds is **active on
+skill-side files**: its snapshot matches the current PR-branch
+state of all snapshot-tracked files, normalized per §A7. That is
+the released `v{N}.json` if added in this PR, else the highest
+`v{N}_<ts>.json` it adds; else, for a PR that adds no run log, the
+latest full-skill run log, as `latest_full_skill_runlog` resolves
+it.
 
 **Rule 2b (warn-only)**: The same run log's `judge_prompt_hash`
 matches the current `judge/prompt.md` (normalized). A mismatch
@@ -491,7 +494,7 @@ judge review lands. The active state still applies to skill-side
 files; the warning just notes that a re-run today would score
 differently than the historical numbers.
 
-**Rule 3**: The latest full-skill run log's `.ann.json` is
+**Rule 3**: The same run log's `.ann.json` is
 **complete** — has an entry for every `(test_id, dimension_source,
 dimension_name)` triple present in the run log.
 
@@ -516,9 +519,9 @@ deferred follow-up. Full rationale: `eval/CLAUDE.md` § "GitHub Action
 rules".
 
 Scratch runs (`scratch_*.json`) are gitignored and never reach the
-action. Implementation is a Python script that loads the latest run
-log's snapshot and diffs vs working tree, using the same
-`normalize()` contract as the harness.
+action. Implementation is a Python script that loads the snapshot of
+the run log Rule 2 grades and diffs it vs working tree, using the
+same `normalize()` contract as the harness.
 
 ---
 

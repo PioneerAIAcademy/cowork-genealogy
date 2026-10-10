@@ -175,6 +175,12 @@ HAS_QUEUED_SQL = (
 # every tool call, and a stale flag halts the NEXT turn at its first call, which looks
 # exactly like Stop being broken from the other side.
 CLEAR_STOP_SQL = "UPDATE sessions SET stop_requested_at = NULL WHERE session_id = %s"
+# U6: the web tier's one close of a turn a worker may have claimed (a send that landed after
+# its timeout). Epoch-less, like the sweep's: the bump fences the claimed attempt's writes.
+FAIL_TURN_SQL = (
+    "UPDATE turns SET outcome = %s, completed_at = now(), claim_epoch = claim_epoch + 1 "
+    "WHERE turn_id = %s AND completed_at IS NULL"
+)
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -752,10 +758,11 @@ class PgStore:
         return Turn(turn_id=turn_id, seq=seq, body=body)
 
     async def fail_turn(self, turn_id: str, reason: str) -> None:
+        """Close a turn whose send failed. A send that landed after its timeout may already
+        be claimed, so this is an epoch-less close (``FAIL_TURN_SQL``); a row already closed
+        keeps its closer's outcome and epoch."""
         async with await self._connect() as conn:
-            await conn.execute(
-                "UPDATE turns SET outcome = %s, completed_at = now() WHERE turn_id = %s", (reason, turn_id)
-            )
+            await conn.execute(FAIL_TURN_SQL, (reason, turn_id))
 
     async def put_back_held(self, turn_id: str) -> bool:
         """Hold a rescued message again after its send failed (U23), so an older message is
