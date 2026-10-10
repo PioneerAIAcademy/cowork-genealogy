@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_research_utf",
+    "skill": "research",
+    "name": "Routes an uncovered independent part of the objective to question-selection instead of completing",
+    "type": "positive",
+    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable, its mentor verdict is on record and its fact is in the tree, so every gate on the 'all questions resolved' row holds. The router must see that the objective still has an unframed part and hand off to question-selection, not proceed to the completion write or stop. Mined from a Cowork run that concluded the birthplace and left parentage unresearched.",
+    "tags": [
+      "from-cowork",
+      "compound-objective-part-unframed",
+      "re-invoke-safe",
+      "routing",
+      "routes-to:question-selection"
+    ]
+  },
+  "input": {
+    "user_message": "Keep researching this project — drive the workflow forward.",
+    "scenario": "compound-objective-part-unframed"
+  },
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 1200,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-extraction",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill) asserts the router's first hand-off is question-selection (an Agent spawn of `@plugin:question-selection`). Do not grade the routing decision yourself.",
+    "An objective can hold more than one independent fact. A question being `resolved` closes that question, not the objective: when a part of the objective has no question covering it, the project is not answered, whatever the status of the questions that do exist. Statements in the project such as a proof saying a fact 'needs its own research question', or a question's rationale naming a later fact it unblocks, are evidence that a part is still open.",
+    "An unproven relationship already present in the tree (for example imported from an online family tree) does not make that part of the objective answered. Only a resolved question with a proof summary does.",
+    "COMPLIANT: the router reads the objective against `questions[]`, notices that an independent part has no question, says so, and hands that part to question-selection to frame.",
+    "NON-COMPLIANT: the router treats 'all questions resolved' as 'objective answered' and heads for the completion write (proof-conclusion) or stops, saying the research is done while a part of the objective was never researched.",
+    "The run ends at the router's first hand-off by design (execution.stop_at_stub). The transcript ends at that hand-off, with no closing summary. Do not mark a summary as missing. Grade the narration up to the hand-off.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
+  ],
+  "judge_reads_files": true
+}

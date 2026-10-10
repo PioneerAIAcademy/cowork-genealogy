@@ -1,0 +1,16 @@
+{
+  "focus": "proof-critique",
+  "target_id": "ps_001",
+  "target_type": "proof_summary",
+  "verdict": "looks_solid",
+  "strengths": [
+    "The England reading is traced to a one-row shift in the online index and checked against the original 1850 page, so the conflict is explained rather than outvoted.",
+    "The probable tier is stated with its limits: only the 1850 entry was read in the original, and no record names a county."
+  ],
+  "must_address": [],
+  "consider_addressing": [],
+  "non_blocking_notes": [
+    "The proof states plainly that it does not establish Elizabeth's parentage, which needs its own research question."
+  ],
+  "narrative_for_user": "The birthplace argument holds at the probable tier. The indexing error is shown on the original page, the household's own answer is consistent across four censuses, and the daughter who said Mississippi is weighed rather than ignored. The proof is careful to say it does not settle who her parents were; that is a separate question."
+}

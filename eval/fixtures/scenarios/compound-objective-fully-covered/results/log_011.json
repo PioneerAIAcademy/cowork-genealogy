@@ -1,0 +1,287 @@
+{
+  "log_id": "log_011",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T19:07:39.075Z",
+  "returned_count": 3,
+  "payload": {
+    "query": {
+      "birthYearFrom": 1818,
+      "birthYearTo": 1828,
+      "collectionId": "2221801",
+      "count": 20,
+      "givenName": "Elizabeth",
+      "surname": "Barker"
+    },
+    "totalMatches": 1381,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:6ZRQ-7YVH",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Hunslet, Metropolitan Borough of Leeds, West Yorkshire, England"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elizabeth Barker",
+        "score": 4.1236,
+        "confidence": 3,
+        "birthDate": "1823",
+        "deathDate": "25 November 1858",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Elizabeth Barker, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:4B8Z-J1XL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292210899848",
+              "ark": "ark:/61903/1:1:6ZRQ-7YVH",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barker",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Hunslet, Metropolitan Borough of Leeds, West Yorkshire, England",
+                  "standard_place": "Hunslet, Leeds, West Yorkshire, England, United Kingdom"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1823",
+                  "standard_date": "1823"
+                },
+                {
+                  "type": "Death",
+                  "date": "25 Nov 1858",
+                  "standard_date": "25 Nov 1858"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173777885541",
+              "title": "Entry for Elizabeth Barker, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZRQ-7YVH : Sun Oct 04 14:55:22 UTC 2026), Entry for Elizabeth Barker.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B8Z-J1XL"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=226892830"
+            },
+            {
+              "id": "src_p_p_292210899848",
+              "url": "#p_292210899848"
+            }
+          ],
+          "places": [
+            {
+              "id": "10912491",
+              "name": "Hunslet, Leeds, West Yorkshire, England, United Kingdom",
+              "latitude": 53.781,
+              "longitude": -1.531
+            }
+          ]
+        },
+        "primaryId": "p_292210899848"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QK18-LYQB",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Heaton, Metropolitan Borough of Bradford, West Yorkshire, England"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elizabeth Barker",
+        "score": 4.1236,
+        "confidence": 3,
+        "birthDate": "1823",
+        "deathDate": "1837",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Elizabeth Barker, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:Q2BH-YH8J",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102045201448",
+              "ark": "ark:/61903/1:1:QK18-LYQB",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Barker"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "1837",
+                  "standard_date": "1837"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Heaton, Metropolitan Borough of Bradford, West Yorkshire, England",
+                  "standard_place": "Heaton, Yorkshire, England"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1823",
+                  "standard_date": "1823"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102747616547",
+              "title": "Entry for Elizabeth Barker, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK18-LYQB : Sun Oct 04 09:16:29 UTC 2026), Entry for Elizabeth Barker.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q2BH-YH8J"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=138860932"
+            },
+            {
+              "id": "src_p_p_102045201448",
+              "url": "#p_102045201448"
+            }
+          ],
+          "places": [
+            {
+              "id": "10619514",
+              "name": "Heaton, Yorkshire, England",
+              "latitude": 53.8171,
+              "longitude": -1.7865
+            }
+          ]
+        },
+        "primaryId": "p_102045201448"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6FN2-N3F5",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "Boston, Boston Borough, Lincolnshire, England"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elizabeth Barker",
+        "score": 4.1236,
+        "confidence": 3,
+        "birthDate": "1823",
+        "deathDate": "3 February 1898",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Elizabeth Barker, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:41R7-P6T3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_295650435174",
+              "ark": "ark:/61903/1:1:6FN2-N3F5",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Barker",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "03 Feb 1898",
+                  "standard_date": "3 Feb 1898"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "Boston, Boston Borough, Lincolnshire, England",
+                  "standard_place": "Boston, Lincolnshire, England, United Kingdom"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1823",
+                  "standard_date": "1823"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_174843183483",
+              "title": "Entry for Elizabeth Barker, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FN2-N3F5 : Sun Oct 04 10:43:41 UTC 2026), Entry for Elizabeth Barker.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:41R7-P6T3"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=238014201"
+            },
+            {
+              "id": "src_p_p_295650435174",
+              "url": "#p_295650435174"
+            }
+          ],
+          "places": [
+            {
+              "id": "2971374",
+              "name": "Boston, Lincolnshire, England, United Kingdom",
+              "latitude": 52.9791,
+              "longitude": -0.0271
+            }
+          ]
+        },
+        "primaryId": "p_295650435174"
+      }
+    ]
+  }
+}

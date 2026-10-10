@@ -1,0 +1,1067 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Determine the true birthplace of Elizabeth Mariah (Turnbow) Barker (b. ~1823), wife of Jonathan Barker, and explain why the 1850 census index says England while the 1860-1880 censuses say Alabama.",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-09",
+    "updated": "2026-10-09",
+    "title": "Elizabeth Turnbow Barker's birthplace"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "depends_on": [],
+      "exhaustive_declaration": {
+        "declared": true,
+        "justification": "Every federal census in which Elizabeth appears (1850 original image plus index, 1860, 1870, 1880) was examined, and so were her daughters' censuses that give a mother's birthplace (Sarah Martha 1880; Amanda 1880 original, 1900, 1910). A FAN survey covered the 1850 Turnbow households, and the church record attached in the tree, the Mississippi death-certificate index and the Find a Grave index were checked. Alabama did not require birth registration until 1908, so the census testimony is the main evidence that exists for a woman born in 1823. The question is answered at state level (Alabama). The county is not named in any record and would need a separate question.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_006",
+          "log_008",
+          "log_009",
+          "log_011"
+        ],
+        "stop_criteria": {
+          "conflict_resolution": "c_001 is resolved in favor of Alabama. England is explained as a derivative transcription error, and Mississippi as a daughter's second-hand answer.",
+          "evidence_class": "Original 1850 schedule (src_001), with the information likely supplied by Elizabeth or her husband. It is direct evidence of birthplace, with informant quality indeterminate.",
+          "goal_alignment": "Yes. Five records, including the original 1850 page, give Alabama, and the England reading is shown to be an indexing line-shift.",
+          "independent_verification": "Four separate enumerations of her own household (1850-1880) plus her daughter Sarah Martha in a separate household. These share a family informant pool but are distinct recordings by different enumerators.",
+          "original_substitution": "The decisive 1850 entry and the 1880 Ainsworth line were verified on original images. The 1860, 1870 and 1880 Barker entries remain index-only but are consistent with each other.",
+          "overturn_risk": "Low for the state. An obituary, a Bible record or a true LDS membership register could name a county, but none is likely to move her birth out of Alabama given five concordant statements and the Turnbow siblings' Alabama births.",
+          "repository_breadth": "Federal censuses 1850-1910, the Mississippi death-certificate index, Find a Grave index, the LDS district minutes and Turnbow FAN censuses were searched on FamilySearch. No vital birth records exist for Alabama in 1823."
+        }
+      },
+      "priority": "high",
+      "question": "Where was Elizabeth Mariah Barker (wife of Jonathan Barker of Jasper and Smith counties, Mississippi, born about 1823) born — England, as the 1850 census index states, or Alabama, as the 1860–1880 censuses and the FamilySearch tree state?",
+      "rationale": "The 1850 U.S. census index gives her birthplace as England while three later censuses give Alabama; the conflict must be resolved before her parentage can be researched, because the place of birth determines which Turnbow family (if any) she belongs to. Records with direct birthplace statements (four federal censuses, an 1883–85 LDS Mississippi Conference membership record attached in the tree, and her daughters' later records naming a mother's birthplace) are available and searchable.",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_011"
+      ],
+      "resolved": "2026-10-09",
+      "selection_basis": "objective_decomposition",
+      "status": "resolved",
+      "unblocks": [],
+      "created": "2026-10-09"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "created": "2026-10-09",
+      "question_id": "q_001",
+      "status": "active",
+      "items": [
+        {
+          "id": "pli_001",
+          "date_range": "1883-1885",
+          "fallback_for": null,
+          "jurisdiction": "Mississippi Conference, Southern States Mission (Smith County, Mississippi)",
+          "rationale": "An LDS 'Record of Members' (FHL film 1939) is already attached to Elizabeth's tree profile. Membership registers of this era usually record birth date, birthplace and parents' names, and the informant is likely Elizabeth herself — potentially direct evidence for both birthplace and parentage. Search FamilySearch full text / indexed records for the entry.",
+          "record_type": "church",
+          "repository": "FamilySearch",
+          "sequence": 1,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "date_range": "1850-1880",
+          "fallback_for": null,
+          "jurisdiction": "Jasper County, Mississippi; Smith County, Mississippi",
+          "rationale": "Extract all four federal census entries for the Jonathan Barker household (1850 Jasper; 1860, 1870, 1880 Smith) and compare birthplace answers. The 1850 entry is the sole source for 'England'; the household's birthplace column appears shifted by one line, so the pattern itself is evidence. Verify against original images where possible.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 2,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "date_range": "1880-1920",
+          "fallback_for": null,
+          "jurisdiction": "Smith and Jones counties, Mississippi",
+          "rationale": "The 1880, 1900, 1910 and 1920 censuses ask each person their mother's birthplace. Entries for daughters Sarah Martha (Barker) and Amanda (Barker) Ainsworth are independent informants for Elizabeth's birthplace.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 3,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "date_range": "1920-1932",
+          "fallback_for": null,
+          "jurisdiction": "Smith and Jones counties, Mississippi",
+          "rationale": "Mississippi Death Certificate Index 1912-1943 (collection 3583821) should cover daughters who died 1920 and 1932; certificates name the mother (maiden name — evidence for Turnbow) and often her birthplace.",
+          "record_type": "vital_record",
+          "repository": "FamilySearch",
+          "sequence": 4,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "date_range": "1830-1850",
+          "fallback_for": null,
+          "jurisdiction": "Rankin, Jones and Choctaw counties, Mississippi",
+          "rationale": "FAN check: Robert F. Turnbow's household in 1830/1840 (tally marks) and 1850 (named) shows where his children were born; Turnbow siblings born c.1817-1830 giving Alabama birthplaces would corroborate an Alabama birth for Elizabeth and place the family there in 1823.",
+          "record_type": "census",
+          "repository": "FamilySearch",
+          "sequence": 5,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "date_range": "1885-1900",
+          "fallback_for": "pli_001",
+          "jurisdiction": "Smith County, Mississippi",
+          "rationale": "Find a Grave memorial for Elizabeth (and Jonathan) may carry a gravestone date/place or a family-supplied birthplace; secondary but cheap. Fallback if the church record is not found.",
+          "record_type": "cemetery",
+          "repository": "other",
+          "sequence": 6,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-09T18:56:25.741Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Barker +Elizabeth +Mississippi",
+        "yearFrom": 1880,
+        "yearTo": 1890
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Full-text search for the 1883-85 LDS Mississippi Conference membership entry returned nothing; the LDS Record of Members (FHL film 1939) does not appear to be in FamilySearch full-text coverage. The tree link points to the Church History Library catalog image (catalog.churchofjesuschrist.org)."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-09T18:56:30.599Z",
+      "tool": "record_search",
+      "query": {
+        "birthYearFrom": 1820,
+        "birthYearTo": 1827,
+        "count": 50,
+        "givenName": "Elizabeth",
+        "recordCountry": "United States",
+        "recordSubdivision": "Mississippi",
+        "surname": "Barker"
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 103,
+      "notes": "No indexed LDS membership entry found. Results surface the four known census entries (1850 England; 1860, 1870, 1880 Alabama) and a new lead: 'Elizabeth M Barker', BLM Tract Book land assessment dated 16 Mar 1894, Mississippi (ark:/61903/1:1:62CG-ZJ7M) — if she, she was alive after the tree's 1890 death date."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-09T18:59:58.406Z",
+      "tool": "browser_image_review",
+      "query": {
+        "images_viewed": [
+          "image 46 (page 40)",
+          "image 47 (page 41)"
+        ],
+        "item": "Mississippi District general minutes, 1842-1953, Volume 1, 1842-1886 (Church History Library)",
+        "url": "https://catalog.churchofjesuschrist.org/assets/4c01c269-2800-4ab8-a0fe-3379e4743be1/0/45?lang=eng"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "The source attached to Elizabeth's tree profile as '1883-1885 Record of the Mississippi Conference' resolves to the Mississippi District GENERAL MINUTES (narrative missionary reports), not a membership register with birth data. Pages 40-41 describe elders' labors in Benton, Panola, Prentiss and Montgomery counties; no Barker or Turnbow named. The attached link's relevance to Elizabeth is unexplained by the tree contributor. A true Mississippi Conference record of members (FHL film 1939, Historian's Office LR 3286 11) was not located online; it remains an unsearched lead."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-09T19:02:16.407Z",
+      "tool": "browser_image_review",
+      "query": {
+        "collection": "United States, Census, 1850 (1401638)",
+        "household": "Jonathan Barker, dwelling/family ~490",
+        "image": "73 of 104",
+        "image_ark": "ark:/61903/3:1:S3HY-DC1S-623",
+        "place": "Jasper County, Mississippi"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Original 1850 schedule examined in the FamilySearch image viewer. Lines read: Jonathan Barker 30 M blacksmith, b. England; Elizabeth 27 F, b. Alabama; Sarah Martha 4 F, b. Mississippi; Amanda P 2 F (birthplace entry not legible at viewer resolution — ditto likely). The FamilySearch index (ark:/61903/1:1:M4L8-3SY) shifted the birthplace column down one line (Elizabeth=England, Sarah Martha=Alabama, Amanda=Mississippi). The 'England' birthplace for Elizabeth is an INDEXING ERROR, not an enumerator statement. Preceding line: Andrew Seaney(?) 21 M farmer, apparently in or adjacent to the household (FAN)."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-09T19:06:46.609Z",
+      "tool": "record_search",
+      "query": {
+        "birthYearFrom": 1846,
+        "birthYearTo": 1851,
+        "givenName": "Amanda",
+        "recordCountry": "United States",
+        "recordSubdivision": "Mississippi",
+        "recordType": "census",
+        "surname": "Ainsworth"
+      },
+      "outcome": "positive",
+      "results_examined": 34,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 34,
+      "notes": "Found Amanda (Barker) Ainsworth, wife of Asbery Ainsworth, Smith Co.: 1880 (M4P3-HXG), 1900 (M9FS-YK8), 1910 (MPDG-3ZJ), 1930 (X9M8-5X4). Parent-birthplace columns read from the FamilySearch indexes."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-09T19:06:59.357Z",
+      "tool": "record_search",
+      "query": {
+        "birthYearFrom": 1843,
+        "birthYearTo": 1848,
+        "givenName": "Sarah",
+        "recordCountry": "United States",
+        "recordSubdivision": "Mississippi",
+        "surname": "Lovett"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 87,
+      "notes": "Sarah Martha (Barker) Lovett, wife of Major W. Lovett: 1870 Smith Co. (MFSR-DYM, Sarah M, b. 1848 MS) and 1880 Raleigh, Smith Co. (M4P3-8Q9, 'Martha S.', b. 1845 MS) — 1880 household on the same page as John & Elisabeth Barker. Other Sarah Lovetts (Georgia-born) excluded."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-09T19:07:02.325Z",
+      "tool": "record_search",
+      "query": {
+        "collectionId": "3583821",
+        "searches": [
+          {
+            "deathYearFrom": 1930,
+            "deathYearTo": 1934,
+            "givenName": "Amanda",
+            "surname": "Ainsworth"
+          },
+          {
+            "deathYearFrom": 1918,
+            "deathYearTo": 1922,
+            "givenName": "Martha",
+            "givenNameAlt": "Sarah",
+            "surname": "Lovett"
+          }
+        ]
+      },
+      "outcome": "negative",
+      "results_examined": 11,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 11,
+      "notes": "Mississippi Death Certificate Index 1912-1943: no entry for Amanda Ainsworth (d. 1932) or Sarah Martha Lovett (d. 1920) under these names; several nameless 'Ainsworth'/'Lovett' stubs exist. Sarah Martha may have died under a later married surname (tree shows a second spouse, KVGS-GGC). The index carries no parents' names in any case; certificates would need image access. Limitation, not a conclusion."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_006",
+      "performed": "2026-10-09T19:07:48.031Z",
+      "tool": "record_search",
+      "query": {
+        "birthYearFrom": 1818,
+        "birthYearTo": 1828,
+        "collectionId": "2221801",
+        "givenName": "Elizabeth",
+        "surname": "Barker"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 1381,
+      "notes": "Find a Grave Index (FamilySearch copy): top 20 of 1,381 Elizabeth Barkers b. 1818-1828 are all English/Northern burials; none in Mississippi. No memorial found for Elizabeth (Turnbow) Barker; her grave may be unmarked. A direct FindAGrave.com search (search-external-sites) remains possible but is low-value for birthplace."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "access_date": "2026-10-09",
+      "citation": "1850 U.S. census, Jasper County, Mississippi, population schedule, image 73 of 104, Jonathan Barker household (dwelling c. 490); digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623 : accessed 9 Oct 2026).",
+      "citation_detail": {
+        "what": "1850 federal census population schedule",
+        "when_accessed": "2026-10-09",
+        "when_created": "1850",
+        "where": "FamilySearch, 'United States, Census, 1850' (collection 1401638), digital image of NARA microfilm",
+        "where_within": "Jasper County, Mississippi; image 73 of 104; Jonathan Barker household, lines c. 18-21",
+        "who": "U.S. Census Bureau (enumerator for Jasper County)"
+      },
+      "gedcomx_source_description_id": "S2",
+      "log_entry_id": "log_004",
+      "notes": "Original page examined in the FamilySearch image viewer at moderate zoom. Birthplace column: 'England' on Jonathan's line, 'Alabama' on Elizabeth's line, 'Missi' on Sarah Martha's line; Amanda's entry not legible at viewer resolution.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "transcription": "[line] Jonathan Barker | 30 | M | Blk Smith | England\n[line] Elizabeth [Barker] | 27 | F | | Alabama\n[line] Sarah Martha [Barker] | 4 | F | | Missi[ssippi]\n[line] Amanda P [Barker] | 2 | F | | [illegible]",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623"
+    },
+    {
+      "id": "src_002",
+      "access_date": "2026-10-09",
+      "citation": "'United States, Census, 1850,' database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M4L8-3SY : accessed 9 Oct 2026), Elizabeth Barker in household of Jonathan Barker, Jasper, Mississippi.",
+      "citation_detail": {
+        "what": "Index entry, United States, Census, 1850",
+        "when_accessed": "2026-10-09",
+        "when_created": "index compiled c. 2000s-2020s from the 1850 schedule",
+        "where": "FamilySearch, collection 1401638",
+        "where_within": "Entry for Elizabeth Barker, household of Jonathan Barker, Jasper, Mississippi",
+        "who": "FamilySearch volunteer indexers"
+      },
+      "gedcomx_source_description_id": "S2",
+      "log_entry_id": "log_002",
+      "notes": "Index of src_001. Compared with the original, the indexed birthplaces are shifted down one line (Elizabeth=England, Sarah Martha=Alabama, Amanda=Mississippi).",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3SY"
+    },
+    {
+      "id": "src_003",
+      "access_date": "2026-10-09",
+      "citation": "'United States, Census, 1860,' database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M6GV-MGR : accessed 9 Oct 2026), Elizabeth Barker in household of Jonathan Barker, Smith, Mississippi.",
+      "citation_detail": {
+        "what": "Index entry, United States, Census, 1860",
+        "when_accessed": "2026-10-09",
+        "when_created": "1860 (schedule); index later",
+        "where": "FamilySearch, collection 1473181",
+        "where_within": "Smith County, Mississippi; Jonathan Barker household",
+        "who": "FamilySearch indexers (from U.S. Census Bureau schedule)"
+      },
+      "gedcomx_source_description_id": "S3",
+      "log_entry_id": "log_002",
+      "notes": "Index only; original image not examined. Household: Jonathan (b.~1821 England), Elizabeth (~1824 Alabama), Sarah M (~1846 MS), Amanda P (~1849 MS), Pernesia A J (~1855 MS).",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MGR"
+    },
+    {
+      "id": "src_004",
+      "access_date": "2026-10-09",
+      "citation": "'United States, Census, 1870,' database, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MFSR-DYF : accessed 9 Oct 2026), Elizabeth Barker in household of Jonathan Barker, Smith, Mississippi.",
+      "citation_detail": {
+        "what": "Index entry, United States, Census, 1870",
+        "when_accessed": "2026-10-09",
+        "when_created": "1870 (schedule); index later",
+        "where": "FamilySearch, collection 1438024",
+        "where_within": "Smith County, Mississippi; Jonathan Barker household",
+        "who": "FamilySearch indexers (from U.S. Census Bureau schedule)"
+      },
+      "gedcomx_source_description_id": "S4",
+      "log_entry_id": "log_002",
+      "notes": "Index only; original image not examined.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MFSR-DYF"
+    },
+    {
+      "id": "src_005",
+      "access_date": "2026-10-09",
+      "citation": "'United States, Census, 1880,' database with images, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:33S7-9YB8-HDX : accessed 9 Oct 2026), Raleigh, Smith, Mississippi, sheet 295C-D, John Barker and Major W. Lovett households.",
+      "citation_detail": {
+        "what": "Index entries, United States, Census, 1880",
+        "when_accessed": "2026-10-09",
+        "when_created": "1880 (schedule); index later",
+        "where": "FamilySearch, collection 1417683",
+        "where_within": "Raleigh, Smith County, Mississippi; sheet 295C-D; John Barker household and adjacent Major W. Lovett household",
+        "who": "FamilySearch indexers (from U.S. Census Bureau schedule)"
+      },
+      "gedcomx_source_description_id": "S5",
+      "log_entry_id": "log_002",
+      "notes": "Read from the image-viewer index panel (includes father's/mother's birthplace columns). Lovett household enumerated immediately after the Barkers on the same page.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB8-HDX"
+    },
+    {
+      "id": "src_006",
+      "access_date": "2026-10-09",
+      "citation": "1880 U.S. census, Smith County, Mississippi, Beat 2 (Bunker Hill), ED 104, sheet 310C, Asbery Ainsworth household; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB8-WKM : accessed 9 Oct 2026).",
+      "citation_detail": {
+        "what": "1880 federal census population schedule",
+        "when_accessed": "2026-10-09",
+        "when_created": "June 1880",
+        "where": "FamilySearch, collection 1417683, digital image",
+        "where_within": "Smith County, Mississippi; Beat 2 Bunker Hill; ED 104; image 19 of 22; sheet 310C, lines 17-25",
+        "who": "U.S. Census Bureau (enumerator)"
+      },
+      "gedcomx_source_description_id": "S7",
+      "log_entry_id": "log_006",
+      "notes": "Original line for Amandy Ainsworth examined: birthplace Miss | father 'Eng' | mother Miss. FamilySearch index misreads the father's birthplace as 'Indiana'.",
+      "repository": "FamilySearch",
+      "source_classification": "original",
+      "transcription": "[line 18] Amandy [Ainsworth] | wife | 32 | Keeping house | Miss | Eng | Miss",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB8-WKM"
+    },
+    {
+      "id": "src_007",
+      "access_date": "2026-10-09",
+      "citation": "'United States, Census, 1900,' database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:M9FS-YK8 : accessed 9 Oct 2026), Mandy P Ainsworth in household of Ag Ainsworth, Beat 2 Summerland, Smith, Mississippi, sheet 18B.",
+      "citation_detail": {
+        "what": "Index entry, United States, Census, 1900",
+        "when_accessed": "2026-10-09",
+        "when_created": "1900 (schedule); index later",
+        "where": "FamilySearch, collection 1325221",
+        "where_within": "Smith County, Mississippi; Beat 2 Summerland town; sheet 18B",
+        "who": "FamilySearch indexers (from U.S. Census Bureau schedule)"
+      },
+      "gedcomx_source_description_id": "S8",
+      "log_entry_id": "log_006",
+      "notes": "Parents' birthplaces read from image-index panel; original not examined.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:M9FS-YK8"
+    },
+    {
+      "id": "src_008",
+      "access_date": "2026-10-09",
+      "citation": "'United States, Census, 1910,' database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:MPDG-3ZJ : accessed 9 Oct 2026), Amanda P Ainsworth in household of Asbery S Ainsworth, Taylorsville, Smith, Mississippi, sheet 28A.",
+      "citation_detail": {
+        "what": "Index entry, United States, Census, 1910",
+        "when_accessed": "2026-10-09",
+        "when_created": "1910 (schedule); index later",
+        "where": "FamilySearch, collection 1727033",
+        "where_within": "Taylorsville, Smith County, Mississippi; sheet 28A",
+        "who": "FamilySearch indexers (from U.S. Census Bureau schedule)"
+      },
+      "gedcomx_source_description_id": "S9",
+      "log_entry_id": "log_006",
+      "notes": "Parents' birthplaces read from image-index panel; original not examined.",
+      "repository": "FamilySearch",
+      "source_classification": "derivative",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MPDG-3ZJ"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely Elizabeth or Jonathan)",
+      "informant_bias_notes": "Adult birthplace typically self-reported or given by spouse; Elizabeth herself is the likeliest informant.",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_004",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "source_id": "src_001",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama"
+      },
+      "value": "Elizabeth [Barker], 27, born Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_002",
+      "date": "1850",
+      "date_certainty": "exact",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "age",
+      "informant": "unknown household member (likely Elizabeth or Jonathan)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_004",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623",
+      "record_persona_id": null,
+      "record_role": "wife",
+      "source_id": "src_001",
+      "value": "27",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_003",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely Jonathan or Elizabeth)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_004",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623",
+      "record_persona_id": null,
+      "record_role": "head_of_household",
+      "source_id": "src_001",
+      "standard_place": "England, United Kingdom",
+      "structured_value": {
+        "place": "England"
+      },
+      "value": "Jonathan Barker, 30, blacksmith, born England",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_004",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely a parent)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_004",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DC1S-623",
+      "record_persona_id": null,
+      "record_role": "child_1",
+      "source_id": "src_001",
+      "standard_place": "Mississippi, United States",
+      "structured_value": {
+        "place": "Mississippi"
+      },
+      "value": "Sarah Martha, 4, born Missi[ssippi]",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_005",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "FamilySearch indexer transcribing an unknown household member",
+      "informant_bias_notes": "Derivative index entry; comparison with the original (src_001) shows the indexer shifted the birthplace column by one line — this value belongs to Jonathan's line.",
+      "informant_proximity": "unknown",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4L8-3SY",
+      "record_persona_id": "p_187409787",
+      "record_role": "wife",
+      "source_id": "src_002",
+      "standard_place": "England, United Kingdom",
+      "structured_value": {
+        "place": "England",
+        "year": 1823
+      },
+      "value": "Elizabeth Barker, born 1823, England (index)",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_006",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely Elizabeth or Jonathan)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M6GV-MGR",
+      "record_persona_id": "p_334206685",
+      "record_role": "wife",
+      "source_id": "src_003",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama",
+        "year": 1824
+      },
+      "value": "Elizabeth Barker, born 1824, Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_007",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely Elizabeth or Jonathan)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MFSR-DYF",
+      "record_persona_id": "p_366806625",
+      "record_role": "wife",
+      "source_id": "src_004",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama",
+        "year": 1823
+      },
+      "value": "Elizabeth Barker, born 1823, Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_008",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "birth",
+      "informant": "unknown household member (likely Elisabeth or John)",
+      "informant_proximity": "household_member",
+      "information_quality": "indeterminate",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83Y",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_005",
+      "standard_place": "Alabama, United States",
+      "structured_value": {
+        "place": "Alabama",
+        "year": 1824
+      },
+      "value": "Elisabeth Barker, wife, 56, born Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_009",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "father_birthplace",
+      "informant": "unknown household member (likely Elisabeth)",
+      "informant_bias_notes": "Parent's birthplace is hearsay to the informant; enumerators often dittoed these columns. Conflicts with the tree's Kentucky (Robert F. Turnbow) and the 1850 index's South Carolina.",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83Y",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_005",
+      "standard_place": "Alabama, United States",
+      "value": "Father's birthplace: Alabama (index)",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_010",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "mother_birthplace",
+      "informant": "unknown household member (likely Elisabeth)",
+      "informant_bias_notes": "Possible ditto of her own birthplace; conflicts with the tree's Tennessee for Sarah Canterberry.",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_002",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83Y",
+      "record_persona_id": "p_188821017",
+      "record_role": "wife",
+      "source_id": "src_005",
+      "standard_place": "Alabama, United States",
+      "value": "Mother's birthplace: Alabama (index)",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_011",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "mother_birthplace",
+      "informant": "unknown member of the Lovett household (likely Martha S.)",
+      "informant_bias_notes": "Daughter reporting her mother's birthplace; her mother lived next door, so the answer may reflect current family knowledge.",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_008",
+      "place": "Alabama",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-8Q9",
+      "record_persona_id": "p_188821021",
+      "record_role": "wife_lovett_household",
+      "source_id": "src_005",
+      "standard_place": "Alabama, United States",
+      "value": "Martha S. Lovett, 35, born Mississippi; mother's birthplace Alabama",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_012",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "father_birthplace",
+      "informant": "unknown member of the Lovett household (likely Martha S.)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_008",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-8Q9",
+      "record_persona_id": "p_188821021",
+      "record_role": "wife_lovett_household",
+      "source_id": "src_005",
+      "standard_place": "England, United Kingdom",
+      "value": "Martha S. Lovett: father's birthplace England",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_013",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "mother_birthplace",
+      "informant": "unknown household member (likely Amandy or Asbery)",
+      "informant_bias_notes": "Mother's birthplace is hearsay; if Asbery answered, he is further removed. Read on the original line.",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_006",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-HXG",
+      "record_persona_id": "p_188818642",
+      "record_role": "wife",
+      "source_id": "src_006",
+      "standard_place": "Mississippi, United States",
+      "value": "Amandy Ainsworth, 32, born Miss; mother's birthplace Miss",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_014",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "father_birthplace",
+      "informant": "unknown household member (likely Amandy or Asbery)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_006",
+      "place": "England",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-HXG",
+      "record_persona_id": "p_188818642",
+      "record_role": "wife",
+      "source_id": "src_006",
+      "standard_place": "England, United Kingdom",
+      "value": "Amandy Ainsworth: father's birthplace 'Eng' (indexed as Indiana)",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_015",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "mother_birthplace",
+      "informant": "unknown household member",
+      "informant_bias_notes": "Father's birthplace given as Mississippi is demonstrably wrong (England in every other record), so this informant's parental birthplaces are unreliable — likely defaulted or dittoed.",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_006",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M9FS-YK8",
+      "record_persona_id": "p_36528881",
+      "record_role": "wife",
+      "source_id": "src_007",
+      "standard_place": "Mississippi, United States",
+      "value": "Mandy P Ainsworth: mother's birthplace Mississippi (father also given as Mississippi)",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_016",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "fact_type": "mother_birthplace",
+      "informant": "unknown household member (likely Amanda)",
+      "informant_proximity": "family_not_present",
+      "information_quality": "secondary",
+      "log_entry_id": "log_006",
+      "place": "Mississippi",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:MPDG-3ZJ",
+      "record_persona_id": "p_569217017",
+      "record_role": "wife",
+      "source_id": "src_008",
+      "standard_place": "Mississippi, United States",
+      "value": "Amanda P Ainsworth, 62: father's birthplace England; mother's birthplace Mississippi",
+      "record_basis": "stated"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1850 Jasper Co. household: Elizabeth, 27 (b.~1823), listed after Jonathan Barker, 30, b. England, with Sarah Martha 4 and Amanda P 2 — same names/ages as the tree's Jonathan (I2), Sarah Martha (I5, b.1845) and Amanda (I6, b.1848); same county as the tree's 1850 residence. Record already attached to KWJ6-RPH in FamilySearch.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Same persona as a_001 (1850 Jasper Co. Barker household, wife line).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Jonathan Barker, 30, blacksmith, b. England, head of the 1850 Jasper Co. household containing Elizabeth, Sarah Martha and Amanda — matches I2 (Jonathan Barker, b.~1819 England) and his tree family.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Sarah Martha, 4, in the 1850 Barker household — name and age match I5 (Sarah Martha Barker, b. 7 Dec 1845).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Index persona M4L8-3SY is the wife line of the same 1850 household as a_001 (attached to KWJ6-RPH in FamilySearch). Identity is secure; the indexed birthplace value itself is a line-shift error (see src_002 notes).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1860 Smith Co.: Elizabeth Barker, ~36 (b.~1824), wife of Jonathan Barker b. England, with Sarah M (1846) and Amanda P (1849) — same family composition as 1850 plus Pernesia; matches tree's 1860 Smith Co. residence.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1870 Smith Co.: Elizabeth Barker b.~1823 with Jonathan Barker b. England — same couple, same county as 1860; age consistent within 1 year.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_008",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "1880 Raleigh, Smith Co.: Elisabeth Barker, 56, wife of John Barker, 61, b. England (John = Jonathan); enumerated next to daughter Martha S. Lovett (I5), wife of Major W. Lovett (her tree spouse KNW4-D7R). Age consistent with b.1823-24.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_009",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Same 1880 persona as a_008 (her father's birthplace).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_010",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Same 1880 persona as a_008 (her mother's birthplace).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_011",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Martha S. Lovett, 35 (b.~1845 MS), wife of Major W. Lovett — tree's Sarah Martha Barker (b.1845) married Major Washington Lovett 1865; household adjacent to the Barkers; father b. England matches Jonathan.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_011",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Statement concerns Martha S. Lovett's mother = Elizabeth Barker (I1), who lived next door on the same 1880 page.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_012",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I5",
+      "rationale": "Same persona as a_011.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_012",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Statement concerns Martha S. Lovett's father = Jonathan/John Barker (I2), b. England, enumerated next door.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_013",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I6",
+      "rationale": "1880 Beat 2 Smith Co.: Amandy Ainsworth, 32 (b.~1848 MS), wife of Asbery Ainsworth, with Armilia, Victory, Orange, Josephine, Clarinda, Susan — children's names match Amanda (Barker) Ainsworth's tree/Find a Grave list (Matilda Armatha, Mary Victoria, Orange Jefferson, Noretta Josephine, Alice Clarinda, Susan).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Statement concerns Amanda's mother. Amanda is the Barker daughter (father 'Eng' on the same line), so the mother referenced is Elizabeth (I1).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I6",
+      "rationale": "Same persona as a_013.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_014",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I2",
+      "rationale": "Father born England = Jonathan Barker (I2).",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_015",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I6",
+      "rationale": "1900 Summerland, Smith Co.: Mandy P Ainsworth b. Nov 1848 MS (matches tree 7 Nov 1848), wife of Ag Ainsworth, married 35 yrs (c.1865 — tree marriage 1865), children Mary V, Crombell, Valley, Wondrous — match tree list.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_015",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Statement concerns Amanda's mother (I1); informant's father value demonstrably wrong, lowering reliability but not identity.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_016",
+      "confidence": "confident",
+      "match_score": null,
+      "person_id": "I6",
+      "rationale": "1910 Taylorsville, Smith Co.: Amanda P Ainsworth, 62 (b.~1848 MS), wife of Asbery S Ainsworth — same couple as 1880/1900; tree residence 1910 Taylorsville.",
+      "created": "2026-10-09"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_016",
+      "confidence": "probable",
+      "match_score": null,
+      "person_id": "I1",
+      "rationale": "Statement concerns Amanda's mother (I1); father given as England on the same line confirms the Barker parentage.",
+      "created": "2026-10-09"
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "c_001",
+      "blocks_question_ids": [
+        "q_001"
+      ],
+      "competing_assertion_ids": [
+        "a_001",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_011",
+        "a_013",
+        "a_015",
+        "a_016"
+      ],
+      "conflict_type": "fact",
+      "description": "Elizabeth (Turnbow) Barker's birthplace: England (1850 census index), Alabama (1850 original schedule; 1860, 1870, 1880 censuses; daughter Sarah Martha 1880), or Mississippi (daughter Amanda's 1880, 1900, 1910 censuses).",
+      "disputed_attribute": "birthplace",
+      "identity_question": null,
+      "independence_analysis": "a_005 is not independent of a_001: it is FamilySearch's index of the very same 1850 page, so the two are one evidence unit and the original (a_001) controls. a_001, a_006, a_007 and a_008 are four separate enumerations (1850, 1860, 1870, 1880) in two counties by different enumerators; the informant each time was a member of Elizabeth's own household, very likely Elizabeth herself or Jonathan. They are independent recordings but share an informant pool, so they show a consistent family answer rather than four unrelated witnesses. a_011 (Sarah Martha, 1880) comes from a separate household, but she lived next door and could have learned it from her mother at any time, so it is only partly independent of Elizabeth's own answer. a_013, a_015 and a_016 come from a third household (Amanda Ainsworth, Smith Co.) with one daughter or son-in-law as informant across three censuses; they are one evidence unit repeated, and a_015 is already compromised because the same line gives Amanda's English father a Mississippi birthplace.",
+      "preferred_assertion_id": "a_001",
+      "resolution_rationale": "The problem: Elizabeth Barker's birthplace is recorded as England, Alabama, and Mississippi, and the answer decides where to look for her birth family. The evidence: the 1850 Jasper County census, as indexed online, says England. But the handwritten 1850 page itself reads 'England' on her husband Jonathan's line and 'Alabama' on hers. The censuses of 1860, 1870 and 1880, all answered by someone in her own home, say Alabama; so does her daughter Sarah Martha, living next door in 1880. Her daughter Amanda, in another county, said in 1880 and 1910 that her mother was born in Mississippi (and in 1900 gave Mississippi for both parents, although her father was English). Which is more reliable: Elizabeth's own household, repeated four times and confirmed on the original 1850 page, is the strongest and most consistent testimony. The England entry is not testimony at all but a copying error, and Amanda's answers are second-hand and partly wrong on their face. Alabama is preferred (a_001). Why the other answers exist: the England reading is a derivative transcription error — the modern indexer slid the birthplace column down one line, giving Elizabeth her husband's 'England' and each child the next person's place. The Mississippi answers fit the familiar pattern of a child reporting a parent's birthplace from family memory: Amanda grew up in Mississippi among Turnbow relatives settled there since about 1830, and the family's earlier home in Madison County was part of the Mississippi Territory until 1817, so 'Mississippi' was an easy, plausible-sounding answer for someone who never saw the place.",
+      "status": "resolved",
+      "weighing_analysis": "Decisive factors: (1) Format — the England reading exists only in the derivative index; the original 1850 schedule (a_001) says Alabama for Elizabeth and puts England on Jonathan's line. An index cannot outweigh the page it was copied from. (2) Informant proximity — the Alabama answers come from Elizabeth's own household four times over 30 years; she is the person best placed to know where she was told she was born. The Mississippi answers come from a daughter (or her husband) reporting a parent's birthplace, which is hearsay by definition. (3) Consistency and plausibility — Alabama is given in 1850 (original), 1860, 1870 and 1880 and by Sarah Martha; it fits a family whose candidate parents married in Madison Co., Mississippi Territory (now Alabama) in 1816 and whose candidate siblings John (b.~1817) and Joseph (b.~1819) Turnbow both report Alabama births, with the Turnbows recorded in Mississippi only from c.1830. Amanda's answers are internally weak (1900 also gives her English-born father a Mississippi birthplace)."
+    }
+  ],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "exhaustive_search_summary": "Searched all four federal censuses in which Elizabeth appears (1850 Jasper Co., with the original image examined; 1860 and 1870 Smith Co.; 1880 Raleigh, Smith Co.). Also searched her daughters' censuses that report a mother's birthplace (Sarah Martha Lovett 1880; Amanda Ainsworth 1880 [original line checked], 1900, 1910), the 1850 Turnbow households in Mississippi (FAN), the Mississippi Death Certificate Index 1912-1943 (daughters not found), the Find a Grave index (no memorial found), and the LDS Mississippi District minutes attached in the tree (no mention). Not searched: original images of the 1860/1870/1880 Barker entries, a true LDS record-of-members register, newspapers, Confederate pension files, and any Alabama county source naming a birth county. Alabama did not require birth registration until 1908.",
+      "narrative_markdown": "# Birthplace of Elizabeth Mariah (Turnbow) Barker (c. 1823)\n\n**Conclusion (Probable):** Elizabeth, wife of the English-born blacksmith and farmer Jonathan Barker of Jasper and Smith counties, Mississippi, was born about 1823 in **Alabama**, not England. The FamilySearch tree records her as Elizabeth Mariah Turnbow (KWJ6-RPH). The \"England\" birthplace attached to her comes from an indexing error.\n\n## The problem\n\nThe online index to the 1850 U.S. census for Jasper County, Mississippi, gives Elizabeth Barker's birthplace as England.[1] Later records give Alabama, and one daughter said Mississippi. Her birthplace decides where to look for her birth family.\n\n## The evidence\n\n**1850 — the original page.** On the handwritten 1850 schedule, the Barker household reads: Jonathan Barker, 30, blacksmith, born *England*; Elizabeth, 27, born *Alabama*; Sarah Martha, 4, born *Mississippi*; Amanda P., 2.[2] The informant is not named; in practice it was usually the wife or husband. This is an original record.\n\n**Her own household, 1860-1880.** Every later census of the household gives Alabama for Elizabeth: 1860 Smith County (about age 36),[3] 1870 Smith County (about 47),[4] and 1880 Raleigh, Smith County (56, wife of \"John\" Barker, born England).[5] Each was taken by a different enumerator. All of these answers come from Elizabeth's own household, so they show one consistent family answer over thirty years.\n\n**Her daughters.** In 1880, daughter Martha S. (Sarah Martha) Lovett lived next door to the Barkers. She gave her father's birthplace as England and her mother's as **Alabama**.[5] Daughter Amanda Ainsworth, in another part of Smith County, gave her mother's birthplace as **Mississippi** in 1880 and 1910.[6][8] In 1900 she gave Mississippi for both parents, although her father was English.[7]\n\n**The Turnbow family (context).** The tree names her parents as Robert F. Turnbow and Sarah Canterberry, married in September 1816 in Madison County, Mississippi Territory, an area that became part of Alabama in 1817. No record found here states that they were Elizabeth's parents. This is context only and is not used to prove the birthplace.\n\n## Resolving the conflict\n\n*England* is not testimony at all. It exists only in the modern index, and on the original page it sits on Jonathan's line. The indexer moved the birthplace column down one row: Elizabeth received her husband's \"England,\" Sarah Martha received Elizabeth's \"Alabama,\" and Amanda received Sarah Martha's \"Mississippi.\"[1][2]\n\n*Mississippi* is a second-hand answer from one daughter, repeated across three censuses with the same informant. One of those entries is plainly wrong about her father. Amanda grew up in Mississippi among relatives settled there since about 1830, and the family's earlier home in Madison County had been part of the Mississippi Territory. A child reporting a parent's birthplace from family memory could easily give that answer.\n\n*Alabama* comes from the original 1850 page and three later censuses of Elizabeth's own household. Her next-door daughter gave the same answer.\n\n## Limits\n\nThe tier is **probable**, not proved. Only the 1850 entry has been examined in the original. The 1860-1880 Barker entries were read from indexes. No record names the informant, and no record gives a county of birth. A county could come from an obituary, a Bible record, the original LDS record-of-members register for the Mississippi Conference, or the original 1860-1880 census pages. This conclusion does not establish her parentage, which needs its own research question.\n\n## Sources\n\n1. \"United States, Census, 1850,\" index, FamilySearch, Elizabeth Barker in household of Jonathan Barker, Jasper, Mississippi (ark:/61903/1:1:M4L8-3SY).\n2. 1850 U.S. census, Jasper Co., Mississippi, population schedule, image 73 of 104, Jonathan Barker household; FamilySearch image ark:/61903/3:1:S3HY-DC1S-623.\n3. \"United States, Census, 1860,\" FamilySearch, Elizabeth Barker in household of Jonathan Barker, Smith, Mississippi (ark:/61903/1:1:M6GV-MGR).\n4. \"United States, Census, 1870,\" FamilySearch, Elizabeth Barker, Smith, Mississippi (ark:/61903/1:1:MFSR-DYF).\n5. \"United States, Census, 1880,\" FamilySearch, Raleigh, Smith, Mississippi, sheet 295C-D, John and Elisabeth Barker and Major W. and Martha S. Lovett households (ark:/61903/3:1:33S7-9YB8-HDX).\n6. 1880 U.S. census, Smith Co., Mississippi, Beat 2, ED 104, sheet 310C, Asbery Ainsworth household; FamilySearch image ark:/61903/3:1:33SQ-GYB8-WKM.\n7. \"United States, Census, 1900,\" FamilySearch, Mandy P Ainsworth, Beat 2 Summerland, Smith, Mississippi (ark:/61903/1:1:M9FS-YK8).\n8. \"United States, Census, 1910,\" FamilySearch, Amanda P Ainsworth, Taylorsville, Smith, Mississippi (ark:/61903/1:1:MPDG-3ZJ).",
+      "question_id": "q_001",
+      "resolved_conflict_ids": [
+        "c_001"
+      ],
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_011"
+      ],
+      "tier": "probable",
+      "vehicle": "argument",
+      "shortfall": "gap"
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "ev_001",
+      "focus": "proof-critique",
+      "target_id": "ps_001",
+      "target_type": "proof_summary",
+      "verdict": "looks_solid",
+      "file_path": "evaluations/proof-critique-ps_001-2026-10-09T19-12-30.json",
+      "timestamp": "2026-10-09T19:12:30Z",
+      "superseded_by": null
+    }
+  ]
+}

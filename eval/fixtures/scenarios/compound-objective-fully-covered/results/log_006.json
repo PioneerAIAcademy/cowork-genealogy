@@ -1,0 +1,1117 @@
+{
+  "log_id": "log_006",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T19:02:28.783Z",
+  "returned_count": 3,
+  "payload": {
+    "query": {
+      "birthYearFrom": 1846,
+      "birthYearTo": 1851,
+      "count": 50,
+      "givenName": "Amanda",
+      "recordCountry": "United States",
+      "recordSubdivision": "Mississippi",
+      "recordType": "census",
+      "surname": "Ainsworth"
+    },
+    "totalMatches": 34,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MPDG-3ZJ",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Taylorsville, Smith, Mississippi, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Amanda P Ainsworth",
+        "score": 6.1186004,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1848",
+        "birthPlace": "Mississippi, United States",
+        "collectionId": "1727033",
+        "collectionTitle": "United States, Census, 1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1727033",
+        "recordTitle": "Household of Asbery S Ainsworth, \"United States, Census, 1910\"",
+        "recordArk": "ark:/61903/1:2:9J6X-VT5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_569217017",
+              "ark": "ark:/61903/1:1:MPDG-3ZJ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Amanda P",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Taylorsville, Smith, Mississippi, United States",
+                  "standard_place": "Taylorsville, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_569217016",
+              "ark": "ark:/61903/1:1:MPDG-3ZN",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Asbery S",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Taylorsville, Smith, Mississippi, United States",
+                  "standard_place": "Taylorsville, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_569217016",
+              "person2": "p_569217017"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1153025004",
+              "title": "Household of Asbery S Ainsworth, \"United States, Census, 1910\"",
+              "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MPDG-3ZN : Wed Aug 13 16:11:45 UTC 2025), Entry for Asbery S Ainsworth and Amanda P Ainsworth, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9J6X-VT5"
+            },
+            {
+              "id": "sd_c_1727033",
+              "title": "United States, Census, 1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1727033"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRJT-9QJY"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_569217017",
+              "url": "#p_569217017"
+            }
+          ],
+          "places": [
+            {
+              "id": "369",
+              "name": "Mississippi, United States",
+              "latitude": 32.7503,
+              "longitude": -89.7503
+            },
+            {
+              "id": "4361234",
+              "name": "Taylorsville, Smith, Mississippi, United States",
+              "latitude": 31.8294,
+              "longitude": -89.4281
+            }
+          ]
+        },
+        "primaryId": "p_569217017"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M9FS-YK8",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1900",
+            "place": "Beat 2 Summerland town, Smith, Mississippi, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mandy P Ainsworth",
+        "score": 5.3978806,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "November 1848",
+        "birthPlace": "Mississippi, United States",
+        "collectionId": "1325221",
+        "collectionTitle": "United States, Census, 1900",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+        "recordTitle": "Household of Ag Ainsworth, \"United States, Census, 1900\"",
+        "recordArk": "ark:/61903/1:2:9977-47VB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_36528881",
+              "ark": "ark:/61903/1:1:M9FS-YK8",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Mandy P"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Nov 1848",
+                  "standard_date": "Nov 1848",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528880",
+              "ark": "ark:/61903/1:1:M9FS-YKZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Ag"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Jan 1841",
+                  "standard_date": "Jan 1841",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528882",
+              "ark": "ark:/61903/1:1:M9FS-YKD",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Mary V"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Sep 1867",
+                  "standard_date": "Sep 1867",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528883",
+              "ark": "ark:/61903/1:1:M9FS-YK6",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Albert",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Jan 1881",
+                  "standard_date": "Jan 1881",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528884",
+              "ark": "ark:/61903/1:1:M9FS-YKX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "He*ds"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "May 1883",
+                  "standard_date": "May 1883",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528885",
+              "ark": "ark:/61903/1:1:M9FS-YKF",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Valley"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Jan 1886",
+                  "standard_date": "Jan 1886",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528886",
+              "ark": "ark:/61903/1:1:M9FS-YKN",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Crombell",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "Dec 1883",
+                  "standard_date": "Dec 1883",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528887",
+              "ark": "ark:/61903/1:1:M9FS-YKJ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Wondrous",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Feb 1893",
+                  "standard_date": "Feb 1893",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_36528888",
+              "ark": "ark:/61903/1:1:M9FS-YKV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Nat",
+                  "surname": "Freeman"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "Beat 2 Summerland town, Smith, Mississippi, United States",
+                  "standard_place": "Summerland, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "Feb 1881",
+                  "standard_date": "Feb 1881",
+                  "place": "Mississippi",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_36528881",
+              "child": "p_36528886"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528880",
+              "child": "p_36528886"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528881",
+              "child": "p_36528887"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528880",
+              "child": "p_36528887"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528880",
+              "child": "p_36528882"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528881",
+              "child": "p_36528882"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528880",
+              "child": "p_36528885"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528881",
+              "child": "p_36528885"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528881",
+              "child": "p_36528884"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528881",
+              "child": "p_36528883"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_36528880",
+              "person2": "p_36528881",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "date": "1865",
+                  "standard_date": "1865"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528880",
+              "child": "p_36528884"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_36528880",
+              "child": "p_36528883"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22724744068",
+              "title": "Household of Ag Ainsworth, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9FS-YKZ : Tue Apr 08 15:51:39 UTC 2025), Entry for Ag Ainsworth and Mandy P Ainsworth, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9977-47VB"
+            },
+            {
+              "id": "sd_c_1325221",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-DTN9-4T7"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_36528881",
+              "url": "#p_36528881"
+            }
+          ],
+          "places": [
+            {
+              "id": "369",
+              "name": "Mississippi, United States",
+              "latitude": 32.7503,
+              "longitude": -89.7503
+            },
+            {
+              "id": "4361366",
+              "name": "Summerland, Smith, Mississippi, United States",
+              "latitude": 31.7992,
+              "longitude": -89.3603
+            }
+          ]
+        },
+        "primaryId": "p_36528881"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M4P3-HXG",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Keeping House"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Beat 2, Smith, Mississippi, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Amandy Ainsworth",
+        "score": 5.3978806,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1848",
+        "birthPlace": "Mississippi, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Asbery Ainsworth, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MWVG-8QT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_188818642",
+              "ark": "ark:/61903/1:1:M4P3-HXG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Amandy",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Keeping House"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1848",
+                  "standard_date": "1848",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818641",
+              "ark": "ark:/61903/1:1:M4P3-HXL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Asbery",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1843",
+                  "standard_date": "1843",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818643",
+              "ark": "ark:/61903/1:1:M4P3-HXP",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Armilia",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818644",
+              "ark": "ark:/61903/1:1:M4P3-HX5",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Vicktory"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1867",
+                  "standard_date": "1867",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818645",
+              "ark": "ark:/61903/1:1:M4P3-HXR",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Orange",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1870",
+                  "standard_date": "1870",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818646",
+              "ark": "ark:/61903/1:1:M4P3-HXT",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Josephine",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1872",
+                  "standard_date": "1872",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818647",
+              "ark": "ark:/61903/1:1:M4P3-HXY",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Clarinda"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1874",
+                  "standard_date": "1874",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818648",
+              "ark": "ark:/61903/1:1:M4P3-HXB",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ainsworth",
+                  "given": "Lenia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_188818649",
+              "ark": "ark:/61903/1:1:M4P3-HX1",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Susan",
+                  "surname": "Ainsworth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "Mississippi, United States",
+                  "standard_place": "Mississippi, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Beat 2, Smith, Mississippi, United States",
+                  "standard_place": "Beat 2, Smith, Mississippi, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818647"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818646"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818643"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818649"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_188818641",
+              "person2": "p_188818642"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818648"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818644"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818642",
+              "child": "p_188818645"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818646"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818645"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818647"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818648"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818649"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818643"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_188818641",
+              "child": "p_188818644"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_160984046",
+              "title": "Household of Asbery Ainsworth, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4P3-HXL : Wed Sep 09 15:43:24 UTC 2026), Entry for Asbery Ainsworth and Amandy Ainsworth, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MWVG-8QT"
+            },
+            {
+              "id": "sd_c_1417683",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB8-WKM"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_188818642",
+              "url": "#p_188818642"
+            }
+          ],
+          "places": [
+            {
+              "id": "369",
+              "name": "Mississippi, United States",
+              "latitude": 32.7503,
+              "longitude": -89.7503
+            },
+            {
+              "id": "4321252",
+              "name": "Beat 2, Smith, Mississippi, United States",
+              "latitude": 31.83583,
+              "longitude": -89.413889
+            }
+          ]
+        },
+        "primaryId": "p_188818642"
+      }
+    ]
+  }
+}
