@@ -647,7 +647,8 @@ Architecturally:
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header) are entrypoints that only connect
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim when
+  `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` are sent) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -1806,7 +1807,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
