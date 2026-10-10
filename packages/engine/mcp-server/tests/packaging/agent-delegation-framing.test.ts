@@ -273,6 +273,33 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  "research -> conflict-resolution": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt: "Relay the agent's return as-is.",
+      },
+    ],
+    exempt: {
+      // Staleness here is NOT detected beyond the idiom check below — pin the
+      // agent's rule and delete this entry when the body gains one.
+      side: "agent",
+      reason:
+        "conflict-resolution.md is the skill folded verbatim, and the fold states no " +
+        "caller-pressure rule: the skill was always entered by the researcher's own words, " +
+        "never by a delegation that could pre-state a winner. The conversion adds no doctrine " +
+        "(the first body change after the unchanged-fold run is naming the resolution kind), " +
+        "so the rule is owed to the next paid run of this agent. Until then what binds is the " +
+        "write boundary, not the prose: research_append refuses a resolve that does not say " +
+        "how it was settled, and the plugin hook routes a conflict's analysis to this agent alone.",
+    },
+  },
+
   "research -> hypothesis-tracking": {
     pins: [
       {
@@ -485,8 +512,14 @@ const PROSE_MENTIONS = new Map<string, string>([
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
-  ["conflict-resolution -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
+  // Bare-name mentions of `conflict-resolution`, visible to the prose arm since
+  // issue #1852 deleted the skill and made the name unambiguous. Each is boundary
+  // prose ("use conflict-resolution", "route to conflict-resolution") and none
+  // spells `@plugin:conflict-resolution`, so none is a delegation being silenced
+  // -- verified per file before listing.
+  ["search-records -> conflict-resolution", ""],
+  ["timeline -> conflict-resolution", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
   // and the one mention below is boundary prose telling the reader this is the
@@ -512,7 +545,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // conversion; when the skill was deleted the name entered agentOnly and
   // every SKILL.md that references it now needs a registration. All are
   // bare-name mentions — none spell `@plugin:person-evidence`.
-  ["conflict-resolution -> person-evidence", ""],
   ["forget-and-rederive -> person-evidence", ""],
   ["record-extraction -> person-evidence", ""],
   ["search-records -> person-evidence", ""],
@@ -530,13 +562,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
   // issue #2805 deleted its skill.
-  ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
   // not a delegation; it does not spell `@plugin:tree-edit`.
-  ["conflict-resolution -> tree-edit", ""],
   // convert-dates entered agentOnly when issue #2790 deleted its skill. All
   // three are routing-boundary prose naming it as the owner of a calendar
   // conversion ("use convert-dates", "route to convert-dates"), none spells
@@ -546,7 +576,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // agentOnly. Every mention below is bare-name boundary or next-step prose;
   // the one delegation, research's routing table, spells `@plugin:` and is a
   // registered edge above.
-  ["conflict-resolution -> question-selection", ""],
   ["forget-and-rederive -> question-selection", ""],
   ["init-project -> question-selection", ""],
   ["research-plan -> question-selection", ""],
@@ -560,7 +589,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
   // `@plugin:hypothesis-tracking`.
-  ["conflict-resolution -> hypothesis-tracking", ""],
   ["timeline -> hypothesis-tracking", ""],
   // search-external-sites entered agentOnly when issue #2802 deleted its skill.
   // The one entry is routing-boundary prose naming it as the owner of an
@@ -760,6 +788,8 @@ describe("agent delegation framing", () => {
   const PROSE_ARM_COVERS = [
     "check-warnings",
     "citation",
+    // ARRIVED when issue #1852 deleted skills/conflict-resolution/.
+    "conflict-resolution",
     "convert-dates",
     "gps-mentor",
     // ARRIVED when issue #2800 deleted skills/historical-context/.

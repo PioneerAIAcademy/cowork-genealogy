@@ -46,6 +46,34 @@ describe('ConflictsSection', () => {
     expect(screen.getByText(/Ireland is accepted/)).toBeInTheDocument()
   })
 
+  it('renders how a resolution was settled, in words, and its resolved value', async () => {
+    const synthesized = {
+      ...patrickFlynnResearch.conflicts[0],
+      id: 'c_syn',
+      description: 'A synthesized birth year',
+      resolution_kind: 'synthesis',
+      resolved_value: 'about 1845'
+    } as Conflict
+    mockResearch({ conflicts: [synthesized] })
+    render(<ConflictsSection />)
+    await userEvent.click(screen.getByText('A synthesized birth year').parentElement as HTMLElement)
+    expect(screen.getByText('Resolved As')).toBeInTheDocument()
+    expect(screen.getByText('A value built from several records')).toBeInTheDocument()
+    expect(screen.getByText('about 1845')).toBeInTheDocument()
+  })
+
+  it('omits both when a conflict was resolved before the fields existed', async () => {
+    mockResearch()
+    render(<ConflictsSection />)
+    await userEvent.click(
+      screen.getByText(
+        "Patrick Flynn's birthplace: Ireland (censuses) vs. Pennsylvania (death certificate)"
+      ).parentElement as HTMLElement
+    )
+    expect(screen.queryByText('Resolved As')).not.toBeInTheDocument()
+    expect(screen.queryByText('Resolved Value')).not.toBeInTheDocument()
+  })
+
   it('shows the empty state when there are no conflicts', () => {
     mockResearch({ conflicts: [] })
     render(<ConflictsSection />)

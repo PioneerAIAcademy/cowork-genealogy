@@ -28,7 +28,7 @@ turns "15 February 1720" into 1721. The century-dependent Julian→Gregorian off
 are equally mechanical and equally easy to get wrong by a day or a month. A wrong
 result also propagates: `conflict-resolution` uses the *expected* offset to decide
 whether two dates that differ are a real conflict or a calendar artifact
-(`packages/engine/plugin/skills/conflict-resolution/SKILL.md` §"4. Apply the seven weighing factors (GPS Standard 47-48)"; `convert-dates/references/calendar-conflicts.md` carried this
+(`packages/engine/plugin/agents/conflict-resolution.md` §"4. Apply the seven weighing factors (GPS Standard 47-48)"; `convert-dates/references/calendar-conflicts.md` carried this
 until it was deleted, its numbers having moved into §4.5) — a miscomputed
 offset silently suppresses a real conflict or fabricates a fake one.
 
@@ -387,7 +387,7 @@ to illustrate that they agree.
 - `conflict-resolution` — calls `convert_calendar` (or reads `applied[].offsetDays`)
   to get the **expected** offset between two jurisdictions, so a date difference
   that matches the calendar offset is correctly classified as an artifact, not a
-  conflict (`packages/engine/plugin/skills/conflict-resolution/SKILL.md` §"4. Apply the seven weighing factors (GPS Standard 47-48)").
+  conflict (`packages/engine/plugin/agents/conflict-resolution.md` §"4. Apply the seven weighing factors (GPS Standard 47-48)").
 
 ---
 

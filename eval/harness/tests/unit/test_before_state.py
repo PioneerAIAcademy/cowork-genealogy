@@ -274,6 +274,28 @@ def test_conflicts_render_even_without_sources():
     assert "Ireland" in rendered
 
 
+def test_conflicts_summary_carries_how_a_resolve_was_settled():
+    """A `synthesis` resolve has no winning assertion, so without its kind and
+    value the judge sees `preferred: None` and cannot tell it from an
+    unexplained resolve (issue #1852)."""
+    conflict = {
+        "id": "c_007",
+        "conflict_type": "fact",
+        "status": "resolved",
+        "competing_assertion_ids": ["a_001", "a_009"],
+        "resolution_kind": "synthesis",
+        "resolved_value": "about 1845, County Tipperary",
+    }
+    entry = _summarize_before_state_conflicts([conflict], _FLYNN_ASSERTIONS)["detail"][0]
+    assert entry["preferred"] is None
+    assert entry["resolution_kind"] == "synthesis"
+    assert entry["resolved_value"] == "about 1845, County Tipperary"
+    rendered = _summarize_before_state(
+        {"research_json": {"conflicts": [conflict], "assertions": _FLYNN_ASSERTIONS}}
+    )
+    assert "synthesis" in rendered and "County Tipperary" in rendered
+
+
 def test_conflict_dangling_assertion_ref_does_not_crash():
     conflict = {
         "id": "c_099",

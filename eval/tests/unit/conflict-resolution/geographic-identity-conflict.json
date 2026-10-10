@@ -10,11 +10,12 @@
       "geographic",
       "place-tools",
       "travel-feasibility",
-      "flynn-identity-geographic"
+      "flynn-identity-geographic",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "There's an 1870 Allegheny County census record flagged as a potential match for Patrick Flynn. Analyze the geographic identity conflict c_003 and resolve it.",
+    "delegation": "There's an 1870 Allegheny County census record flagged as a potential match for Patrick Flynn. Analyze the geographic identity conflict c_003 and resolve it.\n\nconflictId: c_003\nprojectPath: <workspace>",
     "scenario": "flynn-identity-geographic"
   },
   "judge_context": [

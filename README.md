@@ -164,7 +164,7 @@ Tool specs live in `docs/specs/<tool>-tool-spec.md`.
 
 ## Skills
 
-The plugin ships 8 skills covering the full GPS research cycle. Skills
+The plugin ships 7 skills covering the full GPS research cycle. Skills
 are listed in roughly the order you'd use them in a research project.
 For a plain-language account of the research method itself — the GPS
 cycle, the judgment made at each stage, and what to expect from a
@@ -201,12 +201,12 @@ session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
 | Skill | What it does | Say this |
 |-------|-------------|----------|
 | **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
-| **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" |
 
 ### Concluding
 
 Writing the conclusion itself is an agent rather than a skill — see
-`proof-conclusion` in the agent table below.
+`proof-conclusion` in the agent table below. So is resolving conflicting
+evidence — see `conflict-resolution` there.
 
 ### Benchmark suite (not shipped — repo-local dev tooling)
 
@@ -227,7 +227,7 @@ specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-five Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-six Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 at its mentor checkpoint, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -245,6 +245,7 @@ don't load it explicitly.
 | **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
 | **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. A first pass recommends accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, and reads the record image before recommending against a hint; it writes nothing. Once you decide, a second pass logs your verdict on each hint, so an accepted hint flows on to extraction like any search result. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
+| **conflict-resolution** | Resolves conflicting evidence — fact conflicts and identity conflicts where two candidate people genuinely compete. It analyses whether the sources are independent, weighs them by the preponderance hierarchy, and records how each conflict was settled: one record's version preferred, the tree's existing conclusion kept, or a value built from several records. It is the only caller allowed to record that analysis in the `conflicts` section; anything else may open a conflict but not resolve one. | "These sources disagree" / "Resolve this conflict" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person; the tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" |
 | **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
@@ -274,7 +275,7 @@ don't load it explicitly.
                              here and are final at extraction)
 6. citation (agent)          Polish citations to Evidence Explained standards
 7. timeline                  Build chronological timeline, find gaps
-8. conflict-resolution       Resolve disagreements between sources
+8. conflict-resolution (agent) Resolve disagreements between sources
 9. hypothesis-tracking (agent) Track competing candidates
 10. research-exhaustiveness  Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop
@@ -467,11 +468,11 @@ What's shipped:
 - **53 MCP tools.** See the tables above for the full catalog, by category:
   FamilySearch records and places, FamilySearch Wiki content, reference and
   context, project state (the writer and projection tools), and auth.
-- **8 shipped skills.** Full GPS research cycle from `init-project`
+- **7 shipped skills.** Full GPS research cycle from `init-project`
   through the conclusion. The three
   e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
   are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **25 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
+- **26 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
   records), `gps-mentor` (BCG-style senior-genealogist review,
   invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
   (per-record assertion extraction), `proof-conclusion` (the proof conclusion
@@ -480,6 +481,8 @@ What's shipped:
   the only caller that may declare one exhaustive), `person-evidence` agent (identity
   resolution, and the only writer of `person_evidence`), `citation` (Evidence
   Explained refinement of citations on sources that already exist),
+  `conflict-resolution` (resolving conflicting evidence, and the only caller
+  that may record a conflict's analysis and resolution),
   `convert-dates` (calendar-system date conversion), `question-selection`
   (the next research question, and the only minter of questions), `search-images`
   (page-by-page browse of an unindexed volume), `search-external-sites`

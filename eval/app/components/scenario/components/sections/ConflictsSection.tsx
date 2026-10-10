@@ -92,6 +92,20 @@ export default function ConflictsSection(): React.JSX.Element {
                 </div>
               )}
 
+              {conflict.resolution_kind && (
+                <div className={styles.subsection}>
+                  <div className={styles.subLabel}>Resolved As</div>
+                  <p className={styles.analysis}>{conflict.resolution_kind}</p>
+                </div>
+              )}
+
+              {conflict.resolved_value && (
+                <div className={styles.subsection}>
+                  <div className={styles.subLabel}>Resolved Value</div>
+                  <p className={styles.analysis}>{conflict.resolved_value}</p>
+                </div>
+              )}
+
               {conflict.resolution_rationale && (
                 <div className={styles.subsection}>
                   <div className={styles.subLabel}>Resolution Rationale</div>

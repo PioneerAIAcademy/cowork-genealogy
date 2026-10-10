@@ -80,7 +80,7 @@ def test_scenario_workspace_copies_files(tmp_path):
     assert (ws / "research.json").exists()
     assert (ws / "tree.gedcomx.json").exists()
     # All skills present
-    assert (ws / ".claude/skills/conflict-resolution/SKILL.md").exists()
+    assert (ws / ".claude/skills/timeline/SKILL.md").exists()
 
 
 def test_scenario_workspace_copies_results_sidecars(tmp_path):

@@ -275,6 +275,10 @@ OWNED_DECLARATIONS = _guard.OWNED_DECLARATIONS
 #: import-don't-copy discipline as the two maps above.
 OWNED_FIELDS = _guard.OWNED_FIELDS
 
+#: The multi-field claim map: `section -> (owning agent, claim fields, claim
+#: status)`, routed on a conflict's analytical product. Same discipline.
+OWNED_CLAIMS = _guard.OWNED_CLAIMS
+
 #: The shipped hook's own ownership predicate, re-exported rather than
 #: reimplemented. `e2e/orchestrator.py` carried a second copy of the rule until
 #: 2026-08-23 — it imported the map above and the reason text below, so the two
@@ -327,6 +331,13 @@ def owned_section_denial(denied: tuple[str, str, str]) -> dict[str, Any]:
             section=owned_section,
             field=field,
             agent=_guard.OWNED_FIELDS[(owned_section, field)],
+        )
+    elif rule == "claim":
+        owner, claim_fields, _status = _guard.OWNED_CLAIMS[section]
+        reason = _guard.CLAIM_REASON.format(
+            section=section,
+            fields=", ".join(f"`{f}`" for f in claim_fields),
+            agent=owner,
         )
     else:
         allowed = ", ".join(f"`{s}`" for s in sorted(_guard.AGENT_WRITABLE_SECTIONS[caller]))

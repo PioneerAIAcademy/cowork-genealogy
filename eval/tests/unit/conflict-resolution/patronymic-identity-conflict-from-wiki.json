@@ -8,11 +8,12 @@
     "tags": [
       "identity-conflict",
       "patronymic",
-      "naming-from-wiki"
+      "naming-from-wiki",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "An 1875 Norway census entry for an Anders Pedersen, age 7, in the same district keeps coming up as a match for my Anders Hansen (assertions a_001 and a_002). Same given name, same age, same place — but the patronymic is different. Are these the same person? Analyse the identity conflict and either resolve it or say what would decide it.",
+    "delegation": "An 1875 Norway census entry for an Anders Pedersen, age 7, in the same district keeps coming up as a match for my Anders Hansen (assertions a_001 and a_002). Same given name, same age, same place — but the patronymic is different. Are these the same person? Analyse the identity conflict and either resolve it or say what would decide it.\n\nassertionIds: a_001, a_002\nprojectPath: <workspace>",
     "scenario": "norwegian-patronymic-conflict-link"
   },
   "judge_context": [
