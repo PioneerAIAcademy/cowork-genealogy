@@ -219,15 +219,16 @@ bounds' own), with the `turn:`-tagged connections in brackets:
 | 4 | 0.448 (807.3) | 1.055 | 1.92 | 0.5% | 2,010 MB | 1,020 MB | 366 MB `claude` | 14.1 GB | 17 (4) | $17.62 |
 | 8 | 0.89 (1,603.2) | 1.987 | 2.26 | 0.85% | 3,361 MB | 1,925 MB | 362 MB `claude` | 13.2 GB | 25 (8) | $36.52 |
 
-CloudWatch, worker instance. "avg" is the mean of the 5-minute Average points; "max" is the
-largest Maximum statistic, not a 5-minute average:
+CloudWatch, worker instance, over the whole 5-minute grid buckets inside each window (each
+basic-monitoring point covers the 5 minutes after its :00/:05 stamp). "avg" is the mean of the
+5-minute Average points; "max" is the largest Maximum statistic, not a 5-minute average:
 
 | Turns | `CPUUtilization` avg | `CPUUtilization` max | `CPUCreditBalance` | `CPUSurplusCreditsCharged` | RDS CPU avg / max |
 |---|---|---|---|---|---|
-| 0 | 1.1% | 1.2% | 44 → 60 | 0 | 4.4% / 5.5% |
-| 1 | 4.1% | 7.7% | 67 → 104 | 0 | 4.6% / 6.3% |
-| 4 | 12.7% | 25.2% | 282 → 309 | 0 | 5.0% / 7.1% |
-| 8 | 23.3% | 46.4% | 241 → 255 | 0 | 5.5% / 8.6% |
+| 0 | 1.1% | 1.2% | 44 → 52 | 0 | 4.5% / 5.5% |
+| 1 | 4.3% | 7.7% | 75 → 104 | 0 | 4.5% / 6.3% |
+| 4 | 13.3% | 25.2% | 282 → 303 | 0 | 4.9% / 7.1% |
+| 8 | 25.4% | 46.4% | 241 → 251 | 0 | 5.1% / 6.7% |
 
 - **Per turn:** one `claude` process. Subagents run inside it, MCP goes over HTTP to tools,
   and plugin-hook interpreters are short-lived. Plan on **512 MB a turn**, a round
@@ -238,14 +239,15 @@ largest Maximum statistic, not a 5-minute average:
   count: 0.96 / 2.0 / 3.4 GB (U18, 2026-10-10, n=1).
 - **CPU:** about 0.11 cores a turn, roughly linear (U18, 2026-10-10, n=1; tables above). A
   t3.xlarge's credit baseline is 40% of its 4 vCPU, 1.6 cores. At 8 turns the average was
-  under it, and one Maximum reading (46.4%) went over it, during the opening burst. No
+  under it, and two Maximum readings (46.4% and 46.3%) went over it, in the window's first
+  10 minutes. No
   surplus credits were charged at any count. One Python process upserts
   every streamed delta for every slot. Each U26 continuation restarts the CLI and reloads
   the transcript.
 - **Proposal:** `HttpConnections` **4 on a t3.large, 8 on a t3.xlarge**, below the memory
   ceilings. 8 on a t3.xlarge is confirmed for CPU, memory and Postgres at n=1 (U18,
-  2026-10-10): `CPUUtilization` averaged 23.3% against the 40% baseline, with a peak of
-  46.4% (CloudWatch Maximum statistic) in the opening burst. 4 on a t3.large is not measured:
+  2026-10-10): `CPUUtilization` averaged 25.4% against the 40% baseline, with a peak of
+  46.4% (CloudWatch Maximum statistic) in the window's first 10 minutes. 4 on a t3.large is not measured:
   its 0.6-core baseline is above the 0.448 cores measured at 4 turns on the t3.xlarge, but
   that is inference. Fewer slots also means fewer runs cut by a deploy or a
   lost instance (U13 M35). If sustained CPU exceeds the T3 baseline, move to a

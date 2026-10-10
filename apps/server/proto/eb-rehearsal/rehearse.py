@@ -1710,16 +1710,27 @@ U13PY
 
     def cpu(self) -> int:
         """Read-only, unbilled: CloudWatch's 5-minute CPU and credit points for the worker, tools
-        and RDS over a window, and each instance's credit mode. Exits 1 only when --end is given
-        and the last full 5-minute bucket inside the window has no worker CPUUtilization point yet
-        (CloudWatch publishes minutes late)."""
+        and RDS over the whole 5-minute grid buckets inside a window, and each instance's credit
+        mode. Exits 1 only when --end is given and the last of those buckets has no worker
+        CPUUtilization point yet (CloudWatch publishes minutes late)."""
         start, end, end_given = self.cpu_window()
+        # Basic-monitoring points are stamped :00, :05, … and each covers the next 5 minutes, and
+        # CloudWatch buckets a query from --start-time's minute: query the grid buckets inside the
+        # window, so no point covers time outside it (2026-10-10, period 60 on the U18 worker).
+        grid = dt.timedelta(seconds=CPU_PERIOD_S)
+        grid_start = dt.datetime.fromtimestamp(-(-start.timestamp() // CPU_PERIOD_S) * CPU_PERIOD_S, dt.timezone.utc)
+        grid_end = dt.datetime.fromtimestamp(end.timestamp() // CPU_PERIOD_S * CPU_PERIOD_S, dt.timezone.utc)
+        if grid_end <= grid_start:
+            raise Die(f"no whole 5-minute CloudWatch bucket (:00, :05, …) lies between --start {iso(start)} and "
+                      f"--end {iso(end)}; widen the window")
         worker_id = getattr(self.args, "worker_instance", None)
         if worker_id and not re.fullmatch(r"i-[0-9a-f]{8,17}", worker_id):
             raise Die(f"--worker-instance {worker_id!r}: expected an instance id i-…")
         self.guard()
         self.out(f"window_start={iso(start)}")
         self.out(f"window_end={iso(end)}")
+        self.out(f"grid_start={iso(grid_start)}")
+        self.out(f"grid_end={iso(grid_end)}")
         scopes = [("worker", "AWS/EC2", "InstanceId", worker_id or self.instance_of("worker")),
                   ("tools", "AWS/EC2", "InstanceId", self.instance_of("tools")),
                   ("rds", "AWS/RDS", "DBInstanceIdentifier", RDS_ID)]
@@ -1735,8 +1746,8 @@ U13PY
                 points = []
                 if value:
                     got = self.aws("cloudwatch", "get-metric-statistics", "--namespace", namespace, "--metric-name",
-                                   metric, "--dimensions", f"Name={dim},Value={value}", "--start-time", iso(start),
-                                   "--end-time", iso(end), "--period", CPU_PERIOD_S, "--statistics", "Average",
+                                   metric, "--dimensions", f"Name={dim},Value={value}", "--start-time", iso(grid_start),
+                                   "--end-time", iso(grid_end), "--period", CPU_PERIOD_S, "--statistics", "Average",
                                    "Maximum", placeholder={"Datapoints": []})
                     points = sorted((got or {}).get("Datapoints", []), key=lambda p: p["Timestamp"])
                 key = f"{scope}.{metric}"
@@ -1751,13 +1762,12 @@ U13PY
                 self.out(f"{key}.max={max(p['Maximum'] for p in points):g}")
                 self.out(f"{key}.last_at={iso(last_at.astimezone(dt.timezone.utc))}")
                 if (scope, metric) == ("worker", "CPUUtilization"):
-                    # Buckets run from --start's minute and none crosses --end, so the last full one
-                    # starts in (end - 2 periods, end - 1 period], whatever the window's seconds.
-                    covered = last_at + dt.timedelta(seconds=2 * CPU_PERIOD_S) > end
+                    covered = last_at + grid >= grid_end
         if self.dry or not end_given or covered:
             return 0
-        self.out(f"worker.CPUUtilization: no point yet for the last full 5-minute bucket before --end {iso(end)}; "
-                 "CloudWatch publishes minutes late, so re-run in a few minutes")
+        self.out(f"worker.CPUUtilization: no point yet for the bucket ending {iso(grid_end)}; CloudWatch publishes "
+                 "minutes late, so re-run in a few minutes. A worker released before then never publishes it: "
+                 "end the window at its release")
         return 1
 
     # ── pause / resume ───────────────────────────────────────────────────────────────
@@ -2285,8 +2295,8 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--bundles-dir", help="ebext_naming copies eb-tools.zip from here")
     cpu = sub.add_parser("cpu", parents=[common], help="CloudWatch CPU and credit points and the credit mode; read-only")
     cpu.add_argument("--start", help="window start, ISO with Z or an offset (default: an hour before --end)")
-    cpu.add_argument("--end", help="window end (default now); exits 1 until the last full 5-minute bucket inside "
-                                   "the window has a worker CPU point")
+    cpu.add_argument("--end", help="window end (default now); exits 1 until the last whole 5-minute grid bucket "
+                                   "inside the window has a worker CPU point")
     cpu.add_argument("--worker-instance", help="the worker instance id (a released worker_xlarge's stays readable)")
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
     sub.add_parser("pause", parents=[common, billed], help="between sessions: tiers to 0/0, RDS and the bastion stopped")

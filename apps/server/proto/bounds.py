@@ -40,7 +40,7 @@ subagent's halt stop the parent?). Billed, except ``precli``.
   probe_resume     the worker killed --kill-after-s (5-20) after the first subagent row
                    (seeded): the resume, and whether session_entries keeps the model's
                    Agent input ``run_in_background``; a turn still open at --deadline-s is
-                   Stopped and judged at that close
+                   Stopped and judged at that close, a FAIL if it wrote no entry in its last 300 s
 
 Injected usage is one ``session_entries`` row under project_key ``__u23_probe__`` (the meter
 counts every project_key; the SDK store loads only its own), deleted at case end; a turn
@@ -683,13 +683,17 @@ def press(ctx: Ctx, client: httpx.Client, rep: Report) -> float:
 
 
 def done(ctx: Ctx, client: httpx.Client, rep: Report, turn_id: str, *, since: float | None = None,
-         label: str = "") -> bool:
+         label: str = "", deadline_fails: bool = True) -> bool:
+    """``deadline_fails=False``: a turn still open at --deadline-s is the caller's to judge,
+    not a FAIL, and no check is recorded either way."""
     try:
         wall = demo.wait_turn_done(client, ctx.base, rep.session_id, turn_id, ctx.deadline_s)
     except TimeoutError as exc:
-        rep.checks.append((f"{rep.case}: {label or turn_id} reached turn_done", False, str(exc)))
+        if deadline_fails:
+            rep.checks.append((f"{rep.case}: {label or turn_id} reached turn_done", False, str(exc)))
         return False
-    rep.checks.append((f"{rep.case}: {label or turn_id} reached turn_done", True, ""))
+    if deadline_fails:
+        rep.checks.append((f"{rep.case}: {label or turn_id} reached turn_done", True, ""))
     if since is not None:
         rep.figures[f"{label or 'turn'}_done_after_s"] = round(time.monotonic() - since, 1)
     else:
@@ -1117,6 +1121,19 @@ def case_outage_pause(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     ]
 
 
+# A resumed attempt quiet this long at --deadline-s is stalled: past image_transcribe's 180 s,
+# the longest single call, with margin.
+QUIET_LIMIT_S = 300.0
+
+
+def quiet_s(ctx: Ctx, sdk: str | None) -> float | None:
+    """Seconds from the newest session_entries row's own timestamp (any subpath) to Postgres
+    now(); None when there is none."""
+    stamps = [_ts(e.get("timestamp")) for _seq, _sub, e in entries(ctx, sdk, 0) if isinstance(e, dict)]
+    newest, now = max((t for t in stamps if t), default=None), _ts(turn.one(ctx.dsn, PG_NOW_SQL, ()))
+    return round((now - newest).total_seconds(), 1) if newest and now else None
+
+
 def case_probe_resume(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     seeded_session(ctx, rep)
     project_id = turn.one(ctx.dsn, "SELECT project_id FROM sessions WHERE session_id = %s", (rep.session_id,))
@@ -1134,22 +1151,20 @@ def case_probe_resume(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     finally:
         TARGET.signal("worker", "start")
     rep.figures.update({"kill_after_s": ctx.kill_after_s, "killed": killed})
-    try:
-        rep.figures["resumed_wall_s"] = round(demo.wait_turn_done(client, ctx.base, rep.session_id, tid,
-                                                                  ctx.deadline_s), 1)
-        rep.figures["resumed_closed_on_its_own"] = True
-    except TimeoutError:
-        # The seeded research has no end of its own (U13, 2026-10-10): judge the resume at Stop.
-        rep.figures["resumed_closed_on_its_own"] = False
-        running, _held = settle(ctx, client, rep.session_id)
-        rep.checks.append(("probe_resume: the turn open at --deadline-s closed on Stop", not running,
-                           f"running={running}"))
+    if not done(ctx, client, rep, tid, label="resumed", deadline_fails=False):
+        # The seeded research has no end of its own (U13, 2026-10-10): judge the resume at Stop,
+        # once it shows the resumed attempt was still working rather than stalled.
+        quiet = quiet_s(ctx, sdk_before)
+        rep.checks.append((f"probe_resume: session_entries written within {QUIET_LIMIT_S:g} s of --deadline-s",
+                           quiet is not None and quiet <= QUIET_LIMIT_S, f"newest entry {quiet} s before"))
+        settle(ctx, client, rep.session_id)
     rep.evidence.append(turn.render_evidence(turn.gather_evidence(ctx.dsn, rep.session_id, tid, sdk_before, project_id, marks)))
     # Findings first: a resumed run that outlasts the deadline still answers both questions.
     inputs = agent_inputs(entries(ctx, sdk_before, 0))
     rep.findings.append(f"Agent inputs as session_entries keeps them (name, has run_in_background, value): {inputs}")
     rep.findings.append(f"ev=foregrounded lines: {len([e for e in events_for(worker_events(), tid) if e.get('ev') == 'foregrounded'])}")
     snap = snapshot(ctx, rep.session_id, tid)
+    rep.figures["resumed_closed_on_its_own"] = bool(snap.row) and snap.row[2] not in (None, TERMINAL_STOPPED)
     after = int(turn.one(ctx.dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",)) or 0)
     rep.checks += [*resume_checks("probe_resume", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
                                   entries_at_kill=at_kill, entries_after=after),
@@ -2151,7 +2166,7 @@ def window_figures(rep: Report, s: HeavySamples, host: dict, passes: tuple[int, 
     start, end = _iso(window_from), _iso(window_to)
     line = f"rehearse.py cpu --worker-instance {host['instance_id']} --start {start} --end {end} --work-dir <dir>"
     rep.figures.update({"window_s": _secs(window_from, window_to), "window_from": start, "window_to": end, "cpu_line": line})
-    rep.findings.append(f"CloudWatch over the window, once its last 5-min point lands: {line}")
+    rep.findings.append(f"CloudWatch over the window's whole 5-min grid buckets (exits 1 until the last lands): {line}")
 
 
 def cpu_sampled_check(label: str, figures: dict) -> Check:

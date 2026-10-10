@@ -247,15 +247,23 @@ class FakeAws:
         return {"InstanceTypeOfferings": [{"Location": az} for az in sorted(azs)]}
 
     def cloudwatch_get_metric_statistics(self, rest):
-        # As CloudWatch answered on 2026-10-10: buckets run from --start-time's minute, and a
-        # bucket crossing --end-time is not returned.
+        # As CloudWatch answered on 2026-10-10: buckets run from --start-time's minute, each
+        # aggregates the raw points stamped inside it (basic monitoring stamps :00, :05, …), and
+        # a bucket crossing --end-time is not returned.
         dim = _flag(rest, "--dimensions").split("Value=", 1)[1]
         at = lambda s: dt.datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
-        first = at(_flag(rest, "--start-time")).replace(second=0)
+        bucket = at(_flag(rest, "--start-time")).replace(second=0)
         end, period = at(_flag(rest, "--end-time")), dt.timedelta(seconds=int(_flag(rest, "--period")))
-        points = self.metrics.get((_flag(rest, "--namespace"), _flag(rest, "--metric-name"), dim), [])
-        return {"Label": _flag(rest, "--metric-name"),
-                "Datapoints": [p for p in points if first <= at(p["Timestamp"]) and at(p["Timestamp"]) + period <= end]}
+        raw = self.metrics.get((_flag(rest, "--namespace"), _flag(rest, "--metric-name"), dim), [])
+        out = []
+        while bucket + period <= end:
+            inside = [p for p in raw if bucket <= at(p["Timestamp"]) < bucket + period]
+            if inside:
+                out.append({"Timestamp": bucket.isoformat(), "Unit": "Percent",
+                            "Average": sum(p["Average"] for p in inside) / len(inside),
+                            "Maximum": max(p["Maximum"] for p in inside)})
+            bucket += period
+        return {"Label": _flag(rest, "--metric-name"), "Datapoints": out}
 
     def ec2_describe_instance_credit_specifications(self, rest):
         ids = _flag_values(rest, "--instance-ids")
@@ -1876,7 +1884,42 @@ def test_cpu_exits_nonzero_until_the_last_full_bucket_is_published(stack, window
     fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points(*points)}
     got, lines = run(env, fake, "cpu", *window)
     assert got == rc, lines
-    assert any("no point yet for the last full 5-minute bucket" in line for line in lines) == (rc == 1)
+    assert any("no point yet for the bucket ending" in line for line in lines) == (rc == 1)
+
+
+def test_cpu_reads_only_the_grid_buckets_inside_an_off_minute_window(stack):
+    """12:03:19-12:18:19 queried from 12:03 put 12:15's point, which covers 12:15-12:20, in the
+    last bucket: CPU after --end in the figures."""
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points(
+        (0, 1.0, 1.0), (5, 40.0, 50.0), (10, 60.0, 70.0), (15, 99.0, 99.0), (20, 99.0, 99.0))}
+    fake.reset()
+    rc, lines = run(env, fake, "cpu", "--start", "2026-10-10T12:03:19Z", "--end", "2026-10-10T12:18:19Z")
+    assert rc == 0, lines
+    for a in fake.calls_to("cloudwatch", "get-metric-statistics"):
+        assert (_flag(a, "--start-time"), _flag(a, "--end-time")) == ("2026-10-10T12:05:00Z", "2026-10-10T12:15:00Z")
+    out = _kv(lines)
+    assert (out["grid_start"], out["grid_end"]) == ("2026-10-10T12:05:00Z", "2026-10-10T12:15:00Z")
+    assert {k: out[f"worker.CPUUtilization.{k}"] for k in ("points", "avg", "max", "last_at")} == {
+        "points": "2", "avg": "50", "max": "70", "last_at": "2026-10-10T12:10:00Z"}
+
+
+@pytest.mark.parametrize("window", [("--start", "2026-10-10T12:01:00Z", "--end", "2026-10-10T12:04:00Z"),
+                                    ("--start", "2026-10-10T12:06:00Z", "--end", "2026-10-10T12:14:59Z")])
+def test_cpu_refuses_a_window_with_no_whole_grid_bucket(stack, window, capsys):
+    env, fake, _ = stack
+    fake.reset()
+    assert run(env, fake, "cpu", *window)[0] == 2
+    assert "no whole 5-minute CloudWatch bucket" in capsys.readouterr().err
+    assert not fake.calls, "refused before any call"
+
+
+def test_cpu_accepts_a_window_of_exactly_one_grid_bucket(stack):
+    env, fake, _ = stack
+    fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points((5, 30.0, 40.0))}
+    rc, lines = run(env, fake, "cpu", "--start", "2026-10-10T12:04:59Z", "--end", "2026-10-10T12:10:00Z")
+    assert rc == 0, lines
+    assert _kv(lines)["worker.CPUUtilization.points"] == "1"
 
 
 def test_cpu_reads_a_released_worker_by_id(stack, capsys):
