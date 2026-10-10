@@ -285,6 +285,9 @@ research_append({
 })
 ```
 
+`blocked_by_conflict`: same structure — name the blocking conflict by id in
+`justification`, `not_reached: []`, `stop_criteria: null`.
+
 If the call returns `{ ok: false, errors }`, surface the errors and fix
 the offending field — do not blindly retry the same payload.
 
