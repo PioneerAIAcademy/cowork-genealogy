@@ -638,8 +638,9 @@ def test_write_prunes_the_annotation_sibling_too(tmp_path):
 
 
 def test_write_never_prunes_the_newest(tmp_path):
-    """check_runlogs rule 2 gates on a skill's latest run log; pruning must
-    never move which file that is."""
+    """check_runlogs rule 2 gates on the newest candidate a PR adds, or on the
+    skill's latest run log when it adds none; pruning must never move which file
+    that is."""
     for d in range(1, 10):
         _write_at(tmp_path, f"2026-07-{d:02d}_10-00-00")
     assert _candidates(tmp_path)[-1] == "v1_2026-07-09_10-00-00.json"
