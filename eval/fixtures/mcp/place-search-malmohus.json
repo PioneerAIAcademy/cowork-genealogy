@@ -1,0 +1,20 @@
+{
+  "tool": "place_search",
+  "description": "Malmöhus county, Sweden. Captured live 2026-10-07 for the elena-pre-register-birth scenario (issue #2251): v3_2026-10-07_16-40-45 called place_search('Malmöhus') with no fixture and the judge marked ut_research_plan_dth down for it. Response verbatim. Declared after the parish fixtures so their narrower predicates match first.",
+  "args": {
+    "placeName": "~Malm"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Malmöhus, Sweden",
+        "type": "County (Top level)",
+        "dateRange": "+1809/+1997",
+        "latitude": 55.75,
+        "longitude": 13.5,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Malm%C3%B6hus&focusedId=3412",
+        "wikipediaUrl": "https://sv.wikipedia.org/wiki/Malm%C3%B6hus_l%C3%A4n"
+      }
+    ]
+  }
+}

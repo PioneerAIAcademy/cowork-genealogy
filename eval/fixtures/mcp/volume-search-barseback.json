@@ -1,0 +1,332 @@
+{
+  "tool": "volume_search",
+  "description": "Barsebäck parish register volumes, 1670-1750, Religious. Captured live 2026-10-02 for the elena-pre-register-birth scenario (issue #2251, the death-record route to a pre-register birth). Response verbatim. Every volume is 0% name-indexed and not full-text searchable; coverage reaches back to 1648, so the Barsebäck register covers a c. 1680-1692 birth.",
+  "args": {
+    "standardPlace": "~Barseb"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Barsebäck, Harjager, Malmöhus, Sweden",
+      "startYear": 1670,
+      "endYear": 1750,
+      "recordTypeGroups": [
+        "Religious"
+      ]
+    },
+    "totalResults": 6,
+    "results": [
+      {
+        "imageGroupNumber": "004514824_002_M9S4-MF2",
+        "imageGroupPrefix": "004514824",
+        "imageCount": 257,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1825,
+            "endYear": 1835,
+            "dateRange": "1825-1835",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Hofterup, Harjager, Malmöhus, Sweden",
+            "startYear": 1825,
+            "endYear": 1835,
+            "dateRange": "1825-1835",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Hofterup, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1729,
+            "dateRange": "1696-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1729,
+            "dateRange": "1696-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004514824_001_M9S4-MFK",
+        "imageGroupPrefix": "004514824",
+        "imageCount": 258,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1825,
+            "endYear": 1835,
+            "dateRange": "1825-1835",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Hofterup, Harjager, Malmöhus, Sweden",
+            "startYear": 1825,
+            "endYear": 1835,
+            "dateRange": "1825-1835",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Hofterup, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1729,
+            "dateRange": "1696-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1729,
+            "dateRange": "1696-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004514824_003_M9S4-MFL",
+        "imageGroupPrefix": "004514824",
+        "imageCount": 28,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1825,
+            "endYear": 1835,
+            "dateRange": "1825-1835",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Hofterup, Harjager, Malmöhus, Sweden",
+            "startYear": 1825,
+            "endYear": 1835,
+            "dateRange": "1825-1835",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Hofterup, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1729,
+            "dateRange": "1696-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1696,
+            "endYear": 1729,
+            "dateRange": "1696-1729",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004514823_001_M9SW-1C2",
+        "imageGroupPrefix": "004514823",
+        "imageCount": 157,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1674,
+            "endYear": 1677,
+            "dateRange": "1674-1677",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1681,
+            "endYear": 1861,
+            "dateRange": "1681-1861",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1698,
+            "endYear": 1699,
+            "dateRange": "1698-1699",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1648,
+            "endYear": 1678,
+            "dateRange": "1648-1678",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1680,
+            "endYear": 1861,
+            "dateRange": "1680-1861",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1648,
+            "endYear": 1671,
+            "dateRange": "1648-1671",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004514823_003_M9SW-1CG",
+        "imageGroupPrefix": "004514823",
+        "imageCount": 164,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1674,
+            "endYear": 1677,
+            "dateRange": "1674-1677",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1681,
+            "endYear": 1861,
+            "dateRange": "1681-1861",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1698,
+            "endYear": 1699,
+            "dateRange": "1698-1699",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1648,
+            "endYear": 1678,
+            "dateRange": "1648-1678",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1680,
+            "endYear": 1861,
+            "dateRange": "1680-1861",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1648,
+            "endYear": 1671,
+            "dateRange": "1648-1671",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004514823_002_M9SW-1CL",
+        "imageGroupPrefix": "004514823",
+        "imageCount": 428,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": false,
+        "languages": [
+          "sv"
+        ],
+        "coverages": [
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1674,
+            "endYear": 1677,
+            "dateRange": "1674-1677",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1681,
+            "endYear": 1861,
+            "dateRange": "1681-1861",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1698,
+            "endYear": 1699,
+            "dateRange": "1698-1699",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1648,
+            "endYear": 1678,
+            "dateRange": "1648-1678",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1680,
+            "endYear": 1861,
+            "dateRange": "1680-1861",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          },
+          {
+            "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+            "startYear": 1648,
+            "endYear": 1671,
+            "dateRange": "1648-1671",
+            "recordType": "Church records",
+            "recordTypeConceptId": 123402
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "Vélez-Málaga, Spain. Captured live 2026-10-02 for the garcia-romero-compound-surname scenario (issue #2251, the {Country}_Naming_Customs pre-work fetch). Response verbatim.",
+  "args": {
+    "placeName": "~laga"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Vélez-Málaga, Málaga, Andalusia, Spain",
+        "type": "Municipality",
+        "latitude": 36.78133,
+        "longitude": -4.10425,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=V%C3%A9lez-M%C3%A1laga&focusedId=8152045",
+        "wikipediaUrl": "https://es.wikipedia.org/wiki/V%C3%A9lez-M%C3%A1laga"
+      }
+    ]
+  }
+}

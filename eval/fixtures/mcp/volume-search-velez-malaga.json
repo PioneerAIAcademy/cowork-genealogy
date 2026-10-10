@@ -1,0 +1,249 @@
+{
+  "tool": "volume_search",
+  "description": "Vélez-Málaga volumes, 1815-1860. Captured live 2026-10-02 for the garcia-romero-compound-surname scenario (issue #2251, the {Country}_Naming_Customs pre-work fetch). Response verbatim. Santa María parish registers 1837 onward are full-text searchable; a 1841-1845 births volume is 96% name-indexed.",
+  "args": {
+    "standardPlace": "~laga"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Vélez-Málaga, Málaga, Andalusia, Spain",
+      "startYear": 1815,
+      "endYear": 1860
+    },
+    "totalResults": 10,
+    "results": [
+      {
+        "imageGroupNumber": "004104131_002_M987-GTT",
+        "imageGroupPrefix": "004104131",
+        "imageCount": 647,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Santa María, Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1842,
+            "endYear": 1848,
+            "dateRange": "1842–1848",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Santa María, Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1842,
+            "endYear": 1848,
+            "dateRange": "1842–1848",
+            "recordType": "Baptism Records",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "place": "Santa María, Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1842,
+            "endYear": 1848,
+            "dateRange": "1842–1848",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004104131_001_M987-GTY",
+        "imageGroupPrefix": "004104131",
+        "imageCount": 438,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Santa María, Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1837,
+            "endYear": 1895,
+            "dateRange": "1837–1895",
+            "recordType": "Religious Death Records",
+            "recordTypeConceptId": 127576
+          },
+          {
+            "place": "Santa María, Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1837,
+            "endYear": 1895,
+            "dateRange": "1837–1895",
+            "recordType": "Baptism Records",
+            "recordTypeConceptId": 103612
+          },
+          {
+            "place": "Santa María, Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1837,
+            "endYear": 1895,
+            "dateRange": "1837–1895",
+            "recordType": "Religious Marriage Records",
+            "recordTypeConceptId": 127577
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216391_001_M9ZD-F7F",
+        "imageGroupPrefix": "008216391",
+        "imageCount": 494,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1815,
+            "endYear": 1911,
+            "dateRange": "1815–1911",
+            "recordType": "Orphans and orphanages",
+            "recordTypeConceptId": 124197
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216391_003_M9ZD-F7N",
+        "imageGroupPrefix": "008216391",
+        "imageCount": 124,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1852,
+            "endYear": 1852,
+            "dateRange": "1852",
+            "recordType": "Orphans and orphanages",
+            "recordTypeConceptId": 124197
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216391_002_M9ZD-F7X",
+        "imageGroupPrefix": "008216391",
+        "imageCount": 176,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1857,
+            "endYear": 1857,
+            "dateRange": "1857",
+            "recordType": "Orphans and orphanages",
+            "recordTypeConceptId": 124197
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216392_003_M9ZD-FN1",
+        "imageGroupPrefix": "008216392",
+        "imageCount": 355,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1858,
+            "endYear": 1860,
+            "dateRange": "1858–1860",
+            "recordType": "Orphans and orphanages",
+            "recordTypeConceptId": 124197
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216392_002_M9ZD-FNB",
+        "imageGroupPrefix": "008216392",
+        "imageCount": 359,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1854,
+            "endYear": 1857,
+            "dateRange": "1854–1857",
+            "recordType": "Orphans and orphanages",
+            "recordTypeConceptId": 124197
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216392_001_M9ZD-FNY",
+        "imageGroupPrefix": "008216392",
+        "imageCount": 406,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1815,
+            "endYear": 1913,
+            "dateRange": "1815–1913",
+            "recordType": "Orphans and orphanages",
+            "recordTypeConceptId": 124197
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "008216233_005_M9ZZ-4DD",
+        "imageGroupPrefix": "008216233",
+        "imageCount": 160,
+        "recordSearchablePercent": 0,
+        "fulltextSearchable": true,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1853,
+            "endYear": 1861,
+            "dateRange": "1853-1861",
+            "recordType": "Death Records",
+            "recordTypeConceptId": 104898
+          }
+        ]
+      },
+      {
+        "imageGroupNumber": "004458370",
+        "imageGroupPrefix": "004458370",
+        "imageCount": 699,
+        "recordSearchablePercent": 96,
+        "fulltextSearchable": false,
+        "languages": [
+          "es"
+        ],
+        "coverages": [
+          {
+            "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+            "startYear": 1841,
+            "endYear": 1845,
+            "dateRange": "1841-1845",
+            "recordType": "Religious Birth Records",
+            "recordTypeConceptId": 127575
+          }
+        ]
+      }
+    ]
+  }
+}
