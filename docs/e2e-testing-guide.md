@@ -438,7 +438,10 @@ below.)
 The same gate also reds a run log whose `usage.betas` is non-empty — a run made
 with `--context-1m`. A 1M window is not corpus-comparable, so keep it in a
 sibling directory such as `eval/runlogs/_2491-exploratory-quarantine/` rather
-than under `eval/runlogs/e2e/`.
+than under `eval/runlogs/e2e/`. It reds one made with tool search off
+(`usage.tool_search` or `usage.tool_search_offered` false — `--no-tool-search`,
+which the harness already refuses to write under `eval/runlogs/e2e/`) for the
+same reason.
 
 ```
 /grade-e2e-run

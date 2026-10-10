@@ -34,6 +34,15 @@ with no exclusion, so such a run lands at maximum weight. Keep it in a sibling
 directory outside ``eval/runlogs/e2e/``. Same AR scoping and same HEAD_SHA-tree
 read as the grading gate above.
 
+## Tool-search-off gate (BLOCKING)
+
+A run log added or renamed into ``eval/runlogs/e2e/`` whose flat
+``usage.tool_search`` or ``usage.tool_search_offered`` is ``False`` ran with
+every tool schema loaded up front (``--no-tool-search``, or an inherited
+``CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`` that turned an "on" run off). Its
+context size, cache figures and ToolSearch count are not the corpus's. Same AR
+scoping and HEAD_SHA-tree read as the two gates above.
+
 ## Unresolved-draft check (WARN only)
 
 A `genre: "record-hint"` fixture ships as a draft: its README carries
@@ -387,6 +396,51 @@ def check_added_runlogs_not_1m(added: list[Path], head: str) -> list[str]:
             "eval/runlogs/e2e/. A 1M window changes the compaction count and the "
             "cache-gap structure, so the run is not comparable to the corpus and "
             "would skew every windowed report at maximum weight. Keep it in "
+            f"{QUARANTINE_HINT}."
+        )
+    return violations
+
+
+def check_added_runlogs_tool_search_on(added: list[Path], head: str) -> list[str]:
+    """Blocking: a PR-added-or-renamed run log made with tool search off.
+
+    `--no-tool-search` writes `usage.tool_search: false`; the init `tools` list
+    without ToolSearch writes `usage.tool_search_offered: false`. Either one
+    means every schema was loaded up front, so the run's prefix, cache reads and
+    ToolSearch count are not the corpus's. The second catches a run that asked
+    for tool search and was turned off underneath it (an inherited
+    `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`).
+
+    FLAT keys, beside `betas`: NOT `usage.usage.*`, the nested SDK token block.
+
+    Strict `is False`. Absent (every run committed before the fields existed)
+    and `None` (an init with no `tools` list) pass — a truthiness test would
+    reject the whole corpus.
+
+    Cannot catch a run the CLI's per-model gate turned off: that run's init
+    list still offers ToolSearch, so both fields read True. Only the first main
+    call's context size shows it.
+    """
+    violations: list[str] = []
+    for rel in added:
+        log = _read_at_head(head, rel)
+        if not isinstance(log, dict):
+            continue
+        usage = log.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        off = [
+            key for key in ("tool_search", "tool_search_offered")
+            if usage.get(key) is False
+        ]
+        if not off:
+            continue
+        violations.append(
+            f"run log '{rel}' was made with tool search off "
+            f"({', '.join(f'usage.{k} = false' for k in off)}) and must not be "
+            "committed under eval/runlogs/e2e/. With every tool schema loaded up "
+            "front its context size, cache figures and ToolSearch count are not "
+            "comparable to the corpus. Keep it in "
             f"{QUARANTINE_HINT}."
         )
     return violations
@@ -925,6 +979,7 @@ def main() -> int:
     try:
         grade_violations = check_added_runlogs_graded(ar_runlogs, head)
         beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
+        tool_search_violations = check_added_runlogs_tool_search_on(ar_runlogs, head)
         credential_violations = check_added_runlogs_no_credentials(arm_runlogs, head)
     except GateUnavailable as exc:
         print(f"::error::{exc}")
@@ -952,6 +1007,14 @@ def main() -> int:
         for v in beta_violations:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
+    if tool_search_violations:
+        print(
+            "E2E tool-search gate — run logs made with tool search off:",
+            file=sys.stderr,
+        )
+        for v in tool_search_violations:
+            print(f"::error::{v}")
+            print(f"  - {v}", file=sys.stderr)
     if credential_violations:
         print(
             "E2E credential gate — run logs carrying a live secret:",
@@ -960,7 +1023,12 @@ def main() -> int:
         for v in credential_violations:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
-    if grade_violations or beta_violations or credential_violations:
+    if (
+        grade_violations
+        or beta_violations
+        or tool_search_violations
+        or credential_violations
+    ):
         return 1
 
     # --- Annotation structural validation (blocking on PR-added/modified, warn corpus) —

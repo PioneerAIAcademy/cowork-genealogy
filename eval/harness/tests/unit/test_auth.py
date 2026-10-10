@@ -89,3 +89,19 @@ def test_env_for_sdk_subscription_mode_suppresses_key_even_if_present():
         skill_runner_mode="subscription", api_key="sk-x", detail="x"
     )
     assert auth.env_for_sdk(cfg) == {"ENABLE_TOOL_SEARCH": "true", "ANTHROPIC_API_KEY": ""}
+
+
+@pytest.mark.parametrize("mode, key", [("subscription", None), ("api_key", "sk-x")])
+def test_env_for_sdk_tool_search_false_turns_it_off_and_changes_nothing_else(mode, key):
+    """`--no-tool-search` reaches the CLI as the FALSY "false" (an unset
+    variable would still mean ON). The three equality tests above pin the
+    default; this pins that the switch moves exactly one key."""
+    cfg = auth.AuthConfig(skill_runner_mode=mode, api_key=key, detail="x")
+    off = auth.env_for_sdk(cfg, tool_search=False)
+    on = auth.env_for_sdk(cfg)
+    assert off["ENABLE_TOOL_SEARCH"] == "false"
+    assert on["ENABLE_TOOL_SEARCH"] == "true"
+    assert set(off) == set(on)
+    assert {k: v for k, v in off.items() if k != "ENABLE_TOOL_SEARCH"} == {
+        k: v for k, v in on.items() if k != "ENABLE_TOOL_SEARCH"
+    }

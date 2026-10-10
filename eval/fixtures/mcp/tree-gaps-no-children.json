@@ -1,0 +1,53 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a couple with no children. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "no_children",
+        "personId": "TGAP-AUN",
+        "name": "Ruth Ashby",
+        "lifespan": "1880-1949",
+        "generation": 1,
+        "detail": "A married couple with no children in the tree.",
+        "yearRange": {
+          "start": 1906,
+          "end": 1925
+        },
+        "place": "Dayton, Montgomery, Ohio, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1910,
+            1920
+          ],
+          "placeLevel": "locality"
+        },
+        "spouseId": "TGAP-AUS",
+        "spouseName": "Frank Ellery"
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 40,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}
