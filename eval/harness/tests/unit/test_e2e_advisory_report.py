@@ -1,8 +1,8 @@
 """Unit tests for the advisory return-field detector (issue #3199).
 
-The behaviour worth pinning is the five-state partition under the corpus's real
+The behaviour worth pinning is the four-state partition under the corpus's real
 shapes: the two response envelopes, the prefixed tool names, the flat-and-`ops`
-arg forms, and the fourth `not-observable` state that must never collapse into
+arg forms, and the `not-observable` state that must never collapse into
 `condition-never-held`. Each test builds a synthetic run on disk and reads it
 back through `scan`, the same entry point the report uses.
 
@@ -336,6 +336,19 @@ def test_non_dict_ops_entry_does_not_crash(tmp_path):
     calls = [
         _log_resp(fired, as_text_block=False),
         {"tool": "mcp__genealogy__research_append", "args": {"ops": ["oops", {"section": "assertions"}]}},
+    ]
+    rows = scan([_write_run(tmp_path, calls)]).rows
+    assert _states(rows, "log-without-persistence")[ACTED] == 1
+
+
+def test_non_dict_args_does_not_crash(tmp_path):
+    # A malformed `args` (a string, not an object) must be skipped, not crash —
+    # the other half of `_as_dict` that the ops test does not reach.
+    fired = {"ok": True, "validation": {"valid": False, "warnings": [_LOG_WARN]}}
+    calls = [
+        _log_resp(fired, as_text_block=False),
+        {"tool": "mcp__genealogy__research_append", "args": "oops-not-a-dict"},
+        {"tool": "mcp__genealogy__research_append", "args": {"ops": [{"section": "assertions"}]}},
     ]
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert _states(rows, "log-without-persistence")[ACTED] == 1
