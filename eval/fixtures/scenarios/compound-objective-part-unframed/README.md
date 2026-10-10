@@ -19,8 +19,8 @@ already done.
 ## Source and carve
 
 Mined from a genealogist's Cowork project (`puzzle3-mhgk`, 2026-10-09), run on an
-engine older than `main`. **This carve is a best guess at the state the router saw
-at the decision point. Verify it before committing.** Changes from the project as
+engine older than `main`. This carve reconstructs the state the router saw at the
+decision point; it is not a snapshot of the project. Changes from the project as
 found:
 
 - **Added** `ev_001` and its sidecar under `evaluations/`, a `looks_solid`
@@ -29,14 +29,25 @@ found:
 - **Dropped** `log_005` and `log_007`, positive reads that had no assertions, and
   `log_010` with its four FAN assertions (`a_017`–`a_020`, unlinked Turnbow men
   with no tree person). Each would trip an earlier routing row (record-extraction
-  or person-evidence) before the decision under test.
-- **Migrated** to the current schema: the retired pre-#2524 field, `"direct"` on
-  every assertion, → `record_basis: "stated"`, and `ps_001.shortfall: "gap"`, because the proof lists reachable
-  original census images it did not search.
+  or person-evidence) before the decision under test. What cited them went too:
+  `ps_001`'s footnotes 9 and 10 (the 1850 Turnbow households, from `log_010`) and
+  the sentences that cited them, tree sources `S10` and `S11` (the same two
+  households), and `log_006`'s pointer to `log_007`.
+- **Migrated** to the current schema: the retired pre-#2524 field
+  `evidence_type: "direct"` on every assertion → `record_basis: "stated"`, and
+  `ps_001.shortfall: "gap"`, because the proof lists reachable original census
+  images it did not search.
 - **Trimmed** each `results/` sidecar to the records the kept assertions cite.
-  `log_011`, a nil search, keeps its first three results.
+  `log_011`, a nil search, keeps its first three results. The local
+  `payload.query.projectPath` was removed from every sidecar.
 
 **PII:** names, dates and places are kept as they appear. Every subject was born
-before 1850, is long deceased and is public on FamilySearch, and the routing
-decision turns on the objective's own wording. Still review this before
-committing.
+no later than 1850 (the youngest, Nicy Barker, on 16 January 1850), is long
+deceased and is public on FamilySearch, and the routing decision turns on the
+objective's own wording.
+
+## Used by
+
+- `ut_research_utf` (`routes-to:question-selection`), the bug direction.
+- Its twin, `compound-objective-fully-covered`, holds this same state with an
+  objective that `q_001` fully answers, for the other direction.

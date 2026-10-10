@@ -1,14 +1,14 @@
 {
   "project": {
     "id": "rp_001",
-    "objective": "Determine the true birthplace of Elizabeth Mariah (Turnbow) Barker (b. ~1823), wife of Jonathan Barker — the 1850 census index says England while 1860-1880 censuses say Alabama — and confirm whether she was the daughter of Robert Franklin Turnbow and Sarah Canterberry.",
+    "objective": "Determine the true birthplace of Elizabeth Mariah (Turnbow) Barker (b. ~1823), wife of Jonathan Barker, and explain why the 1850 census index says England while the 1860-1880 censuses say Alabama.",
     "subject_person_ids": [
       "I1"
     ],
     "status": "active",
     "created": "2026-10-09",
     "updated": "2026-10-09",
-    "title": "Elizabeth Turnbow Barker's origins"
+    "title": "Elizabeth Turnbow Barker's birthplace"
   },
   "researcher_profile": {
     "experience_level": "intermediate",

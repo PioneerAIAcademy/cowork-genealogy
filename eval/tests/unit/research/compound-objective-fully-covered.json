@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_research_s59",
+    "skill": "research",
+    "name": "A fully covered compound objective proceeds to the completion write, not back to question-selection",
+    "type": "positive",
+    "description": "The other direction of ut_research_utf. The objective asks two things, the birthplace and why the 1850 index says England, and resolved q_001 with proof ps_001 answers both. Its proof-critique is on record and its fact is in the tree, so every gate on the 'all questions resolved' row holds and the router must hand off to proof-conclusion for the project.status write. The project still mentions parentage (q_001's rationale, ps_001's limits, the imported tree links), but the objective does not ask it. A router that routes to question-selection here has let the objective check fire on a finished project. Same state as compound-objective-part-unframed except the objective and title, so the pair isolates the objective wording.",
+    "tags": [
+      "compound-objective-fully-covered",
+      "re-invoke-safe",
+      "routing",
+      "routes-to:proof-conclusion"
+    ]
+  },
+  "input": {
+    "user_message": "Keep researching this project — drive the workflow forward.",
+    "scenario": "compound-objective-fully-covered"
+  },
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 1200,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-extraction",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill) asserts the router's first hand-off is proof-conclusion (an Agent spawn of `@plugin:proof-conclusion`), for the completion write. Do not grade the routing decision yourself.",
+    "The objective asks two things: where Elizabeth was born, and why the 1850 census index says England while the 1860-1880 censuses say Alabama. q_001 and its proof ps_001 answer both: Alabama, at probable, with the England reading traced to a one-row shift in the index (conflict c_001, resolved). Every part of the objective has a resolved question with a proof-critique verdict on record (ev_001, looks_solid), and the Alabama birth is in the tree.",
+    "Parentage is NOT part of this objective. q_001's rationale and ps_001's limits mention it, and the tree holds imported parent links, but a fact the project mentions is not a fact the objective asks for. Routing to question-selection to frame parentage is the failure this test guards against.",
+    "COMPLIANT: the router reads the objective against `questions[]`, finds every part covered, verifies the tree-encoding and mentor gates, and hands off to proof-conclusion for the completion write.",
+    "NON-COMPLIANT: the router treats parentage, or any other fact outside the objective, as an uncovered part and hands off to question-selection, or stops without heading for completion.",
+    "The run ends at the router's first hand-off by design (execution.stop_at_stub). The transcript ends at that hand-off, with no closing summary. Do not mark a summary as missing. Grade the narration up to the hand-off.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation is sound."
+  ],
+  "judge_reads_files": true
+}
