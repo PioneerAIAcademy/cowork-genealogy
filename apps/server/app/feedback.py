@@ -528,7 +528,7 @@ async def _session_log(
     transcripts are the reason: they live one level down at
     `{projects_dir}/{sid}/subagents/agent-*.jsonl` with a small
     `agent-*.meta.json` beside each, and two guardrail owner arms
-    (`proof_summaries`, `questions.exhaustive_declaration`) do their protected
+    (`proof_summaries`, `questions.search_stop`) do their protected
     write from inside one — invisible while a bundle carried only `{sid}.jsonl`
     (issue #1880).
 

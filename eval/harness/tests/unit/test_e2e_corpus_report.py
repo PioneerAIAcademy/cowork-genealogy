@@ -184,7 +184,7 @@ def _detector_messages() -> list[str]:
         *find_effects_without_invocation(
             [],
             {
-                "questions": [{"exhaustive_declaration": {"declared": True}}],
+                "questions": [{"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}}],
                 "person_evidence": [],
                 # `status`, NOT `resolution` — `_is_conflict_resolution_product`
                 # keys on `status == "resolved"` or a CONFLICT_ANALYSIS_FIELDS

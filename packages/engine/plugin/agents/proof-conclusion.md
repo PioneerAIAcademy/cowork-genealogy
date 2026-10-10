@@ -185,7 +185,7 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 - `research_query({ section: "hypotheses", questionId })` — related
   hypotheses.
 - `research_query({ section: "questions", questionId })` — the question
-  entry itself, including its `exhaustive_declaration`.
+  entry itself, including its `search_stop`.
 - `research_query({ section: "timelines", personId })` — the subject's
   timeline, if one exists.
 
@@ -316,7 +316,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 
 **Only when you concluded it.** If the preconditions gate blocked you and you recorded the attempt at `not_proved`, the question stays **open** — you were prevented from concluding, which is not the same as concluding that nothing is there. A `not_proved` summary written after an exhaustive search that came back empty DOES close its question; a `not_proved` summary written because a conflict blocked the correlation does not. Leave it open and route.
 
-**What you do NOT write on the question:** `exhaustive_declaration` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
+**What you do NOT write on the question:** `search_stop` (research-exhaustiveness owns it) and the question's structure or text (question-selection mints questions and owns them). Do not create a follow-on question either — name what would advance the work in §9 and let question-selection mint it.
 
 `resolution_assertion_ids` are the `a_` ids the conclusion rests on — the same ones in the summary's `supporting_assertion_ids`.
 
@@ -386,7 +386,7 @@ is already persisted.
 
 **On repeat invocation for the same question:** update the existing `ps_NNN` in place via `research_append({ section: "proof_summaries", op: "update", entryId: "ps_NNN", fields: { /* only the changed fields */ } })` — the tool shallow-merges just those fields, so pass ONLY what changed and do NOT regenerate the full entry or re-emit `narrative_markdown` when it is unchanged. Never append a second proof_summary for the same `question_id`. Keep the tier/form re-selection terse — do NOT produce a full old-vs-new before/after narrative comparison table. On tier downgrade to `not_proved`/`disproved`, remove the previously concluded fact/relationship from the tree via `tree_correct({ operation: "remove", ... })`.
 
-**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `exhaustive_declaration`, and never mint a question (see §7).
+**Never duplicate:** more than one `proof_summary` for the same `question_id`. Never write `search_stop`, and never mint a question (see §7).
 
 **Per-claim downgrade.** When a `claims[]` breakdown exists and just one claim's `proof_tier` is revised downward across the `probable` threshold on re-invocation (e.g. maternity from `probable` to `possible`), remove only that claim's relationship via `tree_correct` — independent of what happens to the other claim or to the scalar `tier`.
 
@@ -703,7 +703,11 @@ paragraphs of plain prose with **no label, heading or field name**:
    sure it is in plain words rather than by naming a tier. No identifiers,
    file names, tool names or field names; a person is a name, a record is
    what it is ("the 1885 county estate file").
-2. One sentence: what happens next, in plain language.
+2. One sentence: what happens next. When the question's
+   `search_stop.not_reached` list is non-empty, weave what was left on the
+   table into that same sentence in plain language — no field names or
+   identifiers ("digitized vital records for that county are not yet
+   online").
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

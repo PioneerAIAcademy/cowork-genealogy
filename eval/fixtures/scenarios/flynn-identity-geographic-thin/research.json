@@ -22,11 +22,12 @@
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     },
     {
@@ -47,8 +48,8 @@
         "a_002",
         "a_003"
       ],
-      "exhaustive_declaration": {
-        "declared": true,
+      "search_stop": {
+        "stopped_because": "question_answered",
         "justification": "Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). The search located the Thomas Flynn household (dwelling 84) and also surfaced a second Patrick Flynn of similar age in household 197 — which of the two is the subject is tracked as identity conflict c_002.",
         "log_entry_ids": [
           "log_001",
@@ -63,7 +64,8 @@
           "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
           "conflict_resolution": "No conflicts on locating candidate households; the two-candidate identity question is tracked as c_002.",
           "overturn_risk": "Open on identity — a second Patrick Flynn of similar age (household 197) exists in the county, and no later record from either household has been located; which is the subject is unresolved (c_002)."
-        }
+        },
+        "not_reached": []
       }
     }
   ],

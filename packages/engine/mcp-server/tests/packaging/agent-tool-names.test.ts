@@ -490,7 +490,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     ],
     denies: [],
   },
-  // The only caller permitted to set `exhaustive_declaration.declared: true`;
+  // The only caller permitted to set `search_stop.stopped_because` to a stop-gate value;
   // the plugin PreToolUse hook denies that claim to everyone else. Like
   // proof-conclusion it holds the BROAD research_append, and the hook's caller
   // check — not this list — is what restricts it.

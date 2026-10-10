@@ -52,6 +52,7 @@ import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
 import { resolveStandardPlace, countryConsistency } from "../utils/place-resolver.js";
+import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
 // check via research-append.ts (its original home) keep working unchanged.
@@ -1500,7 +1501,7 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
 /** Tier/exhaustiveness cross-field guardrail (docs/specs/guardrail-enforcement-spec.md
  *  §4.2). `proved`/`disproved` claim the research is reasonably exhaustive by
  *  definition, so either tier requires the referenced question's
- *  `exhaustive_declaration.declared` to already be `true` — checked against
+ *  `search_stop.stopped_because` to already be a stop-gate value — checked against
  *  `preCallExhaustiveDeclared`, a snapshot taken BEFORE this call's ops began
  *  applying, never the live-mutating `research` object. Checking the live
  *  object would let one batch call both declare exhaustiveness and consume it
@@ -1672,7 +1673,10 @@ const ASCII_EDGE_WHITESPACE_RE = /^[ \t\n\r\f\v]+|[ \t\n\r\f\v]+$/g;
 
 /** The stop-criterion text when it claims a conflict was resolved, else null. */
 function claimedConflictResolution(question: any): string | null {
-  const cr = question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
+  // New shape first; fall back to legacy for documents written before #2539.
+  const cr =
+    question?.search_stop?.stop_criteria?.conflict_resolution ??
+    question?.exhaustive_declaration?.stop_criteria?.conflict_resolution;
   if (typeof cr !== "string") return null;
   const crl = cr.replace(ASCII_EDGE_WHITESPACE_RE, "").toLowerCase();
   if (NO_CONFLICT_EXACT.has(crl)) return null;
@@ -1686,7 +1690,7 @@ const conflictKey = (value: unknown): string | null =>
   typeof value === "string" && value !== "" ? value.toLowerCase() : null;
 
 /** A `proof_summaries` write whose question's
- *  `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict
+ *  `search_stop.stop_criteria.conflict_resolution` claims a conflict
  *  was resolved, while `conflicts[]` holds no record of it — the resolution lives
  *  only in prose, the viewer's Conflicts section is blank, and every conflict
  *  gate here passes vacuously because each one iterates the array that was never
@@ -1762,7 +1766,7 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
       : "conflicts[] is empty";
   return [
     `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid}'s ` +
-      `exhaustive_declaration.stop_criteria.conflict_resolution says a conflict was resolved — ` +
+      `search_stop.stop_criteria.conflict_resolution says a conflict was resolved — ` +
       `"${quote}" — but conflicts[] holds no record of it (${missing}). A resolution that lives ` +
       `only in prose never reaches the Conflicts section, and no conflict gate can see it. ` +
       `Record the conflict and its resolution with conflict-resolution, the only writer of ` +
@@ -1861,41 +1865,43 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
-/** A question's `status` may not claim an exhaustiveness that its declaration
+/** A question's `status` may not claim an exhaustiveness that its stop decision
  *  does not carry.
  *
  *  **Why both spellings need gating.** `status: "exhaustive_declared"` is what
  *  every downstream reader treats as "GPS Component 1 is satisfied", and
- *  `exhaustive_declaration.declared` is the record that is supposed to back it.
+ *  `search_stop.stopped_because` being a gate value is the record that backs it.
  *  The harness has asserted one direction since the validator shipped —
- *  `test_declared_implies_exhaustive_declared_status`, declared ⟹ status — and
+ *  `test_declared_implies_exhaustive_declared_status`, gate value ⟹ status — and
  *  nothing has ever asserted the other, which is the direction that leaves a
- *  question looking finished with no declaration behind it.
+ *  question looking finished with no stop decision behind it.
  *
  *  **Reads the MERGED entry, deliberately.** `applyOne` shallow-merges `fields`
- *  before invariants run, so `entry.exhaustive_declaration` is "set by this op,
- *  or already true from an earlier call" — exactly the live read ADR-0011
+ *  before invariants run, so `entry.search_stop` is "set by this op,
+ *  or already gate-valued from an earlier call" — exactly the live read ADR-0011
  *  prescribes when the precondition is the same author's own prior step. A
  *  pre-call snapshot would refuse the 123 corpus writes that declare and set the
  *  status in one op, which is the common and correct shape.
  *
  *  **A zero-violation arm, and named as one.** Replayed over 157 committed e2e
  *  runs: 125 ops set this status and none of them would be refused. It ships as
- *  a cheap invariant closing a reachable hole — `exhaustive_declaration` is a
- *  required question property so it is always present, and 219 corpus writes set
- *  `declared: false` — not as a gate with demonstrated catches. Its test vector
- *  is synthetic for that reason. */
+ *  a cheap invariant closing a reachable hole — `search_stop` is a required
+ *  question property so it is always present, and corpus writes use non-gate
+ *  `stopped_because` values — not as a gate with demonstrated catches. Its test
+ *  vector is synthetic for that reason. */
 function declarationStatusInvariants(entry: any): string[] {
   if (entry?.status !== "exhaustive_declared") return [];
-  if (entry?.exhaustive_declaration?.declared === true) return [];
+  if (isStopGateSatisfied(entry)) return [];
+  const sb = getStoppedBecause(entry);
   return [
-    `status 'exhaustive_declared' requires exhaustive_declaration.declared === true on ` +
+    `status 'exhaustive_declared' requires search_stop.stopped_because to be a stop-gate value ` +
+      `('question_answered', 'record_exhausted', or 'nothing_further_reachable') on ` +
       `question '${entry?.id}', and it is ` +
-      `${entry?.exhaustive_declaration === undefined ? "absent" : JSON.stringify(entry?.exhaustive_declaration?.declared)}. ` +
+      `${sb === null ? "absent or null" : JSON.stringify(sb)}. ` +
       "That status is what every later reader treats as GPS Component 1 satisfied, so it may " +
-      "not stand without the declaration that backs it. Set both in this call, or leave the " +
-      "status alone: an honest early termination writes `declared: false` and keeps " +
-      "`status: \"in_progress\"`.",
+      "not stand without the stop decision that backs it. Set both in this call, or leave the " +
+      "status alone: an honest early termination sets stopped_because to a non-gate value and " +
+      "keeps `status: \"in_progress\"`.",
   ];
 }
 
@@ -1912,13 +1918,12 @@ function declarationStatusInvariants(entry: any): string[] {
  *  a researcher who believes the search is done has no way to say so. Issue
  *  #1821 owns that fix.
  *
- *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
- *  routes here deliberately before the plan is drained — "even with plan items
- *  still `planned` → research-exhaustiveness (consult the stop criteria before
- *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
- *  across 31 declarations that are all correct. The skill body's opening
- *  sentence is stricter than its own operative rule; the operative rule and the
- *  orchestrator agree, and this follows them.
+ *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
+ *  then. The prior ruling rested on a skip having nowhere to record its reason —
+ *  the same ruling deferred the skip-reason field to #1830 because it was a
+ *  schema change. `skip_category` is that field, so the premise lapsed and the
+ *  ruling with it. An undisposed `planned` item cannot be told from a forgotten
+ *  one, and a declaration resting on either is unfalsifiable.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -1935,33 +1940,68 @@ function declarationStatusInvariants(entry: any): string[] {
  *  looser reading that also counts unattached plans is indistinguishable today —
  *  it is pinned here and by a synthetic test rather than by the corpus. */
 function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
-  if (entry?.exhaustive_declaration?.declared !== true) return [];
+  if (!isStopGateSatisfied(entry)) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
-    (item) => item.itemId,
+  // Of `plan_item_status`'s four, the two that are not disposed. Derived from
+  // the enum rather than listed so a status added later blocks by default: this
+  // gate should not wave through an item whose disposition it has never heard
+  // of, and a block here is recoverable — the plan's owner disposes of it —
+  // where a silent pass is the exhaustive declaration #1830 exists to stop.
+  const blocking = activePlanItems(
+    preCallResearch,
+    (plan) => plan.question_id === qid,
+    [...VALIDATOR_ENUMS.plan_item_status].filter((s) => s !== "completed" && s !== "skipped"),
   );
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  const inFlight = blocking.filter((i) => i.status === "in_progress").map((i) => i.itemId);
+  const undisposed = blocking.filter((i) => i.status === "planned").map((i) => i.itemId);
+  if (inFlight.length === 0 && undisposed.length === 0) return [];
+
+  // Both arms name the blocking items and stop. Neither tells the caller to
+  // change a status: the exhaustiveness agent holds `questions` and no
+  // `plan_items` write, so a refusal naming an action it cannot take names a
+  // locked door. Disposal is the plan owner's, reached through research/SKILL.md's
+  // route for a refused declaration.
+  const clauses: string[] = [];
+  if (inFlight.length > 0) {
+    const ids = inFlight.sort().join(", ");
+    clauses.push(
+      `${ids} ${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+        "search has not finished, so the declaration would rest on work still running",
+    );
+  }
+  if (undisposed.length > 0) {
+    const ids = undisposed.sort().join(", ");
+    const one = undisposed.length === 1;
+    clauses.push(
+      `${ids} ${one ? "is" : "are"} still 'planned' — ${one ? "it has" : "they have"} not been ` +
+        `disposed of, so the record cannot say whether ${one ? "it was" : "they were"} answered ` +
+        `by what you already hold or simply never run (#1830)`,
+    );
+  }
   return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
+    `question '${qid}' cannot be declared exhaustive while ${clauses.join("; and ")}. ` +
+      `Report ${inFlight.length + undisposed.length === 1 ? "this item" : "these items"} as the ` +
+      "blocker and hand back; the plan's owner disposes of what is left, and declaring is " +
+      "available on the next call once the plan reflects it.",
   ];
 }
 
-/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
- *  the given snapshot. Shared by the two in-flight gates so which plans and
- *  items count as in flight is decided once. */
-function activePlanInProgressItems(
+/** Every item on an ACTIVE plan the predicate accepts whose status is in
+ *  `statuses`, read from the given snapshot. Shared by the in-flight gates so
+ *  which plans and items count is decided once.
+ *
+ *  `statuses` defaults to `["in_progress"]`, which is what the new-question
+ *  gate below asks for. `planCompleteInvariants` additionally passes `planned`
+ *  (issue #1830): an undisposed item leaves the record unable to say whether it
+ *  was answered by what is already held or simply never run. The two gates ask
+ *  different questions of the same plan, so the status set is the caller's. */
+function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
-): { itemId: string; questionId: unknown }[] {
-  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  statuses: readonly string[] = ["in_progress"],
+): { itemId: string; status: string; questionId: unknown }[] {
+  const result: { itemId: string; status: string; questionId: unknown }[] = [];
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -1977,12 +2017,12 @@ function activePlanInProgressItems(
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      if (typeof item?.id === "string" && statuses.includes(item?.status)) {
+        result.push({ itemId: item.id, status: item.status, questionId: plan.question_id });
       }
     }
   }
-  return inFlight;
+  return result;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -2016,7 +2056,7 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused = activePlanInProgressItems(
+  const refused = activePlanItems(
     preCallResearch,
     (plan) =>
       unresolvedQuestions.has(plan.question_id) &&
@@ -2107,7 +2147,7 @@ function planItemLogAttributionInvariants(
       `plan_items[${pid}]: an appended item cannot arrive 'completed' — its id is assigned in ` +
         `this call, so no log[] entry can name it. Don't add a plan item for a search that ` +
         `was already done: cite that search's log id in the question's ` +
-        `exhaustive_declaration.log_entry_ids when you declare. If the search has not been ` +
+        `search_stop.log_entry_ids when you declare. If the search has not been ` +
         `done yet, append the item as 'planned', then complete it after logging the search ` +
         `with research_log_append({ planItemId: "<its id>", ... }).`,
     ];
@@ -2166,10 +2206,11 @@ function proofSummaryInvariants(
   const declaredBeforeThisCall = preCallExhaustiveDeclared?.get(entry?.question_id) === true;
   if (!declaredBeforeThisCall) {
     return [
-      `tier '${tier}' requires question '${entry?.question_id}' to already carry ` +
-        `exhaustive_declaration.declared === true from BEFORE this call (a batch may not ` +
-        `declare exhaustiveness and consume it for a tier in the same call) — invoke ` +
-        `research-exhaustiveness first, in its own call.`,
+      `tier '${tier}' requires question '${entry?.question_id}' to already have its stop gate ` +
+        `satisfied (search_stop.stopped_because is 'question_answered', 'record_exhausted', or ` +
+        `'nothing_further_reachable') from BEFORE this call (a batch may not declare exhaustiveness ` +
+        `and consume it for a tier in the same call) — invoke research-exhaustiveness first, in its ` +
+        `own call.`,
     ];
   }
   return [];
@@ -3541,11 +3582,14 @@ function applyOne(
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
     // a no-op — never overwrite a settled GPS Component-1 record. Only when the
-    // declaration is the SOLE field being set, so a bundled update that also
+    // stop decision is the SOLE field being set, so a bundled update that also
     // changes other fields is not silently dropped.
     if (section === "questions" && Object.keys(op.fields).length === 1) {
-      const newEd = op.fields.exhaustive_declaration as any;
-      if (existing.exhaustive_declaration?.declared === true && newEd?.declared === true) {
+      const newSs = op.fields.search_stop;
+      if (
+        isStopGateSatisfied(existing) &&
+        isStopGateSatisfied(newSs !== undefined ? { search_stop: newSs } : op.fields)
+      ) {
         return {
           section,
           op: op.op,
@@ -3619,7 +3663,7 @@ function applyOne(
     // re-trigger either. `append` always sets both.
     const declarationTouchedThisOp =
       op.op === "append" ||
-      Object.prototype.hasOwnProperty.call(fields, "exhaustive_declaration");
+      Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
     }
@@ -3630,12 +3674,12 @@ function applyOne(
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
     // EITHER side, because the invariant couples two fields and an op that
     // touches one can break it without naming the other. Gating on `status`
-    // alone left the mirror-image hole open: an update lowering
-    // `exhaustive_declaration.declared` to false on a question already sitting
-    // at `status: "exhaustive_declared"` never ran the check and persisted
-    // exactly the state it forbids. That is not hypothetical — it is the
-    // agent's own documented re-invocation path, which writes `declared: false`
-    // and is told to leave `status` alone.
+    // alone left the mirror-image hole open: an update changing
+    // `search_stop.stopped_because` to a non-gate value on a question already
+    // sitting at `status: "exhaustive_declared"` never ran the check and
+    // persisted exactly the state it forbids. That is not hypothetical — it is
+    // the agent's own documented re-invocation path, which may change the stop
+    // reason and is told to leave `status` alone.
     if (statusTouchedThisOp || declarationTouchedThisOp) {
       invariantErrors.push(...declarationStatusInvariants(resultEntry));
     }
@@ -4967,7 +5011,7 @@ export async function researchAppend(
     const preCallExhaustiveDeclared = new Map<string, boolean>(
       (Array.isArray(research.questions) ? research.questions : []).map((q: any) => [
         q?.id,
-        q?.exhaustive_declaration?.declared === true,
+        isStopGateSatisfied(q),
       ]),
     );
     // Same discipline, for the mentor gate on project.status = "completed":

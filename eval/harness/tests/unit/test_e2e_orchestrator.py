@@ -810,7 +810,7 @@ def test_check_guardrail_compliance_aggregates_all_three_checks():
     research = {
         "questions": [{"id": "q1", "status": "resolved"}],
         "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
-        "exhaustive_declaration": {"declared": True},
+        "search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []},
     }
     violations = check_guardrail_compliance([], research, None)
     # The gps-mentor arm reads only research.json...

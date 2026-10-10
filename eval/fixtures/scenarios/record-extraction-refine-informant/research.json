@@ -2,7 +2,9 @@
   "project": {
     "id": "rp_001",
     "objective": "Confirm Thomas Doyle's birthplace and origins before the family's emigration to Pennsylvania",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-05-01",
     "updated": "2026-05-10"
@@ -20,11 +22,12 @@
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
@@ -77,7 +80,10 @@
       "record_role": "head",
       "fact_type": "name",
       "value": "Thomas Doyle",
-      "structured_value": { "given": "Thomas", "surname": "Doyle" },
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "Doyle"
+      },
       "date": null,
       "date_certainty": null,
       "place": null,
@@ -87,7 +93,9 @@
       "informant_bias_notes": "Initial extraction assumed Thomas answered the enumerator himself; the census names no informant.",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_002",
@@ -106,7 +114,9 @@
       "informant_bias_notes": "Initial extraction assumed Thomas answered the enumerator himself; the census names no informant.",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
   "person_evidence": [],

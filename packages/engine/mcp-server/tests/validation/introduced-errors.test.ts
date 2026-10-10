@@ -158,7 +158,7 @@ describe("validateIntroduced", () => {
     created: "2026-01-01",
     resolved: null,
     resolution_assertion_ids: [],
-    exhaustive_declaration: { declared: false, log_entry_ids: [], justification: null, stop_criteria: null },
+    search_stop: { stopped_because: null, log_entry_ids: [], justification: null, stop_criteria: null, not_reached: [] },
   });
 
   it("tolerates a plan that was ALREADY empty before the call", async () => {
@@ -281,8 +281,8 @@ describe("validateIntroduced — proof_summaries resolved_conflict_ids (V5)", ()
     created: "2026-01-01",
     resolved: null,
     resolution_assertion_ids: [],
-    exhaustive_declaration: {
-      declared: false, log_entry_ids: [], justification: null, stop_criteria: null,
+    search_stop: {
+      stopped_because: null, log_entry_ids: [], justification: null, stop_criteria: null, not_reached: [],
     },
   };
 

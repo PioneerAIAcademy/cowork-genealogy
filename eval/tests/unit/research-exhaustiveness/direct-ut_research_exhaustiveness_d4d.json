@@ -17,7 +17,7 @@
     ]
   },
   "input": {
-    "delegation": "Declare question q_001 exhaustive. The census and the death certificate both point to Thomas Flynn, so probate is unnecessary here — the evidence is already strong enough. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Declare question q_001 exhaustive. The census and the death certificate both point to Thomas Flynn, so probate is unnecessary here — the evidence is already strong enough. Appropriate outcome: a stop-gate `stopped_because` value (e.g. `question_answered`).\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-census-exhausted",
     "scenario_notes": null
   },

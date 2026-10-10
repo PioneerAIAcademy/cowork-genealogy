@@ -59,21 +59,34 @@ describe('QuestionsSection', () => {
     expect(screen.getByText(/question-selection step/)).toBeInTheDocument()
   })
 
-  // A question missing exhaustive_declaration and its array fields must not throw
+  // A question missing search_stop and array fields must not throw
   // (issue #1317: a partial item previously white-screened the viewer).
-  it('renders a question missing exhaustive_declaration and array fields without throwing', () => {
+  it('renders a question missing search_stop and array fields without throwing', () => {
     const malformed = {
       id: 'q_bad',
-      question: 'A question with no declaration or arrays',
+      question: 'A question with no stop decision or arrays',
       status: 'active',
       priority: 'high',
       selection_basis: 'lowest_hanging_fruit',
       rationale: 'test',
       created: '2026-01-01'
-      // no exhaustive_declaration, depends_on, unblocks, resolution_assertion_ids
+      // no search_stop, depends_on, unblocks, resolution_assertion_ids
     } as unknown as Question
     mockResearch({ questions: [malformed] })
     expect(() => render(<QuestionsSection />)).not.toThrow()
-    expect(screen.getByText('A question with no declaration or arrays')).toBeInTheDocument()
+    expect(screen.getByText('A question with no stop decision or arrays')).toBeInTheDocument()
+  })
+
+  // A legacy document with exhaustive_declaration.declared=true must still show the badge.
+  it('shows the badge for a legacy document with declared=true', () => {
+    const q = patrickFlynnResearch.questions.find((x) => x.id === 'q_002') as Question
+    const legacyQ = {
+      ...q,
+      search_stop: undefined,
+      exhaustive_declaration: { declared: true, stop_criteria: null }
+    } as unknown as Question
+    mockResearch({ questions: [legacyQ] })
+    render(<QuestionsSection />)
+    expect(screen.getByText('all reachable searched')).toBeInTheDocument()
   })
 })

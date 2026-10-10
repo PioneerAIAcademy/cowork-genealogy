@@ -19,7 +19,7 @@ Extends `flynn-census-exhausted` by adding completed negative searches of the 18
 - **`plans[pl_002].items`:** Adds `pli_007`–`pli_010` (1880 census, 1900 census, probate, church records — all completed), and **redefines `pli_006`**: in `flynn-census-exhausted` it is the probate item, here it is the 1870 census search. Probate is retained, renumbered to `pli_009` — it is not new here.
 - **`log`:** Adds `log_007`–`log_010` (1880 census, 1900 census, probate, church records — all negative), and **redefines `log_006`** from the probate negative to the 1870 census negative. 6 entries become 10.
 - **`timelines[t_001].gaps`:** Census-year events removed from `expected_events`; severity downgraded to `low` since those years have been searched
-- **`proof_summaries[ps_001].exhaustive_search_summary`:** Rewritten to name the 1870/1880/1900 census negatives alongside the probate (`log_009`) and church-record (`log_010`) negatives, so it lists the same searches as `questions[q_001].exhaustive_declaration.justification`. (`flynn-census-exhausted`'s summary names probate as `log_006`; here that search is `log_009`.)
+- **`proof_summaries[ps_001].exhaustive_search_summary`:** Rewritten to name the 1870/1880/1900 census negatives alongside the probate (`log_009`) and church-record (`log_010`) negatives, so it lists the same searches as `questions[q_001].search_stop.justification`. (`flynn-census-exhausted`'s summary names probate as `log_006`; here that search is `log_009`.)
 - **Also differs, incidentally to the FAN-pivot setup:** `assertions` 13 → 6, `person_evidence` 6 → 4, `hypotheses` 0 → 1 (h_001), `project.updated` 2026-05-04 → 2026-05-10.
 
 ## Used by

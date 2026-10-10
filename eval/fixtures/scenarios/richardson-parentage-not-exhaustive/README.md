@@ -1,7 +1,7 @@
 # richardson-parentage-not-exhaustive
 
 Pre-proof state of a parentage question where the research is **not yet
-reasonably exhaustive**: `questions[0].exhaustive_declaration.declared`
+reasonably exhaustive**: `questions[0].search_stop.stopped_because`
 is `false`, and several planned searches remain unexecuted in `plans`
 (including a census that could corroborate *or contradict* the
 parentage). The subject and both candidate parents (`I1` father, `I2`
@@ -14,7 +14,7 @@ tier `probable` (defensible, given non-exhaustive research) but wrote a
 `narrative_markdown` that overclaimed to *Proved* — it stated the case
 was "proved," that "all five components of the GPS are satisfied," and
 that "the research is reasonably exhaustive," directly contradicting the
-`exhaustive_declaration.declared: false` state and the open plan items.
+`search_stop.stopped_because: null` state and the open plan items.
 The test replays this state and checks that the new conclusion's
 narrative certainty **matches its assigned tier** — no "proved" /
 "reasonably exhaustive" language while research is not declared

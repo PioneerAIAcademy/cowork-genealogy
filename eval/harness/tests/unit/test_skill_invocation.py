@@ -112,7 +112,7 @@ def test_exhaustive_declaration_true_owned_by_research_exhaustiveness():
         "section": "questions",
         "op": "update",
         "entryId": "q_001",
-        "fields": {"exhaustive_declaration": {"declared": True}},
+        "fields": {"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
     }
     assert owning_skills("mcp__genealogy__research_append", args) == ["research-exhaustiveness"]
 
@@ -124,7 +124,7 @@ def test_questions_update_without_declaring_true_owns_nothing():
         "section": "questions",
         "op": "update",
         "entryId": "q_001",
-        "fields": {"exhaustive_declaration": {"declared": False}},
+        "fields": {"search_stop": {"stopped_because": None, "log_entry_ids": [], "stop_criteria": None, "not_reached": []}},
     }
     assert owning_skills("mcp__genealogy__research_append", args2) == []
 
@@ -339,7 +339,7 @@ def test_typed_spawn_predicate_strips_the_namespace_and_refuses_untyped():
     "research,arm",
     [
         ({"proof_summaries": [{"id": "ps_001"}]}, "proof-conclusion"),
-        ({"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}]}, "research-exhaustiveness"),
+        ({"questions": [{"id": "q_001", "search_stop": {"stopped_because": "question_answered", "log_entry_ids": [], "stop_criteria": None, "not_reached": []}}]}, "research-exhaustiveness"),
         ({"conflicts": [{"id": "c_001", "status": "resolved"}]}, "conflict-resolution"),
     ],
     ids=["proof-conclusion", "research-exhaustiveness", "conflict-resolution"],
@@ -438,7 +438,7 @@ def test_each_never_invoked_message_names_only_its_own_arm_and_classifies_there(
 
     research = {
         "proof_summaries": [{"id": "ps_001"}],
-        "questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}],
+        "questions": [{"id": "q_001", "search_stop": {"stopped_because": "question_answered", "log_entry_ids": [], "stop_criteria": None, "not_reached": []}}],
         "conflicts": [{"id": "c_001", "status": "resolved"}],
         "person_evidence": [],
     }
@@ -469,7 +469,7 @@ def test_no_violations_on_a_clean_run():
         _skill_call("conflict-resolution"),
     ]
     research = {
-        "questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}],
+        "questions": [{"id": "q_001", "search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}}],
         "proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "proved"}],
         "person_evidence": [{"id": "pe_001", "person_id": "I1"}],
         "conflicts": [{"id": "c_001", "status": "resolved"}],
@@ -479,7 +479,14 @@ def test_no_violations_on_a_clean_run():
 
 
 def test_flags_exhaustive_declaration_with_no_research_exhaustiveness_invocation():
-    research = {"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True}}]}
+    research = {"questions": [{"id": "q_001", "search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}}]}
+    violations = find_effects_without_invocation([], research, {})
+    assert any("research-exhaustiveness" in v for v in violations)
+
+
+def test_flags_legacy_exhaustive_declaration_with_no_research_exhaustiveness_invocation():
+    """Legacy shape (pre-#2539 run logs): exhaustive_declaration.declared: True."""
+    research = {"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True, "justification": "Three converging sources.", "log_entry_ids": ["log_001"]}}]}
     violations = find_effects_without_invocation([], research, {})
     assert any("research-exhaustiveness" in v for v in violations)
 
@@ -932,7 +939,7 @@ def _owned_write(skill, agent_id=_UNSET, agent_type=_UNSET, is_error=False):
                 "section": "questions",
                 "op": "update",
                 "entryId": "q_001",
-                "fields": {"exhaustive_declaration": {"declared": True}},
+                "fields": {"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
             },
             is_error=is_error,
             agent_id=agent_id,
@@ -1218,8 +1225,8 @@ def test_ogletree_children_hand_backfilled_regression():
     by matching each subagent's turn-by-turn tool sequence against the
     corresponding tool_calls slice in order:
       - subagents[11] (general-purpose, "Research exhaustiveness evaluation
-        for q_001") -> tool_calls[215:227]. Its exhaustive_declaration write
-        at 227 is declared=false, so owning_skills attributes it to nobody
+        for q_001") -> tool_calls[215:227]. Its search_stop write
+        at 227 has stopped_because=null, so owning_skills attributes it to nobody
         -- not part of the expected violation count.
       - subagents[12] (record-extractor, "Extract Louise C Barrett death
         cert") -> tool_calls[258:265]. Legitimate control case.
@@ -1591,7 +1598,7 @@ def test_citation_nulling_defensive_on_none_and_empty():
 
 # --- find_unpersisted_conflict_resolutions (issue #1317) ---------------------
 # The conflict-side sibling: a WRITTEN conclusion relies on a resolved conflict
-# (per its question's exhaustive_declaration.stop_criteria.conflict_resolution)
+# (per its question's search_stop.stop_criteria.conflict_resolution)
 # that conflicts[] holds no record of, so the resolution lives only in prose and
 # the viewer's Conflicts section stays blank. Gated on a proof_summaries entry.
 #
@@ -1618,8 +1625,11 @@ def _research_with_conflict_claim(*, conflict_resolution, conflicts=None, resolv
         "questions": [
             {
                 "id": "q_001",
-                "exhaustive_declaration": {
-                    "stop_criteria": {"conflict_resolution": conflict_resolution}
+                "search_stop": {
+                    "stopped_because": "question_answered",
+                    "log_entry_ids": [],
+                    "stop_criteria": {"conflict_resolution": conflict_resolution},
+                    "not_reached": [],
                 },
             }
         ],
@@ -1654,8 +1664,11 @@ def test_conflict_unpersisted_inert_without_a_proof_summary():
         "questions": [
             {
                 "id": "q_001",
-                "exhaustive_declaration": {
-                    "stop_criteria": {"conflict_resolution": "Conflict resolved."}
+                "search_stop": {
+                    "stopped_because": "question_answered",
+                    "log_entry_ids": [],
+                    "stop_criteria": {"conflict_resolution": "Conflict resolved."},
+                    "not_reached": [],
                 },
             }
         ],

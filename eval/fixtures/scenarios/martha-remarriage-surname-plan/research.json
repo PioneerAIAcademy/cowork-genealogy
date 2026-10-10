@@ -2,7 +2,9 @@
   "project": {
     "id": "rp_001",
     "objective": "Identify the maternal grandparents of Jimmie Jewel Neal (born 10 July 1884, Hillsboro, Hill County, Texas; died 7 March 1938, Carlsbad, Eddy County, New Mexico)",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-07-30",
     "updated": "2026-07-30"
@@ -21,15 +23,26 @@
       "priority": "high",
       "status": "resolved",
       "depends_on": [],
-      "unblocks": ["q_002"],
+      "unblocks": [
+        "q_002"
+      ],
       "created": "2026-07-30",
       "resolved": "2026-07-30",
-      "resolution_assertion_ids": ["a_001", "a_002", "a_003", "a_004"],
-      "exhaustive_declaration": {
-        "declared": false,
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
         "justification": null,
-        "log_entry_ids": ["log_001", "log_002"],
-        "stop_criteria": null
+        "log_entry_ids": [
+          "log_001",
+          "log_002"
+        ],
+        "stop_criteria": null,
+        "not_reached": []
       }
     },
     {
@@ -39,16 +52,19 @@
       "selection_basis": "objective_decomposition",
       "priority": "high",
       "status": "open",
-      "depends_on": ["q_001"],
+      "depends_on": [
+        "q_001"
+      ],
       "unblocks": [],
       "created": "2026-07-30",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
@@ -150,7 +166,9 @@
       "informant_bias_notes": "'Mattie' is a known nickname for Martha. 'Landham' is a widow's styling from a prior marriage that has not itself been found or dated.",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_002",
@@ -172,7 +190,9 @@
       "informant_bias_notes": null,
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_003",
@@ -194,7 +214,9 @@
       "informant_bias_notes": "Bride surname on a marriage record is the birth surname only if this was her first marriage — not yet established for a woman later known under at least two further married surnames (Neal, Hamby).",
       "record_basis": "stated",
       "log_entry_id": "log_002",
-      "extracted_for_question_ids": ["q_002"]
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
     },
     {
       "id": "a_004",
@@ -216,7 +238,9 @@
       "informant_bias_notes": null,
       "record_basis": "stated",
       "log_entry_id": "log_002",
-      "extracted_for_question_ids": ["q_002"]
+      "extracted_for_question_ids": [
+        "q_002"
+      ]
     }
   ],
   "person_evidence": [],
@@ -252,10 +276,26 @@
       ],
       "guide_markdown": "# Locality Guide: Blount County, Alabama (circa 1840-1880)\n\nNo civil vital registration before 1908. Probate, court, and land records are full-text searchable but not name-indexed for this period. Marriage records 1820-1888 are well indexed.",
       "pages_read": [
-        { "section": "home", "url": null, "found": false },
-        { "section": "getting_started", "url": null, "found": false },
-        { "section": "online_records", "url": null, "found": false },
-        { "section": "research_tips", "url": null, "found": false }
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
       ],
       "source": "locality-guide",
       "created": "2026-07-30"
@@ -294,10 +334,26 @@
       ],
       "guide_markdown": "# Locality Guide: Hill County and Smith County, Texas (circa 1855-1890)\n\nSmith County marriage volumes 1857-1889 are fully indexed and full-text searchable — well suited to searching for an earlier marriage under a different surname. Hill County probate is full-text searchable but not name-indexed. No civil vital registration before 1903.",
       "pages_read": [
-        { "section": "home", "url": null, "found": false },
-        { "section": "getting_started", "url": null, "found": false },
-        { "section": "online_records", "url": null, "found": false },
-        { "section": "research_tips", "url": null, "found": false }
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "online_records",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "research_tips",
+          "url": null,
+          "found": false
+        }
       ],
       "source": "locality-guide",
       "created": "2026-07-30"

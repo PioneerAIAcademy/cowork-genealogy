@@ -95,11 +95,12 @@ const EXAMPLES: Record<string, string> = {
   "created": "2026-07-18",
   "resolved": null,
   "resolution_assertion_ids": [],
-  "exhaustive_declaration": {
-    "declared": false,
+  "search_stop": {
+    "stopped_because": null,
     "justification": null,
     "log_entry_ids": [],
-    "stop_criteria": null
+    "stop_criteria": null,
+    "not_reached": []
   }
 }`,
 
@@ -292,7 +293,7 @@ export function exampleFor(
   section: string,
   op: "append" | "update" = "append",
   /** Field names the failing op actually named. When it includes
-   *  `exhaustive_declaration`, the `questions` update example teaches the
+   *  `search_stop`, the `questions` update example teaches the
    *  seven-key `stop_criteria` object instead of the generic skeleton.
    *
    *  Without this the declaring body went to EVERY failing `questions` update —
@@ -347,7 +348,7 @@ export function exampleFor(
     // nothing that teaches the seven-key object it is being asked for. The
     // `questions` APPEND example is no help either: it shows `stop_criteria:
     // null` on an undeclared question, which is the other legal shape.
-    if (section === "questions" && fieldsNamed.includes("exhaustive_declaration")) {
+    if (section === "questions" && fieldsNamed.includes("search_stop")) {
       return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "questions",
@@ -355,8 +356,8 @@ export function exampleFor(
   entryId: "<existing-q_-id>",
   fields: {
     status: "exhaustive_declared",
-    exhaustive_declaration: {
-      declared: true,
+    search_stop: {
+      stopped_because: "question_answered",
       justification: "Searched 1850/1860 censuses, death certificate, and probate. Three independent sources confirm parentage.",
       log_entry_ids: ["log_001", "log_002", "log_003"],
       stop_criteria: {
@@ -367,7 +368,8 @@ export function exampleFor(
         evidence_class: "1860 census (original, primary) and death certificate (original, direct).",
         conflict_resolution: "Birthplace conflict resolved per preponderance hierarchy.",
         overturn_risk: "Low. No unexamined record type likely to name a different father."
-      }
+      },
+      not_reached: []
     }
   }
 })`;
@@ -383,7 +385,7 @@ export function exampleFor(
   // A caller refused for writing an unrecognized/malformed `claims[]` entry
   // (#1711's per-claim tier breakdown) gets a worked body showing the shape,
   // rather than the base single-claim example below, which never mentions
-  // `claims` at all. Mirrors the `questions`+`exhaustive_declaration` branch
+  // `claims` at all. Mirrors the `questions`+`search_stop` branch
   // above: swap in a different worked body for the same section+op when a
   // specific field was named in the failing call. `tier` here is the
   // stronger of the two per-claim tiers (probable, over maternity's

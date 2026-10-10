@@ -344,11 +344,11 @@ def test_first_question_depends_on_empty(before_state, after_state, test):
     )
 
 
-# --- Tag-gated: new question's exhaustive_declaration is unstarted ----
+# --- Tag-gated: new question's search_stop is unstarted ----
 
 def test_new_question_exhaustive_declaration_unstarted(before_state, after_state, test):
-    """Tag-gated: a freshly added question's exhaustive_declaration must
-    be unstarted — declared=False, log_entry_ids=[], stop_criteria=None.
+    """Tag-gated: a freshly added question's search_stop must
+    be unstarted — stopped_because=null, log_entry_ids=[], stop_criteria=None.
     Declaring exhaustiveness at creation time is structurally wrong:
     the question hasn't been researched yet."""
     if "new-question-exhaustive-declaration-unstarted" not in test.get("tags", []):
@@ -359,25 +359,26 @@ def test_new_question_exhaustive_declaration_unstarted(before_state, after_state
         pytest.skip("missing research.json for diff")
     new = _new_questions(before, after)
     assert new, "expected a new question; none was added"
+    _STOP_GATE_VALUES = frozenset({"question_answered", "record_exhausted", "nothing_further_reachable"})
     errors: list[str] = []
     for q in new:
-        ed = q.get("exhaustive_declaration") or {}
-        if ed.get("declared") is not False:
+        ss = q.get("search_stop") or {}
+        if ss.get("stopped_because") in _STOP_GATE_VALUES:
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.declared="
-                f"{ed.get('declared')}; expected False"
+                f"question {q.get('id')}.search_stop.stopped_because="
+                f"{ss.get('stopped_because')!r}; expected null (not a stop-gate value)"
             )
-        if ed.get("log_entry_ids") not in (None, []):
+        if ss.get("log_entry_ids") not in (None, []):
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.log_entry_ids="
-                f"{ed.get('log_entry_ids')}; expected []"
+                f"question {q.get('id')}.search_stop.log_entry_ids="
+                f"{ss.get('log_entry_ids')}; expected []"
             )
-        if ed.get("stop_criteria") is not None:
+        if ss.get("stop_criteria") is not None:
             errors.append(
-                f"question {q.get('id')}.exhaustive_declaration.stop_criteria="
-                f"{ed.get('stop_criteria')}; expected None"
+                f"question {q.get('id')}.search_stop.stop_criteria="
+                f"{ss.get('stop_criteria')}; expected None"
             )
-    assert not errors, "Unstarted-exhaustive-declaration violations:\n  - " + "\n  - ".join(errors)
+    assert not errors, "Unstarted-search-stop violations:\n  - " + "\n  - ".join(errors)
 
 
 # --- Tag-gated: disputed assignment is tested, not confirmed (#1471) ---

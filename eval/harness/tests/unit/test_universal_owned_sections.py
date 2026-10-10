@@ -203,7 +203,7 @@ def test_every_denial_arm_produces_a_reason_the_validator_can_report():
     arms = [
         ("proof_summaries", "routed", "record-extractor"),
         ("conflicts", "out_of_lane", "proof-conclusion"),
-        ("questions.exhaustive_declaration", "declaration", "proof-conclusion"),
+        ("questions.search_stop", "declaration", "proof-conclusion"),
         ("project.status", "owned_field", ""),
     ]
     for denied in arms:

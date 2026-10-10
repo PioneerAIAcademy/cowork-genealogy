@@ -117,10 +117,13 @@ def _concluded_claiming_a_resolution(conflicts):
         "questions": [
             {
                 "id": "q_001",
-                "exhaustive_declaration": {
+                "search_stop": {
+                    "stopped_because": "question_answered",
+                    "log_entry_ids": [],
                     "stop_criteria": {
                         "conflict_resolution": "Birth-year conflict resolved -- census age estimated."
-                    }
+                    },
+                    "not_reached": [],
                 },
             }
         ],

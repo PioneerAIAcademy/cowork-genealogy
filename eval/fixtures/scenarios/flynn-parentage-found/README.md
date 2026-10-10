@@ -12,7 +12,7 @@ Patrick Flynn parentage research — the father (Thomas Flynn) has been confirme
 
 ## Differs from `mid-research-flynn`
 
-- **`questions[q_001]`:** Rescoped to "Who was Patrick Flynn's father?" (not "parents"), `status: "resolved"`, `resolution_assertion_ids` populated, `exhaustive_declaration.declared: true`
+- **`questions[q_001]`:** Rescoped to "Who was Patrick Flynn's father?" (not "parents"), `status: "resolved"`, `resolution_assertion_ids` populated, `search_stop.stopped_because: "question_answered"`
 - **`plans[pl_002]`:** `status: "completed"`, probate item (`pli_006`) added and completed (negative result)
 - **`log`:** Adds `log_006` — probate search, negative outcome
 - **`proof_summaries[ps_001].tier`:** `proved` (three independent sources, conflict resolved, probate searched)
