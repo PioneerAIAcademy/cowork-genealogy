@@ -21,6 +21,7 @@ A fake ``aws`` runner stands in for the CLI: no network, no AWS. Plan: the U13 P
 
 from __future__ import annotations
 
+import datetime as dt
 import importlib.util
 import json
 import re
@@ -246,9 +247,15 @@ class FakeAws:
         return {"InstanceTypeOfferings": [{"Location": az} for az in sorted(azs)]}
 
     def cloudwatch_get_metric_statistics(self, rest):
+        # As CloudWatch answered on 2026-10-10: buckets run from --start-time's minute, and a
+        # bucket crossing --end-time is not returned.
         dim = _flag(rest, "--dimensions").split("Value=", 1)[1]
+        at = lambda s: dt.datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
+        first = at(_flag(rest, "--start-time")).replace(second=0)
+        end, period = at(_flag(rest, "--end-time")), dt.timedelta(seconds=int(_flag(rest, "--period")))
+        points = self.metrics.get((_flag(rest, "--namespace"), _flag(rest, "--metric-name"), dim), [])
         return {"Label": _flag(rest, "--metric-name"),
-                "Datapoints": self.metrics.get((_flag(rest, "--namespace"), _flag(rest, "--metric-name"), dim), [])}
+                "Datapoints": [p for p in points if first <= at(p["Timestamp"]) and at(p["Timestamp"]) + period <= end]}
 
     def ec2_describe_instance_credit_specifications(self, rest):
         ids = _flag_values(rest, "--instance-ids")
@@ -1852,18 +1859,24 @@ def test_cpu_reads_cloudwatch_and_credit_mode(stack):
     assert out["worker.CPUSurplusCreditsCharged"] == "no_data" and out["rds.CPUCreditBalance"] == "no_data"
 
 
-@pytest.mark.parametrize("points, end_flag, rc", [
-    (((0, 40.0, 70.0), (25, 60.0, 90.0)), True, 0),  # 12:25's point reaches 12:30
-    (((0, 40.0, 70.0), (20, 60.0, 90.0)), True, 1),  # the last one ends at 12:25: not yet
-    ((), True, 1),
-    ((), False, 0),  # no --end: a credit-mode and balance read, never "not yet"
+# The window bounds.py prints: seconds from Postgres now(), so off CloudWatch's bucket grid.
+OFF_GRID = ("--start", "2026-10-10T12:00:19Z", "--end", "2026-10-10T12:15:19Z")
+
+
+@pytest.mark.parametrize("window, points, rc", [
+    (WINDOW, ((0, 40.0, 70.0), (25, 60.0, 90.0)), 0),  # 12:25's bucket is the last full one
+    (WINDOW, ((0, 40.0, 70.0), (20, 60.0, 90.0)), 1),  # 12:25's is not published yet
+    (OFF_GRID, ((0, 40.0, 70.0), (5, 50.0, 80.0), (10, 60.0, 90.0)), 0),  # 12:10-12:15 is the last full one
+    (OFF_GRID, ((0, 40.0, 70.0), (5, 50.0, 80.0)), 1),  # 12:10's is not published yet
+    (WINDOW, (), 1),
+    ((), (), 0),  # no --end: a credit-mode and balance read, never "not yet"
 ])
-def test_cpu_exits_nonzero_until_a_worker_point_reaches_the_end(stack, points, end_flag, rc):
+def test_cpu_exits_nonzero_until_the_last_full_bucket_is_published(stack, window, points, rc):
     env, fake, _ = stack
     fake.metrics = {("AWS/EC2", "CPUUtilization", WORKER_I): _points(*points)}
-    got, lines = run(env, fake, "cpu", *(WINDOW if end_flag else ()))
+    got, lines = run(env, fake, "cpu", *window)
     assert got == rc, lines
-    assert any("no data point reaches --end" in line for line in lines) == (rc == 1)
+    assert any("no point yet for the last full 5-minute bucket" in line for line in lines) == (rc == 1)
 
 
 def test_cpu_reads_a_released_worker_by_id(stack, capsys):

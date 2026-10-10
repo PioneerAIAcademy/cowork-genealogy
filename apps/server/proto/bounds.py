@@ -39,7 +39,8 @@ subagent's halt stop the parent?). Billed, except ``precli``.
                    beyond the driver recovering
   probe_resume     the worker killed --kill-after-s (5-20) after the first subagent row
                    (seeded): the resume, and whether session_entries keeps the model's
-                   Agent input ``run_in_background``
+                   Agent input ``run_in_background``; a turn still open at --deadline-s is
+                   Stopped and judged at that close
 
 Injected usage is one ``session_entries`` row under project_key ``__u23_probe__`` (the meter
 counts every project_key; the SDK store loads only its own), deleted at case end; a turn
@@ -1133,18 +1134,26 @@ def case_probe_resume(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     finally:
         TARGET.signal("worker", "start")
     rep.figures.update({"kill_after_s": ctx.kill_after_s, "killed": killed})
-    finished = done(ctx, client, rep, tid, label="resumed")
+    try:
+        rep.figures["resumed_wall_s"] = round(demo.wait_turn_done(client, ctx.base, rep.session_id, tid,
+                                                                  ctx.deadline_s), 1)
+        rep.figures["resumed_closed_on_its_own"] = True
+    except TimeoutError:
+        # The seeded research has no end of its own (U13, 2026-10-10): judge the resume at Stop.
+        rep.figures["resumed_closed_on_its_own"] = False
+        running, _held = settle(ctx, client, rep.session_id)
+        rep.checks.append(("probe_resume: the turn open at --deadline-s closed on Stop", not running,
+                           f"running={running}"))
     rep.evidence.append(turn.render_evidence(turn.gather_evidence(ctx.dsn, rep.session_id, tid, sdk_before, project_id, marks)))
     # Findings first: a resumed run that outlasts the deadline still answers both questions.
     inputs = agent_inputs(entries(ctx, sdk_before, 0))
     rep.findings.append(f"Agent inputs as session_entries keeps them (name, has run_in_background, value): {inputs}")
     rep.findings.append(f"ev=foregrounded lines: {len([e for e in events_for(worker_events(), tid) if e.get('ev') == 'foregrounded'])}")
-    if not finished:
-        return
     snap = snapshot(ctx, rep.session_id, tid)
     after = int(turn.one(ctx.dsn, "SELECT count(*) FROM session_entries WHERE session_id = %s", (sdk_before or "",)) or 0)
-    rep.checks += resume_checks("probe_resume", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
-                                entries_at_kill=at_kill, entries_after=after)
+    rep.checks += [*resume_checks("probe_resume", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
+                                  entries_at_kill=at_kill, entries_after=after),
+                   resumed_line_check("probe_resume", events_until(tid, resumed_lines), tid)]
 
 
 # -- U13: cases for the rehearsal's Beanstalk worker (--target deployed only) -----------------

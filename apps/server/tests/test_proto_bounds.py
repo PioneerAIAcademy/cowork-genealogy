@@ -347,6 +347,8 @@ def test_resume_checks():
     assert oks(bounds.resume_checks("x", good, sdk_before="s", sdk_after="t", entries_at_kill=5, entries_after=5)) \
         == [True, True, False, False]
     assert oks(bounds.resume_checks("x", good, sdk_before=None, sdk_after=None, entries_at_kill=0, entries_after=1))[2] is False
+    assert all(oks(bounds.resume_checks("x", snap("stopped", rc=2), sdk_before="s", sdk_after="s",
+                                        entries_at_kill=5, entries_after=9))), "a resumed turn the case Stopped"
 
 
 def test_result_findings_name_each_attempts_ending():
@@ -572,7 +574,7 @@ def test_a_resume_that_outlasts_the_deadline_still_records_both_findings(monkeyp
     """The 2026-10-05 probe resumed, crossed the ceiling and was still extracting at its
     deadline; its findings were skipped, so the stored-input answer had to come by hand."""
     _fake(monkeypatch, wait=("seen", call(1, agent="a1")))
-    monkeypatch.setattr(bounds, "done", lambda *a, **k: False)
+    monkeypatch.setattr(bounds.demo, "wait_turn_done", _times_out)
     monkeypatch.setattr(bounds.time, "sleep", lambda s: None)
     monkeypatch.setattr(bounds.turn, "take_marks", lambda *a: None)
     monkeypatch.setattr(bounds.turn, "gather_evidence", lambda *a: None)
@@ -582,6 +584,51 @@ def test_a_resume_that_outlasts_the_deadline_still_records_both_findings(monkeyp
     rep = bounds.run_case(_ctx(), "probe_resume")
     assert any(f.startswith("Agent inputs as session_entries keeps them") for f in rep.findings), rep.findings
     assert "ev=foregrounded lines: 1" in rep.findings, rep.findings
+
+
+def _times_out(*a, **k):
+    raise TimeoutError("no turn_done within --deadline-s")
+
+
+def _stopped_resume(monkeypatch, *, sdks=("s", "s")):
+    """probe_resume's AWS shape on 2026-10-10: resumed on receive 2, still researching at
+    --deadline-s, Stopped by the case."""
+    log = _fake(monkeypatch, wait=("seen", call(1, agent="a1")), open_rows=[[("turn_1", None)]])
+    monkeypatch.setattr(bounds.demo, "wait_turn_done", _times_out)
+    for name in ("take_marks", "gather_evidence"):
+        monkeypatch.setattr(bounds.turn, name, lambda *a: None)
+    monkeypatch.setattr(bounds.turn, "render_evidence", lambda e: "")
+    monkeypatch.setattr(bounds, "entries", lambda ctx, sdk, after: [])
+    sdk = iter(sdks)
+    monkeypatch.setattr(bounds, "sdk_of", lambda ctx, sid: next(sdk))
+    counts = iter([60, 365])
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: next(counts) if "count(*)" in sql else None)
+    monkeypatch.setattr(bounds, "snapshot", lambda ctx, sid, tid: snap("stopped", tid=tid, rc=2))
+    monkeypatch.setattr(bounds, "worker_events", lambda: [
+        ev("turn", "turn_1", status=200, receive_count=2, outcome="stopped", resumed=True, list_subkeys=1)])
+    return log, bounds.run_case(_ctx(), "probe_resume")
+
+
+def test_probe_resume_judges_a_turn_the_deadline_stopped(monkeypatch):
+    log, rep = _stopped_resume(monkeypatch)
+    assert "POST sessions/sess_s/interrupt" in log, "the case Stops the open turn itself"
+    assert rep.figures["resumed_closed_on_its_own"] is False
+    got = {n: ok for n, ok, _ in rep.checks}
+    for name in ("probe_resume: the turn open at --deadline-s closed on Stop",
+                 "probe_resume: redelivered (receive_count >= 2)",
+                 "probe_resume: the same SDK session resumed",
+                 "probe_resume: session_entries grew past the kill",
+                 "probe_resume: the redelivery's ev=turn has resumed true and list_subkeys >= 1"):
+        assert got.get(name) is True, (name, rep.checks)
+    assert any(n.startswith("probe_resume: closed, not ") and ok for n, ok in got.items()), rep.checks
+    assert not [n for n, ok in got.items() if not ok], rep.checks
+    assert not any("reached turn_done" in n for n in got), "a deadline is a figure, not a FAIL"
+
+
+def test_probe_resume_stopped_turn_fails_on_a_new_sdk_session(monkeypatch):
+    _log, rep = _stopped_resume(monkeypatch, sdks=("s", "t"))
+    bad = [n for n, ok, _ in rep.checks if not ok]
+    assert bad == ["probe_resume: the same SDK session resumed"], rep.checks
 
 
 @pytest.mark.parametrize("case", ["held_release", "held_after_stop"])
