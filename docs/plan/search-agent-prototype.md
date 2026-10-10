@@ -395,7 +395,10 @@ every round it existed. It belongs in code with tests, not in prose.
    one-token `converse` on `us.anthropic.claude-sonnet-4-6` in `us-east-1` returned.
 2. **Service Quotas increase request** for Claude input TPM. Takes days. A single
    session runs ~166k tokens/min against a 2M TPM default, so 50 concurrent
-   sessions is not a default-quota workload.
+   sessions is not a default-quota workload. (Superseded 2026-10-09, handoff U18:
+   Bedrock exempts cache reads and counts output 5×, so a session settles at
+   ~26–43k; the Sonnet 4.6 default is 6M; the per-day quota binds first.
+   `docs/search-agent-capacity.md`.)
 
 3. **Two emails** (drafted separately): one to FS AI Platform covering the Agent
    Gateway's API surface, prompt-caching behaviour, token quota, and Guardrails
@@ -2715,7 +2718,9 @@ anything measured in integ before then is the shared pool. Which account is unse
 (the fulltext P25 accounts if the agent counts as the same product, else a new one via
 a GEM intake). The burndown multiplier and whether cache reads are exempt are unknown
 and the largest variable in the estimate (50 sessions is ~0.5M or ~8.1M TPM); the
-information is in the responses, we test it ourselves. Do not let a `model:` be pinned
+information is in the responses, we test it ourselves. (Answered 2026-10-09, handoff
+U18: 5× output, cache reads exempt, documented and read back from
+`EstimatedTPMQuotaUsage`; ~2M for 50 sessions. `docs/search-agent-capacity.md`.) Do not let a `model:` be pinned
 in our provider block — it overrides the client's model and breaks per-agent selection.
 Gateway capacity is one 0.25 vCPU / 512 MB task per environment, `desiredCount: 1`,
 no autoscaling, parsing and re-serialising every body for every tenant; per-account
