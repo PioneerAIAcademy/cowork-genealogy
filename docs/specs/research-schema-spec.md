@@ -112,11 +112,12 @@ flagged. (One row below is the exception, and says so.)
 | `evaluation_verdict` | `looks_solid`, `consider_addressing`, `address_first`, `refused` | evaluations |
 | `locality_page_section` | `home`, `getting_started`, `online_records`, `research_tips` | localities' `pages_read[].section` (Section 5.13) — the four FamilySearch Research Wiki place-page sections. `validate_research_schema` checks it at every `pages_read[]` item — the one place it descends into a locality's nested objects; the items' required and stray keys are still not deep-checked at the writer |
 | `stopped_because` | `question_answered`, `record_exhausted`, `nothing_further_reachable`, `resources_spent`, `blocked_by_conflict` | questions' `search_stop.stopped_because` (Section 5.2). The first three are stop-gate values that permit `status: "exhaustive_declared"` and a proof tier; the last two (`resources_spent`, `blocked_by_conflict`) keep status `in_progress`. Null on a newly created question (no stop decision yet). Replaces `exhaustive_declaration.declared` (2026-10-07) |
+| `stopped_because_gate` | `question_answered`, `record_exhausted`, `nothing_further_reachable` | Strict subset of `stopped_because`; the gate condition in `search_stop.allOf` that permits `status: "exhaustive_declared"`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum (ADR-0008 policy: no inline enums in `research.schema.json`) |
 | `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
 
 **Where these live in the machine-readable schemas.** All of them are defined in
 `enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
-inline in the research schema (`stopped_because` and `not_reached_kind`, the last rows above, were
+inline in the research schema (`stopped_because`, `stopped_because_gate`, and `not_reached_kind`, the last three rows above, were
 added 2026-10-07), and `enum-drift.test.ts` fails on any inline `enum` array
 that reappears there. Removing or renaming any closed-enum value additionally requires
 a repo-wide grep for the old value — the drift lint checks the full value *list*,
@@ -565,7 +566,8 @@ Array of question objects.
 |-------|------|----------|-------------|
 | `kind` | `not_reached_kind` | yes | What type of barrier prevented access |
 | `description` | string | yes | Brief description of what could not be reached |
-| `wiki_title` | string or null | no | FamilySearch Research Wiki page title (required when `kind` is `wiki_named_untouched`) |
+| `log_entry_id` | string or null | yes | Log entry that corroborates the barrier; null when no direct search produced it |
+| `wiki_title` | string or null | yes | FamilySearch Research Wiki page title; non-null when `kind` is `wiki_named_untouched`; null otherwise |
 
 ### 5.3 `plans`
 
@@ -962,7 +964,7 @@ to the top tier, and the section is titled Findings.
 | `proved` / `probable` / `possible` / `not_proved` / `disproved` | well established / likely / tentative / not established / ruled out |
 | `probable` as a `person_evidence_confidence` | likely (the map is keyed on the value) |
 | `original` / `derivative` / `authored` (`source_classification`) | Record image / Index or transcript / Compiled work |
-| `exhaustive_declared` (question status), and a declared `exhaustive_declaration` | all reachable searched |
+| `exhaustive_declared` (question status), and a stop-gate `search_stop.stopped_because` | all reachable searched |
 | `ceiling` / `gap` / `conflict` (`shortfall`) | limit of online records / evidence missing / conflicting evidence |
 | `none` (`shortfall`) | no badge |
 | `proof_summaries` (section) | Findings |
@@ -1251,11 +1253,12 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "created": "2026-05-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     },
     {
@@ -1270,8 +1273,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
       "created": "2026-05-01",
       "resolved": "2026-05-02",
       "resolution_assertion_ids": ["a_001", "a_002", "a_003"],
-      "exhaustive_declaration": {
-        "declared": true,
+      "search_stop": {
+        "stopped_because": "question_answered",
         "justification": "Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.",
         "log_entry_ids": ["log_001", "log_002", "log_003"],
         "stop_criteria": {
@@ -1282,7 +1285,8 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
           "evidence_class": "Yes — FamilySearch provides original census image with indeterminate-quality information.",
           "conflict_resolution": "No conflicts on the 1850 census placement question.",
           "overturn_risk": "Low — all three repositories agree, and no competing Patrick Flynn of matching age exists in the county."
-        }
+        },
+        "not_reached": []
       }
     }
   ],

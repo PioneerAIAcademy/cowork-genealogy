@@ -556,10 +556,15 @@ def find_effects_without_invocation(
 
     questions = research.get("questions") if isinstance(research.get("questions"), list) else []
     _STOP_GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
-    if any(
-        isinstance(q, dict) and (q.get("search_stop") or {}).get("stopped_because") in _STOP_GATE
-        for q in questions
-    ) and "research-exhaustiveness" not in invoked:
+    def _has_stop_gate(q: dict) -> bool:
+        # New shape (search_stop.stopped_because is a gate string).
+        if (q.get("search_stop") or {}).get("stopped_because") in _STOP_GATE:
+            return True
+        # Legacy shape (exhaustive_declaration.declared is True) for pre-#2539 run logs.
+        if (q.get("exhaustive_declaration") or {}).get("declared") is True:
+            return True
+        return False
+    if any(isinstance(q, dict) and _has_stop_gate(q) for q in questions) and "research-exhaustiveness" not in invoked:
         violations.append(
             "research.json has a question with a stop-gate search_stop.stopped_because "
             "but 'research-exhaustiveness' was never successfully invoked in this run"
@@ -1983,7 +1988,10 @@ def find_unpersisted_conflict_resolutions(
         """The stop-criterion text if it asserts a resolution, else None."""
         decl = question.get("search_stop")
         if not isinstance(decl, dict):
-            return None
+            # Legacy shape: exhaustive_declaration.stop_criteria (pre-#2539 run logs).
+            decl = question.get("exhaustive_declaration")
+            if not isinstance(decl, dict):
+                return None
         crit = decl.get("stop_criteria")
         if not isinstance(crit, dict):
             return None

@@ -354,7 +354,25 @@
             "$ref": "#/$defs/not_reached_entry"
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "stopped_because": {
+                "$ref": "enums.schema.json#/$defs/stopped_because_gate"
+              }
+            },
+            "required": ["stopped_because"]
+          },
+          "then": {
+            "properties": {
+              "log_entry_ids": { "minItems": 1 },
+              "stop_criteria": { "$ref": "#/$defs/stop_criteria" }
+            }
+          }
+        }
+      ]
     },
     "not_reached_entry": {
       "description": "One source, collection, or record type that could not be reached. Built from things the agent already produces: nil searches, browse-only collections, over-cap images, paywalled hits, handed-to-user items, privacy-sealed records, skipped plan items, and wiki-named record types never touched.",

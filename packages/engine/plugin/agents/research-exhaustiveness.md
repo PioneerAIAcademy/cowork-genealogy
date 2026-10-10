@@ -184,9 +184,9 @@ named in `justification`.
     but are unreachable — use when the accessible evidence supports a defensible
     conclusion; record each inaccessible source in `not_reached`
 - **Do not declare** — criteria unmet because a genuinely **unsearched**
-  source remains. Explain what is missing and recommend expanding the plan
-  (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
-  default to `research-plan`.**
+  source remains. Do not call `research_append`. Explain what is missing and
+  recommend expanding the plan (`research-plan`). **When in doubt, a gap is
+  unsearched, not unobtainable — default to `research-plan`.**
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
@@ -278,7 +278,7 @@ research_append({
       log_entry_ids: ["log_001", "log_002"],
       stop_criteria: null,
       not_reached: [
-        { kind: "skipped_plan_item", description: "County probate records 1840-1870 not searched — session ended before completion." }
+        { kind: "skipped_plan_item", log_entry_id: null, wiki_title: null, description: "County probate records 1840-1870 not searched — session ended before completion." }
       ]
     }
   }

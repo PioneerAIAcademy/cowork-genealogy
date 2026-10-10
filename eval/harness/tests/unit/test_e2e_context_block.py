@@ -481,6 +481,15 @@ _EXH_OWNER = "genealogy-research:research-exhaustiveness"
             ),
             "another owning agent -- proof-conclusion may write questions, not the claim",
         ),
+        # Non-gate stopped_because from main thread is blocked per ruling 2026-09-30:
+        # ALL non-null stopped_because is owned by research-exhaustiveness.
+        (
+            _owned(
+                section="questions",
+                fields={"search_stop": {"stopped_because": "resources_spent", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
+            ),
+            "non-gate stopped_because from main thread",
+        ),
     ],
 )
 def test_exhaustive_declaration_claim_is_blocked(payload, label):
@@ -525,14 +534,17 @@ def test_exhaustive_declaration_claim_is_blocked(payload, label):
             ),
             "question-selection creating a question (stopped_because: null)",
         ),
-        # The owning skill's own honest early-termination path. It claims
-        # nothing, so it is not routed.
+        # Non-gate stopped_because written by the owner is allowed.
+        # Ruling 2026-09-30: ALL non-null stopped_because is owned by
+        # research-exhaustiveness, so the owner must carry agent_id+agent_type.
         (
             _owned(
                 section="questions",
                 fields={"search_stop": {"stopped_because": "resources_spent", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
+                agent_id="a1",
+                agent_type="research-exhaustiveness",
             ),
-            "an honest early termination (non-gate stopped_because)",
+            "an honest early termination (non-gate stopped_because), owner",
         ),
     ],
 )

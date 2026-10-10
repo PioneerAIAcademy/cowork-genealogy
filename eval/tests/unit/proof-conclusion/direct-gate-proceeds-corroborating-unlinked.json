@@ -2,32 +2,32 @@
   "test": {
     "id": "ut_proof_conclusion_d3c",
     "skill": "proof-conclusion",
-    "name": "Gate proceeds past unlinked fact assertions when persons are identity-linked (direct-agent arm)",
+    "name": "Unresolved identity conflict blocks proof-conclusion when research stopped with blocked_by_conflict (direct-agent arm)",
     "type": "positive",
-    "description": "Regression test for the identity-scoped precondition gate. In flynn-parentage-disproved, Patrick's ~1845 birth is carried by two unlinked *fact* assertions — a_002 (the 1850 census age) and a_006 (the 1908 death-certificate age) — neither of which has a person_evidence link. Under the identity-scoped gate these are advisory, not blockers, because every person the conclusion depends on is already identity-linked: Patrick via a_001/a_005 → I1, and Thomas of Ballingarry via a_004 (name) and a_003 (the decisive 1842 burial) → I2. The gate must proceed, write the `disproved` conclusion, and surface a_002/a_006 as an advisory note. A hard stop that refuses to conclude and defers to person-evidence is a FAIL — unlinked birth-fact assertions must not block the conclusion once the relevant persons are identified.",
+    "description": "In flynn-conflict-proof-block, q_001 has search_stop.stopped_because set to 'blocked_by_conflict' — research-exhaustiveness already ran and found the birthplace conflict (c_001: Ireland vs. Pennsylvania) unresolved. c_001.blocks_question_ids includes q_001 and c_001.status is 'unresolved'. When proof-conclusion is asked to conclude q_001, the conflict gate must hard-block: the birthplace conflict is identity-scoped (it goes to whether the census records and the death certificate describe the same Patrick Flynn), so the skill must decline to write a proof_summaries entry and route to conflict-resolution. Writing any proof tier — even possible — is a FAIL.",
     "tags": [
       "proof",
       "parentage",
-      "disproved",
       "GPS-step-5",
       "precondition-gate",
-      "gate-advisory-fact",
-      "tier-disproved-q001",
-      "no-tree-write",
+      "conflict-gate",
+      "blocked_by_conflict",
+      "identity-conflict",
+      "decline",
       "direct-arm"
     ]
   },
   "input": {
-    "delegation": "Conclude q_001 — an online tree names Thomas Flynn of Ballingarry as Patrick's father; determine whether that holds up. Several fact assertions are not linked to a person, so the preconditions gate fails — decline and route to person-evidence.\n\nquestionId: q_001\nprojectPath: <workspace>",
-    "scenario": "flynn-parentage-disproved"
+    "delegation": "Conclude q_001 — parentage of Patrick Flynn. Research stopped because an unresolved conflict was found.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-conflict-proof-block"
   },
   "judge_context": [
-    "This test targets the precondition gate specifically. Patrick's ~1845 birth year is carried only by unlinked fact assertions — a_002 (1850 census age) and a_006 (1908 death-certificate age). Because every person the conclusion depends on is already identity-linked (Patrick → I1 via a_001/a_005; Thomas of Ballingarry → I2 via a_004/a_003), those unlinked fact assertions are advisory, and the correct behavior is to PROCEED and write the conclusion.",
-    "A hard stop at the gate that refuses to conclude and defers to person-evidence is a FAIL for this test — unlinked fact/negative assertions must not block the conclusion once the relevant persons are identity-linked.",
-    "It is acceptable (and good) for the skill to note a_002/a_006 as advisory (e.g. 'these birth-year assertions could also be linked but are not required to conclude'); such a note must not prevent the conclusion.",
-    "Should select the `disproved` tier: the evidence affirmatively refutes the claim — Thomas of Ballingarry was buried in 1842, Patrick was born ~1845 — it does not merely fail to support it.",
-    "Must NOT update tree.gedcomx.json — no ParentChild relationship is added; the real father is left as a separate future question.",
-    "narrative_markdown should cite the Ballingarry burial register and the birth-year evidence and stand alone."
+    "c_001 (birthplace: Ireland vs. Pennsylvania) is status 'unresolved' and blocks_question_ids includes 'q_001'. This is the conflict gate trigger.",
+    "The birthplace conflict is identity-scoped: birthplace goes to whether the 1850/1860 census entries and the 1908 death certificate describe the same Patrick Flynn. Per the proof-conclusion agent rules, an unresolved identity conflict hard-blocks ALL tiers.",
+    "Must NOT call research_append to write a proof_summaries entry. Any call that writes proof_summaries is a FAIL.",
+    "Must route to conflict-resolution (name the skill or agent) and explain that c_001 must be resolved before a conclusion can be written.",
+    "Should name c_001 specifically and describe the birthplace dispute (Ireland vs. Pennsylvania) as the blocker.",
+    "The fact that q_001.search_stop.stopped_because is 'blocked_by_conflict' should be consistent with the finding — the skill recognizes why research-exhaustiveness already recorded a block."
   ],
   "judge_reads_files": true,
   "execution": {

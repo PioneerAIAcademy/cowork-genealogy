@@ -17,7 +17,7 @@ Differs from `flynn-resolved` in these ways:
 - **`questions[q_001].resolved`:** `null` (was `"2026-05-04"`).
 - **`questions[q_001].resolution_assertion_ids`:** `[]` (was populated).
 - **`questions[q_001].search_stop`:** `stopped_because: null` with
-  empty fields (was `declared: true` with full `stop_criteria`).
+  empty fields (was a stop-gate value with full `stop_criteria`).
 - **`proof_summaries[ps_001].tier`:** `probable` (was `proved`).
   The proof summary was written pre-declaration and reflects the
   provisional assessment.
@@ -36,7 +36,7 @@ Differs from `flynn-resolved` in these ways:
 
 - `research-exhaustiveness` affirmative-declaration test: the skill
   evaluates q_001, determines all criteria are met, and writes
-  `declared: true` with all seven `stop_criteria` keys populated.
+  a stop-gate `stopped_because` value with all seven `stop_criteria` keys populated.
 
 ## Why this scenario supports a genuine declaration
 

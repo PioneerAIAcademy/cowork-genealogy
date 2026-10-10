@@ -262,6 +262,8 @@ const ALLOWED2: Record<string, string> = {
     "the viewer falls back to the legacy shape for documents written before #2539",
   "packages/viewer-ui/src/components/sections/__tests__/QuestionsSection.test.tsx":
     "tests the legacy-document fallback path, so it must construct the retired shape",
+  "eval/harness/harness/skill_invocation.py":
+    "_has_stop_gate() and _resolution_claimed() fall back to the legacy exhaustive_declaration.declared=true shape for pre-#2539 run logs",
 
   // ── Dated attribution comments — editing them falsifies the attribution ──
   "packages/engine/mcp-server/tests/packaging/doc-links.test.ts":
@@ -317,8 +319,6 @@ const ALLOWED2: Record<string, string> = {
     "a dated 2026-09-05 leadership themes document recording the field name as it stood then",
   "docs/skill-to-agent-pair-conversion.md":
     "a dated conversion log recording the field name as it stood at migration time",
-  "docs/testing-guides/gps-mentor-agent-testing-guide.md":
-    "a dated testing guide written before the rename",
 };
 
 const isFrozen2 = (p: string) => FROZEN_PREFIXES2.some((prefix) => p.startsWith(prefix));

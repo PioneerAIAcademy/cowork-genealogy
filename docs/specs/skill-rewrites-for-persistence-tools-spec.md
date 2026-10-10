@@ -166,8 +166,8 @@ arithmetic). The skill keeps every analytical decision. A determinism audit of a
 
 ### 4.9 `research-exhaustiveness` — Wave 2
 - **Steps 4/5:** `research_append({ section: "questions", op: "update", entryId,
-  fields: { status: "exhaustive_declared", search_stop: { declared,
-  log_entry_ids, stopped_because } } })`. Early termination → `declared: false` form.
+  fields: { status: "exhaustive_declared", search_stop: { stopped_because,
+  log_entry_ids, stop_criteria, not_reached } } })`. Early termination → `stopped_because: "resources_spent"` (non-gate) form.
   Re-declaring an already-declared question is a structural no-op. **Keep**
   `references/research-exhaustiveness.md` in full. **Superseded 2026-08-23:**
   `research-exhaustiveness` is now a skill-agent pair, so that reference file is

@@ -53,6 +53,9 @@ const CLOSED_ENUMS = {
     "question_answered", "record_exhausted", "nothing_further_reachable",
     "resources_spent", "blocked_by_conflict",
   ]),
+  stopped_because_gate: new Set([
+    "question_answered", "record_exhausted", "nothing_further_reachable",
+  ]),
   not_reached_kind: new Set([
     "nil_search", "browse_only", "over_transport_cap", "paywalled",
     "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
@@ -826,6 +829,14 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
       if (isStopGate && ss.stop_criteria === null) {
         addError(report, `${qp}/search_stop`, "stopped_because is a stop-gate value but stop_criteria is null");
+      }
+
+      const isNonGate = typeof ss.stopped_because === "string" && !isStopGate;
+      if (isNonGate && ss.stop_criteria !== null && ss.stop_criteria !== undefined) {
+        addError(
+          report, `${qp}/search_stop`,
+          "stopped_because is a non-gate value — stop_criteria must be null (resources_spent and blocked_by_conflict carry no per-criterion analysis)",
+        );
       }
 
       // `stop_criteria` is an object or null, never anything else. Without this

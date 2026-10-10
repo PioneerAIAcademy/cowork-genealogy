@@ -484,6 +484,13 @@ def test_flags_exhaustive_declaration_with_no_research_exhaustiveness_invocation
     assert any("research-exhaustiveness" in v for v in violations)
 
 
+def test_flags_legacy_exhaustive_declaration_with_no_research_exhaustiveness_invocation():
+    """Legacy shape (pre-#2539 run logs): exhaustive_declaration.declared: True."""
+    research = {"questions": [{"id": "q_001", "exhaustive_declaration": {"declared": True, "justification": "Three converging sources.", "log_entry_ids": ["log_001"]}}]}
+    violations = find_effects_without_invocation([], research, {})
+    assert any("research-exhaustiveness" in v for v in violations)
+
+
 def test_flags_proof_summaries_entry_with_no_proof_conclusion_invocation():
     research = {"proof_summaries": [{"id": "ps_001", "question_id": "q_001", "tier": "probable"}]}
     violations = find_effects_without_invocation([], research, {})

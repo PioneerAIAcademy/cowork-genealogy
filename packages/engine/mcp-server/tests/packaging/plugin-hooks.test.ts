@@ -779,7 +779,13 @@ describe("the guard script's decisions", () => {
     ["the proof-conclusion agent",
       { section: "questions", op: "update", fields: { search_stop: DECLARE } },
       { agent_id: "a1", agent_type: "genealogy-research:proof-conclusion" }],
-  ])("denies a stop-gate search_stop — %s", (_label, tool_input, extra) => {
+    // Non-gate values are also routed: ruling 2026-09-30 routes ALL non-null
+    // `stopped_because`, because the agent applies the criteria that justify
+    // the claim (stop-gate OR early-termination) — not the main thread.
+    ["non-gate early termination from main thread (stopped_because: resources_spent)",
+      { section: "questions", op: "update", entryId: "q_001",
+        fields: { search_stop: { stopped_because: "resources_spent", log_entry_ids: ["log_001"], stop_criteria: null, not_reached: [] } } }, {}],
+  ])("denies a non-null stopped_because — %s", (_label, tool_input, extra) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:research-exhaustiveness");
@@ -804,11 +810,6 @@ describe("the guard script's decisions", () => {
     ["question-selection creating a question (stopped_because: null)",
       { section: "questions", op: "append",
         entry: { question: "Who were the parents?", search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] } } }],
-    // The owning skill's own honest early-termination path. `resources_spent`
-    // is not a stop-gate value, so it is not routed.
-    ["an honest early termination (stopped_because: resources_spent)",
-      { section: "questions", op: "update", entryId: "q_001",
-        fields: { search_stop: { stopped_because: "resources_spent", log_entry_ids: ["log_001"], stop_criteria: null, not_reached: [] } } }],
     // An unrelated question edit from the main thread.
     ["a status-only update",
       { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } }],

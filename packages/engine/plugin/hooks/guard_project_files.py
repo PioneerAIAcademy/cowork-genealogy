@@ -119,20 +119,19 @@ OWNED_SECTIONS = {
 # `agent_id`. Measured over 159 committed e2e runs, 197 of the 392 ops carrying
 # the field are exactly those creations — a presence-keyed rule denies every one.
 #
-# So the rule keys on the CLAIM, not the field: an op setting
-# `search_stop.stopped_because` to a stop-gate value. A question being created
-# carries `stopped_because: null` and passes; so does an honest early
-# termination (`resources_spent` / `blocked_by_conflict`), which claims nothing.
-# What is routed is the assertion that GPS Component 1 is satisfied.
+# So the rule keys on the CLAIM, not the field: any op setting a non-null
+# `search_stop.stopped_because`. A question being created carries
+# `stopped_because: null` and passes. Everything else — stop-gate values AND
+# honest non-gate terminations (`resources_spent`, `blocked_by_conflict`) — is
+# routed to research-exhaustiveness (ruling 2026-09-30).
 # Renamed from `exhaustive_declaration` 2026-10-07.
 OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
 
-# The three values that gate `status: "exhaustive_declared"` and a proof tier.
-# The two non-gate values (`resources_spent`, `blocked_by_conflict`) keep
-# `in_progress` and are not routed. Null (new question) is also not routed.
-_STOP_GATE_VALUES = frozenset({
-    "question_answered", "record_exhausted", "nothing_further_reachable",
-})
+# Any non-null `stopped_because` is routed — the stop-gate values
+# (`question_answered`, `record_exhausted`, `nothing_further_reachable`) AND
+# the non-gate values (`resources_spent`, `blocked_by_conflict`).
+# Null means no declaration and is not routed.
+# Ruling 2026-09-30.
 
 # Field-scoped routing keyed on PRESENCE, not on a claim value: (section, field)
 # -> the BARE agent name that may write it at all. Third granularity, and the
@@ -141,8 +140,9 @@ _STOP_GATE_VALUES = frozenset({
 # `OWNED_SECTIONS` cannot hold it: `project` is co-written. `init-project`
 # authors the section and every skill pings `updated`, so reserving the whole
 # section would deny both. `OWNED_DECLARATIONS` cannot hold it either: that map
-# keys on a claim VALUE (`declared is True`) because a question legitimately
-# carries the field set false. `status` has no such honest non-claiming value --
+# keys on a claim VALUE (`stopped_because is not None`) because a question
+# legitimately carries `stopped_because: null`. `status` has no such honest
+# non-claiming value --
 # any write of it asserts the project's state, so the write IS the claim and
 # presence is the right key.
 OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
@@ -201,9 +201,9 @@ AGENT_WRITABLE_SECTIONS = {
     # lane is required by tests/packaging/plugin-hooks.test.ts for every agent
     # granted research_append, so this row exists even though NO hook route
     # points at this agent -- do not read it as one. It is deliberately narrow:
-    # `questions` carries a routed claim, `search_stop.stopped_because` set to
-    # a gate value, which belongs to research-exhaustiveness. Creating a question
-    # writes `stopped_because: null`, which the guard already permits, so this
+    # `questions` carries a routed claim: any non-null `search_stop.stopped_because`
+    # belongs to research-exhaustiveness. Creating a question writes
+    # `stopped_because: null`, which the guard permits, so this
     # lane widens nothing.
     "question-selection": frozenset({"questions"}),
     # locality-guide writes one `localities` entry per surveyed place, and
@@ -230,12 +230,11 @@ OWNER_REASON = (
 
 DECLARATION_REASON = (
     "Declaring a question exhaustive from here is disabled — `{field}` with "
-    "a stop-gate `stopped_because` value is owned by the {agent} agent, which "
+    "a non-null `stopped_because` value is owned by the {agent} agent, which "
     "applies the seven stop criteria this claim rests on. "
     "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
-    "call. Only the claim is routed — creating a question with "
-    "`stopped_because: null`, and recording an honest non-gate termination, "
-    "are both unaffected, as is everything else in `{section}`."
+    "call. Only non-null `stopped_because` is routed — creating a question with "
+    "`stopped_because: null` is unaffected, as is everything else in `{section}`."
 )
 
 OWNED_FIELD_REASON = (
@@ -439,7 +438,7 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 if not isinstance(payload_obj, dict):
                     continue
                 value = payload_obj.get(field)
-                if isinstance(value, dict) and value.get("stopped_because") in _STOP_GATE_VALUES:
+                if isinstance(value, dict) and value.get("stopped_because") is not None:
                     return (f"{section}.{field}", "declaration", caller)
         # A routed FIELD, reached by anyone but its owning agent. Keyed on
         # presence: unlike the declaration above there is no honest
