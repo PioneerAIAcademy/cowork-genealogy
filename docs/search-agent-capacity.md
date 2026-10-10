@@ -41,7 +41,8 @@ From AWS's quota documentation ([token burndown][burndown], [runtime metrics][me
 fetched 2026-10-09):
 
 - **Settled charge:** input + cache write + output × burndown. **Cache reads are not
-  counted.** These rules feed both the TPM quota and the per-day quota.
+  counted.** Per AWS's worked example, the same settled figure is deducted from the per-day
+  quota too.
 - **Burndown:** 5× for Anthropic models version 4.7 and below (Sonnet 4.6, Sonnet 4.5,
   Haiku 4.5). 10× for Sonnet 5, Opus 5, Opus 5.5 and Fable 5.1. 15× for Claude 4.8.
   `gps-mentor` runs on `claude-sonnet-5`, so its output counts at 10×.
@@ -183,7 +184,8 @@ SQS, which is right: they cannot run until their session's turn ends.
 
 **Quota is admission, not scaling.** Adding workers adds no model capacity. Past the
 quota it adds 429s, which the CLI retries inside the turn. Bound `MaxSize` ≤ 0.8 × TPM
-quota / (per-session peak rate × `HttpConnections`), and alert on `InvocationThrottles`
+quota / (per-session settled mean, ~40k, × `HttpConnections`), about 15 instances at 6M
+and 8 slots, and alert on `InvocationThrottles`
 rather than scaling on it. Alerts, not scaling: V ≥ 1 for 5 minutes at `MaxSize`, the
 DLQ, and protected but idle instances.
 
