@@ -1,0 +1,126 @@
+{
+  "run_log": "v19_2026-10-09_18-08-56.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_021`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that two death-related records are already attached to Cornelius Driscoll's profile (SD-DRIS-D civil death registration and SD-DRIS-C burial record). The tool response confirms both sources are present in the profile's source list. Claude accurately reported what is on file without fabrication or unsupported claims. The response correctly notes that neither date has been extracted into the profile's facts, which is factually accurate per the tool response showing a Burial fact with place but no date.\n\nJunior: (Pass - The response correctly identified that Cornelius Driscoll's profile already contains two attached death-related sources: the civil death registration SD-DRIS-D and the burial record SD-DRIS-C, thereby satisfying the bounded request without initiating unnecessary searches. It accurately reported what was attached and correctly noted that the profile facts did not yet contain the extracted death or burial date, despite the presence of those sources. turn46search1\nThe answer remained focused on informing the researcher about existing attached evidence rather than re-finding records, with no fabrication, unsupported claims, or contradictions to the tool output.)"
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_021`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user asked a single, bounded question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude fully addressed this by identifying the two death-related records already attached and providing their collection titles, record descriptions, and ARK links. The response directly answers the question without omission. Claude also appropriately offered to extract dates if needed, staying within scope.\n\nJunior: (Pass - The tool fully answers the user's narrowly scoped question by identifying the death-related records already attached to Cornelius Driscoll's profile and providing sufficient detail about those sources, including their titles, descriptions, and links. It neither omits relevant attached evidence nor expands into unnecessary research, staying appropriately focused on the requested determination of whether a death record exists.\nThe answer is complete for the stated objective, and the optional offer to extract dates from the attached records represents a reasonable next step without exceeding the user's requested scope.)"
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_021`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made a single MCP call to mcp__genealogy__person_read with personId 'GJ72-9WD', which exactly matches the expected_args. The call succeeded (matched.kind == 'predicate') and returned the full profile data needed to answer the question. No tool call errors occurred, and the argument was correct and critical.\n\nJunior: (Pass - The tool interaction was precise and efficient, using a single call to retrieve Cornelius Driscoll's profile with the exact person identifier provided by the user. The call returned the necessary profile and source information required to answer the bounded question, and no additional or unnecessary tool invocations were made. turn46search1\nArguments were correctly formed, the call executed successfully, and the retrieved dat directly supported the response without requiring retries, error recovery, or parameter correction.)"
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_023`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that the project is in an empty state with only a stub person (Patrick Flynn, I1) and no prior research questions. The response accurately describes the project status as 'active' and correctly states that no questions are registered yet. Claude appropriately routed to question-selection to register the research question before proceeding. The factual claims about the objective (identifying Patrick Flynn's parents, born ca. 1845 PA, died 1908 Schuylkill County PA) match the project context returned by the tool. No fabricated material or unsupported claims are present.\n\nJunior: (Pass - The tool accurately reflects the project state, correctly identifying that Patrick Flynn is the only person in the tree, the project is active, and no research questions have yet been registered. It appropriately treats the request as an autonomous research job and routes to question registration before planning, which is consistent with the project workflow and the information returned by the tool. turn49search1\nAll factual statements about the project objective, the proposed research question conerning a daughter named Mary, and the profile details for Patrick Flynn are supported by the retrieved context. No unsupported claims, fabricated state changes, or contradictions to the tool output are present.)"
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_023`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request fully. The user asked '/research --autonomous Did Patrick Flynn and his wife have a daughter named Mary?' Claude correctly recognized this as a research question that needed to be registered before proceeding, routed to question-selection to handle the registration, and explained the next steps (research-plan would stage searches). The response treats the request as an ongoing job rather than a single deliverable, which aligns with the --autonomous flag and the per-test requirement to frame it as the first step of ongoing work. All required elements were covered.\n\nJunior: (Pass - The response fully addressed the user's request by correctly recognizing that the research question had not yet been registered and routing it to the appropriate question-selection workflow before any research planning occurred. The autonomous nature of the request was handled appropriately, framing question registration as the first step in an ongoing research process rather than attempting to deliver a final answer immediately.\nThe response also provided sufficient context about the proposed question involving Patrick Flynn and a possible daughter named Mary, explained the next stage of the workflow, and remained aligned with the project's current state. No required actions were omitted, and the handling of the autonomous research lifecycle was complete and appropriate.)"
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_023`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one MCP tool call to mcp__genealogy__project_context with the projectPath argument. The expected_args field was null, indicating no specific argument validation was required for this call. The call matched successfully (matched.kind == 'live'), and the projectPath provided was the correct temporary project directory. The tool call was appropriate for retrieving the current project state to understand what work had been done and what needed to be done next.\n\nJunior: (Pass - The tool usage was appropriate and efficient, consisting of a single call to retrieve the current project context before determining the correct workflow. The call succeeded and returned the necessary project-state information, enabling the skill to correctly identify that no research questions had yet been registered and that question selection was the required next step.\nNo argument errors, unnecessary tool calls, retries, or parameter issues were present. The tool was used exactly as needed to establish project state and support the routing decision.)"
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_020`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified this as a bounded request and routed it to the image-reader agent rather than invoking question-selection or research-plan. The transcription text provided (from the delegated agent) accurately represents a census record with three household members and their details. No fabricated material or unsupported claims are present. The response appropriately notes that no project files were touched, which is correct for a transcription-only task.\n\nJunior: (Pass - The response correctly recognized the request as a bounded transcription task and routed it to the appropriate image-reading workflow rather than initiating question-selection, research planning, or broader genealogical analysis. The returned transcription was relayed as a single deliverable, and the response accurately stated that no project files or research state were modified. turn52search1 The framing remained tightly aligned with the user's request, avoided unnecessary workflow escalation, and did not introduce unsupported claims or additional research activity.)"
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_020`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user requested a transcription of a specific image and to 'leave it at that' — a bounded request. Claude fulfilled this completely by routing to image-reader and presenting the transcription result. The response did not attempt to extract assertions, create research questions, or perform other research steps beyond the transcription, which is exactly what the bounded request required.\n\nJunior: (Pass - The response fully satisfied the user's bounded request by providing the requested transcription and stopping there, exactly as instructed. It correctly avoided expanding into research analysis, assertion extraction, question creation, or project-state changes, demonstrating appropriate handling of a transcription-only task.\nThe workflow remained tightly scoped to the image content, and no unnecessary genealogical processes were initiated. This represents complete fulfillment of the user's request with proper scope control and task routing.)"
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_020`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by Claude in this response. The routing to image-reader is handled by the agent system and does not appear in the MCP tool calls section. Per the instructions, Tool Arguments scores null when zero MCP tool calls occur.\n\nJunior: (No MCP tool calls were made by the skill, which is expected for a correctly routed transcription request handled through the image-reading workflow rather than genealogy MCP operations. Per the rubric, Tool Arguments should be scored as N/A when zero MCP tool calls occur, so this dimension is not applicable for evaluation.)"
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_c1k`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly routed both bounded requests (transcription and research plan) to their respective agents/skills. No MCP tool calls were made by the skill itself, which is appropriate for a routing decision. The response accurately describes what was delegated and makes no false claims about the content of either deliverable. The stub behavior is correctly acknowledged.\n\nJunior: (Pass - The response correctly handled the scenario as a routing task, recognizing that both requests were bounded and belonged to other specialized workflows rather than being processed directly by the skill. It accurately described the delegation actions taken, made no unsupported claims about the content of either deliverable, and appropriately avoided performing work outside its responsibility.\nThe response also correctly acknowledged the stub nature of the interaction, with no unnecessary tool usage, fabricated results, or deviations from the expected routing behavior.)"
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_c1k`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Both bounded deliverables requested in the user message were addressed: the transcription request was routed to image-reader, and the research plan request was routed to research-plan. The skill did not skip either task or stop early. The per-test context confirms this is the correct behavior for a compound bounded-request test.\n\nJunior: (Pass - The response fully addressed both components of the compound request by correctly routing the transcription task to the appropriate image-reading workflow and the research-plan request to the research-planning workflow. Neither task was omitted, deferred, or partially handled, and the response maintained clear separation between the two bounded deliverables.\nThe handling aligns with the expected behavior for a compound bounded-request scenario: each request was directed to the correct specialized process, no unnecessary research activity was performed, and the workflow completed all required routing actions without stopping early or overlooking either objective.)"
+    },
+    {
+      "test_id": "ut_research_c1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_c1k`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill under test. The routing to image-reader and research-plan agents is handled by the harness deterministically and does not appear in the MCP tool calls section. Per the base rubric, Tool Arguments is N/A when zero MCP tool calls occur.\n\nJunior: (No MCP tool calls were made by the skill under test. The routing of work to the image-reader and research-plan agents was handled externally by the orchestration framework rather than through MCP tool invocations by the skill itself. Under the rubric, Tool Arguments is not applicable when zero MCP tool calls occur, so this dimension should be recorded as N/A rather than scored.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the two unregistered evidence conflicts (Elizabeth's birthplace: England vs. Alabama; Sarah Martha's birthplace: Alabama vs. Mississippi) and accurately cited the specific assertions (a_007, a_023, a_044 for Elizabeth; a_011, a_027 for Sarah Martha) and sources (src_001, src_002, src_003). The tool calls retrieved the correct assertion details. Claude did not weigh the conflicts or pick a preferred value—it correctly deferred that judgment to conflict-resolution. The routing decision itself is deterministic per the test context, but Claude's factual claims about what conflicts exist and which assertions support them are all accurate and grounded in the tool responses.\n\nJunior: (Pass - The response correctly identified the existence of two unregistered evidence conflicts and accurately cited the relevant assertions and sources supporting each disagreement. It appropriately recognized that conflict registration and resolution must occur before moving to exhaustiveness review or writing a conclusion for Jonathan Barker, which aligns with the project state and routing requirements. turn58search1)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of what the user message and project state required. It identified both unregistered conflicts blocking the conclusion, retrieved the supporting assertions to document them, explained why conflict-resolution must be invoked before proceeding to exhaustiveness and proof conclusion, and routed to the correct next step. The user asked to wrap up q_001, and Claude correctly recognized that the routing table requires conflicts to be resolved first—it did not skip this step or treat the user's request as permission to bypass it.\n\nJunior: (Pass - The response fully addressed the requirements of the project state by identifying both unresolved evidence conflicts, retrieving the supporting assertions, and explaining why those conflicts prevent the research from advancing directly to exhaustiveness review or a proof conclusion. It correctly recognized that the user's request to wrap up q_001 does not override the required workflow and that conflict resolution must occur first.\nThe routing decision was complete and appropriately justified, with no required conflict identified and then ignored, no premature conclusion drafting, and no skipped lifecycle steps. The response properly treated conflict resolution as a prerequisite to closing the question.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All six MCP tool calls passed arguments matching the fixture's expected_args semantically. The project_context call required no args. The five research_query calls each correctly specified the projectPath and the assertionId (a_007, a_023, a_044, a_011, a_027) to retrieve the conflicting assertions. All calls matched.kind == 'live' with no fixture_not_found errors. Arguments were precise and appropriate.\n\nJunior: (Pass - All MCP tool calls used precise and appropriate arguments for the task. The initial project-context retrieval established the project state, and each subsequent query correctly referenced the specific assertion IDs associated with the identified conflicts, allowing the skill to retrieve the exact evidence needed to document the disagreements before routing to conflict resolution.\nThe tool calls executed successfully without argument mismatches, invalid identifiers, retries, or fixture errors. The arguments were narrowly targeted, supported the conflict-identification workflow effectively, and directly enabled the correct routing decision.)"
+    }
+  ]
+}

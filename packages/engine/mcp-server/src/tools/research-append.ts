@@ -1912,13 +1912,26 @@ function declarationStatusInvariants(entry: any): string[] {
  *  a researcher who believes the search is done has no way to say so. Issue
  *  #1821 owns that fix.
  *
- *  **`planned` does NOT block, and that is load-bearing.** `research/SKILL.md`
- *  routes here deliberately before the plan is drained — "even with plan items
- *  still `planned` → research-exhaustiveness (consult the stop criteria before
- *  draining the rest of the plan)" — and 122 corpus items sit at `planned`
- *  across 31 declarations that are all correct. The skill body's opening
- *  sentence is stricter than its own operative rule; the operative rule and the
- *  orchestrator agree, and this follows them.
+ *  **`planned` BLOCKS, decided 2026-10-05 on issue #1830.** It did not until
+ *  then. Dallan's `c78efb0b7` (#1847, 23 August) put "`planned` does NOT block"
+ *  here and the #1843 ruling shipped it, both resting on a skip having nowhere
+ *  to record its reason — the same ruling deferred the skip-reason field to
+ *  #1830 because it was a schema change. `skip_category` is that field, so the
+ *  premise lapsed and the ruling with it.
+ *
+ *  What decided it was not the vote. Six genealogists chose this and none chose
+ *  otherwise, but their shared argument — an unexplained leftover cannot be told
+ *  from a forgotten one — was already written in the skill bodies as prose, and
+ *  across 199 committed e2e runs it produced 38 leftover `planned` items and
+ *  ZERO recorded reasons. A rule with no compliance in prose belongs at the
+ *  write boundary. The decision, the case against it and the conditions it
+ *  ships under are on issue #1830.
+ *
+ *  The orchestrator still consults this gate BEFORE the plan is drained
+ *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
+ *  route taken on a refusal changed, to dispose of the named items rather than
+ *  extend the plan. Were disposal to happen first, the planner would be making
+ *  this gate's call for it.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -1938,30 +1951,67 @@ function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (entry?.exhaustive_declaration?.declared !== true) return [];
   const qid = entry?.id;
   if (typeof qid !== "string" || qid === "") return [];
-  const inFlight = activePlanInProgressItems(preCallResearch, (plan) => plan.question_id === qid).map(
-    (item) => item.itemId,
+  // Of `plan_item_status`'s four, the two that are not disposed. Derived from
+  // the enum rather than listed so a status added later blocks by default: this
+  // gate should not wave through an item whose disposition it has never heard
+  // of, and a block here is recoverable — the plan's owner disposes of it —
+  // where a silent pass is the exhaustive declaration #1830 exists to stop.
+  const blocking = activePlanItems(
+    preCallResearch,
+    (plan) => plan.question_id === qid,
+    [...VALIDATOR_ENUMS.plan_item_status].filter((s) => s !== "completed" && s !== "skipped"),
   );
-  if (inFlight.length === 0) return [];
-  const ids = inFlight.sort().join(", ");
+  const inFlight = blocking.filter((i) => i.status === "in_progress").map((i) => i.itemId);
+  const undisposed = blocking.filter((i) => i.status === "planned").map((i) => i.itemId);
+  if (inFlight.length === 0 && undisposed.length === 0) return [];
+
+  // Both arms name the blocking items and stop. Neither tells the caller to
+  // change a status: the exhaustiveness agent holds `questions` and no
+  // `plan_items` write, so a refusal naming an action it cannot take names a
+  // locked door — which `guard_project_files.py`'s OWNER_REASON records as the
+  // thing that produces bypasses. Pinned by "the refusal names no plan_items
+  // action". Disposal is the plan owner's, reached through research/SKILL.md's
+  // route for a refused declaration.
+  const clauses: string[] = [];
+  if (inFlight.length > 0) {
+    const ids = inFlight.sort().join(", ");
+    clauses.push(
+      `${ids} ${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
+        "search has not finished, so the declaration would rest on work still running",
+    );
+  }
+  if (undisposed.length > 0) {
+    const ids = undisposed.sort().join(", ");
+    const one = undisposed.length === 1;
+    clauses.push(
+      `${ids} ${one ? "is" : "are"} still 'planned' — ${one ? "it has" : "they have"} not been ` +
+        `disposed of, so the record cannot say whether ${one ? "it was" : "they were"} answered ` +
+        `by what you already hold or simply never run (#1830)`,
+    );
+  }
   return [
-    `question '${qid}' cannot be declared exhaustive while ${ids} ` +
-      `${inFlight.length === 1 ? "is" : "are"} still 'in_progress' — the plan says that ` +
-      "search has not finished, so the declaration would rest on work still running. " +
-      `Report ${inFlight.length === 1 ? "this item" : "these items"} as the blocker and let ` +
-      "the search finish; declaring is available on the next call once the plan reflects it. " +
-      "Items still at `planned` do not block — consulting the stop criteria before draining " +
-      "the plan is the sanctioned path.",
+    `question '${qid}' cannot be declared exhaustive while ${clauses.join("; and ")}. ` +
+      `Report ${inFlight.length + undisposed.length === 1 ? "this item" : "these items"} as the ` +
+      "blocker and hand back; the plan's owner disposes of what is left, and declaring is " +
+      "available on the next call once the plan reflects it.",
   ];
 }
 
-/** Every `in_progress` item on an ACTIVE plan the predicate accepts, read from
- *  the given snapshot. Shared by the two in-flight gates so which plans and
- *  items count as in flight is decided once. */
-function activePlanInProgressItems(
+/** Every item on an ACTIVE plan the predicate accepts whose status is in
+ *  `statuses`, read from the given snapshot. Shared by the in-flight gates so
+ *  which plans and items count is decided once.
+ *
+ *  `statuses` defaults to `in_progress` alone, which is what the new-question
+ *  gate below asks for. `planCompleteInvariants` additionally passes `planned`
+ *  (issue #1830): an undisposed item leaves the record unable to say whether it
+ *  was answered by what is already held or simply never run. The two gates ask
+ *  different questions of the same plan, so the status set is the caller's. */
+function activePlanItems(
   research: any,
   includePlan: (plan: any) => boolean,
-): { itemId: string; questionId: unknown }[] {
-  const inFlight: { itemId: string; questionId: unknown }[] = [];
+  statuses: readonly string[] = ["in_progress"],
+): { itemId: string; questionId: unknown; status: string }[] {
+  const found: { itemId: string; questionId: unknown; status: string }[] = [];
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (!plan || !includePlan(plan)) continue;
     // ONLY the active plan blocks, and this is what keeps the gate escapable.
@@ -1977,12 +2027,13 @@ function activePlanInProgressItems(
     // is not the plan the question is being worked from.
     if (plan.status !== "active") continue;
     for (const item of Array.isArray(plan.items) ? plan.items : []) {
-      if (item?.status === "in_progress" && typeof item?.id === "string") {
-        inFlight.push({ itemId: item.id, questionId: plan.question_id });
+      if (typeof item?.id !== "string" || typeof item?.status !== "string") continue;
+      if (statuses.includes(item.status)) {
+        found.push({ itemId: item.id, questionId: plan.question_id, status: item.status });
       }
     }
   }
-  return inFlight;
+  return found;
 }
 
 /** A new question may not be created while any unresolved question has an
@@ -2016,7 +2067,7 @@ function newQuestionWhileSearchInFlightInvariants(entry: any, preCallResearch: a
     if (c?.status !== "unresolved" || !Array.isArray(c.blocks_question_ids)) continue;
     for (const q of c.blocks_question_ids) if (typeof q === "string") conflictBlocked.add(q);
   }
-  const refused = activePlanInProgressItems(
+  const refused = activePlanItems(
     preCallResearch,
     (plan) =>
       unresolvedQuestions.has(plan.question_id) &&
@@ -2120,6 +2171,81 @@ function planItemLogAttributionInvariants(
       `search was already logged with planItemId: null, leave this item 'in_progress' ` +
       `rather than logging the same search twice.`,
   ];
+}
+
+/** The seven `skip_category` values, for the refusal message. Kept as a literal
+ *  rather than read from the schema: the validator already enforces membership,
+ *  and what this list is for is telling the agent what to pick. */
+const SKIP_CATEGORIES =
+  "answered, inaccessible, no_coverage, fallback_not_triggered, out_of_scope, " +
+  "premise_invalidated, user_declined";
+
+/** A `skipped` item must say WHY it was skipped, and must not say it in
+ *  `rationale`.
+ *
+ *  Why this is a writer precondition and not prose (ADR-0011's first question):
+ *  it is decidable from the entry alone. Six skills may write a plan item's
+ *  status, so a prose rule would have to be repeated in six bodies and would
+ *  bind in none of them reliably; the tool covers all six at once and cannot be
+ *  argued with.
+ *
+ *  Without it, `skipped` is a way to satisfy the exhaustiveness gate without
+ *  searching: the gate treats `completed`-or-`skipped` as a disposed item, and
+ *  a bare `skipped` tells it nothing about whether the source was ever reached.
+ *  Once every new skip carries a category, the gate has something to read —
+ *  which is why the gate itself was NOT changed to treat a missing value as
+ *  "not searched" (lead ruling 2026-09-30). Existing projects carry bare
+ *  `skipped` items that will never gain one, and `research-exhaustiveness` is
+ *  not a permitted writer of `plan_items`, so a question blocked that way would
+ *  have no route to repair — the unrecoverable false deny ADR-0011's first
+ *  limit exists to prevent.
+ *
+ *  The `rationale` clause is the other half of the same defect. `rationale`
+ *  means why the item was PLANNED and is required; with nowhere else to put it,
+ *  the model was observed rewriting it with the skip reason, destroying the
+ *  planning record to store something `skip_reason` now holds.
+ */
+function planItemSkipInvariants(
+  item: any,
+  fields: Record<string, unknown>,
+  isAppend: boolean,
+  storedRationale?: unknown,
+): string[] {
+  const pid = item?.id ?? "(new)";
+  const errors: string[] = [];
+  if (item?.status === "skipped" && !item?.skip_category) {
+    errors.push(
+      `plan_items[${pid}]: status 'skipped' needs a skip_category saying why, or the ` +
+        `exhaustiveness gate cannot tell a source you decided against from one you could ` +
+        `not reach. Pick one of: ${SKIP_CATEGORIES}. Put the detail in skip_reason — not ` +
+        `in rationale, which records why the item was planned.`,
+    );
+  }
+  // Narrowed to a SKIP deliberately, not every status move. The defect is the
+  // model folding the skip reason into `rationale` for want of anywhere else,
+  // and `skip_reason` is the place to send it instead — so on a skip the
+  // refusal names a remedy. On a `completed` or `in_progress` move there is no
+  // such field, so the same refusal would be a deny with no route out, which is
+  // the false deny ADR-0011's first limit exists to prevent. Re-wording the
+  // rationale while completing an item is a documented, legitimate edit
+  // (`(d4-logattr) ACCEPTS an update re-sending status: completed …`).
+  //
+  // It fires on a CHANGED rationale, not merely a present one. An agent that
+  // re-sends the whole entry unchanged alongside the status move has destroyed
+  // nothing, and refusing it would be a refusal for no defect — the shape a
+  // batched update takes most naturally (review, 2026-10-01).
+  const rationaleTouched =
+    Object.prototype.hasOwnProperty.call(fields ?? {}, "rationale") &&
+    fields.rationale !== storedRationale;
+  if (!isAppend && fields?.status === "skipped" && rationaleTouched) {
+    errors.push(
+      `plan_items[${pid}]: this op sets status 'skipped' and rewrites rationale in the same ` +
+        `call. rationale is why the item was PLANNED — overwriting it while disposing of the ` +
+        `item destroys the planning record. Leave rationale alone and put why it was skipped ` +
+        `in skip_reason.`,
+    );
+  }
+  return errors;
 }
 
 /** The two tiers that are a final answer rather than a stalled one: `proved`
@@ -3707,9 +3833,21 @@ function applyOne(
           .filter((it: any) => it && it.status === "completed")
           .map((it: any) => it.id),
       );
+      const alreadySkipped = new Set(
+        (Array.isArray(storedPlan?.items) ? storedPlan.items : [])
+          .filter((it: any) => it && it.status === "skipped")
+          .map((it: any) => it.id),
+      );
       for (const item of Array.isArray(resultEntry?.items) ? resultEntry.items : []) {
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        // Inline `items[]` on a `plans` op reaches the same field, so the skip
+        // rule has to hold here too or it is one `{ ...entry }` spread away
+        // from being bypassed. `isAppend: true` — an item arriving inline has
+        // no prior rationale to overwrite, so only the category clause applies.
+        if (item && !alreadySkipped.has(item.id)) {
+          invariantErrors.push(...planItemSkipInvariants(item, {}, true));
+        }
       }
     }
   }
@@ -3741,6 +3879,25 @@ function applyOne(
     if (statusTouchedThisOp && !wasCompleted) {
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
+      );
+    }
+    // A `skipped` item must carry a category. Gated the same way, and
+    // additionally skipped when the item was ALREADY `skipped` before this
+    // call: re-stating a bare skip written before this rule existed changes
+    // nothing, and refusing it would strand every pre-existing project. Only a
+    // NEW skip is held to it.
+    const storedItem = (Array.isArray(preCallResearch?.plans) ? preCallResearch.plans : [])
+      .flatMap((pl: any) => (pl && Array.isArray(pl.items) ? pl.items : []))
+      .find((it: any) => it && it.id === resultEntry?.id);
+    const wasSkipped = op.op === "update" && storedItem?.status === "skipped";
+    if (statusTouchedThisOp && !wasSkipped) {
+      invariantErrors.push(
+        ...planItemSkipInvariants(
+          resultEntry,
+          itemFields,
+          op.op === "append",
+          storedItem?.rationale,
+        ),
       );
     }
   }

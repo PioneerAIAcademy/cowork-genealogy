@@ -135,6 +135,15 @@ turned out to be a different person, or a boundary change moved the
 records). Apply Step 6 ("Handle re-planning"): supersede the old plan,
 create a new one.
 
+**Dispose mode** — `research-exhaustiveness` refused a declaration
+because items on the active plan are still `planned`, and you were
+given their ids. Set each: `completed` if its search was done and
+logged, otherwise `skipped` with a `skip_category`. Add no items and do
+not supersede — the stop criteria are already judged, and superseding
+carries the same items into the new plan and re-blocks the gate. Put
+every item in ONE `research_append` call; one `skip_reason` may cover
+several items sharing a reason.
+
 **Heuristic for ambiguous prompts.** When a prompt could mean "tell me
 the plan" (review) or "make a plan" (add/supersede), default to review
 if an active plan has unfinished items — a duplicate plan alongside a
@@ -470,6 +479,11 @@ research_append({
 - `status`: the item's progress — exactly one of `planned`,
   `in_progress`, `completed`, or `skipped`. New items are `planned`.
   Never use any other value (e.g. not `not_started`, not `pending`).
+- `skip_category`: required whenever `status` is `skipped` — exactly
+  one of `answered`, `inaccessible`, `no_coverage`,
+  `fallback_not_triggered`, `out_of_scope`, `premise_invalidated`,
+  `user_declined`. Detail goes in `skip_reason`; never in `rationale`,
+  which records why the item was planned.
 
 **Field-value rules (strict).** Use only schema-defined fields and
 values. A plan's `status` is one of `active`, `superseded`,

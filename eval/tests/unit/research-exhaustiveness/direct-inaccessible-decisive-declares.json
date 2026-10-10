@@ -1,0 +1,38 @@
+{
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_d8h",
+    "skill": "research-exhaustiveness",
+    "name": "An inaccessible decisive record is justified, not a gap (direct-agent arm)",
+    "type": "positive",
+    "description": "q_001 in decisive-skip-inaccessible asks for the parents of Alan Glen Applegarth (b. 1936 Utah). The decisive record for a parentage question -- the subject's own birth certificate, pli_004 -- is skipped with skip_category 'inaccessible' and a skip_reason naming Utah's ~100-year seal. The decisive-record rule permits a declaration once that record is 'searched or the declaration explicitly justifies why it is inaccessible', so the agent should declare and record the limitation. The accept half of the check-6' pair for issue #1830; the reject half is _d9i, on a Massachusetts birth registration that is genuinely obtainable. Nothing in THIS fixture's prose says whether the record can be obtained -- pli_004's rationale is neutral and log_004 is removed -- so a gate that ignores skip_category and skip_reason has no grounds to declare and fails this test. That is the pre-fix direction.",
+    "tags": [
+      "research-exhaustiveness",
+      "affirmative-declaration",
+      "skip-category",
+      "decisive-record",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "decisive-skip-inaccessible"
+  },
+  "mcp_fixtures": [
+    "wiki-read-utah-vital-records"
+  ],
+  "judge_context": [
+    "pli_004 is Alan's own 1936 Utah birth certificate — the decisive record for a parentage question. It is `skipped` with `skip_category: \"inaccessible\"` and a `skip_reason` stating that Utah seals birth records for ~100 years (public ~2036), released before then only to the registrant or a direct heir. That is the explicit inaccessibility justification the decisive-record rule asks for.",
+    "Claude should declare q_001 reasonably exhaustive: set exhaustive_declaration.declared to true and q_001.status to 'exhaustive_declared' via a research_append op:'update' call, with all seven stop_criteria keys populated. Verify the write from the research_append call's arguments and the resulting research.json state, not a raw file_changes diff.",
+    "The declaration should record the sealed certificate as an access limitation — in the overturn_risk assessment or a stop_criteria note — rather than as an outstanding searchable gap.",
+    "FAILURE MODES: (a) refusing to declare solely because pli_004 was not obtained; (b) listing the birth certificate as an outstanding searchable record still to be pursued; (c) recommending the researcher obtain it as a next step. Any of these is a fail. This is the same rule ut_research_exhaustiveness_017 guards, reached here through the skip_category field rather than through prose.",
+    "IMPORTANT — unlike `recent-birth-sealed`, nothing in this fixture's prose says the record is unobtainable. pli_004's `rationale` states only what the record would show, and there is no log entry for it. The inaccessibility is carried by `skip_category` and `skip_reason` alone. A reply that treats pli_004 as an unsearched gap has not read those fields, and that is precisely the failure this test exists to catch — do NOT credit it as appropriate caution.",
+    "Claude must NOT claim the birth certificate was examined or invent its contents.",
+    "The parents (John Obrien Applegarth and Olive Annie Harvey) are established by independent sources: the 1940 and 1950 censuses and the 1926 Weber County marriage. The church and probate items were searched and are negative. On this evidence the accessible record supports a defensible conclusion, which is the precondition the pursued-and-unavailable exception itself requires.",
+    "research_append validates-before-persist and writes atomically in a single call, so it alone is the complete and correct persistence step. Do NOT expect a separate validation call, and do NOT penalize Tool Arguments or Completeness for the absence of one."
+  ]
+}
