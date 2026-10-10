@@ -4,7 +4,7 @@
  * WHY THIS EXISTS. The lead ruled (2026-08-27) that `person_read` returns relatives'
  * attached sources as ordinary `sources[]` entries. The tree-read body already carries
  * relatives' source REFS, but as full URLs to descriptions FamilySearch does not send in
- * that body, so `keepResolvablePersonSourceRefs` drops them (0/102 and 2/79 resolved,
+ * that body, so `keepResolvableSourceRefs` drops them (0/102 and 2/79 resolved,
  * probe 2026-09-30). This probe settles HOW to resolve them, and at what cost, before any
  * production code is written — the same discipline Half 2 used with `probe-memories.ts`.
  *
