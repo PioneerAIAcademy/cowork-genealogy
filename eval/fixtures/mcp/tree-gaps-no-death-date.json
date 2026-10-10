@@ -1,0 +1,46 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: a deceased person with no death date. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "no_death_date",
+        "personId": "TGAP-GGF",
+        "name": "Johann Ashby",
+        "lifespan": "1822-",
+        "generation": 2,
+        "detail": "Deceased, but the tree gives no death date.",
+        "yearRange": {
+          "start": 1822,
+          "end": 1912
+        },
+        "place": "Baden, Germany",
+        "coverage": {
+          "collections": 3,
+          "records": 900000,
+          "recordTypes": [
+            "CHURCH_RECORD"
+          ],
+          "censusYears": [],
+          "placeLevel": "region"
+        }
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 40,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}

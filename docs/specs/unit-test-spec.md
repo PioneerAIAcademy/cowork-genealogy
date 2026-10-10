@@ -179,7 +179,7 @@ A fixture's `args` block is **always required and non-empty.** It serves two pur
 
 **Error fixtures.** To test how a skill handles error responses (auth failure, upstream 5xx, malformed response), set `response` to the error envelope the real MCP tool would return. The harness returns whatever object is in `response` verbatim — there is no separate "error" mode.
 
-**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The twelve tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. None is fixture-served, so no fixture should carry that shape either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
+**The failure envelope is one key, `error`, holding the message string.** Every dispatch arm in `src/server.ts` catches identically and returns `{"error": <the thrown message>}`, and no arm produces any other shape for a THROWN error. A companion `message`, `status` or `code` key is therefore not a shape any tool can produce, and the fixture-shape check below rejects it. (The tools in `OK_FALSE_IS_FAILURE` are a separate case: they report an *expected* failure by returning `{ok: false, reason, errors}`, which `src/tool-result.ts` turns into `isError`. They are not all writers, and most of them still re-throw an unexpected error into the envelope above. The one fixture-served member, `external_links_search`, never returns that shape — it fails by throwing — so no fixture should carry it either.) Note also that production sets `isError: true` alongside `{error}` and a fixture-served response never does, so an error fixture exercises the body and not the flag:
 
 ```json
 // auth failure
@@ -651,6 +651,21 @@ across the conversion; minting new ids would orphan every prior grade on the
 `(test_id, dimension_source, dimension_name)` key this section already names.
 The "separate file, own id" rule above still governs a **pair** — a routing
 skill that still ships — because there both arms exist and both are graded.
+
+**The paired-skill pattern is retired (lead ruling 2026-09-22, restated
+2026-09-29).** A conversion now ends with the agent authored and
+`skills/<name>/` deleted in the same PR. What it beat was keeping
+the thin routing skill on disk as the direct-user and unit-eval entry point —
+the shape §0 of `docs/skill-to-agent-pair-conversion.md` was written for, which
+left a rule stated only in the routing skill's body switched off during
+production research while still billing its tokens.
+
+Four of the five pairs are gone: `search-images` (2026-09-29),
+`person-evidence`, `proof-conclusion` and `research-exhaustiveness`
+(2026-10-08). Only `record-extraction` →
+`record-extractor` remains, under the 2026-09-21 exemption. The conversion
+rules and the direct-agent arm still apply to that suite and to any future
+pair, but the population they govern has shrunk from five pairs to one.
 
 **A negative converts too, when its outcome does not depend on routing.** The
 conversion doc says negatives get no twin, and for a pair that is right: routing
@@ -1510,6 +1525,8 @@ This composition cleanly handles all edge cases:
 - `runs_per_test: 3` — description-optimizer passes (so pass-rate deltas aren't dominated by sampling noise) and golden-set calibration during rubric tuning.
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
+`run_tests.py --no-tool-search` (Makefile `eval-skill ... TOOL_SEARCH=0`) is the other CLI-only override: it sends `ENABLE_TOOL_SEARCH=false`, so every tool schema is loaded up front instead of deferred behind ToolSearch. It is experiment-only — the invocation is non-releasable and writes a `scratch_` log, by the same mechanism as `--runs-per-test N` — and the run log records it as `tool_search: false` (see "Field details").
+
 So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
 **Cost impact.** Running N=3 triples skill-execution cost and judge cost (every non-aborted run is judged). Prompt caching mitigates the skill-execution side — only the test-specific tail re-runs uncached. Budget impact is roughly 2.5x rather than 3x for batched skill runs. Because N=1 is the default, this cost only applies during optimization passes and calibration work.
@@ -1650,6 +1667,7 @@ def report_example_pattern(text_response):
 - `no_result_message` (bool) — true when the run ended before a `ResultMessage` ever arrived even though it is not an abort: the negative-test routing short-circuit, and a `stop_at_stub` stop, which shares its exit. `num_turns` above has a real answer on this path (it is not read off the `ResultMessage` — see its own entry); `output_tokens` does not, since no partial token count exists before a `ResultMessage`. This field is what distinguishes that 0 from a skill that genuinely used no output tokens. Shape choice: the alternative considered was making `num_turns`/`output_tokens` nullable instead of adding this flag, and rejected — neither field has a null branch today, so nullable would be a schema change in both mirrors, would break every `int(...)` summation site, and would silently disable `test_universal.py`'s V8 guard (`num_turns != 0 or output_tokens != 0`, which becomes vacuously true against `None`). The sibling-flag shape keeps both fields real integers everywhere, so no consumer arithmetic and no existing validator needed to change.
 - `aborted_reason` (str | None) — abort reason if the run was aborted (e.g. `"max_wall_clock_seconds"`, `"sdk_stream_silence"`, `"quota_exhausted"`, `"error"`). `None` when the run completed normally.
 - `suppressed_post_deny_calls` (array of objects, optional) — MCP calls made in the turn AFTER the routing short-circuit's hook denied the hand-off (a negative test's, or a `stop_at_stub` stop). That turn is the model reacting to the deny, not the skill working, so its text, its turn count and these calls are all withheld from the run's own record. They are still written here rather than dropped, because dropping them made two things uncheckable from any run log: whether a reaction call ever executes at all, and whether one ever names a tool the mock server does not register. Read asymmetrically on purpose — the orchestrator's `unmatched_tool_call` gate counts them on the attempted side (so an executed, fixture-matching reaction call cannot raise `covered` while the left side stays flat and mask an uncovered call from an earlier turn) and scans them for unregistered names; `_build_warnings`' `uncovered_tool_call` advisory does **not**, so a deliberately stopped run collects no advisory for a turn it never owned. Absent when the run suppressed nothing.
+- `subagents` / `subagent_capture_status` / `main_thread` (optional) — each thread's **busiest moment** (`peak_window_tokens`: the tallest single window it read, a max over its messages, never a sum), its compactions (one `{trigger, pre_tokens, post_tokens}` per compaction; the **count** is the signal, since a peak saturates once a thread compacts) and the models it ran on. Read from the SDK's own transcripts by `_capture_context_meters` in `_execute_skill_with_retry`, which must run **before** `cleanup_session_store` deletes them — `test_capture_runs_before_session_cleanup` pins the order. `subagents` covers helpers, including the agent under test on a direct-arm test (behind the relay); `main_thread` is the parent session, where a routed test's skill runs. Absent — never zero — on a log written before the capture existed and on a run that aborted before execution. `make unit-report` prints them.
 - `error` (str | None) — the SDK's own error string for an aborted run, plus whichever rate-limit signals fired. `None` when the run completed normally, or when it aborted before the SDK produced one (the pre-execution runnability gate). On a routing short-circuit that also detects a genuine subscription-quota rejection, `aborted_reason`/`error` survive rather than being cleared with the rest of the short-circuit's abort state — see `skill_runner.run_skill`'s routing-short-circuit branch.
 
 Validators compute the diff between `before_state` and `after_state` internally. The harness does not pre-compute the diff for validators — they have full state for cases like the append-only check that need to compare collections, not just diffs.
@@ -1799,6 +1817,9 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
       "cache_creation_input_tokens": "number",
       "output_tokens": "number",
       "model_usage": "object (per-model ledger, keyed by model id; the token fields above are its column sums)",
+      "subagents": "array (optional; one summary per subagent — agent_type, usage, peak_window_tokens, compactions, models, duration_seconds; written with subagent_capture_status, absent when no capture ran)",
+      "subagent_capture_status": "string (optional; captured | matched_no_transcripts | no_cache_dir | error)",
+      "main_thread": "object (optional; the parent session's peak_window_tokens, compactions, models; absent when its transcript could not be read)",
       "skill_cost_usd": "number",
 
       "output": {
@@ -1886,6 +1907,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **`tool_search`** (envelope) — `true`, or `false` under `--no-tool-search`. Written on every log the harness writes, the default included; optional in the schema and absent on logs written before it existed, which all ran with tool search on and are read that way. Recorded so `make unit-compare` names a differing setting ("run settings that differ") instead of reporting a cost move with no changed file as wobble.
 - **Every token field covers every model the run touched** — the main thread plus
   any plugin agent it delegated to. They are read from the SDK's per-model ledger
   (`model_usage`), which the CLI documents as covering the same calls as

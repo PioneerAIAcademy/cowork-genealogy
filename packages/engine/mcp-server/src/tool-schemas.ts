@@ -25,6 +25,7 @@ import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
+import { treeGapsToolSchema } from "./tools/tree-gaps.js";
 import { samePersonSchema } from "./tools/same-person.js";
 import {
   personRecordMatchesSchema,
@@ -90,6 +91,7 @@ export const allToolSchemas = [
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,
+  treeGapsToolSchema,
   samePersonSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,

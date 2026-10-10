@@ -104,7 +104,7 @@ Skim the diff for:
 - **Rubric changes** (`eval/tests/unit/<skill>/rubric.md`) — only if the junior had to change grading dimensions to capture something new.
 - **Scenario / fixture changes** — usually rare on a per-skill PR. If present, did they affect tests in other skills?
 
-The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json`, latest run log is active on skill-side files, and its `.ann.json` is complete. If the action is green, you don't have to manually check these.
+The CI `check-runlogs` action has already verified: ≤1 new released `v{N}.json`, the run log the PR adds (else the latest) is active on skill-side files, and its `.ann.json` is complete. If the action is green, you don't have to manually check these.
 
 ## 3. Launch the CRUD UI
 

@@ -402,6 +402,19 @@ START = {"ev": "start", "spend_cap_usd": 35.0, "prices": {"output": 15.0}}
     (("--case", "cap_main_real",), {**START, "spend_cap_usd": 0}, "lowered"),
     (("--case", "cap_main",), {**START, "spend_cap_usd": 0}, "off"),
     (("--case", "outage_pause", "--pause-s", "0"), START, "positive"),
+    # concurrent_rss_heavy's flags: in range, and on no other case (--target deployed, so
+    # DEPLOYED_ONLY is not what refuses).
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--sessions", "9"), START, "--sessions must be 0-8"),
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--sessions", "-1"), START, "--sessions must be 0-8"),
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--window-s", "0"), START, "--window-s must be 1-1800"),
+    (("--case", "concurrent_rss_heavy", "--target", "deployed", "--window-s", "1801"), START, "--window-s must be 1-1800"),
+    (("--case", "concurrent_rss", "--target", "deployed", "--sessions", "2"), START,
+     "--sessions is for concurrent_rss_heavy, not concurrent_rss"),
+    (("--case", "concurrent_rss", "--target", "deployed", "--window-s", "600"), START,
+     "--window-s is for concurrent_rss_heavy"),
+    (("--case", "kill_hold", "--target", "deployed", "--expect-instance-type", "t3.xlarge"), START,
+     "--expect-instance-type is for concurrent_rss_heavy"),
+    (("--case", "stop_main", "--allow-standard-credits"), START, "--allow-standard-credits is for concurrent_rss_heavy"),
 ])
 def test_make_ctx_refuses(argv, start, said):
     with pytest.raises(ValueError, match=said):
@@ -417,6 +430,23 @@ def test_make_ctx_refuses(argv, start, said):
 def test_make_ctx_accepts(argv, start):
     ctx = bounds.make_ctx(_args(*argv), start)
     assert ctx.cap_usd == start["spend_cap_usd"]
+
+
+@pytest.mark.parametrize("argv, sessions, window_s, expect, allow", [
+    ((), 2, 600.0, None, False),
+    (("--sessions", "0", "--window-s", "900"), 0, 900.0, None, False),
+    (("--sessions", "8", "--window-s", "1800", "--expect-instance-type", "t3.xlarge"), 8, 1800.0, "t3.xlarge", False),
+    (("--sessions", "1", "--window-s", "1", "--allow-standard-credits"), 1, 1.0, None, True),
+])
+def test_make_ctx_accepts_the_heavy_flags(argv, sessions, window_s, expect, allow):
+    ctx = bounds.make_ctx(_args("--case", "concurrent_rss_heavy", "--target", "deployed", *argv), START)
+    assert (ctx.sessions, ctx.window_s, ctx.expect_instance_type, ctx.allow_standard_credits) == (
+        sessions, window_s, expect, allow)
+
+
+def test_make_ctx_leaves_the_heavy_defaults_on_other_cases():
+    ctx = bounds.make_ctx(_args("--case", "concurrent_rss", "--target", "deployed"), START)
+    assert (ctx.sessions, ctx.window_s) == (bounds.HEAVY_SESSIONS, bounds.HEAVY_WINDOW_S)
 
 
 def test_the_case_list_is_closed():
@@ -633,11 +663,28 @@ def test_the_outage_cases_terminate_exactly_the_turns_backend(monkeypatch):
 # ── the probe texts and the make target ────────────────────────────────────────────────
 
 
+def test_kill_hold_names_one_record_and_matches_the_namespaced_extractor():
+    """A fresh seed cites nothing, so the generic extraction prompt searched for ~20 min first
+    and its first extraction_append came past the deadline (U13, 2026-10-08). The runtime
+    records the agent as ``genealogy-research:record-extractor``."""
+    text = bounds.KILL_HOLD_TEXT.read_text(encoding="utf-8")
+    assert re.search(r"ark:/61903/1:1:[A-Z0-9-]+", text) and "record-extractor" in text, text
+    assert "background" not in text.lower()
+    assert "agent_type LIKE '%%record-extractor'" in bounds.HOLD_ROW_SQL, bounds.HOLD_ROW_SQL
+    assert "agent_type = 'record-extractor'" not in bounds.HOLD_ROW_SQL
+
+
 def test_the_probe_texts_exist_and_the_delegation_one_never_asks_for_background():
-    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT):
+    for path in (bounds.LOOKUPS_TEXT, bounds.EXTRACTIONS_TEXT, bounds.RESUME_TEXT, bounds.SPILL_TEXT, bounds.KILL_HOLD_TEXT):
         assert path.read_text(encoding="utf-8").strip(), path
     text = bounds.EXTRACTIONS_TEXT.read_text(encoding="utf-8").lower()
     assert "background" not in text and "record-extractor" in text
+    # Italy is measured past the 50,000-character spill; England never was. A count is in the
+    # 2 KB preview (totalForPlace), the last title only in the spilled tail.
+    spill = bounds.SPILL_TEXT.read_text(encoding="utf-8").lower()
+    assert '"italy"' in spill and "england" not in spill, spill
+    assert re.search(r"\btitle\b", spill) and re.search(r"\blast collection\b", spill), spill
+    assert "how many" not in spill, "a count is answerable from the preview without reading the spill"
 
 
 _NUDGES_3 = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:-3\}\1$""")
@@ -691,3 +738,32 @@ def test_bounds_py_runs_as_a_script_from_apps_server():
                           text=True, encoding="utf-8")
     assert proc.returncode == 0, proc.stderr
     assert "--case" in proc.stdout and "probe_resume" in proc.stdout
+
+
+def _closed(rep_ok: list) -> bool:
+    [ok] = [ok for n, ok, _ in rep_ok if ": closed, not " in n]
+    return ok
+
+
+def test_resume_checks_pass_no_progress_only_for_a_nudged_project_less_turn():
+    """Deployed probe turns run project-less with nudges on and close no_progress after two
+    empty nudges, at caps 60 and 3 alike (U13, 2026-10-08). That is not a stranded resume."""
+    snap = bounds.TurnSnap(turn_id="t1", row=(2, "now", "no_progress", 0.2))
+    kw = dict(sdk_before="s", sdk_after="s", entries_at_kill=1, entries_after=5)
+    assert _closed(bounds.resume_checks("x", snap, nudged_projectless=True, **kw))
+    assert not _closed(bounds.resume_checks("x", snap, **kw))
+    for outcome in ("retries_exhausted", "signin_required", "transcript_lost"):
+        bad = bounds.TurnSnap(turn_id="t1", row=(2, "now", outcome, 0.2))
+        assert not _closed(bounds.resume_checks("x", bad, nudged_projectless=True, **kw)), outcome
+
+
+def test_nudged_projectless_needs_both_a_nudge_and_no_research_json(monkeypatch):
+    ctx = bounds.Ctx(base="b", dsn="d", email="e", s3_endpoint="s", fixture="f", session=None, deadline_s=5.0,
+                     kill_after_s=10.0, pause_s=1.0, cap_usd=35.0, price_output=15.0)
+    nudged = [{"ev": "nudge", "turn_id": "t1", "n": 1}]
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 0 if sql == bounds.RESEARCH_DOC_SQL else None)
+    assert bounds.nudged_projectless(ctx, "s1", nudged, "t1")
+    assert not bounds.nudged_projectless(ctx, "s1", [], "t1"), "no nudge: a no_progress there is a real failure"
+    assert not bounds.nudged_projectless(ctx, "s1", [{"ev": "nudge", "turn_id": "t9"}], "t1")
+    monkeypatch.setattr(bounds.turn, "one", lambda dsn, sql, params: 1 if sql == bounds.RESEARCH_DOC_SQL else None)
+    assert not bounds.nudged_projectless(ctx, "s1", nudged, "t1"), "a seeded project's no_progress still fails"

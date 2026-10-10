@@ -638,11 +638,13 @@ pushing a *new commit per round* (don't amend). Most PRs land in 1–2 rounds;
 things your step-4 run can no longer satisfy, because the skill changed
 underneath it:
 
-- The latest run log per touched skill must be **active** — its snapshot still
-  matching the branch's current skill files, tests and rubric. Edit any of
-  those and the UI shows "no active version" until you re-run; that's your
-  signal the results are stale.
-- Its `.ann.json` must carry a correction for **every** (test, dimension) pair.
+- The run log your PR adds for each touched skill (or, if it adds none, the
+  latest one) must be **active** — its snapshot still matching the branch's
+  current skill files, tests and rubric. Edit any of those and the UI shows
+  "no active version" until you re-run; that's your signal the results are
+  stale.
+- Its `.ann.json` must carry a correction for **every** dimension of each
+  sampled test, and a comment on each one that is not a confirmed pass.
 
 **One *problem* per PR — which is usually, but not always, one skill.** A
 locator rule that belongs in `citation` alone is a one-skill PR. But a doctrine

@@ -5,16 +5,18 @@ name: Check runlog discipline
 #   Rule 1 (blocking): At most one newly-added-or-renamed-into-place
 #   v{N}.json (released) per eval/runlogs/unit/<skill>/ per PR.
 #
-#   Rule 2 (blocking): The latest full-skill run log per touched skill
-#   must be "active on skill-side files" — its embedded snapshot matches
-#   the current PR-branch state of all snapshot-tracked files.
+#   Rule 2 (blocking): The run log this PR adds per touched skill (a
+#   released v{N}.json it adds, else its newest candidate) must be "active
+#   on skill-side files": its embedded snapshot matches the current
+#   PR-branch state of all snapshot-tracked files. A PR that adds no run
+#   log is held to the latest full-skill run log on disk instead.
 #
 #   Rule 2b (warn-only): The same run log's judge_prompt_hash matches the
 #   current eval/harness/judge/prompt.md. Mismatch surfaces a warning
 #   annotation but does not block merge — judge-prompt edits are a
 #   separate project-wide cadence.
 #
-#   Rule 3 (blocking): The latest full-skill run log's .ann.json contains
+#   Rule 3 (blocking): The same run log's .ann.json contains
 #   a correction entry for every (test_id, dimension_source, dimension_name)
 #   triple of the tests named in the run log's `review_sample` (3 rotation,
 #   1 targeted, 1 random, plus every test that failed, scored a 1 or 2 on

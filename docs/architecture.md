@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **9** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **24** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **8** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **25** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-four agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-five agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation` and `survey-surname`.
+`search-external-sites`, `source-evaluation`, `survey-surname` and `search-hints`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -353,7 +353,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-6 of the 9 skills carry a `references/` folder, loaded on demand, in-session,
+6 of the 8 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -479,7 +479,7 @@ identically is **physically duplicated** into each one rather than linked.
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
+| `places-guidance.md` | 5 | 2 | `tests/packaging/skill-guidance.test.ts` |
 
 The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
 (the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
@@ -498,17 +498,19 @@ it writes `questions` or `plans`, never `assertions` or `person_evidence`. A
 duplicated family with no lint decayed in exactly the way the guarded one did
 not.
 
-The `places-guidance` lint holds 8 copies byte-identical to a canonical at
+The `places-guidance` lint holds 4 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
 **absent from `package-plugin.mjs`'s `INCLUDE`**, so the canonical is a
-build-time anchor that never ships into the VM. The 9th copy belongs to
-`research-plan`, which had three place tools dropped from its `allowed-tools`
-in 8bf43be2 (and never held a fourth), so the canonical text would name tools it
-cannot call. It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY` — but
-pinned to a **sha256 of its own content**, so an edit inside it fails CI until
-the hash moves in the same diff. **Copy that shape, not a bare exemption**, when
-a fourth family gets a lint: every skill must land in exactly one of the two
-lists, and the test asserts that too.
+build-time anchor that never ships into the VM. The 5th copy belongs to
+`init-project`, whose canonical "copy it from a `person_read` result" bullet
+names a step it no longer takes (`project_create` carries the
+`standard_place`). It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY`
+— but pinned to a **sha256 of its own content**, so an edit inside it fails CI
+until the hash moves in the same diff. `research-plan` carried a specialized
+copy too until it was deleted under the lead's 2026-08-31 ruling and the two
+rules it needed were inlined into its `SKILL.md`. **Copy that shape, not a bare
+exemption**, when a fourth family gets a lint: every skill must land in exactly
+one of the two lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
 > knowing which divergences are deliberate — now only for `places-guidance.md`,
@@ -647,7 +649,8 @@ Architecturally:
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
   tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header) are entrypoints that only connect
+  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim when
+  `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` are sent) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -750,8 +753,9 @@ out of it (§3.1), then run `make eval-skill SKILL=<name>` — **and grade it.**
 
 > Touching *anything* under `packages/engine/plugin/skills/**` — including a
 > `references/` file or a comment — arms `.github/workflows/check-runlogs.yml`,
-> which **blocks the PR** unless the newest full-skill run log's snapshot matches
-> your branch and its `.ann.json` carries a correction for every dimension of
+> which **blocks the PR** unless the run log you add (or, if you add none, the
+> newest full-skill run log) has a snapshot that matches your branch and an
+> `.ann.json` that carries a correction for every dimension of
 > each **sampled** test — the tests named in the run log's `review_sample`
 > (3 rotation + 1 targeted + 1 random, plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the
 > count varies by run).
@@ -804,10 +808,11 @@ There **is** an orchestrator, and it is a skill:
    and then hand-authoring the fields that skill would have written is not
    invoking it." The column is **mixed**, and the spelling is what says which:
    an entry spelled `@plugin:<name>` is an `Agent` spawn of that agent, and
-   every other entry is a `Skill` call. The paired rows —
+   every other entry is a `Skill` call. The formerly paired rows —
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` — take
-   the spawn; their same-named thin skills stay on disk as the direct-user and
-   unit-eval entry points and are **not** on the in-loop route
+   the spawn, and their same-named thin skills have all been deleted:
+   the agent is now the only entry point, for the
+   orchestrator, for a user who names it, and for its unit-eval suite
    (`docs/skill-to-agent-pair-conversion.md` §0, which owns this rule).
    **The table is not the only routing surface in the file.** The section headed
    `## Direct user requests name a destination, not a shortcut`
@@ -886,6 +891,16 @@ back through the table anyway. The trigger corpus catches routing
 *into* `research` from the description, but not the internal routing table; a
 live e2e run is still the only instrument for table changes. Name the fixture
 you ran in the PR, or say you ran none.
+
+**A row spelled `@plugin:<name>` is an agent spawn, and the compliance
+detectors need no edit for it.** They credit a guardrail arm on either route: a
+`Skill` call naming it, or a typed `Agent`/`Task` spawn whose `subagent_type`
+(plugin namespace stripped) names it. So flipping a guardrail row from a skill
+to its agent, or converting another guardrail skill, keeps compliance green as
+long as the agent carries the arm's name. Adding the agent file still needs its
+name in `DEDICATED_AGENT_NAMES` (`eval/harness/harness/skill_invocation.py`),
+whose guard test goes red until it is there. An untyped spawn is still a bypass —
+the rule and its reason are in `docs/specs/guardrail-enforcement-spec.md` §2.
 
 The runlog CI gate now applies to `research` (armed by adding
 `eval/tests/unit/research/`). `forget-and-rederive` remains exempt
@@ -1094,11 +1109,14 @@ driver must wait.
 > Vertex, and under `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) **Five sites
 > described the opposite and have been corrected** — the
 > three harness/hosted comments plus `CLAUDE.md` and this repo's own packaging
-> test. The flag **values** are unchanged; flipping them is separate work that
-> has to re-measure the tool mix before and after, and
-> `eval/harness/e2e/mcp_health.py`'s mid-run backstop now *depends* on deferral
-> being on, so it is no longer a one-line experiment
-> (`gh issue list --state open --search "ENABLE_TOOL_SEARCH"`). The
+> test. The flag **values** are unchanged: on everywhere by default. Both eval
+> harnesses take an experiment-only off switch, `--no-tool-search` (`make e2e-run`
+> / `make eval-skill` with `TOOL_SEARCH=0`); an e2e run made with it must go to a
+> `RUNLOG_ROOT` outside `eval/runlogs/e2e/` (the harness refuses, CI rejects a
+> commit), and a unit run made with it is a `scratch_` log.
+> `eval/harness/e2e/mcp_health.py`'s mid-run backstop *depends* on deferral being
+> on and is inert under the switch. What off costs against on is recorded in
+> `docs/plan/cost-latency-10x.md` §5 once measured (T1.7). The
 > repo's own data corroborates the flag being live: ToolSearch is a steady few
 > percent of all tool calls across the committed e2e corpus *while the flag is
 > set to `true`*. This does not change the bare-name rule above, which is
@@ -1166,7 +1184,8 @@ the file-write tools, because two of the three rules act on `research_append`
 itself:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
-   `research.json` and `tree.gedcomx.json` (`PROTECTED_PROJECT_FILES`), matched
+   `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
+   `external-collections.json` (`PROTECTED_PROJECT_FILES`), matched
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
@@ -1367,6 +1386,7 @@ trustworthy rather than merely present:
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
+| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`. At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
 check lists `results/` non-recursively and errors on any top-level `*.json` no
@@ -1487,8 +1507,8 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 9 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 8 of them as the first line of the body,
+All 8 skills carry a `**Narration:**` line (`init-project` spells it
+`**Narration**`, without the colon) — 7 of them as the first line of the body,
 the other one further down — instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
 invocation's narration style. `init-project` writes the profile from two
@@ -1789,7 +1809,7 @@ bridge-free path has never been observed.
 | **Hosted control plane** (`app/agent/real_agent.py`) | `plugins=[{"type": "local", …}]` | **staged** into `<project>/.claude/agents/` | plugin's **+ its own `hooks=`** — the plugin half is the one arm of this column that is **measured**, by `make hook-smoke` (§9.1) | `bypassPermissions`, no allowlist | own stdio registration under `genealogy` |
 | **Unit harness** (`eval/harness/harness/workspace.py`) | staged into `.claude/skills/` | staged into `.claude/agents/` | **its own `hooks=`** — not the plugin's `hooks.json`, but it **imports the shipped predicates**, so the write lockdown and the ownership rules bind (§5.4) | `bypassPermissions` — chosen over `dontAsk` so declared `Write`/`Edit` still work. No MCP tool is blocked: every registered tool is granted, and `test_tool_allowlist` only warns (§5.1) | mock server under `genealogy` |
 | **E2e harness** (`eval/harness/e2e/orchestrator.py`) | staged | staged | **its own `hooks=`** | **`dontAsk`**, which on CLI ≥2.1 denies `Write`/`Edit` outright | live server under `genealogy` |
-| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store |
+| **Search-agent prototype** (`apps/server/proto/worker/`, `apps/server/proto/tools/`) | `plugins=[{"type": "local", …}]` from `ENGINE_PLUGIN_DIR` | passed as `agents=`, parsed from the plugin's `agents/` | plugin's **+ its own `hooks=`** (`PreToolUse`, `PostToolUse`, `Stop`) | `bypassPermissions`, `setting_sources=[]` | `build/http.js`, Streamable HTTP at `/mcp` — the one non-stdio row; the worker registers it under `genealogy` with a per-request `Authorization: Bearer`, never `LOCAL`, and a per-request `X-Genealogy-Project-Id` header that binds a `PgS3ProjectStore` on the stack's Postgres/S3 store, plus the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` claim fence (U6) that makes a superseded attempt's writes roll back |
 
 **The permission-mode column is not a footnote.** It is why the e2e tier and the
 unit tier disagree about raw writes for reasons that have nothing to do with the
@@ -1928,7 +1948,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
-| `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-guidance.test.ts` | 4 `places-guidance.md` copies byte-identical to the canonical, the 5th (`init-project`) pinned to its own sha256, and every skill in exactly one of the two lists |
 | `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |

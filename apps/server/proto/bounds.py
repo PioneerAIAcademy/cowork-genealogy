@@ -9,6 +9,8 @@ subagent's halt stop the parent?). Billed, except ``precli``.
     uv run python proto/bounds.py --case <case> [--session <id>] [--fixture bagley-father-1884]
                                   [--deadline-s 1200] [--kill-after-s 10] [--pause-s 30]
                                   [--base ...] [--pg-dsn ...] [--s3-endpoint ...]
+    concurrent_rss_heavy only:    [--sessions 0-8] [--window-s 1-1800] [--expect-instance-type t3.xlarge]
+                                  [--allow-standard-credits]
 
   precli           worker stopped, a message posted, Stop pressed, worker started: the
                    redelivery closes ``stopped`` before any CLI (cost 0, no ev=cli_stderr)
@@ -51,8 +53,10 @@ or the arguments are refused.
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import math
+import re
 import subprocess
 import sys
 import time
@@ -88,6 +92,8 @@ PROBES = Path(__file__).resolve().parent / "probes"
 LOOKUPS_TEXT = PROBES / "u23-lookups.txt"
 EXTRACTIONS_TEXT = PROBES / "u23-two-extractions.txt"
 RESUME_TEXT = PROBES / "background-delegation.txt"
+# kill_hold: one named record straight to the extractor, so the held write comes in minutes.
+KILL_HOLD_TEXT = PROBES / "u13-kill-hold.txt"
 FOLLOW_UP_TEXT = "Reply with the single word ok."
 PROBE_KEY = "__u23_probe__"
 REAL_CAP_MAX_USD = 5.0
@@ -95,6 +101,11 @@ KILL_AFTER_RANGE_S = (5.0, 20.0)
 SETTLE_S = 240.0
 INJECT_MARGIN = 1.10
 DEFAULT_DEADLINE_S = 1200.0
+# concurrent_rss_heavy (U18): --sessions 0-8 (0 samples the idle worker), --window-s up to the 1,800 s grain.
+HEAVY_SESSIONS = 2
+HEAVY_WINDOW_S = 600.0
+MAX_SESSIONS = 8
+MAX_WINDOW_S = 1800.0
 
 # (id, tool_name, agent_id, decision, ts)
 CALLS_SQL = "SELECT id, tool_name, agent_id, decision, ts FROM tool_calls WHERE turn_id = %s ORDER BY id"
@@ -180,6 +191,10 @@ class Ctx:
     postgres: str = "proto-postgres"
     tools: str = "proto-tools"
     target: str = "compose"
+    sessions: int = HEAVY_SESSIONS
+    window_s: float = HEAVY_WINDOW_S
+    expect_instance_type: str | None = None
+    allow_standard_credits: bool = False
 
 
 def compose_target(worker: str = "proto-worker", postgres: str = "proto-postgres",
@@ -465,6 +480,12 @@ def released_by(events: list[dict], turn_id: str) -> list[str]:
     return [e["released_turn"] for e in events_for(events, turn_id) if e.get("ev") == "turn" and e.get("released_turn")]
 
 
+def released_named(events: list[dict], held_turn_id: str) -> bool:
+    """An ev=released line names ``held_turn_id``. close_turn's own release (the worker's
+    last-receive close, U5 c) logs only this; ``released_turn`` is the handover's."""
+    return any(e.get("ev") == "released" and e.get("turn_id") == held_turn_id for e in events)
+
+
 def held_checks(label: str, reply: dict, a: TurnSnap, b: TurnSnap, events: list[dict],
                 shim_posts: list[dict], *, a_outcome: str, a_reason: str) -> list[Check]:
     """B posted while A ran: held, A ended by its bound, the msgid A's close released is B's
@@ -490,14 +511,28 @@ def held_checks(label: str, reply: dict, a: TurnSnap, b: TurnSnap, events: list[
     ]
 
 
+RESEARCH_DOC_SQL = ("SELECT count(*) FROM documents d JOIN sessions s ON s.project_id = d.project_id "
+                    "WHERE s.session_id = %s AND d.name = 'research.json'")
+
+
+def nudged_projectless(ctx: Ctx, session_id: str, events: list[dict], turn_id: str) -> bool:
+    """The session has no research.json and the worker logged an ev=nudge on the turn."""
+    nudged = any(e.get("ev") == "nudge" for e in events_for(events, turn_id))
+    return nudged and int(turn.one(ctx.dsn, RESEARCH_DOC_SQL, (session_id,)) or 0) == 0
+
+
 def resume_checks(label: str, snap: TurnSnap, *, sdk_before: str | None, sdk_after: str | None,
-                  entries_at_kill: int, entries_after: int) -> list[Check]:
+                  entries_at_kill: int, entries_after: int, nudged_projectless: bool = False) -> list[Check]:
+    """``nudged_projectless``: the session has no research.json and the worker nudged this
+    turn. Then ``no_progress`` is the Stop hook ending a reply to a probe, not a stranded
+    resume (U13, 2026-10-08: the same at caps 60 and 3); the SDK-session and entries checks
+    below are what catch stranding."""
     rc, completed, outcome, _cost = snap.row or (None, None, None, None)
+    bad = turn.RESUMED_FAILED_OUTCOMES - ({TERMINAL_NO_PROGRESS} if nudged_projectless else set())
     return [
         redelivered_check(label, snap),
-        (f"{label}: closed, not {'/'.join(sorted(turn.RESUMED_FAILED_OUTCOMES))}",
-         completed is not None and outcome is not None and outcome not in turn.RESUMED_FAILED_OUTCOMES,
-         f"row={snap.row}"),
+        (f"{label}: closed, not {'/'.join(sorted(bad))}",
+         completed is not None and outcome is not None and outcome not in bad, f"row={snap.row}"),
         (f"{label}: the same SDK session resumed", bool(sdk_before) and sdk_after == sdk_before, f"{sdk_before} -> {sdk_after}"),
         (f"{label}: session_entries grew past the kill", entries_after > entries_at_kill, f"{entries_at_kill} -> {entries_after}"),
     ]
@@ -594,10 +629,14 @@ def seeded_session(ctx: Ctx, rep: Report) -> str:
     if ctx.session:
         rep.session_id = ctx.session
     else:
-        args = argparse.Namespace(fixture=ctx.fixture, project_id=None, title=f"u23 {rep.case}", pg_dsn=ctx.dsn,
-                                  s3_endpoint=ctx.s3_endpoint, base=ctx.base, email=ctx.email)
-        rep.session_id, _project, _meta = demo.seed_session(args)
+        rep.session_id, _project, _meta = demo.seed_session(seed_args(ctx, rep))
     return rep.session_id
+
+
+def seed_args(ctx: Ctx, rep: Report) -> argparse.Namespace:
+    """demo.seed_session's arguments for a fresh seed of ``--fixture``."""
+    return argparse.Namespace(fixture=ctx.fixture, project_id=None, title=f"u23 {rep.case}", pg_dsn=ctx.dsn,
+                              s3_endpoint=ctx.s3_endpoint, base=ctx.base, email=ctx.email)
 
 
 def post(ctx: Ctx, client: httpx.Client, rep: Report, text: str) -> dict:
@@ -759,7 +798,7 @@ def case_precli(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
             TARGET.signal("worker", "start")
     if not done(ctx, client, rep, tid):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [closed_check("precli", snap, TERMINAL_STOPPED), payload_check("precli", snap, TERMINAL_STOPPED),
                    *unbilled_checks("precli", snap, events, TERMINAL_STOPPED)]
 
@@ -773,7 +812,7 @@ def case_stop_main(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     pressed_at = stopped_at(ctx, rep.session_id)
     if not done(ctx, client, rep, tid, since=t, label="stopped"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [*halt_checks("stop_main", snap.calls, events_for(events, tid), reason=STOP_REASON, subagent=False),
                    closed_check("stop_main", snap, TERMINAL_STOPPED), payload_check("stop_main", snap, TERMINAL_STOPPED)]
     rep.figures["halt_after_press_s"] = halt_latency(snap, pressed_at)
@@ -799,7 +838,7 @@ def _delegation(ctx: Ctx, client: httpx.Client, rep: Report, *, bound: str) -> N
         t = time.monotonic()
     if not done(ctx, client, rep, tid, since=t, label="bounded"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     label = rep.case
     if bound == "stop":
         rep.checks += [*halt_checks(label, snap.calls, events_for(events, tid), reason=STOP_REASON, subagent=True),
@@ -819,16 +858,31 @@ def case_cap_delegation(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     _delegation(ctx, client, rep, bound="cap")
 
 
-def shim_posts_for(msgid: str | None, timeout_s: float = 60, every_s: float = 1.0) -> list[dict]:
-    """The shim's post lines for ``msgid``, polled: the shim logs one when the worker
-    answers the delivery, after its teardown and release -- past the turn_done ``done`` saw."""
+DEPLOYED_DELIVERY_S = (180.0, 5.0)  # CloudWatch ingestion lags the worker by tens of seconds
+
+
+def deliveries(events: list[dict], msgid: str) -> list[dict]:
+    """The worker's own evidence that ``msgid`` was delivered: an ev=released line maps it to
+    a turn_id, and an ev=turn line with a receive_count says sqsd handed that turn over.
+    One dict per such ev=turn, carrying ``msgid`` (held_checks reads it)."""
+    released = {e.get("turn_id") for e in events if e.get("ev") == "released" and e.get("message_id") == msgid}
+    return [{**e, "msgid": msgid} for e in events
+            if e.get("ev") == "turn" and e.get("turn_id") in released and e.get("receive_count") is not None]
+
+
+def shim_posts_for(msgid: str | None, timeout_s: float | None = None, every_s: float | None = None) -> list[dict]:
+    """``msgid``'s deliveries, polled. Compose: the shim's post lines, logged when the worker
+    answers the delivery, after its teardown and release -- past the turn_done ``done`` saw.
+    Deployed: sqsd's log is not read; the worker's own lines (``deliveries``), on a longer
+    budget for CloudWatch's lag."""
     if msgid is None:
         return []
-    if TARGET.name != "compose":
-        raise NotImplementedError("shim_posts_for reads compose's shim; a deployed worker has sqsd, whose log "
-                                  "is not parsed yet")
-    return smoke.wait_for(lambda: [p for p in smoke.service_lines("shim", "post") if p.get("msgid") == msgid],
-                          timeout_s, every_s) or []
+    if TARGET.name == "compose":
+        return smoke.wait_for(lambda: smoke.shim_decisions(msgid), 60 if timeout_s is None else timeout_s,
+                              1.0 if every_s is None else every_s) or []
+    budget, every = DEPLOYED_DELIVERY_S
+    return smoke.wait_for(lambda: deliveries(worker_events(), msgid), budget if timeout_s is None else timeout_s,
+                          every if every_s is None else every_s) or []
 
 
 def _held(ctx: Ctx, client: httpx.Client, rep: Report, *, stop_first: bool) -> None:
@@ -871,14 +925,14 @@ def case_cap_main(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     t = time.monotonic()
     if not done(ctx, client, rep, tid, since=t, label="capped"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += cap_checks("cap_main", snap, events, cap_usd=ctx.cap_usd, subagent=False)
     rep.findings.append("Q1 (cap, main thread): %s -- %s" % q1_answer(events, tid))
     # The capped session's next message closes before the CLI (the precli cap half).
     nxt = post(ctx, client, rep, FOLLOW_UP_TEXT)["turn_id"]
     if not done(ctx, client, rep, nxt, label="next"):
         return
-    snap2, events = snapshot(ctx, rep.session_id, nxt), worker_events()
+    snap2, events = snapshot(ctx, rep.session_id, nxt), events_until(nxt, closing_lines)
     rep.checks += [closed_check("cap_main: next", snap2, TERMINAL_BUDGET),
                    payload_check("cap_main: next", snap2, TERMINAL_BUDGET, "spend"),
                    *unbilled_checks("cap_main: next", snap2, events, TERMINAL_BUDGET)]
@@ -890,7 +944,7 @@ def case_cap_main_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     tid = post(ctx, client, rep, demo.opening_prompt(meta, None))["turn_id"]
     if not done(ctx, client, rep, tid, label="capped"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += cap_checks("cap_main_real", snap, events, cap_usd=ctx.cap_usd, subagent=None)
     fired = [e for e in events_for(events, tid) if e.get("ev") == "spend_cap"]
     estimate = (snap.payload or {}).get("spend_estimate_usd")
@@ -916,10 +970,12 @@ def _outage(ctx: Ctx, client: httpx.Client, rep: Report, *, condition: str) -> N
         press(ctx, client, rep)
     elif condition == "cap":
         inject(ctx, rep, sdk)
-    else:
-        reply = post(ctx, client, rep, turn.TEXT_KILL)
     mark1, t_out = max_entry(ctx, sdk), utc_now()
     terminated = sum(1 for (ok,) in turn.db(ctx.dsn, TERMINATE_SQL, (f"turn:{tid}",)) if ok)
+    if condition == "held":
+        # Posted after the outage, not before: a held message hands the turn over at its next
+        # tool call, and over the rehearsal's forward that call came before the terminate (U13).
+        reply = post(ctx, client, rep, turn.TEXT_KILL)
     # Attempt 1 ends when the redelivery claims the turn (receive_count moves) or it closes.
     t0 = time.monotonic()
     while time.monotonic() - t0 < ctx.deadline_s:
@@ -936,7 +992,7 @@ def _outage(ctx: Ctx, client: httpx.Client, rep: Report, *, condition: str) -> N
     rep.findings.extend(f"tools log in the window: {ln[:200]}" for ln in tools_lines[:5])
     if not done(ctx, client, rep, tid, label="redelivered"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     want = {"stop": TERMINAL_STOPPED, "cap": TERMINAL_BUDGET, "held": TERMINAL_QUEUED}[condition]
     rep.checks += [*outage_checks(rep.case, events, tid, terminated=terminated, ran=ran),
                    redelivered_check(rep.case, snap), closed_check(rep.case, snap, want)]
@@ -964,10 +1020,17 @@ def case_outage_held(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     _outage(ctx, client, rep, condition="held")
 
 
-def cancel_hook_waiter(ctx: Ctx, turn_id: str) -> int:
+ALLOWED_AFTER_SQL = ("SELECT coalesce(agent_id, ''), tool_name, tool_use_id FROM tool_calls WHERE turn_id = %s "
+                     "AND decision = 'allow' AND ts > %s "
+                     "AND ts < (SELECT CASE WHEN receive_count > 1 THEN claimed_at "
+                     "ELSE coalesce(completed_at, now()) END FROM turns WHERE turn_id = %s)")
+
+
+def cancel_hook_waiter(ctx: Ctx, turn_id: str, stamp: list | None = None) -> int:
     """Lock ``turns`` ACCESS EXCLUSIVE, wait for the turn's backend to block on it inside the
     halt check, cancel that backend, release. Returns how many backends were cancelled. No
-    other driver read may touch ``turns`` while the lock is held."""
+    other driver read may touch ``turns`` while the lock is held. ``stamp`` gets Postgres's
+    now() at the cancel, the instant after which no call may be allowed."""
     # Two connections: pg_stat_activity is snapshotted once per transaction, so a poll inside
     # the transaction holding the lock never sees the backend that starts waiting on it.
     with psycopg.connect(ctx.dsn) as lock, psycopg.connect(ctx.dsn, autocommit=True) as watch:
@@ -978,6 +1041,8 @@ def cancel_hook_waiter(ctx: Ctx, turn_id: str) -> int:
             while time.monotonic() - t0 < 60:
                 pids = [r[0] for r in watch.execute(HOOK_WAITER_SQL, (f"turn:{turn_id}", HOOK_WAIT_QUERY)).fetchall()]
                 if pids:
+                    if stamp is not None:
+                        stamp.append(watch.execute(PG_NOW_SQL).fetchone()[0])
                     return sum(1 for pid in pids
                                if watch.execute("SELECT pg_cancel_backend(%s)", (pid,)).fetchone()[0])
                 time.sleep(0.2)
@@ -994,7 +1059,8 @@ def case_outage_hook(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     sdk = sdk_of(ctx, rep.session_id)
     rc1 = int(turn.one(ctx.dsn, "SELECT receive_count FROM turns WHERE turn_id = %s", (tid,)) or 0)
     mark1 = max_entry(ctx, sdk)
-    cancelled = cancel_hook_waiter(ctx, tid)
+    stamp: list = []
+    cancelled = cancel_hook_waiter(ctx, tid, stamp)
     t0 = time.monotonic()
     while time.monotonic() - t0 < ctx.deadline_s:
         row = turn.db(ctx.dsn, "SELECT receive_count, completed_at FROM turns WHERE turn_id = %s", (tid,))
@@ -1002,12 +1068,15 @@ def case_outage_hook(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
             break
         time.sleep(0.3)
     mark2 = max_entry(ctx, sdk)
-    ran, unresolved = calls_ran(entries(ctx, sdk, mark1, mark2))
+    _ran_entries, unresolved = calls_ran(entries(ctx, sdk, mark1, mark2))
+    # A call the hook allowed after the cancel, within attempt 1. Entries alone over-count: a
+    # call allowed before the lock can land its result after mark1 (U13: call 873, 2 s early).
+    ran = [tuple(r) for r in turn.db(ctx.dsn, ALLOWED_AFTER_SQL, (tid, stamp[0], tid))] if stamp else []
     rep.figures.update({"cancelled_backends": cancelled, "entries_window": f"({mark1}, {mark2}]"})
     rep.findings.append(f"calls issued in attempt 1 after the cancel with no result: {unresolved}")
     if not done(ctx, client, rep, tid, label="redelivered"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [*hook_outage_checks(rep.case, events, tid, cancelled=cancelled, ran=ran),
                    redelivered_check(rep.case, snap), ran_check(f"{rep.case}: the redelivery", snap)]
     rep.findings.extend(f"{rep.case}: {line}" for line in result_findings(events, tid))
@@ -1032,7 +1101,7 @@ def case_outage_pause(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         rep.findings.append(f"turn_done {wall:.0f}s after the unpause")
     except TimeoutError as exc:
         rep.findings.append(f"no turn_done: {exc} (settle stops it)")
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     ran, unresolved = calls_ran(entries(ctx, sdk, mark1))
     mine = events_for(events, tid)
     hook = [str(e.get("line"))[:200] for e in mine if e.get("ev") == "cli_stderr"
@@ -1094,6 +1163,7 @@ SPILL_READ_SQL = ("SELECT count(*) FROM tool_calls WHERE turn_id = %s AND id > %
                   "AND input_path LIKE '%%/tool-results/%%'")
 SPILL_CALL_SQL = ("SELECT id, duration_ms FROM tool_calls WHERE turn_id = %s AND tool_name LIKE %s "
                   "AND duration_ms IS NOT NULL ORDER BY id LIMIT 1")
+RERUN_SQL = "SELECT count(*) FROM tool_calls WHERE turn_id = %s AND id > %s AND tool_name LIKE %s"
 
 
 NFT_INSTALL = "command -v nft >/dev/null || dnf -y -q install nftables"
@@ -1128,6 +1198,10 @@ def wait_lock_gone(ctx: Ctx, deadline_s: float = KEEPALIVE_DROP_MAX_S, every_s: 
     return None
 
 
+HANDOVER_WAIT_S = 30.0
+COMPLETED_SQL = "SELECT completed_at FROM turns WHERE turn_id = %s AND completed_at IS NOT NULL"
+
+
 def shutdown_named(events: list[dict], turn_id: str) -> bool:
     return any(e.get("ev") == "shutdown" and turn_id in json.dumps(e) for e in events)
 
@@ -1140,19 +1214,33 @@ def case_sigterm_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
     if reach(ctx, rep, tid, subagent=False) is None:
         return
+    held = post(ctx, client, rep, FOLLOW_UP_TEXT)
+    # The held message hands over at the turn's next tool call (handover_clause): if that
+    # closes it inside HANDOVER_WAIT_S, the released held turn is the live one to signal.
+    target = tid
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < HANDOVER_WAIT_S:
+        if turn.one(ctx.dsn, COMPLETED_SQL, (tid,)) is not None:
+            target = held["turn_id"]
+            break
+        time.sleep(1.0)
+    rep.figures["kill_target"] = "held" if target != tid else "original"
+    if target != tid and reach(ctx, rep, target, subagent=False) is None:
+        return
     sdk_before = sdk_of(ctx, rep.session_id)
     at_kill = max_entry(ctx, sdk_before)
-    held = post(ctx, client, rep, FOLLOW_UP_TEXT)
     TARGET.signal("worker", "term")
-    if not done(ctx, client, rep, tid, label="resumed"):
+    if not done(ctx, client, rep, target, label="resumed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
-    rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, tid), ""))
+    snap, events = snapshot(ctx, rep.session_id, target), events_until(target, closing_lines)
+    rep.checks.append(("sigterm_real: ev=shutdown names the turn", shutdown_named(events, target), ""))
     rep.checks += resume_checks("sigterm_real", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
-                                entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before))
+                                entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before),
+                                nudged_projectless=nudged_projectless(ctx, rep.session_id, events, target))
     skipped = [e for e in events if e.get("ev") == "deferred_release_skipped"]
     rep.findings.append(f"held reply {held}; ev=deferred_release_skipped lines: {skipped[:3]}")
-    done(ctx, client, rep, held["turn_id"], label="held")
+    if target == tid:
+        done(ctx, client, rep, held["turn_id"], label="held")
 
 
 def case_dead_letter_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
@@ -1168,11 +1256,12 @@ def case_dead_letter_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.figures["terminated_backends"] = terminated
     if not done(ctx, client, rep, tid, label="closed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += [closed_check("dead_letter_real", snap, "retries_exhausted"),
                    ("dead_letter_real: one receive", (snap.row or (0,))[0] == 1, f"row={snap.row}"),
-                   ("dead_letter_real: its close released a message", bool(released_by(events, tid)),
-                    f"released={released_by(events, tid)}")]
+                   ("dead_letter_real: its close released the held message",
+                    bool(released_by(events, tid)) or released_named(events, held["turn_id"]),
+                    f"released_turn={released_by(events, tid)}; no ev=released names {held['turn_id']}")]
     done(ctx, client, rep, held["turn_id"], label="held")
 
 
@@ -1195,14 +1284,20 @@ def case_keepalive_drop(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
                        f"figures={rep.figures}"))
     if not done(ctx, client, rep, tid, label="resumed"):
         return
-    snap, events = snapshot(ctx, rep.session_id, tid), worker_events()
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks.append(redelivered_check("keepalive_drop", snap))
     rep.findings.append(f"store errors on the turn: {[e.get('ev') for e in events_for(events, tid) if is_store_error(str(e.get('error') or ''))][:5]}")
 
 
 def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     """M51: SIGKILL between a tool result spilling to the CLI's tool-results file and the
-    agent reading it back; the redelivery must complete, not end no_progress."""
+    agent reading it back; the redelivery must complete, not end no_progress.
+
+    The prompt asks for Italy's last collection title: Italy is measured past the CLI's
+    50,000-character spill and the title is only in the tail, past the 2 KB preview. The
+    kill fires on ``duration_ms``, which a failed call stamps too, so the run is void
+    unless the turn read a tool-results file somewhere: a failing upstream call reads as
+    void, not as M51 met. ``rerun_calls`` and ``reads_after_kill`` record re-ran vs stranded."""
     fresh_session(ctx, client, rep)
     tid = post(ctx, client, rep, SPILL_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
     t0, row = time.monotonic(), None
@@ -1222,10 +1317,1021 @@ def case_spill_kill(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     if not done(ctx, client, rep, tid, label="resumed"):
         return
     snap = snapshot(ctx, rep.session_id, tid)
-    rep.checks += [redelivered_check("spill_kill", snap),
-                   ("spill_kill: not closed no_progress", snap.row is not None and snap.row[2] != TERMINAL_NO_PROGRESS,
+    reads = int(turn.one(ctx.dsn, SPILL_READ_SQL, (tid, 0)) or 0)
+    after = int(turn.one(ctx.dsn, SPILL_READ_SQL, (tid, row[0])) or 0)
+    rerun = int(turn.one(ctx.dsn, RERUN_SQL, (tid, row[0], f"%{SPILL_TOOL}")) or 0)
+    rep.figures.update({"tool_results_reads": reads, "reads_after_kill": after, "rerun_calls": rerun})
+    rep.checks += [("spill_kill: the result spilled (a tool-results Read/Grep in the turn, else void)", reads > 0,
+                    "no Read/Grep of a tool-results path: the call failed or never spilled"),
+                   redelivered_check("spill_kill", snap),
+                   ("spill_kill: not closed no_progress (unless nudged on a project-less session after re-running the call)",
+                    snap.row is not None and (snap.row[2] != TERMINAL_NO_PROGRESS
+                                              or (rerun > 0 and nudged_projectless(ctx, rep.session_id,
+                                                                                   events_until(tid, closing_lines), tid))),
                     f"row={snap.row}")]
-    rep.findings.append(f"Read/Grep rows on tool-results after the kill: {turn.one(ctx.dsn, SPILL_READ_SQL, (tid, row[0]))}")
+    rep.findings.append("after the kill the agent " + (f"re-ran {SPILL_TOOL}" if rerun else
+                                                        "read a tool-results path without re-running (stranded spill)"
+                                                        if after else "neither re-ran nor read a tool-results path"))
+
+
+# -- U13 PR8: measurements under a probe case the operator set (rehearse.py probe --case) ----
+
+# What each probe case leaves on its tier, as TARGET.settings reads it back; a case checks
+# its probes before it posts, so a forgotten probe costs no turn. Pinned to rehearse.py's
+# CASES (test_proto_target.py). idle_session_60s is an RDS parameter, read from pg_settings.
+PROBE_SETTINGS = {
+    "kill_window": ("worker", "SQSD_VISIBILITY_TIMEOUT_S", "1500"),
+    "debug_hold": ("tools", "GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS", "20000"),
+    "refresh_age_0": ("web", "FS_GRANT_REFRESH_AGE_S", "0"),
+}
+IDLE_PROBE = ("idle_session_timeout", "60000")
+IDLE_SETTING_SQL = "SELECT setting FROM pg_settings WHERE name = %s"
+ERROR_VISIBILITY_S = 300.0  # step 11's interim ErrorVisibilityTimeout, which has no environment mirror
+RECLAIM_BUDGET_S = 1800.0   # past kill_window's VisibilityTimeout (1500 s)
+EVENT_LAG_S = DEPLOYED_DELIVERY_S[0]
+PG_NOW_SQL = "SELECT now()"
+PROJECT_SQL = "SELECT project_id FROM sessions WHERE session_id = %s"
+USER_SEQ_SQL = ("SELECT max(seq) FROM session_events WHERE session_id = %s AND kind = 'user_msg' "
+                "AND payload->>'turn_id' = %s")
+RECLAIM_SQL = "SELECT receive_count, claimed_at, completed_at FROM turns WHERE turn_id = %s"
+# kill_hold: the delegated extraction_append inside the hold -- allowed, no duration_ms yet.
+HOLD_ROW_SQL = ("SELECT id, ts FROM tool_calls WHERE turn_id = %s AND agent_type LIKE '%%record-extractor' "
+                "AND tool_name LIKE '%%extraction_append' AND decision = 'allow' AND duration_ms IS NULL "
+                "ORDER BY id LIMIT 1")
+DURATION_SQL = "SELECT duration_ms FROM tool_calls WHERE id = %s"
+# The main-thread delegation the held call runs under: the last Agent/Task row before it.
+AGENT_ROW_SQL = ("SELECT id, duration_ms FROM tool_calls WHERE turn_id = %s AND agent_id IS NULL "
+                 "AND tool_name IN ('Agent', 'Task') AND id < %s ORDER BY id DESC LIMIT 1")
+# research.json's sources sharing one url (or, lacking one, citation): a write that both
+# committed and re-ran shows here.
+DUP_SOURCES_SQL = (
+    "SELECT COALESCE(s->>'url', s->>'citation'), count(*) FROM documents d, jsonb_array_elements("
+    "CASE WHEN jsonb_typeof(d.doc->'sources') = 'array' THEN d.doc->'sources' ELSE '[]'::jsonb END) s "
+    "WHERE d.project_id = %s AND d.name = 'research.json' GROUP BY 1 HAVING count(*) > 1 ORDER BY 1"
+)
+SOURCES_SQL = ("SELECT CASE WHEN jsonb_typeof(doc->'sources') = 'array' THEN jsonb_array_length(doc->'sources') "
+               "ELSE 0 END FROM documents WHERE project_id = %s AND name = 'research.json'")
+IDLE_TEXT = PROBES / "u13-idle-watch.txt"
+IDLE_LIMIT_S = 60.0
+IDLE_WATCH_S = 900.0
+IDLE_POLL_S = 5.0
+IDLE_CUT = "idle-session timeout"  # Postgres's FATAL text for a backend idle_session_timeout ended
+# idle_watch: the patron's attempt-lock backend (grants.ATTEMPT_LOCK_SQL's two-int4 key, so
+# objsubid 2; objid is hashtext(owner) as an unsigned oid), its age and its idle time.
+LOCK_BACKEND_SQL = (
+    "SELECT a.pid, EXTRACT(EPOCH FROM now() - a.backend_start), a.state, EXTRACT(EPOCH FROM now() - a.state_change) "
+    "FROM pg_locks l JOIN pg_stat_activity a USING (pid) "
+    "JOIN projects p ON p.project_id = (SELECT project_id FROM sessions WHERE session_id = %s) "
+    "WHERE l.locktype = 'advisory' AND l.granted AND l.objsubid = 2 AND l.classid = %s::int4::oid "
+    "AND l.objid::bigint = (hashtext(p.owner_id)::bigint & 4294967295)"
+)
+TURN_BACKEND_SQL = ("SELECT pid, EXTRACT(EPOCH FROM now() - backend_start), state, "
+                    "EXTRACT(EPOCH FROM now() - state_change) FROM pg_stat_activity WHERE application_name = %s")
+RSS_EVERY_S = 10.0
+# One SSM call per sample: web.service's cgroup (the worker and every CLI it spawned), the
+# instance's MemAvailable, the /tmp tmpfs, then every process's RSS.
+RSS_COMMANDS = (
+    "echo cgroup_bytes=$(systemctl show -p MemoryCurrent --value web.service)",
+    "awk '/^MemAvailable:/ {print \"avail_kb=\" $2}' /proc/meminfo",
+    "echo tmp_used_mb=$(df -m --output=used /tmp | tail -1)",
+    "ps -eo rss,comm --no-headers",
+)
+
+
+def probes_in_effect(ctx: Ctx, rep: Report, *probes: str) -> bool:
+    """A check per probe the measurement needs; False when one is not in effect (post nothing)."""
+    ok_all, read = True, {}
+    for probe in probes:
+        if probe == "idle_session_60s":
+            name, want = IDLE_PROBE
+            got = turn.one(ctx.dsn, IDLE_SETTING_SQL, (name,))
+        else:
+            tier, name, want = PROBE_SETTINGS[probe]
+            if tier not in read:
+                read[tier] = TARGET.settings(tier)
+            got = read[tier].get(name)
+        ok = got is not None and str(got) == want
+        rep.checks.append((f"{rep.case}: probe {probe} in effect (else void)", ok, f"{name}={got!r}, wanted {want!r}"))
+        ok_all = ok_all and ok
+    return ok_all
+
+
+def redelivery_timer(gap_s: float, *, visibility_s: float, error_s: float = ERROR_VISIBILITY_S) -> str:
+    """Which sqsd timer brought a killed attempt's message back: the nearer of the two."""
+    return "ErrorVisibilityTimeout" if abs(gap_s - error_s) <= abs(gap_s - visibility_s) else "VisibilityTimeout"
+
+
+def wait_row(ctx: Ctx, turn_id: str, sql: str, params: tuple, every_s: float = 0.3) -> tuple | None:
+    """``sql``'s first row once it has one; None if the turn closes first or at --deadline-s."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < ctx.deadline_s:
+        got = turn.db(ctx.dsn, sql, params)
+        if got:
+            return got[0]
+        if turn.one(ctx.dsn, "SELECT completed_at FROM turns WHERE turn_id = %s", (turn_id,)) is not None:
+            return None
+        time.sleep(every_s)
+    return None
+
+
+def wait_reclaim(ctx: Ctx, turn_id: str, receive_count: int, budget_s: float = RECLAIM_BUDGET_S,
+                 every_s: float = 5.0) -> tuple | None:
+    """``(receive_count, claimed_at)`` once a later receive claims the turn; None if it
+    closed first or at the budget, which outlasts kill_window's VisibilityTimeout."""
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < budget_s:
+        got = turn.db(ctx.dsn, RECLAIM_SQL, (turn_id,))
+        if got and got[0][0] > receive_count:
+            return got[0][0], got[0][1]
+        if got and got[0][2] is not None:
+            return None
+        time.sleep(every_s)
+    return None
+
+
+def resumed_lines(events: list[dict], turn_id: str) -> list[dict]:
+    """The redelivery's ev=turn lines (receive_count >= 2) that answered 200."""
+    return [e for e in events_for(events, turn_id) if e.get("ev") == "turn" and e.get("status") == 200
+            and isinstance(e.get("receive_count"), int) and e["receive_count"] >= 2]
+
+
+def turn_lines(events: list[dict], turn_id: str) -> list[dict]:
+    return [e for e in events_for(events, turn_id) if e.get("ev") == "turn"]
+
+
+def closing_lines(events: list[dict], turn_id: str) -> list[dict]:
+    """The turn's closing ev=turn line (it carries ``outcome``), logged after its halt and
+    release lines: once CloudWatch has it, a deployed read has the rest (U13: stop_main read
+    the log 3.8 s after the close and found no ev=halt yet)."""
+    return [e for e in turn_lines(events, turn_id) if "outcome" in e]
+
+
+def events_until(turn_id: str, lines: Callable[[list[dict], str], list[dict]] = turn_lines) -> list[dict]:
+    """The worker's lines once ``lines`` finds the turn's among them, polled for CloudWatch's
+    lag; whatever is there at EVENT_LAG_S."""
+    def got() -> list[dict] | None:
+        evs = worker_events()
+        return evs if lines(evs, turn_id) else None
+
+    # Compose reads docker logs, which have no lag: one look, not EVENT_LAG_S of polling.
+    lag = EVENT_LAG_S if isinstance(TARGET, target.DeployedTarget) else 0
+    return smoke.wait_for(got, lag, 5.0) or worker_events()
+
+
+def resumed_line_check(label: str, events: list[dict], turn_id: str) -> Check:
+    lines = resumed_lines(events, turn_id)
+    return (f"{label}: the redelivery's ev=turn has resumed true and list_subkeys >= 1",
+            any(e.get("resumed") is True and (e.get("list_subkeys") or 0) >= 1 for e in lines),
+            f"lines={[{k: e.get(k) for k in ('receive_count', 'resumed', 'list_subkeys')} for e in lines]}")
+
+
+def reauth(ctx: Ctx, session_id: str, turn_id: str, sdk: str | None) -> tuple[list[str], list[str]]:
+    """``(summary hits since the turn's user_msg, full-result hits)``: demo's and turn's scans."""
+    since = turn.one(ctx.dsn, USER_SEQ_SQL, (session_id, turn_id)) or 0
+    return turn.reauth_hits(ctx.dsn, session_id, since), turn.reauth_entry_hits(ctx.dsn, sdk, turn_id)
+
+
+def _secs(a: Any, b: Any) -> float | None:
+    """``b - a`` in seconds, both Postgres timestamps; None when either is missing."""
+    ta, tb = _ts(a), _ts(b)
+    return round((tb - ta).total_seconds(), 1) if ta and tb else None
+
+
+def case_kill_hold(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M65 (acceptance 4): SIGKILL the worker while a delegated extraction_append sits in the
+    tools tier's 20 s hold (debug_hold), under kill_window. The redelivery must resume and
+    close not no_progress with research.json holding the source once. Void (H:360) unless
+    the kill landed inside the hold with the delegation's Agent row still open, or if any
+    FamilySearch call got the reconnect instruction; one kill by construction. Records
+    which sqsd timer brought the message back: seconds from the kill to the second claim."""
+    if not probes_in_effect(ctx, rep, "kill_window", "debug_hold"):
+        return
+    seeded_session(ctx, rep)
+    project_id = turn.one(ctx.dsn, PROJECT_SQL, (rep.session_id,))
+    tid = post(ctx, client, rep, KILL_HOLD_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    hold = wait_row(ctx, tid, HOLD_ROW_SQL, (tid,))
+    rep.checks.append(("kill_hold: a delegated extraction_append entered the hold", hold is not None,
+                       "the turn closed without one, or none within --deadline-s"))
+    if hold is None:
+        return
+    # Nothing between the hold and the kill but the kill: everything below is read after it,
+    # when the dead worker can write no entry, stamp no duration_ms and add no source.
+    kill_at = turn.one(ctx.dsn, PG_NOW_SQL, ())
+    try:
+        TARGET.signal("worker", "kill")
+        killed_by = turn.one(ctx.dsn, PG_NOW_SQL, ())
+        held_ms = turn.one(ctx.dsn, DURATION_SQL, (hold[0],))
+        agent = turn.db(ctx.dsn, AGENT_ROW_SQL, (tid, hold[0]))
+    finally:
+        TARGET.signal("worker", "start")
+    sdk_before = sdk_of(ctx, rep.session_id)
+    at_kill = max_entry(ctx, sdk_before)
+    # The held write commits ~20 s on whatever happens here, so this may or may not hold its
+    # source; either way only the redelivery can make a second copy.
+    dups_before = turn.db(ctx.dsn, DUP_SOURCES_SQL, (project_id,))
+    rep.figures["sources_at_kill"] = turn.one(ctx.dsn, SOURCES_SQL, (project_id,))
+    hold_s = int(PROBE_SETTINGS["debug_hold"][2]) / 1000
+    sent_s, landed_s = _secs(hold[1], kill_at), _secs(hold[1], killed_by)
+    rep.figures.update({"hold_call_id": hold[0], "kill_sent_s_into_hold": sent_s,
+                        "kill_landed_by_s_into_hold": landed_s, "kill_signal_s": _secs(kill_at, killed_by)})
+    # killed_by is only an upper bound (SSM's poll); a worker alive past the hold would
+    # have stamped duration_ms, so no stamp plus a send inside the hold places the kill.
+    rep.checks += [
+        ("kill_hold: the kill landed inside the hold (else void)",
+         held_ms is None and sent_s is not None and sent_s < hold_s,
+         f"duration_ms={held_ms} sent {sent_s}s (landed by {landed_s}s) into {hold_s:g}s"),
+        ("kill_hold: the delegation's Agent row had no duration_ms at the kill (else void)",
+         bool(agent) and agent[0][1] is None, f"agent row={agent}"),
+    ]
+    reclaim = wait_reclaim(ctx, tid, 1)
+    gap = _secs(killed_by, reclaim[1]) if reclaim else None
+    if gap is not None:
+        rep.figures.update({"reclaimed_after_kill_s": gap, "redelivered_by": redelivery_timer(
+            gap, visibility_s=float(PROBE_SETTINGS["kill_window"][2]))})
+    else:
+        rep.findings.append(f"no second claim within {RECLAIM_BUDGET_S:g} s of the kill (closed first, or never redelivered)")
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, resumed_lines)
+    hits, entry_hits = reauth(ctx, rep.session_id, tid, sdk_before)
+    grown = [d for d in turn.db(ctx.dsn, DUP_SOURCES_SQL, (project_id,)) if d not in dups_before]
+    rep.figures.update({"sources_after": turn.one(ctx.dsn, SOURCES_SQL, (project_id,)),
+                        "reauth_hits": len(hits), "reauth_entry_hits": len(entry_hits)})
+    rep.checks += [
+        *resume_checks("kill_hold", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
+                       entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before)),
+        resumed_line_check("kill_hold", events, tid),
+        ("kill_hold: research.json holds each source once (no duplicate the kill added)", not grown,
+         f"duplicated (key, count)={grown}"),
+        ("kill_hold: no FamilySearch call got the reconnect instruction (else void)", not hits and not entry_hits,
+         f"hits={(hits + entry_hits)[:2]}"),
+    ]
+    rep.findings.extend(f"kill_hold: {line}" for line in result_findings(events, tid))
+
+
+def case_kill_refresh(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M55: SIGKILL mid-turn under kill_window and refresh_age_0, so the web tier refreshes
+    the grant -- revoking the killed attempt's token -- before the redelivery; the resumed
+    attempt must bear the new one (no reconnect instruction anywhere) and resume."""
+    if not probes_in_effect(ctx, rep, "kill_window", "refresh_age_0"):
+        return
+    fresh_session(ctx, client, rep)
+    project_id = turn.one(ctx.dsn, PROJECT_SQL, (rep.session_id,))
+    tid = post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    if reach(ctx, rep, tid, subagent=False) is None:
+        return
+    sdk_before = sdk_of(ctx, rep.session_id)
+    at_kill = max_entry(ctx, sdk_before)
+    grant_before = turn.one(ctx.dsn, turn.GRANT_START_SQL, (project_id,))
+    refreshed = False
+    try:
+        TARGET.signal("worker", "kill")
+        # No attempt is live now, so the web tier's loop may refresh the grant.
+        refreshed = turn.wait_grant_refresh(ctx.dsn, project_id, grant_before)
+    finally:
+        TARGET.signal("worker", "start")
+    rep.figures["grant_refreshed"] = refreshed
+    if not done(ctx, client, rep, tid, label="resumed"):
+        return
+    snap = snapshot(ctx, rep.session_id, tid)
+    hits, entry_hits = reauth(ctx, rep.session_id, tid, sdk_before)
+    rep.figures.update({"receive_count": snap.row[0] if snap.row else None, "reauth_hits": len(hits),
+                        "reauth_entry_hits": len(entry_hits)})
+    rep.checks += [
+        ("kill_refresh: grant refreshed between attempts", bool(refreshed),
+         "session_started_at did not move while no attempt was live"),
+        ("kill_refresh: reauth_hits=0 since the user_msg", not hits, f"hits={hits[:2]}"),
+        ("kill_refresh: reauth_entry_hits=0 (full tool results)", not entry_hits, f"hits={entry_hits[:2]}"),
+        *resume_checks("kill_refresh", snap, sdk_before=sdk_before, sdk_after=sdk_of(ctx, rep.session_id),
+                       entries_at_kill=at_kill, entries_after=max_entry(ctx, sdk_before),
+                       nudged_projectless=nudged_projectless(ctx, rep.session_id, events_until(tid, closing_lines),
+                                                             tid)),
+    ]
+
+
+@dataclass
+class IdleSample:
+    """One idle_watch poll: the lock and turn backends as ``(pid, age_s, state, idle_s)``."""
+
+    at_s: float
+    receive_count: int
+    completed: bool
+    lock: list[tuple] = field(default_factory=list)
+    turn: list[tuple] = field(default_factory=list)
+
+
+def idle_figures(samples: list[IdleSample]) -> dict[str, Any]:
+    """Over attempt 1's samples (the first receive_count seen): the lock backends, their
+    oldest age and longest idle; the turn:<id> backends, and when one vanished with the turn
+    still open."""
+    first = [s for s in samples if s.receive_count == samples[0].receive_count] if samples else []
+    seen, cut_at = False, None
+    for i, s in enumerate(first):
+        if s.turn:
+            seen = True
+        # A backend gone in a sample read just before the turn closed is the close, not a
+        # cut: count it only when the next sample still shows the turn open.
+        elif seen and not s.completed and cut_at is None and i + 1 < len(samples) and not samples[i + 1].completed:
+            cut_at = s.at_s
+    # pg_stat_activity hides another role's backend_start/state_change (None) from a role
+    # without pg_read_all_stats: those read as missing, not as a crash.
+    return {
+        "lock_pids": list(dict.fromkeys(r[0] for s in first for r in s.lock)),
+        "lock_max_age_s": max((float(r[1]) for s in first for r in s.lock if r[1] is not None), default=None),
+        "lock_max_idle_s": max((float(r[3]) for s in first for r in s.lock if r[2] == "idle" and r[3] is not None),
+                               default=None),
+        "turn_pids": list(dict.fromkeys(r[0] for s in first for r in s.turn)),
+        "turn_max_idle_s": max((float(r[3]) for s in first for r in s.turn if r[2] == "idle" and r[3] is not None),
+                               default=None),
+        "turn_backend_gone_at_s": cut_at,
+        "final_receive_count": samples[-1].receive_count if samples else None,
+        "samples": len(samples),
+    }
+
+
+def case_idle_watch(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M22: under idle_session_60s (a 60 s parameter-group idle_session_timeout), the attempt's
+    lock connection, which sets idle_session_timeout=0, must outlive 60 s idle with no
+    ev=grant_lock_lost. Polls both backends every 5 s through the driver's own connections
+    until the first redelivery or IDLE_WATCH_S, then Stops a turn still running. Records
+    whether the turn:<id> connection, which TURN_CONN_KWARGS does not shield, was cut."""
+    if not probes_in_effect(ctx, rep, "idle_session_60s"):
+        return
+    fresh_session(ctx, client, rep)
+    since_ms = epoch_ms(utc_now())
+    tid = post(ctx, client, rep, IDLE_TEXT.read_text(encoding="utf-8").strip())["turn_id"]
+    samples: list[IdleSample] = []
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < IDLE_WATCH_S:
+        row = turn.db(ctx.dsn, RECLAIM_SQL, (tid,))
+        rc, completed = (row[0][0], row[0][2] is not None) if row else (0, False)
+        if rc >= 1:
+            samples.append(IdleSample(at_s=round(time.monotonic() - t0, 1), receive_count=rc, completed=completed,
+                                      lock=turn.db(ctx.dsn, LOCK_BACKEND_SQL, (rep.session_id, ATTEMPT_LOCK_NS)),
+                                      turn=turn.db(ctx.dsn, TURN_BACKEND_SQL, (f"turn:{tid}",))))
+        if completed or rc >= 2:
+            break
+        time.sleep(IDLE_POLL_S)
+    figures = idle_figures(samples)
+    rep.figures.update(figures)
+    if samples and samples[-1].completed:
+        done(ctx, client, rep, tid, label="done")
+    else:
+        t = press(ctx, client, rep)
+        done(ctx, client, rep, tid, since=t, label="stopped")
+    events = events_until(tid)  # ev=grant_lock_lost precedes the attempt's ev=turn
+    lost = [e for e in events_for(events, tid) if e.get("ev") == "grant_lock_lost"]
+    five = [e.get("error") for e in events_for(events, tid) if e.get("ev") == "turn" and e.get("status") == 500]
+    age, idle = figures["lock_max_age_s"], figures["lock_max_idle_s"]
+    rep.checks += [
+        (f"idle_watch: attempt 1's lock backend lived past {IDLE_LIMIT_S:g} s (else void)",
+         age is not None and age > IDLE_LIMIT_S, f"lock_max_age_s={age}"),
+        (f"idle_watch: the lock backend outlived {IDLE_LIMIT_S:g} s idle, one pid throughout attempt 1",
+         idle is not None and idle > IDLE_LIMIT_S and len(figures["lock_pids"]) == 1,
+         f"lock_max_idle_s={idle} lock_pids={figures['lock_pids']}"),
+        ("idle_watch: no ev=grant_lock_lost", not lost, f"lost={lost[:2]}"),
+    ]
+    cut = figures["turn_backend_gone_at_s"]
+    rep.findings.append(
+        f"turn:{tid} backend " + (f"vanished at ~{cut:g} s with the turn open (a cut: a finding against H:327)"
+                                  if cut is not None else "never vanished while the turn was open")
+        + f"; longest idle {figures['turn_max_idle_s']} s; receive_count {figures['final_receive_count']}; "
+          f"500s {five}")
+    for tier in ("web", "tools"):
+        cut_lines = [ln for ln in TARGET.logs(tier, since_ms).splitlines() if IDLE_CUT in ln]
+        rep.findings.append(f"{tier} tier: {len(cut_lines)} log line(s) naming the idle-session timeout"
+                            + (f", first {cut_lines[0][:200]!r}" if cut_lines else ""))
+
+
+def parse_rss(text: str) -> dict[str, Any]:
+    """One RSS_COMMANDS sample, in MB: the ``key=value`` lines, then ``<rss kB> <comm>`` per
+    process. A figure the instance could not give is None."""
+    keys: dict[str, int | None] = {}
+    procs: list[tuple[int, str]] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        key, sep, value = line.partition("=")
+        if sep and key in ("cgroup_bytes", "avail_kb", "tmp_used_mb"):
+            keys[key] = int(value) if value.strip().isdigit() else None
+            continue
+        parts = line.split(None, 1)
+        if len(parts) == 2 and parts[0].isdigit():
+            procs.append((int(parts[0]), parts[1]))
+    top = max(procs, default=None)
+    cgroup, avail = keys.get("cgroup_bytes"), keys.get("avail_kb")
+    return {"total_rss_mb": round(sum(p[0] for p in procs) / 1024, 1),
+            "top_mb": round(top[0] / 1024, 1) if top else None, "top_comm": top[1] if top else None,
+            "cgroup_mb": round(cgroup / 1048576, 1) if cgroup is not None else None,
+            "avail_mb": round(avail / 1024, 1) if avail is not None else None, "tmp_used_mb": keys.get("tmp_used_mb")}
+
+
+def rss_figures(samples: list[dict]) -> dict[str, Any]:
+    """The peaks over every sample (MemAvailable's floor)."""
+    def over(key: str, pick: Callable = max) -> Any:
+        return pick((s[key] for s in samples if s.get(key) is not None), default=None)
+
+    top = max((s for s in samples if s.get("top_mb") is not None), key=lambda s: s["top_mb"], default=None)
+    return {"rss_samples": len(samples), "peak_total_rss_mb": over("total_rss_mb"), "peak_cgroup_mb": over("cgroup_mb"),
+            "peak_process_mb": top["top_mb"] if top else None, "peak_process": top["top_comm"] if top else None,
+            "min_avail_mb": over("avail_mb", min), "peak_tmp_used_mb": over("tmp_used_mb")}
+
+
+def case_concurrent_rss(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """M49: two turns at once on two fresh sessions (HttpConnections 2), the worker's memory
+    sampled over SSM every RSS_EVERY_S until both close: peak total RSS, the peak process,
+    web.service's cgroup, MemAvailable's floor and /tmp, for U18. Void unless both ran at
+    once. run_case settles the second session; this settles the first."""
+    sessions: list[str] = []
+    try:
+        for _ in range(2):
+            sessions.append(fresh_session(ctx, client, rep))
+            post(ctx, client, rep, LOOKUPS_TEXT.read_text(encoding="utf-8").strip())
+        tids = list(rep.turn_ids)
+        samples: list[dict] = []
+        overlapped = False
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < ctx.deadline_s:
+            t = time.monotonic()
+            samples.append(parse_rss(TARGET.run("worker", *RSS_COMMANDS, comment="U13 concurrent_rss: sample memory")))
+            rows = [turn.db(ctx.dsn, RECLAIM_SQL, (tid,)) for tid in tids]
+            overlapped = overlapped or sum(1 for r in rows if r and r[0][1] is not None and r[0][2] is None) == 2
+            if all(r and r[0][2] is not None for r in rows):
+                break
+            time.sleep(max(0.0, RSS_EVERY_S - (time.monotonic() - t)))
+        rep.figures.update(rss_figures(samples))
+        rep.checks += [("concurrent_rss: both turns ran at once (else void)", overlapped,
+                        "never both claimed and open in one sample"),
+                       ("concurrent_rss: memory sampled", bool(samples), "no sample")]
+        for sid, tid, label in zip(sessions, tids, ("first", "second")):
+            rep.session_id = sid
+            done(ctx, client, rep, tid, label=label)
+    finally:
+        for sid in sessions[:-1]:
+            running, _held = settle(ctx, client, sid)
+            rep.checks.append((f"concurrent_rss: no turn left running on {sid}", not running, f"running={running}"))
+
+
+# concurrent_rss_heavy: the delegated rows across every turn, and those inside the window. A
+# subagent's row is the one with an agent_id (is_subagent): agent_type is also set on the main
+# thread of a session started with --agent (worker/options.py).
+SUBAGENT_ROWS_SQL = "SELECT count(*) FROM tool_calls WHERE turn_id = ANY(%s) AND agent_id IS NOT NULL"
+WINDOW_SUBAGENT_SQL = SUBAGENT_ROWS_SQL + " AND ts >= %s AND ts <= %s"
+# RECLAIM_SQL for every turn in one query per pass (eight connections a pass at N = 8 otherwise).
+RECLAIM_ANY_SQL = "SELECT turn_id, receive_count, claimed_at, completed_at FROM turns WHERE turn_id = ANY(%s)"
+# Every other backend, split by the turn:<id> application_name each turn's connection carries.
+PG_ACTIVITY_SQL = ("SELECT application_name LIKE 'turn:%%', count(*) FROM pg_stat_activity "
+                   "WHERE pid <> pg_backend_pid() GROUP BY 1")
+# A FamilySearch tool's own throttle answer, per session (one patron runs every session).
+RATE_LIMIT_SQL = ("SELECT session_id, count(*) FROM session_events WHERE session_id = ANY(%s) AND kind = 'tool_result' "
+                  "AND payload->>'summary' ILIKE '%%rate limit reached%%' GROUP BY 1")
+# The patron's grant, for a run resumed after days paused: ages in seconds, and whether it was refused.
+GRANT_AGE_SQL = ("SELECT EXTRACT(EPOCH FROM now() - ft.granted_at), EXTRACT(EPOCH FROM now() - ft.session_started_at), "
+                 "EXTRACT(EPOCH FROM now() - ft.updated_at), ft.refresh_refused_at IS NOT NULL "
+                 "FROM users u JOIN familysearch_tokens ft ON ft.user_id = u.id WHERE u.email = %s")
+# What .ebextensions sets when the API carries no value: 02-worker.config / 01-sqsd.config (pinned by tests).
+TEMPLATE_TURN_USERS = "genealogy-turn-0 genealogy-turn-1"
+TEMPLATE_SQSD_VISIBILITY_S = 36300
+TURN_USERS_ALL = tuple(f"genealogy-turn-{i}" for i in range(MAX_SESSIONS))  # what the predeploy hook creates
+VISIBILITY_MARGIN_S = 600.0
+FRESH_UPTIME_S = 600.0  # a replaced instance's boot and deploy are not the idle worker
+SSM_OUTPUT_CAP = 24000  # get-command-invocation's StandardOutputContent keeps this many chars
+# The worker's API throttling: a CLI stderr line, or a closing ev=turn's ResultMessage error.
+THROTTLE_LINE = re.compile(r"\b(429|529)\b|overloaded|rate.?limit", re.I)
+THROTTLE_ERROR = re.compile(r"api (429|529)", re.I)
+# One SSM call per pass, sent before RSS_COMMANDS: web.service's cgroup cpu.stat (the worker and
+# every CLI it spawned; never the root cgroup), the clocks, load, the host cpu line (steal is
+# the T3 throttle), every process with RSS (kernel threads dropped), and an end marker SSM's
+# output cap would cut. Every line is KEY=..., so parse_rss's digit-first process rule skips it.
+CPU_COMMANDS = (
+    "CG=$(systemctl show -p ControlGroup --value web.service)",
+    "if [ -z \"$CG\" ]; then echo cgstat_missing=1; else awk '{print \"cgstat_\" $1 \"=\" $2}' \"/sys/fs/cgroup$CG/cpu.stat\"; fi",
+    "echo epoch=$(date +%s.%N)",
+    "awk '{print \"uptime=\" $1}' /proc/uptime",
+    "awk '{print \"loadavg=\" $1 \" \" $2 \" \" $3}' /proc/loadavg",
+    "awk '/^cpu / {print \"hoststat=\" $0}' /proc/stat",
+    "ps -eo pid=,uid=,rss=,cputimes=,comm= | awk '$3>0{print \"proc=\" $0}'",
+    "echo cpu_end=1",
+)
+# Sent last, after RSS_COMMANDS, by the heavy case only: a cut inside the memory half is a lost
+# sample too, not a silent undercount.
+RSS_END = "echo rss_end=1"
+# The preflight's host facts, one SSM call: IMDSv2 identity, size, uptime, web.service's cgroup
+# and whether its cpu.stat reads, and the slot users' uids for the per-user figures.
+HOST_COMMANDS = (
+    "TOKEN=$(curl -sS -X PUT -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' http://169.254.169.254/latest/api/token)",
+    "echo instance_id=$(curl -sS -H \"X-aws-ec2-metadata-token: $TOKEN\" http://169.254.169.254/latest/meta-data/instance-id)",
+    "echo instance_type=$(curl -sS -H \"X-aws-ec2-metadata-token: $TOKEN\" "
+    "http://169.254.169.254/latest/meta-data/instance-type)",
+    "echo nproc=$(nproc)",
+    "awk '/^MemTotal:/ {print \"mem_total_kb=\" $2}' /proc/meminfo",
+    "awk '{print \"uptime=\" $1}' /proc/uptime",
+    "CG=$(systemctl show -p ControlGroup --value web.service)",
+    "echo control_group=$CG",
+    "if [ -n \"$CG\" ] && [ -r \"/sys/fs/cgroup$CG/cpu.stat\" ]; then echo cpu_stat_readable=1; else echo cpu_stat_readable=0; fi",
+    f"getent passwd {' '.join(TURN_USERS_ALL)} | awk -F: '{{print \"uid_\" $1 \"=\" $3}}'",
+)
+
+
+def _num(value: str, kind: type = int) -> Any:
+    try:
+        return kind(value.strip())
+    except ValueError:
+        return None
+
+
+def split_users(value: str | None) -> list[str]:
+    """``WORKER_TURN_USERS`` as turn_users.py splits it."""
+    return [n for n in re.split(r"[,\s]+", value or "") if n]
+
+
+def parse_cpu(text: str) -> dict[str, Any]:
+    """One CPU_COMMANDS sample: web.service's cpu.stat (``cgroup``, by key), the clocks, load
+    average's 1-min figure, the host ``cpu`` line's counters and ``(pid, uid, rss kB, cpu s,
+    comm)`` per process. ``complete`` is False without ``cpu_end=1`` (cut at SSM's cap). A figure
+    the instance could not give is None."""
+    got: dict[str, Any] = {"complete": False, "cgstat_missing": False, "cgroup": {}, "epoch": None, "uptime": None,
+                           "loadavg_1": None, "hoststat": None, "procs": []}
+    for raw in text.splitlines():
+        key, sep, value = raw.strip().partition("=")
+        if not sep:
+            continue
+        if key == "cpu_end":
+            got["complete"] = value.strip() == "1"
+        elif key == "cgstat_missing":
+            got["cgstat_missing"] = True
+        elif key.startswith("cgstat_"):
+            got["cgroup"][key[len("cgstat_"):]] = _num(value)
+        elif key in ("epoch", "uptime"):
+            got[key] = _num(value, float)
+        elif key == "loadavg":
+            got["loadavg_1"] = _num((value.split() or [""])[0], float)
+        elif key == "hoststat":
+            parts = value.split()
+            got["hoststat"] = [int(p) for p in parts[1:] if p.isdigit()] if parts[:1] == ["cpu"] else None
+        elif key == "proc":
+            parts = value.split(None, 4)
+            if len(parts) == 5 and all(p.isdigit() for p in parts[:4]):
+                got["procs"].append((int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]), parts[4]))
+    got["usage_usec"] = got["cgroup"].get("usage_usec")
+    return got
+
+
+def parse_host(text: str) -> dict[str, Any]:
+    """HOST_COMMANDS' output: identity, size, uptime, the cgroup, and ``uids`` by slot user."""
+    keys: dict[str, str] = {}
+    uids: dict[str, int] = {}
+    for raw in text.splitlines():
+        key, sep, value = raw.strip().partition("=")
+        if not sep:
+            continue
+        if key.startswith("uid_") and value.strip().isdigit():
+            uids[key[len("uid_"):]] = int(value)
+        else:
+            keys[key] = value.strip()
+    return {"instance_id": keys.get("instance_id") or None, "instance_type": keys.get("instance_type") or None,
+            "nproc": _num(keys.get("nproc", "")), "mem_total_kb": _num(keys.get("mem_total_kb", "")),
+            "uptime": _num(keys.get("uptime", ""), float), "control_group": keys.get("control_group") or "",
+            "cpu_stat_readable": keys.get("cpu_stat_readable") == "1", "uids": uids}
+
+
+def cpu_figures(samples: list[tuple[int, dict]], first_pass: int, last_pass: int,
+                uids: dict[str, int]) -> dict[str, Any]:
+    """Over the complete samples the loop took from the pass that opened the window to the one
+    that closed it: web.service's cgroup CPU (authoritative: it counts exited processes, and
+    excludes the SSM sampler) as core-seconds, its mean and its peak per interval in cores
+    over /proc/uptime; the host's steal and 1-min load (both include the sampler); and per
+    slot user (by uid) the peak RSS and the CPU its processes gained (one that exited between
+    samples loses its last interval)."""
+    inw = [s for p, s in samples if first_pass <= p <= last_pass and s.get("complete")]
+    used = [s for s in inw if s.get("usage_usec") is not None and s.get("uptime") is not None]
+    core_s = avg = peak = steal = None
+    if len(used) >= 2:
+        core_s = (used[-1]["usage_usec"] - used[0]["usage_usec"]) / 1e6
+        span = used[-1]["uptime"] - used[0]["uptime"]
+        avg = core_s / span if span > 0 else None
+        peak = max(((b["usage_usec"] - a["usage_usec"]) / 1e6 / (b["uptime"] - a["uptime"])
+                    for a, b in zip(used, used[1:]) if b["uptime"] > a["uptime"]), default=None)
+    host = [s["hoststat"] for s in inw if s.get("hoststat") and len(s["hoststat"]) >= 8]
+    if len(host) >= 2:
+        total = sum(host[-1][:8]) - sum(host[0][:8])  # user..steal; guest is already inside user
+        steal = (host[-1][7] - host[0][7]) * 100 / total if total > 0 else None
+    names = {uid: name for name, uid in uids.items()}
+    peak_rss: dict[str, float] = {}
+    first_cpu = {pid: cpu for pid, uid, _rss, cpu, _c in (inw[0]["procs"] if inw else ()) if uid in names}
+    last_cpu: dict[int, tuple[str, int]] = {}
+    for s in inw:
+        per: dict[str, int] = {}
+        for pid, uid, rss, cpu, _comm in s["procs"]:
+            if uid in names:
+                per[names[uid]] = per.get(names[uid], 0) + rss
+                last_cpu[pid] = (names[uid], cpu)
+        for name, kb in per.items():
+            peak_rss[name] = max(peak_rss.get(name, 0.0), round(kb / 1024, 1))
+    user_cpu: dict[str, int] = {}
+    for pid, (name, cpu) in last_cpu.items():
+        user_cpu[name] = user_cpu.get(name, 0) + cpu - first_cpu.get(pid, 0)
+    loads = [s["loadavg_1"] for s in inw if s.get("loadavg_1") is not None]
+    return {"cpu_samples": len(used), "cpu_core_s": None if core_s is None else round(core_s, 1),
+            "cpu_cores_avg": None if avg is None else round(avg, 3),
+            "cpu_cores_peak": None if peak is None else round(peak, 3),
+            "host_steal_pct": None if steal is None else round(steal, 2), "host_loadavg_1_peak": max(loads, default=None),
+            "turn_user_peak_rss_mb": dict(sorted(peak_rss.items())), "turn_user_cpu_s": dict(sorted(user_cpu.items()))}
+
+
+def api_throttle_lines(events: list[dict], turn_id: str) -> int:
+    """The turn's ev=cli_stderr lines naming a 429/529, an overload or a rate limit, plus each
+    ev=turn whose error carries ``api 429``/``api 529`` (the ResultMessage the worker raised)."""
+    mine = events_for(events, turn_id)
+    return (sum(1 for e in mine if e.get("ev") == "cli_stderr" and THROTTLE_LINE.search(str(e.get("line") or "")))
+            + sum(1 for e in mine if e.get("ev") == "turn" and THROTTLE_ERROR.search(str(e.get("error") or ""))))
+
+
+def start_state(events: list[dict]) -> tuple[list[str] | None, dict | None]:
+    """``(turn_users of the newest ev=start, the first refused start after it)``. A refusal is an
+    ev=prepare with an ``error``, a step other than ``schema`` and no ``retrying``: the schema
+    thread logs a transient ``step=schema error=... retrying=True`` and heals, and a healthy start
+    logs a non-error ``step=turn_users killed=... purged=...``. ``(None, None)``: no ev=start."""
+    at = next((i for i in range(len(events) - 1, -1, -1) if events[i].get("ev") == "start"), None)
+    if at is None:
+        return None, None
+    users = events[at].get("turn_users")
+    refused = next((e for e in events[at + 1:] if e.get("ev") == "prepare" and "error" in e
+                    and e.get("step") != "schema" and not e.get("retrying")), None)
+    return [str(u) for u in users] if isinstance(users, list) else [], refused
+
+
+_REHEARSE: Any = None
+
+
+def rehearse_module() -> Any:
+    """eb-rehearsal/rehearse.py, loaded once by path (its directory is not a package)."""
+    global _REHEARSE
+    if _REHEARSE is None:
+        spec = importlib.util.spec_from_file_location("u18_rehearse", SERVER_DIR / "proto" / "eb-rehearsal" / "rehearse.py")
+        _REHEARSE = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(_REHEARSE)
+    return _REHEARSE
+
+
+def probe_case_values() -> list[tuple[str, str, str, str, str]]:
+    """``(case, tier, namespace, name, value)`` for every environment or sqsd value a
+    web/worker/tools probe case sets (fast_errors has no environment mirror), the slot and
+    instance-type cases aside (they are what the heavy case runs under). A case that removes a
+    value is a start refusal, which the ev=start check catches."""
+    rh = rehearse_module()
+    return [(case, tier, ns, name, value) for case, spec in rh.CASES.items()
+            if not case.startswith("slots_") and case != "worker_xlarge"
+            for tier in ("web", "worker", "tools") for ns, name, value in spec.get("ops", {}).get(tier, [])
+            if ns in (rh.ENV_NS, rh.SQSD_NS) and value is not rh.REMOVE]
+
+
+def probes_live(ctx: Ctx, settings: dict[str, dict[str, str]]) -> list[str]:
+    """Every probe case whose value the live settings (``settings`` by tier, read here when
+    missing) or RDS (idle_session_60s, through pg_settings) still carry: probes_in_effect's
+    reading, turned around."""
+    live = []
+    other: dict[tuple[str, str], dict[str, str]] = {}  # (tier, namespace) -> a non-environment namespace's values
+    for case, tier, ns, name, value in probe_case_values():
+        if ns == target.ENV_NS:
+            if tier not in settings:
+                settings[tier] = TARGET.settings(tier)
+            got = settings[tier].get(name)
+        else:
+            if (tier, ns) not in other:
+                other[(tier, ns)] = TARGET.settings(tier, ns)
+            got = other[(tier, ns)].get(name)
+        if got == value:
+            live.append(f"{case} ({tier} {name}={value})")
+    idle_name, idle_value = IDLE_PROBE
+    got = turn.one(ctx.dsn, IDLE_SETTING_SQL, (idle_name,))
+    if got is not None and str(got) == idle_value:
+        live.append(f"idle_session_60s ({idle_name}={got})")
+    return live
+
+
+def heavy_preflight(ctx: Ctx, rep: Report) -> dict | None:
+    """Every refusal before a seed or a post (nothing billed), each a check: enough live slot
+    users and a worker that started with them, no other probe case live, a visibility timeout
+    the window and the drain fit under, and the host -- its type, its cgroup, its credit mode
+    (and, at N = 0, ten minutes past boot). Records the host facts and the grant's age. The
+    host facts when every check passed, else None."""
+    n, label = ctx.sessions, rep.case
+    checks: list[Check] = []
+    settings = {"worker": TARGET.settings("worker")}
+    slots = split_users(settings["worker"].get("WORKER_TURN_USERS") or TEMPLATE_TURN_USERS)
+    checks.append((f"{label}: preflight: WORKER_TURN_USERS names >= {n} slot(s) (else refused)", len(slots) >= n,
+                   f"WORKER_TURN_USERS={slots}"))
+
+    def started() -> list[dict] | None:
+        evs = worker_events()
+        users, refused = start_state(evs)
+        return evs if users is not None and len(users) >= n and refused is None else None
+
+    budget, every = DEPLOYED_DELIVERY_S if isinstance(TARGET, target.DeployedTarget) else (0, 5.0)
+    users, refused = start_state(smoke.wait_for(started, budget, every) or worker_events())
+    checks.append((f"{label}: preflight: the worker's newest ev=start names >= {n} turn_users, no refused start "
+                   "after it (else refused)", users is not None and len(users) >= n and refused is None,
+                   f"turn_users={users} refused={refused}"))
+    live = probes_live(ctx, settings)
+    checks.append((f"{label}: preflight: no other probe case live (else refused)", not live, f"live={live}"))
+    vis = _num(str(settings["worker"].get("SQSD_VISIBILITY_TIMEOUT_S") or TEMPLATE_SQSD_VISIBILITY_S), float)
+    floor = ctx.window_s + ctx.deadline_s + VISIBILITY_MARGIN_S
+    checks.append((f"{label}: preflight: SQSD_VISIBILITY_TIMEOUT_S >= window + deadline + {VISIBILITY_MARGIN_S:g} s "
+                   "(else refused)", vis is not None and vis >= floor, f"visibility={vis} floor={floor:g}"))
+    host, errors = None, []
+    for _ in range(2):  # one lost SSM call is not a refusal (nor a sample error)
+        try:
+            host = parse_host(TARGET.run("worker", *HOST_COMMANDS, comment="U18 concurrent_rss_heavy: host facts"))
+            break
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{type(exc).__name__}: {exc}"[:300])
+    checks.append((f"{label}: preflight: host facts read over SSM (else refused)", host is not None, f"errors={errors}"))
+    mode = None
+    if host is not None:
+        rep.figures.update({"instance_id": host["instance_id"], "instance_type": host["instance_type"],
+                            "nproc": host["nproc"], "host_uptime_s": host["uptime"], "control_group": host["control_group"],
+                            "mem_total_mb": round(host["mem_total_kb"] / 1024) if host["mem_total_kb"] else None})
+        checks += [(f"{label}: preflight: web.service has a ControlGroup (else refused)", bool(host["control_group"]),
+                    f"ControlGroup={host['control_group']!r}"),
+                   (f"{label}: preflight: web.service's cpu.stat reads (else refused)", host["cpu_stat_readable"],
+                    f"cgroup {host['control_group']!r}")]
+        if ctx.expect_instance_type is not None:
+            checks.append((f"{label}: preflight: the worker is a {ctx.expect_instance_type} (else refused)",
+                           host["instance_type"] == ctx.expect_instance_type, f"instance-type={host['instance_type']}"))
+        if n == 0:
+            checks.append((f"{label}: preflight: the worker is >= {FRESH_UPTIME_S:g} s past boot (else refused)",
+                           (host["uptime"] or 0) >= FRESH_UPTIME_S, f"uptime={host['uptime']}"))
+        try:
+            specs = TARGET.aws("ec2", "describe-instance-credit-specifications", "--instance-ids", str(host["instance_id"]))
+            mode = next((s.get("CpuCredits") for s in specs.get("InstanceCreditSpecifications", [])), None)
+            mode_detail = f"CpuCredits={mode}"
+        except Exception as exc:  # noqa: BLE001 - unreadable reads as not unlimited
+            mode_detail = f"{type(exc).__name__}: {exc}"[:300]
+        rep.figures["credit_mode"] = mode
+        checks.append((f"{label}: preflight: unlimited credits, or --allow-standard-credits (else refused)",
+                       mode == "unlimited" or ctx.allow_standard_credits, mode_detail))
+    grant = turn.db(ctx.dsn, GRANT_AGE_SQL, (ctx.email.strip().lower(),))
+    if grant:
+        granted, session, updated, refused_grant = grant[0]
+        rep.figures.update({"grant_age_s": None if granted is None else round(float(granted)),
+                            "grant_session_age_s": None if session is None else round(float(session)),
+                            "grant_updated_age_s": None if updated is None else round(float(updated)),
+                            "grant_refresh_refused": bool(refused_grant)})
+    else:
+        rep.figures["grant_age_s"] = None
+    rep.checks += checks
+    return host if all(ok for _, ok, _ in checks) else None
+
+
+@dataclass
+class HeavySamples:
+    """concurrent_rss_heavy's readings, one SSM call and one pg_stat_activity count per pass:
+    RSS samples, ``(pass, parse_cpu)`` pairs, lost or truncated samples, and ``(backends,
+    turn:<id> backends)``. A truncated sample is counted lost and kept out of both figures."""
+
+    rss: list[dict] = field(default_factory=list)
+    cpu: list[tuple[int, dict]] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    truncated: int = 0
+    pg: list[tuple[int, int]] = field(default_factory=list)
+
+    def take(self, ctx: Ctx, pass_i: int) -> None:
+        try:
+            out = TARGET.run("worker", *CPU_COMMANDS, *RSS_COMMANDS, RSS_END,
+                             comment="U18 concurrent_rss_heavy: sample CPU and memory")
+        except Exception as exc:  # noqa: BLE001 - one lost sample must not end a billed run
+            self.errors.append(f"{type(exc).__name__}: {exc}")
+        else:
+            cpu = parse_cpu(out)
+            if cpu["complete"] and "rss_end=1" in out.splitlines():
+                self.cpu.append((pass_i, cpu))
+                self.rss.append(parse_rss(out))
+            else:
+                self.truncated += 1
+                self.errors.append(f"truncated: no {'cpu_end' if not cpu['complete'] else 'rss_end'}=1 in "
+                                   f"{len(out)} chars (SSM keeps {SSM_OUTPUT_CAP})")
+        try:
+            rows = turn.db(ctx.dsn, PG_ACTIVITY_SQL, ())
+        except Exception as exc:  # noqa: BLE001 - one RDS blip must not end a billed run either
+            self.errors.append(f"pg_stat_activity: {type(exc).__name__}: {exc}")
+        else:
+            self.pg.append((sum(int(c) for _turn, c in rows), sum(int(c) for is_turn, c in rows if is_turn)))
+
+    def figures(self) -> dict[str, Any]:
+        return {**rss_figures(self.rss), "rss_sample_errors": len(self.errors), "cpu_truncated_samples": self.truncated,
+                "pg_conns_peak": max((a for a, _t in self.pg), default=None),
+                "pg_turn_conns_peak": max((t for _a, t in self.pg), default=None)}
+
+
+def _iso(value: Any) -> str | None:
+    at = _ts(value)
+    return at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ") if at else None
+
+
+def window_figures(rep: Report, s: HeavySamples, host: dict, passes: tuple[int, int] | None,
+                   window_from: Any, window_to: Any) -> None:
+    """The figures every run records, the window's CPU among them, and -- when a window opened --
+    its UTC bounds and the ``rehearse.py cpu`` line that reads CloudWatch over it."""
+    rep.figures.update(s.figures())
+    rep.figures.update(cpu_figures(s.cpu, *passes, host["uids"]) if passes else {"cpu_samples": 0})
+    if s.errors:
+        rep.findings.append(f"{len(s.errors)} sample(s) lost, first: {s.errors[0][:300]}")
+    if passes is None:
+        rep.figures["window_s"] = None
+        return
+    start, end = _iso(window_from), _iso(window_to)
+    line = f"rehearse.py cpu --worker-instance {host['instance_id']} --start {start} --end {end} --work-dir <dir>"
+    rep.figures.update({"window_s": _secs(window_from, window_to), "window_from": start, "window_to": end, "cpu_line": line})
+    rep.findings.append(f"CloudWatch over the window, once its last 5-min point lands: {line}")
+
+
+def cpu_sampled_check(label: str, figures: dict) -> Check:
+    return (f"{label}: CPU sampled, >= 2 in-window samples with usage_usec (else void)",
+            (figures.get("cpu_samples") or 0) >= 2, f"cpu_samples={figures.get('cpu_samples')}")
+
+
+def heavy_idle(ctx: Ctx, rep: Report, host: dict) -> None:
+    """N = 0: no seed, no post. The same SSM call every RSS_EVERY_S, so the sampler's own host
+    cost is in the baseline too; the window runs from the first sample to --window-s."""
+    s = HeavySamples()
+    window_at = window_from = window_to = None
+    pass_i = 0
+    while True:
+        t = time.monotonic()
+        s.take(ctx, pass_i)
+        if window_at is None:
+            window_at, window_from = t, db_one(ctx, PG_NOW_SQL, ())
+        if t - window_at >= ctx.window_s:
+            window_to = db_one(ctx, PG_NOW_SQL, ())
+            break
+        pass_i += 1
+        time.sleep(max(0.0, RSS_EVERY_S - (time.monotonic() - t)))
+    window_figures(rep, s, host, (0, pass_i), window_from, window_to)
+    rep.checks += [cpu_sampled_check(rep.case, rep.figures),
+                   (f"{rep.case}: memory sampled", bool(s.rss), "no sample")]
+
+
+def case_concurrent_rss_heavy(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
+    """U18 under real load: ``--sessions`` N (default 2) seeds of ``--fixture``, all seeded
+    before any is posted the harness's ``/research --autonomous <researcher_question>``; every
+    RSS_EVERY_S one SSM call samples CPU (CPU_COMMANDS) and memory (RSS_COMMANDS), and one query
+    each reads every turn's row and pg_stat_activity. The window opens at the first sample with
+    every turn running; ``--window-s`` (default HEAVY_WINDOW_S) later Stop is pressed on each
+    turn still open, and sampling runs on until all close. Void unless all N ran at once, a
+    subagent tool call landed inside the window, every turn stayed open at every sample from
+    window open to due, every turn was received once, and >= 2 in-window samples carried
+    cpu.stat's usage_usec. The first in-window sample that sees a turn closed or redelivered
+    Stops every open turn at once, as does every turn claimed without ever running together: a
+    void run is not billed to the window's end. A window-dependent check is not emitted when no
+    window opened. CPU figures: ``cpu_*`` from web.service's cgroup (excludes the SSM sampler),
+    ``host_*`` from /proc (includes it). Throttles are findings, never voids: reauth hits,
+    FamilySearch rate limits and API 429/529 lines. ``--sessions 0`` seeds nothing and samples
+    the idle worker for ``--window-s`` (heavy_idle). Refused before anything is billed when
+    heavy_preflight is. A failed SSM sample is counted, not fatal. run_case settles the last
+    session; this settles the others."""
+    n, label = ctx.sessions, rep.case
+    host = heavy_preflight(ctx, rep)
+    if host is None:
+        return
+    if n == 0:
+        heavy_idle(ctx, rep, host)
+        return
+    sessions: list[str] = []
+    try:
+        projects, metas = [], []
+        for _ in range(n):  # seed all, then post all: seeding between posts staggers the starts by minutes
+            sid, project, meta = demo.seed_session(seed_args(ctx, rep))
+            sessions.append(sid)
+            projects.append(project)
+            metas.append(meta)
+        for sid, meta in zip(sessions, metas):
+            rep.session_id = sid
+            post(ctx, client, rep, demo.opening_prompt(meta, None))
+        tids = list(rep.turn_ids)
+        s = HeavySamples()
+        overlapped = False
+        window_at = window_from = window_to = None
+        passes: list[int] = []  # the passes that opened and closed the window
+        closed_early: set[str] = set()
+        receives: dict[str, int] = {}
+        last_rows: dict = {}
+        pressed: dict[str, float] = {}  # session -> its Stop's monotonic time
+        stopping = False
+        limit = time.monotonic() + ctx.deadline_s
+        pass_i = -1
+        # The window is not cut by --deadline-s, which bounds the wait for every claim and,
+        # after the Stop, the wait for every close.
+        while (window_at is not None and not stopping) or time.monotonic() < limit:
+            t = time.monotonic()
+            pass_i += 1
+            s.take(ctx, pass_i)
+            try:
+                rows = {r[0]: r for r in turn.db(ctx.dsn, RECLAIM_ANY_SQL, (tids,))}
+            except Exception as exc:  # noqa: BLE001 - keep the last pass's rows rather than lose the run
+                s.errors.append(f"turns: {type(exc).__name__}: {exc}")
+                rows = last_rows
+            last_rows = rows
+            for tid in tids:
+                receives[tid] = max(receives.get(tid, 0), int(rows[tid][1] or 0) if tid in rows else 0)
+            closed = [tid in rows and rows[tid][3] is not None for tid in tids]
+            open_ = [tid in rows and rows[tid][2] is not None and not c for tid, c in zip(tids, closed)]
+            overlapped = overlapped or all(open_)
+            if window_at is None and overlapped:
+                window_at, window_from = t, db_one(ctx, PG_NOW_SQL, ())
+                passes = [pass_i]
+            void_now = False
+            if window_at is not None and not stopping:
+                closed_early |= {tid for tid, o in zip(tids, open_) if not o}
+                void_now = bool(closed_early) or any(receives[tid] > 1 for tid in tids)
+            if all(closed):
+                break
+            due = window_at is not None and t - window_at >= ctx.window_s
+            never = all(o or c for o, c in zip(open_, closed)) and not overlapped
+            if not stopping and (due or never or void_now):
+                stopping = True
+                if window_at is not None:
+                    window_to = db_one(ctx, PG_NOW_SQL, ())
+                    passes.append(pass_i)
+                for sid, still in zip(sessions, open_):
+                    if still:
+                        rep.session_id = sid
+                        pressed[sid] = press(ctx, client, rep)
+                limit = time.monotonic() + ctx.deadline_s
+            time.sleep(max(0.0, RSS_EVERY_S - (time.monotonic() - t)))
+        if window_at is not None and window_to is None:
+            window_to = db_one(ctx, PG_NOW_SQL, ())
+            passes.append(pass_i)
+        window = window_from is not None
+        in_window = int(db_one(ctx, WINDOW_SUBAGENT_SQL, (tids, window_from, window_to)) or 0) if window else 0
+        window_figures(rep, s, host, (passes[0], passes[-1]) if window else None, window_from, window_to)
+        rep.figures.update({"sessions": n, "subagent_rows": int(db_one(ctx, SUBAGENT_ROWS_SQL, (tids,)) or 0),
+                            "subagent_rows_in_window": in_window, "stopped": sorted(pressed),
+                            "max_receive_count": max(receives.values(), default=None)})
+        rep.checks += [(f"{label}: {n} projects seeded", len(set(projects)) == n, f"projects={projects}"),
+                       (f"{label}: all {n} turn(s) ran at once (else void)", overlapped,
+                        "never every turn claimed and open in one sample")]
+        if window:
+            rep.checks += [
+                (f"{label}: a subagent tool call ran inside the window (else void)", in_window > 0,
+                 f"subagent rows in the window={in_window}"),
+                (f"{label}: every turn open at every sample from window open to due (else void)", not closed_early,
+                 f"closed early={sorted(closed_early)}"),
+                cpu_sampled_check(label, rep.figures)]
+        rep.checks += [(f"{label}: every turn received once (else void)", all(receives.get(t, 0) <= 1 for t in tids),
+                        f"receive_count={receives}"),
+                       (f"{label}: memory sampled", bool(s.rss), "no sample")]
+        for i, (sid, tid) in enumerate(zip(sessions, tids), 1):
+            rep.session_id = sid
+            done(ctx, client, rep, tid, since=pressed.get(sid), label=f"session_{i}")
+        heavy_throttles(ctx, rep, sessions, tids)
+    finally:
+        for sid in sessions[:-1]:
+            running, _held = settle(ctx, client, sid)
+            rep.checks.append((f"{label}: no turn left running on {sid}", not running, f"running={running}"))
+        if sessions:
+            rep.session_id = sessions[-1]
+
+
+DB_TRIES = 3
+
+
+def db_one(ctx: Ctx, sql: str, params: tuple) -> Any:
+    """turn.one, tried DB_TRIES times RSS_EVERY_S apart: a read after a billed window must not
+    lose the run to one RDS blip."""
+    for i in range(DB_TRIES):
+        try:
+            return turn.one(ctx.dsn, sql, params)
+        except psycopg.OperationalError:
+            if i == DB_TRIES - 1:
+                raise
+            time.sleep(RSS_EVERY_S)
+
+
+def heavy_throttles(ctx: Ctx, rep: Report, sessions: list[str], tids: list[str]) -> None:
+    """One patron across N sessions: reauth hits, FamilySearch rate limits and API throttle lines
+    per session, recorded as figures and findings, never as voids -- nor as a crash: a failed
+    read is a finding."""
+    try:
+        heavy_throttle_figures(ctx, rep, sessions, tids)
+    except Exception as exc:  # noqa: BLE001 - throttle figures are findings, never the run's verdict
+        rep.findings.append(f"throttle figures not read: {type(exc).__name__}: {exc}")
+
+
+def heavy_throttle_figures(ctx: Ctx, rep: Report, sessions: list[str], tids: list[str]) -> None:
+    limited = {sid: int(c) for sid, c in turn.db(ctx.dsn, RATE_LIMIT_SQL, (sessions,))}
+    events = events_until(tids[-1], closing_lines)
+    throttles = 0
+    for i, (sid, tid) in enumerate(zip(sessions, tids), 1):
+        hits, entry_hits = reauth(ctx, sid, tid, sdk_of(ctx, sid))
+        lines = api_throttle_lines(events, tid)
+        throttles += lines
+        rep.figures.update({f"session_{i}.reauth_hits": len(hits) + len(entry_hits),
+                            f"session_{i}.rate_limited": limited.get(sid, 0), f"session_{i}.api_throttle_lines": lines})
+    rep.figures["rate_limited"] = sum(limited.values())
+    rep.findings.append(f"FamilySearch 'rate limit reached' tool results: {sum(limited.values())} across {len(sessions)} "
+                        "session(s)")
+    rep.findings.append(f"API throttle lines (429/529/overloaded/rate limit): {throttles}" if throttles else
+                        "API throttle lines: not observed (CLI-internal retries are not logged)")
 
 
 CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
@@ -1247,16 +2353,21 @@ CASES: dict[str, Callable[[Ctx, httpx.Client, Report], None]] = {
     "dead_letter_real": case_dead_letter_real,
     "keepalive_drop": case_keepalive_drop,
     "spill_kill": case_spill_kill,
+    "kill_hold": case_kill_hold,
+    "kill_refresh": case_kill_refresh,
+    "idle_watch": case_idle_watch,
+    "concurrent_rss": case_concurrent_rss,
+    "concurrent_rss_heavy": case_concurrent_rss_heavy,
 }
-SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe_resume"})
+SEEDED = frozenset({"stop_delegation", "cap_delegation", "cap_main_real", "probe_resume", "kill_hold"})
 # Cases a deployed target cannot run yet, and why.
 COMPOSE_ONLY = {
     "outage_pause": "RDS has no freeze (U19 calls a pause no RDS failure shape)",
-    "held_release": "its release check reads compose's shim; a deployed worker has sqsd",
-    "held_after_stop": "its release check reads compose's shim; a deployed worker has sqsd",
 }
 # Cases only a deployed target runs (U13): they signal or firewall the Beanstalk worker.
-DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill"})
+DEPLOYED_ONLY = frozenset({"sigterm_real", "dead_letter_real", "keepalive_drop", "spill_kill",
+                           "kill_hold", "kill_refresh", "idle_watch", "concurrent_rss",
+                           "concurrent_rss_heavy"})
 
 
 def run_case(ctx: Ctx, name: str) -> Report:
@@ -1309,6 +2420,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--target", choices=("compose", "deployed"), default="compose",
                    help="compose's containers, or U13's rehearsal tiers on Beanstalk")
     p.add_argument("--profile", default=None, help="deployed: the aws CLI profile")
+    # default=None/False so make_ctx tells "given" from "default" and refuses them on another case.
+    p.add_argument("--sessions", type=int, default=None,
+                   help=f"concurrent_rss_heavy: sessions run at once, 0-{MAX_SESSIONS} (0: the idle worker; "
+                        f"default {HEAVY_SESSIONS})")
+    p.add_argument("--window-s", type=float, default=None,
+                   help=f"concurrent_rss_heavy: the measured window, 1-{MAX_WINDOW_S:g} s (default {HEAVY_WINDOW_S:g})")
+    p.add_argument("--expect-instance-type", default=None, help="concurrent_rss_heavy: refuse unless the worker is this type")
+    p.add_argument("--allow-standard-credits", action="store_true", default=False,
+                   help="concurrent_rss_heavy: run on a T instance in standard credit mode (else refused)")
     return p
 
 
@@ -1332,6 +2452,17 @@ def make_ctx(args: argparse.Namespace, start: dict | None) -> Ctx:
         raise ValueError(f"--kill-after-s must be {lo:g}-{hi:g}, not {args.kill_after_s:g}")
     if args.deadline_s <= 0 or args.pause_s <= 0:
         raise ValueError("--deadline-s and --pause-s must be positive")
+    sessions, window_s = getattr(args, "sessions", None), getattr(args, "window_s", None)
+    expect, allow_standard = getattr(args, "expect_instance_type", None), getattr(args, "allow_standard_credits", False)
+    given = [flag for flag, v in (("--sessions", sessions), ("--window-s", window_s),
+                                  ("--expect-instance-type", expect)) if v is not None]
+    given += ["--allow-standard-credits"] if allow_standard else []
+    if given and args.case != "concurrent_rss_heavy":
+        raise ValueError(f"{', '.join(given)} {'is' if len(given) == 1 else 'are'} for concurrent_rss_heavy, not {args.case}")
+    if sessions is not None and not 0 <= sessions <= MAX_SESSIONS:
+        raise ValueError(f"--sessions must be 0-{MAX_SESSIONS}, not {sessions}")
+    if window_s is not None and not 1 <= window_s <= MAX_WINDOW_S:
+        raise ValueError(f"--window-s must be 1-{MAX_WINDOW_S:g}, not {window_s:g}")
     cap, price, source = spend_config(start, SPEND_CAP_USD, PRICE_PER_MTOK["output"])
     if args.case == "cap_main_real" and not 0 < cap <= REAL_CAP_MAX_USD:
         raise ValueError(f"cap_main_real wants SESSION_SPEND_CAP_USD lowered to (0, {REAL_CAP_MAX_USD:g}]; the worker "
@@ -1341,7 +2472,10 @@ def make_ctx(args: argparse.Namespace, start: dict | None) -> Ctx:
     return Ctx(base=args.base, dsn=args.pg_dsn, email=args.email, s3_endpoint=args.s3_endpoint, fixture=args.fixture,
                session=args.session, deadline_s=args.deadline_s, kill_after_s=args.kill_after_s, pause_s=args.pause_s,
                cap_usd=cap, price_output=price, worker=args.worker_container, postgres=args.postgres_container,
-               tools=args.tools_container, target=getattr(args, "target", "compose"))
+               tools=args.tools_container, target=getattr(args, "target", "compose"),
+               sessions=HEAVY_SESSIONS if sessions is None else sessions,
+               window_s=HEAVY_WINDOW_S if window_s is None else window_s,
+               expect_instance_type=expect, allow_standard_credits=bool(allow_standard))
 
 
 def main(argv: list[str] | None = None) -> int:

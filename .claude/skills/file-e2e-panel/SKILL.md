@@ -227,8 +227,9 @@ Run it in Git Bash or WSL on Windows. `origin/main` must be the `main` you
 branched from: if `origin` is your fork, use `upstream/main`.
 
 That gate blocks a run log shipped without its annotation, one made with the 1M
-context window (`usage.betas` non-empty), and one containing a FamilySearch or
-OpenRouter credential.
+context window (`usage.betas` non-empty), one made with tool search off
+(`usage.tool_search` or `usage.tool_search_offered` false), and one containing a
+FamilySearch or OpenRouter credential.
 
 **Cost:** budget about $<budget> of API spend: the highest cost recorded in this
 fixture's last five runs, rounded up (<recorded costs>). <k> of the five recorded

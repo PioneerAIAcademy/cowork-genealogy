@@ -204,7 +204,8 @@ source of truth for the advertised tool list); `src/server.ts`
 entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
 `src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
 request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
-`X-Genealogy-Project-Id` header). Per-tool
+`X-Genealogy-Project-Id` header, fenced by `X-Genealogy-Turn-Id` and
+`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back — U6). Per-tool
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
@@ -412,7 +413,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-seven other agents also carry no line — `search-wikipedia` is the one whose
+eight other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 
@@ -612,7 +613,7 @@ and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
 entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
 request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
-`X-Genealogy-Project-Id` header, and a new tool's arm goes in
+`X-Genealogy-Project-Id` header (claim-fenced, U6), and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
 neither calls nor lists as an exclusion.

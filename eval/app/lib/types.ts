@@ -292,6 +292,10 @@ export interface RunLogRun {
   num_turns?: number;
   /** Skill-execution attempts; >1 means transient stall/error retries. */
   skill_attempts?: number;
+  // Busiest-moment capture (optional; absent on older logs and pre-execution aborts).
+  subagents?: Array<Record<string, unknown>>;
+  subagent_capture_status?: "captured" | "matched_no_transcripts" | "no_cache_dir" | "error";
+  main_thread?: { peak_window_tokens: number; compactions: unknown[]; models: string[] };
   /** Epoch seconds bracketing the whole run. Absent for never-executed runs. */
   started_at?: number;
   ended_at?: number;
@@ -394,6 +398,9 @@ export interface RunLogFile {
   harness_version: string;
   model: string;
   review_sample?: ReviewSample;
+  /** `false` under `run_tests.py --no-tool-search` (a scratch log). Absent on
+   *  logs written before the field existed, all of which ran with it on. */
+  tool_search?: boolean;
   judge_prompt_hash: string;
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;

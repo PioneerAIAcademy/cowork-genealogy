@@ -1,0 +1,207 @@
+"""Tests for `make e2e-compare` — two runs of one fixture side by side.
+
+The comparison file lives in the folder the blind grader works from, so the
+judge's grade may appear only when BOTH runs are graded (spec §7.4).
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from e2e.run_compare import compare, keep_newest_comparisons, main, next_comparison_path
+
+REAL_DIR = Path(__file__).resolve().parents[3] / "runlogs" / "e2e" / "anders-monsen-ancestry"
+
+
+def _log(cost, **over):
+    log = {
+        "test_id": "fx", "captured_at": "t", "harness_schema_version": 3,
+        "verdict": "pass", "compliance": "clean", "outcome": "pass", "stop_reason": "completed",
+        "skills_hash": "h1", "git_sha": "abc",
+        "judge_output": {"verdict": "pass", "recall_required": 1.0},
+        "usage": {"total_cost_usd": cost, "wall_clock_seconds": 600.0, "num_turns": 10,
+                  "agent_model": "claude-sonnet-4-6", "effort_level": "high"},
+        "tool_calls": [],
+    }
+    log.update(over)
+    return log
+
+
+def _pair(tmp_path, before, after, graded=(False, False)):
+    fx = tmp_path / "fx"
+    fx.mkdir(exist_ok=True)
+    paths = []
+    for name, log, g in (("run-2026-10-01_00-00-00", before, graded[0]),
+                         ("run-2026-10-02_00-00-00", after, graded[1])):
+        p = fx / f"{name}.json"
+        p.write_text(json.dumps(log), encoding="utf-8")
+        if g:
+            (fx / f"{name}.ann.json").write_text("{}", encoding="utf-8")
+        paths.append(p)
+    return paths
+
+
+def test_the_grade_shows_only_when_both_runs_are_graded(tmp_path):
+    b, a = _pair(tmp_path, _log(5.0), _log(4.0), graded=(True, False))
+    text = compare(_log(5.0), b, _log(4.0), a)
+    assert "verdict" not in text and "recall" not in text
+    b, a = _pair(tmp_path, _log(5.0), _log(4.0), graded=(True, True))
+    assert "verdict" in compare(_log(5.0), b, _log(4.0), a)
+
+
+def test_settings_that_moved_are_named(tmp_path):
+    after = _log(4.0)
+    after["usage"]["effort_level"] = "low"
+    after["skills_hash"] = "h2"
+    b, a = _pair(tmp_path, _log(5.0), after)
+    text = compare(_log(5.0), b, after, a)
+    assert "plugin skills + agents: CHANGED" in text
+    assert "effort_level 'high' -> 'low'" in text
+    assert "$5.00 -> $4.00" in text and "-20%" in text
+
+
+def test_a_real_committed_comparison_shows_cost_and_both_grades():
+    before = REAL_DIR / "run-2026-09-30_07-29-52.json"
+    after = REAL_DIR / "run-2026-10-05_16-07-18.json"
+    text = compare(json.loads(before.read_text(encoding="utf-8")), before,
+                   json.loads(after.read_text(encoding="utf-8")), after)
+    assert "120.4 min -> 107.1 min" in text
+    # Before is an aborted run's estimate, after is the SDK's figure: no % change.
+    assert "$14.58 -> $15.66" in text and "+7%" not in text
+    assert "not comparable" in text
+    assert "partial -> pass" in text  # both runs graded, so the grade shows
+    # A fraction keeps its decimals: 0.75 -> 1.0 printed as "1 -> 1 +33%" once.
+    assert "0.75 -> 1.00" in text
+
+
+def test_files_are_numbered_and_only_five_kept(tmp_path):
+    fx = tmp_path / "fx"
+    assert next_comparison_path(fx).name == "01_comparison.txt"
+    (fx / "comparison").mkdir(parents=True)
+    for n in range(1, 8):
+        (fx / "comparison" / f"{n:02d}_comparison.txt").write_text("x", encoding="utf-8")
+    assert next_comparison_path(fx).name == "08_comparison.txt"
+    keep_newest_comparisons(fx)
+    assert sorted(p.name for p in (fx / "comparison").iterdir()) == [
+        f"{n:02d}_comparison.txt" for n in range(3, 8)
+    ]
+    # Numbering continues past pruned files rather than reusing a number.
+    assert next_comparison_path(fx).name == "08_comparison.txt"
+
+
+def test_main_writes_the_next_numbered_file_and_prints_it(tmp_path, capsys):
+    b, a = _pair(tmp_path, _log(5.0), _log(4.0))
+    assert main(["--before", str(b), "--after", str(a)]) == 0
+    saved = tmp_path / "fx" / "comparison" / "01_comparison.txt"
+    assert saved.exists()
+    assert "$5.00 -> $4.00" in capsys.readouterr().out
+
+
+_TOKENS = {"input_tokens": 10, "output_tokens": 1_000, "cache_read_input_tokens": 50_000,
+           "cache_creation_input_tokens": 2_000}
+
+
+def _with_helper(model):
+    return _log(5.0, subagents=[{"agent_type": "record-extractor", "usage": dict(_TOKENS),
+                                 "models": [model]}],
+                subagent_capture_status="captured")
+
+
+def test_a_helper_moved_from_sonnet_to_haiku_shows_its_saving(tmp_path):
+    """T1.11: identical tokens, Sonnet 4.6 -> Haiku — the helper cost falls by two thirds."""
+    before, after = _with_helper("claude-sonnet-4-6"), _with_helper("claude-haiku-4-5-20251001")
+    b, a = _pair(tmp_path, before, after)
+    text = compare(before, b, after, a)
+    line = next(line for line in text.splitlines() if line.strip().startswith("helper cost"))
+    assert "$0.04 -> $0.01" in line and "-67%" in line
+
+
+def test_a_helper_moved_to_an_unpriced_model_is_not_a_saving(tmp_path):
+    """Before: two Sonnet helpers. After: one stays, one moves to a model with no
+    rate. Summing only the priced one would read $0.08 -> $0.04, a fake halving."""
+    before = _with_helper("claude-sonnet-4-6")
+    before["subagents"].append({"agent_type": "gps-mentor", "usage": dict(_TOKENS),
+                                "models": ["claude-sonnet-4-6"]})
+    after = _with_helper("claude-unknown-9")
+    after["subagents"].append({"agent_type": "gps-mentor", "usage": dict(_TOKENS),
+                               "models": ["claude-sonnet-4-6"]})
+    b, a = _pair(tmp_path, before, after)
+    text = compare(before, b, after, a)
+    line = next(line for line in text.splitlines() if line.strip().startswith("helper cost"))
+    assert "$0.08 -> --" in line
+    row = next(line for line in text.splitlines() if line.strip().startswith("record-extractor"))
+    assert "$0.04 -> --" in row
+
+
+def test_a_multi_query_run_shows_no_turns_change_and_a_resumed_one_no_cost_change(tmp_path):
+    after = _log(4.0)
+    after["usage"].update(num_turns=1, resumes=1, timeline=[[0.0, "system:init"], [9.0, "system:init"]])
+    b, a = _pair(tmp_path, _log(5.0), after)
+    text = compare(_log(5.0), b, after, a)
+    assert "multi-query run (after)" in text and "-90%" not in text
+    assert "resumed run (after)" in text and "-20%" not in text
+
+
+def test_helper_time_is_summed_per_run(tmp_path):
+    def sub(seconds):
+        return {"agent_type": "record-extractor", "num_assistant_turns": 3,
+                "usage": {"input_tokens": 1, "output_tokens": 10}, "duration_seconds": seconds}
+    before = _log(5.0, subagents=[sub(60.0), sub(120.0)], subagent_capture_status="captured")
+    after = _log(4.0, subagents=[sub(90.0)], subagent_capture_status="captured")
+    b, a = _pair(tmp_path, before, after)
+    assert "3.0 min -> 1.5 min" in compare(before, b, after, a)
+
+
+def _off_on_pair(tmp_path):
+    """T1.7's reading: an on run, then an off run, with the meters it reads."""
+    on = _log(5.0, tool_calls=[
+        {"tool": "ToolSearch"}, {"tool": "ToolSearch"},
+        {"tool": "ToolSearch", "agent_id": "a1"}, {"tool": "Read"},
+    ])
+    on["usage"].update(
+        tool_search=True, tool_search_offered=True,
+        message_usage=[["sub", 9, 9, 9], ["main", 3, 0, 35_141], ["main", 3, 35_144, 900]],
+        usage={"cache_read_input_tokens": 1_000_000, "cache_creation_input_tokens": 200_000},
+        whole_run_usage={"cache_read_input_tokens": 3_000_000, "cache_creation_input_tokens": 500_000},
+    )
+    off = _log(6.0, tool_calls=[{"tool": "Read"}])
+    off["usage"].update(
+        tool_search=False, tool_search_offered=False,
+        message_usage=[["main", 3, 0, 74_997]],
+        usage={"cache_read_input_tokens": 1_500_000, "cache_creation_input_tokens": 300_000},
+        whole_run_usage={"cache_read_input_tokens": 4_000_000, "cache_creation_input_tokens": 600_000},
+    )
+    b, a = _pair(tmp_path, on, off)
+    return compare(on, b, off, a)
+
+
+def _line(text, label):
+    return next(line for line in text.splitlines() if line.strip().startswith(label))
+
+
+def test_a_tool_search_switch_is_named_as_a_differing_setting(tmp_path):
+    text = _off_on_pair(tmp_path)
+    assert "tool_search True -> False" in text
+    assert "tool_search_offered True -> False" in text
+
+
+def test_the_tool_search_meters_are_shown(tmp_path):
+    text = _off_on_pair(tmp_path)
+    assert "2 -> 0" in _line(text, "ToolSearch (main)")
+    assert "1 -> 0" in _line(text, "ToolSearch (helpers)")
+    # The FIRST main row — not the first row (a helper's), not the second main one.
+    assert "35,144 -> 75,000" in _line(text, "first main call context")
+    assert "1,000,000 -> 1,500,000" in _line(text, "main cache read")
+    assert "200,000 -> 300,000" in _line(text, "main cache write")
+    assert "3,000,000 -> 4,000,000" in _line(text, "whole-run cache read")
+    assert "500,000 -> 600,000" in _line(text, "whole-run cache write")
+
+
+def test_the_tool_search_meters_read_dashes_on_a_run_that_predates_them(tmp_path):
+    before, after = _log(5.0), _log(4.0)
+    b, a = _pair(tmp_path, before, after)
+    text = compare(before, b, after, a)
+    assert "run settings that differ: none" in text
+    for label in ("first main call context", "main cache read", "whole-run cache write"):
+        assert "-- -> --" in _line(text, label), label
