@@ -2230,6 +2230,34 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok).toBe(false);
     });
 
+    // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
+    // in the entry, which wrongly silenced every one of these on the exact
+    // immigrant timeline this guard exists for -- none names a jurisdiction
+    // at all, so each must still fire via arm 3.
+    it.each([
+      ["sentence-initial capital", "The 1890 census"],
+      ["a US place name after 'census of'", "1890 census of Schuylkill County"],
+      ["a capitalized word inside a parenthetical", "1890 census (Destroyed in 1921 fire)"],
+      ["a capitalized word far from 'census'", "Household listing in 1890 census"],
+    ])("still refuses on the mixed timeline despite a stray capital: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
+    // Resolves the limitation the first cut of arm 2 knowingly accepted: a
+    // literal US state or county name immediately before "census" is
+    // recognized against the timeline's own US-placed events, not read as
+    // naming a foreign country.
+    it.each([
+      ["the state", "Pennsylvania census 1890"],
+      ["the county", "Schuylkill census 1890"],
+    ])("fires on a literal US place name immediately before 'census', matched against the timeline's own places: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
     it("allows a non-1890 census year", async () => {
       await writeProject();
       const r = await appendWithGap(["census 1900"]);

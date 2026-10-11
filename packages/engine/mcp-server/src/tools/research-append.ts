@@ -379,16 +379,30 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
 //      regardless of the timeline's places -- "Denmark census 1890" must
 //      never be refused just because the same timeline also has a US-placed
 //      event (an emigrant's own timeline, the exact shape this guard exists
-//      for, routinely has both). Detected structurally -- a capitalized word
-//      other than the US/grammatical exclusions -- not a per-country table,
-//      which ADR-0012 forbids. Known false-allow this costs: a literal US
-//      state or county name capitalized in the entry text (e.g. "Pennsylvania
-//      census 1890") also reads as naming another jurisdiction and is
-//      silenced, though no state held a census the federal record's loss
-//      would apply to. Reading the claim the entry TEXT makes is required
-//      regardless -- the ruling's own Denmark example names a country the
-//      timeline's own events never mention at all, so cross-referencing
-//      against the timeline's places (an alternative considered) cannot work.
+//      for, routinely has both). Detected structurally: a capitalized word
+//      immediately before "census" -- not a per-country table, which
+//      ADR-0012 forbids, and not "any capitalized word anywhere in the
+//      entry", which a review round found caught ordinary sentence-initial
+//      or parenthetical capitals ("The 1890 census", "1890 census
+//      (Destroyed in 1921 fire)", "Household listing in 1890 census") and
+//      so silenced entries that name no jurisdiction at all and should fire
+//      via arm 3. Requiring direct adjacency to "census" is what a mere
+//      exclusion list cannot give: a word three tokens away from "census"
+//      says nothing about what the entry is naming. The adjacent word is
+//      then checked against the timeline's OWN recorded places (every
+//      alphabetic token in a US-placed event's `place`/`standard_place`) --
+//      if it matches, it names a US STATE OR COUNTY, not a foreign country
+//      ("Pennsylvania census 1890" / "Schuylkill census 1890" on the
+//      Schuylkill County timeline both fire, resolving a limitation the
+//      first cut of this arm had), and arm 2 does not apply. Otherwise the
+//      word names some other, non-US jurisdiction and arm 2 silences it.
+//      Knowingly lets through, in the direction that now costs a refusal
+//      rather than a false allow: a foreign-country reference NOT
+//      immediately adjacent to "census" ("the 1890 census in Denmark",
+//      "Denmark's 1890 census") is not recognized by arm 2 and falls to
+//      arm 3, which fires if the timeline has a US-placed event elsewhere --
+//      narrowing arm 2 for precision costs this shape, deliberately, since
+//      the alternative (any capitalized word) cost the four phrasings above.
 //   3. An entry naming no jurisdiction at all falls back to the timeline's
 //      own events -- it fires when ANY non-null `standard_place` ends in
 //      "United States". Not "every": an immigrant's own timeline routinely
@@ -422,11 +436,13 @@ const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
 const TIMELINE_VETERAN_RE = /veteran/i;
 const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
 const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b/;
-// A capitalized word, excluding "Census"/"Federal" (part of the phrase being
-// classified, not a jurisdiction) and "United"/"States" (already covered by
-// TIMELINE_NAMES_US_RE, checked first -- reaching this regex at all means the
-// text did not match it case-insensitively in any form).
-const TIMELINE_NAMES_OTHER_JURISDICTION_RE = /\b(?!Census\b|Federal\b|United\b|States\b)[A-Z][a-z]+/;
+// A capitalized word immediately before "census" -- not "Census"/"Federal"
+// (part of the phrase being classified, not a jurisdiction) or
+// "United"/"States" (already covered by TIMELINE_NAMES_US_RE, checked first
+// -- reaching this regex at all means the text did not match it
+// case-insensitively in any form). Captured so the caller can check it
+// against the timeline's own recorded US places.
+const TIMELINE_NAMES_OTHER_JURISDICTION_RE = /\b(?!Census\b|Federal\b|United\b|States\b)([A-Z][a-z]+) census\b/;
 
 export function timelineCensus1890Invariants(entry: any): string[] {
   const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];
@@ -437,6 +453,19 @@ export function timelineCensus1890Invariants(entry: any): string[] {
     .map((e: any) => e?.standard_place)
     .filter((p: unknown): p is string => typeof p === "string" && p.length > 0);
   const anyEventIsUS = standardPlaces.some((p: string) => p.endsWith("United States"));
+  // Every alphabetic word appearing in a US-placed event's own `place` or
+  // `standard_place` -- "Pennsylvania"/"Schuylkill" census 1890 on this
+  // timeline names a US state or county, not a foreign country, and arm 2
+  // must not silence it.
+  const usPlaceWords = new Set<string>();
+  for (const e of events) {
+    const sp = e?.standard_place;
+    if (typeof sp !== "string" || !sp.endsWith("United States")) continue;
+    for (const src of [sp, e?.place]) {
+      if (typeof src !== "string") continue;
+      for (const word of src.match(/[A-Za-z]+/g) ?? []) usPlaceWords.add(word);
+    }
+  }
 
   const errs: string[] = [];
   for (const gap of gaps) {
@@ -448,8 +477,9 @@ export function timelineCensus1890Invariants(entry: any): string[] {
       if (TIMELINE_VETERAN_RE.test(text)) continue;
       const namesUS = TIMELINE_NAMES_US_RE.test(text) || TIMELINE_NAMES_US_ABBREV_RE.test(text);
       if (!namesUS) {
-        if (TIMELINE_NAMES_OTHER_JURISDICTION_RE.test(text)) continue;
-        if (!anyEventIsUS) continue;
+        const otherJurisdiction = text.match(TIMELINE_NAMES_OTHER_JURISDICTION_RE);
+        if (otherJurisdiction && !usPlaceWords.has(otherJurisdiction[1])) continue;
+        if (!otherJurisdiction && !anyEventIsUS) continue;
       }
       errs.push(
         `gaps[].expected_events entry '${text}' names the US 1890 federal census, which does ` +
