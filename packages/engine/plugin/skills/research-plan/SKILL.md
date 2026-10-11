@@ -567,7 +567,7 @@ supersede mode):
 Never modify a superseded plan — it is part of the audit trail. Status
 transitions (`planned → in_progress → completed`) on existing items are
 made by the executing skills (search-records, search-external-sites),
-not here.
+not here — except in Dispose mode.
 
 **Termination (BCG Standard 18):** If all identified sources are
 exhausted or inaccessible and the question remains unresolved, set the
