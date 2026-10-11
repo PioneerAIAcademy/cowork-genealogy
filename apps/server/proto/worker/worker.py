@@ -290,6 +290,7 @@ EXPECTED_AGENTS = frozenset({
     "survey-surname",
     "translation",
     "tree-edit",
+    "tree-survey",
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
