@@ -17,6 +17,7 @@ import {
   warningId,
   staleJustifications,
   computeTouchedPersonIds,
+  competingParentage,
 } from "../../src/validation/introduced-warnings.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 
@@ -482,5 +483,151 @@ describe("computeTouchedPersonIds", () => {
 
     const touched = computeTouchedPersonIds(before, after);
     expect(touched).toEqual(expect.arrayContaining(["I1", "I2"]));
+  });
+});
+
+// Issue #2525: competing biological parentage, surfaced by the tree writers.
+describe("competingParentage", () => {
+  const gp = (id: string, given: string, gender: string) => ({
+    id,
+    gender,
+    names: [{ id: `${id}-n`, given, surname: "Flynn" }],
+    facts: [],
+  });
+  const people = () => [
+    gp("I1", "Patrick", "Male"),
+    gp("I2", "Thomas", "Male"),
+    gp("I3", "John", "Male"),
+    gp("I4", "Mary", "Female"),
+    gp("I5", "Ann", "Female"),
+    gp("I6", "James", "Male"),
+  ];
+  const pc = (id: string, parent: string, subtype?: string, ref = "S1") => ({
+    id,
+    type: "ParentChild",
+    parent,
+    child: "I1",
+    ...(subtype ? { subtype } : {}),
+    sources: [{ ref }],
+  });
+  const research = {
+    sources: [
+      { id: "src_001", gedcomx_source_description_id: "S1" },
+      { id: "src_002", gedcomx_source_description_id: "S2" },
+    ],
+    assertions: [
+      { id: "a_001", source_id: "src_001", fact_type: "relationship" },
+      { id: "a_002", source_id: "src_001", fact_type: "birth" },
+      { id: "a_003", source_id: "src_002", fact_type: "relationship" },
+    ],
+    person_evidence: [
+      { assertion_id: "a_001", person_id: "I2" },
+      { assertion_id: "a_003", person_id: "I3" },
+    ],
+  };
+  const surface = (
+    beforeRels: any[],
+    afterRels: any[],
+    proposed?: Map<string, string>,
+    beforePeople = people(),
+    afterPeople = people(),
+  ) => {
+    const before = tree(beforePeople, beforeRels);
+    const after = tree(afterPeople, afterRels);
+    return competingParentage(before, after, research, proposed);
+  };
+
+  it("names both fathers and the assertion behind each when a second biological father is added", () => {
+    const out = surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", undefined, "S2")]);
+    expect(out).toEqual([
+      {
+        personId: "I1",
+        factType: "ParentChild",
+        values: ["I2 Thomas Flynn (a_001)", "I3 John Flynn (a_003)"],
+      },
+    ]);
+  });
+
+  it("names the proposed edge by the call's sourceAssertionId", () => {
+    const out = surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3")], new Map([["I3|I1", "a_099"]]));
+    expect(out[0].values).toContain("I3 John Flynn (a_099)");
+  });
+
+  it("falls back to the source ref when no parentage assertion resolves", () => {
+    const out = surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", undefined, "S9")]);
+    expect(out[0].values).toContain("I3 John Flynn (source S9)");
+  });
+
+  it("counts only the biological fathers when an adoptive one also stands", () => {
+    const standing = [pc("R1", "I2"), pc("R2", "I3", "Adoptive")];
+    const out = surface(standing, [...standing, pc("R3", "I6", undefined, "S9")]);
+    expect(out).toEqual([
+      {
+        personId: "I1",
+        factType: "ParentChild",
+        values: ["I2 Thomas Flynn (a_001)", "I6 James Flynn (source S9)"],
+      },
+    ]);
+  });
+
+  it("surfaces a second father made by changing a parent's gender", () => {
+    const rels = [pc("R1", "I2"), pc("R2", "I4")];
+    const afterPeople = people().map((p) => (p.id === "I4" ? { ...p, gender: "Male" } : p));
+    expect(surface(rels, rels, undefined, people(), afterPeople)).toHaveLength(1);
+  });
+
+  it("does not surface an adoptive father beside a biological one", () => {
+    expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", "Adoptive")])).toEqual([]);
+  });
+
+  it("counts an absent subtype and Biological alike", () => {
+    expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I3", "Biological")])).toHaveLength(1);
+  });
+
+  it("counts a parent holding both a Biological and an Adoptive edge once", () => {
+    expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I2", "Adoptive")])).toEqual([]);
+  });
+
+  it("surfaces two biological mothers the same way", () => {
+    const out = surface([pc("R1", "I4")], [pc("R1", "I4"), pc("R2", "I5")]);
+    expect(out.map((c) => c.values.length)).toEqual([2]);
+  });
+
+  it("does not surface a mother added beside a father", () => {
+    expect(surface([pc("R1", "I2")], [pc("R1", "I2"), pc("R2", "I4")])).toEqual([]);
+  });
+
+  it("does not cite an assertion linked only to the child (it may name the mother)", () => {
+    const rs = {
+      sources: [{ id: "src_001", gedcomx_source_description_id: "S1" }],
+      assertions: [
+        { id: "a_001", source_id: "src_001", fact_type: "relationship", value: "Father: Thomas" },
+        { id: "a_002", source_id: "src_001", fact_type: "relationship", value: "Mother: Mary" },
+      ],
+      person_evidence: [
+        { assertion_id: "a_001", person_id: "I2" },
+        { assertion_id: "a_002", person_id: "I1" },
+      ],
+    };
+    const before = tree(people(), [pc("R1", "I2")]);
+    const after = tree(people(), [pc("R1", "I2"), pc("R2", "I3", undefined, "S2")]);
+    expect(competingParentage(before, after, rs)[0].values).toEqual([
+      "I2 Thomas Flynn (a_001)",
+      "I3 John Flynn (source S2)",
+    ]);
+  });
+
+  it("is skipped when no ParentChild edge or gender changed", () => {
+    // A fact edit on a tree that already holds two fathers raises nothing new.
+    const rels = [pc("R1", "I2"), pc("R2", "I3")];
+    const before = tree(people(), []);
+    const after = tree(people(), rels);
+    expect(competingParentage(after, after, research)).toEqual([]);
+    expect(competingParentage(before, after, research)).toHaveLength(1);
+  });
+
+  it("does not surface a set that did not grow", () => {
+    const both = [pc("R1", "I2"), pc("R2", "I3")];
+    expect(surface(both, [...both, pc("R3", "I2")])).toEqual([]);
   });
 });

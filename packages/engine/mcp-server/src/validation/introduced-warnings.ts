@@ -16,10 +16,12 @@
  */
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedRelationship } from "../types/gedcomx.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type { PersonWarning } from "../types/person-warnings.js";
-import { Mob } from "../utils/mob.js";
-import { calculateWarnings } from "../tools/person-warnings.js";
+import { Mob, normalizeGender } from "../utils/mob.js";
+import { calculateWarnings, getPersonName, isQualifyingParentChildEdge } from "../tools/person-warnings.js";
+import { isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
 /** Stable warning identifier: tag + person + related + sorted fact ids. */
 export function warningId(w: PersonWarning): string {
@@ -345,4 +347,149 @@ export function computeTouchedPersonIds(
   }
 
   return [...touched];
+}
+
+/** Key for one parent-child pair, as `executeTreeOps` records a proposed edge's
+ *  `sourceAssertionId` for the competing-parentage check. */
+export function parentChildKey(parent: string, child: string): string {
+  return `${parent}|${child}`;
+}
+
+/** Biological parents of one sex for every child, in one pass. An edge with a
+ *  non-biological `subtype` does not count; a parent holding both kinds of edge
+ *  counts once. Parent ids pass through `rename` (a merge's collapsed→survivor
+ *  map), so folding one father into another is not read as a new father; child
+ *  ids do not, because folding two records of one child together does give
+ *  that child both records' parents. */
+function biologicalParentsByChild(
+  tree: SimplifiedGedcomX,
+  sex: "Male" | "Female",
+  rename: (id: string) => string = (id) => id,
+): Map<string, Set<string>> {
+  const gender = new Map((tree.persons ?? []).map((p) => [rename(p.id ?? ""), normalizeGender(p.gender)]));
+  const out = new Map<string, Set<string>>();
+  for (const r of tree.relationships ?? []) {
+    if (!r.parent || !r.child || !isQualifyingParentChildEdge(r)) continue;
+    const parent = rename(r.parent);
+    if (gender.get(parent) !== sex) continue;
+    const child = r.child;
+    const set = out.get(child) ?? new Set<string>();
+    set.add(parent);
+    out.set(child, set);
+  }
+  return out;
+}
+
+/** Where a parent edge's claim comes from: the proposed edge's own
+ *  `sourceAssertionId`; else the assertions `person_evidence` links to that
+ *  parent on the edge's sources, plus any source those do not cover; else the
+ *  bare source refs. An assertion linked only to the child is not cited: it may
+ *  name the other parent (a "Mother: …" on the same census). */
+function parentEvidence(
+  tree: SimplifiedGedcomX,
+  research: any,
+  parent: string,
+  child: string,
+  proposed: Map<string, string> | undefined,
+): string {
+  const fromCall = proposed?.get(parentChildKey(parent, child));
+  if (fromCall) return fromCall;
+  const refs: string[] = [];
+  for (const r of tree.relationships ?? []) {
+    if (r.parent === parent && r.child === child && isQualifyingParentChildEdge(r)) {
+      for (const s of r.sources ?? []) if (s.ref && !refs.includes(s.ref)) refs.push(s.ref);
+    }
+  }
+  if (refs.length === 0) return "no source";
+  const sdidOf = new Map<string, string>(
+    (Array.isArray(research?.sources) ? research.sources : [])
+      .filter((s: any) => s && refs.includes(s.gedcomx_source_description_id))
+      .map((s: any) => [s.id, s.gedcomx_source_description_id]),
+  );
+  const linkedToParent = new Set(
+    (Array.isArray(research?.person_evidence) ? research.person_evidence : [])
+      .filter((pe: any) => pe && pe.person_id === parent)
+      .map((pe: any) => pe.assertion_id),
+  );
+  const cited = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
+    (a: any) =>
+      a && sdidOf.has(a.source_id) && linkedToParent.has(a.id) &&
+      isRelationshipEstablishing(a.fact_type) && String(a.fact_type).trim().toLowerCase() !== "marriage",
+  );
+  const covered = new Set(cited.map((a: any) => sdidOf.get(a.source_id)));
+  const rest = refs.filter((r) => !covered.has(r));
+  return [...cited.map((a: any) => a.id), ...(rest.length > 0 ? [`source ${rest.join(", ")}`] : [])].join(", ");
+}
+
+/** One competing-parentage finding, with what the gate needs to key it. */
+export interface CompetingParentage {
+  entry: ConflictSurfaced;
+  sex: "Male" | "Female";
+  /** Stable id for a justification: `competingParentage|child|sex|parents`. */
+  warningId: string;
+}
+
+/**
+ * Competing biological parentage this write creates: a child who now has two
+ * or more biological parents of one sex, where that set grew. Issue #2525.
+ *
+ * Computed from the trees, not from the gate's introduced warnings: a
+ * `tooManyFathers2` id carries no related person or facts, so a child who
+ * already held the warning (a biological and an adoptive father, say) would
+ * hide a new biological father, and a parent's gender change touches only the
+ * parent while the warning sits on the child. A merge passes `collapseMap` so
+ * a parent who was only folded into another is not read as new.
+ *
+ * Skipped unless the write changed a ParentChild edge or a person's gender:
+ * nothing else can change a child's biological parents.
+ */
+export function findCompetingParentage(
+  before: SimplifiedGedcomX,
+  after: SimplifiedGedcomX,
+  research: any,
+  proposed?: Map<string, string>,
+  collapseMap?: Map<string, string>,
+): CompetingParentage[] {
+  const edges = (t: SimplifiedGedcomX) =>
+    JSON.stringify((t.relationships ?? []).filter((r) => r.type === "ParentChild"));
+  const genders = (t: SimplifiedGedcomX) => JSON.stringify((t.persons ?? []).map((p) => [p.id, p.gender]));
+  if (!collapseMap && edges(before) === edges(after) && genders(before) === genders(after)) return [];
+
+  const rename = (id: string) => collapseMap?.get(id) ?? id;
+  const people = new Map((after.persons ?? []).map((p) => [p.id, p]));
+  const out: CompetingParentage[] = [];
+  for (const sex of ["Male", "Female"] as const) {
+    const was = biologicalParentsByChild(before, sex, rename);
+    for (const [child, now] of biologicalParentsByChild(after, sex)) {
+      if (now.size < 2 || !people.has(child)) continue;
+      const prior = was.get(child) ?? new Set<string>();
+      if (![...now].some((p) => !prior.has(p))) continue;
+      const parents = [...now].sort();
+      out.push({
+        sex,
+        warningId: `competingParentage|${child}|${sex}|${parents.join(",")}`,
+        entry: {
+          personId: child,
+          factType: "ParentChild",
+          values: parents.map((p) => {
+            const person = people.get(p);
+            const name = person ? getPersonName(person) : "";
+            return `${p} ${name} (${parentEvidence(after, research, p, child, proposed)})`;
+          }),
+        },
+      });
+    }
+  }
+  return out;
+}
+
+/** The surfaced entries alone: what a writer returns as `conflicts_surfaced`. */
+export function competingParentage(
+  before: SimplifiedGedcomX,
+  after: SimplifiedGedcomX,
+  research: any,
+  proposed?: Map<string, string>,
+  collapseMap?: Map<string, string>,
+): ConflictSurfaced[] {
+  return findCompetingParentage(before, after, research, proposed, collapseMap).map((c) => c.entry);
 }

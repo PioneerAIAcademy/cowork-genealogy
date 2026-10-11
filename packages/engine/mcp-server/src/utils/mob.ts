@@ -123,7 +123,7 @@ export function isVitalType(type: string | undefined): boolean {
 
 export type GenderType = "Male" | "Female" | "Unknown";
 
-function normalizeGender(raw: string | undefined): GenderType {
+export function normalizeGender(raw: string | undefined): GenderType {
   if (raw === "Male" || raw === "Female") return raw;
   return "Unknown";
 }

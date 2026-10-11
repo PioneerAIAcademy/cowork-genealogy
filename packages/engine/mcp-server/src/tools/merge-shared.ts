@@ -6,6 +6,8 @@
 // Spec: merge-gedcomx-spec.md §5b.
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedSourceReference } from "../types/gedcomx.js";
+import type { ConflictSurfaced } from "../types/materialize-facts.js";
+import type { WarningGateRefusal } from "./tree-edit.js";
 import { TREE_SOURCE_REF_FIELDS } from "../validation/tree-shape.js";
 import { validateGedcomx } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
@@ -46,15 +48,19 @@ export interface MergeSuccess {
   newRelatives: string[];
   researchRefsUpdated?: ResearchRefsUpdated;
   validation: { valid: true; warnings: string[] };
+  /** Competing biological parentage the merge created while passing the
+   *  warning gate (issue #2525). */
+  conflicts_surfaced?: ConflictSurfaced[];
 }
 
-export interface MergeFailure {
+export interface MergeFailure extends Partial<Pick<WarningGateRefusal, "message" | "warnings" | "conflicts_surfaced">> {
   ok: false;
   errors: string[];
-  /** Marks the one ok:false that is an answer rather than a failure — the user
-   *  is not in a research project (see `noProjectResult`). Optional so every
+  /** `no_project` marks the one ok:false that is an answer rather than a
+   *  failure — the user is not in a research project (see `noProjectResult`).
+   *  `unjustified_warnings` is the warning gate's refusal. Optional so every
    *  existing `if (!r.ok) r.errors…` keeps narrowing as it does today. */
-  reason?: "no_project";
+  reason?: "no_project" | "unjustified_warnings";
 }
 
 export type MergeResult = MergeSuccess | MergeFailure;

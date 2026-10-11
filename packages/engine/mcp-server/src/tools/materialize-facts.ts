@@ -831,7 +831,7 @@ export async function materializeFacts(
         beforeTree, tree, research, projectPath,
         input.warningJustifications, "materialize_facts",
       );
-      if (batchGateResult && "ok" in batchGateResult) return batchGateResult as any;
+      if (batchGateResult && "ok" in batchGateResult) return batchGateResult;
       const batchJustPersisted = batchGateResult?.justificationsPersisted === true;
 
       if (batchJustPersisted) {
@@ -853,6 +853,7 @@ export async function materializeFacts(
           valid: true,
           warnings: [...sanitized.warnings, ...formatIssues(validation.warnings)],
         },
+        ...(batchGateResult?.conflicts_surfaced ? { conflicts_surfaced: batchGateResult.conflicts_surfaced } : {}),
       };
     }
 
@@ -896,7 +897,7 @@ export async function materializeFacts(
       beforeTree, tree, research, projectPath,
       input.warningJustifications, "materialize_facts",
     );
-    if (singleGateResult && "ok" in singleGateResult) return singleGateResult as any;
+    if (singleGateResult && "ok" in singleGateResult) return singleGateResult;
     const singleJustPersisted = singleGateResult?.justificationsPersisted === true;
 
     if (singleJustPersisted) {
@@ -914,6 +915,7 @@ export async function materializeFacts(
     return {
       ok: true,
       ...result,
+      conflicts_surfaced: [...result.conflicts_surfaced, ...(singleGateResult?.conflicts_surfaced ?? [])],
       filesWritten: singleFilesWritten,
       validation: {
         valid: true,

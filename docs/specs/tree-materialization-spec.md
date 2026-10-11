@@ -291,6 +291,11 @@ something was lost.
   reported in `conflicts_surfaced`.** `VITAL_PRIMARY_TYPES` currently lives in
   two copies (`merge-shared.ts`, `merge-gedcomx.ts`); lift it to a shared
   module so this gate and the merge core read one definition.
+- **One exception rides the warning gate, not this list.** When filling in a
+  person's gender gives a child two biological parents of one sex, the gate's
+  refusal carries a `factType: "ParentChild"` entry under the same
+  `conflicts_surfaced` key (`tree-edit-tool-spec.md` §6). It appears only on that
+  refusal and on a justified re-call, never in the vital-type list above.
 - `materialize_facts` **does not** write `conflicts` entries — that stays
   `conflict-resolution`'s job. The tool reports; the skill routes.
 
