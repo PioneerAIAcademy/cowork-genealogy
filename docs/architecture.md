@@ -479,7 +479,7 @@ identically is **physically duplicated** into each one rather than linked.
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
+| `places-guidance.md` | 5 | 2 | `tests/packaging/skill-guidance.test.ts` |
 
 The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
 (the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
@@ -498,17 +498,19 @@ it writes `questions` or `plans`, never `assertions` or `person_evidence`. A
 duplicated family with no lint decayed in exactly the way the guarded one did
 not.
 
-The `places-guidance` lint holds 8 copies byte-identical to a canonical at
+The `places-guidance` lint holds 4 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
 **absent from `package-plugin.mjs`'s `INCLUDE`**, so the canonical is a
-build-time anchor that never ships into the VM. The 9th copy belongs to
-`research-plan`, which had three place tools dropped from its `allowed-tools`
-in 8bf43be2 (and never held a fourth), so the canonical text would name tools it
-cannot call. It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY` — but
-pinned to a **sha256 of its own content**, so an edit inside it fails CI until
-the hash moves in the same diff. **Copy that shape, not a bare exemption**, when
-a fourth family gets a lint: every skill must land in exactly one of the two
-lists, and the test asserts that too.
+build-time anchor that never ships into the VM. The 5th copy belongs to
+`init-project`, whose canonical "copy it from a `person_read` result" bullet
+names a step it no longer takes (`project_create` carries the
+`standard_place`). It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY`
+— but pinned to a **sha256 of its own content**, so an edit inside it fails CI
+until the hash moves in the same diff. `research-plan` carried a specialized
+copy too until it was deleted under the lead's 2026-08-31 ruling and the two
+rules it needed were inlined into its `SKILL.md`. **Copy that shape, not a bare
+exemption**, when a fourth family gets a lint: every skill must land in exactly
+one of the two lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
 > knowing which divergences are deliberate — now only for `places-guidance.md`,
@@ -1946,7 +1948,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
-| `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-guidance.test.ts` | 4 `places-guidance.md` copies byte-identical to the canonical, the 5th (`init-project`) pinned to its own sha256, and every skill in exactly one of the two lists |
 | `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |

@@ -173,6 +173,7 @@ from e2e.runlog_selection import (
     result_jsons_for,
     run_date,
 )
+from e2e.response_summary import unwrap
 from harness.context_policy import bare_tool_name
 
 #: The visible depth of `ranked.matches` in a committed capture. `judge.py`'s
@@ -286,33 +287,10 @@ _RECORD_ARK_RE = re.compile(r'\\?"recordArk\\?"\s*:\s*\\?"([^"\\]+)')
 _RANKED_KEY_RE = re.compile(r'\\?"ranked\\?"\s*:')
 
 
-def _unwrap(summary: str) -> dict | None:
-    """The document inside a `response_summary`, or None.
-
-    Handles both committed envelopes: `[{...document...}]` (what a tool
-    returning structured content produces) and `[{"type": "text", "text":
-    "{...}"}]` (what `research_log_append` produces). Descends at most two
-    levels so a malformed capture cannot loop.
-    """
-    try:
-        value: Any = json.loads(summary)
-    except (TypeError, ValueError):
-        return None
-    for _ in range(3):
-        if isinstance(value, list):
-            value = value[0] if value else None
-            continue
-        if isinstance(value, dict):
-            text = value.get("text")
-            if value.get("type") == "text" and isinstance(text, str):
-                try:
-                    value = json.loads(text)
-                except ValueError:
-                    return None
-                continue
-            return value
-        return None
-    return value if isinstance(value, dict) else None
+# `_unwrap` now lives in `e2e/response_summary.py` so `advisory_report.py` can
+# share the one decoder; imported as `_unwrap` to leave the call sites below
+# unchanged.
+_unwrap = unwrap
 
 
 class RankedMatch(NamedTuple):

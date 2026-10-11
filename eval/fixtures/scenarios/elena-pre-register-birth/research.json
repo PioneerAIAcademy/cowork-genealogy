@@ -1,0 +1,157 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the birthplace and parents of Elena Asmundsdotter, wife of Jöns Jönsson and mother of Asmund Jönsson (christened 11 September 1718, Barsebäck, Malmöhus, Sweden)",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-02",
+    "updated": "2026-10-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Elena Asmundsdotter born, and who were her parents? She married Jöns Jönsson on 29 December 1712 in Västra Karaby, Malmöhus, Sweden, and was the mother of Asmund Jönsson, christened 11 September 1718 in Barsebäck.",
+      "rationale": "Primary research objective. Her patronymic implies a father named Asmund, which does not identify which Asmund. The 1712 marriage took place in Västra Karaby, not in Barsebäck where the couple later lived, which points to Västra Karaby as her home parish. Her birth is undated; a 1712 marriage and a 1718 child put it roughly 1680-1692.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-02",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Barsebäck, Harjager, Malmöhus, Sweden",
+      "for_place": "Barsebäck, Harjager, Malmöhus, Sweden",
+      "time_period": "1675-1750",
+      "jurisdictions": [
+        {
+          "name": "Barsebäck, Harjager, Malmöhus, Sweden (Lutheran parish)",
+          "date_range": "1648-1996"
+        },
+        {
+          "name": "Malmöhus, Sweden (county)",
+          "date_range": "1719-1996"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1974200",
+          "title": "Sweden, Malmöhus, Church Records, 1541-1918; index 1646-1860",
+          "date_range": "1541-1918"
+        },
+        {
+          "id": "1520597",
+          "title": "Sweden, Burials, 1649-1920",
+          "date_range": "1649-1920"
+        },
+        {
+          "id": "1520596",
+          "title": "Sweden, Marriages, 1630-1920",
+          "date_range": "1630-1920"
+        }
+      ],
+      "quirks": [
+        "Barsebäck's register volumes on FamilySearch (image groups 004514823, 004514824) cover 1648 onward and are 0% name-indexed; browse them by year.",
+        "Hofterup parish is filmed in the same 004514824 image groups as Barsebäck.",
+        "Swedish parish registers were made compulsory by the church law of 1686, effective 1688 (FamilySearch Wiki, Sweden_Church_Records).",
+        "Skåne was Danish until the Treaty of Roskilde, 1658.",
+        "The Malmöhus church-record image collection (1974200) is browse-only (personCount 0); the national Baptisms, Burials and Marriages indexes are name-searchable but partial."
+      ],
+      "guide_markdown": "## Barsebäck, Malmöhus, Sweden — 1675-1750\n\nThe couple's later parish. Its registers reach back to 1648 and are browse-only on FamilySearch. Death and burial entries for adults living here in the 1700s fall inside the register.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Sweden_Genealogy",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Sweden_Church_Records",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-02"
+    },
+    {
+      "id": "loc_002",
+      "place": "Västra Karaby, Harjager, Malmöhus, Sweden",
+      "for_place": "Västra Karaby, Harjager, Malmöhus, Sweden",
+      "time_period": "1675-1750",
+      "jurisdictions": [
+        {
+          "name": "Västra Karaby, Harjager, Malmöhus, Sweden (Lutheran parish)",
+          "date_range": "1688-1996"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1974200",
+          "title": "Sweden, Malmöhus, Church Records, 1541-1918; index 1646-1860",
+          "date_range": "1541-1918"
+        },
+        {
+          "id": "1520597",
+          "title": "Sweden, Burials, 1649-1920",
+          "date_range": "1649-1920"
+        },
+        {
+          "id": "1520596",
+          "title": "Sweden, Marriages, 1630-1920",
+          "date_range": "1630-1920"
+        }
+      ],
+      "quirks": [
+        "Västra Karaby's birth and baptism register begins in 1688 (FamilySearch Wiki case study 'Beyond Parish Registers', Sweden; FamilySearch Places dates the parish +1688). A birth before 1688 has no baptism entry to find.",
+        "Register volumes on FamilySearch (image groups 004523021, 004523018) are 0% name-indexed; most catalog coverage rows begin 1687/1688, one row on 004523021 reads 1662-1850.",
+        "Household tax lists (mantalslängder) survive for the härad from 1658 and are held by Riksarkivet.",
+        "Swedish parish registers were made compulsory by the church law of 1686, effective 1688 (FamilySearch Wiki, Sweden_Church_Records).",
+        "Skåne was Danish until the Treaty of Roskilde, 1658.",
+        "The Malmöhus church-record image collection (1974200) is browse-only (personCount 0); the national Baptisms, Burials and Marriages indexes are name-searchable but partial."
+      ],
+      "guide_markdown": "## Västra Karaby, Malmöhus, Sweden — 1675-1750\n\nThe parish of the 1712 marriage. Its birth register begins in 1688, so a birth in the 1680s may predate it. The registers are browse-only on FamilySearch.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Sweden_Genealogy",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Sweden_Church_Records",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-02"
+    }
+  ]
+}

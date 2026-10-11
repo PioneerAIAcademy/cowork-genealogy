@@ -14,10 +14,12 @@ import re
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import httpx
+import psycopg
 import pytest
 
 SERVER = Path(__file__).resolve().parents[1]
@@ -29,6 +31,9 @@ from proto import bounds, demo, target, turn  # noqa: E402
 
 FIXTURE = SERVER / "tests" / "fixtures" / "eb-cloudwatch" / "worker-web-stdout.txt"
 COOKIE = "c0ffee-session-value"
+
+
+SQSD = "aws:elasticbeanstalk:sqsd"
 
 
 class FakeAws:
@@ -54,7 +59,8 @@ class FakeAws:
             body = {"Environments": [{"Status": "Ready"}]}
         elif (svc, op) == ("elasticbeanstalk", "describe-configuration-settings"):
             body = {"ConfigurationSettings": [{"OptionSettings": [
-                {"Namespace": target.ENV_NS, "OptionName": k, "Value": v} for k, v in self.settings.items()]}]}
+                {"Namespace": target.ENV_NS, "OptionName": k, "Value": v} for k, v in self.settings.items()]
+                + [{"Namespace": SQSD, "OptionName": "ErrorVisibilityTimeout", "Value": "300"}]}]}
         elif (svc, op) == ("elasticbeanstalk", "update-environment"):
             if self.fail_update_on is not None and len(self.updates()) == self.fail_update_on:
                 return subprocess.CompletedProcess(argv, 254, "", "boom")
@@ -72,6 +78,12 @@ class FakeAws:
 
 def deployed(fake: FakeAws) -> target.DeployedTarget:
     return target.DeployedTarget(profile="p", runner=fake, sleep=lambda s: None)
+
+
+def test_settings_reads_one_namespace():
+    t = deployed(FakeAws(settings={"ErrorVisibilityTimeout": "10"}))
+    assert t.settings("worker") == {"ErrorVisibilityTimeout": "10"}, "the environment namespace by default"
+    assert t.settings("worker", SQSD) == {"ErrorVisibilityTimeout": "300"}
 
 
 # ── parsing ────────────────────────────────────────────────────────────────────────────
@@ -357,9 +369,9 @@ class RecordingTarget:
         self.order.extend(f"run {tier}: {c}" for c in commands)
         return self.run_out
 
-    def settings(self, tier: str) -> dict[str, str]:
-        self.order.append(f"settings {tier}")
-        return dict(self._settings.get(tier, {}))
+    def settings(self, tier: str, namespace: str = target.ENV_NS) -> dict[str, str]:
+        self.order.append(f"settings {tier}" + ("" if namespace == target.ENV_NS else f" {namespace}"))
+        return dict(self._settings.get(tier if namespace == target.ENV_NS else (tier, namespace), {}))
 
     def signal(self, tier: str, action: str) -> None:
         self.order.append(f"signal {tier} {action}")
@@ -859,59 +871,137 @@ def test_concurrent_rss_is_void_when_the_turns_ran_one_after_the_other(monkeypat
     assert _failed(rep) == ["concurrent_rss: both turns ran at once (else void)"]
 
 
-def _heavy(monkeypatch, *, in_window: int = 3, claim_at=(0.0, 0.0), close_at=(None, None),
-           projects=("proj_1", "proj_2"), deadline_s: float = 30.0, ssm_fails: int = 0):
-    """concurrent_rss_heavy on a fake clock (sleep advances it): each turn is claimed at
-    ``claim_at`` and closes at ``close_at`` (None: only a Stop closes it). ``deadline_s``
-    sits far under HEAVY_WINDOW_S, so a window it cut would show."""
+UIDS = {name: 1001 + i for i, name in enumerate(bounds.TURN_USERS_ALL)}
+HOST = {"instance_id": "i-0abc", "instance_type": "t3.xlarge", "nproc": "4", "mem_total_kb": "16384000",
+        "uptime": "5000.5", "control_group": "/system.slice/web.service", "cpu_stat_readable": "1"}
+
+
+def host_out(**over: str) -> str:
+    return "".join(f"{k}={v}\n" for k, v in {**HOST, **over}.items()) + "".join(f"uid_{n}={u}\n" for n, u in UIDS.items())
+
+
+def cpu_out(at: float, *, usage: bool = True, end: bool = True) -> str:
+    """A CPU_COMMANDS sample ``at`` seconds in: web.service at 2 cores, 1% steal on 4 CPUs, the
+    first two slot users' node at a fixed RSS gaining CPU."""
+    lines = [f"cgstat_usage_usec={int(at * 2_000_000)}", "cgstat_user_usec=1", "cgstat_nr_periods=0"] if usage else []
+    lines += [f"epoch={1760000000 + at:.6f}", f"uptime={1000 + at:.2f}", f"loadavg={1.5 + at / 1000:.2f} 1.2 0.9 3/210 4242",
+              f"hoststat=cpu {int(at * 150)} 0 {int(at * 50)} {int(at * 196)} 0 0 0 {int(at * 4)} 0 0",
+              "proc=  100     0  2048     5 sqsd",
+              f"proc=  200  {UIDS['genealogy-turn-0']} 524288 {int(at / 2)} node",
+              f"proc=  201  {UIDS['genealogy-turn-1']} 262144 {int(at / 4)} claude code"]
+    return "\n".join(lines + (["cpu_end=1"] if end else [])) + "\n"
+
+
+def start_line(n: int = 8) -> dict:
+    return {"ev": "start", "turn_users": list(bounds.TURN_USERS_ALL[:n])}
+
+
+def _heavy(monkeypatch, *, n: int = 2, in_window: int = 3, claim_at=None, close_at=None, redeliver_at=None,
+           projects=None, deadline_s: float = 30.0, ssm_fails: int = 0, host_fails: int = 0, settings=None,
+           events=None, host: dict | None = None, credit: str = "unlimited", idle_setting: str = "0",
+           rate_limited=(), reauth=(), cpu_usage: bool = True, truncate_at=(), rss_cut_at=(), db_fails_at=(),
+           window_fails: int = 0, **ctx_over):
+    """concurrent_rss_heavy on a fake clock (sleep advances it) with ``n`` sessions: turn i is
+    claimed at ``claim_at[i]``, closes at ``close_at[i]`` (None: only a Stop closes it) and is
+    redelivered at ``redeliver_at[i]``. ``deadline_s`` sits far under HEAVY_WINDOW_S, so a
+    window it cut would show. The target answers HOST_COMMANDS with host facts and a sample
+    (CPU_COMMANDS + RSS_COMMANDS + RSS_END) with ``cpu_out`` + RSS_OUT + ``rss_end=1``;
+    ``ssm_fails`` / ``host_fails`` fail that many of each, ``truncate_at`` / ``rss_cut_at`` drop
+    the CPU or RSS end marker at those times, ``db_fails_at`` fails both per-pass queries, and
+    ``window_fails`` fails the first reads of the window's subagent count."""
+    claim_at = claim_at or (0.0,) * n
+    close_at = close_at or (None,) * n
+    redeliver_at = redeliver_at or (None,) * n
+    projects = projects or tuple(f"proj_{i}" for i in range(1, n + 1))
+    if settings is None:
+        settings = {"worker": {"WORKER_TURN_USERS": " ".join(bounds.TURN_USERS_ALL[:n])}} if n > 2 else {}
     order: list[str] = []
     _case_stack(monkeypatch, order)
-    target_ = RecordingTarget(order, run_out=RSS_OUT)
-    fails = [ssm_fails]
-    real_run = target_.run
+    target_ = RecordingTarget(order, settings)
+    clock = [0.0]
+    fails = {"sample": ssm_fails, "host": host_fails}
 
     def run(tier, *commands, comment=""):
-        if fails[0] > 0:
-            fails[0] -= 1
+        kind = "host" if commands == bounds.HOST_COMMANDS else "sample" if commands[0] == bounds.CPU_COMMANDS[0] else None
+        if kind and fails[kind] > 0:
+            fails[kind] -= 1
             raise subprocess.CalledProcessError(254, ["aws", "ssm", "send-command"])
-        return real_run(tier, *commands, comment=comment)
+        order.extend(f"run {tier}: {c}" for c in commands)
+        if kind == "host":
+            return host_out(**(host or {}))
+        return (cpu_out(clock[0], usage=cpu_usage, end=clock[0] not in truncate_at) + RSS_OUT
+                + ("" if clock[0] in rss_cut_at else "rss_end=1\n"))
 
     target_.run = run
+    target_.aws = lambda *a: order.append(f"aws {' '.join(a)}") or {
+        "InstanceCreditSpecifications": [{"InstanceId": a[-1], "CpuCredits": credit}]}
     monkeypatch.setattr(bounds, "TARGET", target_)
-    clock = [0.0]
     monkeypatch.setattr(bounds.time, "monotonic", lambda: clock[0])
     monkeypatch.setattr(bounds.time, "sleep", lambda s: clock.__setitem__(0, clock[0] + max(s, 0.01)))
-    seeds = iter([("sess_1", projects[0], {"researcher_question": "Who was Q's father?"}),
-                  ("sess_2", projects[1], {"researcher_question": "Who was Q's father?"})])
-    monkeypatch.setattr(bounds.demo, "seed_session", lambda args: next(seeds))
-    turns = iter(["t1", "t2"])
+    seeds = iter([(f"sess_{i}", projects[i - 1], {"researcher_question": "Who was Q's father?"}) for i in range(1, n + 1)])
+    monkeypatch.setattr(bounds.demo, "seed_session", lambda args: (lambda s: order.append(f"seed {s[0]}") or s)(next(seeds)))
+    turns = iter([f"t{i}" for i in range(1, n + 1)])
     monkeypatch.setattr(bounds, "post", lambda ctx, client, rep, text: order.append(f"post {rep.session_id} {text}")
                         or rep.turn_ids.append(next(turns)) or {"turn_id": rep.turn_ids[-1]})
-    by_tid = {"t1": 0, "t2": 1}
     stopped: set[int] = set()
 
+    def blip():
+        if clock[0] in db_fails_at:
+            raise psycopg.OperationalError("connection to RDS lost")
+
     def reclaim(params):
-        i = by_tid[params[0]]
-        closed = i in stopped or (close_at[i] is not None and clock[0] >= close_at[i])
-        return [(1, T0 if clock[0] >= claim_at[i] else None, T0 if closed else None)]
+        blip()
+        order.append(f"reclaim-any {len(params[0])}")
+        rows = []
+        for tid in params[0]:
+            i = int(tid[1:]) - 1
+            closed = i in stopped or (close_at[i] is not None and clock[0] >= close_at[i])
+            rc = 2 if redeliver_at[i] is not None and clock[0] >= redeliver_at[i] else 1
+            rows.append((tid, rc, T0 if clock[0] >= claim_at[i] else None, T0 if closed else None))
+        return rows
 
     def press(ctx, client, rep):
         order.append(f"stop {rep.session_id} at {clock[0]:g}")
-        stopped.add(int(rep.session_id[-1]) - 1)
+        stopped.add(int(rep.session_id.split("_")[1]) - 1)
         return clock[0]
 
     window_params: list[tuple] = []
-    _db(monkeypatch, {bounds.RECLAIM_SQL: reclaim,
-                      bounds.PG_NOW_SQL: lambda p: [(T0 + timedelta(seconds=clock[0]),)],
+    _db(monkeypatch, {bounds.RECLAIM_ANY_SQL: reclaim,
+                      bounds.RECLAIM_SQL: lambda p: pytest.fail("one ANY query per pass, not one per turn"),
+                      bounds.PG_NOW_SQL: lambda p: blip() or [(T0 + timedelta(seconds=clock[0]),)],
                       bounds.SUBAGENT_ROWS_SQL: [(in_window + 2,)],
-                      bounds.WINDOW_SUBAGENT_SQL: lambda p: window_params.append(p) or [(in_window,)]})
+                      bounds.WINDOW_SUBAGENT_SQL: lambda p: window_params.append(p) or (
+                          [(in_window,)] if len(window_params) > window_fails
+                          else (_ for _ in ()).throw(psycopg.OperationalError("connection to RDS lost"))),
+                      bounds.PG_ACTIVITY_SQL: lambda p: blip() or [(False, 12), (True, n)],
+                      bounds.RATE_LIMIT_SQL: list(rate_limited),
+                      bounds.IDLE_SETTING_SQL: [(idle_setting,)],
+                      bounds.GRANT_AGE_SQL: [(Decimal("90000.4"), Decimal("3600"), Decimal("600"), False)],
+                      bounds.USER_SEQ_SQL: [(1,)], bounds.SDK_SQL: [("sdk",)]})
+    monkeypatch.setattr(bounds.turn, "reauth_hits", lambda dsn, sid, since: list(reauth) if sid == "sess_1" else [])
+    monkeypatch.setattr(bounds.turn, "reauth_entry_hits", lambda dsn, sdk, tid: [])
+    lines = events if events is not None else [start_line()]
+    monkeypatch.setattr(bounds, "worker_events", lambda: list(lines))
     monkeypatch.setattr(bounds, "press", press)
-    monkeypatch.setattr(bounds, "done", lambda ctx, client, rep, tid, since=None, **k:
-                        order.append(f"done {rep.session_id} {tid} since={since}") or True)
+    monkeypatch.setattr(bounds, "done", lambda ctx, client, rep, tid, since=None, label="", **k:
+                        order.append(f"done {rep.session_id} {tid} since={since} label={label}") or True)
     monkeypatch.setattr(bounds, "settle", lambda ctx, client, sid: order.append(f"settle {sid}") or ([], []))
     rep = bounds.Report(case="concurrent_rss_heavy")
-    bounds.case_concurrent_rss_heavy(dataclasses.replace(_ctx(), deadline_s=deadline_s), None, rep)
+    ctx = dataclasses.replace(_ctx(), deadline_s=deadline_s, sessions=n, **ctx_over)
+    bounds.case_concurrent_rss_heavy(ctx, None, rep)
     return rep, order, window_params
+
+
+def _stops(order: list[str]) -> list[str]:
+    return [o for o in order if o.startswith("stop")]
+
+
+def _dones(order: list[str]) -> list[str]:
+    return [o.split(" label=")[0] for o in order if o.startswith(("done", "settle"))]
+
+
+def _billed(order: list[str]) -> bool:
+    return any(o.startswith(("seed", "post")) for o in order)
 
 
 def test_concurrent_rss_heavy_stops_both_at_the_window_end_and_records_the_load(monkeypatch):
@@ -921,26 +1011,39 @@ def test_concurrent_rss_heavy_stops_both_at_the_window_end_and_records_the_load(
     assert posts == ["post sess_1 /research --autonomous Who was Q's father?",
                      "post sess_2 /research --autonomous Who was Q's father?"]
     # A 30 s --deadline-s does not cut the window short; sampling runs on until both close.
-    assert [o for o in order if o.startswith("stop")] == ["stop sess_1 at 600", "stop sess_2 at 600"]
+    assert _stops(order) == ["stop sess_1 at 600", "stop sess_2 at 600"]
     assert rep.figures["window_s"] == bounds.HEAVY_WINDOW_S and rep.figures["stopped"] == ["sess_1", "sess_2"]
     assert rep.figures["subagent_rows"] == 5 and rep.figures["subagent_rows_in_window"] == 3
     assert window_params == [(["t1", "t2"], T0, T0 + timedelta(seconds=600))]
     assert rep.figures["peak_total_rss_mb"] == 515.0 and rep.figures["rss_samples"] == 62
-    assert ["done sess_1 t1 since=600.0", "done sess_2 t2 since=600.0", "settle sess_1"] == [
-        o for o in order if o.startswith(("done", "settle"))]
+    assert ["done sess_1 t1 since=600.0", "done sess_2 t2 since=600.0", "settle sess_1"] == _dones(order)
     assert rep.session_id == "sess_2", "run_case settles the second session"
+    # The window's CPU: passes 0..60 (61 samples), 2 cores for 600 s, 1% steal.
+    assert rep.figures["cpu_samples"] == 61 and rep.figures["cpu_core_s"] == 1200.0
+    assert rep.figures["cpu_cores_avg"] == 2.0 and rep.figures["cpu_cores_peak"] == 2.0
+    assert rep.figures["host_steal_pct"] == 1.0 and rep.figures["host_loadavg_1_peak"] == 2.1
+    assert rep.figures["turn_user_peak_rss_mb"] == {"genealogy-turn-0": 512.0, "genealogy-turn-1": 256.0}
+    assert rep.figures["turn_user_cpu_s"] == {"genealogy-turn-0": 300, "genealogy-turn-1": 150}
+    assert rep.figures["window_from"] == "2026-10-08T12:00:00Z" and rep.figures["window_to"] == "2026-10-08T12:10:00Z"
+    line = "rehearse.py cpu --worker-instance i-0abc --start 2026-10-08T12:00:00Z --end 2026-10-08T12:10:00Z --work-dir <dir>"
+    assert rep.figures["cpu_line"] == line and any(line in f for f in rep.findings)
+    assert rep.figures["credit_mode"] == "unlimited" and rep.figures["instance_type"] == "t3.xlarge"
+    assert rep.figures["grant_age_s"] == 90000 and rep.figures["grant_refresh_refused"] is False
 
 
 def test_concurrent_rss_heavy_stops_only_the_turn_still_open(monkeypatch):
+    # Rewritten (U18): a turn closing inside the window voids the run, and the other is
+    # Stopped at that sample, not billed on to the window's end.
     rep, order, _ = _heavy(monkeypatch, close_at=(300.0, None))
-    assert [o for o in order if o.startswith("stop")] == ["stop sess_2 at 600"]
-    assert rep.figures["stopped"] == ["sess_2"] and not _failed(rep)
-    assert "done sess_1 t1 since=None" in order
+    assert _stops(order) == ["stop sess_2 at 300"]
+    assert rep.figures["stopped"] == ["sess_2"] and rep.figures["window_s"] == 300.0
+    assert _failed(rep) == ["concurrent_rss_heavy: every turn open at every sample from window open to due (else void)"]
+    assert "done sess_1 t1 since=None" in _dones(order)
 
 
 @pytest.mark.parametrize(("over", "failing"), [
     ({"in_window": 0}, "concurrent_rss_heavy: a subagent tool call ran inside the window (else void)"),
-    ({"projects": ("proj_1", "proj_1")}, "concurrent_rss_heavy: two projects seeded"),
+    ({"projects": ("proj_1", "proj_1")}, "concurrent_rss_heavy: 2 projects seeded"),
 ])
 def test_concurrent_rss_heavy_voids_each_way(monkeypatch, over, failing):
     rep, _order, _ = _heavy(monkeypatch, **over)
@@ -949,20 +1052,309 @@ def test_concurrent_rss_heavy_voids_each_way(monkeypatch, over, failing):
 
 def test_concurrent_rss_heavy_stops_at_once_when_the_turns_never_ran_together(monkeypatch):
     # The first closed before the second was claimed: void already, so the second is not
-    # billed a ten-minute window.
+    # billed a ten-minute window. No window opened, so no window-dependent check is emitted.
     rep, order, _ = _heavy(monkeypatch, claim_at=(0.0, 20.0), close_at=(10.0, None))
-    assert [o for o in order if o.startswith("stop")] == ["stop sess_2 at 20"]
+    assert _stops(order) == ["stop sess_2 at 20"]
     assert rep.figures["window_s"] is None and rep.figures["subagent_rows_in_window"] == 0
-    assert _failed(rep) == ["concurrent_rss_heavy: both turns ran at once (else void)",
-                            "concurrent_rss_heavy: a subagent tool call ran inside the window (else void)"]
+    assert _failed(rep) == ["concurrent_rss_heavy: all 2 turn(s) ran at once (else void)"]
+    assert not any("window" in n or "CPU sampled" in n for n, _ok, _d in rep.checks if "preflight" not in n), rep.checks
 
 
 def test_concurrent_rss_heavy_rides_out_a_failed_ssm_sample(monkeypatch):
     rep, order, _ = _heavy(monkeypatch, ssm_fails=2)
     assert not _failed(rep), rep.checks
     assert rep.figures["rss_sample_errors"] == 2 and rep.figures["rss_samples"] == 60
-    assert [o for o in order if o.startswith("stop")] == ["stop sess_1 at 600", "stop sess_2 at 600"]
-    assert any("2 memory sample(s) lost" in f for f in rep.findings)
+    assert _stops(order) == ["stop sess_1 at 600", "stop sess_2 at 600"]
+    assert any("2 sample(s) lost" in f for f in rep.findings)
+
+
+def test_concurrent_rss_heavy_rides_out_one_failed_host_facts_call(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, host_fails=1)
+    assert not _failed(rep), rep.checks
+    assert rep.figures["rss_sample_errors"] == 0, "a lost host-facts call is not a sample error"
+    assert _stops(order) == ["stop sess_1 at 600", "stop sess_2 at 600"]
+
+
+def test_concurrent_rss_heavy_refuses_when_host_facts_fail_twice(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, host_fails=2)
+    assert _failed(rep) == ["concurrent_rss_heavy: preflight: host facts read over SSM (else refused)"]
+    assert not _billed(order)
+
+
+def test_concurrent_rss_heavy_runs_n_sessions(monkeypatch):
+    rep, order, window_params = _heavy(monkeypatch, n=4)
+    assert not _failed(rep), rep.checks
+    billed = [o.split(" ")[0] for o in order if o.startswith(("seed", "post"))]
+    assert billed == ["seed"] * 4 + ["post"] * 4, "every seed before any post"
+    samples = sum(1 for o in order if o == f"run worker: {bounds.RSS_COMMANDS[-1]}")
+    assert [o for o in order if o.startswith("reclaim-any")] == ["reclaim-any 4"] * samples, "one ANY query per pass"
+    assert _stops(order) == [f"stop sess_{i} at 600" for i in range(1, 5)]
+    assert [o.split(" label=")[1] for o in order if o.startswith("done")] == [f"session_{i}" for i in range(1, 5)]
+    assert ("concurrent_rss_heavy: 4 projects seeded", True, "projects=['proj_1', 'proj_2', 'proj_3', 'proj_4']") in rep.checks
+    assert window_params == [(["t1", "t2", "t3", "t4"], T0, T0 + timedelta(seconds=600))]
+    assert rep.figures["pg_conns_peak"] == 16 and rep.figures["pg_turn_conns_peak"] == 4
+    assert [o for o in order if o.startswith("settle")] == ["settle sess_1", "settle sess_2", "settle sess_3"]
+
+
+def test_concurrent_rss_heavy_honours_the_window(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, window_s=1800.0, deadline_s=30.0)
+    assert not _failed(rep), rep.checks
+    assert _stops(order) == ["stop sess_1 at 1800", "stop sess_2 at 1800"] and rep.figures["window_s"] == 1800.0
+
+
+def test_concurrent_rss_heavy_zero_sessions_samples_the_idle_worker(monkeypatch):
+    rep, order, window_params = _heavy(monkeypatch, n=0, window_s=900.0)
+    assert not _failed(rep), rep.checks
+    assert not _billed(order) and not _stops(order) and window_params == []
+    assert rep.figures["window_s"] == 900.0 and rep.figures["rss_samples"] == 91 and rep.figures["cpu_samples"] == 91
+    assert rep.figures["cpu_core_s"] == 1800.0 and rep.figures["cpu_cores_avg"] == 2.0
+    assert rep.figures["cpu_line"].startswith("rehearse.py cpu --worker-instance i-0abc --start 2026-10-08T12:00:00Z ")
+    names = [n for n, _ok, _d in rep.checks]
+    assert not any("ran at once" in n or "subagent" in n or "projects seeded" in n for n in names), names
+    assert "concurrent_rss_heavy: CPU sampled, >= 2 in-window samples with usage_usec (else void)" in names
+    assert rep.session_id is None, "nothing for run_case to settle"
+
+
+def test_concurrent_rss_heavy_zero_sessions_refuses_a_fresh_instance(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, n=0, host={"uptime": "300.0"})
+    assert _failed(rep) == ["concurrent_rss_heavy: preflight: the worker is >= 600 s past boot (else refused)"]
+    assert not any(o.startswith("run worker: echo cpu_end") for o in order), "refused before any sample"
+
+
+def test_concurrent_rss_heavy_stops_all_at_once_when_one_closes_early(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, n=4, close_at=(None, 300.0, None, None))
+    assert _stops(order) == ["stop sess_1 at 300", "stop sess_3 at 300", "stop sess_4 at 300"]
+    assert _failed(rep) == ["concurrent_rss_heavy: every turn open at every sample from window open to due (else void)"]
+
+
+def test_concurrent_rss_heavy_voids_a_redelivered_turn(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, redeliver_at=(None, 200.0))
+    assert _stops(order) == ["stop sess_1 at 200", "stop sess_2 at 200"]
+    assert _failed(rep) == ["concurrent_rss_heavy: every turn received once (else void)"]
+    assert rep.figures["max_receive_count"] == 2
+
+
+def test_concurrent_rss_heavy_refuses_when_the_worker_has_fewer_slots_than_sessions(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, n=4, settings={})  # absent: 02-worker.config's two
+    assert _failed(rep) == ["concurrent_rss_heavy: preflight: WORKER_TURN_USERS names >= 4 slot(s) (else refused)"]
+    assert not _billed(order)
+
+
+START_CHECK = ("concurrent_rss_heavy: preflight: the worker's newest ev=start names >= 4 turn_users, "
+               "no refused start after it (else refused)")
+
+
+@pytest.mark.parametrize("events", [
+    [start_line(), {"ev": "prepare", "step": "turn_users", "error": "TurnUsersError: no such user 'genealogy-turn-3'"}],
+    [start_line(), {"ev": "prepare", "step": "tmpdir", "error": "not writable", "tmpdir": "/nonexistent"}],
+    [start_line(2)],
+    [{"ev": "prepare", "step": "turn_users", "error": "TurnUsersError: x"}],
+])
+def test_concurrent_rss_heavy_refuses_a_refused_worker_start(monkeypatch, events):
+    rep, order, _ = _heavy(monkeypatch, n=4, events=events)
+    assert _failed(rep) == [START_CHECK]
+    assert not _billed(order)
+
+
+@pytest.mark.parametrize("events", [
+    [start_line(), {"ev": "prepare", "step": "turn_users", "killed": {"genealogy-turn-0": 1}, "purged": {}}],
+    [start_line(), {"ev": "prepare", "step": "schema", "error": "OperationalError: timeout", "retrying": True},
+     {"ev": "prepare", "step": "schema", "at": "011"}],
+    [start_line(2), {"ev": "prepare", "step": "turn_users", "error": "TurnUsersError: x"}, start_line()],
+    # The refusal rule's conjuncts one at a time: a schema error, and an error still retrying.
+    [start_line(), {"ev": "prepare", "step": "schema", "error": "OperationalError: x"}],
+    [start_line(), {"ev": "prepare", "step": "turn_users", "error": "x", "retrying": True}],
+])
+def test_concurrent_rss_heavy_passes_a_healthy_worker_start(monkeypatch, events):
+    rep, _order, _ = _heavy(monkeypatch, n=4, events=events)
+    assert not _failed(rep), rep.checks
+
+
+@pytest.mark.parametrize("probe, over", [
+    ("nudges_0", {"settings": {"web": {"AUTONOMOUS_MAX_NUDGES": "0"}}}),
+    ("cap_1usd", {"settings": {"worker": {"SESSION_SPEND_CAP_USD": "1"}}}),
+    ("kill_window", {"settings": {"worker": {"SQSD_VISIBILITY_TIMEOUT_S": "1500"}}, "deadline_s": 1200.0}),
+    ("debug_hold", {"settings": {"tools": {"GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS": "20000"}}}),
+    ("idle_session_60s", {"idle_setting": "60000"}),
+    ("fast_errors", {"settings": {("worker", "aws:elasticbeanstalk:sqsd"): {"ErrorVisibilityTimeout": "10"}}}),
+])
+def test_concurrent_rss_heavy_refuses_with_another_probe_live(monkeypatch, probe, over):
+    rep, order, _ = _heavy(monkeypatch, **over)
+    failed = _failed(rep)
+    assert "concurrent_rss_heavy: preflight: no other probe case live (else refused)" in failed, rep.checks
+    [detail] = [d for n, _ok, d in rep.checks if n.endswith("no other probe case live (else refused)")]
+    assert probe in detail
+    if probe == "kill_window":
+        assert "concurrent_rss_heavy: preflight: SQSD_VISIBILITY_TIMEOUT_S >= window + deadline + 600 s (else refused)" in failed
+    else:
+        assert len(failed) == 1, failed
+    assert not _billed(order)
+
+
+def test_concurrent_rss_heavy_refuses_a_visibility_timeout_the_window_outlasts(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, settings={"worker": {"SQSD_VISIBILITY_TIMEOUT_S": "2000"}}, window_s=1800.0)
+    assert _failed(rep) == ["concurrent_rss_heavy: preflight: SQSD_VISIBILITY_TIMEOUT_S >= window + deadline + 600 s "
+                            "(else refused)"]
+    assert not _billed(order)
+
+
+def test_concurrent_rss_heavy_ignores_the_slot_cases_own_values(monkeypatch):
+    """slots_4 is what the heavy case runs under: its WORKER_TURN_USERS is not "another probe"."""
+    rh = bounds.rehearse_module()
+    monkeypatch.setitem(rh.CASES, "slots_4", {"measures": "x", "ops": {"worker": [
+        (rh.SQSD_NS, "HttpConnections", "4"), (rh.ENV_NS, "WORKER_TURN_USERS", " ".join(bounds.TURN_USERS_ALL[:4]))]}})
+    monkeypatch.setitem(rh.CASES, "worker_xlarge", {"measures": "x", "ops": {"worker": [
+        (rh.ENV_NS, "WORKER_TURN_USERS", " ".join(bounds.TURN_USERS_ALL[:4]))]}})
+    rep, _order, _ = _heavy(monkeypatch, n=4)
+    assert not _failed(rep), rep.checks
+
+
+@pytest.mark.parametrize("expect, ok", [("t3.large", False), ("t3.xlarge", True)])
+def test_concurrent_rss_heavy_refuses_the_wrong_instance_type(monkeypatch, expect, ok):
+    rep, order, _ = _heavy(monkeypatch, expect_instance_type=expect)
+    assert _failed(rep) == ([] if ok else [f"concurrent_rss_heavy: preflight: the worker is a {expect} (else refused)"])
+    assert _billed(order) == ok
+
+
+@pytest.mark.parametrize("allow, ok", [(False, False), (True, True)])
+def test_concurrent_rss_heavy_refuses_standard_credits(monkeypatch, allow, ok):
+    rep, order, _ = _heavy(monkeypatch, credit="standard", allow_standard_credits=allow)
+    assert _failed(rep) == ([] if ok else ["concurrent_rss_heavy: preflight: unlimited credits, or --allow-standard-credits "
+                                           "(else refused)"])
+    assert rep.figures["credit_mode"] == "standard" and _billed(order) == ok
+    assert "aws ec2 describe-instance-credit-specifications --instance-ids i-0abc" in order
+
+
+def test_concurrent_rss_heavy_refuses_an_empty_control_group(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, host={"control_group": "", "cpu_stat_readable": "0"})
+    assert _failed(rep) == ["concurrent_rss_heavy: preflight: web.service has a ControlGroup (else refused)",
+                            "concurrent_rss_heavy: preflight: web.service's cpu.stat reads (else refused)"]
+    assert not _billed(order)
+
+
+def test_concurrent_rss_heavy_void_without_two_in_window_cpu_samples(monkeypatch):
+    rep, _order, _ = _heavy(monkeypatch, cpu_usage=False)
+    assert _failed(rep) == ["concurrent_rss_heavy: CPU sampled, >= 2 in-window samples with usage_usec (else void)"]
+    assert rep.figures["cpu_samples"] == 0 and rep.figures["cpu_core_s"] is None
+
+
+def test_concurrent_rss_heavy_counts_a_truncated_sample_lost(monkeypatch):
+    rep, _order, _ = _heavy(monkeypatch, truncate_at=(10.0,))
+    assert not _failed(rep), rep.checks
+    assert rep.figures["cpu_truncated_samples"] == 1 and rep.figures["rss_sample_errors"] == 1
+    assert rep.figures["cpu_samples"] == 60 and rep.figures["rss_samples"] == 61
+    assert any("truncated: no cpu_end=1" in f for f in rep.findings)
+
+
+def test_concurrent_rss_heavy_counts_a_sample_cut_inside_the_memory_half_lost(monkeypatch):
+    rep, _order, _ = _heavy(monkeypatch, rss_cut_at=(10.0,))
+    assert not _failed(rep), rep.checks
+    assert rep.figures["rss_sample_errors"] == 1 and rep.figures["rss_samples"] == 61
+    assert any("truncated: no rss_end=1" in f for f in rep.findings)
+    assert bounds.RSS_END not in bounds.RSS_COMMANDS, "concurrent_rss's sample is unchanged"
+
+
+def test_concurrent_rss_heavy_rides_out_failed_reads_after_the_window(monkeypatch):
+    monkeypatch.setattr(bounds, "heavy_throttle_figures", lambda *a: (_ for _ in ()).throw(
+        psycopg.OperationalError("rate-limit read lost")))
+    rep, _order, window_params = _heavy(monkeypatch, window_fails=bounds.DB_TRIES - 1)
+    assert not _failed(rep), rep.checks
+    assert rep.figures["subagent_rows_in_window"] == 3 and len(window_params) == bounds.DB_TRIES
+    assert any("throttle figures not read: OperationalError: rate-limit read lost" in f for f in rep.findings)
+
+
+@pytest.mark.parametrize("at", [0.0, 600.0], ids=["window_open", "window_due"])
+def test_concurrent_rss_heavy_rides_out_a_failed_read_of_the_window_bounds(monkeypatch, at):
+    rep, order, _ = _heavy(monkeypatch, db_fails_at=(at,))
+    assert not _failed(rep), rep.checks
+    assert [o.split(" at ")[0] for o in _stops(order)] == ["stop sess_1", "stop sess_2"], "db_one's retry, then the Stop"
+    assert rep.figures["cpu_samples"] > 2
+
+
+def test_concurrent_rss_heavy_rides_out_a_failed_database_read(monkeypatch):
+    rep, order, _ = _heavy(monkeypatch, db_fails_at=(300.0,))
+    assert not _failed(rep), rep.checks
+    assert _stops(order) == ["stop sess_1 at 600", "stop sess_2 at 600"]
+    assert rep.figures["rss_sample_errors"] == 2
+    assert any("connection to RDS lost" in f for f in rep.findings)
+
+
+def test_concurrent_rss_heavy_records_pg_connections_rate_limits_and_api_errors(monkeypatch):
+    events = [start_line(),
+              {"ev": "cli_stderr", "turn_id": "t1", "line": "API Error: 529 {\"type\":\"overloaded_error\"}"},
+              {"ev": "cli_stderr", "turn_id": "t1", "line": "fetched 1529 records"},
+              {"ev": "turn", "turn_id": "t2", "status": 500, "outcome": "failed",
+               "error": "RuntimeError: ResultMessage is_error (error_during_execution, api 429): rate limited"}]
+    rep, _order, _ = _heavy(monkeypatch, events=events, rate_limited=[("sess_1", 2)], reauth=["Reconnect FamilySearch"])
+    assert not _failed(rep), "throttles are findings, never voids"
+    assert rep.figures["pg_conns_peak"] == 14 and rep.figures["pg_turn_conns_peak"] == 2
+    assert rep.figures["session_1.rate_limited"] == 2 and rep.figures["session_2.rate_limited"] == 0
+    assert rep.figures["session_1.api_throttle_lines"] == 1 and rep.figures["session_2.api_throttle_lines"] == 1
+    assert rep.figures["session_1.reauth_hits"] == 1 and rep.figures["session_2.reauth_hits"] == 0
+    assert "API throttle lines (429/529/overloaded/rate limit): 2" in rep.findings
+
+
+def test_concurrent_rss_heavy_reports_no_api_throttle_as_not_observed(monkeypatch):
+    rep, _order, _ = _heavy(monkeypatch)
+    assert "API throttle lines: not observed (CLI-internal retries are not logged)" in rep.findings
+
+
+def test_parse_cpu_reads_every_figure():
+    got = bounds.parse_cpu(cpu_out(10.0) + RSS_OUT)
+    assert got["complete"] and not got["cgstat_missing"]
+    assert got["usage_usec"] == 20_000_000 and got["cgroup"]["nr_periods"] == 0
+    assert got["epoch"] == 1760000010.0 and got["uptime"] == 1010.0 and got["loadavg_1"] == 1.51
+    assert got["hoststat"] == [1500, 0, 500, 1960, 0, 0, 0, 40, 0, 0]
+    assert got["procs"] == [(100, 0, 2048, 5, "sqsd"), (200, 1001, 524288, 5, "node"), (201, 1002, 262144, 2, "claude code")]
+    assert bounds.parse_rss(cpu_out(10.0) + RSS_OUT) == bounds.parse_rss(RSS_OUT), "parse_rss skips every CPU line"
+    bare = bounds.parse_cpu("cgstat_missing=1\nuptime=[not set]\ncpu_end=1\n")
+    assert bare["cgstat_missing"] and bare["usage_usec"] is None and bare["uptime"] is None and bare["complete"]
+
+
+def test_parse_cpu_flags_a_truncated_sample():
+    assert not bounds.parse_cpu(cpu_out(10.0, end=False))["complete"]
+    assert not bounds.parse_cpu(cpu_out(10.0)[:-len("cpu_end=1\n") + 6])["complete"], "a cut marker is not one"
+
+
+# What a CPU_COMMANDS / HOST_COMMANDS entry may emit with: `echo KEY=`, an awk printing a
+# literal "KEY= (or a "key_ prefix), `sed 's/^/KEY=/'`. Assignments and tests emit nothing.
+_EMITS = re.compile(r"""^(echo\s+[a-z_]+=|awk\b.*\bprint\s*"[a-z]+(_"|[a-z_]*=)|sed\s+'s/\^/[a-z_]+=/')""")
+_SILENT = re.compile(r"^(if\s|\[|fi$|[A-Z_]+=\$\()")
+
+
+def _unprefixed(command: str) -> list[str]:
+    """The segments of one entry whose output reaches stdout unprefixed: each simple command's
+    last pipeline stage must be a prefixing emitter."""
+    out = []
+    for seg in re.split(r";|&&|\|\||\bthen\b|\belse\b", command):
+        seg = seg.strip()
+        if seg and not _SILENT.match(seg) and not _EMITS.match(seg.split("|")[-1].strip()):
+            out.append(seg)
+    return out
+
+
+def test_cpu_commands_emit_only_prefixed_lines():
+    for command in (*bounds.CPU_COMMANDS, *bounds.HOST_COMMANDS):
+        assert not _unprefixed(command), command
+    assert bounds.CPU_COMMANDS[-1] == "echo cpu_end=1", "the end marker comes last"
+    assert "/sys/fs/cgroup/cpu.stat" not in " ".join(bounds.CPU_COMMANDS + bounds.HOST_COMMANDS)
+    assert any("cgstat_missing=1" in c for c in bounds.CPU_COMMANDS), "an empty ControlGroup never reads the root cgroup"
+
+
+def _sample(at: float, usage: int | None, uptime: float) -> dict:
+    return {"complete": True, "usage_usec": usage, "uptime": uptime, "hoststat": None, "loadavg_1": None, "procs": []}
+
+
+def test_cpu_figures_use_the_samples_bracketing_the_window():
+    # Passes 0-5; the window opened on pass 2 and closed on pass 4. Outside it the worker was
+    # far busier, so a figure that leaked past the bracket would show.
+    samples = [(0, _sample(0, 0, 100.0)), (1, _sample(1, 90_000_000, 110.0)), (2, _sample(2, 100_000_000, 120.0)),
+               (3, _sample(3, 110_000_000, 130.0)), (4, _sample(4, 140_000_000, 140.0)),
+               (5, _sample(5, 900_000_000, 150.0))]
+    got = bounds.cpu_figures(samples, 2, 4, {})
+    assert got["cpu_samples"] == 3 and got["cpu_core_s"] == 40.0
+    assert got["cpu_cores_avg"] == 2.0 and got["cpu_cores_peak"] == 3.0
+    assert bounds.cpu_figures(samples, 2, 2, {})["cpu_core_s"] is None, "one sample is no interval"
 
 
 def test_concurrent_rss_heavy_counts_subagent_rows_by_agent_id():
@@ -1004,6 +1396,24 @@ def test_the_probe_values_are_what_rehearse_sets():
         assert (rh.ENV_NS, name, value) in rh.CASES[probe]["ops"][tier], probe
     assert rh.CASES["idle_session_60s"]["rds_param"] == bounds.IDLE_PROBE
     assert bounds.IDLE_TEXT.read_text(encoding="utf-8").count(";") >= 10, "the idle turn must outlast a minute"
+    # concurrent_rss_heavy's preflight reads every other case's values off the same table.
+    live = {case for case, *_ in bounds.probe_case_values()}
+    assert {"nudges_0", "cap_1usd", "kill_window", "debug_hold", "refresh_age_0"} <= live, live
+    assert not {c for c in live if c.startswith("slots_") or c == "worker_xlarge"}
+    assert all(value is not rh.REMOVE for *_, value in bounds.probe_case_values())
+
+
+def test_template_turn_users_match_the_worker_config():
+    """What the heavy preflight assumes when the API carries no value is what .ebextensions sets;
+    TURN_USERS_ALL is the hook's literal (the getent uid map reads those)."""
+    rh = bounds.rehearse_module()
+    env = rh.template_env("worker")
+    assert env["WORKER_TURN_USERS"] == bounds.TEMPLATE_TURN_USERS
+    assert int(env["SQSD_VISIBILITY_TIMEOUT_S"]) == bounds.TEMPLATE_SQSD_VISIBILITY_S
+    hook = (SERVER / "proto" / "eb-worker" / ".platform" / "hooks" / "predeploy" / "01-worker-layout.sh").read_text(
+        encoding="utf-8")
+    [literal] = re.findall(r'^TURN_USERS="([^"]*)"', hook, re.M)
+    assert tuple(literal.split()) == bounds.TURN_USERS_ALL and len(bounds.TURN_USERS_ALL) == bounds.MAX_SESSIONS
 
 
 def test_events_until_polls_the_deployed_log_until_the_turns_closing_line_lands(monkeypatch):
