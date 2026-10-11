@@ -61,7 +61,7 @@ Two premises moved since the plan:
 | U19 | Operational hardening | Nothing alerts | go-live | F14, F17 |
 | U20 | Product gaps against the alpha | Lost features | go-live | F9 |
 | U21 | Lead decisions: all seven decided 2026-09-29 | — | — | — |
-| U22 | Correct the ARB draft (SC-12457) | Wrong premises | go-live; before F17's request | — |
+| U22 | Correct the ARB draft (SC-12457); scripts landed (PR #3304) | Wrong premises | go-live; before F17's request | — |
 | U23 | Live Stop, held release, $35 cap, Stop mid-delegation | Recorded on compose and on Beanstalk (12 of 13 cases, U13, 2026-10-08, n=1 per case) | integ | — |
 | U24 | Continuous-work behaviour | Turns overrun their deliverable; a lookup ends `no_progress` | go-live | — |
 | U25 | Hard image cap (issue #3010) | Built (PR #3111); a delegated read relaying the refusal is unverified | go-live (cost) | — |
@@ -129,7 +129,7 @@ CI (`eb-bundles.yml`, Node 24) repeats the build, verify and amd64 smoke on ever
 6. **Prototype grades** count in calibration (U16).
 7. **The D17/D18 exports:** Richard decides (U16).
 
-**U22.** Why: the 2026-09-07 draft carries none of the report's six corrections (the sixth is the grain). Add them and R6: no shell, WebFetch/WebSearch or device bridge where record text is read. Commit the scripts behind the report's measurement 3 and corrections 2 and 4 first; they never landed. **Done when:** all seven are in and the scripts are in git.
+**U22.** Why: the 2026-09-07 draft carries none of the report's six corrections (the sixth is the grain). Add them and R6: no shell, WebFetch/WebSearch or device bridge where record text is read. The scripts landed (PR #3304, 2026-10-10): `apps/server/dev/review_figures_runlogs.py` reproduces measurement 3 and correction 4 at their commits; correction 2's original tool set was never written down, so its figure is now the measured 5,234 of 27,002 (19.4%); `packages/engine/mcp-server/dev/count-projectpath-tools.ts` recounts correction 5 (27 and 26 of 53). The draft edits remain, with Dallan and Richard. **Done when:** all seven are in the draft.
 
 **U23.** Why: until U26, Stop and the $35 cap are the patron's only bounds on a run; all four have offline tests only. The hooks swallow Postgres errors, so during an outage Stop, the held-message handover and the cap fail open, silently. Also run PR #2870's owed probes: `make proto-probe-resume` (its kill now lands in a foregrounded delegation) and the two SDK questions under "Not covered". Stop during a run, recorded once (2026-10-03, compose, U3's live checks): the turn closed `stopped` at its next tool call, which the halt denied, so it never ran; that is the halt U3 changed to deny as well as end the turn. **Done when:** each is recorded on compose, then in U13: both done, 12 of 13 cases on Beanstalk (below).
 **Recorded on compose** (2026-10-05, n=1 per case, dev key, Anthropic API, Sonnet 4.6, `make proto-bounds CASE=<case>` in PR #3171; $6.71 by the CLI's own figures across 33 turns (those closed before the CLI cost nothing), plus the resume probe's killed and ceiling-cut attempts, which report none: its session meter read $8.87). Every case below is a script, not a hand run: `apps/server/proto/bounds.py` prints its evidence and a PASS/FAIL per check, and every exit that would leave a turn running presses Stop.
