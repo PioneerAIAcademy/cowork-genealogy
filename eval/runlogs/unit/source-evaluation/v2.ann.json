@@ -21,14 +21,6 @@
     {
       "test_id": "ut_source_evaluation_k9t",
       "dimension_source": "rubric",
-      "dimension_name": "Remediation doctrine",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "I checked whether the recommended actions preserve evidence and follow the required investigation order. The marriage remedy starts by checking the original register, and the 1851 census remedy directs verification of the underlying schedule before correcting the index or profile. The response does not recommend detaching the ambiguous 1851 entry and correctly sends the death-date disagreement to conflict resolution without detaching either source. The remedies follow the required doctrine."
-    },
-    {
-      "test_id": "ut_source_evaluation_k9t",
-      "dimension_source": "rubric",
       "dimension_name": "Classification before recommendation",
       "llm_score": 3,
       "corrected_score": 3,
@@ -203,14 +195,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_source_evaluation_j4s",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Writing\n\n\n\n\n\nThe response identifies the three genuine findings: the marriage-year discrepancy, the conflict between the burial and civil death records, and the 1851 census residence discrepancy. It correctly distinguishes the 1814 christening from a proven birth date, treats the 1861 census age difference as ordinary variance rather than a finding, and avoids recommending detachment of either conflicting death source. One qualification is needed for the 1851 census: the indexed record contains only residence and birthplace, so the absence of spouse, household, and birth-year details limits verification but does not itself prove that the entry represents another person. The response should describe the identity as unresolved rather than implying that the missing details establish ambiguity."
-    },
-    {
       "test_id": "ut_source_evaluation_h5w",
       "dimension_source": "base",
       "dimension_name": "Completeness",
@@ -222,14 +206,6 @@
       "test_id": "ut_source_evaluation_h5w",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_h5w",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -253,23 +229,7 @@
     {
       "test_id": "ut_source_evaluation_h5w",
       "dimension_source": "rubric",
-      "dimension_name": "Signal versus backend noise",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_h5w",
-      "dimension_source": "rubric",
       "dimension_name": "Tool selection and argument quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_source_evaluation_h5w",
-      "dimension_source": "rubric",
-      "dimension_name": "Coverage and honesty about what was not checked",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -340,11 +300,51 @@
     },
     {
       "test_id": "ut_source_evaluation_k9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Remediation doctrine",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The recommended actions preserve evidence and prioritize checking original records before correcting indexed information or profile details. The response avoids unnecessary detachment and appropriately routes the death-date conflict for further investigation."
+    },
+    {
+      "test_id": "ut_source_evaluation_k9t",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Three genuine findings are identified correctly, but the 1851 census discussion overstates what the missing indexed details establish."
+      "comment": "Three genuine findings are identified correctly, but the 1851 census discussion makes an unsupported assumption about how the index was created. The response should distinguish verified evidence from speculation."
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage and honesty about what was not checked",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The response explains the cause of the post-death residence warning without evidence from the tool output. It also counts the 1900 census birth-year discrepancy as a finding, even though the two-year age drift is ordinary census variance and should not be treated as a substantive finding."
+    },
+    {
+      "test_id": "ut_source_evaluation_h5w",
+      "dimension_source": "rubric",
+      "dimension_name": "Signal versus backend noise",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The response includes the 1900 census age discrepancy as a numbered finding despite classifying it as ordinary variance. It also explains the cause of the residence warning and recommends corrective action, improperly mixing a project-tree warning with the source audit."
+    },
+    {
+      "test_id": "ut_source_evaluation_j4s",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The response identifies the marriage-date and death-record conflicts correctly and excludes ordinary census birth-year variance. However, it overstates what the 1851 census's missing spouse and household fields establish. The record's omissions do not prove the identity is ambiguous.\n\n\n\n\n\n"
     }
   ]
 }
