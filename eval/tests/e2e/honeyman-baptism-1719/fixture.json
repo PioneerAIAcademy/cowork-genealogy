@@ -1,0 +1,19 @@
+{
+  "id": "honeyman-baptism-1719",
+  "name": "William Honeyman (Hunneman)",
+  "genre": "strip",
+  "source_pid": "PID-TODO",
+  "captured": "2026-10-08",
+  "researcher_question": "There's a dispute about my ancestor William Honeyman's baptism: some sources say 1716, others 1719. His father is listed as from Fife but I'm not sure that's proven. Can you sort this out?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1710s",
+    "geography": "GB-ENG"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "PID-less: ground truth is a Cowork run on 8 Oct 2026 graded by the fixture author, not the tree. The starting tree holds the family's old claim (1716 Edinburgh baptism, Fife-born father); a pass needs only the first rejected, on cited parish records rather than tree notes (the 1719 Hutton Rudby christening, f1, and the 1716 Edinburgh claim removed, f2). Leaving the Fife origin unproved (f3) is graded but not required."
+}
