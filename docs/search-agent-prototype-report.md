@@ -99,7 +99,7 @@
 |---|---|---|---|
 | 1 | Resume mid-delegation from an external store? | **Yes; the delegation re-runs.** | P1, 2026-09-10: 5 variants, n=1 each, probe driver, SDK 0.2.128 / CLI 2.1.220. Worker: D17, n=1, foreground only. |
 | 2 | Cache across resume and past the TTL? | Resume reads it (P3k). Via agentgateway the TTL is 5 min regardless (P3j). The review's 4.6× cost blocker rests on 1-hour writes, which the gateway never gives; at 5 minutes the corpus loses 2.2–2.3% of run cost (below). | P3j/P3k: 2026-09-25, local agentgateway v1.5.0, TAP's route |
-| 3 | Where to checkpoint? | **The patron turn.** No tool call exceeds 1,800 s; skill/agent segments p99 1,488 s, 4 over 1,800 s. | Corpus at `e18d99b10` (2026-09-07): 8,898 calls, 51 instrumented runs, 947 segments, autonomous only |
+| 3 | Where to checkpoint? | **The patron turn.** No tool call exceeds 1,800 s; skill/agent segments p99 1,488 s, 4 over 1,800 s. | Corpus at `e18d99b10` (2026-09-07): 8,898 calls, 51 instrumented runs, 947 segments, autonomous only; `apps/server/dev/review_figures_runlogs.py` |
 | 4 | Oversized result, no shell? | Spilled to a file; the agent `Read`s or `Grep`s it, never stranded. | P2, 2026-09-10, **current stack**, n=3. Prototype on Beanstalk: the spill file lives only for its attempt; killed between the spill and its read, the redelivery found the file gone, re-ran the call and answered correctly, then closed `no_progress` after two empty nudges, a recorded departure (U13, 2026-10-08, n=1, 1 try). |
 | 5 | Bedrock? | Direct: yes. TAP's route, local copy: yes, tool search off (broken before agentgateway v1.6.0-alpha.1; TAP pins v1.5.0). Off cost +18% on one turn (P3i), 2.2× on P3b's short arm. | P3 2026-09-10; P3b 2026-09-11 (passthrough proxy to the Anthropic API); P3f/P3i 2026-09-25; n=1 per arm. **Not the deployed gateway.** |
 | 6 | Commit-time ledger? | **Buys nothing.** After a commit, resume wrote nothing; before it, resume re-decided (17 of 20 ops identical, 3 rephrased). | P1, 2026-09-10, n=1 |
@@ -182,15 +182,17 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 1. **"Removes the patron-token surface" is wrong:** it concentrates it in one tool server.
    Credit removing the on-disk token file and the shell.
 2. **Bedrock Guardrails cannot see the injection vectors:** Converse emits no `guardContent`,
-   and `guardrailIdentifier` is a placeholder in beta and prod. 20.6% of tool calls return
-   externally authored content (5,554 of 27,002, 163 runs, `d016032e5`).
+   and `guardrailIdentifier` is a placeholder in beta and prod. 19.4% of tool calls return
+   text a third party wrote (5,234 of 27,002, 163 runs, `d016032e5`; the tool set is in
+   `review_figures_runlogs.py`). The 5,554 first quoted came from a set never written down.
 3. **Server-side context management is off on Bedrock** and cannot pass Messages→Converse.
    Client-side `/compact` worked through a local v1.5.0 gateway (2026-09-25, n=1); autocompact
    was not forced.
 4. **The 14.7% "reads its own transcript" row** is the oversized-output spill: 739 reads, 11.8%
-   of 6,247 filesystem operations, 66 of 161 runs (`e18d99b10`).
-5. **"24 take a `projectPath`, 24 are pure HTTP"** was 21 and 27 at `e18d99b10`; there are 48
-   tools now. Recount.
+   of 6,247 filesystem operations, 66 of 161 runs (`e18d99b10`; `review_figures_runlogs.py`).
+5. **"24 take a `projectPath`, 24 are pure HTTP"** was 21 and 27 of 48 tools at `e18d99b10`,
+   and is 27 and 26 of 53 at `19ea6d089` (`dev/count-projectpath-tools.ts`). Several that
+   take none make no network call either.
 6. **State the grain** ([above](#the-validated-grain)).
 
 ## Open questions for FamilySearch
@@ -237,4 +239,5 @@ and the S3 objects. Our own decisions: handoff U21, all made 2026-09-29.
 - **In git:** `eval/runlogs/e2e/bagley-father-1884/run-2026-09-25_01-42-24.*` (with its
   `.ann.json`) and `paerai-teupooihi-spouse/run-2026-09-21_16-47-07.*`.
 - **Local only:** prototype exports (D17 and D18 on Richard's machine), P1 and P2 evidence. The scripts behind measurement 3 and
-  corrections 2 and 4 never landed (U22).
+  corrections 2, 4 and 5 are `apps/server/dev/review_figures_runlogs.py` and
+  `packages/engine/mcp-server/dev/count-projectpath-tools.ts` (U22).
