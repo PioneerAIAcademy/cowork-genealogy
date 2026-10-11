@@ -298,8 +298,15 @@ the text after the first comma** ("Pennsylvania, United States", then
   first contact with a country or when the local levels are sparse.
 - **Inclusive resource** — `catalog_search`. A search includes subordinate
   places by default (`exactPlace` is false), so a parent's hits already cover
-  its children. On 0 hits, climb one jurisdiction level and **stop at the
-  first level with hits** — do not call every level.
+  its children. Call it **once per place level, with `standardPlace` only** —
+  no `keywords`, `subject`, or `title` filters. On `totalHits: 0`, broaden
+  by dropping **only the first** comma-delimited component of `standardPlace`
+  (e.g. `"Javorje, Škofja Loka, Slovenia"` → `"Škofja Loka, Slovenia"`,
+  **not** `"Slovenia"`). Do **not** skip levels, do **not** batch broadening
+  calls in parallel — wait for each result before climbing. **Stop at the
+  first level with `totalHits > 0`**, even if the hits are not the record
+  type you want — report what the Catalog returned as a coverage gap. Never
+  call `catalog_search` more than twice for one locality.
 
 ### Writing places to research.json / tree.gedcomx.json
 

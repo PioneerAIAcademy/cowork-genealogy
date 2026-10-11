@@ -19,6 +19,7 @@
     "scenario": "flynn-first-plan"
   },
   "mcp_fixtures": [
+    "place-search-pulaski-county-ky",
     "place-search-any",
     "place-search-all-any",
     "place-population-any",
