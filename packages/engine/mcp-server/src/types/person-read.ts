@@ -12,6 +12,7 @@ import type {
   GedcomXFact,
   GedcomXPerson,
   GedcomXSourceDescription,
+  GedcomXSourceReference,
 } from "./gedcomx.js";
 
 // ─── Tool I/O ─────────────────────────────────────────────────────────────
@@ -84,6 +85,11 @@ export interface TreeRelationship {
   person1?: string;
   person2?: string;
   facts?: TreeFact[];
+  /** The sources FamilySearch attached to this relationship, as refs into the
+   *  result's `sources[]`. Only refs that resolve there are kept; absent when
+   *  none do. One child-and-parents relationship is two ParentChild edges, and
+   *  both carry its refs. */
+  sources?: TreeSourceRef[];
 }
 
 export interface TreeSource {
@@ -171,6 +177,8 @@ export interface FSChildAndParentsRelationship {
   child?: FSResourceRef;
   parent1Facts?: FSFact[];
   parent2Facts?: FSFact[];
+  /** Sent only in a read of a person this relationship names (issue #3229). */
+  sources?: GedcomXSourceReference[];
 }
 
 // FS relationship entries in `relationships[]` (couples, bare
@@ -183,6 +191,8 @@ export interface FSRelationship {
   person1?: FSResourceRef;
   person2?: FSResourceRef;
   facts?: FSFact[];
+  /** Sent only in a read of a person this relationship names (issue #3229). */
+  sources?: GedcomXSourceReference[];
 }
 
 export interface FSSourceDescription extends GedcomXSourceDescription {

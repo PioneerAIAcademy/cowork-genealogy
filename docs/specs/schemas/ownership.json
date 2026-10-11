@@ -213,6 +213,7 @@
         "agent:search-external-sites",
         "agent:search-full-text",
         "agent:search-images",
+        "agent:search-hints",
         "skill:record-extraction",
         "agent:survey-surname"
       ],
@@ -240,6 +241,12 @@
           "tools": [
             "research_log_append",
             "build_external_search_url"
+          ]
+        },
+        {
+          "agent": "agent:search-hints",
+          "tools": [
+            "research_log_append"
           ]
         },
         {

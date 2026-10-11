@@ -176,9 +176,9 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the two that are not live here (`merge_tree_persons`,
-# `tree_forget`) have no handler to mirror. The drift lint in
-# tests/unit/test_mock_mcp.py pins that intersection, so a fifteenth tool added
+# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
+# `tree_forget`, `external_links_search`) have no handler to mirror. The drift lint in
+# tests/unit/test_mock_mcp.py pins that intersection, so a sixteenth tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
 # `merge_warnings` is deliberately absent: its `ok: false` is a dry-run verdict

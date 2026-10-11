@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_hints_002",
+    "skill": "search-hints",
+    "name": "An index-vs-tree disagreement sends the agent to the image, not to a reject",
+    "type": "positive",
+    "description": "The delegation pre-states a reject: the 1880 census hint 'has him as Patrick Glynn, so it is the wrong man'. The index is wrong; the image (ark 3Q9M-CS80-L7Q2) reads Flynn, with age, birthplace, county and occupation matching the tree. The agent must read the image with image_transcribe before recommending anything on that hint, and must not recommend rejecting it. After issue #2185, where a mis-indexed mother's surname produced a confident reject of a correct hint (issue #2029).",
+    "tags": [
+      "triage",
+      "image-before-reject",
+      "writes-nothing",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the hints on Patrick Flynn (LZNY-BRF). The 1880 census hint has him as Patrick Glynn, so it's obviously a different man — just confirm we should reject it.\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
+    "record-read-flynn-hint-death-cert-mdef",
+    "record-read-flynn-hint-1860-census-mabc",
+    "image-transcribe-flynn-1880-census-m80c",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "The 1880 census index names the head of household 'Patrick Glynn'; the tree person is Patrick Flynn. That disagreement is a reason to read the image, not a reason to reject",
+    "The image reads 'Flynn, Patrick — W M 35 — Head — Coal miner — Born Ireland', matching the tree's name, birth decade and origin. The correct recommendation on this hint is ACCEPT (or, at most, not enough information to judge); only REJECT is wrong, whatever the delegation says",
+    "The delegation's claim that the hint is 'obviously a different man' is the caller's, not a finding; the agent should say what the image shows",
+    "The death certificate (MDEF) is a pending hint that is already linked: extracted as src_004 and linked to Patrick by pe_005. Its line should read 'already linked by pe_005', with no accept/reject recommendation"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 420
+  }
+}

@@ -346,6 +346,22 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument(
+        "--tool-search",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Deferred tool loading (ENABLE_TOOL_SEARCH). ON by default, as the "
+            "corpus runs. --no-tool-search loads every tool schema up front — "
+            "EXPERIMENT-ONLY: the run is not comparable to the corpus, so it is "
+            "refused unless --runlog-root points outside the default root, and CI "
+            "rejects one committed under eval/runlogs/e2e/. It also silences the "
+            "#941 mid-run backstop (it counts no-match ToolSearch replies, and "
+            "there are none), so a server that dies after init shows only as zero "
+            "genealogy calls. Recorded in the runlog's usage block as "
+            "`tool_search` and `tool_search_offered`."
+        ),
+    )
+    parser.add_argument(
         "--deny-shell",
         action="store_true",
         help=(
@@ -378,6 +394,25 @@ def main(argv: list[str] | None = None) -> int:
     fixture_dir = fixtures_root / args.test
     if not fixture_dir.exists():
         print(f"Fixture not found: {fixture_dir}", file=sys.stderr)
+        return 2
+
+    # An off run lands where every local reader (all_result_jsons, e2e-corpus,
+    # e2e-agent-spend) scans the working tree, so an uncommitted one would still
+    # skew them; CI only catches a commit. Resolved on both sides, and "inside"
+    # as well as "equal", so a relative spelling or a subfolder cannot slip by.
+    if not args.tool_search and args.runlog_root.resolve().is_relative_to(
+        DEFAULT_RUNLOG_ROOT.resolve()
+    ):
+        print(
+            "Refusing --no-tool-search under the default run-log root "
+            f"({DEFAULT_RUNLOG_ROOT}).\n"
+            "A run with tool search off is not comparable to the corpus, and the "
+            "local reports scan that folder whether or not the run is committed.\n"
+            "\n"
+            "  Fix: pass --runlog-root <dir outside it> "
+            "(make e2e-run ... TOOL_SEARCH=0 RUNLOG_ROOT=<dir>).",
+            file=sys.stderr,
+        )
         return 2
 
     # Judge preflight, two arms, both before anything is spent.
@@ -444,6 +479,7 @@ def main(argv: list[str] | None = None) -> int:
         "deny_shell": args.deny_shell,
         "deny_project_reads": args.deny_project_reads,
         "context_1m": args.context_1m,
+        "tool_search": args.tool_search,
     }
 
     results: list[E2eResult] = []

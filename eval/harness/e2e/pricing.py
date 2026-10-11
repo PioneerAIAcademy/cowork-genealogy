@@ -29,9 +29,21 @@ importing the estimator (it cannot import `e2e.orchestrator` for the same
 reason). `orchestrator` imports this too, so the rates live in one place.
 
 Rates are Claude Sonnet standard tier, US dollars per million tokens.
+
+**Per-model rates (T1.11).** `MODEL_RATES` prices a token block at the model that
+actually produced it, so a helper moved to a cheaper model shows a cheaper row.
+It sits beside the flat table rather than replacing it: `estimate_cost_usd` stays
+the corpus estimator and its calibration above is untouched, and
+`estimate_cost_for_model` calls it for Sonnet 4.6, so a Sonnet-4.6 figure is the
+flat figure by construction. Cache writes are priced at each model's 1-hour rate,
+the same corpus basis as the flat table. A model not in the table prices to None,
+never to the Sonnet figure: CLI 2.1.139 falls back silently for a model it does
+not know, which is how some unit logs came to price Sonnet 5 at 4.6's rates.
 """
 
 from __future__ import annotations
+
+import re
 
 # USD per 1M tokens (Claude Sonnet, standard tier). Cache write is the 1-hour
 # ephemeral rate (see module docstring: it is what calibrates to ~0.90x).
@@ -46,6 +58,53 @@ _PER_MTOK = {
 # block at all". A usage block carrying none of these (the 13 pre-fallback runs
 # with no token counts) is unrecoverable and must estimate to None, never 0.
 PRICED_FIELDS = tuple(_PER_MTOK)
+
+
+# USD per 1M tokens, each model's own standard rate, cache write at the 1-hour
+# rate (2x input on every tier). Source: Anthropic's published price list
+# (claude-api skill, cached 2026-09-25); Sonnet 4.6 and Haiku 4.5 also agree with
+# the bundled CLI catalogs and reproduce 2,358 / 724 unit `costUSD` entries.
+MODEL_RATES = {
+    "claude-sonnet-4-6": {"input_tokens": 3.00, "output_tokens": 15.00,
+                          "cache_read_input_tokens": 0.30, "cache_creation_input_tokens": 6.00},
+    "claude-sonnet-5": {"input_tokens": 2.00, "output_tokens": 10.00,
+                        "cache_read_input_tokens": 0.20, "cache_creation_input_tokens": 4.00},
+    "claude-sonnet-5-5": {"input_tokens": 2.00, "output_tokens": 10.00,
+                          "cache_read_input_tokens": 0.20, "cache_creation_input_tokens": 4.00},
+    "claude-haiku-4-5": {"input_tokens": 1.00, "output_tokens": 5.00,
+                         "cache_read_input_tokens": 0.10, "cache_creation_input_tokens": 2.00},
+    "claude-opus-4-8": {"input_tokens": 5.00, "output_tokens": 25.00,
+                        "cache_read_input_tokens": 0.50, "cache_creation_input_tokens": 10.00},
+}
+
+_DATE_SUFFIX = re.compile(r"-\d{8}$")
+
+
+def canonical_model(model: str) -> str:
+    """`claude-haiku-4-5-20251001` -> `claude-haiku-4-5`: transcripts carry the
+    dated id, the price list the undated one. Anything else passes through."""
+    return _DATE_SUFFIX.sub("", model)
+
+
+def estimate_cost_for_model(usage_tokens: dict | None, model: str | None) -> float | None:
+    """Dollar estimate at `model`'s own rate, or None when unrecoverable.
+
+    None for the same "no positive token count" rule as `estimate_cost_usd`, and
+    None for a model the table does not know — never the Sonnet figure, which
+    would hide exactly the saving (or cost) this exists to show.
+    """
+    if not isinstance(model, str):
+        return None
+    key = canonical_model(model)
+    if key == "claude-sonnet-4-6":
+        return estimate_cost_usd(usage_tokens)
+    rates = MODEL_RATES.get(key)
+    if rates is None or estimate_cost_usd(usage_tokens) is None:
+        return None
+    return sum(
+        (raw if isinstance((raw := usage_tokens.get(field)), int) else 0) * per_mtok / 1_000_000
+        for field, per_mtok in rates.items()
+    )
 
 
 def estimate_cost_usd(usage_tokens: dict | None) -> float | None:

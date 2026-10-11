@@ -1274,50 +1274,6 @@
       "record_basis": "stated"
     },
     {
-      "id": "a_046",
-      "extracted_for_question_ids": [
-        "q_001"
-      ],
-      "fact_type": "name",
-      "informant": "unknown household member",
-      "informant_bias_notes": "Relationship to head not returned by index (possibly grandchild or boarder); check image.",
-      "informant_proximity": "household_member",
-      "information_quality": "indeterminate",
-      "log_entry_id": "log_002",
-      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
-      "record_persona_id": "p_188821018",
-      "record_role": "household_member_1",
-      "source_id": "src_003",
-      "structured_value": {
-        "given": "Mary",
-        "surname": "Delaney"
-      },
-      "value": "Mary Delaney",
-      "record_basis": "stated"
-    },
-    {
-      "id": "a_047",
-      "extracted_for_question_ids": [
-        "q_001"
-      ],
-      "fact_type": "name",
-      "informant": "unknown household member",
-      "informant_bias_notes": "Relationship to head not returned by index (possibly grandchild or boarder); check image.",
-      "informant_proximity": "household_member",
-      "information_quality": "indeterminate",
-      "log_entry_id": "log_002",
-      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4P3-83T",
-      "record_persona_id": "p_188821019",
-      "record_role": "household_member_2",
-      "source_id": "src_003",
-      "structured_value": {
-        "given": "Edward",
-        "surname": "Delaney"
-      },
-      "value": "Edward Delaney",
-      "record_basis": "stated"
-    },
-    {
       "id": "a_048",
       "date": "1845",
       "date_certainty": "exact",

@@ -291,8 +291,8 @@ git push -u origin junior-<your-name>-search-wikipedia
 ``` The `check-runlogs` action will run automatically and check three things:
 
 | ✓ | At most one newly added released `v{N}.json` per skill (a candidate PR adds zero). |
-| ✓ | The latest full-skill run log is **active** — its embedded snapshot matches the skill files in the PR. |
-| ✓ | The latest run log's `.ann.json` is **complete** — every dimension has a correction entry. |
+| ✓ | The run log your PR adds is **active** — its embedded snapshot matches the skill files in the PR. (A PR that adds none is checked on the latest full-skill run log.) |
+| ✓ | That run log's `.ann.json` is **complete** — every dimension of each sampled test has a correction entry. |
 
 If any of these fail, the action prints which files differ or which dimensions you missed. Fix and push again.
 

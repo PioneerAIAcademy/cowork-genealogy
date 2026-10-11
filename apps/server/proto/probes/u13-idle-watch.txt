@@ -1,0 +1,12 @@
+Use place_search to find the standardized FamilySearch place name for each of these places,
+one call at a time and in this order, waiting for each answer before the next call: Nauvoo,
+Illinois; Topsham, Maine; Salem, Massachusetts; Provo, Utah; Kirtland, Ohio; Independence,
+Missouri; Quincy, Illinois; Far West, Missouri; Palmyra, New York; Fayette, New York; Harmony,
+Pennsylvania; Sharon, Vermont; Winter Quarters, Nebraska; Council Bluffs, Iowa; Ogden, Utah;
+Topsham, Vermont; Bradford, Vermont; Newbury, Vermont; Corinth, Vermont; Chelsea, Vermont;
+Haverhill, New Hampshire; Orford, New Hampshire; Lyme, New Hampshire; Hanover, New Hampshire;
+Concord, New Hampshire; Portsmouth, New Hampshire; Exeter, New Hampshire; Dover, New Hampshire;
+Keene, New Hampshire; Claremont, New Hampshire; Montpelier, Vermont; Barre, Vermont; Randolph,
+Vermont; Woodstock, Vermont; Windsor, Vermont; Rutland, Vermont; Burlington, Vermont; St.
+Johnsbury, Vermont; Bennington, Vermont; Brattleboro, Vermont.
+Then list the forty names it returned, one per line.

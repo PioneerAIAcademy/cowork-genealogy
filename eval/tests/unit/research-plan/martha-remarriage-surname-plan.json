@@ -22,6 +22,7 @@
     "place-search-blount-alabama",
     "collections-search-blount",
     "collections-search-alabama",
+    "place-search-georgia",
     "collections-search-georgia",
     "volume-search-blount",
     "external-links-search-blount",
@@ -32,7 +33,8 @@
     "external-links-search-texas",
     "place-search-all-any",
     "collections-search-us-national",
-    "external-links-search-any"
+    "external-links-search-any",
+    "place-search-eddy-new-mexico"
   ],
   "judge_context": [
     "The plan MUST include at least one item — anywhere in the sequence, not necessarily first — targeting records that would name Martha's parents directly or test whether 'Wood' is even her birth surname: a further/earlier marriage-record search (Smith County TX marriage indexes 1857-1889 are fully indexed and full-text searchable), a probate/estate record naming her as an heir or ward, a church/baptism record, or a sibling's record. Whether such an item is present anywhere in the plan is what Record type selection turns on for this test.",
@@ -45,6 +47,6 @@
   "execution": {
     "max_wall_clock_seconds": 1200,
     "max_turns": 40,
-    "sdk_message_silence_seconds": 300
+    "sdk_message_silence_seconds": 360
   }
 }

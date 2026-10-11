@@ -160,6 +160,7 @@ def run_one_test(
     model: str = DEFAULT_MODEL,
     judge_model: str = DEFAULT_JUDGE_MODEL,
     timestamp: str | None = None,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     """Run a single test; return the per-test entry dict for the envelope.
 
@@ -180,6 +181,7 @@ def run_one_test(
             model=model,
             judge_model=judge_model,
             timestamp=ts,
+            tool_search=tool_search,
         )
     )
 
@@ -192,6 +194,7 @@ async def _run_one_test_async(
     model: str,
     judge_model: str,
     timestamp: str,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     # --- Runnability gate -----------------------------------------------
     gate = check_runnable(
@@ -312,6 +315,7 @@ async def _run_one_test_async(
             auth=auth,
             model=model,
             judge_model=judge_model,
+            tool_search=tool_search,
         )
         runs.append(single)
         if n_runs > 1:
@@ -518,6 +522,7 @@ async def _execute_single_run(
     auth: AuthConfig,
     model: str,
     judge_model: str,
+    tool_search: bool = True,
 ) -> SingleRun:
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
@@ -543,6 +548,7 @@ async def _execute_single_run(
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
         stop_at_stub=_stop_at_stub(spec),
+        tool_search=tool_search,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -853,6 +859,9 @@ async def _execute_single_run(
         model_usage=per_model,
         no_result_message=result.no_result_message,
         suppressed_post_deny_calls=result.suppressed_post_deny_calls,
+        subagents=result.subagents,
+        subagent_capture_status=result.subagent_capture_status,
+        main_thread=result.main_thread,
         skill_cost_usd=float(_usage.get("total_cost_usd") or 0.0),
         output={
             "text_response": result.text_response,
@@ -939,6 +948,36 @@ def _is_zero_progress_timeout(result) -> bool:
     return (result.usage or {}).get("num_turns") == 0
 
 
+# What a unit run log keeps of each subagent summary. `turns` (one entry per
+# record) and `transcript` (a local cache filename) are dropped: unit logs are
+# committed in bulk, and neither is read by anything downstream of them.
+_UNIT_SUBAGENT_DROP = ("turns", "transcript")
+
+
+def _capture_context_meters(result, workspace: Path) -> None:
+    """Attach the busiest-moment capture to `result`. Never raises.
+
+    Must run BEFORE `cleanup_session_store(workspace)`: that deletes the very
+    SDK cache directory these transcripts live in. Both readers resolve the
+    directory with the SDK's own `project_key_for_directory`, the same key the
+    cleanup deletes. Imported here, not at module top, so a broken e2e package
+    can never stop the orchestrator loading.
+    """
+    try:
+        from e2e.subagent_capture import collect_main_thread, collect_subagents
+
+        subagents, status = collect_subagents(workspace)
+        result.subagents = [
+            {k: v for k, v in s.items() if k not in _UNIT_SUBAGENT_DROP}
+            for s in subagents
+        ]
+        result.subagent_capture_status = status
+        result.main_thread = collect_main_thread(workspace)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        result.subagents = []
+        result.subagent_capture_status = "error"
+
+
 def _is_retryable_abort(result) -> bool:
     """Whether a failed skill run should be retried (see the two helpers and
     `_execute_skill_with_retry`'s docstring)."""
@@ -961,6 +1000,7 @@ async def _execute_skill_with_retry(
     stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
+    tool_search: bool = True,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
     failures with exponential backoff. See `_is_retryable_abort`.
@@ -1055,8 +1095,10 @@ async def _execute_skill_with_retry(
                         declared_tools=declared_skill_tools(
                             spec.skill, paths.skills_dir
                         ),
+                        tool_search=tool_search,
                     )
                     after_snapshot = snapshot_files(workspace)
+                    _capture_context_meters(result, workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long

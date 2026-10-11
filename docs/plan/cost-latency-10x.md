@@ -1,6 +1,7 @@
 # Cut e2e research cost and latency as far as they go
 
-**Status:** Not started. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
+**Status:** In progress — T1.3 (PR #3194), T1.4 (PR #3195), T1.11 (PR #3256) and
+T2.1 (PR #3230) landed. Owner: **Promise Igbojionu**, shepherding from 2026-09-27.
 **No lead gates** — every ruling this plan once waited on has been
 made. Update this line as waves land; delete this file when the work ships.
 
@@ -170,7 +171,7 @@ Lever 1's other half: what comes back. Tool-result carry is **24%** of the bill.
   generates a median **9,036 chars of arguments** per call — those are output tokens
   at $15/MTok. Results are the cheaper half (result/arg 0.17–0.33).
 
-**Production runs with tool search off, and that alone was measured at 2.2× cost.**
+**Production runs with tool search off. A short probe measured that at 2.2× cost; a full run puts it at about +12–14%.**
 Every figure in this plan comes from runs with tool search **on**: both harnesses and the
 alpha set `ENABLE_TOOL_SEARCH=true`. The FamilySearch gateway path turns it off:
 `GATEWAY_TOOL_SEARCH` defaults to `false` in `apps/server/proto/worker/options.py`,
@@ -181,17 +182,34 @@ the first call rose from 28,722 to 71,524 tokens (+149%), and the arm cost 2.2×
 control. That probe was short, so re-price it on a full panel run before quoting it
 against the $10.57 baseline.
 
+**Re-priced on a full run (T1.7, 2026-10-09).** One on/off pair on
+`catharina-gosner-daughter`, same commit (`c4cc58e4a`), harness CLI 2.1.139, scratch runs,
+`--skip-judge`. Tool search off added **43,484 tokens** to the first main call
+(39,323 → 82,807), and the main thread re-read about 37,000 more tokens per call
+(main cache reads 4.92M → 8.01M). Helpers were unaffected — every helper type's busiest moment
+stayed within a few thousand tokens — so the extra block rides on the main thread only. Priced
+from those measurements, **off costs about +$1.16 to +$1.34 per run (+12% to +14%) on the
+corpus basis, and about +$1.11 to +$1.15 on the production basis**. **2.2× does not hold for a
+full run.** The raw totals of this one pair went the other way (on $9.78 / 67.8 min, off
+$8.27 / 53.6 min) because the off run happened to launch fewer helpers (18 → 15); catharina's
+on-vs-on runs already range from 7 to 16 launches, so one pair's totals measure that spread, not
+the switch. n = 1 pair; the figure is the projection, not the totals. The hosted path runs CLI
+2.1.220, whose deferral code may differ.
+
 Two pieces of work, in order:
 
 1. **Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
    The request to FamilySearch is drafted in `search-agent-prototype.md` "Open asks"
    and has not been sent. It is the lead's to send. Until it lands, production pays for
    the whole schema block on every call and Wave 2's schema trim is the only relief.
-2. **Measure one e2e panel fixture with tool search off against the same fixture with
+2. **Done 2026-10-09 (above). Measure one e2e panel fixture with tool search off against the same fixture with
    it on**, on the harness, so the production gap is priced on this plan's basis. Do
    this before step 1 lands, because it decides how much of the gap is this lever's.
-   Both harnesses hard-code `"true"` (`env_for_sdk` in `eval/harness/harness/auth.py`
-   and the e2e orchestrator), so the off arm needs a switch.
+   Both harnesses take `--no-tool-search` (`make e2e-run TEST=<slug> TOOL_SEARCH=0
+   RUNLOG_ROOT=<dir outside the repo>`; `make eval-skill ... TOOL_SEARCH=0` for the
+   unit harness), which sends `ENABLE_TOOL_SEARCH=false` through `env_for_sdk` in
+   `eval/harness/harness/auth.py`. Read the pair with
+   `make e2e-compare BEFORE=<on.json> AFTER=<off.json>`.
 
 **Issue #2953 is the other half.** It marks the hot tools always-loaded (per-tool
 `_meta["anthropic/alwaysLoad"]`), which removes most of the corpus's median 12
@@ -268,7 +286,8 @@ change. Whether agent frontmatter can express a thinking budget at all is
 
 **Context is not the constraint.** Haiku's 200k window gives the same 167,000
 compaction trigger as today, and main peaks at 159–174k across all 18 instrumented
-runs. Per-agent windows are **not recorded** (`thread_windows` carries main only), so
+runs. Per-agent windows are now recorded — `subagents[].peak_window_tokens` and
+`subagents[].compactions` (T1.3) — but no committed e2e run carries them yet, so
 verify before assuming Haiku is safe inside an agent.
 
 **Nothing in this product has ever run below effort `high`** — `effort_level` is
@@ -298,7 +317,8 @@ the first time it is pulled.
   first task. **Fold in** per-message wall timestamps and a message id on the
   assistant timeline row: `_usage_key` is already in hand at the write site, both
   halves edit the same instrumentation, and under merge doctrine they are one PR.
-- **Per-thread windows for subagents**, so Wave 4's Haiku arms can be verified.
+- ~~**Per-thread windows for subagents**~~ — built (T1.3): `subagents[].peak_window_tokens`
+  and `compactions`, shown per agent by `make e2e-agent-spend`. Awaits its first run.
 
 **The replay harness — built (T1.4): `make replay-sizes`.** Local-state read tools
 only (~36% of recorded answer chars); the network half is T1.4c. Re-issue a committed
