@@ -2347,6 +2347,72 @@ keeps no tool-call ledger to run them over.
 Each of these was worked through and rejected or deferred with a reason. Read
 this section before reopening one.
 
+- **A surname arm on `research_append`'s person_evidence invariants** — refuse a
+  `confident` link when the project documents the person under another surname.
+  Worked through and **set aside 2026-10-05**, on measurement rather than
+  taste. Three facts decided it:
+
+  1. **It cannot fire on the case it was written for.** The motivating case is
+     the `jimmie-jewel-neal` fixture, where six committed runs attach the wrong
+     parents and the right surname — Sampson — appears nowhere in any run's
+     transcript, tool calls or final state. Only two of the six carry a
+     `confident` link to that person at all, and in both the tree records her
+     under one surname (`Wood`), so a predicate keyed on a *second documented*
+     surname reaches neither. "Sampson" occurs only under `judge_output`, which
+     comes from the answer key, not from anything the agent could read.
+  2. **Any predicate that does fire is a constant, not a guardrail.** Re-run
+     2026-10-09 at aefc2e5f9 over 204 committed e2e final states: **5,734**
+     confident
+     person_evidence links, **1,518** attached to a person carrying more than
+     one distinct surname, **858** surviving an escape of a `MarriedName` name
+     type, a `Marriage` fact, or a `Couple` relationship carrying one — **858 of
+     5,734 (15.0%)** of all confident links, every figure here measured at
+     aefc2e5f9 by the command below. ADR-0011 limit 2's shipped precedent is the plan-completeness
+     rate recorded in the enforcement-layers table above, and a 52% rate was
+     rejected in those terms; 15.0% sits in the same reject band. "Read every
+     refusal" is not tractable at 858.
+  3. **The refusals inspect as false positives, and one class contradicts
+     shipped doctrine.** Sampled from the surviving set: `anders-monsen-ancestry`
+     on KZHH-VTX (Halsteinsdatter / Halstensdatter / Nielsdatter) and
+     `anna-findejsova-daughter` on P915-SXM (Michal / Michl) are orthographic
+     and patronymic variants, which `agents/person-evidence.md` explicitly rules
+     must not downgrade a match. Separating "a variant" from "another surname"
+     is genealogical judgment, and the document-decidable version of the rule
+     does not make that cut.
+
+  Reshaping it onto `coreIdentifierContradictionInvariants` was considered and
+  rejected for the same reason as (1): no anchor in the project documents names
+  the other surname, so no reshaped predicate reaches the case. The numbers move
+  as the corpus grows — re-run before reopening:
+
+  ```
+  python3 -c "
+  import json,glob
+  A=B=C=0
+  for r in sorted(glob.glob('eval/runlogs/e2e/*/*.final-research.json')):
+      d=json.load(open(r,encoding='utf-8')); t=json.load(open(r.replace('final-research','final-tree.gedcomx'),encoding='utf-8'))
+      P={p['id']:p for p in t.get('persons',[])}
+      wed={v for rel in t.get('relationships',[]) if rel.get('type')=='Couple' and any(f.get('type')=='Marriage' for f in rel.get('facts') or []) for k,v in rel.items() if k in ('person1','person2')}
+      for pe in d.get('person_evidence') or []:
+          if pe.get('confidence')!='confident': continue
+          C+=1; p=P.get(pe.get('person_id')) or {}; n=p.get('names') or []
+          s={(x.get('surname') or '').strip().lower() for x in n if (x.get('surname') or '').strip()}
+          if len(s)<2: continue
+          A+=1
+          if not (any(x.get('type')=='MarriedName' for x in n) or any(f.get('type')=='Marriage' for f in p.get('facts') or []) or p.get('id') in wed): B+=1
+  print(C,A,B)"
+  ```
+
+- **Requiring a new shadow guard to name its graduation instrument, sample and
+  read-date at filing.** Dropped by lead ruling **2026-10-06**, on the ground
+  that it would have no instances to govern: the guard registry's `guards[]`
+  holds one entry and it is already enforcing, the registry test introduced with
+  the labelled-case rule already forces a case set on every *new* harness
+  detector, and two checks graduated after the rule was first proposed. The
+  free-text half survives as a docstring requirement on the guards that carry a
+  lexical predicate — a guard whose predicate reads free text names the
+  declared-or-recomputed alternative it rejected.
+
 - **Converting the four skills to agents** (which would give a real `agent_id`
   and make hook attribution trivial). All four do mandatory on-demand `Read` of
   their own `references/*.md`, and that on-demand-`Read` pattern was measured
