@@ -67,10 +67,12 @@ Example:
 ```
 
 **Resolving `personId`.** A tree person whose `id` equals
-`personId` wins. Otherwise the anchor is the one tree person whose `ark`, in
-any spelling `toArk` normalizes (a bare `ark:/61903/4:1:…`, a resolver URL, a
-`4:1:` prefix), names `ark:/61903/4:1:<personId>`, compared case-insensitively
-with any query string dropped. A `1:1:` record-persona ark never matches. Two
+`personId` wins. Otherwise the anchor is the one tree person whose `ark` names
+the trimmed `personId`, read by `treePidOfArk` (`src/utils/ark.ts`, shared with
+`project_create`'s staged build): a `4:1:` ark in any spelling — bare, behind a
+resolver URL, or a bare `4:1:` prefix — or a FamilySearch tree-person URL, with
+percent escapes decoded, surrounding space trimmed, any query string ignored,
+and compared case-insensitively. A `1:1:` record-persona ark never matches. Two
 persons linked to the same FamilySearch id is a pending merge, so the tool
 throws naming both ids rather than picking one; no match throws
 `Person '<id>' not found in tree.gedcomx.json.` init-project keys imported

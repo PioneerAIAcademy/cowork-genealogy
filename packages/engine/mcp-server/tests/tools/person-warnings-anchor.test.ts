@@ -57,10 +57,20 @@ describe("person_warnings anchor lookup", () => {
       "https://familysearch.org/ark:/61903/4:1:KD96-TV2",
       "https://www.familysearch.org/ark:/61903/4:1:KD96-TV2?lang=en",
       "4:1:KD96-TV2",
+      "https://www.familysearch.org/tree/person/details/KD96-TV2",
+      " ark:/61903/4:1:KD96-TV2 ",
     ]) {
       await treeOf([person("I1", ark, EMPTY)]);
       expect(await anchorOf("KD96-TV2"), ark).toEqual([["I1", FIRES]]);
     }
+  });
+
+  it("matches regardless of case and surrounding space on either side", async () => {
+    await treeOf([person("I1", "ark:/61903/4:1:kd96-tv2", EMPTY)]);
+    expect(await anchorOf("KD96-TV2")).toEqual([["I1", FIRES]]);
+    await treeOf([person("I1", "ark:/61903/4:1:KD96-TV2", EMPTY)]);
+    expect(await anchorOf("kd96-tv2")).toEqual([["I1", FIRES]]);
+    expect(await anchorOf(" KD96-TV2 ")).toEqual([["I1", FIRES]]);
   });
 
   it("prefers a tree id over another person's ark", async () => {

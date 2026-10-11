@@ -6,7 +6,7 @@
 // No network, no auth.
 
 import { getProjectStore } from "../store/project-store.js";
-import { toArk } from "../utils/ark.js";
+import { treePidOfArk } from "../utils/ark.js";
 import { classifyProjectPath, missingProjectDirMessage, noProjectResult } from "../utils/project-io.js";
 import type {
   SimplifiedFact,
@@ -123,19 +123,18 @@ async function loadAnchor(
 
 /**
  * The tree person `personId` names: by tree id first, else (issue #2942) the
- * one person whose FamilySearch link (`ark`, `4:1:` in any spelling) carries
- * that id. init-project keys imported persons `I1`, `I2`… and keeps their
- * FamilySearch id in `ark`, so a caller holding only the FamilySearch id still
- * reaches them. Two persons linked to the same id is a pending merge, not a
- * choice to make silently.
+ * one person whose FamilySearch link (`ark`) names that id, read by
+ * `treePidOfArk` (a `4:1:` ark in any spelling or a tree person URL),
+ * compared case-insensitively. init-project keys imported persons `I1`, `I2`…
+ * and keeps their FamilySearch id in `ark`, so a caller holding only the
+ * FamilySearch id still reaches them. Two persons linked to the same id is a
+ * pending merge, not a choice to make silently.
  */
 function findAnchor(persons: SimplifiedPerson[], personId: string): SimplifiedPerson {
   const byId = persons.find((p) => p.id === personId);
   if (byId) return byId;
-  const wanted = `ark:/61903/4:1:${personId}`.toLowerCase();
-  const linked = persons.filter(
-    (p) => typeof p.ark === "string" && toArk(p.ark).replace(/[?#].*$/, "").toLowerCase() === wanted,
-  );
+  const wanted = personId.trim().toUpperCase();
+  const linked = persons.filter((p) => treePidOfArk(p.ark)?.toUpperCase() === wanted);
   if (linked.length === 1) return linked[0];
   if (linked.length > 1) {
     throw new Error(
