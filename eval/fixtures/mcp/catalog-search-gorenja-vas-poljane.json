@@ -1,0 +1,58 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for Gorenja Vas-Poljane, Slovenia — 2 hits. Population censuses from 1931 and 1936 only. Measured live 2026-10-07 with catalogSearchTool({ standardPlace: 'Gorenja Vas-Poljane, Slovenia' }).",
+  "args": {
+    "standardPlace": "~Gorenja"
+  },
+  "response": {
+    "totalHits": 2,
+    "returned": 2,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 4,
+    "hits": [
+      {
+        "id": "koha:1051283",
+        "title": "Popis prebivalstva, 1931. Javorjev dol",
+        "creator": "Idrija. Mestno županstvo",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library", "Online"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:1051283",
+        "hydrated": true,
+        "notes": ["Returns for the 1931 census of the Kingdom of Italy from Javorjev Dol, Gorizia, Italy; later Javorjev dol, Slovenia. Text in Italian."],
+        "authors": [],
+        "subjects": ["Slovenia, Gorenja vas-Poljane, Javorjev dol - Census - 1931"],
+        "filmNotes": [
+          {
+            "filmNumber": "2256422",
+            "imageGroupNumber": "7787382",
+            "shelf": "Film",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Volume 148 (frames 664-668)"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:1052053",
+        "title": "Popis prebivalstva, 1936. Javorjev dol",
+        "creator": "Idrija. Mestno županstvo",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library", "Online"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:1052053",
+        "hydrated": true,
+        "notes": ["Returns for the 1936 census of the Kingdom of Italy from Javorjev Dol, Gorizia, Italy; later Javorjev dol, Slovenia. Text in Italian."],
+        "authors": [],
+        "subjects": ["Slovenia, Gorenja vas-Poljane, Javorjev dol - Census - 1936"],
+        "filmNotes": [
+          {
+            "filmNumber": "2256934",
+            "imageGroupNumber": "7787405",
+            "shelf": "Film",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Frazione di censimento F (frames 682-687)"
+          }
+        ],
+        "availableOnline": true
+      }
+    ]
+  }
+}
