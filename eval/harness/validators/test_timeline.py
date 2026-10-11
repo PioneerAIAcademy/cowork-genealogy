@@ -26,6 +26,12 @@ from validators_lib import assert_foreign_keys_valid
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
 _PAREN_RE = re.compile(r"\([^()]*\)")
+# A year immediately preceded by a comma, at the end of a parenthetical's
+# content -- "<jurisdiction>, 1861" -- as opposed to a bounding life event's
+# own year with no punctuation before it ("married 1859"). See
+# `_names_census_year` for why this is the second, reverse-order half of that
+# check.
+_COMMA_YEAR_RE = re.compile(r",\s*(1[89]\d\d)\s*$")
 
 
 # --- Helpers ----------------------------------------------------------
@@ -249,21 +255,31 @@ def _census_year_of_entry(entry: str) -> int | None:
     census_at = [m.start() for m in re.finditer("census", blanked.lower())]
     if not census_at:
         return None
-    # A parenthetical names the census year only when the year IS its first
-    # token. Any word before the year makes it that word's year, not the
-    # census's — "(married 1859)", "(m. 1859)", "(bapt. 1859)", "(buried
-    # 1870)", "(widowed 1859)", "(emigrated 1859)" are all a bounding life
-    # event's year and must not be returned as the census year (finding #4).
-    # This is a structural rule, not a word list: it needs no enumeration of
-    # every way a genealogist might phrase a life event, and it still accepts
-    # "(1861, England & Wales)" — the year opens that parenthetical, which is
-    # the shape the jurisdiction check below depends on staying eligible.
-    def _opens_with_year(paren_text: str) -> bool:
-        inner = paren_text[1:-1].lstrip()
-        return _YEAR_RE.match(inner) is not None
+    # A parenthetical names the census year when the year is presented as a
+    # DATA FIELD -- jurisdiction and year together, in either order -- not
+    # when it is a bounding life event's own year. "(married 1859)", "(m.
+    # 1859)", "(bapt. 1859)", "(buried 1870)", "(widowed 1859)", "(emigrated
+    # 1859)" all have the shape "<verb> <year>", no punctuation between them,
+    # and must not be returned as the census year (finding #4). "(1861,
+    # England & Wales)" has the year FIRST; an independent review found the
+    # reverse order, "(England & Wales, 1861)", just as plausible a phrasing
+    # for the same fact and not covered by "opens with year" alone -- it was
+    # read as a bounding span and its year discarded entirely, reproducing
+    # #2797's "produced no census gap naming a year" failure for a different
+    # token order. Both year-first and comma-then-year are accepted as naming
+    # the census; a bare verb immediately before the year, with no
+    # punctuation, is not. This is still structural, not a word list: the
+    # comma is what a "<jurisdiction>, <year>" field pairing carries and a
+    # "<verb> <year>" phrase does not, in every shape above and the ones a
+    # word list would have to keep enumerating.
+    def _names_census_year(paren_text: str) -> bool:
+        inner = paren_text[1:-1]
+        if _YEAR_RE.match(inner.lstrip()) is not None:
+            return True
+        return _COMMA_YEAR_RE.search(inner) is not None
 
     bounding_spans = [
-        m.span() for m in _PAREN_RE.finditer(entry) if not _opens_with_year(m.group(0))
+        m.span() for m in _PAREN_RE.finditer(entry) if not _names_census_year(m.group(0))
     ]
 
     def _in_bounding_span(pos: int) -> bool:

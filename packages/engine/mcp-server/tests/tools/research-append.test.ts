@@ -2230,6 +2230,14 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok).toBe(false);
     });
 
+    // An open-ended review found "USA" recognized by neither TIMELINE_NAMES_US_RE
+    // nor the bare-"US" abbreviation check, so it fell through every arm unflagged.
+    it("fires on the abbreviation \"USA\", on a non-US timeline", async () => {
+      await writeProject();
+      const r = await appendWithGap(["USA census 1890"], denmarkEvents);
+      expect(r.ok).toBe(false);
+    });
+
     // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
     // in the entry, which wrongly silenced every one of these on the exact
     // immigrant timeline this guard exists for -- none names a jurisdiction

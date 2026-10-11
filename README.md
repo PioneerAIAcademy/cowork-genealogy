@@ -273,15 +273,15 @@ don't load it explicitly.
                              (evidence classifications are written
                              here and are final at extraction)
 6. citation (agent)          Polish citations to Evidence Explained standards
-8. conflict-resolution       Resolve disagreements between sources
-9. hypothesis-tracking (agent) Track competing candidates
-10. research-exhaustiveness  Gate before proof — applies the seven
+7. conflict-resolution       Resolve disagreements between sources
+8. hypothesis-tracking (agent) Track competing candidates
+9. research-exhaustiveness   Gate before proof — applies the seven
                              stop criteria. If not yet exhaustive, loop
                              back to step 3 (extend plan) or step 2
                              (FAN pivot). If exhaustive, advance.
-11. proof-conclusion         Write the GPS conclusion
+10. proof-conclusion         Write the GPS conclusion
     tree-edit (agent)        Merge persons, correct facts
-12. project-status (agent)   "Where are we? What's next?"
+11. project-status (agent)   "Where are we? What's next?"
 ```
 
 This is the ideal GPS cycle. In practice you can invoke any skill at

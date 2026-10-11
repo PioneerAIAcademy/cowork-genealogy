@@ -441,15 +441,17 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
 // in the string) is still caught, not by the explicit-naming regex but by
 // arm 3's fallback, whenever the timeline actually has a US-placed event --
 // which is the only context that makes a bare "federal census" mean the US
-// census in the first place. `\bUS\b` is matched case-SENSITIVELY and
-// separately from the case-insensitive spellings: a case-insensitive `\bus\b`
-// matches the ordinary pronoun "us" ("not available to us") in running prose,
-// which would wrongly fire on a non-US timeline naming no jurisdiction at all.
+// census in the first place. `\bUS\b`/`\bUSA\b` are matched case-SENSITIVELY
+// and separately from the case-insensitive spellings: a case-insensitive
+// `\bus\b` matches the ordinary pronoun "us" ("not available to us") in
+// running prose, which would wrongly fire on a non-US timeline naming no
+// jurisdiction at all. "USA" carries no such ordinary-word collision, but is
+// kept on the same case-sensitive regex for consistency.
 const TIMELINE_CENSUS_RE = /census/i;
 const TIMELINE_1890_RE = /(?<!\d)1890(?!\d)/;
 const TIMELINE_VETERAN_RE = /veteran/i;
 const TIMELINE_NAMES_US_RE = /united states|u\.s\./i;
-const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b/;
+const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
 // A capitalized word immediately before "census" -- not "Census"/"Federal"
 // (part of the phrase being classified, not a jurisdiction) or
 // "United"/"States" (already covered by TIMELINE_NAMES_US_RE, checked first

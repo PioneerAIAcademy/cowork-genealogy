@@ -108,6 +108,23 @@ def test_passes_when_the_census_year_lives_only_inside_the_parenthetical():
     check_census_from_wiki(BEFORE, _after(gaps), [_wiki_call()], TAGGED)
 
 
+def test_passes_when_the_parenthetical_names_jurisdiction_before_year():
+    """An independent review of PR #3231 found the year-opens-the-parenthetical
+    check only covers one token order. `census (England & Wales, 1861)` -- the
+    jurisdiction first, a comma, then the year -- is just as plausible a
+    phrasing of the same fact as `census (1861, England & Wales)`, which the
+    prior regression pins. The year-first check alone reads this as a bounding
+    span (no word opens it with a year) and discards its year entirely, which
+    reproduces #2797's "produced no census gap naming a year" failure for a
+    different token order, on a gap whose only year sits inside the
+    parenthetical. Must NOT raise."""
+    gaps = [
+        {"start": "1851", "end": "1861", "severity": "high",
+         "expected_events": ["census (England & Wales, 1861)"]},
+    ]
+    check_census_from_wiki(BEFORE, _after(gaps), [_wiki_call()], TAGGED)
+
+
 def test_passes_on_underscore_joined_census_year_tokens():
     """Regression for the second paid run of #2261: the skill named the gaps
     `census_1841` / `census_1861` / `census_1871` (year joined to the record type
