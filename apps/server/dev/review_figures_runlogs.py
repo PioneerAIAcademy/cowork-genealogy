@@ -12,7 +12,7 @@ With no section named, all three run.
 
 checkpoint  Measurement 3, recorded at e18d99b10: 51 instrumented runs, 8,898 calls,
             0 over 1,800 s; segments n=947, p99 1,488 s, 4 over 1,800 s.
-            Instrumented = usage.timeline rows are [t, kind, names] (three elements).
+            Instrumented = every usage.timeline row is [t, kind, names] (three elements).
             A call is an `assistant` row naming a tool, paired FIFO per tool name to
             the next `tool_result` row naming it; its duration is the difference.
             (LIFO pairs the same count and also finds 0 over the ceiling; only the
@@ -28,6 +28,8 @@ spill       Correction 4, at e18d99b10: `Read`s of the CLI's oversized-output sp
             (`.../tool-results/...`, 739) over filesystem operations (FS_OPS, 6,247),
             and the runs that read one (66 of 161). Paths are compared with `\`
             replaced by `/`: a posix-only match drops every Windows run (678).
+            Also printed: tool calls of any kind whose JSON-encoded args contain
+            `claude-resume` (0 at e18d99b10) — a call count, not a path count.
 """
 from __future__ import annotations
 
@@ -82,7 +84,7 @@ def bare(tool):
 def checkpoint(runs):
     calls, segments, unpaired = [], [], 0
     timelines = [(rel, (d.get("usage") or {}).get("timeline") or []) for rel, d in runs]
-    instrumented = [(rel, tl) for rel, tl in timelines if tl and len(tl[0]) == 3]
+    instrumented = [(rel, tl) for rel, tl in timelines if tl and all(len(row) == 3 for row in tl)]
     for _rel, tl in instrumented:
         open_ = defaultdict(list)
         starts = []
@@ -152,11 +154,13 @@ def spill(runs):
                 posix_only += 1
     return {"runs": len(runs), "fs_ops": ops, "reads": reads, "spill_reads": spills,
             "spill_reads_posix_only": posix_only, "runs_with_spill": len(runs_with),
-            "claude_resume_paths": resume}
+            "claude_resume_calls": resume}
 
 
 def main(root, sections):
     runs = load_runs(root)
+    if not runs:
+        sys.exit(f"no run logs at {root}/eval/runlogs/e2e/*/run-<ts>.json; pass the extracted corpus root")
     print(f"run logs read: {len(runs)} (eval/runlogs/e2e/*/run-<ts>.json under {root})")
     if "checkpoint" in sections:
         r = checkpoint(runs)
@@ -180,7 +184,7 @@ def main(root, sections):
         print(f"{r['spill_reads']:,} spill reads of {r['fs_ops']:,} filesystem operations "
               f"({r['spill_reads'] / r['fs_ops']:.1%}; {r['reads']:,} Reads); "
               f"{r['runs_with_spill']} of {r['runs']} runs; posix-only match {r['spill_reads_posix_only']:,}; "
-              f"paths containing claude-resume: {r['claude_resume_paths']}")
+              f"calls whose args mention claude-resume: {r['claude_resume_calls']}")
 
 
 if __name__ == "__main__":

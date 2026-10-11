@@ -2781,8 +2781,8 @@ category of control — injection is an input-integrity problem on a channel nei
 mechanism reads — so do not accept "tune the guardrail" as a plan. And it is not even
 on: `guardrailIdentifier` is a placeholder in beta and prod, and their README warns
 that enabling `PROMPT_ATTACK` 403s every request on v1.3.x. Exposure, from the corpus:
-5,234 of 27,002 tool calls return text a third party wrote — 19.4% of all calls,
-33.6% of MCP calls, about 32 per run over 163 runs (`d016032e5`; set and rule in
+5,234 of 27,002 tool calls return text a third party wrote — 19.4% of all calls;
+5,199 of them are MCP calls, 33.6% of 15,474 (the other 35 are WebFetch/WebSearch); about 32 per run over 163 runs (`d016032e5`; set and rule in
 `apps/server/dev/review_figures_runlogs.py`; an unrecorded set first gave 5,554) — mostly `record_search`,
 `record_read`, `image_transcribe`, `wiki_place_page`, `fulltext_search`. The
 gateway-side fix is theirs and small (emit `guardContent` for `toolResult`, or teach
@@ -2889,7 +2889,7 @@ idle-session billing.
 
 - **"Exactly 24 take a `projectPath` and 24 are pure HTTP callers" is 21 and 27** —
   21 take a `projectPath` and the other 27 do not, of 48 at `e18d99b10` (27 and 26 of 53
-  at `19ea6d089`; `packages/engine/mcp-server/dev/count-projectpath-tools.ts`); several of those 27 make no network
+  at `19ea6d089`; `packages/engine/mcp-server/dev/count-projectpath-tools.ts`); several that take none make no network
   call either, so "pure HTTP callers" is the wrong gloss for them too.
   The 24 is a file count that includes three helper modules exporting no tool. The
   argument survives; a reviewer who checks the number stops trusting the rest.

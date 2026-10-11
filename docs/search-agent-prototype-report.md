@@ -191,7 +191,7 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 4. **The 14.7% "reads its own transcript" row** is the oversized-output spill: 739 reads, 11.8%
    of 6,247 filesystem operations, 66 of 161 runs (`e18d99b10`; `review_figures_runlogs.py`).
 5. **"24 take a `projectPath`, 24 are pure HTTP"** was 21 and 27 of 48 tools at `e18d99b10`,
-   and is 27 and 26 of 53 at `19ea6d089` (`dev/count-projectpath-tools.ts`). Several that
+   and is 27 and 26 of 53 at `19ea6d089` (`packages/engine/mcp-server/dev/count-projectpath-tools.ts`). Several that
    take none make no network call either.
 6. **State the grain** ([above](#the-validated-grain)).
 
@@ -237,7 +237,7 @@ and the S3 objects. Our own decisions: handoff U21, all made 2026-09-29.
 - **Probes:** `apps/server/dev/p1/` (`probe_gateway_parity.py` checks TAP's integ route);
   `apps/server/proto/eb-worker-probe/`.
 - **In git:** `eval/runlogs/e2e/bagley-father-1884/run-2026-09-25_01-42-24.*` (with its
-  `.ann.json`) and `paerai-teupooihi-spouse/run-2026-09-21_16-47-07.*`.
-- **Local only:** prototype exports (D17 and D18 on Richard's machine), P1 and P2 evidence. The scripts behind measurement 3 and
-  corrections 2, 4 and 5 are `apps/server/dev/review_figures_runlogs.py` and
+  `.ann.json`) and `paerai-teupooihi-spouse/run-2026-09-21_16-47-07.*`. The scripts behind
+  measurement 3 and corrections 2, 4 and 5 are `apps/server/dev/review_figures_runlogs.py` and
   `packages/engine/mcp-server/dev/count-projectpath-tools.ts` (U22).
+- **Local only:** prototype exports (D17 and D18 on Richard's machine), P1 and P2 evidence.
