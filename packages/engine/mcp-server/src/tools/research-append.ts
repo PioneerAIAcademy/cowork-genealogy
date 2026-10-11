@@ -403,6 +403,20 @@ function unorderableDateWarnings(entry: any, research: any): string[] {
 //      arm 3, which fires if the timeline has a US-placed event elsewhere --
 //      narrowing arm 2 for precision costs this shape, deliberately, since
 //      the alternative (any capitalized word) cost the four phrasings above.
+//      A SECOND, structural knowingly-lets-through: `usPlaceWords` only knows
+//      THIS timeline's own recorded places, not US geography in general, so
+//      a real US state or county the timeline has never mentioned ("New York
+//      census 1890", "Pottsville census 1890" on a timeline that has only
+//      ever recorded Schuylkill County) is indistinguishable from a foreign
+//      one and arm 2 silences it -- a false allow (the entry should fire,
+//      since the federal census is equally gone in New York). Deliberate,
+//      not an oversight: the only fix that closes it is a US-places
+//      reference wider than this one document, which is the per-jurisdiction
+//      table ADR-0012 forbids in different clothing, and ADR-0011 limit 1
+//      prefers exactly this direction of error (a false allow over a false
+//      refusal) when the two trade off. Found by an independent review,
+//      2026-10-11; not separately put to the lead, since it is a cost of the
+//      no-table design the ruling itself chose, not a deviation from it.
 //   3. An entry naming no jurisdiction at all falls back to the timeline's
 //      own events -- it fires when ANY non-null `standard_place` ends in
 //      "United States". Not "every": an immigrant's own timeline routinely
@@ -441,8 +455,15 @@ const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b/;
 // "United"/"States" (already covered by TIMELINE_NAMES_US_RE, checked first
 // -- reaching this regex at all means the text did not match it
 // case-insensitively in any form). Captured so the caller can check it
-// against the timeline's own recorded US places.
-const TIMELINE_NAMES_OTHER_JURISDICTION_RE = /\b(?!Census\b|Federal\b|United\b|States\b)([A-Z][a-z]+) census\b/;
+// against the timeline's own recorded US places. "[Cc]ensus" deliberately,
+// not a trailing /i flag -- an /i flag would also make the leading
+// `[A-Z][a-z]+` match a lowercase word, defeating the whole point of
+// requiring a CAPITALIZED word. An independent review found the first cut's
+// bare lowercase "census" meant "Denmark Census 1890" (capital C) never
+// matched this regex at all and fell through to arm 3's fallback -- the
+// exact silencing this arm exists to provide, lost on nothing but a
+// capitalization choice.
+const TIMELINE_NAMES_OTHER_JURISDICTION_RE = /\b(?!Census\b|Federal\b|United\b|States\b)([A-Z][a-z]+) [Cc]ensus\b/;
 
 export function timelineCensus1890Invariants(entry: any): string[] {
   const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];

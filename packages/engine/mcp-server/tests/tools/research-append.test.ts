@@ -2258,6 +2258,39 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok).toBe(false);
     });
 
+    // An independent review found arm 2's jurisdiction regex hard-coded a
+    // lowercase "census" with no /i, so capitalizing "Census" as a
+    // record-title convention skipped the regex match entirely and fell to
+    // arm 3's fallback, silently losing the "names another country" silence
+    // this arm exists to provide -- identical to the allowed lowercase form
+    // in every way except capitalization.
+    it.each([
+      ["Denmark, capitalized", "Denmark Census 1890"],
+      ["Sweden, capitalized", "Sweden Census 1890"],
+    ])("still allows a capitalized 'Census' naming another country, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    // Documents, rather than hides, the structural cost of matching against
+    // only THIS timeline's own recorded places (no wider US-geography
+    // reference, which would be the per-jurisdiction table ADR-0012 forbids
+    // in different clothing): a real US state or county this specific
+    // timeline has never mentioned is indistinguishable from a foreign one,
+    // so arm 2 silences it -- a false allow, not a false refusal, which is
+    // the direction ADR-0011 limit 1 prefers. Pottsville is literally the
+    // Schuylkill County seat for this same fixture's subject; the guard has
+    // no way to know that from this one timeline entry alone.
+    it.each([
+      ["a different US state", "New York census 1890"],
+      ["the county seat, not yet on this timeline", "Pottsville census 1890"],
+    ])("knowingly allows an unrecorded US place name immediately before 'census': %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     it("allows a non-1890 census year", async () => {
       await writeProject();
       const r = await appendWithGap(["census 1900"]);

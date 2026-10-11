@@ -252,7 +252,7 @@ Two consequences worth holding onto:
   and the `PreToolUse` hook. (`disallowedTools:` was deleted from every agent
   on 2026-08-30 — it only restated the `tools:` omission.)
 - **Only two skills hold `research_query`** — `research` and `search-records` — and seven
-  of the twenty-five agents, `search-external-sites` among them. Everything else that needs project
+  of the twenty-six agents, `search-external-sites` among them. Everything else that needs project
   state does a whole-file `Read`, which is the thing the orchestrator forbids for itself
   because `research.json` reaches 100+ assertions by late run.
 - **The hook carries exactly four rules**, in
