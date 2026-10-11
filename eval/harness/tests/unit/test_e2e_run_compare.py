@@ -151,3 +151,57 @@ def test_helper_time_is_summed_per_run(tmp_path):
     after = _log(4.0, subagents=[sub(90.0)], subagent_capture_status="captured")
     b, a = _pair(tmp_path, before, after)
     assert "3.0 min -> 1.5 min" in compare(before, b, after, a)
+
+
+def _off_on_pair(tmp_path):
+    """T1.7's reading: an on run, then an off run, with the meters it reads."""
+    on = _log(5.0, tool_calls=[
+        {"tool": "ToolSearch"}, {"tool": "ToolSearch"},
+        {"tool": "ToolSearch", "agent_id": "a1"}, {"tool": "Read"},
+    ])
+    on["usage"].update(
+        tool_search=True, tool_search_offered=True,
+        message_usage=[["sub", 9, 9, 9], ["main", 3, 0, 35_141], ["main", 3, 35_144, 900]],
+        usage={"cache_read_input_tokens": 1_000_000, "cache_creation_input_tokens": 200_000},
+        whole_run_usage={"cache_read_input_tokens": 3_000_000, "cache_creation_input_tokens": 500_000},
+    )
+    off = _log(6.0, tool_calls=[{"tool": "Read"}])
+    off["usage"].update(
+        tool_search=False, tool_search_offered=False,
+        message_usage=[["main", 3, 0, 74_997]],
+        usage={"cache_read_input_tokens": 1_500_000, "cache_creation_input_tokens": 300_000},
+        whole_run_usage={"cache_read_input_tokens": 4_000_000, "cache_creation_input_tokens": 600_000},
+    )
+    b, a = _pair(tmp_path, on, off)
+    return compare(on, b, off, a)
+
+
+def _line(text, label):
+    return next(line for line in text.splitlines() if line.strip().startswith(label))
+
+
+def test_a_tool_search_switch_is_named_as_a_differing_setting(tmp_path):
+    text = _off_on_pair(tmp_path)
+    assert "tool_search True -> False" in text
+    assert "tool_search_offered True -> False" in text
+
+
+def test_the_tool_search_meters_are_shown(tmp_path):
+    text = _off_on_pair(tmp_path)
+    assert "2 -> 0" in _line(text, "ToolSearch (main)")
+    assert "1 -> 0" in _line(text, "ToolSearch (helpers)")
+    # The FIRST main row — not the first row (a helper's), not the second main one.
+    assert "35,144 -> 75,000" in _line(text, "first main call context")
+    assert "1,000,000 -> 1,500,000" in _line(text, "main cache read")
+    assert "200,000 -> 300,000" in _line(text, "main cache write")
+    assert "3,000,000 -> 4,000,000" in _line(text, "whole-run cache read")
+    assert "500,000 -> 600,000" in _line(text, "whole-run cache write")
+
+
+def test_the_tool_search_meters_read_dashes_on_a_run_that_predates_them(tmp_path):
+    before, after = _log(5.0), _log(4.0)
+    b, a = _pair(tmp_path, before, after)
+    text = compare(before, b, after, a)
+    assert "run settings that differ: none" in text
+    for label in ("first main call context", "main cache read", "whole-run cache write"):
+        assert "-- -> --" in _line(text, label), label

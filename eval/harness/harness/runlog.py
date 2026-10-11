@@ -609,6 +609,7 @@ def build_run_log(
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
     review_sample: dict[str, Any] | None = None,
+    tool_search: bool | None = None,
 ) -> dict[str, Any]:
     """Wrap per-test entries in the run-log envelope.
 
@@ -620,6 +621,11 @@ def build_run_log(
     envelope is `additionalProperties: false`, and its absence is what makes
     every pre-sampling run log, and every partial write, fall back to the
     every-dimension rule in `check_runlogs.rule3_completeness`.
+
+    `tool_search` records `--tool-search` / `--no-tool-search`. `run_tests.py`
+    passes it on every write, the default `True` included, so a new log says
+    which way it ran; None omits it, and absence (every log written before the
+    field) means on — no unit run could turn it off until the flag existed.
     """
     totals = {k: 0 for k in _TOTALS_KEYS}
     for entry in tests:
@@ -650,6 +656,8 @@ def build_run_log(
     }
     if review_sample is not None:
         envelope["review_sample"] = review_sample
+    if tool_search is not None:
+        envelope["tool_search"] = tool_search
     return envelope
 
 
