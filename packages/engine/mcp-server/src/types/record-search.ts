@@ -5,6 +5,7 @@ import type { SimplifiedGedcomX } from "./gedcomx.js";
 import type { RankSearchMatchesResult } from "./rank-search-matches.js";
 import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
+import type { SurnameVariantHints } from "../utils/surname-variant-hints.js";
 
 export interface FSDisplay {
   name?: string;
@@ -413,4 +414,10 @@ export interface RecordSearchToolResponse {
     candidates: JurisdictionCandidate[];
     note: string;
   };
+  // Present only on a search that did not find the subject — no hits, or hits
+  // ranking judged to hold no match — where a surname field ends in -datter or
+  // -dotter. Lists the abbreviated forms the index may hold (Halsteinsdatter →
+  // Halsteinsdr), one entry per qualifying field. Advisory only; serialized
+  // BEFORE `results` and never staged. See `utils/surname-variant-hints.ts`.
+  surnameVariantHints?: SurnameVariantHints;
 }

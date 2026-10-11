@@ -1158,9 +1158,11 @@ def test_stage_and_compact_degrades_on_node_failure(tmp_path, monkeypatch):
 
     response = {"results": [{"id": "r1"}]}
     ranked = {"matches": [{"recordId": "r1"}]}
-    out = mock_mcp._stage_and_compact_search_results(
-        tmp_path, "record_search", response, ranked
-    )
+    # Absorbed, but not silently: a staging fault must not read as the model's.
+    with pytest.warns(UserWarning, match="staging/compaction failed"):
+        out = mock_mcp._stage_and_compact_search_results(
+            tmp_path, "record_search", response, ranked
+        )
 
     assert len(out) == 4, f"the degrade arm must return four values, got {len(out)}"
     staged, resp, unlogged, rank = out                # the caller's unpack
@@ -1474,3 +1476,109 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert [e["id"] for e in log] == [out["logId"]]
     assert log[0]["outcome"] == "partial"
     assert log[0]["external_site"]["url_generated"] == out["url"]
+
+
+# ─── surnameVariantHints: production's own rule, computed per call (#3054) ───
+#
+# The mock runs the compiled `surnameVariantHints` on the arguments the model
+# actually sent, inside the node process the call already spawns, so the agent
+# sees what production would send and no fixture carries a hand-written copy.
+
+_SURNAME_HINTS_JS = (
+    REPO_ROOT / "packages/engine/mcp-server/build/utils/surname-variant-hints.js"
+)
+_HALSTEINS_NIL = "record-search-surname-not-abbreviated-zero-results"
+
+
+def _hint_body(tmp_path, fixture, args):
+    if not _SURNAME_HINTS_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    server, call_log, tools_by_name = create_mock_server([fixture], FIXTURES_DIR, workspace=tmp_path)
+    return _extract_response_dict(_invoke(tools_by_name, "record_search", args)), call_log
+
+
+@pytest.mark.parametrize("with_project", [True, False])
+def test_nil_datter_search_carries_production_surname_hint(tmp_path, with_project):
+    """Both nil paths: with a projectPath (the hint rides the backlog process) and
+    without one (the one path that spawns a process only for this)."""
+    args = {"givenName": "Unna", "surname": "Halsteinsdatter", "collectionId": "1468080"}
+    if with_project:
+        args["projectPath"] = str(tmp_path)
+    body, call_log = _hint_body(tmp_path, _HALSTEINS_NIL, args)
+
+    hint = body.get("surnameVariantHints")
+    assert hint, "the compiled module is present but no hint came back — the node call failed"
+    assert hint["fields"] == [{
+        "field": "surname",
+        "searched": "Halsteinsdatter",
+        "variants": ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd"],
+    }]
+    keys = list(body)
+    assert keys.index("surnameVariantHints") == keys.index("results") - 1
+    # What the run log keeps is what the model saw.
+    assert call_log[-1]["response"]["surnameVariantHints"] == hint
+
+
+def test_hint_follows_the_call_not_the_fixture(tmp_path):
+    """The same catch-all fixture answers an already-abbreviated surname, and
+    production would offer nothing for it — neither may the mock."""
+    body, _ = _hint_body(
+        tmp_path,
+        _HALSTEINS_NIL,
+        {"givenName": "Urna", "surname": "Halsteinsdtr", "collectionId": "1468080"},
+    )
+    assert "surnameVariantHints" not in body
+
+
+def test_spouse_surname_hint_names_its_field(tmp_path):
+    body, _ = _hint_body(
+        tmp_path,
+        _HALSTEINS_NIL,
+        {"surname": "Monsen", "spouseSurname": "Halsteinsdatter", "collectionId": "1468080"},
+    )
+    assert [e["field"] for e in body["surnameVariantHints"]["fields"]] == ["spouseSurname"]
+
+
+def test_non_patronymic_nil_carries_no_surname_hint(tmp_path):
+    body, _ = _hint_body(
+        tmp_path,
+        "record-search-patrick-flynn-no-results",
+        {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+    )
+    assert "surnameVariantHints" not in body
+    assert body["nilSearchNeedsLog"] == NIL_SEARCH_NEEDS_LOG_NOTE
+
+
+def test_hit_carries_no_surname_hint(tmp_path):
+    """A search that found something gets no hint — the trigger is 'did not find
+    the subject', and this hit has no ranking to say otherwise."""
+    body, _ = _hint_body(
+        tmp_path,
+        "record-search-urna-halsteinsdr-marriage-match",
+        {"surname": "Halsteinsdr", "collectionId": "1468080", "projectPath": str(tmp_path)},
+    )
+    assert body.get("staged")
+    assert "surnameVariantHints" not in body
+
+
+def test_surname_hint_degrades_with_a_warning_on_node_failure(tmp_path, monkeypatch):
+    """A harness fault must not look like the model ignoring the hint: no crash,
+    no hint, and a warning that says why."""
+    if not _SURNAME_HINTS_JS.exists():
+        pytest.skip("compiled MCP build absent")
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+    with pytest.warns(UserWarning, match="surnameVariantHints"):
+        hint = mock_mcp._surname_variant_hints(
+            {"surname": "Halsteinsdatter"}, {"totalMatches": 0, "results": []}
+        )
+    assert hint is None
+
+    with pytest.warns(UserWarning, match="nil-search node call failed"):
+        unlogged, hint = mock_mcp._unlogged_staged_handles(
+            tmp_path, args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
+        )
+    assert (unlogged, hint) == ([], None)
