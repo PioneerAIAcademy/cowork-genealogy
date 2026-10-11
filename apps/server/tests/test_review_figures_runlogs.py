@@ -93,4 +93,4 @@ def test_spill_normalises_separators_and_counts_fs_ops(tmp_path):
     ]
     r = rf.spill(_runs(tmp_path, {"tool_calls": calls}, {"tool_calls": [{"tool": "Read", "args": {"file_path": "/a"}}]}))
     assert (r["fs_ops"], r["reads"], r["spill_reads"], r["spill_reads_posix_only"]) == (8, 4, 2, 1)
-    assert (r["runs"], r["runs_with_spill"], r["claude_resume_paths"]) == (2, 1, 1)
+    assert (r["runs"], r["runs_with_spill"], r["claude_resume_calls"]) == (2, 1, 1)
