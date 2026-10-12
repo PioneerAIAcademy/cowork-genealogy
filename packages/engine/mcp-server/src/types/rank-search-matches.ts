@@ -55,7 +55,7 @@ export interface RankedMatch {
   recordArk?: string;
   /** 0-1 match score; null when the FS call kept failing (never dropped). */
   matchScore: number | null;
-  /** 1-10 confidence bucket; omitted on a no-match / failure. */
+  /** 1-5 confidence bucket; omitted on a no-match / failure. */
   matchConfidence?: number;
   /** Only set when `checkAttachments` and the batch call succeeded. */
   attachedToSubject?: boolean;
