@@ -1,0 +1,19 @@
+{
+  "id": "tomasa-tassara-birth",
+  "name": "Tomasa Tassara — birth about 1864, Buenos Aires, Argentina",
+  "genre": "record-hint",
+  "source_pid": "GW82-2VP",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Tomasa Tassara born, the wife of Juan Rossello and mother of Juan Felipe Marcelo (christened 15 August 1885), Angela (born 31 July 1889) and Maria (christened 25 February 1899) Rossello at Mercedes, Buenos Aires, Argentina?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1860s",
+    "geography": "AR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 33, hint-samples.csv row 13, flag adds_birth, confidence 3). Draft transcribed from an 1895 Mercedes, Buenos Aires national census entry; unverified."
+}

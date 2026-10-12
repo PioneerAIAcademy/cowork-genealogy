@@ -626,10 +626,15 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 > - **`sessions`** — **not built**; the signed cookie is self-contained, which is
 >   the "or stateless JWT" branch this bullet allowed for.
 > - **`usage`** — built as **`turn_costs`** (project_id, user_id, model, cost_usd,
->   input_tokens, output_tokens, created), one row per completed turn. The sandbox
->   POSTs each turn's cost to `/api/turn-cost`, authenticated by its Anthropic proxy
->   token; no foreign keys, so a deleted session's spend stays. Only production
->   (proxy active) reports. No budget reads it yet.
+>   input_tokens, output_tokens, build, continuations, created), one row per completed
+>   turn. The sandbox POSTs each turn's cost to `/api/turn-cost`, authenticated by its
+>   Anthropic proxy token; no foreign keys, so a deleted session's spend stays. Only
+>   production (proxy active) reports. `build` is the sandbox image's own commit, so a
+>   sandbox that outlives a deploy is billed to the code it runs; `continuations` counts
+>   the stops the Stop hook overrode that turn. `create_all` never alters a live table, so
+>   `init_db` adds any nullable column the model has and the table lacks
+>   (`db.add_missing_columns`). `make alpha-costs` prints cost per day, per build and the
+>   top sessions. No budget reads it yet.
 
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,

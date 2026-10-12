@@ -1,0 +1,247 @@
+{
+  "persons": [
+    {
+      "id": "G5RB-GL5",
+      "ark": "ark:/61903/4:1:G5RB-GL5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "fad389cc-a65d-4ce8-b635-f0caa32cdd93",
+          "preferred": true,
+          "given": "Claudia",
+          "surname": "Almada",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "117b9952-45d7-4fc7-8285-ff286b80663b",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QR5C-JR3"
+        },
+        {
+          "ref": "QR5C-J5V"
+        }
+      ]
+    },
+    {
+      "id": "27R5-6NW",
+      "ark": "ark:/61903/4:1:27R5-6NW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Lujana Juana",
+          "surname": "Sequeira",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "19 Aug 1880",
+          "standard_date": "19 Aug 1880",
+          "place": "Nuestra Senora de la Merced, General Lavalle, Buenos Aires, Argentina",
+          "standard_place": "General Lavalle, Buenos Aires, Argentina"
+        },
+        {
+          "id": "9323b5d4-6fe9-4660-8fb3-767ed9d47155",
+          "type": "Baptism",
+          "date": "19 Aug 1880",
+          "standard_date": "19 Aug 1880",
+          "place": "Nuestra Señora de la Merced, General Lavalle, General Lavalle, Buenos Aires, Argentina",
+          "standard_place": "Nuestra Señora de la Merced, General Lavalle, General Lavalle, Buenos Aires, Argentina"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QR5C-VF6"
+        },
+        {
+          "ref": "QR5C-VXR"
+        }
+      ]
+    },
+    {
+      "id": "G5TM-S45",
+      "ark": "ark:/61903/4:1:G5TM-S45",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8f23d50a-3008-47dd-986a-1ba223169b11",
+          "preferred": true,
+          "given": "Alejandro",
+          "surname": "Sequeira",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3d5c01f9-b8a6-45ca-b985-4f9404e9e5fd",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QR5C-JPD"
+        },
+        {
+          "ref": "QR5C-JL7"
+        }
+      ]
+    },
+    {
+      "id": "G5R1-2GM",
+      "ark": "ark:/61903/4:1:G5R1-2GM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "fffaeb33-90f8-422f-81d5-40879e9ee725",
+          "preferred": true,
+          "given": "Gregoria",
+          "surname": "Almada",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6a90ecac-4e61-46be-b6f4-895561c7c491",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QR5C-JH1"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G5TM-S45",
+      "person2": "G5RB-GL5",
+      "facts": [
+        {
+          "id": "be0e97a9-ee89-4a84-83f3-feaef27e6362",
+          "type": "Marriage",
+          "date": "12 May 1879",
+          "standard_date": "12 May 1879",
+          "place": "Nuestra Señora de la Merced, General Lavalle, General Lavalle, Buenos Aires, Argentina",
+          "standard_place": "Nuestra Señora de la Merced, General Lavalle, General Lavalle, Buenos Aires, Argentina"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "G5R1-2GM",
+      "child": "G5RB-GL5"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G5TM-S45",
+      "child": "27R5-6NW"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G5RB-GL5",
+      "child": "27R5-6NW"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_G5RB-GL5",
+      "title": "Claudia Almada",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Claudia Almada (PID G5RB-GL5); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G5RB-GL5"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_27R5-6NW",
+      "title": "Lujana Juana Sequeira",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Lujana Juana Sequeira (PID 27R5-6NW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:27R5-6NW"
+    },
+    {
+      "id": "sd_person_G5TM-S45",
+      "title": "Alejandro Sequeira",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Alejandro Sequeira (PID G5TM-S45); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G5TM-S45"
+    },
+    {
+      "id": "sd_person_G5R1-2GM",
+      "title": "Gregoria Almada",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Gregoria Almada (PID G5R1-2GM); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G5R1-2GM"
+    },
+    {
+      "id": "QR5C-J5V",
+      "title": "Claudia Almada, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XNDD-ZLY : Mon Aug 03 23:39:07 UTC 2026), Entry for Lujana Juana Sequeira and Alejandro Sequeira, 19 August 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XNDD-ZL1"
+    },
+    {
+      "id": "QR5C-JR3",
+      "title": "\"Computer-Generated Trees,\" entry for Claudia Almada.",
+      "citation": "\"Computer-Generated Trees,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/2:5:7Z8Z-5MQ : accessed 12 October 2026), entry for Claudia Almada, cites sources; \"Argentina Computer-Generated Tree by FamilySearch\" file (2:5:2:MMNB-YD1), submitted 19 May 2023 by Genealogies Data Admin.",
+      "url": "https://familysearch.org/ark:/61903/2:5:7Z8Z-5MQ"
+    },
+    {
+      "id": "QR5C-VF6",
+      "title": "Lujana Juana Sequeira, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XNDD-ZLY : Mon Aug 03 23:39:07 UTC 2026), Entry for Lujana Juana Sequeira and Alejandro Sequeira, 19 August 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XNDD-ZLY"
+    },
+    {
+      "id": "QR5C-VXR",
+      "title": "\"Computer-Generated Trees,\" entry for Lujana Juana Sequeira.",
+      "citation": "\"Computer-Generated Trees,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/2:5:7ZKF-N3S : accessed 12 October 2026), entry for Lujana Juana Sequeira, cites sources; \"Argentina Computer-Generated Tree by FamilySearch\" file (2:5:2:MMNB-YD1), submitted 19 May 2023 by Genealogies Data Admin.",
+      "url": "https://familysearch.org/ark:/61903/2:5:7ZKF-N3S"
+    },
+    {
+      "id": "QR5C-JPD",
+      "title": "Alejandro Sequeira, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XNDD-ZLY : Mon Aug 03 23:39:07 UTC 2026), Entry for Lujana Juana Sequeira and Alejandro Sequeira, 19 August 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XNDD-ZLB"
+    },
+    {
+      "id": "QR5C-JL7",
+      "title": "\"Computer-Generated Trees,\" entry for Alejandro Sequeira.",
+      "citation": "\"Computer-Generated Trees,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/2:5:7ZZB-4VX : accessed 12 October 2026), entry for Alejandro Sequeira, cites sources; \"Argentina Computer-Generated Tree by FamilySearch\" file (2:5:2:MMNB-YD1), submitted 19 May 2023 by Genealogies Data Admin.",
+      "url": "https://familysearch.org/ark:/61903/2:5:7ZZB-4VX"
+    },
+    {
+      "id": "QR5C-JH1",
+      "title": "\"Computer-Generated Trees,\" entry for Gregoria Almada.",
+      "citation": "\"Computer-Generated Trees,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/2:5:7Z2Z-V6L : accessed 12 October 2026), entry for Gregoria Almada, cites sources; \"Argentina Computer-Generated Tree by FamilySearch\" file (2:5:2:MMNB-YD1), submitted 19 May 2023 by Genealogies Data Admin.",
+      "url": "https://familysearch.org/ark:/61903/2:5:7Z2Z-V6L"
+    }
+  ]
+}

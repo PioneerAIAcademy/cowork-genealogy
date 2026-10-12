@@ -1,0 +1,19 @@
+{
+  "id": "simon-heydocker-death",
+  "name": "Simon Heydöcker — death in August 1808, Laakirchen, Upper Austria",
+  "genre": "record-hint",
+  "source_pid": "GZRZ-TNG",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Simon Heydöcker die, the husband of Katharina and father of Juliana (born 15 June 1798) and Josef (born 11 October 1801) Heidegger at Laakirchen, Upper Austria?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1800s",
+    "geography": "AT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 36, hint-samples.csv row 39, flags adds_birth/adds_death, confidence 3). Draft transcribed from an 1808 Laakirchen, Upper Austria parish death register entry; unverified."
+}
