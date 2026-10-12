@@ -58,18 +58,22 @@ wiki tools can be overridden per-user via `wikiApiUrl` in
 `~/.familysearch-mcp/config.json` (useful for pointing at a local dev
 instance).
 
-**There is no public deployment yet, so the defaults are a developer's
-personal host.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
-`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at
-one machine's tailnet. The hosted path can now be redirected without an
+**The defaults are a developer's personal host, and it is publicly
+reachable.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
+`DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at a
+`*.ts.net` host served to the public internet through Tailscale Funnel, so
+every install reaches it. Never describe it as private, undeployed or
+unreachable — not in a README, a known-limits list or a review. A `dig`
+returning a `100.64.0.0/10` address is the tailnet-internal answer and says
+nothing about public reach. The hosted path can now be redirected without an
 engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
 plane and `hosted_config()` writes them into the sandbox's config — but
 the compiled-in defaults still apply everywhere else, including every
 installed `.mcpb`. When one of those calls fails the agent gets an
 actionable error and then quietly ships a thinner answer, so the user sees
 nothing; `make e2e-wiki-failures` is what surfaces the current rate and its
-causes. Do not write "end users do not need to set this" — that was true only
-in the sense that they cannot.
+causes. Those failures are ordinary intermittent availability, not a
+locked-out audience.
 
 ## Repository layout
 

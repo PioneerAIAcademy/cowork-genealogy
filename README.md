@@ -1,13 +1,12 @@
 # Genealogy Research
 
-Family history research with Claude, held to the standard professional
-genealogists use.
+Family history research with Claude, using records that are online.
 
 It is for anyone from a first-time family historian to a certified
-genealogist. Ask it a question about your family and it works the way a
-professional would, following the Genealogical Proof Standard: it records every
-search and every piece of evidence, and tells you how sure it is and why. It
-runs in Claude Desktop's Cowork tab, using your FamilySearch account.
+genealogist. Ask it a question about your family and it plans the research,
+searches online records and reads what it finds. It records every search and
+every piece of evidence, and tells you how sure it is and why. It runs in
+Claude Desktop's Cowork tab, using your FamilySearch account.
 
 ## What you can do
 
@@ -26,10 +25,6 @@ and why.
   for you to open; save the page as a PDF and upload it, and it reads that.
 - **Find missing family members** — children and siblings your tree doesn't
   have, reported as candidates with the evidence for each.
-- **Survey a surname** — every household of a surname in a place across the
-  US federal censuses, so you can tell same-named men apart.
-- **Browse an unindexed film** — pages through the images to the entry you
-  need and transcribes it.
 
 **Read records**
 
@@ -37,8 +32,10 @@ and why.
   PDFs you upload.
 - **Translate a record** in German, French, Spanish, Italian, Dutch, Latin or
   Portuguese, with old terms and abbreviations explained.
+- **Build a timeline** — a life year by year from the records, showing the
+  gaps and anything that doesn't fit one life.
 
-**Check the tree**
+**Check the FamilySearch tree**
 
 - **Check a person's sources** — which attached sources hold an indexing error
   to correct, and which belong to someone else.
@@ -48,8 +45,6 @@ and why.
   against.
 - **Review FamilySearch hints** — a recommendation to accept or reject each
   hint on a person.
-- **Build a timeline** — a life year by year from the records, showing the
-  gaps and anything that doesn't fit one life.
 
 **Learn and get help**
 
@@ -59,27 +54,26 @@ and why.
   the pages used.
 - **Understand the history** — boundary changes, migration, naming customs and
   old calendars.
-- **Get your work reviewed** — a mentor checks your conclusion the way a
-  certified genealogist would.
+- **Get your work reviewed** — a mentor reads your conclusion and tells you
+  what would make it stronger.
 - **Polish your citations** in Evidence Explained style.
 
 ## Known limits
 
-- **Cowork only.** There is no supported way to install it in Claude Code yet.
-  A browser version is in invite-only alpha.
+- **Requires Claude Desktop.**
+- **It searches only online records.** Records held only in courthouses,
+  archives or libraries are out of its reach, so a conclusion can miss
+  evidence they hold.
 - **It's slow and uses a lot of your Claude plan.** A full research question
-  usually takes over an hour.
+  usually takes over an hour. We're working on making it faster and on
+  cutting the tokens it uses.
 - **It doesn't change FamilySearch.** It works on a copy of the tree in your
   project folder; anything you want on FamilySearch, you change there
   yourself.
-- **Browsing an unindexed film is unreliable.** It may not land on the right
-  page.
+- **It reads at most 20 page scans from any one film in a project.**
 - **Transcriptions of handwriting contain errors.** Check names, dates and
   numbers against the image before you rely on them. Old German script
   (Kurrent or Sütterlin) reads poorly.
-- **FamilySearch Wiki answers depend on a server that isn't publicly deployed
-  yet.** When it's unreachable, how-to and where-are-the-records answers are
-  thinner.
 - **Don't enter information about living people.** Nothing is encrypted yet.
 
 ## What you need
@@ -89,9 +83,8 @@ and why.
   needs one.
 - **An OpenRouter API key**, to read page scans. Get one at
   <https://openrouter.ai/keys>; you paste it in when you install. OpenRouter
-  charges per use. Without a key it can't read page scans, browse unindexed
-  films or transcribe FamilySearch memories, and hint reviews are less
-  complete.
+  charges per use. Without a key it can't read page scans or transcribe
+  FamilySearch memories, and hint reviews are less complete.
 
 ## Install
 
@@ -193,10 +186,9 @@ If you know the person's FamilySearch ID, give that instead. Then:
 ## A note on responsibility
 
 These tools assist your research; they don't replace it. Every record, match
-and conclusion is a starting point to check against the original sources. The
-Genealogical Proof Standard puts the weighing of evidence on the researcher,
-not the tool, so treat what it produces as a working draft, not a citable
-conclusion.
+and conclusion is a starting point to check against the original sources. Weighing the
+evidence is your job, not the tool's, so treat what it produces as a working
+draft, not a citable conclusion.
 
 ## Contributing
 

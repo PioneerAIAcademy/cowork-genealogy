@@ -190,10 +190,8 @@ CI job can run Claude Desktop.
 from disk via a `wikiMarkdownDir` config key, and would throw a config-missing
 error on a stock install. **That code path is gone** — `getWikiMarkdownDir` no
 longer exists in the engine and both tools are now HTTP clients of the hosted
-`wiki-query-api`, like `wiki_search`. They need no local corpus, but the compiled-in
-default names one developer's tailnet host rather than a public deployment, so on
-a stock install expect them to fail unless that host is reachable or you set
-`wikiApiUrl` in `~/.familysearch-mcp/config.json`. The other tools work out of the box (the bundled
+`wiki-query-api`, like `wiki_search`. They need no local corpus; the compiled-in
+default is a publicly reachable host, so they work on a stock install. The other tools work out of the box too (the bundled
 FamilySearch clientId covers the authenticated tools; `wiki_search` and
 `place_population` use hosted services).
 
