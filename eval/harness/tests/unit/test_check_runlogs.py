@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+
 import pytest
 from datetime import date, timedelta
 import re
@@ -1160,9 +1162,20 @@ def test_rule7_synthesis_is_released_only_not_any_added_candidate(
 ):
     """Only an added RELEASE may synthesize. If an added candidate could too, the
     widening would be one slot per added candidate rather than one per PR, which
-    rule 1 does not bound. Nothing noticed the restriction's removal before."""
+    rule 1 does not bound.
+
+    The added name is a SCRATCH log, deliberately. An added candidate returns at
+    the bail-out above and never reaches the released-only filter, so a candidate
+    here would make this test pass for the wrong reason -- which it did until
+    clack391 caught it on #3306.
+
+    Stated plainly, because the fixed test still does not prove what its name
+    says: a scratch log is excluded by its None VERSION, not by its kind. The
+    `kind == "released()"` check is unreachable-by-difference given the bail-out,
+    and the code comment there says so. This pins the OUTCOME -- a non-release
+    added name synthesizes nothing -- which is the part that matters."""
     names = check_runlogs._promoted_candidate_names(
-        tmp_path, ["v9_2026-08-01_00-00-00.json"], set()
+        tmp_path, ["scratch_2026-08-01_00-00-00.json"], set()
     )
     assert names == set()
 
@@ -1238,6 +1251,138 @@ def test_rule7_a_release_with_no_matching_deletion_buys_one_slot(monkeypatch, tm
     # the bound: a SECOND hand-deletion is not bought by the same phantom
     deleted.add("eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json")
     assert check_runlogs.rule7_deletions(deleted, added) == 1
+
+
+@pytest.mark.parametrize("timestamp", ["  2026-08-01_00-00-00", "2026-08-01_00-00-00  "])
+def test_rule7_a_padded_timestamp_buys_no_slot(monkeypatch, tmp_path, timestamp):
+    """Padding inside a real timestamp is corruption, and the name is NOT repaired.
+
+    Trimming it would synthesize a filename the release flow never wrote. Left
+    alone it does not parse as a candidate, `prunable_candidates` drops it, and the
+    deletion blocks -- fail closed. Deleting the `.strip()` this pins left all 140
+    tests green (clack391, #3306)."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp=timestamp)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_an_unreadable_release_buys_no_slot(monkeypatch, tmp_path):
+    """The OSError arm of the `except (OSError, ValueError)`. Narrowing it to
+    ValueError alone left all 140 tests green: a released log the PR added but
+    which is absent from the tree raises OSError, and an uncaught one would crash
+    the whole check rather than decline the synthesis (clack391, #3306)."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    # staged WITHOUT v9.json, so reading it raises rather than parsing
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=survivors)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_reads_head_candidates_from_the_prs_own_tree(monkeypatch, tmp_path):
+    """CI checks out the MERGE commit, so the working tree carries candidates only
+    MAIN wrote. They pad the union, and a WITHIN-keep hand-deletion the PR's own tree
+    flags is accepted off that scan -- measured by clack391 on #3306 as main 1 error
+    against 0 here.
+
+    The PR's own tree holds three candidates and releases one; main contributed two
+    more. Off the merge tree the union reaches 7, so the two oldest are prunable and
+    the hand-deletion of `07-03` lands inside them. Off the PR's own three it reaches
+    5, nothing is prunable, and the deletion is what it is."""
+    _make_present_skill(tmp_path, monkeypatch)
+    mine_at_head = ["v1_2026-07-02_00-00-00.json",
+                    "v1_2026-07-04_00-00-00.json",
+                    "v1_2026-07-05_00-00-00.json"]
+    only_main = ["v1_2026-09-01_00-00-00.json", "v1_2026-09-02_00-00-00.json"]
+    _stage_runlog_dir(
+        tmp_path, monkeypatch, candidates=[*mine_at_head, *only_main, "v9.json"]
+    )
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    # a candidate in the middle of the PR's own set, not its oldest
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-03_00-00-00.json"}
+    added = {"present-skill": ["v9.json"]}
+
+    assert check_runlogs.rule7_deletions(deleted, added) == 0, "the merge tree's view"
+    assert (
+        check_runlogs.rule7_deletions(
+            deleted, added, head_listing={"present-skill": set(mine_at_head)}
+        )
+        == 1
+    ), "the PR's own view"
+
+
+def test_rule7_a_legitimate_release_still_passes_under_the_head_listing(
+    monkeypatch, tmp_path
+):
+    """The other direction, which breaking the repo cannot test: the listing must not
+    turn a REAL same-PR run-and-release prune into a failure."""
+    _make_present_skill(tmp_path, monkeypatch)
+    mine = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*mine, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert (
+        check_runlogs.rule7_deletions(
+            deleted, {"present-skill": ["v9.json"]}, head_listing={"present-skill": set(mine)}
+        )
+        == 0
+    )
+
+
+def test_head_candidates_by_skill_is_none_without_a_head_sha(monkeypatch):
+    """No HEAD_SHA (every local run and every test) falls back to the directory
+    scan, which is correct there because the working tree IS the PR's tree.
+
+    Asserts git is never INVOKED, not merely that the result is None: deleting the
+    guard makes `git ls-tree` run against a bogus rev, which fails, which the
+    fail-open arm turns back into None -- so a return-value assertion passes with
+    the guard removed and proves nothing."""
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    called: list[object] = []
+
+    def _never(*a, **k):
+        called.append(a)
+        raise AssertionError("git must not run without a HEAD_SHA")
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", _never)
+    assert check_runlogs.head_candidates_by_skill() is None
+    assert called == []
+
+
+def test_head_candidates_by_skill_falls_back_when_git_fails(monkeypatch):
+    """Fail OPEN. A listing we cannot read is not a reason to crash the check and
+    leave every later rule ungraded."""
+    monkeypatch.setenv("HEAD_SHA", "deadbeef")
+
+    def _boom(*a, **k):
+        raise subprocess.CalledProcessError(128, "git")
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", _boom)
+    assert check_runlogs.head_candidates_by_skill() is None
+
+
+def test_head_candidates_by_skill_keeps_only_candidates(monkeypatch):
+    """Released logs, annotations and scratch logs are not candidates and must not
+    enter the union through this door."""
+    monkeypatch.setenv("HEAD_SHA", "deadbeef")
+    monkeypatch.setattr(
+        check_runlogs.subprocess,
+        "check_output",
+        lambda *a, **k: (
+            "eval/runlogs/unit/alpha/v1_2026-07-01_00-00-00.json\n"
+            "eval/runlogs/unit/alpha/v1_2026-07-01_00-00-00.ann.json\n"
+            "eval/runlogs/unit/alpha/v2.json\n"
+            "eval/runlogs/unit/alpha/scratch_2026-07-01_00-00-00.json\n"
+            "eval/runlogs/unit/beta/v3_2026-08-01_00-00-00.json\n"
+        ),
+    )
+    assert check_runlogs.head_candidates_by_skill() == {
+        "alpha": {"v1_2026-07-01_00-00-00.json"},
+        "beta": {"v3_2026-08-01_00-00-00.json"},
+    }
 
 
 def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):
