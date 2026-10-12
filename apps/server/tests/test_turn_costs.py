@@ -212,11 +212,7 @@ def test_the_sandbox_reads_its_own_build(tmp_path, monkeypatch, content, expecte
     if content is not None:
         stamp.write_text(content, encoding="utf-8")
     monkeypatch.setattr(real_agent, "_BUILD_INFO", stamp)
-    real_agent._sandbox_build.cache_clear()
-    try:
-        assert real_agent._sandbox_build() == expected
-    finally:
-        real_agent._sandbox_build.cache_clear()
+    assert real_agent._sandbox_build() == expected
 
 
 

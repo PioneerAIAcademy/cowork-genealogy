@@ -2,7 +2,8 @@
 ``sandbox/build-image.sh``: ``{"commit": "<sha|dev>", "dirty": <bool>, "built_at": ...}``.
 
 Read on the control plane by ``E2BProvider`` (for /api/health) and inside the sandbox by
-``real_agent`` (for each turn's cost report), so both name a build the same way.
+``real_agent`` (for each turn's cost report), so both name a build the same way. It lives in
+``app.agent`` because the prototype worker's bundle ships only that package.
 """
 from __future__ import annotations
 

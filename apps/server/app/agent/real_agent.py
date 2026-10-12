@@ -35,7 +35,6 @@ turn and rebuilds the client when it changes.
 from __future__ import annotations
 
 import asyncio
-import functools
 import json
 import os
 import shutil
@@ -44,7 +43,7 @@ import urllib.request
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-from ..build_info import BUILD_INFO_PATH, build_label
+from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     CONTINUE_REASON,
     DELEGATION_TOOLS,
@@ -550,7 +549,6 @@ def _turn_cost_url() -> str | None:
 _BUILD_INFO = Path(BUILD_INFO_PATH)
 
 
-@functools.cache
 def _sandbox_build() -> str | None:
     """The build this sandbox's code came from, for the cost report. None outside the
     image (local dev) or when the stamp is unreadable."""

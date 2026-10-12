@@ -32,7 +32,7 @@ import asyncio
 import inspect
 import logging
 
-from ..build_info import AGENT_HOME, BUILD_INFO_PATH, build_label
+from ..agent.build_info import AGENT_HOME, BUILD_INFO_PATH, build_label
 from ..config import get_settings
 from ..ws_token import sandbox_secret
 from .base import (
