@@ -95,7 +95,11 @@ Source: init-project's "Census fertility gap" paragraph (removed when init-proje
 
 A child born on or before the day is counted in that census's `childrenBorn`. A
 child who died before the day is counted dead; one who died on or after it is
-counted living. **Every birth window the tool reports is bounded by these days
+counted living. The enumerator instructions fix the reference date whatever day
+the enumerator visited: 1900 includes people living on June 1 or during any
+part of that day, and 1910 information relates to April 15. A child born or
+dying on the day was alive during part of it, so a date without a time is
+enough (checked against the instructions by a senior genealogist, 2026-10-12). **Every birth window the tool reports is bounded by these days
 and nothing else** — never by a sibling's birth. A child dead by the 1900 census
 is "born on or before 1900-06-01", not "born between James and Catherine".
 
