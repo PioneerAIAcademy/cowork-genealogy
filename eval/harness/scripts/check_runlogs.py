@@ -146,6 +146,43 @@ def gh_warning(message: str, *, file: str | None = None) -> None:
     print(f"{prefix}{message}")
 
 
+def head_candidates_by_skill() -> dict[str, set[str]] | None:
+    """Candidate run-log filenames per skill AS OF THE PR'S OWN HEAD COMMIT.
+
+    Rule 7 otherwise reads them from the working tree, and CI checks out the
+    MERGE commit (`check-runlogs.yml`, `actions/checkout@v7`). On a branch behind
+    a main that also ran the same skill, the merge tree holds main's candidates
+    too, which widens the prunable set and accepts a hand-deletion the PR's own
+    tree would flag -- measured by clack391 on #3306 as main 1 error against 0.
+
+    Returns None when HEAD_SHA is unset (a local run, and every unit test), where
+    the working tree IS the PR's tree and the directory scan is already correct.
+    """
+    head = os.environ.get("HEAD_SHA")
+    if not head:
+        return None
+    try:
+        out = subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", head, "--", str(RUNLOGS_DIR)],
+            text=True,
+            encoding="utf-8",
+        )
+    except (subprocess.CalledProcessError, OSError):
+        # Fail OPEN to the directory scan rather than crash the whole check: a
+        # listing we cannot read is not a reason to stop grading deletions.
+        return None
+    listing: dict[str, set[str]] = {}
+    for line in out.splitlines():
+        parts = line.strip().split("/")
+        if len(parts) < 2:
+            continue
+        name = parts[-1]
+        if classify(name).kind != "candidate":
+            continue
+        listing.setdefault(parts[-2], set()).add(name)
+    return listing
+
+
 def git_diff_changes() -> list[tuple[str, str | None]]:
     """Return [(status_letter, path)] for AR-filtered changes in the PR.
 
@@ -943,8 +980,116 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     return bad
 
 
+def _promoted_candidate_names(
+    skill_dir: Path, added: list[str], deleted_candidates: set[str]
+) -> set[str]:
+    """Filenames of the candidates this PR's added releases were promoted from.
+
+    `v{N}.json` carries the `timestamp` of the run, not of the release, so the
+    candidate it consumed was `v{N}_{timestamp}.json`.
+
+    Synthesis is SKIPPED when a candidate of that version is already among the
+    deletions, and that skip is what makes this safe. It covers two shapes, not
+    one. The first is the merge-base promotion. The second is a SAME-PR run and
+    release whose prune happens to carry the released version: there the first
+    two terms do not reconstruct the directory either, but main's own
+    `c.version in added_released_versions` exemption already accepts that
+    deletion, so synthesizing would add nothing and is declined
+    (`test_rule7_version_skip_and_mains_version_exemption_compose`). The first is
+    the merge-base shape,
+    where the rename shows as `D` and the union is complete unaided. The first
+    draft deduped on the synthesized STRING instead, which a one-second drift
+    between the envelope `timestamp` and the candidate filename defeats: the
+    phantom name becomes a sixth member, buys a free prunable slot, and a
+    hand-deletion of a WITHIN-keep candidate is then accepted. That was a
+    regression against the old arithmetic, not a pre-existing hole, and it was
+    reproduced before this guard replaced the string compare.
+
+    Returns the empty set when the file is unreadable, when `json.loads` yields
+    anything but an object, or when it carries no usable `timestamp` -- the
+    conservative direction, since a missing name only shrinks the prunable set
+    back to today's behaviour.
+
+    A malformed-but-present `timestamp` is NOT rejected here: it is synthesized
+    and then ignored downstream, because `prunable_candidates` drops any name it
+    cannot parse as a candidate. Only a WELL-FORMED timestamp can move the
+    arithmetic, which is why the version-keyed skip above, not name validation,
+    is the guard that matters.
+    """
+    # Synthesize NOTHING if this PR also ADDED a candidate for the skill. A write
+    # that lands after the release refills the slot the promotion emptied, so
+    # crediting the promoted candidate as well describes a directory that never
+    # existed and authorises one deletion more than the harness ever performed.
+    # Measured: run -> release -> run again prunes ONCE (the release leaves the
+    # dir at 4, so the second write prunes nothing), yet the credited union makes
+    # TWO deletions prunable, waving through a hand-deletion of committed grading.
+    #
+    # The cost of this bail-out is the run -> run -> release shape, where two
+    # prunes really did happen and the second still reads as a hand-deletion.
+    # That is the behaviour on main today, so this is not a regression. The fix
+    # opens ONE bounded hole, pinned by
+    # `test_rule7_a_release_with_no_matching_deletion_buys_one_slot`: a released
+    # log whose version is absent from the deletions is indistinguishable from a
+    # real promotion by filename alone, so it buys a single slot (the oldest) at
+    # the keep boundary. Rule 7 guards grading that cannot be recovered, so a
+    # surviving false positive beats a wider hole.
+    if any(classify(n).kind == "candidate" for n in added):
+        return set()
+
+    deleted_versions = {
+        v
+        for n in deleted_candidates
+        if (v := classify(n).version) is not None
+    }
+    # `kind == "released"` is an INVARIANT here, not a live filter, and no input can
+    # distinguish its removal: the bail-out above returns early if any added name is a
+    # candidate, and `classify` gives a non-None version to released and candidate
+    # names only -- so everything reaching this line with a version IS a release. It is
+    # kept because it states the set being built and would start doing work the moment
+    # the bail-out moved; it is not break-tested because it cannot be (clack391, #3306).
+    releases = [
+        c
+        for name in added
+        if (c := classify(name)).kind == "released" and c.version is not None
+    ]
+    # At most ONE release may synthesize. Two promotions in one PR would credit
+    # two emptied slots and authorise two deletions where the harness performed
+    # one per write; measured as 0 errors here against 2 on main for
+    # run -> release -> run -> release. `rule1_max_one_released` already fails
+    # that PR, but rule 7 should be right on its own rather than leaning on
+    # another rule's verdict, and its docstring claims it reconstructs the
+    # directory.
+    if len(releases) != 1:
+        return set()
+
+    out: set[str] = set()
+    for c in releases:
+        name = f"v{c.version}.json"
+        if c.version in deleted_versions:
+            continue
+        try:
+            doc = json.loads((skill_dir / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(doc, dict):
+            continue  # a valid-JSON array or scalar has no envelope
+        ts = doc.get("timestamp")
+        if not isinstance(ts, str) or not ts.strip():
+            continue
+        # NOT ts.strip(): the blank check above uses strip() to reject an
+        # all-whitespace envelope, but padding inside a real value is corruption,
+        # and silently repairing it would synthesize a name the release flow never
+        # wrote. Left as-is, a padded timestamp yields a name
+        # `prunable_candidates` cannot parse, so it buys no slot -- the same
+        # fail-closed direction every other guard here takes.
+        out.add(f"v{c.version}_{ts}.json")
+    return out
+
+
 def rule7_deletions(
-    deleted_paths: set[str], added_by_skill: dict[str, list[str]]
+    deleted_paths: set[str],
+    added_by_skill: dict[str, list[str]],
+    head_listing: dict[str, set[str]] | None = None,
 ) -> int:
     """Rule 7 (blocking): a deleted run log / annotation must be a legitimate
     keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
@@ -955,8 +1100,11 @@ def rule7_deletions(
     of the names, and `prune_old_candidates` deletes exactly its output plus each
     pruned log's `.ann.json` (and `runs/` sidecars). So per skill a deletion is a
     legitimate prune iff the deleted candidate is in
-    `prunable_candidates(head_candidates ∪ deleted_candidates, keep=K)` — the
-    union reconstructs what the dir held before the prune. The #2579 incident
+    `prunable_candidates(head_candidates ∪ deleted_candidates ∪ promoted_candidates,
+    keep=K)` — the union reconstructs what the dir held before the prune. The third
+    term is the candidate a same-PR release was promoted FROM: it is neither at
+    head nor deleted, and without it the union undercounts by one and flags the
+    harness's own prune. The #2579 incident
     (`v1_2026-09-03_11-42-59.{json,ann.json}` dropped with 4 candidates on disk
     where the rule keeps 5) recomputes to an empty prunable set and is flagged.
 
@@ -995,16 +1143,41 @@ def rule7_deletions(
         deleted_candidate_json = {
             n for n in deleted_names if classify(n).kind == "candidate"
         }
+        # The PR's OWN head tree when main() could read it, else the working tree.
+        # Under CI the two differ: the checkout is the MERGE commit, so the scan
+        # would also see candidates main contributed (clack391, #3306).
         head_candidate_json: set[str] = set()
-        if skill_dir.is_dir():
+        if head_listing is not None:
+            head_candidate_json = set(head_listing.get(skill, set()))
+        elif skill_dir.is_dir():
             head_candidate_json = {
                 p.name
                 for p in skill_dir.iterdir()
                 if p.is_file() and classify(p.name).kind == "candidate"
             }
+        # A candidate WRITTEN AND PROMOTED inside this PR is in neither set above:
+        # it is no longer a candidate at head (it is `v{N}.json` now) and it was
+        # never deleted (the rename is a net add in the three-dot diff). The
+        # union would lose a member and, at the cap, `prunable_candidates` would
+        # return nothing -- flagging the prune the harness itself performed when
+        # it wrote that very run. Reconstruct the consumed candidate's filename
+        # from the released log's envelope `timestamp`, which the release flow
+        # preserves by contract (`eval/app/lib/release.ts:5`, "`timestamp` is
+        # kept"). A candidate that existed at the merge-base needs no synthesis:
+        # its rename shows as `D`, so the VERSION-KEYED skip in
+        # `_promoted_candidate_names` declines to synthesize for it. An earlier
+        # draft relied on the synthesized string colliding with that deletion
+        # instead, which a one-second timestamp drift defeated.
+        promoted_candidate_json = _promoted_candidate_names(
+            skill_dir, added_by_skill.get(skill, []), deleted_candidate_json
+        )
         prunable = set(
             prunable_candidates(
-                list(head_candidate_json | deleted_candidate_json),
+                list(
+                    head_candidate_json
+                    | deleted_candidate_json
+                    | promoted_candidate_json
+                ),
                 keep=DEFAULT_KEEP_CANDIDATES,
             )
         )
@@ -1411,7 +1584,9 @@ def main() -> int:
     # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
     # rule that destroys committed grading. Keyed on the same deleted set rule 3
     # reads and the merge-base-safe `added_by_skill` main() already computed.
-    fails += rule7_deletions(deleted_paths, added_by_skill)
+    fails += rule7_deletions(
+        deleted_paths, added_by_skill, head_listing=head_candidates_by_skill()
+    )
 
     graded_logs = graded_tests = 0
 
