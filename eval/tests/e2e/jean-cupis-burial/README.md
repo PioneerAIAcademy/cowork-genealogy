@@ -50,19 +50,18 @@ hint does not re-index anything already attached. The tree gives christening
   Anne De Cupis De Camargo, the dancer La Camargo.
 - **Death date.** Death 30 Apr 1788, burial 1 May 1788. The death date is
   exactly the tree's.
-- **Age.** A computed birth year of 1710, about a year off the tree's 1711
-  christening. That is the usual error in an age at death.
+- **Birth year.** The index gives a birth year of 1710, about a year off the
+  tree's 1711 christening.
 - **The confounder.** The only in-tree confounder, his son Jean Baptiste
-  Cupis (`MHT2-X6G`), is ruled out by the index's age. A son of the 1729
-  marriage could not have been about 78 in 1788.
-- **Place.** The record states the parish of Montreuil itself, "cette
-  paroisse", and the image is catalogued as "Montreuil, Seine, France". So
-  the event place is Montreuil-sous-Bois, which lies today in
-  Seine-Saint-Denis. That is the town f1 names, in modern jurisdiction, so f1's
+  Cupis (`MHT2-X6G`), is ruled out by that birth year. A son of the 1729
+  marriage could not have been born in 1710.
+- **Place.** The index gives the burial place as Montreuil, and the register
+  image is catalogued as "Montreuil, Seine, France". So the event place is
+  Montreuil-sous-Bois, which lies today in Seine-Saint-Denis. That is the town f1 names, in modern jurisdiction, so f1's
   place stands. A burial near Paris also fits a family whose son François was
   born in Paris in 1732.
-- **The `adds_birth` flag.** It is an indexing artefact. The 1710 is computed
-  from the age at death, and nobody should replace the christening with it.
+- **The `adds_birth` flag.** It is an indexing artefact. The index's 1710 is
+  not a birth record, and nobody should replace the christening with it.
 
 **Image reading: failed calibration, discarded.** The page image
 `ark:/61903/3:1:3Q9M-CSLZ-X9KW-2` was transcribed with `image_transcribe`.
@@ -78,10 +77,7 @@ spouse or parents.
   in the spelling of his wife's surname, Laizier against Laissier.
 
 One of the checks differs, so everything the transcription read from the page
-is discarded, and `image_basis` is not set. For the record only, and **not
-relied on**: the discarded transcription has the act giving age 78, "en sa
-maison rue Marchande", and witnesses who were bourgeois de Paris, with no wife
-or child named. Nothing in it contradicts the index.
+is discarded, and `image_basis` is not set. Nothing above rests on the image.
 
 **What an agent must find.** The burial on 1 May 1788 at Montreuil, the day
 after the 30 April death, from the parish register entry above.
