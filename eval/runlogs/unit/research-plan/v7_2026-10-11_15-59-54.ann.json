@@ -148,14 +148,6 @@
     },
     {
       "test_id": "ut_research_plan_wzk",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "**`ut_research_plan_wzk`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 2\n\n> One tool call failed with fixture_not_found: mcp__genealogy__place_search with args {placeName: 'United States'} returned error. This is incorrect tool usage — the place_search tool requires a context or expects specific place names, not a bare national scope. However, this error did not prevent the plan from being written; Claude recovered by using national-scope collections_search and external_links_search calls instead, which succeeded. The error was not critical to the plan's completion, but it represents a misunderstanding of the tool's expected arguments. All other tool calls (project_context, research_query, place_search for specific counties, collections_search, volume_search, external_links_search, research_append) passed with correct arguments matching expected_args.\n\nJunior: (Pass - Excellent coverage. The plan balances direct parentage evidence (marriage, probate, death) with indirect evidence strategies (census, FAN, migration tracking). The research design is comprehensive and addresses all major avenues needed to evaluate Martha J's parentage.)"
-    },
-    {
-      "test_id": "ut_research_plan_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Record type selection",
       "llm_score": 3,
@@ -177,14 +169,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_plan_wzk`** — `rubric` / `Sequencing logic`\nLLM: 3 → Junior: 3\n\n> The sequence is logically defensible and well-explained. Free/indexed sources (pli_001, pli_002, pli_003, pli_004, pli_007) precede paid/supplementary (pli_008). Narrow searches (Smith County marriage 1857-1869, Blount County 1860 census) precede broader ones (national 1870 census). The critical verification item (pli_002: earlier marriage search) is sequenced second, immediately after the initial census lead, ensuring the 'Wood' surname is tested before the entire search strategy depends on it. pli_004 and pli_005 are correctly positioned after pli_001 names the parents. pli_006 (death record) is independent and can run in parallel. pli_007 (FAN) depends on pli_001 identifying neighbors. The date_ranges are appropriate: 1857-1869 for the marriage verification (before the known 1869 marriage), 1820-1860 for parents' marriage (before Martha's ~1859 birth), 1860-1920 for probate (father's plausible lifespan), 1890-1930 for death (Martha's plausible death window). The plan reaches the later part of Martha's window (1930) rather than only its start.\n\nJunior: (Pass - Strong sequencing throughout. The early placement of the surname-verification step is especially important because it tests a key assumption before the remainder of the plan relies on it. Dependencies are handled correctly, date ranges are appropriate, and the workflow efficiently progresses from hypothesis generation to proof-oriented sources.)"
-    },
-    {
-      "test_id": "ut_research_plan_wzk",
-      "dimension_source": "rubric",
-      "dimension_name": "Jurisdiction accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_research_plan_wzk`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are historically accurate for the target periods. Blount County, Alabama existed from 1818 onward (per place_search response: dateRange '+1818/'). Smith County, Texas existed from 1846 onward (dateRange '+1846/'). Hill County, Texas existed from 1853 onward (dateRange '+1853/'). The 1860 and 1870 censuses are national records covering all states. The plan correctly notes that Texas did not require statewide civil registration until 1903, and that Alabama had no civil birth/death records before 1908 (per loc_001 quirks). No anachronistic jurisdictions or pre-statehood errors appear.\n\nJunior: (**`ut_research_plan_wzk`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are historically accurate for the target periods. Blount County, Alabama existed from 1818 onward (per place_search response: dateRange '+1818/'). Smith County, Texas existed from 1846 onward (dateRange '+1846/'). Hill County, Texas existed from 1853 onward (dateRange '+1853/'). The 1860 and 1870 censuses are national records covering all states. The plan correctly notes that Texas did not require statewide civil registration until 1903, and that Alabama had no civil birth/death records before 1908 (per loc_001 quirks). No anachronistic jurisdictions or pre-statehood errors appear.\n\nJunior: (Pass - Strong jurisdictional analysis throughout. County formation dates, statewide registration boundaries, and census jurisdictions are all handled correctly. The research plan avoids common boundary and record-availability errors and is appropriately grounded in the historical jurisdictions relevant to Martha's parentage question.)"
     },
     {
       "test_id": "ut_research_plan_wzk",
@@ -473,6 +457,22 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_plan_dth`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> This is a first-plan scenario: no prior plan exists for q_001 (the research_query call returned count 0 for plans). The skill correctly chose 'add-new' mode (creating pl_001 as the first plan). The plan is set to status 'active' and all items are status 'planned.' The research_append call appended the plan and items to the research.json file without modifying any prior plan (none existed). Exactly one plan is now active for q_001. The audit trail is preserved: no prior plans were edited or deleted. The lifecycle is correct for a first-plan scenario.\n\nJunior: (Pass - Excellent lifecycle handling. The skill correctly recognized the absence of prior plans, created a new active plan, left all items in planned status, and preserved a clean audit trail. The chosen mode and resulting project state fully match expectations for a first-plan scenario.)"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_wzk`** — `rubric` / `Jurisdiction accuracy`\nLLM: 3 → Junior: 3\n\n> All jurisdictions are historically accurate for the target periods. Blount County, Alabama existed from 1818 onward (per place_search response: dateRange '+1818/'). Smith County, Texas existed from 1846 onward (dateRange '+1846/'). Hill County, Texas existed from 1853 onward (dateRange '+1853/'). The 1860 and 1870 censuses are national records covering all states. The plan correctly notes that Texas did not require statewide civil registration until 1903, and that Alabama had no civil birth/death records before 1908 (per loc_001 quirks). No anachronistic jurisdictions or pre-statehood errors appear.\n\nJunior: (Pass - Strong jurisdictional analysis throughout. County formation dates, statewide registration boundaries, and census jurisdictions are all handled correctly. The research plan avoids common boundary and record-availability errors and is appropriately grounded in the historical jurisdictions relevant to Martha's parentage question.)"
+    },
+    {
+      "test_id": "ut_research_plan_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "(Partial - Good overall tool usage and recovery. Avoid broad national-level\nplace_search calls unless supported by the tool's place model. When national\nscope is needed, rely on collection searches, repository discovery, or other\nsupported mechanisms rather than forcing a place lookup that may not resolve.)\n"
     }
   ]
 }
