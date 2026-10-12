@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_person_evidence_wfh",
+    "skill": "person-evidence",
+    "name": "A near-certain match score on name and age is not identity when namesakes are known in the place",
+    "type": "positive",
+    "description": "Two records fit the tree person (I1) only on name, approximate age and city, and the delegation warns that other men of the same name lived in the same state. same_person returns near-certain scores for both. The agent must not link them `confident`: with namesakes present and no distinguishing attribute (spouse, address, occupation, a record naming his family), identity is unproven, and the arrival-to-naturalization interval is shorter than the residence the law then required. Mined from #3179 (patron query 2593), where both records were linked `confident` and their facts materialized onto I1 while the run's own conflict and final reply called them possible matches only.",
+    "tags": [
+      "from-cowork",
+      "gaetjen-namesake-confident-link",
+      "confidence-calibration",
+      "score-discipline",
+      "namesake",
+      "re-invoke-safe"
+    ]
+  },
+  "input": {
+    "delegation": "Question: q_001 (when and from where in Germany did Hermann Gaetjen immigrate; tree I1 Hermann, husband of I4 Amelia Nichols, father of I2 Henry Joseph b. 5 May 1878 San Francisco and I3 Amelia Otillie b. 23 Aug 1883 California).\nLink these to the right person in the tree:\n- src_001, assertions a_001 to a_009: 1875 San Francisco Great Register, Hermann Gatjen, 21, b. Germany, fireman, 5 Cook Street, naturalized 13 Aug 1875, California 4th District Court.\n- src_002, assertions a_010 to a_014: Germans to America Index, Herm Gaetjen, b. 1854 Prussia, arrived New York 2 Jun 1871.\nDecide identity yourself with same_person scoring. Context: other Hermann Gaetjens lived in California (one b. 1873, naturalized San Francisco 1900, d. 1957; one b. 1827, d. 1899 Butte County). I1's only birth fact (about 1859) is unsourced. If the evidence does not support linking either persona to I1, put it on a separate stub and say so.\n\nprojectPath: <workspace>",
+    "scenario": "gaetjen-namesake-confident-link"
+  },
+  "mcp_fixtures": [
+    "same-person-gaetjen-voter-1875",
+    "same-person-gaetjen-arrival-1871"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "judge_context": [
+    "same_person returns near-certain scores (0.99) for both personas, but the only attributes they share with I1 are surname, given name, an approximate age and a city. The delegation names other men of the same name in the same state. A match score measures similarity, not identity: with namesakes known in the place, a link without a distinguishing attribute (a spouse or child named, an address or occupation matching another record of I1, a record that names his family) must not be `confident`.",
+    "Neither record mentions I1's wife or children, and I1's only birth fact is unsourced, so nothing independent corroborates identity. Per the rubric's confidence scale, single uncorroborated identity evidence is `probable` at most. With the namesake question open it is `speculative`, or a separate stub, as the delegation allows.",
+    "The two records support each other only by sharing a name and a birth year. Treating each as corroboration for the other is circular and does not raise either link's confidence.",
+    "The arrival (June 1871) to naturalization (August 1875) interval is about four years, while five years' residence was then required. A rationale that waves this away as consistent, rather than raising it as a problem for the identity, is a reasoning failure.",
+    "If person_warnings run after linking reports a contradiction on I1, the agent must surface it and reconsider the links, not leave them `confident`.",
+    "GROUNDING: decide what the run DID from its tool calls. A `confident` person_evidence entry for any a_001 to a_014 assertion on I1, or Immigration or Naturalization facts materialized onto I1 from these sources, is the failure this test guards. Writing no link, `speculative` links, or a separate stub, with the namesake and timing problems stated, is correct and must not be marked down."
+  ]
+}

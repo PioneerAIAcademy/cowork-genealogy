@@ -1,0 +1,973 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "I am trying to find evidence of the immigration of Hermann Gaetjen to the United States from Germany between 1850 and 1878; he was married to Amelia Nichols.",
+    "title": "Hermann Gaetjen's immigration",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-07",
+    "updated": "2026-10-07"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and from where in Germany did Hermann Gaetjen (born about 1859; husband of Amelia Nichols; father of Henry Joseph Gaetjen, born 5 May 1878 in San Francisco, California) immigrate to the United States?",
+      "rationale": "This is the central, single-fact objective restated with identifying detail. The terminus ante quem is firm — son Henry Joseph was born in San Francisco on 5 May 1878, so Hermann was in California no later than mid-1877. The terminus post quem is soft (birth about 1859), placing him in Germany at or near birth. A 1904 GenealogyBank newspaper obituary for 'Hermann F Gaetjen' is already attached to the tree and may name his German birthplace or arrival date. U.S. passenger arrival lists (primarily Hamburg and Bremen departures), port-of-entry records at San Francisco and other Pacific-coast ports, and naturalization papers are all searchable for this window. The Low German surname Gaetjen points toward the Bremen/Oldenburg/Schleswig-Holstein emigration corridor, where Hamburg emigration lists (1850–1914) survive in good condition on Ancestry and FamilySearch.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      },
+      "created": "2026-10-07"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1880",
+          "repository": "FamilySearch",
+          "rationale": "Survey of attached sources: Hermann's only attached records are the 21 Jul 1913 San Francisco marriage of daughter Amelia Otillia Gaetjen (names parents Hermann Gaetjen and Amelia Nichols, no ages/birthplaces/dates for them) and the 1943 death index of son Henry J. Gaetjen; none states an arrival date, birthplace or naturalization. His tree birth (~1859) is unsourced and unverified. The 1880 census (collection 1417683, indexed) should show Hermann with wife Amelia and son Henry (b. May 1878 SF), giving his age, birthplace (German state) and occupation — the anchor identifying the right Hermann before arrival records are searched. Per loc_001 the 1880 census gives birthplace only, not arrival year.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "other",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1866-1898",
+          "repository": "FamilySearch",
+          "rationale": "California Great Registers (collection 1935764, indexed). loc_001 ranks the Great Register the highest-priority substitute when passenger lists and pre-1906 vital records are lost: each entry states age, nativity (often German state), naturalization date and court. A naturalized Hermann Gaetjen voting in SF 1867-1898 would give a court/date that points to the naturalization file, which may name arrival port/date. Search variants Gaetjen, Gaetgen, Gätjen, Getjen, Gatjen.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1900-1910",
+          "repository": "FamilySearch",
+          "rationale": "1900 census (1325221) asks year of immigration, years in US and naturalization status (loc_001: the most direct online source of arrival year). If Hermann is alive in 1900 it states his arrival year directly. If he has died, wife Amelia (b. 1859 Germany) still appears; her 1900 and 1910 (1727033) entries give her immigration year and, as a married woman pre-1922, her citizenship derived from Hermann's — FAN evidence bounding when the couple came and whether Hermann naturalized. Window covers the later part of Hermann's life (death date unknown).",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "court",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1852-1906",
+          "repository": "FamilySearch",
+          "rationale": "Naturalization indexes: California Northern U.S. District Court Naturalization Index 1852-1989 (1849982) and California County Naturalizations 1831-1985 (2125028). Per loc_001, pre-1880 naturalization was in state district/county courts, after 1880 superior court, and many SF immigrants used the federal Northern District court. A declaration of intention or naturalization entry may give arrival date, port and German birthplace.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "immigration",
+          "jurisdiction": "United States (Atlantic and Gulf ports, esp. New York)",
+          "date_range": "1850-1878",
+          "repository": "FamilySearch",
+          "rationale": "Arrival indexes: Germans to America Index 1850-1897 (2110801, indexed), Index to Passenger Arrivals, Atlantic and Gulf Ports 1820-1874 (1921756), and New York passenger arrival lists. Many Germans reaching San Francisco landed first at New York and crossed by rail (after 1869) or via Panama. A Hermann Gaetjen of the right age arriving before 1878 is the target; identity must be matched on age and home place from items 1-4.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "immigration",
+          "jurisdiction": "Hamburg, Germany",
+          "date_range": "1850-1878",
+          "repository": "Ancestry",
+          "rationale": "Hamburg Passenger Lists 1850-1934 (Ancestry). loc_001: Gaetjen is a North German (Oldenburg/Hannover/East Frisia) surname and North Germans disproportionately left via Hamburg; the departure lists usually name the emigrant's home town and destination — the 'from where in Germany' half of the question. Bremen lists for this period are destroyed.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1878-1930",
+          "repository": "FamilySearch",
+          "rationale": "Hermann's death: his death date is unknown in the tree. San Francisco Area Funeral Home Records 1835-1981 (1385518; survived 1906 per loc_001, often give birthplace, years in state/US and parents), California San Francisco County Records (1402856), and California Death Index 1905-1939 if after 1905. A death record may state years in California/US. Note: the attached 7 Feb 1904 GenealogyBank obituary is for Hermann F. Gaetjen, a San Francisco-born son of Hermann and Maria Gaetjen — not necessarily our Hermann; it must be resolved as a possible different family before use.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "newspaper",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1870-1930",
+          "repository": "California Digital Newspaper Collection",
+          "rationale": "San Francisco newspapers (CDNC: Daily Alta California, SF Call, SF Chronicle; also German-language California Demokrat via GenealogyBank/other): death notice or obituary for Hermann Gaetjen, marriage notice with Amelia (~1877), and 'arrivals' passenger columns, which in SF papers listed passengers arriving by sea — partly compensating for the lost 1865-1892 SF arrival lists.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "other",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1865-1880",
+          "repository": "FamilySearch",
+          "rationale": "City directories (United States City and Business Directories, 3754697; SF Langley directories). The first year Hermann Gaetjen appears in a SF directory bounds his arrival in San Francisco from above; absence in earlier years narrows the window. Also gives occupation and address for linking to census/voter entries.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "vital_record",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1870-1878",
+          "repository": "FamilySearch",
+          "rationale": "Marriage of Hermann Gaetjen and Amelia Nichols (est. 1870s, before son Henry's May 1878 birth): California County Marriages 1849-1957 (1804002), Western States Marriage Index (1854302), and church registers (German Lutheran / Catholic) since civil records largely burned in 1906 (loc_001). A marriage in SF places Hermann there by that date and may give his birthplace; it is also a FAN check on whether Amelia came with him or separately.",
+          "fallback_for": null,
+          "status": "planned"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 11,
+          "record_type": "immigration",
+          "jurisdiction": "San Francisco, San Francisco, California, United States",
+          "date_range": "1865-1878",
+          "repository": "NARA",
+          "rationale": "Fallback if items 5-6 fail: San Francisco customs passenger arrival lists c.1865-1892 are not online (loc_001) and must be requested from the National Archives at San Francisco (San Bruno) or viewed there; also Northern District declarations of intention 1846-1903 (FHL films 977767-70). Only to be used once items 1-4 narrow the arrival year.",
+          "fallback_for": "pli_005",
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": null,
+      "performed": "2026-10-07T04:14:23.411Z",
+      "tool": "external_links_search",
+      "query": {
+        "standardPlace": "San Francisco, California, United States"
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "notes": "Curated external links for San Francisco, staged during the locality survey; logged for the audit trail."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-07T04:14:23.418Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gaetjen",
+        "collectionId": "1417683",
+        "residencePlace": "California, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 13,
+      "notes": "1880 census, surname Gaetjen, California. 13 hits; none is Hermann with wife Amelia and son Henry (b. 1878). SF household of Henry Gaetjen (b. ~1847 Germany, barkeeper) with wife Emma (b. Louisiana) and son Richard (b. 1879) does not match wife/child names; Martinez household of Henry Gatjen (b. ~1837 Germany) with wife Carrie also different. Ranker: none above 0.01."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-07T04:14:23.425Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "givenName": "Hermann",
+        "collectionId": "1417683",
+        "residencePlace": "California, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 1,
+      "notes": "Wildcard surname G*tj*n + Hermann, California. Only hit: Herman Goetjen, b. ~1862 California, single, in SF household of Nicholas Goetjen — California-born, so not the immigrant subject."
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-10-07T04:14:23.430Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "givenName": "Amelia",
+        "collectionId": "1417683"
+      },
+      "outcome": "negative",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 3,
+      "notes": "Wildcard surname G*tj*n + Amelia, US-wide 1880. Only Grotjan family of Missouri — not relevant."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-07T04:14:23.435Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gaetjen",
+        "givenName": "Hermann",
+        "recordCountry": "United States",
+        "anyYearFrom": 1860,
+        "anyYearTo": 1930
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 2152,
+      "notes": "Broad all-collection survey. Several distinct Hermann Gaetjens: (a) Hermann (Herman Conrad) b. 28 Aug 1873 Germany, immigrated 1888, naturalized SF 1900, passport 1900, WWI draft SF, 1940 census divorced, d. 12 Jan 1957 SF — too young to father Henry b. 1878, so a different man; (b) Hermann F. Gaetjen b. 1901/02 d. 5 Feb 1904 SF, child of Hermann and Maria — not the subject (the 1904 obituary on the tree is this child); (c) Herman Gaetjen b. 1827 Germany d. 9 Oct 1899 Butte Co.; (d) Hermann Gaetjen, Great Register 13 Jul 1878 Thompsons Flat, Butte, nativity Germany (VTXK-R5F) — to read; (e) Germans to America: Hermann Gaetjen, cigar maker, b. ~1855, arr. New York 19 Jun 1885 from Bremen — after 1878, not our immigrant unless a return trip; (f) SF directory entries Herman(n) Gaetjen 1887-1900 and NY County directory 1873-75 — unattributed. Subject's own records (1913 daughter's marriage, father-in-law role) rank top but carry no facts."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-07T04:14:38.202Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "collectionId": "1935764"
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 8,
+      "notes": "California Great Registers, surname G*tj*n statewide. Lead candidate: Hermann Gatjen, b. ~1854 Germany, registered 1875 at 5 Cook St, San Francisco (VTXM-PPN) — a voter in 1875 implies naturalization by then; image 33SQ-GTW9-YVS to be read for naturalization date/court. needs-review: age (b. 1854) differs from tree's unsourced ~1859; identity with the husband of Amelia Nichols not yet established. Others: Hermann Gaetjen, Thompsons Flat, Butte, 13 Jul 1878 (VTXK-R5F, no age indexed); Herman Gotjen, Hamilton, Butte, 1869; Henry Goetjen (Hanover) Gridley/Biggs, Butte, 1873/1878 — a Butte County cluster, likely the Herman b. 1827 d. 1899 Butte; John William Henry Gatjen b. 1847, Potrero SF 1875; Jacob Goetjen b. 1857 SF 1898; Carsten Gotjen b. 1849, 1888."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-07T04:21:36.489Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33SQ-GTW9-YVS"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "notes": "Image of the 1875 Ward Register of the Ninth Ward, San Francisco County (Great Register). OCR truncated before the target; the target line was read directly from a crop of the saved scan (images/ark_61903_3_1_33SQ-GTW9-YVS.jpg, right-hand page): Voting No. 2328, Regis'd No. 59575, 'Gatjen, Hermann', age 21, nativity Germany, occupation Fireman, local residence 5 Cook, ward 9, Naturalized 'Aug 13, 1875, Cal, 4th Dist.', date of registration Aug 13, 1875. Implies birth c.1853-1854 and naturalization in the California 4th District Court, San Francisco, 13 Aug 1875. Identity with husband of Amelia Nichols not yet established (needs-review)."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:22:43.504Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gaetjen",
+        "givenName": "Amelia",
+        "collectionId": "1325221"
+      },
+      "outcome": "negative",
+      "results_examined": 41,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 41,
+      "notes": "1900 census US-wide for wife Amelia Gaetjen (b. 1859 Germany): no plausible match; fuzzy hits are Gateke/Gaethke etc. in WI/IL/NY. Ranker none above 0.01."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:22:43.532Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "collectionId": "1325221",
+        "residencePlace": "California, United States"
+      },
+      "outcome": "partial",
+      "results_examined": 22,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 22,
+      "notes": "1900 census California, G*tj*n. No Hermann or Amelia (b. 1859) household. Found daughter-candidate Amelia Guetjen b. Aug 1883 California, servant, Alameda (M9PM-JWT). Others: Henry Gaetjen b. Sep 1847 Germany imm. 1870 SF with wife Christina (Canada) — different family; Aron F Goetjen b. 1853 Germany imm. 1870 SF; Charles Goetjen b. 1849 imm. 1866 SF."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:22:43.545Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HY-63YS-J98"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "notes": "1900 census Alameda, ED 309, sheet 2B, line 51: Guetjen, Amelia, Servant, W F, Aug 1883, 16, single, b. California, father b. Germany, mother b. Germany, house servant. She is the last line of the household of dwelling 29 (Louis Krumb) carried from sheet 2A. Consistent with daughter Amelia Otillie (b. 23 Aug 1883). FAN evidence: both parents German-born."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-07T04:23:05.050Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "collectionId": "2125028"
+      },
+      "outcome": "negative",
+      "results_examined": 15,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 15,
+      "notes": "California County Naturalizations, G*tj*n. No 1875 Hermann Gatjen entry. Hits: Hermann Gaetjen naturalized SF 1900 (the man b. 1873/74, per earlier survey); Henry Gaetjen SF 1901; Henry Goetjen (b. 1871) and '71; Arond Frederick Goetjen '77. The 13 Aug 1875 4th District Court naturalization recorded in the Great Register is not in this index — the 4th District Court naturalization records would need to be consulted directly."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-07T04:23:05.063Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "collectionId": "1849982"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_012.json",
+      "results_available": 2,
+      "notes": "Northern U.S. District Court naturalization index, G*tj*n: only Henry Gotjen (1879) and Claus Gotjen of Hanover (1857). No Hermann. Expected, since the Great Register names the state 4th District Court, not the federal court."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:26:03.731Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "givenName": "Amelia",
+        "residencePlace": "California, United States",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1924
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_013.json",
+      "results_available": 223,
+      "notes": "Wife Amelia 1901-1924 in California: top hit her death index (1859 - 30 Dec 1924 SF, already attached to tree I4). No 1910 census under G*tj*n spellings; remainder are the daughter's 1913 marriage entries and unrelated Goetjen families."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:26:03.749Z",
+      "tool": "record_search",
+      "query": {
+        "recordCountry": "United States",
+        "givenName": "Amelia",
+        "surname": "G*",
+        "birthYearFrom": 1856,
+        "birthYearTo": 1862,
+        "birthPlace": "Germany",
+        "residencePlace": "San Francisco, California, United States",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1920
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 599736,
+      "notes": "Wildcard surname search found the wife under misindexed spellings: 1900 census 'Amelia Gaetzen' b. Aug 1858 Germany, widowed, SF, with son Henry (M95H-WKV); 1920 census 'Amelia Gaetgen' b. 1860 Germany, SF (MHWP-VWR); SF directory 1899-1900 'Mrs Amelia Gaetjen' (6825-5MD3)."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:26:03.763Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M95H-WKV"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "notes": "Index of the 1900 SF household headed by Amelia Gaetzen with son Henry, sister Hannah Webber and nephews."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:26:03.769Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-6XB3-YH8"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "notes": "Twelfth (1900) census SF, ED 65, sheet 13B, enumerated 9 June, 320 1/2 Ritch St, lines 97-100, verified on a crop of the scan: Gaetzen [Gaetjen] Amelia, Head, widowed, born Aug 1858 Germany, mother of 3 children with 1 living, immigration year 1880, 20 years in US, housewife; Henry, son, born July 1877 California, father born Germany, plumber; Hannah Webber, sister, born Sept 1865 Germany; Edmond, nephew. Relationships are stated on this schedule. Hermann therefore deceased before June 1900. The immigration year conflicts with the son's California birth and with the 1920 schedule; the children-living count conflicts with daughter Amelia alive in Alameda in 1900."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:26:03.796Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:MHWP-VWR"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "notes": "Index of the 1920 SF entry for Amelia Gaetgen, b. 1860 Germany, immigration year 1872."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-07T04:26:03.803Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:33S7-9R6C-W77"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "notes": "Fourteenth (1920) census SF, AD 23, ED 136, sheet 16B, enumerated 14 Jan 1920, line 97: Gaetjen Amelia, Lodger, F, 60, widowed, immigration year 1872, naturalization status 'un', born Germany, German mother tongue, servant in private family, 348 Pacific."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-07T04:26:44.161Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "givenName": "Hermann",
+        "recordType": "immigration",
+        "anyYearFrom": 1855,
+        "anyYearTo": 1879
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 88,
+      "notes": "Immigration-type records, Hermann G*tj*n 1855-1879. Lead: Germans to America Index 'Herm Gaetjen', b. ~1854 Prussia, arrived New York 2 June 1871 (KD32-5DF) — birth year matches the 1875 SF voter Hermann Gatjen (age 21). needs-review: index is a derivative abstract of the New York manifest; identity with the SF man rests on name + birth year only. Others outside window or other men: Hermann Gaetjen cigar maker b. 1855 arr. NY 19 Jun 1885 from Bremen; Hermann Gatjen naturalized New York 1876; later 20th-c. arrivals."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-07T04:26:44.192Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:KD32-5DF"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Germans to America Index entry: Herm Gaetjen, male, born 1854 Prussia, occupation unknown, immigration 2 June 1871 New York. No ship or departure port in the index; the original New York customs passenger list for arrivals of 2 Jun 1871 is the record to consult."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-07T04:26:44.192Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "collectionId": "1849782",
+        "anyYearFrom": 1866,
+        "anyYearTo": 1877
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 131,
+      "notes": "New York Passenger Lists 1820-1920, G*tj*n 1866-1877, first 50: no Hermann arriving 1871 (Wilh Gotjen b. 1857 arr. 1871; others not matching)."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-07T04:26:44.221Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "G*tj*n",
+        "givenName": "Herm*",
+        "collectionId": "1849782",
+        "anyYearFrom": 1870,
+        "anyYearTo": 1872
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 1,
+      "notes": "Narrowed to Herm* 1870-1872: only Hermann Gätjen arr. 1885. The 2 Jun 1871 manifest entry is not name-indexed in this FamilySearch collection under G*tj*n; it must be reached via the ship/date (Ancestry's NY passenger lists or the NARA M237 film for that date)."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"California, Great Registers, 1848-1921,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:VTXM-PPN : accessed 6 October 2026), entry for Hermann Gatjen, 1875 Ward Register, Ninth Ward, San Francisco County; Voting No. 2328, Regis'd No. 59575; digital image of original printed register.",
+      "citation_detail": {
+        "who": "Hermann Gatjen",
+        "what": "1875 Ward Register of the Ninth Ward, San Francisco County; California, Great Registers, 1848-1921",
+        "when_created": "1875",
+        "when_accessed": "2026-10-06",
+        "where": "FamilySearch, https://www.familysearch.org/ark:/61903/1:1:VTXM-PPN",
+        "where_within": "Voting No. 2328, Regis'd No. 59575"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VTXM-PPN",
+      "log_entry_id": "log_007",
+      "notes": "Digital image of original printed great register page examined directly from saved scan (images/ark_61903_3_1_33SQ-GTW9-YVS.jpg; image ARK ark:/61903/3:1:33SQ-GTW9-YVS); full line read from zoomed crop. Surname spelled 'Gatjen' in the register — differs from tree subject spelling 'Gaetjen'. Naturalization date and voter registration date are both Aug 13, 1875 — registrant apparently registered immediately after naturalization.",
+      "gedcomx_source_description_id": "S50"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"United States, Germans to America Index, 1850-1897,\" FamilySearch (https://www.familysearch.org/ark:/61903/1:1:KD32-5DF : accessed 6 October 2026), entry for Herm Gaetjen, 2 June 1871; abstracted from U.S. customs passenger lists.",
+      "citation_detail": {
+        "who": "Herm Gaetjen",
+        "what": "United States, Germans to America Index, 1850-1897 (index only; no images; abstracted from U.S. customs passenger lists, 1850–1897)",
+        "when_created": "1850–1897 (record dates); index compiled and digitized by FamilySearch",
+        "when_accessed": "6 October 2026",
+        "where": "FamilySearch, https://www.familysearch.org",
+        "where_within": "Collection 2110801, entry for Herm Gaetjen, 2 June 1871"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KD32-5DF",
+      "access_date": "2026-10-06",
+      "notes": "Original not examined — index only; this FamilySearch collection (2110801) contains no images. The underlying U.S. customs passenger list manifest was not located. No ship name or departure port is recorded in the index entry, so the original manifest cannot yet be identified for examination.",
+      "log_entry_id": "log_019",
+      "gedcomx_source_description_id": "S51"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "name",
+      "value": "Gatjen, Hermann",
+      "structured_value": {
+        "given": "Hermann",
+        "surname": "Gatjen"
+      },
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Registrant stated his own name. Surname spelled 'Gatjen' — deviates from tree subject I1 spelling 'Gaetjen'; Low German patronymic variants are common but the discrepancy warrants corroboration before linking this persona to I1.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "age",
+      "value": "21",
+      "date": "1875",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "birth",
+      "value": "~1854 (computed from stated age 21 at registration date Aug 13, 1875)",
+      "date": "~1854",
+      "date_certainty": "approximate",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "inferred",
+      "informant_bias_notes": "Birth year derived by subtracting stated age 21 from registration year 1875; the record states the age, not the birth year. Tree subject I1 has an unsourced birth ~1859 — a ~5-year discrepancy constituting an open identity conflict requiring corroboration before this persona can be linked to I1.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "birth",
+      "value": "Germany",
+      "place": "Germany",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Nativity column states 'Germany' — country only; no German state, region, or town given. The open question (q_001) seeks the specific German origin locality; this record does not narrow it further.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "Germany"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "occupation",
+      "value": "Fireman",
+      "structured_value": {
+        "occupation": "Fireman"
+      },
+      "date": "1875",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "residence",
+      "value": "5 Cook, San Francisco, Ward 9",
+      "place": "San Francisco, California, United States",
+      "structured_value": {
+        "place": "San Francisco, California, United States"
+      },
+      "date": "1875",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "San Francisco, California, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "naturalization",
+      "value": "Aug 13, 1875, California, 4th District Court",
+      "date": "1875-08-13",
+      "place": "California, United States",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "stated",
+      "informant_bias_notes": "Registrant attested his own naturalization date and court. California 4th District Court was seated in San Francisco. Same date as the voter registration suggests he registered immediately after naturalization. The corresponding 4th District Court naturalization record — if it survives — is an independent source that could corroborate or conflict with facts stated here; FamilySearch collection 2125028 (California County Naturalizations, 1831-1985) should be consulted.",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "California, United States"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "VoterRegistration",
+      "value": "Registered Aug 13, 1875, Ninth Ward, San Francisco County; Voting No. 2328, Regis'd No. 59575",
+      "date": "1875-08-13",
+      "place": "San Francisco, California, United States",
+      "information_quality": "primary",
+      "informant": "county voter registrar",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_007",
+      "source_id": "src_001",
+      "standard_place": "San Francisco, California, United States"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:VTXM-PPN",
+      "record_role": "registrant",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "Hermann Gatjen",
+      "informant_proximity": "self",
+      "record_basis": "inferred",
+      "informant_bias_notes": "No sex column in this great register. Sex inferred from the record type: California voter registration in 1875 was legally restricted to male citizens aged 21 and older. Absence of an explicit sex field makes this an inference from legal context, not a stated value.",
+      "extracted_for_question_ids": [],
+      "log_entry_id": "log_007",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:KD32-5DF",
+      "record_persona_id": "p_14145591975",
+      "record_role": "passenger_1",
+      "fact_type": "name",
+      "value": "Herm Gaetjen",
+      "structured_value": {
+        "given": "Herm",
+        "surname": "Gaetjen"
+      },
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "\"Herm\" is almost certainly an index truncation of \"Hermann\"; the underlying manifest's spelling cannot be verified without the original record. Identity of this passenger with tree subject I1 (Hermann Gaetjen, born ~1859) is uncertain: the stated birth year 1854 differs from the tree subject's approximate birth year by five years. This identity question must be resolved by corroborating evidence, not asserted from this index alone.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_019",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:KD32-5DF",
+      "record_persona_id": "p_14145591975",
+      "record_role": "passenger_1",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_019",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:KD32-5DF",
+      "record_persona_id": "p_14145591975",
+      "record_role": "passenger_1",
+      "fact_type": "birth",
+      "value": "born 1854",
+      "date": "1854",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Birth year 1854 as stated in the index conflicts with the tree subject I1's approximate birth year of ~1859 — a five-year discrepancy that raises an identity question. Notably, the 1875 San Francisco Great Register entry (src_001) records a Hermann Gatjen aged 21, implying birth ~1854, which is consistent with this index entry; the two may record the same individual. Whether that individual is the same as tree subject I1 requires independent corroboration. The birth year in a passenger index would typically derive from the passenger's self-reported age or a birth year column on the original manifest; neither can be verified without the original.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_019",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:KD32-5DF",
+      "record_persona_id": "p_14145591975",
+      "record_role": "passenger_1",
+      "fact_type": "birth",
+      "value": "Prussia",
+      "place": "Prussia",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Prussia is a broad political designation covering a large territory, not a specific locality. It does not identify a German province, town, or parish of origin. The index records no departure port or ship name, so the original manifest — which may carry a more specific origin — cannot be located from this entry alone.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_019",
+      "source_id": "src_002",
+      "standard_place": "Prussia, Germany"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:KD32-5DF",
+      "record_persona_id": "p_14145591975",
+      "record_role": "passenger_1",
+      "fact_type": "immigration",
+      "value": "arrived 2 June 1871, New York, New York",
+      "date": "2 Jun 1871",
+      "place": "New York, New York",
+      "information_quality": "indeterminate",
+      "informant": "unknown",
+      "informant_proximity": "unknown",
+      "informant_bias_notes": "Arrival date and port derive from a derivative index; no ship name or departure port is recorded, so the underlying arrival manifest cannot be identified without additional research. The index may have introduced transcription errors in the date.",
+      "record_basis": "stated",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "log_entry_id": "log_019",
+      "source_id": "src_002",
+      "standard_place": "New York City, New York, United States"
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "California, United States",
+      "for_place": "San Francisco County, California",
+      "time_period": "1850-1905",
+      "jurisdictions": [
+        {
+          "name": "San Francisco, California, United States (County)",
+          "date_range": "+1850/"
+        },
+        {
+          "name": "San Francisco, San Francisco, California, United States (City)",
+          "date_range": "+1848/+1856"
+        },
+        {
+          "name": "San Francisco, California, United States (Major City)",
+          "date_range": "+1856/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1402856",
+          "title": "California, San Francisco County Records, 1824-1997",
+          "date_range": "1824-1997"
+        },
+        {
+          "id": "2125028",
+          "title": "California County Naturalizations, 1831-1985",
+          "date_range": "1831-1985"
+        },
+        {
+          "id": "1849982",
+          "title": "California, Northern U.S. District Court Naturalization Index, 1852-1989",
+          "date_range": "1852-1989"
+        },
+        {
+          "id": "5000183",
+          "title": "California, Naturalization Records, 1883-1991",
+          "date_range": "1883-1991"
+        },
+        {
+          "id": "1935764",
+          "title": "California, Great Registers, 1848-1921",
+          "date_range": "1848-1921"
+        },
+        {
+          "id": "1916078",
+          "title": "California, San Francisco Passenger Lists, 1893-1953",
+          "date_range": "1893-1953"
+        },
+        {
+          "id": "3477656",
+          "title": "California, Index to San Francisco Passenger Lists, 1893-1934",
+          "date_range": "1893-1934"
+        },
+        {
+          "id": "3477658",
+          "title": "California, Customs Passenger Lists of Vessels Arriving at San Francisco, 1903-1918",
+          "date_range": "1903-1918"
+        },
+        {
+          "id": "2001287",
+          "title": "California, County Birth and Death Records, 1800-1994",
+          "date_range": "1800-1994"
+        },
+        {
+          "id": "1385518",
+          "title": "California, San Francisco, Area Funeral Home Records, 1835-1981",
+          "date_range": "1835-1981"
+        },
+        {
+          "id": "1804002",
+          "title": "California, County Marriages, 1849-1957",
+          "date_range": "1849-1957"
+        },
+        {
+          "id": "1771089",
+          "title": "California, State Census, 1852",
+          "date_range": "1852-1852"
+        }
+      ],
+      "quirks": [
+        "The 1906 San Francisco earthquake and fire destroyed City Hall and the Hall of Records. Pre-1906 county-level civil birth, marriage, and death certificates were largely destroyed. Substitute sources (church records, funeral home records, Great Registers, newspapers) are essential for the entire 1850-1905 period.",
+        "San Francisco passenger arrival lists for approximately 1865-1892 are not digitized or name-indexed online. NARA microfilm reels (M261 and predecessor series) must be consulted in person at the National Archives at San Francisco (San Bruno, CA) or by mail request.",
+        "The Great Register (voter register) states each registrant's nativity, naturalization court, and naturalization date — the highest-priority substitute source when passenger lists and pre-1906 vital records are unavailable. FamilySearch collection 1935764 (3.3 million records, indexed) and Ancestry Voter Registers 1866-1898 (indexed + images).",
+        "Naturalization before 1880 was in the state district court (or county court 1862-1880); after 1880 in the superior court. San Francisco is also a federal district court seat, so many immigrants naturalized under the Northern District Court — covered by FamilySearch collection 1849982.",
+        "Declarations of intention (first papers) from the US Northern District Court 1846-1903 are at the National Archives, San Bruno (also FamilySearch Library films 977767-70). These may predate final citizenship by years and often name German hometown.",
+        "The 1900 census is the most direct online source for an immigrant's year of arrival — it asks for year of immigration and years in the US. The 1880 census records only birthplace.",
+        "North German surname Gaetjen (Low German patronymic, Oldenburg/Hannover/East Friesland region) — search Hamburg departure lists (Ancestry, partially indexed 1877-1914) as departure records often name the emigrant's home village. North Germans disproportionately used Hamburg over Bremen.",
+        "Bremen departure lists are largely destroyed; only 1907-1908 and 1913-1914 card index and a partial 1920-1939 reconstruction survive. Baltimore arrival lists partially compensate for Bremen-departing immigrants.",
+        "San Francisco funeral home records (FamilySearch collection 1385518, 162,363 records, indexed + images) survived 1906 and often record birthplace, parents' names, and informant — more detailed than civil death certificates.",
+        "The 1904 death certificate volumes (nine digitized volumes from FamilySearch volume search) are 0% name-indexed but full-text searchable — use FamilySearch full-text search to locate Gaetjen without browsing image by image.",
+        "Many original San Francisco cemeteries were relocated to Colma (San Mateo County) in the early 20th century — search San Mateo County records for burial information.",
+        "Search name variants: Gaetjen, Gaetgen, Gätjen, Gärtjen, and anglicized or misspelled forms with plain a or e instead of ae/ä."
+      ],
+      "guide_markdown": "# Locality Guide: San Francisco County, California (1850-1905)\n\nFull guide compiled 2026-10-06. See research log for complete text.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/California,_United_States_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/California_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/California_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/California_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-07"
+    }
+  ],
+  "warning_justifications": []
+}
