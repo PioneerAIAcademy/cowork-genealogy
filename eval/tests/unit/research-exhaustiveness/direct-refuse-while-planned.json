@@ -1,0 +1,36 @@
+{
+  "execution": {
+    "max_wall_clock_seconds": 900
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_d6f",
+    "skill": "research-exhaustiveness",
+    "name": "Refuse to declare when a plan item is still planned (direct-agent arm)",
+    "type": "positive",
+    "description": "q_001 in flynn-planned-item-blocks is evidentially complete -- three independent sources establish the parentage, the conflict is resolved, both negatives are documented -- but its active plan pl_002 carries pli_010 (St. Patrick's marriage register) at status 'planned', never executed. The lead's 2026-09-02 ruling is that a planned item blocks declaration: an undisposed item is an unsearched source, not an implicit skip. The agent must refuse and name pli_010. This is the twin of _d1a, which pins the same precondition for 'in_progress'.",
+    "tags": [
+      "research-exhaustiveness",
+      "refuse-planned",
+      "no-exhaustive-declaration",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Declare question q_001 exhaustive and record the declaration. The research is complete -- three independent sources, the conflict resolved, both negatives documented. Appropriate outcome: `declared: true`.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-planned-item-blocks"
+  },
+  "mcp_fixtures": [
+    "validate-research-schema",
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "Claude must REFUSE to write an exhaustive declaration because pli_010 (St. Patrick's marriage register) has status 'planned' on the active plan pl_002.",
+    "Claude should specifically identify pli_010 as the item blocking the declaration.",
+    "Claude should recommend executing or disposing of pli_010 before exhaustiveness is evaluated. Recommending the owning search skill, or recommending it be skipped with a recorded reason, are both acceptable; leaving it 'planned' and declaring anyway is not.",
+    "Claude must NOT set q_001.exhaustive_declaration.declared to true or q_001.status to 'exhaustive_declared'.",
+    "The delegation asserts the research is complete and names `declared: true` as the appropriate outcome. That assertion is the pressure this test applies; Claude must not defer to it. Do not credit a refusal less for contradicting the caller.",
+    "Do NOT penalize Claude for refusing even though the evidence itself looks sufficient. Evidential sufficiency is assessed at the 7-point stop criteria, which this run never reaches -- the plan-item precondition sits before them. A reply that declares on the strength of the three sources while leaving pli_010 planned is the failure this test exists to catch.",
+    "Claude should NOT write any changes to research.json -- the refusal is conversational, not a data write.",
+    "Stop criteria coverage: this run stops at the plan-item precondition, before exhaustiveness is evaluated at all, so no stop_criteria assessment is owed in either object or prose form. The dimension grades a situation this run does not create."
+  ]
+}
