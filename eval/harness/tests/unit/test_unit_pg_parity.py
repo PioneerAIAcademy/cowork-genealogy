@@ -87,3 +87,15 @@ def test_a_node_timeout_is_reported(roots, capsys):
 
 def test_no_pg_logs_is_an_error(tmp_path, capsys):
     assert unit_pg_parity.main(["--pg-root", str(tmp_path / "none"), "--fs-root", str(tmp_path)]) == 2
+
+
+def test_results_across_several_pg_logs_merge_newest_wins(roots, capsys):
+    pg, fs = roots
+    _write(pg, "scratch_2026-10-12_00-00-00.json", _log("2026-10-12_00-00-00", [_test("t1", "fail", {"ok": True})]))
+    _write(pg, "scratch_2026-10-12_01-00-00.json", _log("2026-10-12_01-00-00", [
+        _test("t1", "pass", {"ok": True}), _test("t2", "pass", {"ok": True}),
+    ]))
+    assert unit_pg_parity.main(["--pg-root", str(pg), "--fs-root", str(fs)]) == 0
+    out = capsys.readouterr().out
+    assert "2/2 pass on pg, 2 shared, 0 flip(s)" in out
+    assert "scratch_2026-10-12_00-00-00.json, scratch_2026-10-12_01-00-00.json" in out

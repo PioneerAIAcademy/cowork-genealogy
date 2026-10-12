@@ -1,6 +1,10 @@
 """`make unit-pg-parity` — each skill's newest `--store pg` run against its
 newest file-store run (U15).
 
+A skill's Postgres results may span several `--store pg` logs (a run that
+stopped part-way, then the missing tests by `--test`); they are merged, the
+newest log's result winning for a test that appears twice.
+
 A Postgres run is judged by parity, not graded on its own: the question is
 whether moving every live tool call onto PgS3ProjectStore changed anything. Per
 skill, over the tests present in both runs, it prints the outcome flips and
@@ -41,9 +45,14 @@ STORE_FAULT = re.compile(
 )
 
 
-def newest(paths: list[Path]) -> tuple[Path, dict[str, Any]] | None:
+def by_time(paths: list[Path]) -> list[tuple[Path, dict[str, Any]]]:
     loaded = [(p, log) for p in paths if (log := _load(p)) is not None]
     loaded.sort(key=lambda pl: (str(pl[1].get("timestamp") or ""), pl[0].name))
+    return loaded
+
+
+def newest(paths: list[Path]) -> tuple[Path, dict[str, Any]] | None:
+    loaded = by_time(paths)
     return loaded[-1] if loaded else None
 
 
@@ -68,11 +77,16 @@ def live_faults(test: dict[str, Any]) -> tuple[int, list[str], list[str]]:
 
 
 def compare(skill: str, pg_root: Path, fs_root: Path) -> tuple[list[str], bool]:
-    pg = newest(run_logs(skill, root=pg_root))
-    if pg is None:
+    pg_logs = by_time(run_logs(skill, root=pg_root))
+    if not pg_logs:
         return [f"{skill}: no --store pg run log"], False
     fs = newest(run_logs(skill, root=fs_root)) if (fs_root / skill).is_dir() else None
-    pg_path, pg_log = pg
+    merged: dict[Any, dict[str, Any]] = {}
+    for _, log in pg_logs:
+        for t in log["tests"]:
+            merged[t.get("test_id")] = t
+    pg_log = {"tests": list(merged.values())}
+    pg_names = ", ".join(p.name for p, _ in pg_logs)
     by_fs = {t.get("test_id"): t for t in (fs[1]["tests"] if fs else [])}
     lines: list[str] = []
     flips: list[str] = []
@@ -94,7 +108,7 @@ def compare(skill: str, pg_root: Path, fs_root: Path) -> tuple[list[str], bool]:
     passed = sum(1 for t in pg_log["tests"] if t.get("outcome") == "pass")
     fs_note = f"vs {fs[0].name}" if fs else "no file-store log to compare"
     head = (
-        f"{skill}: {pg_path.name} {fs_note} — {passed}/{len(pg_log['tests'])} pass on pg, "
+        f"{skill}: {pg_names} {fs_note} — {passed}/{len(pg_log['tests'])} pass on pg, "
         f"{shared} shared, {len(flips)} flip(s), {calls} live call(s), "
         f"{sum(1 for x in lines if 'STORE FAULT' in x)} store fault(s)"
     )

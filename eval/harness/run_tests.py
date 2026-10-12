@@ -178,7 +178,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument(
-        "--test", help="Run the single test with this ut_ id."
+        "--test",
+        nargs="+",
+        metavar="TEST",
+        help="Run the test(s) with these ut_ ids, in one pool (one run log per "
+        "skill). Every id must exist: one unknown id selects nothing.",
     )
     selection.add_argument(
         "--skill",
@@ -429,7 +433,7 @@ def _resolve_concurrency(requested: int | None) -> tuple[int, str, str | None]:
 def _select_tests(args, tests_dir: Path) -> list[TestSpec]:
     """Translate CLI flags into a list of TestSpecs."""
     if args.test:
-        return _find_by_id(args.test, tests_dir)
+        return _find_by_ids(args.test, tests_dir)
 
     if args.skill:
         # args.skill is a list (nargs="+"). Concatenate each skill's specs;
@@ -480,15 +484,23 @@ def _collect_specs(root: Path, *, tags: list[str]) -> list[TestSpec]:
     return out
 
 
-def _find_by_id(test_id: str, root: Path) -> list[TestSpec]:
+def _find_by_ids(test_ids: list[str], root: Path) -> list[TestSpec]:
+    """The specs for `test_ids`, in the order given — or [] when any id is
+    unknown, naming it, so a typo never quietly runs fewer tests."""
+    wanted = set(test_ids)
+    found: dict[str, TestSpec] = {}
     for path in _iter_test_files(root):
         try:
             spec = load_test(path)
         except InvalidTestError:
             continue
-        if spec.id == test_id:
-            return [spec]
-    return []
+        if spec.id in wanted:
+            found[spec.id] = spec
+    unknown = [t for t in test_ids if t not in found]
+    if unknown:
+        print(f"Unknown test id(s): {', '.join(unknown)}", file=sys.stderr)
+        return []
+    return [found[t] for t in dict.fromkeys(test_ids)]
 
 
 def _format_path(path: Path) -> str:
