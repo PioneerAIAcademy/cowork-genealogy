@@ -2,7 +2,7 @@
 
 Pre-proof state of a parentage question where the research is **not yet
 reasonably exhaustive**: `questions[0].search_stop.stopped_because`
-is `false`, and several planned searches remain unexecuted in `plans`
+is `null`, and several planned searches remain unexecuted in `plans`
 (including a census that could corroborate *or contradict* the
 parentage). The subject and both candidate parents (`I1` father, `I2`
 mother) are already identity-linked via `person_evidence`, and all 16

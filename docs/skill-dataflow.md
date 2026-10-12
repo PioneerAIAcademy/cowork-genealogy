@@ -229,7 +229,7 @@ rule prevents, is in [`specs/schemas/ownership.json`](specs/schemas/ownership.js
 | `research.json` | `project` | `init-project` | `proof-conclusion` (status + `updated`) | `project_create`, `research_append` | unit + hook — the hook routes `project.status` to the proof-conclusion agent (field-scoped; the rest of the section is co-written and untouched). A diff confined to `updated` is exempt at both, so the activity ping is free to any writer |
 | | `researcher_profile` | `init-project` | any caller, to correct a field | `research_append` | **nothing** |
 | | `known_holdings` | `init-project` | — | `research_append` | **nothing** |
-| | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook keys on the claim `search_stop.stopped_because: "question_answered"`, not on the section |
+| | `questions` | `question-selection` | `research-exhaustiveness`, `proof-conclusion` | `research_append` | unit + hook + tool — the only field-scoped rule: the hook routes any non-null `search_stop.stopped_because` to `research-exhaustiveness` (2026-09-30 ruling, #2539) |
 | | `plans` / `plan_items` | `research-plan` | the four search skills and `record-extraction`, for `items[].status` only | `research_append` | unit (whole-section only — it cannot tell a status flip from a rewritten plan) |
 | | `log` | none by design — append-only, multi-writer | the four search skills, `record-extraction`, `survey-surname` and the `search-hints` agent (one entry per hint verdict) | `research_log_append` | unit |
 | | `sources` | `record-extraction` | `agent:citation` (refine only, never create); `init-project` (one entry per transcribed memory, at creation) | `research_append`, `extraction_append` | unit; create-vs-refine held by tool identity |
@@ -259,7 +259,7 @@ Two consequences worth holding onto:
 - **The hook carries exactly four rules**, in
   `packages/engine/plugin/hooks/guard_project_files.py`, and they are the only ones that
   discriminate by caller: `proof_summaries` is writable only by the proof-conclusion
-  agent; a `research_append` op setting `search_stop.stopped_because` to `true` is
+  agent; a `research_append` op setting `search_stop.stopped_because` to any non-null value is
   writable only by the research-exhaustiveness agent; `project.status` is writable only
   by the proof-conclusion agent, field-scoped because the rest of `project` is
   co-written; and each of those agents is held to its own section set, which is what

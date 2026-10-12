@@ -426,10 +426,9 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
             return (section, "routed", caller)
         # A routed CLAIM, reached by anyone but its owning agent. Read from the
         # op's own payload — `fields` on an update, `entry` on an append — and
-        # only when the op sets the claim TRUE. A `declared: false` write claims
-        # nothing: it is either a question being created (197 of 392 corpus ops)
-        # or an honest early termination, and both are the owning skill's own
-        # sanctioned path.
+        # only when `stopped_because` is non-null. A `stopped_because: null`
+        # write claims nothing: it is a question being created (null init) and
+        # is the owning skill's own sanctioned path.
         for (owned_section, field), owner in OWNED_DECLARATIONS.items():
             if section != owned_section or caller == owner:
                 continue

@@ -192,8 +192,10 @@ named in `justification`.
     skipped **decisive** record still gates (below) unless its recorded reason
     is inaccessibility.
   - A present `skip_category` changes only two things: `premise_invalidated`
-    means recommend `research-plan`; `inaccessible` and `no_coverage` make the
-    item eligible for the exception below, whose own conditions still decide.
+    means recommend `research-plan`; `inaccessible` makes the item eligible for
+    the exception below; `no_coverage` records the item in `not_reached` with
+    `kind: "skipped_plan_item"` and is treated as inaccessible for the exception
+    below, whose own conditions still decide.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and

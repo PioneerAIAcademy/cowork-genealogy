@@ -35,7 +35,7 @@
         "a_004"
       ],
       "search_stop": {
-        "stopped_because": "resources_spent",
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [
           "log_001",

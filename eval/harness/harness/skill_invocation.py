@@ -174,7 +174,11 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
                 fields = op.get("fields") if isinstance(op.get("fields"), dict) else op.get("entry")
                 ss = (fields or {}).get("search_stop") if isinstance(fields, dict) else None
                 _GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
-                if isinstance(ss, dict) and ss.get("stopped_because") in _GATE:
+                new_gate = isinstance(ss, dict) and ss.get("stopped_because") in _GATE
+                # Legacy shape: exhaustive_declaration.declared = true (pre-#2539 runs)
+                ed = (fields or {}).get("exhaustive_declaration") if isinstance(fields, dict) else None
+                legacy_gate = isinstance(ed, dict) and ed.get("declared") is True
+                if new_gate or legacy_gate:
                     owners.append("research-exhaustiveness")
     elif bare == "materialize_facts":
         for op in _iter_ops(args):

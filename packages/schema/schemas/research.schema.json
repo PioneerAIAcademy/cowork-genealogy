@@ -371,6 +371,21 @@
               "stop_criteria": { "$ref": "#/$defs/stop_criteria" }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "stopped_because": {
+                "enum": ["resources_spent", "blocked_by_conflict"]
+              }
+            },
+            "required": ["stopped_because"]
+          },
+          "then": {
+            "properties": {
+              "stop_criteria": { "type": "null" }
+            }
+          }
         }
       ]
     },
