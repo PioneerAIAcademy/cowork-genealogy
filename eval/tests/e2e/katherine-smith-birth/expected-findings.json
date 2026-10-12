@@ -1,0 +1,36 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Katherine Ganden Smith was born on 12 July 1831 in New Church Street, Bermondsey, Surrey, England, the daughter of James Smith and Mary Ann Hunt.",
+      "details": {
+        "subject_person": "Katherine Ganden Smith (GLPD-4GL)",
+        "fact_type": "Birth",
+        "date": "12 July 1831",
+        "place": "Bermondsey, Surrey, England"
+      },
+      "supporting_sources": [
+        "England, Births and Christenings, 1538-1975 — birth entry for Katharine Ganden Smith, 12 Jul 1831"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Katherine Ganden Smith's parents were James Smith and Mary Ann Hunt; the entry names Mary Ann's father as Philip Hunt.",
+      "details": {
+        "subject_person": "Katherine Ganden Smith (GLPD-4GL)",
+        "relation": "parents",
+        "target_person": {
+          "name": "James Smith and Mary Ann Hunt",
+          "parents": "Mary Ann Hunt was the daughter of Philip Hunt"
+        }
+      },
+      "supporting_sources": [
+        "England, Births and Christenings, 1538-1975 — birth entry for Katharine Ganden Smith, 12 Jul 1831, naming James Smith, Mary Ann Hunt and Philip Hunt"
+      ],
+      "required": true
+    }
+  ]
+}

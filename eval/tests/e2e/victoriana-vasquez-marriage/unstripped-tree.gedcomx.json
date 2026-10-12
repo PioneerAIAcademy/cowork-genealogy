@@ -1,0 +1,189 @@
+{
+  "persons": [
+    {
+      "id": "GFG9-7H4",
+      "ark": "ark:/61903/4:1:GFG9-7H4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "2f659c17-8ac1-4841-b57d-85c83ddbfb1e",
+          "preferred": true,
+          "given": "Victoriana",
+          "surname": "Vasquez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "21077f8d-7202-48ab-8d26-8cba63fc143e",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GFG9-3QW",
+      "ark": "ark:/61903/4:1:GFG9-3QW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "64d45937-b7a0-414a-b067-3aa0b5a952bd",
+          "preferred": true,
+          "given": "Silveria",
+          "surname": "Gutierrez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a4396cb1-815e-4083-82d7-a7ae5fa4a0b6",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GFG9-FPF",
+      "ark": "ark:/61903/4:1:GFG9-FPF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c9932f6a-1b98-41aa-a3eb-830cff3db105",
+          "preferred": true,
+          "given": "Remigio",
+          "surname": "Vasquez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "991446bd-9ebd-40c7-bb46-6f3225ef05e5",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GFG9-WPX",
+      "ark": "ark:/61903/4:1:GFG9-WPX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "461dff9e-b64d-4dad-9eef-4260ecb57f80",
+          "preferred": true,
+          "given": "Jose Cleofas",
+          "surname": "Gutierrez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6c5f7c5d-85df-4c4b-9653-d0f7f93a7a26",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GFG9-NTX",
+      "ark": "ark:/61903/4:1:GFG9-NTX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "827b0a1f-7497-4fc7-b496-5658ed6cc50c",
+          "preferred": true,
+          "given": "Bernarda",
+          "surname": "Sandoval",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad0cdc53-16a8-4971-9e2f-a132b79a942e",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GFG9-WPX",
+      "person2": "GFG9-7H4"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GFG9-FPF",
+      "person2": "GFG9-NTX"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GFG9-FPF",
+      "child": "GFG9-7H4"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GFG9-NTX",
+      "child": "GFG9-7H4"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GFG9-WPX",
+      "child": "GFG9-3QW"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GFG9-7H4",
+      "child": "GFG9-3QW"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GFG9-7H4",
+      "title": "Victoriana Vasquez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Victoriana Vasquez (PID GFG9-7H4); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GFG9-7H4"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GFG9-3QW",
+      "title": "Silveria Gutierrez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Silveria Gutierrez (PID GFG9-3QW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GFG9-3QW"
+    },
+    {
+      "id": "sd_person_GFG9-FPF",
+      "title": "Remigio Vasquez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Remigio Vasquez (PID GFG9-FPF); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GFG9-FPF"
+    },
+    {
+      "id": "sd_person_GFG9-WPX",
+      "title": "Jose Cleofas Gutierrez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jose Cleofas Gutierrez (PID GFG9-WPX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GFG9-WPX"
+    },
+    {
+      "id": "sd_person_GFG9-NTX",
+      "title": "Bernarda Sandoval",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Bernarda Sandoval (PID GFG9-NTX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GFG9-NTX"
+    }
+  ]
+}

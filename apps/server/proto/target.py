@@ -190,11 +190,11 @@ class DeployedTarget:
                                   "no RDS failure shape")
         yield  # pragma: no cover
 
-    def settings(self, tier: str) -> dict[str, str]:
+    def settings(self, tier: str, namespace: str = ENV_NS) -> dict[str, str]:
         res = self.aws("elasticbeanstalk", "describe-configuration-settings", "--application-name", self.prefix,
                        "--environment-name", self.env_name(tier))
         opts = res.get("ConfigurationSettings", [{}])[0].get("OptionSettings", [])
-        return {o["OptionName"]: o.get("Value") for o in opts if o.get("Namespace") == ENV_NS}
+        return {o["OptionName"]: o.get("Value") for o in opts if o.get("Namespace") == namespace}
 
     def wait_ready(self, tier: str) -> None:
         waited = 0.0

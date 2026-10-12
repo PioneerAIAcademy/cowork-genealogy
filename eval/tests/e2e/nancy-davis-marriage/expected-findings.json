@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Nancy Davis, indexed as Nancy Angeline Davis, married William Brewer (indexed as William Bremer) on 12 May 1868 in Newton County, Missouri.",
+      "details": {
+        "subject_person": "Nancy Davis (LJK2-JBH)",
+        "fact_type": "Marriage",
+        "date": "12 May 1868",
+        "place": "Newton, Missouri, United States"
+      },
+      "supporting_sources": [
+        "Missouri, Marriages, 1750-1920 — entry for William Bremer and Nancy Angeline Davis, 12 May 1868"
+      ],
+      "required": true
+    }
+  ]
+}

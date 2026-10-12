@@ -10,11 +10,12 @@
       "person-search",
       "no-id",
       "single-turn-decomposition",
-      "expects-person-search"
+      "expects-person-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "init-project: Start a new research project. I want to find the parents of Patrick Flynn, born around 1845 in Ireland, who lived in Schuylkill County, Pennsylvania. I don't have his FamilySearch ID.",
+    "delegation": "init-project: Start a new research project. I want to find the parents of Patrick Flynn, born around 1845 in Ireland, who lived in Schuylkill County, Pennsylvania. I don't have his FamilySearch ID.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [
@@ -29,21 +30,7 @@
     "Should set the project objective to something like 'Identify the parents of Patrick Flynn'"
   ],
   "execution": {
-    "max_wall_clock_seconds": 480,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 480
   },
   "judge_reads_files": true
 }

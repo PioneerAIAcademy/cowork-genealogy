@@ -852,6 +852,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     tools: ["Read"],
     denies: [],
   },
+
+  // The folded init-project skill (issue #2122) holds the tools that skill
+  // declared less `place_search` (project_create standardizes places), plus
+  // `Read`, which it had as the main thread: a large `person_read` result is
+  // persisted to a file the agent pages through. Its `research_append` is laned
+  // to `project` (which it owns), `researcher_profile`, `known_holdings` and
+  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // so no spawn tool.
+  "init-project.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "person_search",
+      "project_create",
+      "research_append",
+    ],
+    denies: [],
+  },
 };
 
 /** Bare name for an MCP entry; non-MCP built-ins (`Read`) pass through as-is. */
