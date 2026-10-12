@@ -11,7 +11,8 @@
       "online-tree",
       "verify-before-building",
       "compiled-source",
-      "question-selection-no-new-question",
+      "new-question-exhaustive-declaration-unstarted",
+      "unblocks-nonempty",
       "direct-arm"
     ]
   },
