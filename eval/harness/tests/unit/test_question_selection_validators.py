@@ -380,6 +380,8 @@ _MOTIVATION_TAGS = {"tags": ["motivation-objective-decomposed"]}
         "Did Michael Sheahan move to Schuylkill County, Pennsylvania around 1882 for anthracite coal-mining work, as family tradition holds?",
         "Did the Morgans move to Texas to join relatives already living there?",
         "Did the family migrate because of the 1883 death of Eugene McElwee?",
+        "What brought Patrick Flynn's family to Schuylkill County?",
+        "What drew the Flynn family to Pennsylvania?",
     ],
 )
 def test_motivation_rejects_a_question_asking_the_reason(question):
@@ -397,6 +399,7 @@ def test_motivation_rejects_a_question_asking_the_reason(question):
         "Which of Clorinda Sleeper's brothers were living in the Texas county before 1880?",
         "Did Patrick Flynn's parents move to Schuylkill County before 1860?",
         "When did the Morgan family arrive in Texas?",
+        "What ship brought Patrick Flynn's family to Philadelphia?",
     ],
 )
 def test_motivation_accepts_a_relationship_or_event_question(question):

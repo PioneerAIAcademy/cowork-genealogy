@@ -666,7 +666,7 @@ _MOTIVATION_PATTERNS = (
     r"\bfor what (?:reason|purpose)\b",
     r"\breasons?\b",
     r"\bmotivat",
-    r"\bwhat (?:led|prompted|caused|drove|induced|motivated)\b",
+    r"\bwhat (?:led|prompted|caused|drove|induced|motivated|brought|drew)\b",
     r"\bbecause\b",
     r"\b(?:move|moved|relocate|relocated|migrate|migrated|settle|settled|leave|left|emigrate|emigrated)\b[^?]*\b(?:for|to (?:find|seek|join|escape|take up))\b[^?]{0,40}?\b(?:work|employment|jobs?|land|wages|mining|mines|opportunit\w*|relatives|kin|family)\b",
 )
