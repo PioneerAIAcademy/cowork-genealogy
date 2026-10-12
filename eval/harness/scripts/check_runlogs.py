@@ -961,9 +961,10 @@ def _promoted_candidate_names(
     regression against the old arithmetic, not a pre-existing hole, and it was
     reproduced before this guard replaced the string compare.
 
-    Returns the empty set when the file is unreadable, is not valid JSON, or
-    carries no usable `timestamp` -- the conservative direction, since a missing
-    name only shrinks the prunable set back to today's behaviour.
+    Returns the empty set when the file is unreadable, when `json.loads` yields
+    anything but an object, or when it carries no usable `timestamp` -- the
+    conservative direction, since a missing name only shrinks the prunable set
+    back to today's behaviour.
 
     A malformed-but-present `timestamp` is NOT rejected here: it is synthesized
     and then ignored downstream, because `prunable_candidates` drops any name it
@@ -971,6 +972,23 @@ def _promoted_candidate_names(
     arithmetic, which is why the version-keyed skip above, not name validation,
     is the guard that matters.
     """
+    # Synthesize NOTHING if this PR also ADDED a candidate for the skill. A write
+    # that lands after the release refills the slot the promotion emptied, so
+    # crediting the promoted candidate as well describes a directory that never
+    # existed and authorises one deletion more than the harness ever performed.
+    # Measured: run -> release -> run again prunes ONCE (the release leaves the
+    # dir at 4, so the second write prunes nothing), yet the credited union makes
+    # TWO deletions prunable, waving through a hand-deletion of committed grading.
+    #
+    # The cost of this bail-out is the run -> run -> release shape, where two
+    # prunes really did happen and the second still reads as a hand-deletion.
+    # That is the behaviour on main today, so this is not a regression: the fix
+    # strictly removes false positives and introduces no hole. Rule 7 guards
+    # grading that cannot be recovered, so a surviving false positive beats a
+    # hole every time.
+    if any(classify(n).kind == "candidate" for n in added):
+        return set()
+
     deleted_versions = {
         v
         for n in deleted_candidates
@@ -987,6 +1005,8 @@ def _promoted_candidate_names(
             doc = json.loads((skill_dir / name).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             continue
+        if not isinstance(doc, dict):
+            continue  # a valid-JSON array or scalar has no envelope
         ts = doc.get("timestamp")
         if not isinstance(ts, str) or not ts.strip():
             continue

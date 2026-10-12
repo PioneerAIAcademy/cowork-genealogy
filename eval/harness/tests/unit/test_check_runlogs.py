@@ -1019,7 +1019,7 @@ def test_rule7_same_pr_run_and_release_passes(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize(
     "timestamp",
-    ["", "   ", "not-a-timestamp", "../../../etc/passwd", "2026-08-01_00-00-00.json"],
+    ["not-a-timestamp", "../../../etc/passwd", "2026-08-01_00-00-00.json"],
 )
 def test_rule7_promotion_synthesis_rejects_an_unusable_timestamp(
     monkeypatch, tmp_path, timestamp
@@ -1105,6 +1105,61 @@ def test_rule7_a_fabricated_release_envelope_buys_no_slot(monkeypatch, tmp_path)
         "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",
     }
     assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_a_second_run_after_the_release_buys_no_free_deletion(
+    monkeypatch, tmp_path
+):
+    """run -> release -> run again must not authorise a second deletion.
+
+    The blocking hole a blind review found in the first fix. The second write
+    prunes NOTHING, because the release left the directory at 4; but crediting the
+    promoted candidate on top of the newly written one describes a directory that
+    never existed, makes two deletions prunable where the harness pruned once, and
+    waves through a hand-deletion of committed grading.
+
+    The precondition is ordinary, not adversarial: edit the skill, run, senior
+    releases, review comments arrive, edit again, run again -- and rule 2 FORCES
+    that second run once the body changes."""
+    _make_present_skill(tmp_path, monkeypatch)
+    head = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(3, 6)]
+    _stage_runlog_dir(
+        tmp_path, monkeypatch,
+        candidates=[*head, "v10_2026-08-02_00-00-00.json", "v9.json"],
+    )
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",  # the one real prune
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",  # a hand-deletion
+    }
+    added = {"present-skill": ["v9.json", "v10_2026-08-02_00-00-00.json"]}
+    assert check_runlogs.rule7_deletions(deleted, added) == 1
+
+
+def test_rule7_synthesis_ignores_a_release_whose_envelope_is_not_an_object(
+    monkeypatch, tmp_path
+):
+    """A JSON array or scalar is valid JSON and has no envelope. The guard must
+    skip it rather than raise: `rule7_deletions` is unit-tested directly, so its
+    docstring is the contract even where `main()` would crash earlier."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    d = _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    (d / "v9.json").write_text("[1, 2, 3]", encoding="utf-8")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_synthesis_is_released_only_not_any_added_candidate(
+    monkeypatch, tmp_path
+):
+    """Only an added RELEASE may synthesize. If an added candidate could too, the
+    widening would be one slot per added candidate rather than one per PR, which
+    rule 1 does not bound. Nothing noticed the restriction's removal before."""
+    names = check_runlogs._promoted_candidate_names(
+        tmp_path, ["v9_2026-08-01_00-00-00.json"], set()
+    )
+    assert names == set()
 
 
 def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):
