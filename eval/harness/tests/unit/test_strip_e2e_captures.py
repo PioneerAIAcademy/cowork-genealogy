@@ -293,9 +293,9 @@ def test_remnant_keeps_the_no_project_marker() -> None:
     """`did_not_land` decides "this call changed nothing" by matching this marker,
     and the no-project answer deliberately carries no `is_error`. Losing it makes
     a write that never happened look landed — and in
-    `find_relationship_writes_without_warnings_check` the polarity inverts, so a
-    lost marker credits a `person_warnings` call that did nothing and the check
-    silently undercounts."""
+    `unresolved_warning_refusal` the polarity inverts, so a lost marker credits
+    a writer call that did nothing as the success resolving a refusal and the
+    check silently undercounts."""
     from harness.skill_invocation import did_not_land
 
     full = '[{"type": "text", "text": "{\\"reason\\": \\"no_project\\"}"}]'
@@ -313,6 +313,53 @@ def test_remnant_does_not_invent_a_no_project_marker() -> None:
     from harness.skill_invocation import did_not_land
 
     assert did_not_land({"response_summary": remnant}) is False
+
+
+def test_remnant_keeps_the_unjustified_warnings_marker() -> None:
+    """`unresolved_warning_refusal` keys on this marker and NOTHING else, so a
+    remnant that drops it leaves a stripped run structurally unable to report a
+    refusal — while the run still counts toward the denominator unless the
+    replay skips it. Stripping is irreversible, so a marker not kept here is
+    gone from the corpus permanently."""
+    from harness.skill_invocation import unresolved_warning_refusal
+
+    full = (
+        '[{"type": "text", "text": "{\\"ok\\": false, '
+        '\\"reason\\": \\"unjustified_warnings\\"}"}]'
+    )
+    refused = [{"tool": "mcp__genealogy__tree_edit", "response_summary": full}]
+    assert unresolved_warning_refusal(refused) is True
+
+    remnant = replay_remnant(full)
+    assert remnant is not None
+    assert "unjustified_warnings" in remnant
+    stripped = [{"tool": "mcp__genealogy__tree_edit", "response_summary": remnant}]
+    assert unresolved_warning_refusal(stripped) is True
+
+
+def test_remnant_keeps_the_marker_when_the_payload_does_not_parse() -> None:
+    """The guard arm, which the parseable case above never reaches: a refusal
+    whose envelope `parse_tool_result` cannot read has no `ids`, no
+    `full_length` and no `ok`, so without `has_unjustified` in the early-return
+    condition the whole remnant is dropped and the marker goes with it."""
+    from harness.skill_invocation import unresolved_warning_refusal
+
+    full = 'tool output truncated ... reason: "unjustified_warnings" ...'
+    remnant = replay_remnant(full)
+    assert remnant is not None, "the refusal marker was dropped entirely"
+    assert "unjustified_warnings" in remnant
+    stripped = [{"tool": "mcp__genealogy__tree_edit", "response_summary": remnant}]
+    assert unresolved_warning_refusal(stripped) is True
+
+
+def test_remnant_does_not_invent_an_unjustified_warnings_marker() -> None:
+    """The other direction: an ordinary landed write must not come back reading
+    as a refusal the agent abandoned."""
+    from harness.skill_invocation import unresolved_warning_refusal
+
+    remnant = replay_remnant(json.dumps({"ok": True, "results": [{"entryId": "a_001"}]}))
+    landed = [{"tool": "mcp__genealogy__tree_edit", "response_summary": remnant}]
+    assert unresolved_warning_refusal(landed) is False
 
 
 def test_remnant_is_none_when_there_is_nothing_to_keep() -> None:

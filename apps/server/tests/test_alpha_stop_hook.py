@@ -66,12 +66,13 @@ def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path,
                       "mcp__genealogy__research_append", "Read")
         # Most are outside the deny matcher, which is the whole argument for the
         # split. `Task` is deliberately NOT asserted here: it joined the matcher
-        # with the foreground arm (issue #2813), so it is no longer an example of
-        # a call the narrow matcher misses. It stays in `step_tools` because the
-        # claim under test is that the COUNTER sees every call, and a delegation
-        # is one. Four of five still miss, so the under-count is unchanged.
+        # with the foreground arm (issue #2813), and `Read` joined with the
+        # credential-read arm (issue #2485). Both stay in `step_tools` because
+        # the claim under test is that the COUNTER sees every call. Three of
+        # five still miss, so the under-count is unchanged.
+        matcher_tools = real_agent.DELEGATION_TOOLS | frozenset(real_agent._CREDENTIAL_READ_GUARD_TOOLS)
         for tool in step_tools:
-            if tool not in real_agent.DELEGATION_TOOLS:
+            if tool not in matcher_tools:
                 assert real_agent._PRETOOL_MATCHER and tool not in real_agent._PRETOOL_MATCHER, tool
             await counter_hook({"tool_name": tool, "tool_input": {}}, "t", None)
         return first, await stop({}, None, None)

@@ -23,7 +23,7 @@ const OFFER = /(Would you like me to|Shall I continue|Let the user confirm|Would
 /** Bodies that still end a reply with an offer the run overrides, and why each is still here. */
 const KNOWN: Record<string, string> = {
   "skills/search-records/SKILL.md": "PR #2971 owns this file; batched behind it",
-  "skills/search-external-sites/SKILL.md": "batched with phase 3's errand — same passage (R5)",
+  "agents/search-external-sites.md": "batched with phase 3's errand — same passage (R5); an agent since the main merge",
   // MEASURED 2026-09-29: these two offers are load-bearing STOPS, not politeness.
   // Removing the question let each skill run on into the next skill's work, and
   // the eval caught it three ways in one run (v1_2026-09-29_15-00-30):
@@ -42,7 +42,7 @@ const KNOWN: Record<string, string> = {
   // wzk (424s, rank 1 of 23), 005 (rank 2), 014 (rank 3), 002 (rank 5). Five runs
   // failed to produce a clean log for a one-line prose change. Fix the stall first.
   "skills/research-plan/SKILL.md": "reverted — gate blocked by duration-linked stalls, not by the edit",
-  "skills/search-full-text/SKILL.md": "offer is a load-bearing stop — see note above",
+  "agents/search-full-text.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
   "skills/conflict-resolution/SKILL.md": "offer is a load-bearing stop — see note above",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
 };

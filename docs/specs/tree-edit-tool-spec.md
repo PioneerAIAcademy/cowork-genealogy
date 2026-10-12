@@ -118,7 +118,7 @@ Out of scope: **person merging / person removal** — that is the merge tools'
 job (`merge_tree_persons` removes a collapsed person and remaps `research.json`);
 `tree_edit` never deletes a person. Also out of scope: `research.json` edits
 (those are `research_append`), and `check-warnings` (a separate agent,
-spawned after — see §8).
+invoked to review a person rather than after every edit — see §8).
 
 ---
 
@@ -527,9 +527,13 @@ The tool does the **structural** edit (id assignment, swaps, schema validation).
 The caller (`tree-edit` skill) still:
 
 - decides the content (which fact/value/relationship, justified by a source);
-- runs **`check-warnings`** after the edit to catch genealogical impossibilities
-  the structural pass does not (parent younger than child, etc.) — the same
-  division of labor the merge spec sets (`merge-gedcomx-spec.md` §10);
+- no longer runs **`check-warnings`** after each edit to catch genealogical
+  impossibilities. The tool itself refuses a write that introduces an
+  unjustified warning, so the impossibility this bullet used to name — a
+  parent younger than their child — is caught at the write boundary rather
+  than by a pass the caller has to remember. `check-warnings` stays available
+  as a review of a person already in the tree; it is not a post-edit step, and
+  the agent bodies no longer instruct one;
 - no longer hand-edits JSON, hand-allocates ids, or calls
   `validate_research_schema` itself — the tool does the structural validate.
 

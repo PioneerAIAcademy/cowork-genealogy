@@ -25,15 +25,13 @@ import sys
 import threading
 import time
 import uuid
-from datetime import datetime, timezone
 
 import psycopg
 import pytest
-from psycopg.types.json import Jsonb
 
 from proto import enqueue, grants
 from proto.worker import worker
-from tests._proto_pg import PROTO, database, sql
+from tests._proto_pg import PROTO, database, session, sql, turn
 
 sys.path.insert(0, str(PROTO))
 
@@ -69,31 +67,6 @@ def sent(monkeypatch, pg_dsn) -> list[dict]:
     monkeypatch.setattr(enqueue, "credentials_ready", lambda timeout=None: True)
     monkeypatch.setattr(enqueue, "sqs_call", send)
     return bodies
-
-
-def session(dsn: str, *, running: bool = False, held: tuple[str, ...] = ()) -> SessionRow:
-    """A fresh session with one completed turn, optionally a running one, and ``held``
-    messages queued oldest-first."""
-    sid, pid = "sess_" + uuid.uuid4().hex[:10], "proj_" + uuid.uuid4().hex[:10]
-    sql(dsn, "INSERT INTO sessions (session_id, project_id) VALUES (%s, %s)", (sid, pid))
-    turn(dsn, sid, pid, "done", completed=True, outcome="ok")
-    if running:
-        turn(dsn, sid, pid, "running")
-    for text in held:
-        turn(dsn, sid, pid, text, outcome="queued")
-    now = datetime.now(tz=timezone.utc)
-    return SessionRow(sid, pid, "t", "m", now, now)
-
-
-def turn(dsn: str, sid: str, pid: str, text: str, *, completed: bool = False, outcome: str | None = None) -> str:
-    """``enqueued_at`` from this host's clock, as the web tier stamps it: the oldest-first
-    claim compares it with the web tier's own stamps, and the database's clock can differ."""
-    turn_id = "turn_" + uuid.uuid4().hex[:10]
-    sql(dsn, "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, completed_at, outcome) "
-             "VALUES (%s, %s, %s, %s, %s, CASE WHEN %s THEN now() END, %s)",
-        (turn_id, sid, pid, Jsonb({"turn_id": turn_id, "session_id": sid, "project_id": pid, "text": text}),
-         datetime.now(tz=timezone.utc), completed, outcome))
-    return turn_id
 
 
 def running(dsn: str, sid: str) -> list[str]:
@@ -432,7 +405,7 @@ def test_a_redelivered_claim_keeps_a_closed_turns_outcome(pg_dsn):
 # ── U4: the claim takes the web tier's row, never the queue body's ids ──────────────
 
 
-def claim_as(dsn: str, turn_id: str, session_id: str, project_id: str, text: str = "forged") -> dict | None:
+def claim_as(dsn: str, turn_id: str, session_id: str, project_id: str, text: str = "forged") -> worker.Claim | None:
     with psycopg.connect(dsn) as conn:
         return worker.claim(conn, {"turn_id": turn_id, "session_id": session_id, "project_id": project_id,
                                    "message": {"text": text}}, 1)
@@ -445,7 +418,7 @@ def stamps(dsn: str, turn_id: str) -> list[tuple]:
 def test_a_claim_naming_its_row_runs_the_row_s_message(pg_dsn):
     row = session(pg_dsn)
     turn_id = turn(pg_dsn, row.session_id, row.project_id, "patron")
-    assert claim_as(pg_dsn, turn_id, row.session_id, row.project_id)["text"] == "patron"
+    assert claim_as(pg_dsn, turn_id, row.session_id, row.project_id).message["text"] == "patron"
     assert stamps(pg_dsn, turn_id) == [(True, 1)]
 
 

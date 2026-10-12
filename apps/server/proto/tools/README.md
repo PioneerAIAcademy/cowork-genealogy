@@ -14,8 +14,9 @@ Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 |---|---|
 | `POST /mcp` | Stateless Streamable HTTP, JSON responses (`sessionIdGenerator: undefined`, `enableJsonResponse: true`). One `Server` + transport per request, closed after the response. |
 | `GET` / `DELETE` / anything else on `/mcp` | `405`, `Allow: POST`, `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}` — answered by the entrypoint before any transport exists, so a client's post-initialize `GET` never gets a held-open SSE stream. The SDK client and the Claude Code CLI treat that 405 as "no server-push stream" and continue. |
-| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
+| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`, and `turns`, which the claim fence reads) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
 | `X-Genealogy-Project-Id` (request header) | The project the request's tools run against, matched against `PROJECT_ID_RE` (`src/store/project-id.ts`). Exactly one value; malformed or duplicated → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid X-Genealogy-Project-Id header."},"id":null}` before any transport exists. |
+| `X-Genealogy-Turn-Id` + `X-Genealogy-Claim-Epoch` (request headers, optional) | The claim fence (U6): the worker attempt's turn id (the `PROJECT_ID_RE` shape) and its `claim_epoch` (`[1-9][0-9]{0,17}`), both or neither. Exactly one of the two, a duplicated value, one that misses its pattern after trimming, or a fence without `X-Genealogy-Project-Id` → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, once each, with X-Genealogy-Project-Id."},"id":null}` before any transport exists. |
 | any other path | `404` JSON. |
 
 **Header → principal.** `Authorization: Bearer <token>` becomes
@@ -47,6 +48,20 @@ answer, and the project tools (`project_create`, `research_append`, …) return 
 instruction as an `isError` result. The process store is the same unbound store, so no
 path — inside a request or outside one — ever reaches `FsProjectStore`. Malformed → `400`,
 above.
+
+**Header → fence.** `X-Genealogy-Turn-Id: <turn>` with `X-Genealogy-Claim-Epoch: <n>` adds
+`fence: { turnId, claimEpoch }` to that request's store. A fenced store writes only inside a
+transaction — `writeJson`, `writeBytes` and `remove` get one of their own instead of
+autocommitting — and that transaction runs `CLAIM_PRECHECK_SQL` right after `BEGIN` and
+`CLAIM_FENCE_SQL` (the same `turns` lookup on turn, project and epoch, `FOR SHARE`) right
+before `COMMIT`. When a newer claim of the turn has moved `claim_epoch` on, the write rolls
+back (the objects it put are deleted) and the tool answers `isError` with `StaleClaimError`'s
+text: "This turn was taken over by a newer attempt (turn <id>: claim epoch <n> is no longer
+current), so this write was rolled back and nothing was saved. Stop working on this turn."
+The share lock conflicts with the claim's row lock, so a commit racing an in-flight claim
+waits for it and then re-reads the epoch. Reads are never fenced. Without the pair the store
+autocommits exactly as before. The worker sends the pair on every call
+(`options.tool_server_headers`).
 
 `baseConfig` is `~/.familysearch-mcp/config.json`, read once at startup with
 `loadConfig(LOCAL)`, and then `WIKI_API_URL`, `POP_STATS_URL`, `OPENROUTER_API_KEY` and

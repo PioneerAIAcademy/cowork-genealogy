@@ -5,15 +5,18 @@ Blocking rules plus two warn-only rules (2b, 2f) per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
-    Rule 2   latest full-skill run log per touched skill is "active on
-             skill-side files" (snapshot matches working tree).
+    Rule 2   the graded run log per touched skill is "active on skill-side
+             files" (snapshot matches working tree). That is the run log this
+             PR adds (a released v{N}.json it adds, else its newest
+             candidate), or, for a PR that adds none, the latest full-skill
+             run log on disk.
     Rule 2b  (warn-only) the same run log's judge_prompt_hash matches
              eval/harness/judge/prompt.md.
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale
              (#1094 — see rule2_fixture_touched for why it only warns).
-    Rule 3   the same run log's .ann.json has corrections for every
+    Rule 3   the graded run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple of the tests
              named in its `review_sample` (3 rotation + 1 targeted + 1
              random, plus every test that failed, scored a 1 or 2 on any dimension, or
@@ -362,6 +365,50 @@ def resolve_latest_runlog(
     return "ok", latest
 
 
+def pr_added_runlog(skill_dir: Path, added: list[str]) -> str | None:
+    """The run log rules 2, 2b and 3 grade for a skill: the one this PR adds.
+
+    `added` is the skill's entry in `added_by_skill`: released and candidate
+    names only, `.ann.json` and scratch already excluded. A released `v{N}.json`
+    wins, because the candidate -> release rename arrives as an add (rule 1
+    allows one; if there were two, the higher version). Otherwise the newest
+    candidate by (version, timestamp), the order `prunable_candidates` sorts by:
+    a PR can add several iterations, and the newest is the run it ships. Rule 6
+    still grades every one of them.
+
+    Returns None when the PR adds no run log; the caller then falls back to
+    `resolve_latest_runlog`, exactly as it did before this existed.
+
+    A name with no file in `skill_dir` is dropped first. `added` comes from a git
+    diff and the files from disk, and the two can disagree
+    (`test_added_runlog_still_marks_skill_touched` lists a name nothing wrote).
+    Without this the caller's parse raises FileNotFoundError, which nothing there
+    catches.
+    """
+    released: list[tuple[int, str]] = []
+    candidates: list[tuple[int, str, str]] = []
+    for name in added:
+        if not (skill_dir / name).is_file():
+            continue
+        c = classify(name)
+        if c.kind == "released" and c.version is not None:
+            released.append((c.version, name))
+        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
+            candidates.append((c.version, c.timestamp, name))
+    if released:
+        return max(released)[1]
+    if candidates:
+        return max(candidates)[2]
+    return None
+
+
+# How the messages of rules 2, 2b and 3 name the run log they graded, and why that
+# one. `main()` passes the first when the PR adds a run log and the second when it
+# adds none; the third is the default for a caller that does not say.
+GRADED_ADDED = "the run log this PR adds"
+GRADED_FALLBACK = "the latest full-skill run log on disk (this PR adds none)"
+GRADED_DEFAULT = "the latest full-skill run log"
+
 COSMETIC_SKIP_LABEL_PREFIX = "eval-cosmetic-skip:"
 
 
@@ -378,8 +425,13 @@ def cosmetic_skip_labels() -> set[str]:
     return {line.strip() for line in raw.splitlines() if line.strip()}
 
 
-def rule2_active(skill: str, log: dict, filename: str) -> int:
-    """Rule 2 (blocking): latest run log's snapshot matches disk.
+def rule2_active(
+    skill: str, log: dict, filename: str, *, graded: str = GRADED_DEFAULT
+) -> int:
+    """Rule 2 (blocking): the graded run log's snapshot matches disk.
+
+    `graded` says which log that is and why, for the messages: `main()` passes
+    the run log this PR adds, or the latest on disk when the PR adds none.
 
     Cosmetic-skip escape hatch, per skill: when the PR carries the label
     `eval-cosmetic-skip:<skill>` (applied by a senior, passed in by the
@@ -404,7 +456,7 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
     labels = cosmetic_skip_labels()
     if label in labels:
         gh_warning(
-            f"skill `{skill}`: latest run log `{filename}` differs from the working "
+            f"skill `{skill}`: `{filename}`, {graded}, differs from the working "
             f"tree in {len(diffs)} file(s), but the `{label}` label bypasses rule 2 "
             f"for this skill — no re-run required. Confirm the change is "
             f"behavior-neutral before approving.\n" + diff_lines,
@@ -417,7 +469,7 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
         else ""
     )
     gh_error(
-        f"skill `{skill}`: latest full-skill run log `{filename}` is NOT active — "
+        f"skill `{skill}`: `{filename}`, {graded}, is NOT active — "
         f"{len(diffs)} snapshot file(s) differ from the working tree. Re-run the "
         f"harness (`uv run python eval/harness/run_tests.py --skill {skill}`) so "
         f"the run log reflects the PR-branch state. If this skill's change is "
@@ -471,13 +523,16 @@ def rule2_fixture_touched(
     )
 
 
-def rule2b_judge_prompt(skill: str, log: dict, filename: str) -> None:
-    """Rule 2b (warn-only): judge_prompt_hash matches current judge prompt."""
+def rule2b_judge_prompt(
+    skill: str, log: dict, filename: str, *, graded: str = GRADED_DEFAULT
+) -> None:
+    """Rule 2b (warn-only): judge_prompt_hash matches current judge prompt.
+    `graded` is as for `rule2_active`."""
     expected = log.get("judge_prompt_hash") or ""
     actual = hash_file("eval/harness/judge/prompt.md", JUDGE_PROMPT_PATH)
     if expected and actual and expected != actual:
         gh_warning(
-            f"skill `{skill}`: latest run log `{filename}` was scored against an "
+            f"skill `{skill}`: `{filename}`, {graded}, was scored against an "
             f"older judge prompt (hash {expected[:12]}…). Current judge prompt "
             f"hash is {actual[:12]}…. Re-running would likely produce different "
             f"scores — interpret the corrected mean cautiously.",
@@ -496,9 +551,17 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
     return llm == corrected and llm in (3, None)
 
 
-def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) -> int:
+def rule3_completeness(
+    skill: str,
+    log: dict,
+    filename: str,
+    skill_dir: Path,
+    *,
+    graded: str = GRADED_DEFAULT,
+) -> int:
     """Rule 3 (blocking): every dimension of each sampled test has a correction
     entry in .ann.json, and each that is not a confirmed pass carries a comment.
+    `graded` is as for `rule2_active`.
 
     Falls back to the pre-sampling every-dimension rule when the run log has no
     `review_sample`, or when the one it has cannot be trusted (see the three
@@ -507,7 +570,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     ann_path = skill_dir / ann_filename
     if not ann_path.exists():
         gh_error(
-            f"skill `{skill}`: latest run log `{filename}` has no annotation file "
+            f"skill `{skill}`: `{filename}`, {graded}, has no annotation file "
             f"(`{ann_filename}` missing). Review the sampled tests before opening "
             f"the PR.",
         )
@@ -521,8 +584,8 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         ann = json.loads(ann_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         gh_error(
-            f"skill `{skill}`: annotation `{ann_filename}` is not valid JSON "
-            f"({exc}). Restore the last valid version from git, or delete it "
+            f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, is not "
+            f"valid JSON ({exc}). Restore the last valid version from git, or delete it "
             f"and re-annotate in the CRUD UI — never hand-edit it.",
         )
         return 1
@@ -542,9 +605,9 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     ]
     if malformed:
         gh_error(
-            f"skill `{skill}`: annotation `{ann_filename}` has {len(malformed)} "
-            f"of {len(corrections)} correction(s) missing required keys "
-            f"{REQUIRED_KEYS} — likely hand-written or in the deprecated "
+            f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, has "
+            f"{len(malformed)} of {len(corrections)} correction(s) missing required "
+            f"keys {REQUIRED_KEYS} — likely hand-written or in the deprecated "
             f"run_index/dimension/source shape. Annotations must be produced by "
             f"the CRUD UI, not written by hand. Delete the file and re-review "
             f"every dimension in the UI.",
@@ -569,8 +632,8 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     ungraded = zero_dimension_test_ids(tests)
     if ungraded:
         gh_warning(
-            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` have no "
-            f"reviewable dimensions, so nothing is required of them here: "
+            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}`, {graded}, "
+            f"have no reviewable dimensions, so nothing is required of them here: "
             f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / judge "
             f"`error` before treating this run as a clean pass.",
         )
@@ -601,15 +664,15 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
                      f"({', '.join(sorted(unknown)[:3])})"
             )
             gh_warning(
-                f"skill `{skill}`: `{filename}`'s `review_sample` {reason}; "
-                f"ignoring it and requiring every dimension. The harness writes "
+                f"skill `{skill}`: the `review_sample` of `{filename}`, {graded}, "
+                f"{reason}; ignoring it and requiring every dimension. The harness writes "
                 f"this field — a hand-edited one is not trusted.",
             )
             required_test_ids = None
         elif not required_test_ids & gradeable:
             gh_warning(
-                f"skill `{skill}`: `{filename}`'s `review_sample` names only "
-                f"tests with no graded dimensions, so it would require nothing; "
+                f"skill `{skill}`: the `review_sample` of `{filename}`, {graded}, "
+                f"names only tests with no graded dimensions, so it would require nothing; "
                 f"requiring every dimension instead.",
             )
             required_test_ids = None
@@ -649,7 +712,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         if uncommented:
             shown = ", ".join(f"{t}/{s}/{n}" for t, s, n in sorted(uncommented)[:5])
             gh_error(
-                f"skill `{skill}`: annotation `{ann_filename}` has "
+                f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, has "
                 f"{len(uncommented)} sampled correction(s) with no comment "
                 f"(e.g., {shown}). The sample is small so each test in it gets "
                 f"read — write a sentence on any dimension that is not a "
@@ -669,7 +732,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         else f"every dimension of the {len(required_test_ids)} sampled test(s)"
     )
     gh_error(
-        f"skill `{skill}`: annotation `{ann_filename}` is incomplete — "
+        f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, is incomplete — "
         f"{len(missing)} dimension(s) are unreviewed (e.g., {sample}). "
         f"Review {scope} in the CRUD UI before opening the PR.",
     )
@@ -1355,26 +1418,55 @@ def main() -> int:
     for skill in sorted(touched_skills):
         fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
         skill_dir = RUNLOGS_DIR / skill
-        status, latest = resolve_latest_runlog(skill_dir)
-        if status == "no_dir":
-            gh_error(
-                f"skill `{skill}` was touched but has no run logs at "
-                f"`eval/runlogs/unit/{skill}/`. Re-run the harness with "
-                f"`--skill {skill}` and commit the result before opening this PR.",
+        # Rules 2, 2b and 3 grade the run log THIS PR adds, for the reason rule 6
+        # does (see `added_by_skill`): `latest_full_skill_runlog` prefers ANY
+        # released `v{N}.json`, so once main has released one newer than the PR's
+        # own candidate it is graded in the candidate's place and the PR's run is
+        # checked by nothing. One log, the one that decides the PR
+        # (`pr_added_runlog`), not every iteration it adds: an earlier stale
+        # candidate is not what the PR ships, and rule 6 below still grades them
+        # all. A PR that adds none (SKILL.md-only, annotation-only, cosmetic-skip)
+        # resolves exactly as it always did.
+        target: tuple[str, dict] | None
+        added_name = pr_added_runlog(skill_dir, added_by_skill.get(skill, []))
+        if added_name is not None:
+            graded = GRADED_ADDED
+            try:
+                target = (
+                    added_name,
+                    json.loads((skill_dir / added_name).read_text(encoding="utf-8")),
+                )
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                # Nothing to grade. The rule 6 loop below parses this same file and
+                # reports it as unreadable, so skip rules 2, 2b and 3 and fall
+                # through to it. NOT `continue`: that would skip rule 6 as well,
+                # nothing else reports the file, and the PR would pass.
+                target = None
+        else:
+            graded = GRADED_FALLBACK
+            status, target = resolve_latest_runlog(skill_dir)
+            if status == "no_dir":
+                gh_error(
+                    f"skill `{skill}` was touched but has no run logs at "
+                    f"`eval/runlogs/unit/{skill}/`. Re-run the harness with "
+                    f"`--skill {skill}` and commit the result before opening this PR.",
+                )
+                fails += 1
+                continue
+            if status == "no_runlog":
+                gh_error(
+                    f"skill `{skill}` was touched but has no full-skill run log. "
+                    f"Re-run the harness with `--skill {skill}` to produce one.",
+                )
+                fails += 1
+                continue
+        if target is not None:
+            filename, log = target
+            fails += rule2_active(skill, log, filename, graded=graded)
+            rule2b_judge_prompt(skill, log, filename, graded=graded)
+            fails += rule3_completeness(
+                skill, log, filename, skill_dir, graded=graded
             )
-            fails += 1
-            continue
-        if status == "no_runlog":
-            gh_error(
-                f"skill `{skill}` was touched but has no full-skill run log. "
-                f"Re-run the harness with `--skill {skill}` to produce one.",
-            )
-            fails += 1
-            continue
-        filename, log = latest
-        fails += rule2_active(skill, log, filename)
-        rule2b_judge_prompt(skill, log, filename)
-        fails += rule3_completeness(skill, log, filename, skill_dir)
         # Rule 6 grades the log(s) this PR added. Rule 1 caps released logs at one
         # per skill but does not bound candidates, and it never short-circuits
         # main(), so N added logs are all graded -- any red in any of them blocks.

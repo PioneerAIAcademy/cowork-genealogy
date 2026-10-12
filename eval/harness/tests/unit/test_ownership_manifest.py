@@ -67,7 +67,7 @@ FROZEN_OWNERSHIP_TABLE: dict[str, set[str]] = {
 }
 
 
-# ── The four deltas, and why each was made ─────────────────────────────────
+# ── The five deltas, and why each was made ─────────────────────────────────
 
 #: `localities` had a declared owner from the day the section shipped and was
 #: never once evaluated: the check iterated `REQUIRED_SECTIONS`, which the
@@ -81,7 +81,11 @@ NEWLY_ENFORCED = {"localities"}
 #: Brought in by the research-as-a-job phase-2 merge: `rejected_links` is written by
 #: `person-evidence` alone (phase 3 item 3, "a rejection is its own record"). Declared
 #: here for the same reason NEWLY_ENFORCED is -- the frozen table predates the section.
-ADDED: dict[str, set[str]] = {"rejected_links": {"person-evidence"}}
+#: EMPTY, not {"person-evidence"}: the row was written when person-evidence was a
+#: skill. It is an agent now, and SUBJECTS is derived from `agent:` entries in some
+#: row's `callers` -- person-evidence appears in none, so `writer_sets` resolves its
+#: agent owner nowhere. `person_evidence` is the empty set for the same reason.
+ADDED: dict[str, set[str]] = {"rejected_links": set()}
 
 #: `questions` gains `proof-conclusion`. The transition it covers —
 #: `status -> resolved` — was owned by nobody: `proof-conclusion`'s body hands
@@ -97,7 +101,13 @@ WIDENED: dict[str, set[str]] = {
     #: each census-year search page. The `agent:survey-surname` caller was added to
     #: ownership.json's `callers` so the ownership validator resolves it when the
     #: agent is the suite subject.
-    "log": {"survey-surname"},
+    #:
+    #: `log` gains `search-hints` (issue #2029), a new agent. A hint the researcher
+    #: decided is a search result: its record-mode entry is what routes an accepted
+    #: hint to record-extraction, and before it a hint review persisted nothing. The
+    #: agent writes only through `research_log_append`, which takes no `section`, so
+    #: the widening adds a writer to an append-only, multi-writer section.
+    "log": {"survey-surname", "search-hints"},
 }
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's

@@ -41,6 +41,7 @@
     { "name": "record_search" },
     { "name": "person_search" },
     { "name": "person_ancestors" },
+    { "name": "tree_gaps" },
     { "name": "same_person" },
     { "name": "person_record_matches" },
     { "name": "record_person_matches" },

@@ -40,7 +40,6 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
-    "no-shortcut": "claimed by PR #3165 (ut_research_015); delete this entry when it lands",
     "objective-target": (
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"

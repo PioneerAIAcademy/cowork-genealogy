@@ -30,6 +30,7 @@ import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
+import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeTool } from "./tools/image-transcribe.js";
 import { volumeBisectTool } from "./tools/volume-bisect.js";
@@ -45,6 +46,8 @@ import {
   personAncestorsTool,
   type PersonAncestorsInput,
 } from "./tools/person-ancestors.js";
+import { treeGapsTool } from "./tools/tree-gaps.js";
+import type { TreeGapsInput } from "./types/tree-gaps.js";
 import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
@@ -121,7 +124,7 @@ import { getNameVariants, type GetNameVariantsInput } from "./tools/name-variant
 import { allToolSchemas } from "./tool-schemas.js";
 // Tools that report failure by RETURNING `{ ok: false }` rather than throwing
 // need `isError` set explicitly — the catch arms below cannot see them.
-import { writerToolResult } from "./tool-result.js";
+import { writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
 
 export function createServer(principal: Principal): Server {
@@ -338,10 +341,10 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "external_links_search") {
       try {
         const args = request.params.arguments as unknown as ExternalLinksSearchInput;
-        const result = await externalLinksSearchTool(args);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }]
-        };
+        // It reports failure by throwing (below), never with `ok: false`, so the
+        // envelope is the plain one; the wrapper keeps it on the writer path.
+        const result: ExternalLinksSearchResult & OkFalseResult = await externalLinksSearchTool(args);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {
@@ -521,6 +524,21 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as PersonAncestorsInput;
         const result = await personAncestorsTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "tree_gaps") {
+      try {
+        const args = request.params.arguments as unknown as TreeGapsInput;
+        const result = await treeGapsTool(args ?? {}, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };

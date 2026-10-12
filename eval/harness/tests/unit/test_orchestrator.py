@@ -12,6 +12,8 @@ from harness.orchestrator import (
     _compute_outcome,
     _COMMISSION_VALIDATORS,
     _negative_judge_context,
+    _stop_at_stub,
+    _stopped_at_a_handoff,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
@@ -325,7 +327,10 @@ def test_no_warning_on_out_of_scope_negative():
     assert warnings == []
 
 
-def test_no_warning_on_grade_on_invariant():
+def test_grade_on_invariant_is_coerced_and_names_its_mode():
+    """Ruling on issue #2190 (2026-09-07): an invariant negative no longer
+    short-circuits. Its 1 is coerced like a routing negative's, but the warning
+    and rationale must say the validator decides it, not routing."""
     dims = _routing_dims()
     warnings: list = []
     flag_routing_negative_judge_fail(
@@ -335,6 +340,43 @@ def test_no_warning_on_grade_on_invariant():
         skills_invoked=["search-records"],
         warnings=warnings,
     )
+    assert [d["score"] for d in dims] == [None, None, None]
+    assert [w["kind"] for w in warnings] == ["coerced_routing_negative_to_na"] * 2
+    assert "decided by its invariant validator alone" in warnings[0]["advisory"]
+    assert "decided by its invariant validator alone" in dims[0]["rationale"]
+    assert "decided by routing" not in dims[0]["rationale"]
+
+
+def test_routing_negative_coercion_still_says_routing():
+    """The other direction: a negative without `grade_on_invariant` keeps the
+    routing wording."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"]),
+        activated=False,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert "decided by routing alone" in warnings[0]["advisory"]
+    assert "decided by routing alone" in dims[0]["rationale"]
+
+
+def test_activated_invariant_negative_is_not_coerced():
+    """The `activated` guard stays for invariant negatives: one may activate and
+    still pass on its validator, and there its 1 is left a 1 for the review
+    sample's first trigger to catch."""
+    dims = _routing_dims()
+    warnings: list = []
+    flag_routing_negative_judge_fail(
+        dims,
+        spec=_negative_spec(correct=["search-records"], grade_on_invariant=True),
+        activated=True,
+        skills_invoked=["search-records"],
+        warnings=warnings,
+    )
+    assert [d["score"] for d in dims] == [1, 1, None]
     assert warnings == []
 
 
@@ -775,6 +817,69 @@ def test_negative_fails_when_no_correct_skill_invoked():
     ) == "fail"
 
 
+def test_negative_passes_when_correct_skill_arrived_as_an_agent_spawn():
+    """A `correct_skill` naming a CONVERTED callee is satisfied by the `Agent`
+    spawn, which never lands in `skills_invoked` (issue #2825).
+
+    `runnability.py` resolves a `correct_skill` entry against the agents dir as
+    well as the skills dir (issue #2793), so such a test loads. Matching the
+    routing arm on `skills_invoked` alone made that acceptance a lie — the test
+    ran and then failed however correctly the run routed. Live instance:
+    `ut_init_project_009` spawned `project-status`, an agent since 2026-10-03,
+    and was graded a routing failure for it.
+    """
+    spec = _negative_spec(correct=["project-status"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        builtin_tool_calls=[
+            {"tool": "Agent", "args": {"subagent_type": "project-status",
+                                       "prompt": "p"}}
+        ],
+    ) == "pass"
+
+
+def test_negative_still_fails_when_the_spawn_is_a_different_agent():
+    """The other direction: widening to hand-offs must not pass a run that
+    spawned SOMETHING, only one that spawned an acceptable destination."""
+    spec = _negative_spec(correct=["project-status"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        builtin_tool_calls=[
+            {"tool": "Agent", "args": {"subagent_type": "gps-mentor",
+                                       "prompt": "p"}}
+        ],
+    ) == "fail"
+
+
+def test_negative_still_fails_when_the_correct_agent_was_spawned_by_a_subagent():
+    """A hand-off is the caller's. A spawn carrying `agent_id` was made INSIDE
+    another subagent, so it is not the routing decision under test and must not
+    satisfy `correct_skill`."""
+    spec = _negative_spec(correct=["project-status"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False, skills_invoked=[],
+        builtin_tool_calls=[
+            {"tool": "Agent", "args": {"subagent_type": "project-status",
+                                       "prompt": "p"},
+             "agent_id": "a1"}
+        ],
+    ) == "fail"
+
+
+def test_negative_routing_unaffected_when_no_builtin_tool_calls_recorded():
+    """A fixture that records only `skills_invoked` — no `builtin_tool_calls`
+    at all — keeps grading exactly as before."""
+    spec = _negative_spec(correct=["search-records"])
+    assert _compute_outcome(
+        spec=spec, validators_passed=True, judge_dimensions=[],
+        aborted_reason=None, activated=False,
+        skills_invoked=["search-records"],
+    ) == "pass"
+
+
 def test_negative_with_empty_correct_skill_requires_empty_skills_invoked():
     """v1.6 reverts to spec §6 step 2 literal: correct_skill: [] →
     pass requires skills_invoked is also []. An earlier, more lenient
@@ -944,6 +1049,35 @@ def test_negative_judge_context_renders_as_two_nested_lists_in_the_judge_prompt(
     author_at = lines.index("- Test author's notes (written for this test):")
     assert lines[author_at + 1] == "  - AUTHOR-NOTE"
     assert author_at == 4  # label + three harness lines precede it
+
+
+def test_negative_judge_context_self_route_only_renders_the_no_skill_arm():
+    """A `correct_skill` naming only the skill under test
+    (`ut_record_extraction_011`) must not tell the judge to route to the skill
+    it was told must not do its task; the emptied list takes the no-skill arm."""
+    spec = _negative_spec(skill="record-extraction", correct=["record-extraction"])
+    ctx = _negative_judge_context(spec)
+    assert "decline without invoking any skill" in ctx[0]
+    assert "route the user to" not in ctx[0]
+
+
+def test_negative_judge_context_drops_the_skill_under_test_from_the_route():
+    """`ut_conflict_resolution_010`'s shape: the skill under test plus one
+    other. Only the other is named as the route."""
+    spec = _negative_spec(
+        skill="conflict-resolution",
+        correct=["record-extraction", "conflict-resolution"],
+    )
+    ctx = _negative_judge_context(spec)
+    assert "decline and route the user to: record-extraction." in ctx[0]
+
+
+def test_negative_judge_context_unchanged_when_skill_not_in_route():
+    """The other direction: a route not naming the skill under test is rendered
+    in full, in order."""
+    spec = _negative_spec(skill="citation", correct=["record-extraction", "timeline"])
+    ctx = _negative_judge_context(spec)
+    assert "decline and route the user to: record-extraction, timeline." in ctx[0]
 
 
 def test_negative_out_of_scope_fails_when_judge_scored_a_dimension_1():
@@ -1590,6 +1724,47 @@ def test_live_tool_call_is_covered(tmp_path, monkeypatch):
     assert not any(w["kind"] == "uncovered_tool_call" for w in warnings)
 
 
+@pytest.mark.parametrize("passed, expected", [({"tool_search": False}, False), ({}, True)])
+def test_tool_search_reaches_run_skill(tmp_path, monkeypatch, passed, expected):
+    """`--no-tool-search` crosses four call sites to reach `run_skill`; a
+    dropped hop leaves the default True there and the run quietly runs ON."""
+    from harness.skill_runner import SkillRunResult
+    from harness.judge import JudgeOutput
+
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    seen: list = []
+
+    async def fake_run_skill(**kwargs):
+        seen.append(kwargs.get("tool_search", "MISSING"))
+        return SkillRunResult(
+            text_response="ok", skills_invoked=["record-extraction"], tool_calls=[],
+            duration_ms=1.0, usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", lambda **kw: JudgeOutput(
+        dimensions=[], cost_usd=0.0, input_tokens=0, cached_input_tokens=0,
+        output_tokens=0, prompt_hash="stub-hash",
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=_positive_spec(),
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        paths=OrchestratorPaths(runlogs_root=tmp_path),
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-09_10-30-00",
+        **passed,
+    ))
+    assert seen == [expected]
+
+
 # --- intentionally_invalid: file-validity validators are not counted -----
 
 from dataclasses import dataclass as _dataclass
@@ -2107,6 +2282,148 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
     assert seen.get("stub_skills") == {"gps-mentor": None, "search-records": None}
 
 
+# --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
+
+
+def _positive_spec_with(execution, skill="research"):
+    return load_test_from_dict({
+        "test": {"id": "ut_o_003", "skill": skill, "name": "n", "type": "positive",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "execution": execution,
+        "judge_context": [],
+    })
+
+
+_STOPPING = {"stop_at_stub": True, "stub_skills": ["question-selection"]}
+
+
+def test_stop_at_stub_is_on_only_when_a_positive_test_sets_it():
+    assert _stop_at_stub(_positive_spec_with(_STOPPING)) is True
+    assert _stop_at_stub(_positive_spec_with({"stub_skills": ["question-selection"]})) is False
+
+
+def test_stop_at_stub_is_off_on_a_negative_test():
+    """A negative test already stops on its own routing short-circuit, so the
+    field is ignored there even when it is set."""
+    spec = load_test_from_dict({
+        "test": {"id": "ut_o_004", "skill": "research", "name": "n", "type": "negative",
+                  "description": "x", "tags": []},
+        "input": {"user_message": "m", "scenario": None},
+        "negative": {"correct_skill": ["search-records"], "explanation": "x"},
+        "execution": _STOPPING,
+        "judge_context": [],
+    })
+    assert spec.execution.get("stop_at_stub") is True
+    assert _stop_at_stub(spec) is False
+
+
+def _run_with(*builtin_calls):
+    from harness.skill_runner import SkillRunResult
+
+    return SkillRunResult(
+        text_response="", skills_invoked=["research"], tool_calls=[], duration_ms=1.0,
+        usage={}, builtin_tool_calls=list(builtin_calls),
+    )
+
+
+_ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
+_SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
+
+
+def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
+    stopping = _positive_spec_with(_STOPPING)
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
+        "the skill's own entry is not a stubbed hand-off"
+    )
+    unstubbed = {"tool": "Agent", "args": {"subagent_type": "gps-mentor"}}
+    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, unstubbed)) is False, (
+        "a hand-off to an unstubbed name is not what the stop ends at"
+    )
+    plain = _positive_spec_with({"stub_skills": ["question-selection"]})
+    assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False
+
+
+def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):
+    """The stop leaves only the narration before the hand-off, which can be short
+    and name the next row. That run still activated: the hand-off is its work."""
+    import asyncio
+    from harness.judge import JudgeOutput
+    from harness.skill_runner import SkillRunResult
+
+    spec = load_test(REPO_ROOT / "eval/tests/unit/research/route-shortcut-guard.json")
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="No questions yet. Routing to question-selection, then research-plan.",
+            skills_invoked=["research"],
+            tool_calls=[],
+            duration_ms=10.0,
+            usage={"num_turns": 3},
+            builtin_tool_calls=[
+                {"tool": "Skill", "args": {"skill": "research"}},
+                {"tool": "Agent", "args": {"subagent_type": "question-selection"}},
+            ],
+        )
+
+    def fake_run_judge(**kwargs):
+        return JudgeOutput(
+            dimensions=[
+                {"source": "base", "name": name, "score": 3, "rationale": "fine"}
+                for name in ("Correctness", "Completeness", "Tool Arguments")
+            ],
+            cost_usd=0.0, input_tokens=0, cached_input_tokens=0, output_tokens=0,
+            prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [])
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert entry["runs"][0]["output"]["activated"] is True
+    assert entry["outcome"] == "pass"
+
+
+def test_a_stop_at_stub_test_reaches_run_skill_with_the_stop(tmp_path, monkeypatch):
+    """The orchestrator hop of `stop_at_stub` (#3119): only the
+    `_execute_single_run` call site and the retry wrapper carry it to the hook,
+    and dropping either would leave `_stop_at_stub`'s own tests green."""
+    import asyncio
+    import json
+
+    raw = json.loads(WIKI_TEST_PATH.read_text(encoding="utf-8"))
+    raw["execution"] = {**raw.get("execution", {}), "stop_at_stub": True,
+                        "stub_skills": ["search-records"]}
+    spec = load_test_from_dict(raw)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    seen = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        seen.update(kwargs)
+        return SkillRunResult(
+            text_response="", skills_invoked=[], tool_calls=[], duration_ms=1.0,
+            usage={}, aborted_reason="quota_exhausted", error="stop",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-05_10-00-00",
+    ))
+    assert seen.get("stop_at_stub") is True
+
+
 # --- #2057: a failing validator no longer skips the judge --------------------
 #
 # The gate is in `_execute_single_run`, NOT in `_compute_outcome`. A test that
@@ -2115,19 +2432,13 @@ def test_a_stub_naming_an_agent_reaches_run_skill_as_a_spawn_stub(tmp_path, monk
 # `if not validators_passed: return "fail"` runs ahead of every judge_skipped
 # branch. These drive the real path.
 
-# A negative fixture with a non-empty `correct_skill` and NO
-# `grade_on_invariant`. That second condition is load-bearing and easy to get
-# wrong: `grade_on_invariant` is the FIRST guard in
-# flag_routing_negative_judge_fail, so a fixture carrying it is exempt from the
-# coercion and would make this test pass for the wrong reason. (The example
-# this comment used to cite was search-wikipedia's three negatives; issue #2795
-# deleted two of them and made the third — `ut_search_wikipedia_008` — a DIRECT
-# negative that still carries `grade_on_invariant`, so it is exempt from the
-# coercion for that reason rather than for having ceased to be a negative.) 81 of the committed negative
-# fixtures qualify; this one is
-# picked because its scenario exists and OrchestratorPaths resolves it, and it
-# sits in record-extraction's suite, which stays a skill (the check-warnings one
-# it replaced was deleted with that skill, issue #2118).
+# A negative fixture with a non-empty `correct_skill`. It needs no
+# `grade_on_invariant` exclusion any more: since issue #3080 deleted that early
+# return from flag_routing_negative_judge_fail, an invariant negative is coerced
+# too, so neither kind makes the coercion test below pass for the wrong reason.
+# This one is picked because its scenario exists and OrchestratorPaths resolves
+# it, and it sits in record-extraction's suite, which stays a skill (the
+# check-warnings one it replaced was deleted with that skill, issue #2118).
 NEGATIVE_TEST_PATH = (
     REPO_ROOT / "eval/tests/unit/record-extraction/negative-search-vs-extract.json"
 )
@@ -2488,150 +2799,63 @@ def test_a_matched_suppressed_call_cannot_mask_an_earlier_uncovered_one():
     )
 
 
-# --- A correct callee reached by an AGENT SPAWN (issue: skill->agent conversion) ---
-#
-# Four callees ship as BOTH a skill and a plugin agent (person-evidence,
-# proof-conclusion, research-exhaustiveness, search-images), and the conversion
-# direction is to delete the skill. A converted callee is SPAWNED by the router,
-# not loaded via the Skill tool, so it never reaches `skills_invoked` — and the
-# routing verdict read only that field, failing a negative test that routed
-# correctly. Observed live on ut_conflict_resolution_009, which routed to the
-# person-evidence AGENT (builtin `Agent` call) and was scored `fail` with every
-# judge dimension at 3.
-
-def test_negative_passes_when_the_correct_callee_was_spawned_as_an_agent():
-    spec = _negative_spec(correct=["person-evidence"])
-    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
-    assert _compute_outcome(
-        spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=False, skills_invoked=[],
-        agents_spawned_all=["person-evidence"],
-    ) == "pass"
+# --- busiest-moment capture must run before the session store is deleted ---
 
 
-def test_negative_still_fails_when_a_different_agent_was_spawned():
-    """The widening must not turn the verdict into 'any agent will do'."""
-    spec = _negative_spec(correct=["person-evidence"])
-    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
-    assert _compute_outcome(
-        spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=False, skills_invoked=[],
-        agents_spawned_all=["record-extractor"],
-    ) == "fail"
+def test_capture_runs_before_session_cleanup(tmp_path, monkeypatch):
+    """The SDK cache holding the transcripts is the very directory
+    `cleanup_session_store` deletes. Capturing after it would record nothing,
+    silently, on every run — so the real cleanup runs here, against a
+    redirected home, and the capture must still have read both transcripts."""
+    import json as _json
 
+    from claude_agent_sdk import project_key_for_directory
 
-def test_the_widening_does_not_reach_the_out_of_scope_branch():
-    """`correct_skill: []` is graded on its base dimensions, not on routing, so
-    the new field must not change its verdict in either direction. Whether a
-    spawn SHOULD fail an out-of-scope negative is a real question and a
-    different decision -- it is deliberately not made here, because it would
-    flip committed outcomes across skills this change never looked at."""
-    spec = _negative_spec(correct=[])
-    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
-    without = _compute_outcome(
-        spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=False, skills_invoked=[],
-    )
-    with_field = _compute_outcome(
-        spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=False, skills_invoked=[],
-        agents_spawned_all=["person-evidence"],
-    )
-    assert without == with_field == "pass"
+    from harness import workspace as workspace_mod
 
+    home = tmp_path / "home"
+    projects = home / ".claude" / "projects"
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    monkeypatch.setattr(workspace_mod, "_SESSION_STORE_ROOT", projects)
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {})
 
-def test_the_direct_test_discriminator_is_untouched_by_the_widening():
-    """`agents_spawned` (singular meaning: this is a DIRECT test) must keep its
-    meaning. Passing the new field must not make a routed test look direct."""
-    spec = _negative_spec(correct=["person-evidence"])
-    dims = [{"source": "base", "name": "Correctness", "score": 3, "rationale": "x"}]
-    # agents_spawned stays None (routed), agents_spawned_all carries the evidence.
-    assert _compute_outcome(
-        spec=spec, validators_passed=True, judge_dimensions=dims,
-        aborted_reason=None, activated=False, skills_invoked=[],
-        agents_spawned=None, agents_spawned_all=["person-evidence"],
-    ) == "pass"
+    def _msg(mid, window):
+        return {"type": "assistant", "message": {
+            "role": "assistant", "id": mid, "model": "claude-sonnet-4-6",
+            "content": [{"type": "text"}],
+            "usage": {"input_tokens": 0, "output_tokens": 5,
+                      "cache_read_input_tokens": window, "cache_creation_input_tokens": 0}}}
 
+    seen = {}
 
-# --- Backoff must outlast the condition it is retrying (sdk_stream_silence) ---
-#
-# The retry backoff is 1s -> 2s -> 4s, so all three attempts land within ~7
-# seconds. But `sdk_stream_silence` is only raised after the watchdog has waited
-# 180s for ANY SDK message: by the time it fires, the upstream has been silent for
-# three minutes, and retrying one second later retries into the same bad state.
-# That is why ut_research_plan_wzk has burned all three attempts repeatedly rather
-# than recovering on the second.
-#
-# The threshold is NOT the problem and must not be raised: across every committed
-# unit run log, the non-API gap in SUCCESSFUL runs peaks at 58.7s, nowhere near
-# 180s. A 180s silence is a genuine stall, not a tight limit.
+    async def fake_run_skill(**kwargs):
+        ws = kwargs["workspace"]
+        cache = projects / project_key_for_directory(str(ws))
+        (cache / "sess" / "subagents").mkdir(parents=True)
+        (cache / "sess.jsonl").write_text(_json.dumps(_msg("m1", 9_100)), encoding="utf-8")
+        (cache / "sess" / "subagents" / "agent-1.jsonl").write_text(
+            _json.dumps(_msg("a1", 41_230)), encoding="utf-8")
+        (cache / "sess" / "subagents" / "agent-1.meta.json").write_text(
+            _json.dumps({"agentType": "check-warnings"}), encoding="utf-8")
+        seen["cache"] = cache
+        return _retry_stub_result()
 
-def test_a_stall_backs_off_far_longer_than_an_ordinary_error():
-    from harness.orchestrator import retry_delay_for
-    assert retry_delay_for("sdk_stream_silence", 1.0) > retry_delay_for("error", 1.0) * 10
-
-
-def test_a_stall_backs_off_for_a_meaningful_fraction_of_the_silence_window():
-    """Retrying inside a few seconds of a three-minute silence is retrying into the
-    same stalled upstream. The floor is tied to the window that declared it."""
-    from harness.orchestrator import retry_delay_for
-    from harness.skill_runner import DEFAULT_SDK_MESSAGE_SILENCE_SECONDS
-    assert retry_delay_for("sdk_stream_silence", 1.0) >= DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6
-
-
-def test_an_ordinary_error_keeps_its_fast_retry():
-    """An `error` abort is a blip and recovers immediately; slowing it down would
-    add minutes to every flaky suite for no gain."""
-    from harness.orchestrator import retry_delay_for
-    assert retry_delay_for("error", 1.0) == 1.0
-    assert retry_delay_for(None, 1.0) == 1.0
-
-
-def test_an_unknown_reason_is_not_given_the_stall_treatment():
-    """Only the reason we measured gets the long wait. A new abort kind must not
-    silently inherit minutes of delay."""
-    from harness.orchestrator import retry_delay_for
-    assert retry_delay_for("some_future_reason", 1.0) == 1.0
-
-
-def test_the_retry_loop_actually_waits_out_a_stall(tmp_path, monkeypatch):
-    """The WIRING, not the helper. `retry_delay_for` being correct is worth nothing
-    if the loop never calls it -- a correct function nothing invokes looks identical
-    to a working fix from outside, which is how an unguarded hunk shipped earlier on
-    this branch.
-
-    Drives the real loop, captures what it actually sleeps, and asserts a stall waits
-    far longer than an ordinary error does.
-    """
-    from harness.skill_runner import DEFAULT_SDK_MESSAGE_SILENCE_SECONDS
-    _stub_workspace_helpers(monkeypatch)
-    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    paths = OrchestratorPaths(runlogs_root=tmp_path / "runlogs")
     auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    result, _b, _a = asyncio.run(orchestrator._execute_skill_with_retry(
+        run_index=0, spec=_positive_spec(), paths=paths,
+        skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
+        base_delay=0,
+    ))
 
-    def _slept_for(reason):
-        calls, naps = {"n": 0}, []
-
-        async def fake_run_skill(**kwargs):
-            calls["n"] += 1
-            return _retry_stub_result(aborted_reason=reason if calls["n"] < 2 else None)
-
-        async def fake_sleep(d):
-            naps.append(d)
-
-        monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
-        monkeypatch.setattr(orchestrator.asyncio, "sleep", fake_sleep)
-        asyncio.run(orchestrator._execute_skill_with_retry(
-            run_index=0, spec=_positive_spec(), paths=paths,
-            skill_baseline=["Read"], auth=auth, model="claude-sonnet-4-6",
-            base_delay=1.0,
-        ))
-        return naps
-
-    stall = _slept_for("sdk_stream_silence")
-    blip = _slept_for("error")
-    assert stall and blip, "both cases must have retried at least once"
-    assert stall[0] >= DEFAULT_SDK_MESSAGE_SILENCE_SECONDS / 6, (
-        f"the loop slept {stall[0]}s after a 180s silence -- it is not calling "
-        f"retry_delay_for"
-    )
-    assert blip[0] == 1.0, "an ordinary error must keep its fast retry"
+    assert result.subagent_capture_status == "captured"
+    assert result.subagents[0]["agent_type"] == "check-warnings"
+    assert result.subagents[0]["peak_window_tokens"] == 41_230
+    assert "turns" not in result.subagents[0]
+    assert result.main_thread == {"peak_window_tokens": 9_100, "compactions": [],
+                                  "models": ["claude-sonnet-4-6"]}
+    # The real cleanup ran afterwards and removed the store.
+    assert not seen["cache"].exists()

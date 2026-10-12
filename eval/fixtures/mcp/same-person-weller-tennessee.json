@@ -1,0 +1,17 @@
+{
+  "tool": "same_person",
+  "description": "same_person for William Weller (1870/1880 Maury County, Tennessee) vs subject I1 William Weller of Horsham. Name, birth year and birthplace country agree, so the tool returns a strong score; the score says nothing about whether the move between the two places is explained (issue #2537). Matched on any pairing.",
+  "args": {
+    "assertionId": "~",
+    "treePersonId": "~"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 4,
+    "score": 0.78,
+    "queryArk": "https://www.familysearch.org/ark:/61903/1:1:TN70-WEL",
+    "candidateArk": "https://www.familysearch.org/ark:/61903/4:1:WEL-I1",
+    "apiTitle": "Matches for ark:/61903/1:1:TN70-WEL",
+    "updated": "2026-10-03T00:00:00Z"
+  }
+}

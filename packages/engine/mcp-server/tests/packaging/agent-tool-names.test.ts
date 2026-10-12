@@ -520,20 +520,30 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // the check-warnings SKILL — a route an agent does not have. Widened
   // deliberately (lead review, 2026-09-02) because the warnings pass cannot sit
   // in the routing skill: `/research` may spawn this agent directly, so no
-  // plane guarantees the router runs at all. Still no `Read` and no
-  // `project_context` — the body reaches project state through research_query
-  // and never named either.
+  // plane guarantees the router runs at all. Still no `Read`: the body reaches
+  // research.json through research_query. `place_search`, `place_distance` and `wiki_read`
+  // were added for #2537: the identity decision measures a move outside the
+  // residence cluster and reads the destination's migration page and the
+  // country's naming page (ADR-0012), so those facts left the body.
+  // `place_distance` alone would be a dead grant — it takes the `standardPlace`
+  // only `place_search` returns. `project_context` was added for the same issue:
+  // it is the only tool that lists a person's tree spouses and children, which
+  // the Household check needs to name an absent spouse (ut_person_evidence_026).
   "person-evidence.md": {
     tools: [
       "materialize_facts",
       "merge_warnings",
       "person_quality",
       "person_warnings",
+      "place_distance",
+      "place_search",
+      "project_context",
       "record_read",
       "research_append",
       "research_query",
       "same_person",
       "tree_edit",
+      "wiki_read",
     ],
     denies: [],
   },
@@ -674,6 +684,26 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "wiki_read",
       "wiki_search",
       "wikipedia_search",
+    ],
+    denies: [],
+  },
+
+  // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
+  // `person_record_matches` for the pending matches, `research_query` to find a
+  // hint the project already extracted, `record_read` per hint,
+  // `image_transcribe` to read the image before recommending against a hint (it
+  // calls the tool itself; an agent cannot spawn image-reader), `person_read`
+  // and `Read` for the tree person. Record mode writes one log entry per decided
+  // hint through `research_log_append`. No `research_append`, so no hook lane.
+  "search-hints.md": {
+    tools: [
+      "Read",
+      "image_transcribe",
+      "person_read",
+      "person_record_matches",
+      "record_read",
+      "research_log_append",
+      "research_query",
     ],
     denies: [],
   },

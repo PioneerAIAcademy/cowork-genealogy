@@ -57,8 +57,9 @@ deliberately does NOT:
   (§4, Dallan's FINAL DECISION),
 - touch `research.json`, the filesystem, or run validation — those belong to the
   **tool wrappers** (§5b), which own persistence and the cross-file remap (§10),
-- run warning checks (`check-warnings` does that after a merge — see
-  `agents/tree-edit.md`, Appendix B).
+- run warning checks — the merge tools refuse a write that introduces an
+  unjustified genealogical warning, so the plausibility check is at the write
+  boundary rather than a pass the caller runs afterwards.
 
 ---
 
@@ -578,13 +579,16 @@ Tool-level (wrappers over the pure core):
   `gedcomx_source_description_id` needs **no** remap: target S-ids are preserved
   and `research.json` never references candidate S-ids.
 
-**Caller (the `tree-edit` skill) still** spawns the `check-warnings` agent
-(`relationship-accuracy.md`) after the merge to catch genealogical impossibilities
-it may have introduced (e.g. parent younger than child). The tool does the
-**structural** validate (schema + refs) but **not** the genealogical-plausibility
-checks — those stay a separate agent step. The caller no longer hand-edits
-`research.json` refs or calls `validate_research_schema` itself; the tool does
-both.
+**Caller (the `tree-edit` skill) no longer** spawns the `check-warnings` agent
+after the merge. The merge tools refuse a write that introduces an unjustified
+genealogical warning, so the impossibility this paragraph used to
+name — a parent younger than their child — is refused at the write boundary
+rather than reported by a pass the caller has to remember. The tool does the
+structural validate (schema + refs) AND, through that gate, the
+genealogical-plausibility check on what the write introduced; `check-warnings`
+remains available as a review of a person already in the tree. The caller no
+longer hand-edits `research.json` refs or calls `validate_research_schema`
+itself; the tool does both.
 
 ---
 

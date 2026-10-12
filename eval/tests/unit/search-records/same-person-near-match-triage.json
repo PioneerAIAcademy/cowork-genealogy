@@ -25,7 +25,9 @@
     "wiki-read-united-states-census",
     "record-search-near-match-age-off-flynn",
     "rank-search-matches-flynn-near-match",
-    "record-read-patrick-flyn-vrnt-7m3"
+    "record-read-patrick-flyn-vrnt-7m3",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",

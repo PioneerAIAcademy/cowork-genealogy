@@ -46,6 +46,7 @@ import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "../utils/date-helpers.js";
 import { COUPLE_EVENT_TYPES } from "../utils/record-persona.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 
 /** The pre-removal snapshot. Dot-prefixed on purpose — it still holds the
  *  answer, and both the agent's file browsing and the feedback bundler skip
@@ -158,12 +159,10 @@ const persons = (tree: SimplifiedGedcomX): SimplifiedPerson[] => tree.persons ??
 const relationships = (tree: SimplifiedGedcomX): SimplifiedRelationship[] =>
   tree.relationships ?? [];
 
-/** The two person ids a relationship connects, whatever its type. */
-function endpoints(rel: SimplifiedRelationship): string[] {
-  return rel.type === "ParentChild"
-    ? [rel.parent ?? "", rel.child ?? ""]
-    : [rel.person1 ?? "", rel.person2 ?? ""];
-}
+/** The person ids a relationship connects, whatever its type.
+ *  Thin alias over the shared reader — the only caller tests membership in a
+ *  person set, where a blank endpoint and a missing one behave identically. */
+const endpoints = (rel: SimplifiedRelationship): string[] => relationshipEndpoints(rel);
 
 function requirePerson(tree: SimplifiedGedcomX, personId: string | undefined, sel: string): string {
   if (!personId) throw new TreeForgetError(`'${sel}' requires personId`);

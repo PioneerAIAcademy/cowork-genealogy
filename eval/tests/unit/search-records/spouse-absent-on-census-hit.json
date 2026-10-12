@@ -24,7 +24,9 @@
     "wiki-read-united-states-census",
     "record-search-ackerman-1860-spouse-absent",
     "rank-search-matches-ackerman-1860-spouse-absent",
-    "record-read-ackerman-1860-m7qz-8kd"
+    "record-read-ackerman-1860-m7qz-8kd",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "CORE (Correctness): the returned record names NO spouse. record_search reports `relativeTerms.spouse: { status: \"absent\" }` and rank_search_matches returns a `relativeTermNote` saying so. Score Correctness 1 if the skill writes, in its narrative, its log notes, or any table, that the record CONFIRMS the marriage, confirms Catherine, or verifies George's wife. That claim is the exact failure this field exists to prevent: FamilySearch keeps records that do not contradict the named spouse, so a spouse-silent record survives a spouse-anchored search and looks identical to a confirming one.",

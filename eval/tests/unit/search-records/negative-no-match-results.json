@@ -24,7 +24,9 @@
     "wiki-read-united-states-census",
     "record-search-1850-census-flynn",
     "rank-search-matches-flynn-collection-mismatch",
-    "record-read-patrick-flynn-mxhy-tp4"
+    "record-read-patrick-flynn-mxhy-tp4",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in).",

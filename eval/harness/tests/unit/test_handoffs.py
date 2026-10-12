@@ -122,46 +122,12 @@ def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
         mod.test_live_callee_used_its_own_tools(tools, [], [], live)
 
 
-# --- the four other hand-off readers: Skill route, Agent route, wrong name ------
-
-_TREE_BEFORE = {"tree_gedcomx_json": {"persons": [{"id": "I1"}]}}
-_TREE_AFTER = {"tree_gedcomx_json": {"persons": [{"id": "I1"}, {"id": "I2"}]}}
-ROUTES = {
-    "skill": ([_skill("check-warnings")], True),
-    "agent": ([_spawn("check-warnings")], True),
-    "wrong_name": ([_spawn("conflict-resolution")], False),
-}
-
-
-@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
-def test_tree_edit_check_warnings_after_a_write(route):
-    calls, ok = ROUTES[route]
-    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
-    check = lambda: _validators("test_tree_edit").test_check_warnings_runs_after_any_tree_write(  # noqa: E731
-        _TREE_BEFORE, _TREE_AFTER, skills, {"skill": "tree-edit", "tags": []},
-        builtin_tool_calls=calls,
-    )
-    if ok:
-        check()
-    else:
-        with pytest.raises(AssertionError):
-            check()
-
-
-@pytest.mark.parametrize("route", ROUTES, ids=list(ROUTES))
-def test_person_evidence_check_warnings_after_a_write(route):
-    calls, ok = ROUTES[route]
-    skills = [c["args"]["skill"] for c in calls if c["tool"] == "Skill"]
-    before = {"research_json": {"person_evidence": []}, **_TREE_BEFORE}
-    after = {"research_json": {"person_evidence": [{"id": "pe_001"}]}, **_TREE_BEFORE}
-    check = lambda: _validators("test_person_evidence").test_check_warnings_runs_after_a_write(  # noqa: E731
-        before, after, skills, [], {"tags": ["check-warnings-required"]}, calls
-    )
-    if ok:
-        check()
-    else:
-        with pytest.raises(AssertionError):
-            check()
+# --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
+# The engine gate now refuses unjustified warnings at write time, so the
+# validators no longer check for check-warnings hand-offs. No eval validator
+# asserts the gate at all — the engine enforces it and PR 1's tests prove it
+# (`guardrail-enforcement-spec.md`, "No eval validator asserts this gate").
+# What remains is the shadow detector, tested in test_skill_invocation.py.
 
 
 @pytest.mark.parametrize(
@@ -248,26 +214,30 @@ def test_stub_agents_are_only_the_entries_with_no_skill_directory(tmp_path):
     assert _stub_agents(spec, tmp_path) == {"locality-guide": "r"}
 
 
-def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn():
-    """`route-shortcut-guard.json` stubs one paired name that ships as both a
-    skill and an agent; its compliant spawn must keep running.
+def test_a_stub_that_is_still_a_skill_is_not_stubbed_at_its_spawn(tmp_path):
+    """A paired name that ships as both a skill and an agent is not stubbed at
+    its spawn — the skill directory makes `_stub_agents` return None.
 
-    `proof-conclusion` (issue #2822) and `person-evidence` (issue #2821) were
-    paired too until each lost its skill half, so both now take the
-    converted-callee path below with `gps-mentor`.
+    After issue #2738 deleted `research-exhaustiveness`'s skill directory, no
+    paired names remain in the shipped plugin.  This test uses `tmp_path` to
+    create a synthetic skill directory instead.  `route-shortcut-guard.json`
+    supplied the real paired name until then, and now ends at its first stubbed
+    hand-off anyway: `stop_at_stub`.
     """
-    spec = _stub_spec(["research-exhaustiveness"])
-    assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") is None
+    (tmp_path / "fake-paired-skill").mkdir()
+    spec = _stub_spec(["fake-paired-skill"])
+    assert _stub_agents(spec, tmp_path) is None
 
 
 def test_a_stub_with_no_skill_directory_is_stubbed_at_its_spawn():
     """The other direction, on the real plugin tree: an agent-only callee in the
     same fixture IS denied at its spawn, which is what issue #2825 buys."""
-    spec = _stub_spec(["proof-conclusion", "gps-mentor", "person-evidence"])
+    spec = _stub_spec(["proof-conclusion", "gps-mentor", "person-evidence", "research-exhaustiveness"])
     assert _stub_agents(spec, REPO_ROOT / "packages" / "engine" / "plugin" / "skills") == {
         "proof-conclusion": None,
         "gps-mentor": None,
         "person-evidence": None,
+        "research-exhaustiveness": None,
     }
 
 

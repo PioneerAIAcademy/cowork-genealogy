@@ -219,6 +219,13 @@ def _skill_phase_breakdown(timeline: list[list[Any]]) -> list[dict[str, Any]]:
     anywhere — this returns ``[]`` for those, never raises. A run with a
     tagged timeline but genuinely no Skill tool-use (crashed before routing)
     also returns ``[]``.
+
+    Only a ``Skill`` call opens a phase. A paired agent the orchestrator spawns
+    directly (the sanctioned route for any routing-table cell spelled
+    ``@plugin:<name>``) emits no ``Skill:`` tag, so its
+    time folds into the preceding phase, or, before the first ``Skill:`` tag,
+    into no phase at all. Deliberate: tagging spawns would change the run-log
+    timeline shape for this one report.
     """
     boundaries: list[tuple[float, str]] = []
     last_t = 0.0
@@ -394,7 +401,11 @@ def format_skill_phases(bd: LatencyBreakdown) -> str:
             f"=== {bd.test_id} — no skill-phase data "
             "(run predates timeline tool-name tagging, or made no Skill tool-use) ==="
         )
-    lines = [f"=== {bd.test_id} — per-skill phase breakdown ==="]
+    lines = [
+        f"=== {bd.test_id} — per-skill phase breakdown ===",
+        "  (a directly spawned agent opens no phase: its time folds into the preceding Skill phase,"
+        " or is in no phase before the first one)",
+    ]
     if bd.counted_sleep_s:
         lines.append(
             f"  (shares are of wall-clock plus {_fmt_min(bd.counted_sleep_s)} host sleep, "

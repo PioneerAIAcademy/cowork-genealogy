@@ -13,8 +13,8 @@
     ]
   },
   "input": {
-    "user_message": "Is the research on the parentage question exhaustive?",
-    "scenario": "flynn-census-exhausted"
+    "scenario": "flynn-census-exhausted",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording an honest `declared: false` termination if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
     "Should NOT set `q_001.exhaustive_declaration.declared` to true",

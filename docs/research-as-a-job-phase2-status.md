@@ -391,9 +391,12 @@ run and makes the annotation moot. Annotating now risks paying for the run twice
 
 Two things make this concrete rather than cautious:
 
-- **Issue #1962's PR 5 is already scheduled to edit `init-project/SKILL.md:243`** (drop
+- **Issue #1962's PR 5 was scheduled to edit `init-project/SKILL.md`'s "Obvious error
+  detection" section** (drop
   three items from "Obvious error detection"), and that card prices its own cost as one
   `make eval-skill SKILL=init-project` plus an annotation pass. A known, planned change
+  — **superseded 2026-10-08**: the lead cancelled that PR, and the blocker is now #2122,
+  which deletes `skills/init-project/` outright.
   to this exact skill is pending.
 - `ut_init_project_vqx` — the one partial — is failing on precisely what PR 5 addresses,
   so the run that supersedes v6 is also the run that should clear it.

@@ -149,13 +149,15 @@ You need the ONE plugin sub-skill that owns the mistake — the test's
   - **sub-skill regression** or **agent-reasoning regression** → mine a
     test for the implicated sub-skill. The run log already lists the
     sub-skills the agent ran, in order — read them from `run-<ts>.json`'s
-    `tool_calls` (the `Skill` entries' `args.skill`):
+    `tool_calls`: the `Skill` entries' `args.skill` and the typed
+    `Agent`/`Task` entries' `args.subagent_type` (the orchestrator spawns
+    paired agents directly, so a `Skill`-only list misses them):
     ```
-    uv run --directory eval/harness python -c "import json,sys; r=json.load(open(sys.argv[1])); print([tc['args'].get('skill') for tc in r.get('tool_calls',[]) if tc['tool']=='Skill'])" eval/runlogs/e2e/<slug>/run-<ts>.json
+    python3 -c "import json,sys; r=json.load(open(sys.argv[1], encoding='utf-8')); print([tc['args'].get('skill') if tc['tool']=='Skill' else (tc['args'].get('subagent_type') or 'UNTYPED').split(':')[-1] for tc in r.get('tool_calls',[]) if tc['tool'] in ('Skill','Agent','Task')])" eval/runlogs/e2e/<slug>/run-<ts>.json
     ```
     That list is the *sequence*, not the culprit: the owner is the sub-skill
     whose **handoff dropped the evidence**, which may not be the last one to run.
-    Read the assistant narration *between* the `Skill` blocks (where a decision
+    Read the assistant narration *between* those blocks (where a decision
     like "this date can't be verified — drop it" happens), and check what a
     sub-skill was *handed* vs what it passed on, to find the turn it went wrong.
     That last step is judgment.

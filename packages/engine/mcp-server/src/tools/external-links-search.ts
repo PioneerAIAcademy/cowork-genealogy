@@ -8,6 +8,13 @@ import {
   UNLOGGED_SEARCHES_NOTE,
   NIL_SEARCH_NEEDS_LOG_NOTE,
 } from "../utils/results-staging.js";
+import {
+  dedupeCollections,
+  recordExternalCollections,
+  EXTERNAL_COLLECTIONS_FILE,
+  yearNum,
+  type StoredCollectionRow,
+} from "../utils/external-collections-store.js";
 import type {
   PlaceExternalLink,
   ExternalLinksSearchResult,
@@ -26,20 +33,17 @@ export interface ExternalLinksSearchInput {
 const FS_EXTERNAL_URL =
   "https://www.familysearch.org/service/search/hr/external/collections/search";
 
-const PAGE_SIZE = 100;
+// The endpoint's row cap: count=1001 is HTTP 400, and count=1000 returns a place's
+// whole list in one response (Pennsylvania 510/510, New York 795/795, measured).
+// One request, never paging: the endpoint's order changes on every call, so
+// offset paging repeats and skips rows (six fetches of Venango's 510 gave
+// 337-365 unique rows).
+const FETCH_COUNT = 1000;
 
-// Backstop cap on the inline `results[]`, applied only once the full set has
-// been staged to disk (so nothing dropped is unrecoverable). A link-dense place
-// (US counties carry several hundred curated resources) with no `host` filter
-// would otherwise overflow the tool-result token cap even after staging. With a
-// `host` filter the matched set is small and the cap effectively never bites.
-const INLINE_CAP = 50;
-
-function parseYear(raw: string | undefined): number | null {
-  if (!raw) return null;
-  const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) ? n : null;
-}
+// Cap on the inline `results[]` only, applied on every call after dedupe. The
+// stored list (`external-collections.json`) holds every row and the staged
+// sidecar every year-filtered row; `inlineCapped` says when this cut the inline copy.
+const INLINE_CAP = 200;
 
 // An undated resource (no start and no end year) is always included, regardless
 // of the year filter. A dated resource is included when its range overlaps
@@ -50,22 +54,23 @@ function includeCollection(
   userStart: number,
   userEnd: number
 ): boolean {
-  const cStart = parseYear(collection.startYear);
-  const cEnd = parseYear(collection.endYear);
+  const cStart = yearNum(collection.startYear);
+  const cEnd = yearNum(collection.endYear);
   if (cStart === null && cEnd === null) return true;
   const effectiveStart = cStart ?? (cEnd as number);
   const effectiveEnd = cEnd ?? (cStart as number);
   return effectiveStart <= userEnd && effectiveEnd >= userStart;
 }
 
-async function fetchPage(
-  placeId: string,
-  offset: number
-): Promise<FSPlaceExternalResponse> {
+function includeRow(row: StoredCollectionRow, userStart: number, userEnd: number): boolean {
+  return includeCollection({ startYear: row.start_year, endYear: row.end_year }, userStart, userEnd);
+}
+
+async function fetchAll(placeId: string): Promise<FSPlaceExternalResponse> {
   const url = new URL(FS_EXTERNAL_URL);
   url.searchParams.set("q.placeId", placeId);
-  url.searchParams.set("offset", String(offset));
-  url.searchParams.set("count", String(PAGE_SIZE));
+  url.searchParams.set("offset", "0");
+  url.searchParams.set("count", String(FETCH_COUNT));
 
   const res = await fetchWithRetry(url, {
     headers: {
@@ -151,45 +156,62 @@ export async function externalLinksSearchTool(
   }
   const placeId = resolution.placeId;
 
-  // The curated set per place is small; fetch every page so the returned set is
-  // complete (no caller cursor — the tool filters client-side and returns the
-  // whole filtered set in one response).
-  const all: FSPlaceExternalCollection[] = [];
-  let offset = 0;
-  let totalForPlace = 0;
-
-  for (;;) {
-    const data = await fetchPage(placeId, offset);
-    const collections = data.collections ?? [];
-    totalForPlace = data.totalResults ?? 0;
-    all.push(...collections);
-
-    const advanced = collections.length;
-    if (advanced === 0) break;
-    offset += advanced;
-    if (offset >= totalForPlace) break;
+  const data = await fetchAll(placeId);
+  const collections = data.collections ?? [];
+  const totalResults = data.totalResults;
+  // A partial list is an error, never an answer: a stored list that silently
+  // lacks rows reads to every later caller as "this collection is not here".
+  if (typeof totalResults !== "number" || !Number.isFinite(totalResults)) {
+    throw new Error(
+      "FamilySearch's external-links response carried no totalResults, so whether the list is " +
+        "complete cannot be told. Nothing was stored. Retry once; if it persists, surface this to the user.",
+    );
+  }
+  if (totalResults > FETCH_COUNT) {
+    throw new Error(
+      `"${standardPlace}" has ${totalResults} curated links, more than the ${FETCH_COUNT} one request ` +
+        "can return, so the list would be partial. Nothing was stored. Request a smaller place — a " +
+        "state or county, not a whole country such as the United States.",
+    );
+  }
+  if (totalResults > collections.length) {
+    throw new Error(
+      `FamilySearch returned ${collections.length} of the ${totalResults} curated links for ` +
+        `"${standardPlace}", so the list is partial. Nothing was stored. Retry once; if it persists, ` +
+        "surface this to the user.",
+    );
   }
 
+  const rows = dedupeCollections(
+    collections.filter((c): c is FSPlaceExternalCollection & { url: string } => typeof c.url === "string"),
+    standardPlace,
+  );
+  const totalForPlace = rows.length;
+
   // When no years are given, every resource matches (dated and undated alike).
-  const matched =
+  const matchedRows =
     startYear == null && endYear == null
-      ? all
-      : all.filter((c) =>
-          includeCollection(
-            c,
+      ? rows
+      : rows.filter((r) =>
+          includeRow(
+            r,
             startYear ?? Number.NEGATIVE_INFINITY,
             endYear ?? Number.POSITIVE_INFINITY
           )
         );
 
   // The full year-filtered set (all hosts). This is what gets staged to disk —
-  // host filtering and the inline cap narrow only the inline copy.
-  const allLinks: PlaceExternalLink[] = matched
-    .filter((c) => typeof c.url === "string" && c.url.length > 0)
-    .map((c) => ({
-      url: c.url as string,
-      linkText: c.linkText ?? "",
-    }));
+  // host filtering and the inline cap narrow only the inline copy. Most specific
+  // place first (more comma segments), so a county's own few rows lead and the
+  // 200 cap falls on the end of its state's long list, never on them. The sort is
+  // stable over the stored order (place, then key), so it stays deterministic.
+  const depth = (place: string): number => place.split(",").length;
+  const allLinks: PlaceExternalLink[] = [...matchedRows]
+    .sort((a, b) => depth(b.place) - depth(a.place))
+    .map((r) => ({
+    url: r.url,
+    linkText: r.link_text,
+  }));
 
   const query: ExternalLinksSearchResult["query"] = { standardPlace };
   if (startYear != null) query.startYear = startYear;
@@ -253,13 +275,26 @@ export async function externalLinksSearchTool(
     ? allLinks.filter((r) => r.url.toLowerCase().includes(host))
     : allLinks;
 
-  // The backstop cap only bites once the full set is safely staged — mirroring
-  // record_search/fulltext_search, which reshape the inline copy only when
-  // staged so nothing dropped is unrecoverable. An un-staged caller gets the
-  // full (optionally host-filtered) set, exactly as before this change; the
-  // skill always passes projectPath + host, so the staged path is the norm.
-  if (out.staged && inline.length > INLINE_CAP) {
+  if (inline.length > INLINE_CAP) {
     inline = inline.slice(0, INLINE_CAP);
+    out.inlineCapped = true;
+  }
+
+  // Keep the full list in the project (every row, every year, every host). A
+  // failure here never fails a search that succeeded; it is reported instead.
+  if (input.projectPath !== undefined) {
+    try {
+      const places = await recordExternalCollections(input.projectPath, standardPlace, rows);
+      if (places === null) {
+        out.collectionsError =
+          "Nothing was stored: projectPath does not name a project folder (one holding " +
+          "research.json or tree.gedcomx.json).";
+      } else {
+        out.stored = { file: EXTERNAL_COLLECTIONS_FILE, places };
+      }
+    } catch (error) {
+      out.collectionsError = error instanceof Error ? error.message : String(error);
+    }
   }
 
   out.results = inline;
@@ -281,8 +316,10 @@ export const externalLinksSearchToolSchema = {
     "response returns only matching links plus `returned` (their count). Pass " +
     "`projectPath` to stage the full year-filtered set to disk and get a " +
     "`staged.resultsRef` handle (pass it to research_log_append as " +
-    "`stagedResultsRef` so the complete link list is retained). The inline " +
-    "`results[]` is capped for safety; the staged sidecar always holds the full set.",
+    "`stagedResultsRef` so the complete link list is retained); the full list is also " +
+    "stored for research_query({section: 'external_collections'}). Inline `results[]` is " +
+    "deduplicated and capped at 200 (`inlineCapped`). A whole country such as the United " +
+    "States is too large: ask for a state.",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -319,8 +356,8 @@ export const externalLinksSearchToolSchema = {
           "Absolute path to the active project directory. When supplied, the tool stages the full " +
           "year-filtered link set host-side and returns a `staged.resultsRef` handle — pass that to " +
           "research_log_append as `stagedResultsRef` so the complete list is retained in the log " +
-          "sidecar (and rides along in a feedback bundle) without you re-serializing it. Omit only " +
-          "for a throwaway exploratory lookup you will not log.",
+          "sidecar (and rides along in a feedback bundle) without you re-serializing it, and " +
+          "stores the place's full list. Omit only for a throwaway exploratory lookup you will not log.",
       },
     },
     required: ["standardPlace"],
