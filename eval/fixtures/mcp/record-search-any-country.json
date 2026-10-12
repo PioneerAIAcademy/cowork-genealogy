@@ -1,0 +1,18 @@
+{
+  "tool": "record_search",
+  "description": "record_search catch-all for a search scoped only by recordCountry (predicate '~' = empty-substring match), returning no results, so a record_search call whose arguments carry no `surname` degrades to an empty result instead of fixture_not_found. Order LAST in a test's mcp_fixtures.",
+  "args": {
+    "recordCountry": "~"
+  },
+  "response": {
+    "query": {
+      "surname": "Smith"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
