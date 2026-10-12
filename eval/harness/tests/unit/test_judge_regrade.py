@@ -736,6 +736,18 @@ def test_rederive_fallback_warning_follows_the_current_brief(disk_tree):
     assert [w["kind"] for w in out] == ["prose_observation"]
 
 
+def test_rederive_replaces_a_readme_fallback_with_brief_missing(disk_tree):
+    stale = [{"kind": "scenario_readme_fallback", "scenario": "demo-scenario", "advisory": "old"}]
+    (disk_tree["scenarios"] / "README.md").unlink()
+    bare = judge_regrade._load_scenario_brief("demo-scenario")
+    out = judge_regrade._rederive_fallback_warning(stale, bare)
+    assert [w["kind"] for w in out] == ["scenario_brief_missing"]
+    # And back: a brief clears the missing entry too.
+    (disk_tree["scenarios"] / "judge-brief.md").write_text("Mocked.\n", encoding="utf-8")
+    briefed = judge_regrade._load_scenario_brief("demo-scenario")
+    assert judge_regrade._rederive_fallback_warning(out, briefed) == []
+
+
 def test_slot_readme_renders_the_readme_over_a_brief(disk_tree):
     (disk_tree["scenarios"] / "judge-brief.md").write_text("BRIEF_SENTINEL\n", encoding="utf-8")
     log = _minimal_run_log(scenario="demo-scenario")
@@ -808,7 +820,7 @@ def test_scratch_dry_run_counts_prompts_and_writes_nothing(disk_tree, tmp_path, 
     out = capsys.readouterr().out
     assert code == 0
     assert "1 prompt(s) rendered in total" in out
-    assert "1 scenario(s) graded against a README, not a judge brief: demo-scenario" in out
+    assert "1 scenario(s) graded without a judge brief (README or nothing): demo-scenario" in out
     assert committed.read_bytes() == before
     assert not scratch.exists()
 

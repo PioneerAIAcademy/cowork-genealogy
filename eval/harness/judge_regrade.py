@@ -546,17 +546,20 @@ def _strip_prior_coerced_warnings(warnings: list[dict[str, Any]]) -> list[dict[s
     return [w for w in (warnings or []) if (w or {}).get("kind") != "coerced_routing_negative_to_na"]
 
 
+_NO_BRIEF_KINDS = frozenset({"scenario_readme_fallback", "scenario_brief_missing"})
+
+
 def _rederive_fallback_warning(
     warnings: list[dict[str, Any]], brief: ScenarioBrief
 ) -> list[dict[str, Any]]:
-    """Replace any `scenario_readme_fallback` entry with one from the current loader.
+    """Replace any no-brief entry with one from the current loader.
 
     A regrade keeps each run's original warnings, so a log regraded after its
     scenario gained a judge brief would otherwise still say the judge read the
     README. The regraded prompt is what the entry describes, so it is derived
     from the brief the regrade actually rendered.
     """
-    out = [w for w in (warnings or []) if (w or {}).get("kind") != "scenario_readme_fallback"]
+    out = [w for w in (warnings or []) if (w or {}).get("kind") not in _NO_BRIEF_KINDS]
     if (fallback := readme_fallback_warning(brief)) is not None:
         out.append(fallback)
     validate_warning_kinds(out)
@@ -613,7 +616,7 @@ def regrade_run_log(
         brief = _load_scenario_brief(scenario, force_readme=force_readme)
         scenario_readme = brief.text
         before_snapshot = _load_before_snapshot(scenario)
-        if brief.is_readme_fallback:
+        if brief.lacks_brief:
             result.fallback_scenarios.add(brief.scenario or "")
 
         old_outcome = test_entry.get("outcome")
@@ -759,7 +762,7 @@ def dry_run(
 
     Pure disk reads, zero model calls, zero cost. Used by `make harness-test`
     to prove the renderer reads from disk (edit a rubric and every hash moves).
-    Scenarios whose prompt fell back to a README are added to `fallbacks`.
+    Scenarios whose prompt had no judge brief are added to `fallbacks`.
     """
     out: dict[str, str] = {}
     scenarios = _scenario_index(target.skill) if fallbacks is not None else {}
@@ -783,7 +786,7 @@ def dry_run(
                 brief = _load_scenario_brief(
                     scenarios.get(test_entry["test_id"]), force_readme=force_readme
                 )
-                if brief.is_readme_fallback:
+                if brief.lacks_brief:
                     fallbacks.add(brief.scenario or "")
             # First run only: a test's runs render the same prompt by design.
             break
@@ -874,8 +877,8 @@ def copy_to_scratch(
 def _print_fallback_summary(fallbacks: set[str]) -> None:
     if fallbacks:
         print(
-            f"  {len(fallbacks)} scenario(s) graded against a README, not a "
-            f"judge brief: {', '.join(sorted(fallbacks))}"
+            f"  {len(fallbacks)} scenario(s) graded without a judge brief "
+            f"(README or nothing): {', '.join(sorted(fallbacks))}"
         )
 
 

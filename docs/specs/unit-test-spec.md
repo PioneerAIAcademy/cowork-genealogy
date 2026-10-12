@@ -122,13 +122,16 @@ run does, and every concrete claim in it is checked against the fixture files: a
 false statement of content leaks as badly as a verdict. Provenance, authoring
 notes and "what it exercises" stay in the README, which reaches no grader once a
 brief exists. An empty brief is a deliberate "tell the judge nothing" and renders
-`(scenario brief intentionally empty)`, distinct from `(stateless test)`.
+`(scenario brief intentionally empty)`, distinct from `(stateless test)`. A
+scenario with neither file still stages its state, so it renders
+`(scenario has no judge brief or README)`, never `(stateless test)`.
 
 The README fallback exists until every referenced scenario has a brief. It is
 reported, never silent: each fallback run carries a `scenario_readme_fallback`
-entry in `output.warnings` (a harness advisory, not a judge rule), the end of
-every suite prints `N test(s) graded against a scenario README, not a judge
-brief`, and a regrade prints the same. Removing the fallback is the last step of
+entry in `output.warnings` (a harness advisory, not a judge rule), or
+`scenario_brief_missing` when the scenario has neither file, the end of every
+suite prints `N test(s) graded without a judge brief, on a README or nothing`,
+and a regrade prints the same count. Removing the fallback is the last step of
 the brief sweep. A scenario name must match its directory exactly; a mis-cased
 name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
@@ -1413,7 +1416,7 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 ```
 {rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
 {judge_context}                     — bullet list from the test JSON
-{scenario_readme}                   — scenario judge-brief.md; README.md while no brief exists; "(scenario brief intentionally empty)" for an empty brief; "(stateless test)" with no scenario
+{scenario_readme}                   — scenario judge-brief.md; README.md while no brief exists; "(scenario brief intentionally empty)" for an empty brief; "(scenario has no judge brief or README)" for a scenario with neither; "(stateless test)" with no scenario
 {user_message}                      — verbatim from the test; on a direct-agent test, the `delegation` under a one-line harness label (§5.2.1)
 {skills_invoked}                    — list of skills Claude actually invoked, with each agent the main thread spawned inserted in call order as `<name> (agent)`; on a direct-agent test, the agent that was spawned (no skill runs)
 {text_response}                     — Claude's full output text (or sidecar ref)

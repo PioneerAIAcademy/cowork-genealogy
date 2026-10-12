@@ -10,7 +10,9 @@ regrade (`judge_regrade`) so the two cannot drift.
 
 The README fallback exists only until every referenced scenario has a brief.
 Each fallback is reported (`scenario_readme_fallback` in `output.warnings`, and
-a suite summary line), because a fallback nobody can see becomes permanent.
+a suite summary line), because a fallback nobody can see becomes permanent. So is
+a scenario with neither file (`scenario_brief_missing`): it still holds state, so
+it renders `NO_BRIEF_MARKER`, never "(stateless test)".
 """
 
 from __future__ import annotations
@@ -32,11 +34,16 @@ EMPTY_BRIEF_MARKER = "(scenario brief intentionally empty)"
 #: Rendered when the README slot is forced on a scenario that has no README.
 NO_README_MARKER = "(scenario has no README)"
 
-#: `source` values. `readme_fallback` is the one that is reported.
+#: Rendered for a scenario with neither file. It still stages its state, so
+#: "(stateless test)" would tell the judge a stateful run had none.
+NO_BRIEF_MARKER = "(scenario has no judge brief or README)"
+
+#: `source` values. `readme_fallback` and `no_brief` are reported.
 SOURCE_NONE = "none"
 SOURCE_BRIEF = "brief"
 SOURCE_BRIEF_EMPTY = "brief_empty"
 SOURCE_README_FALLBACK = "readme_fallback"
+SOURCE_NO_BRIEF = "no_brief"
 
 
 @dataclass(frozen=True)
@@ -48,6 +55,11 @@ class ScenarioBrief:
     @property
     def is_readme_fallback(self) -> bool:
         return self.source == SOURCE_README_FALLBACK
+
+    @property
+    def lacks_brief(self) -> bool:
+        """A scenario the judge graded with no judge-brief.md: README or nothing."""
+        return self.source in (SOURCE_README_FALLBACK, SOURCE_NO_BRIEF)
 
 
 def _exact_scenario_dir(scenarios_dir: Path, scenario: str) -> Path:
@@ -84,7 +96,7 @@ def load_scenario_brief(
     - `judge-brief.md` present → its text, `brief`; whitespace-only →
       `EMPTY_BRIEF_MARKER`, `brief_empty`. A brief wins whenever it exists.
     - else `README.md` present → its text, `readme_fallback`
-    - else → empty text, `none`
+    - else → `NO_BRIEF_MARKER`, `no_brief`
 
     `force_readme` skips the brief. Only the scratch regrade's README arm uses
     it, so an A/B can run both arms on one tree.
@@ -107,11 +119,25 @@ def load_scenario_brief(
         # The README arm of an A/B on a scenario that has only a brief. Saying
         # "(stateless test)" would tell the judge a stateful run had no state.
         return ScenarioBrief(scenario, NO_README_MARKER, SOURCE_NONE)
-    return ScenarioBrief(scenario, "", SOURCE_NONE)
+    return ScenarioBrief(scenario, NO_BRIEF_MARKER, SOURCE_NO_BRIEF)
 
 
 def readme_fallback_warning(brief: ScenarioBrief) -> dict[str, str] | None:
-    """The `output.warnings` entry for a README fallback, or None."""
+    """The `output.warnings` entry for a scenario with no brief, or None.
+
+    `scenario_readme_fallback` when the judge read the README instead,
+    `scenario_brief_missing` when there was neither file to read.
+    """
+    if brief.source == SOURCE_NO_BRIEF:
+        return {
+            "kind": "scenario_brief_missing",
+            "scenario": brief.scenario or "",
+            "advisory": (
+                f"Scenario {brief.scenario!r} has neither {BRIEF_FILENAME} nor "
+                f"{README_FILENAME}, so the judge was told only that it exists "
+                "(issue #2478)."
+            ),
+        }
     if not brief.is_readme_fallback:
         return None
     return {

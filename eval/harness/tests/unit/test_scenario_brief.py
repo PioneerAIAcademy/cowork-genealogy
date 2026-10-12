@@ -21,8 +21,10 @@ from harness.orchestrator import _build_warnings
 from harness.rubric import empty_rubric
 from harness.scenario_brief import (
     EMPTY_BRIEF_MARKER,
+    NO_BRIEF_MARKER,
     SOURCE_BRIEF,
     SOURCE_BRIEF_EMPTY,
+    SOURCE_NO_BRIEF,
     SOURCE_NONE,
     SOURCE_README_FALLBACK,
     load_scenario_brief,
@@ -119,9 +121,10 @@ def test_missing_brief_falls_back_to_readme_and_reports_it(tmp_path: Path) -> No
     assert "judge-brief.md" in warnings[0]["advisory"]
 
 
-def test_fallback_kind_is_a_harness_advisory_not_a_judge_rule() -> None:
-    assert "scenario_readme_fallback" in HARNESS_WARNING_KINDS
-    assert "scenario_readme_fallback" not in JUDGE_WARNING_KINDS
+@pytest.mark.parametrize("kind", ["scenario_readme_fallback", "scenario_brief_missing"])
+def test_fallback_kind_is_a_harness_advisory_not_a_judge_rule(kind: str) -> None:
+    assert kind in HARNESS_WARNING_KINDS
+    assert kind not in JUDGE_WARNING_KINDS
 
 
 def test_brief_present_emits_no_fallback_warning(tmp_path: Path) -> None:
@@ -136,7 +139,7 @@ def test_suite_summary_names_the_fallback_scenarios(capsys) -> None:
         {"test_id": "ut_c", "readme_fallback_scenarios": []},
     ])
     out = capsys.readouterr().out
-    assert "2 test(s) graded against a scenario README, not a judge brief" in out
+    assert "2 test(s) graded without a judge brief, on a README or nothing" in out
     assert "(2 scenario(s)): s-one, s-two" in out
 
 
@@ -172,9 +175,26 @@ def test_absent_or_null_scenario_is_stateless(tmp_path: Path, scenario) -> None:
     assert (brief.text, brief.source) == ("", SOURCE_NONE)
 
 
-def test_scenario_with_neither_file_is_none(tmp_path: Path) -> None:
+def test_scenario_with_neither_file_is_not_stateless_and_is_reported(tmp_path: Path) -> None:
     _scenario(tmp_path, "demo", readme=None, brief=None)
-    assert load_scenario_brief(tmp_path, "demo").source == SOURCE_NONE
+    brief = load_scenario_brief(tmp_path, "demo")
+    assert (brief.text, brief.source) == (NO_BRIEF_MARKER, SOURCE_NO_BRIEF)
+    assert brief.lacks_brief and not brief.is_readme_fallback
+    rendered = _render(brief.text)
+    assert NO_BRIEF_MARKER in rendered
+    assert "(stateless test)" not in rendered
+
+    warnings = _build_warnings([], scenario_brief=brief)
+    assert [w["kind"] for w in warnings] == ["scenario_brief_missing"]
+    assert warnings[0]["scenario"] == "demo"
+
+
+def test_brief_or_readme_never_reports_brief_missing(tmp_path: Path) -> None:
+    _scenario(tmp_path, "readme-only", readme=README_TEXT, brief=None)
+    _scenario(tmp_path, "briefed", readme=None, brief=BRIEF_TEXT)
+    assert load_scenario_brief(tmp_path, "readme-only").source == SOURCE_README_FALLBACK
+    briefed = load_scenario_brief(tmp_path, "briefed")
+    assert briefed.source == SOURCE_BRIEF and not briefed.lacks_brief
 
 
 @pytest.mark.parametrize("name", ["Demo", "DEMO", "demo ", "missing"])
@@ -194,6 +214,13 @@ def test_every_referenced_scenario_resolves_and_fallbacks_are_counted() -> None:
         and not (SCENARIOS_DIR / s / "judge-brief.md").is_file()
     }
     assert {s for s, src in sources.items() if src == SOURCE_README_FALLBACK} == expected_fallback
+    expected_missing = {
+        s for s in referenced
+        if not (SCENARIOS_DIR / s / "README.md").is_file()
+        and not (SCENARIOS_DIR / s / "judge-brief.md").is_file()
+    }
+    assert {s for s, src in sources.items() if src == SOURCE_NO_BRIEF} == expected_missing
+    assert SOURCE_NONE not in sources.values(), "a referenced scenario rendered as stateless"
     briefed = {s for s in referenced if (SCENARIOS_DIR / s / "judge-brief.md").is_file()}
     assert {"flynn-record-matching", "christian-hole-quality"} <= briefed
 

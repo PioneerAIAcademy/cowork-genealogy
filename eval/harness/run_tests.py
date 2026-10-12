@@ -624,19 +624,20 @@ def _print_judge_warnings(rows: list[dict]) -> None:
 
 
 def _print_readme_fallbacks(rows: list[dict]) -> None:
-    """Say how many tests the judge graded against a scenario README.
+    """Say how many tests the judge graded without a scenario judge brief.
 
     The README fallback exists until every referenced scenario has a
-    judge-brief.md (#2478). A fallback nobody can see becomes permanent, so
-    every run names the tests and scenarios still on it.
+    judge-brief.md (#2478); a scenario with neither file is counted with it. A
+    fallback nobody can see becomes permanent, so every run names the tests and
+    scenarios still on it.
     """
     tests = [r for r in rows if r.get("readme_fallback_scenarios")]
     if not tests:
         return
     scenarios = sorted({s for r in tests for s in r["readme_fallback_scenarios"]})
     print(
-        f"{len(tests)} test(s) graded against a scenario README, not a judge "
-        f"brief ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
+        f"{len(tests)} test(s) graded without a judge brief, on a README or "
+        f"nothing ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
     )
     print()
 
@@ -1295,13 +1296,13 @@ def main(argv: list[str] | None = None) -> int:
                     for w in iter_run_warnings(entry)
                     if w.get("kind") in _JUDGE_WARNING_KINDS
                 ],
-                # Scenarios the judge read a whole README for, because they
-                # have no judge-brief.md yet (#2478). Its own line, not the
-                # judge tally: a fixture advisory, not a grading rule.
+                # Scenarios with no judge-brief.md yet, graded on a whole
+                # README or on nothing (#2478). Its own line, not the judge
+                # tally: a fixture advisory, not a grading rule.
                 "readme_fallback_scenarios": sorted({
                     w.get("scenario") or ""
                     for w in iter_run_warnings(entry)
-                    if w.get("kind") == "scenario_readme_fallback"
+                    if w.get("kind") in ("scenario_readme_fallback", "scenario_brief_missing")
                 }),
             }
         )

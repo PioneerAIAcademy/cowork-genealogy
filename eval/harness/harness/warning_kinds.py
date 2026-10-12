@@ -62,6 +62,8 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # The judge read a scenario README because no judge-brief.md exists (#2478).
     # A fixture advisory, not a grading rule.
     "scenario_readme_fallback": "harness",
+    # Neither judge-brief.md nor README.md, so the judge saw only a marker (#2478).
+    "scenario_brief_missing": "harness",
 }
 
 _VALID_SIDES = frozenset({"judge", "harness"})
