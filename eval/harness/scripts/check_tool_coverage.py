@@ -69,59 +69,6 @@ EXEMPT_TOOLS: dict[str, str] = {
         "(packages/engine/mcp-server/tests/); transcription behavior is verified via the "
         "layered manual testing playbooks (docs/testing-guides/)."
     ),
-    "research_log_append": (
-        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
-        "implementation rather than matching a fixture. The tool handles id "
-        "assignment, timestamping, camelCase-to-snake_case field renaming, "
-        "and validation. No fixture needed; it is always available."
-    ),
-    "research_append": (
-        "registered as a LIVE_TOOL in mock_mcp.py — calls the real compiled "
-        "implementation against the workspace research.json rather than "
-        "matching a fixture. It validates-before-persist and enforces "
-        "supersede-not-delete, so its result reflects the actual file the "
-        "skill wrote. No fixture needed; it is always available."
-    ),
-    "research_query": (
-        "registered as a LIVE_TOOL in mock_mcp.py (#919) — a read-only, "
-        "deterministic projection over the workspace's own research.json, "
-        "same class as project_context. It calls the real compiled "
-        "implementation rather than matching a fixture, so mocking it would "
-        "only invite drift from the scenario's actual state. No fixture "
-        "needed; it is always available."
-    ),
-    "extraction_append": (
-        "registered as a LIVE_TOOL in mock_mcp.py — the record-extraction "
-        "lane's writer (research_append restricted to sources + assertions). "
-        "Calls the real compiled implementation against the workspace, so its "
-        "result reflects the actual file the skill wrote, including a "
-        "rejection when an op strays outside the lane. No fixture needed; it "
-        "is always available."
-    ),
-    "convert_calendar": (
-        "registered as a LIVE_TOOL in mock_mcp.py (#1654) — pure calendar "
-        "arithmetic, so a fixture would have to hard-code the very answer the "
-        "test exists to measure, which is the one way of mocking this tool "
-        "that is worse than not mocking it. It calls the real compiled "
-        "implementation, deriving the Julian/Gregorian offset by JDN round-"
-        "trip. No fixture needed; it is always available. conflict-resolution "
-        "declares the same tool, so this exemption drops convert_calendar from "
-        "that skill's missing list too — it does NOT silence that skill, which "
-        "still warns for place_search_all, an unrelated pre-existing gap. "
-        "Before the "
-        "live registration this warning was true and unactioned for two "
-        "months, because the remedies it named — add a fixture, or drop the "
-        "tool — were both wrong here; the warning now had to stop firing or it "
-        "would assert something false about a tool 11 of 16 tests exercise."
-    ),
-    "build_external_search_url": (
-        "registered as a LIVE_TOOL in mock_mcp.py — URL-templating from "
-        "structured attributes, so a fixture would have to hard-code the "
-        "exact URL string search-external-sites' eval exists to measure. It "
-        "calls the real compiled implementation, including its hand-off log "
-        "write when the agent passes projectPath. No fixture needed; it is "
-        "always available."
-    ),
 }
 
 
@@ -202,7 +149,10 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
 
 #: Every LIVE_TOOL is exempt by construction: the mock registers it
 #: unconditionally and its handler calls the real compiled implementation, so
-#: there is no fixture to write and never will be. Six of them were hand-copied
+#: a fixture is not how they are covered. (Not that one could never exist: a few --
+#: person_quality, person_warnings -- are fixture-backed in places. The point is that
+#: the live handler answers, so a missing fixture is not a coverage gap.) Six were
+#: hand-copied
 #: into EXEMPT_TOOLS above while LIVE_TOOLS held eighteen, so `research_query`
 #: was exempt and `validate_research_schema` -- equally live -- was warned about
 #: for as long as both have existed. Derived rather than copied a seventh time.
@@ -308,12 +258,27 @@ def main() -> int:
         print("\nCoverage-exempt tools (structurally untestable, never flagged):")
         for tool, reason in sorted(EXEMPT_TOOLS.items()):
             print(f"  - {tool}: {reason}")
+    # The docstring promises the exemption list is printed every run "so it stays visible
+    # rather than silently swallowing a gap". The derived half has to be printed too, or
+    # the larger of the two sets is the invisible one.
+    if LIVE:
+        print(
+            f"\nAlso exempt, derived from mock_mcp.LIVE_TOOLS ({len(LIVE)}): "
+            "registered unconditionally and answered by the real compiled tool, so a "
+            "fixture is not how they are covered."
+        )
+        print("  " + ", ".join(sorted(LIVE)))
+    else:
+        print(
+            "\nLIVE_TOOLS could not be read, so nothing is exempt on that ground and "
+            "live tools below are reported as gaps."
+        )
 
     write_step_summary(
         "Skill tool-coverage drift (warn-only)",
         footer=(
             "Warn-only: this check does not block the build. "
-            f"Coverage-exempt tools: {', '.join(sorted(EXEMPT_TOOLS)) or 'none'}."
+            f"Coverage-exempt: {', '.join(sorted(set(EXEMPT_TOOLS) | LIVE)) or 'none'}."
         ),
     )
     return 0

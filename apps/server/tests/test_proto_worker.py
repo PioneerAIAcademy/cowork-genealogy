@@ -4708,18 +4708,27 @@ def test_the_main_thread_still_delivers_with_agent_type_present():
     assert halted == ["x"]
 
 
-def test_the_guidance_says_to_search_for_the_deferred_schema():
-    """ENABLE_TOOL_SEARCH is on and `research_delivered` is not in ALWAYS_LOAD, so its
-    schema is deferred. The one tool the system prompt names has to be findable, and
-    the short bounded turns this feature exists for are the ones holding the fewest
-    schemas."""
+def test_the_guidance_tells_the_model_how_to_find_the_schema_without_claiming_it_is_deferred():
+    """The one tool the system prompt names has to be findable, and the short bounded
+    turns this feature exists for are the ones holding the fewest schemas -- so the
+    find-it clause stays.
+
+    What changed: `research_delivered` IS in ALWAYS_LOAD now, so on a hosted turn the
+    schema is already held and "its schema is deferred" is simply false. The clause is
+    conditional instead. It is not deleted, because ALWAYS_LOAD is a `_meta` hint the
+    CLIENT honours -- the unit harness's mock drops `_meta` entirely, so the schema is
+    still deferred there, and a model that has to search must still be told how."""
     # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
     # "researcher" and "research_delivered", so that assertion can never fail. This is
     # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
     # break-testing this very test, which stayed green with the clause deleted.
     lowered = options.DELIVERY_GUIDANCE.lower()
-    assert "deferred" in lowered, "the guidance must say the schema is deferred"
-    assert "search for it" in lowered, "and must tell the model to search for it"
+    assert "search for it by name" in lowered, "must tell the model how to find it"
+    assert "if you do not already hold" in lowered, "and must make that conditional"
+    assert "schema is deferred" not in lowered, (
+        "the schema is in ALWAYS_LOAD now, so stating it is deferred is false on every "
+        "hosted turn -- the plane this guidance is written for"
+    )
 
 
 def test_the_delivery_summary_reaches_a_human():

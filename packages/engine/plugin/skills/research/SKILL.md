@@ -107,7 +107,7 @@ transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 a status question such as "where are we?".
 Two or more of them in one message is still bounded: deliver each, name each,
-and end the turn when the last one is met. A message that also asks for
+and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
@@ -142,8 +142,9 @@ finish". Then offer to take it further, and end. The offer is not
 something you wait for — their answer arrives as the next message.
 
 End it by calling `research_delivered` with a one-sentence summary of what you
-delivered. Call it last, after everything you want the researcher to read: the
-turn stops there.
+delivered. Call it last, after everything you want the researcher to read — where
+this run is managed, the turn stops there. If you do not already hold its schema,
+search for it by name.
 
 ## What to do
 
@@ -467,7 +468,8 @@ turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 **A bounded request has a fifth: its deliverable.** When everything the
-message asked for is produced — one deliverable or several — end the turn;
+message asked for is produced — one deliverable or several — end the turn as
+§"Bounded request or job" says to;
 see §"Bounded request or job".
 
 ### Candidates, not verdicts

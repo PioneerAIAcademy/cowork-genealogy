@@ -507,16 +507,41 @@ def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
     if _ENDS_WITH_DELIVERY_TAG not in tags:
         pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
 
-    called = [c for c in tool_calls if str(c.get("tool", "")).endswith(_DELIVERED_TOOL)]
-    assert called, (
+    first = next(
+        (i for i, c in enumerate(tool_calls)
+         if str(c.get("tool", "")).endswith(_DELIVERED_TOOL)),
+        None,
+    )
+    assert first is not None, (
         f"a bounded turn must end by calling `{_DELIVERED_TOOL}`; it never did. "
         f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls})}. "
-        "Without it the hosted Stop hook vetoes the stop and nudges the agent on into "
-        "more research, which is what the researcher reports as 'it would not stop'."
+        "Without it the hosted PreToolUse arm never halts the turn, the nudge arm sees an "
+        "incomplete objective, and the agent is pushed on into more research -- which is "
+        "what the researcher reports as 'it would not stop'."
     )
-    summary = (called[-1].get("args") or {}).get("summary")
+
+    # The FIRST call, and nothing after it. The hosted arm halts on the first MAIN-THREAD
+    # call, so that is where the turn actually ends and whose summary the researcher
+    # reads. Asserting only "called somewhere" accepted
+    # research_delivered -> record_search -> research_append: deliver-then-keep-
+    # researching, the exact regression this test exists to catch, invisible here because
+    # the tool is inert in this harness.
+    after = [str(c.get("tool")) for c in tool_calls[first + 1:]]
+    assert not after, (
+        f"`{_DELIVERED_TOOL}` must be the LAST tool call of the turn; {len(after)} "
+        f"follow it: {after}. On the hosted plane the first main-thread call halts the "
+        "turn, so anything queued after it never runs and never reaches the researcher."
+    )
+
+    # `[first]`, though the assertion above makes it provably the same element as
+    # `[-1]`: no input can distinguish the two once "nothing follows it" holds, and
+    # swapping them reds no test. Written as `first` because it states the rule the
+    # hosted plane actually follows -- it halts on the FIRST main-thread call -- and
+    # it stays correct if the last-call assertion is ever relaxed.
+    summary = (tool_calls[first].get("args") or {}).get("summary")
     assert isinstance(summary, str) and summary.strip(), (
         f"`{_DELIVERED_TOOL}` needs a one-sentence summary naming what was delivered; "
-        f"got {summary!r}. The hosted plane puts it in front of the stop reason, so an "
-        "empty one is what the researcher reads."
+        f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
+        "halts on and puts in front of the stop reason -- an empty summary there is what "
+        "the researcher reads, however well-formed a later call might be."
     )

@@ -106,7 +106,12 @@ prototype-only. Pricing a description change is a separate decision, not taken h
 
 **The fifth stop condition has to be worded carefully.** PR #3147 deliberately kept
 `research_delivered` out of skill bodies, so the new stop condition can only say "end your
-turn" — it must NOT name the tool. On the hosted path a toolless voluntary stop is vetoed
+turn" — it must NOT name the tool. **Superseded 2026-10-12.** The paragraph below correctly
+identified that a toolless voluntary stop is vetoed and nudged, and concluded the pairing
+works "only because the per-turn `DELIVERY_GUIDANCE` names the tool". The field says it did
+not: alpha reported the agent answering a bounded question and carrying on. "End your turn"
+in the body and "call `research_delivered`" in the prompt competed, and the body won. The
+router's bounded close names the tool now. On the hosted path a toolless voluntary stop is vetoed
 and nudged with `CONTINUE_REASON` ("invoke the next GPS sub-skill now"), which contradicts
 the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
 names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.

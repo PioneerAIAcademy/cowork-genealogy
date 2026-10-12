@@ -130,3 +130,15 @@ def test_the_check_still_reports_a_genuine_gap(capsys):
     check_tool_coverage.main()
     out = capsys.readouterr().out
     assert "tree_forget" in out, "the forward check stopped reporting real gaps"
+
+
+def test_the_derived_exemption_is_printed(capsys):
+    """The module docstring promises the exemption list is printed every run "so it stays
+    visible rather than silently swallowing a gap". Only `EXEMPT_TOOLS` was printed, and
+    the derived set is now the larger of the two — the invisible one was the big one.
+
+    Deleting the print block left every other test green."""
+    check_tool_coverage.main()
+    out = capsys.readouterr().out
+    assert "derived from mock_mcp.LIVE_TOOLS" in out, "the derived exemptions are silent"
+    assert "research_delivered" in out, "and must name what they cover"

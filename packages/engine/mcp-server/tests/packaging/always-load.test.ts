@@ -11,7 +11,7 @@ const PINNED = [
   "project_context",
   "record_read",
   "research_append",
-  // 0.7 KB, the smallest schema the server ships. Added for reachability, not
+  // 802 B, under a third of record_read (2,363 B). Added for reachability, not
   // frequency: the hosted Stop hook lets a bounded turn stop ONLY when the model
   // calls this tool, so deferring it puts a ToolSearch round trip in front of the
   // one moment that must not fail. A model that has not loaded the schema is
