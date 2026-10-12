@@ -1,0 +1,478 @@
+{
+  "persons": [
+    {
+      "id": "GW82-2VP",
+      "ark": "ark:/61903/4:1:GW82-2VP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "9d478a8c-6fb0-4899-be7c-ac4f3b944c5f",
+          "preferred": true,
+          "given": "Tomasa",
+          "surname": "Tassara",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d97a3e83-af93-40dc-8ab9-21c766c03ddd",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2G1-5DV"
+        },
+        {
+          "ref": "Q2G1-NGV"
+        },
+        {
+          "ref": "Q2G1-X68"
+        }
+      ]
+    },
+    {
+      "id": "GW82-JXB",
+      "ark": "ark:/61903/4:1:GW82-JXB",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "eeabe2d1-8ab8-45c2-824d-c1e07aacd2d5",
+          "preferred": true,
+          "given": "Juan Felipe Marcelo",
+          "surname": "Rossello",
+          "type": "BirthName"
+        },
+        {
+          "id": "d00a638e-cced-4c86-bffb-e82947bde533",
+          "given": "Juan",
+          "surname": "Rossello",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "07a94ec5-e8d7-4f0a-9fae-d721874be906",
+          "type": "Birth",
+          "date": "18 June 1885",
+          "standard_date": "18 Jun 1885"
+        },
+        {
+          "id": "07df498a-1fd6-4b25-aa1a-d5a3faf4a3cd",
+          "type": "Christening",
+          "date": "15 de agosto de 1885",
+          "standard_date": "15 Aug 1885",
+          "place": "Mercedes, Mercedes, Buenos Aires, Argentina",
+          "standard_place": "Mercedes, Mercedes, Buenos Aires, Argentina"
+        },
+        {
+          "id": "e41d746c-dc14-41d2-8379-1584a03a948b",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2G1-X2N"
+        }
+      ]
+    },
+    {
+      "id": "GW82-2K6",
+      "ark": "ark:/61903/4:1:GW82-2K6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "fd4be56a-0b9a-40d9-a2aa-84a56e96c9d9",
+          "preferred": true,
+          "given": "Catalina",
+          "surname": "Rossello",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "128beb56-9b1d-44e5-ac78-4046260fde29",
+          "type": "Birth",
+          "date": "1888",
+          "standard_date": "1888"
+        },
+        {
+          "id": "488f304a-0c73-4fb0-9add-1135cd1754a0",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GW82-NX8",
+      "ark": "ark:/61903/4:1:GW82-NX8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b6fc9058-4e08-48ad-b50b-9ffd5fd86677",
+          "preferred": true,
+          "given": "Angela",
+          "surname": "Rossello",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "54915700-2050-4719-8fac-174e2fdc6586",
+          "type": "Christening",
+          "date": "1889",
+          "standard_date": "1889",
+          "place": "Catedral de Nuestra Señora de las Mercedes, Mercedes, Mercedes, Buenos Aires, Argentina",
+          "standard_place": "Catedral Basílica Nuestra Señora de las Mercedes, Mercedes, Mercedes, Buenos Aires, Argentina"
+        },
+        {
+          "id": "798e1269-31f6-42b1-bb0a-9536ef343a5e",
+          "type": "Birth",
+          "date": "31 July 1889",
+          "standard_date": "31 Jul 1889"
+        },
+        {
+          "id": "12ce3ebf-8354-4520-bbdc-667ba8bb5ab5",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2G1-N1G"
+        }
+      ]
+    },
+    {
+      "id": "GPS3-WX5",
+      "ark": "ark:/61903/4:1:GPS3-WX5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "62436b73-faa7-461c-859a-956190c35f72",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Rossello",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6d1bffd0-87a8-4b6d-8a07-e265aede8daf",
+          "type": "Birth",
+          "date": "19 de noviembre de 1898",
+          "standard_date": "19 Nov 1898"
+        },
+        {
+          "id": "2ef7bd6f-6d81-4f4e-aebe-5e6d549e16b8",
+          "type": "Christening",
+          "date": "25 de febrero de 1899",
+          "standard_date": "25 Feb 1899",
+          "place": "Catedral de Nuestra Señora de las Mercedes, Mercedes, Mercedes, Buenos Aires, Argentina",
+          "standard_place": "Catedral Basílica Nuestra Señora de las Mercedes, Mercedes, Mercedes, Buenos Aires, Argentina"
+        },
+        {
+          "id": "331e544c-3da8-47bd-baea-fbcf0b6d7a2f",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2G1-5LT"
+        }
+      ]
+    },
+    {
+      "id": "GW82-LWW",
+      "ark": "ark:/61903/4:1:GW82-LWW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "333f7431-f060-445f-b9bf-219987b00a0a",
+          "preferred": true,
+          "given": "Bartolome",
+          "surname": "Rossello",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "252ad4b8-ce9e-428a-81c2-881580a75067",
+          "type": "Birth",
+          "date": "1892",
+          "standard_date": "1892",
+          "place": "Mercedes, Buenos Aires, Argentina",
+          "standard_place": "Mercedes, Buenos Aires, Argentina"
+        },
+        {
+          "id": "15d87e45-b7bc-4204-aeb4-1fbd01eaa98b",
+          "type": "Death",
+          "date": "10 de junio de 1975",
+          "standard_date": "10 Jun 1975",
+          "place": "Mercedes, Buenos Aires, Argentina",
+          "standard_place": "Mercedes, Buenos Aires, Argentina"
+        }
+      ]
+    },
+    {
+      "id": "GW82-J12",
+      "ark": "ark:/61903/4:1:GW82-J12",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "3463a98c-7ad6-42a9-9eb4-a9fed50bfb6a",
+          "preferred": true,
+          "given": "Juan",
+          "surname": "Rossello",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9d15411a-6c2b-43f3-a6bc-2a2f298e720f",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2G1-5CY"
+        },
+        {
+          "ref": "Q2G1-NKY"
+        },
+        {
+          "ref": "Q2G1-X84"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GW82-J12",
+      "person2": "GW82-2VP"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GW82-J12",
+      "child": "GW82-JXB",
+      "sources": [
+        {
+          "ref": "Q2G1-XN9"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GW82-2VP",
+      "child": "GW82-JXB",
+      "sources": [
+        {
+          "ref": "Q2G1-XN9"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GW82-J12",
+      "child": "GW82-2K6"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GW82-2VP",
+      "child": "GW82-2K6"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GW82-J12",
+      "child": "GW82-NX8",
+      "sources": [
+        {
+          "ref": "Q2G1-N5P"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GW82-2VP",
+      "child": "GW82-NX8",
+      "sources": [
+        {
+          "ref": "Q2G1-N5P"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GW82-J12",
+      "child": "GW82-LWW"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GW82-2VP",
+      "child": "GW82-LWW"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GW82-J12",
+      "child": "GPS3-WX5",
+      "sources": [
+        {
+          "ref": "Q2G1-5FX"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GW82-2VP",
+      "child": "GPS3-WX5",
+      "sources": [
+        {
+          "ref": "Q2G1-5FX"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GW82-2VP",
+      "title": "Tomasa Tassara",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Tomasa Tassara (PID GW82-2VP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GW82-2VP"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GW82-JXB",
+      "title": "Juan Felipe Marcelo Rossello",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Juan Felipe Marcelo Rossello (PID GW82-JXB); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GW82-JXB"
+    },
+    {
+      "id": "sd_person_GW82-2K6",
+      "title": "Catalina Rossello",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Catalina Rossello (PID GW82-2K6); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GW82-2K6"
+    },
+    {
+      "id": "sd_person_GW82-NX8",
+      "title": "Angela Rossello",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Angela Rossello (PID GW82-NX8); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GW82-NX8"
+    },
+    {
+      "id": "sd_person_GPS3-WX5",
+      "title": "Maria Rossello",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Rossello (PID GPS3-WX5); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GPS3-WX5"
+    },
+    {
+      "id": "sd_person_GW82-LWW",
+      "title": "Bartolome Rossello",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Bartolome Rossello (PID GW82-LWW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GW82-LWW"
+    },
+    {
+      "id": "sd_person_GW82-J12",
+      "title": "Juan Rossello",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Juan Rossello (PID GW82-J12); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GW82-J12"
+    },
+    {
+      "id": "Q2G1-NGV",
+      "title": "Tomasa Pasara, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-43LJ : Tue Aug 04 02:47:40 UTC 2026), Entry for Angela and José R. Alva, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-43LK"
+    },
+    {
+      "id": "Q2G1-5DV",
+      "title": "Tomasa Tassaro, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66MB-QZ9B : Tue Aug 04 01:22:19 UTC 2026), Entry for Maria and Nicolas Cam- Pole, 25 de febrero de 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66MB-QZSM"
+    },
+    {
+      "id": "Q2G1-X68",
+      "title": "Tomasa Passara, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-15HW : Tue Aug 04 02:46:56 UTC 2026), Entry for Juan Felipe Marcelo and Pablo Soler Teniente, 15 de agosto de 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-15HH"
+    },
+    {
+      "id": "Q2G1-X2N",
+      "title": "Juan Felipe Marcelo, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-15HW : Tue Aug 04 02:46:56 UTC 2026), Entry for Juan Felipe Marcelo and Pablo Soler Teniente, 15 de agosto de 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-15HW"
+    },
+    {
+      "id": "Q2G1-N1G",
+      "title": "Angela, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-43LJ : Tue Aug 04 02:47:40 UTC 2026), Entry for Angela and José R. Alva, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-43LJ"
+    },
+    {
+      "id": "Q2G1-5LT",
+      "title": "Maria, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66MB-QZ9B : Tue Aug 04 01:22:19 UTC 2026), Entry for Maria and Nicolas Cam- Pole, 25 de febrero de 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66MB-QZ9B"
+    },
+    {
+      "id": "Q2G1-5CY",
+      "title": "Juan Rossello, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66MB-QZ9B : Tue Aug 04 01:22:19 UTC 2026), Entry for Maria and Nicolas Cam- Pole, 25 de febrero de 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66MB-QZ91"
+    },
+    {
+      "id": "Q2G1-NKY",
+      "title": "Juan Rosendo, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-43LJ : Tue Aug 04 02:47:40 UTC 2026), Entry for Angela and José R. Alva, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-43LV"
+    },
+    {
+      "id": "Q2G1-X84",
+      "title": "Juan Rosello, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-15HW : Tue Aug 04 02:46:56 UTC 2026), Entry for Juan Felipe Marcelo and Pablo Soler Teniente, 15 de agosto de 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-15H4"
+    },
+    {
+      "id": "Q2G1-XN9",
+      "title": "Juan Felipe Marcelo, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-15HW : Tue Aug 04 02:46:56 UTC 2026), Entry for Juan Felipe Marcelo and Pablo Soler Teniente, 15 de agosto de 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-15HW"
+    },
+    {
+      "id": "Q2G1-N5P",
+      "title": "Angela, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66M1-43LJ : Tue Aug 04 02:47:40 UTC 2026), Entry for Angela and José R. Alva, 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66M1-43LJ"
+    },
+    {
+      "id": "Q2G1-5FX",
+      "title": "Maria, \"Argentina, Buenos Aires, registros parroquiales, 1635-2017\"",
+      "citation": "\"Argentina, Buenos Aires, registros parroquiales, 1635-2017\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66MB-QZ9B : Tue Aug 04 01:22:19 UTC 2026), Entry for Maria and Nicolas Cam- Pole, 25 de febrero de 1899.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66MB-QZ9B"
+    }
+  ]
+}

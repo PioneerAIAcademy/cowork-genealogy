@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Mári Nagy, indexed as Mária Nagy (born about 1858), married János Szőke (indexed Szöke, born about 1847) on 17 January 1875 in Egyházasrádóc, Vas County, Hungary.",
+      "details": {
+        "subject_person": "Mári Nagy (G549-JNM)",
+        "fact_type": "Marriage",
+        "date": "17 January 1875",
+        "place": "Egyházasrádóc, Vas, Hungary"
+      },
+      "supporting_sources": [
+        "Hungary, Church Books, 1624-1950 — marriage entry for Szöke János and Nagy Mária, 17 Jan 1875"
+      ],
+      "required": true
+    }
+  ]
+}

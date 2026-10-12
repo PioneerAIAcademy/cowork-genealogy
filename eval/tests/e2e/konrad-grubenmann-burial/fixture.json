@@ -1,0 +1,19 @@
+{
+  "id": "konrad-grubenmann-burial",
+  "name": "Konrad Grubenmann — burial in March 1787, Teufen, Appenzell Ausserrhoden, Switzerland",
+  "genre": "record-hint",
+  "source_pid": "KP47-72Q",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Konrad Grubenmann, born 21 August 1698 in Teufen, Appenzell, who married Barbara Oberteufer in 1724, buried?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1780s",
+    "geography": "CH"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 26, hint-samples.csv row 882, flags adds_spouse/adds_burial, confidence 3). Draft transcribed from a 1787 Teufen, Appenzell Ausserrhoden church burial register entry; unverified."
+}

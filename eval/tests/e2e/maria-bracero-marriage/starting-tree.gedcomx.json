@@ -1,0 +1,1420 @@
+{
+  "persons": [
+    {
+      "id": "LL4N-82C",
+      "ark": "ark:/61903/4:1:LL4N-82C",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "97c2b1b5-faa7-4efa-9b77-2fc1c9eb0a69",
+          "type": "Birth",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "7796e74e-546a-430e-9539-516b36882a23",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "12e524e9-9a11-4436-98e3-fba226f63148",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hormigueros, Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "aa470711-8d79-4c72-be08-61d7f645c560",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "1c5d7580-2898-447a-a6d1-6943f101e13b",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "79F4-5QG"
+        },
+        {
+          "ref": "7MDZ-S71"
+        },
+        {
+          "ref": "7MD3-SHT"
+        },
+        {
+          "ref": "7M8P-91D"
+        },
+        {
+          "ref": "7M8V-KZ4"
+        },
+        {
+          "ref": "7MH7-6MG"
+        },
+        {
+          "ref": "QBTW-1BQ"
+        },
+        {
+          "ref": "QYLF-X2N"
+        },
+        {
+          "ref": "QYXX-7HD"
+        },
+        {
+          "ref": "QYQX-M8M"
+        },
+        {
+          "ref": "QFNT-26S"
+        },
+        {
+          "ref": "3CLG-XXS"
+        },
+        {
+          "ref": "QYX6-K86"
+        },
+        {
+          "ref": "9FZ5-HSH"
+        }
+      ]
+    },
+    {
+      "id": "GT65-49J",
+      "ark": "ark:/61903/4:1:GT65-49J",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "dc7491cd-569b-4102-9c5c-98a49547e12b",
+          "preferred": true,
+          "given": "Jovita",
+          "surname": "Morales Y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d3374aae-90db-409d-933b-0d1b786a59a7",
+          "type": "Birth",
+          "date": "1904",
+          "standard_date": "1904",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "1b5b9aad-4997-4573-8885-e88835c893b4",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "2539299d-8ddd-404f-9eab-ab225962791f",
+          "type": "Death"
+        },
+        {
+          "id": "14ea7dc0-d0f0-484b-a42f-097d2bd1d07c",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "88ef8eda-9103-4842-9202-ec38145fe727",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7M8P-SKM"
+        }
+      ]
+    },
+    {
+      "id": "GRYL-VG4",
+      "ark": "ark:/61903/4:1:GRYL-VG4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "82d31a9d-2837-4ca7-9fe6-051077723b50",
+          "preferred": true,
+          "given": "Matilda",
+          "surname": "Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2c0214d5-8861-4be9-af45-40030ca96ec4",
+          "type": "Birth",
+          "date": "1922",
+          "standard_date": "1922",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "66dde53a-fb69-4fcc-9b56-ba191f8851b7",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QBT4-MYZ"
+        }
+      ]
+    },
+    {
+      "id": "GRDB-7WY",
+      "ark": "ark:/61903/4:1:GRDB-7WY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "f50d3a73-99f7-4673-b46e-55c5d32121e8",
+          "preferred": true,
+          "given": "Gregorio",
+          "surname": "Morales",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "dab9d792-f0f0-4f2c-9aab-d3f0f77fc27c",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QYX6-KNN"
+        }
+      ]
+    },
+    {
+      "id": "GRYL-L8L",
+      "ark": "ark:/61903/4:1:GRYL-L8L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "a5b4561f-2b32-418d-9cf8-f63b0127b711",
+          "preferred": true,
+          "given": "Jovita",
+          "surname": "Moralez y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ab89b3d3-ce8c-4a9d-a400-7422982eb5c8",
+          "type": "Birth",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico, Caquetá, Colombia"
+        },
+        {
+          "id": "35160b91-a61d-46be-82f5-8119f8d55b47",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QBT4-M35"
+        }
+      ]
+    },
+    {
+      "id": "LL4N-82N",
+      "ark": "ark:/61903/4:1:LL4N-82N",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Maria Jovita",
+          "surname": "Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1905",
+          "standard_date": "1905",
+          "place": "Mayagüez, Puerto Rico",
+          "standard_place": "Mayagüez, Puerto Rico"
+        },
+        {
+          "id": "3e81c127-f3b6-4ec8-919f-f871a92cb6fc",
+          "type": "Death Registration",
+          "date": "27 Feb 1993",
+          "standard_date": "27 Feb 1993",
+          "place": "Hormigueros, Puerto Rico, Estados Unidos de América",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QYX6-KZH"
+        },
+        {
+          "ref": "9FZ5-HS3"
+        }
+      ]
+    },
+    {
+      "id": "GT65-CL4",
+      "ark": "ark:/61903/4:1:GT65-CL4",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "5473118a-1373-4397-92b0-f4d4cc189b20",
+          "preferred": true,
+          "given": "Cárlos",
+          "surname": "Morales Y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "23d03202-adb4-427d-9474-25562df10236",
+          "type": "Birth",
+          "date": "1906",
+          "standard_date": "1906",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "586ad851-eb56-418f-b679-1e34257981d2",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "3e1a8a1d-646d-44a8-a061-1f505467d7a4",
+          "type": "Death"
+        },
+        {
+          "id": "1d80e385-b6d0-4609-9985-f9ec7090bfb3",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "fff27d43-02fd-477c-b32f-6dbab39c8ebf",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7M8P-3SY"
+        }
+      ]
+    },
+    {
+      "id": "G8M9-59S",
+      "ark": "ark:/61903/4:1:G8M9-59S",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "9ac427e7-b5f8-4b03-a9af-3dd7ff7035df",
+          "preferred": true,
+          "given": "Gregorio",
+          "surname": "Morales",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "0cfbc265-1c37-4ae2-8b87-d4326504f822",
+          "type": "Birth",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "26e7f1d5-dc6d-4664-92b6-7d192fff5025",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "0f766e98-5def-4a24-b675-9561711f65e1",
+          "type": "Death"
+        },
+        {
+          "id": "30e34eb4-2f06-4440-bde4-e57f8a64766f",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "c3418a76-7916-4baf-9ba0-6f62492b234a",
+          "type": "Marital Status",
+          "value": "Married"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "79F4-5WK"
+        },
+        {
+          "ref": "7MDZ-9TQ"
+        },
+        {
+          "ref": "7MD3-9L2"
+        },
+        {
+          "ref": "7M8P-SHL"
+        },
+        {
+          "ref": "7M8V-KD8"
+        },
+        {
+          "ref": "7MH7-DYW"
+        },
+        {
+          "ref": "QYLF-XG1"
+        },
+        {
+          "ref": "QYXX-7ZP"
+        },
+        {
+          "ref": "QYQX-M4B"
+        },
+        {
+          "ref": "3DNH-14P"
+        }
+      ]
+    },
+    {
+      "id": "GRD1-QQL",
+      "ark": "ark:/61903/4:1:GRD1-QQL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "f42108a7-060f-4536-ab00-0fa1f96c8e56",
+          "preferred": true,
+          "given": "Julia",
+          "surname": "Morales",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2a5d25ac-9bd0-4d76-943f-e0e95d49df03",
+          "type": "Birth",
+          "date": "1906",
+          "standard_date": "1906"
+        },
+        {
+          "id": "a04cc55e-1ca0-4c1a-9a06-040f5075e0ad",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "e184da0a-d044-4b2f-bf61-4406942c1312",
+          "type": "Death",
+          "date": "16 October 1931",
+          "standard_date": "16 Oct 1931",
+          "place": "San Germán, San Germán, Puerto Rico",
+          "standard_place": "San Germán, San Germán, Puerto Rico"
+        },
+        {
+          "id": "2eac95df-b92f-4ec8-a37e-30bfe6bceee6",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "5e8e871e-f056-403a-a04a-4e4d0544b623",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7MD3-JZD"
+        },
+        {
+          "ref": "7M8P-SBX"
+        },
+        {
+          "ref": "QYXX-7JV"
+        }
+      ]
+    },
+    {
+      "id": "GT6G-N4J",
+      "ark": "ark:/61903/4:1:GT6G-N4J",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b5245b03-6b1b-4384-be4f-c27fe38bca9f",
+          "preferred": true,
+          "given": "Eufemia",
+          "surname": "Morales y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "db04dacc-a52a-4e00-9d44-b5af68925ae2",
+          "type": "Birth",
+          "date": "1 August 1910",
+          "standard_date": "1 Aug 1910"
+        },
+        {
+          "id": "306a8b0d-3b5a-4eda-b140-000665bae110",
+          "type": "Death"
+        },
+        {
+          "id": "b378fc2a-eb43-4ca1-afad-c2dba7fe97b8",
+          "type": "Birth Registration",
+          "place": "Mayagüez, Mayagüez, Puerto Rico",
+          "standard_place": "Mayagüez, Mayagüez, Puerto Rico"
+        },
+        {
+          "id": "4e2c8654-5ac0-48e5-9a39-f166d967f7b6",
+          "type": "Birth Registration",
+          "place": "Hormigueros, Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Hormigueros, Puerto Rico"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "79F4-5C5"
+        },
+        {
+          "ref": "7M8V-KVN"
+        }
+      ]
+    },
+    {
+      "id": "GT65-WM4",
+      "ark": "ark:/61903/4:1:GT65-WM4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "d2461c7b-7b00-4b8a-a735-9819a6263ff4",
+          "preferred": true,
+          "given": "Irene E",
+          "surname": "Morales Y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e2741c09-6dc3-4f05-b143-19c478bc3521",
+          "type": "Birth",
+          "date": "1909",
+          "standard_date": "1909",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "0d57b700-6868-497a-bbff-aefb84e2bdbf",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "ab564223-22dd-44e3-b3f1-ff2a2b634b33",
+          "type": "Death"
+        },
+        {
+          "id": "53f8fd73-e896-4a5f-be25-0b864b36f939",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "c9c5c283-bd8d-473c-bed1-2d4417280b7f",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7M8P-3H3"
+        }
+      ]
+    },
+    {
+      "id": "GRYL-VLT",
+      "ark": "ark:/61903/4:1:GRYL-VLT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "e7ec7b80-aaa0-4f05-99b0-edb88aee4d70",
+          "preferred": true,
+          "given": "Carlos",
+          "surname": "Moralez y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "17635f49-26c3-4fe4-b7bd-928ba458b719",
+          "type": "Birth",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "fe80c8cd-e6c8-4b12-a9b0-e4eb5a887a81",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QBT4-MDZ"
+        }
+      ]
+    },
+    {
+      "id": "G8M9-XD3",
+      "ark": "ark:/61903/4:1:G8M9-XD3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "63611c31-e7a0-4f10-a168-4c33ea72fbf5",
+          "preferred": true,
+          "given": "Marcos",
+          "surname": "Morales Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5a7590b0-8463-4763-86b1-fa7fb9c78a9e",
+          "type": "Birth",
+          "date": "1912",
+          "standard_date": "1912"
+        },
+        {
+          "id": "b65a8f9d-5e20-4651-acaf-f10ff844864a",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hormigueros, Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "55516772-f51c-4d52-8f09-051e9a82ce22",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "85bddfee-6684-421b-8a6f-142be35b9c92",
+          "type": "Death Registration",
+          "date": "13 Feb 1985",
+          "standard_date": "13 Feb 1985",
+          "place": "Hormigueros, Puerto Rico, Estados Unidos de América",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "6aadf1b3-bf53-4922-b5ff-ce195b782bdc",
+          "type": "Death",
+          "date": "1985",
+          "standard_date": "1985",
+          "place": "Hormigueros, Puerto Rico, Estados Unidos de América",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "f2c5ed76-395b-4e33-9b79-8d20f68df056",
+          "type": "Birth Registration",
+          "place": "Hormigueros, Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "bb01b53d-38cf-4afa-9279-41e3a4384a67",
+          "type": "Birth Registration",
+          "place": "Mayagüez, Mayagüez, Puerto Rico",
+          "standard_place": "Mayagüez, Mayagüez, Puerto Rico"
+        },
+        {
+          "id": "8b647799-e78a-4646-9816-21428298117a",
+          "type": "Marital Status",
+          "value": "Single"
+        },
+        {
+          "id": "e1d6076f-c0ff-4687-8b60-34680a57e858",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7MT3-9TL"
+        },
+        {
+          "ref": "7MH7-DPF"
+        },
+        {
+          "ref": "QBTW-1T9"
+        },
+        {
+          "ref": "QYLF-XYK"
+        },
+        {
+          "ref": "QYNW-3Y3"
+        },
+        {
+          "ref": "QYQX-MWQ"
+        },
+        {
+          "ref": "QYM4-ZWW"
+        },
+        {
+          "ref": "QFNT-2XL"
+        },
+        {
+          "ref": "3CLG-6XX"
+        }
+      ]
+    },
+    {
+      "id": "GTJP-3L1",
+      "ark": "ark:/61903/4:1:GTJP-3L1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "105b8774-5897-45b4-90a8-8cd3e33b9730",
+          "preferred": true,
+          "given": "Vicente",
+          "surname": "Moralez Y Bracero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d00d7311-3a19-4de2-bb7c-9d365a442661",
+          "type": "Birth",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Puerto Rico",
+          "standard_place": "Puerto Rico"
+        },
+        {
+          "id": "5dc5584d-9a98-45fe-a163-9d446b2f6021",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Hormigueros, Puerto Rico",
+          "standard_place": "Hormigueros, Puerto Rico"
+        },
+        {
+          "id": "a4353c1f-1f7b-4324-8373-8d181c9f3ae5",
+          "type": "Death"
+        },
+        {
+          "id": "f9650bf8-cb3c-4836-8ecd-6781760f5cce",
+          "type": "Ethnicity",
+          "value": "White"
+        },
+        {
+          "id": "42d431a9-22a3-48b2-a4d4-68503a37feca",
+          "type": "Marital Status",
+          "value": "Single"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7MG5-9CY"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G8M9-59S",
+      "person2": "LL4N-82C"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GRDB-7WY",
+      "person2": "LL4N-82C",
+      "sources": [
+        {
+          "ref": "QYX6-K65"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "GT65-49J",
+      "sources": [
+        {
+          "ref": "7M8P-SXD"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GT65-49J",
+      "sources": [
+        {
+          "ref": "7M8P-SXD"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GRDB-7WY",
+      "child": "LL4N-82N",
+      "sources": [
+        {
+          "ref": "QYX6-K65"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "LL4N-82N",
+      "sources": [
+        {
+          "ref": "QYX6-K65"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "GRD1-QQL",
+      "sources": [
+        {
+          "ref": "QYXX-76P"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GRD1-QQL",
+      "sources": [
+        {
+          "ref": "QYXX-76P"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "GT65-CL4",
+      "sources": [
+        {
+          "ref": "7M8P-S14"
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GT65-CL4",
+      "sources": [
+        {
+          "ref": "7M8P-S14"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "GT65-WM4",
+      "sources": [
+        {
+          "ref": "7M8P-3QN"
+        }
+      ]
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GT65-WM4",
+      "sources": [
+        {
+          "ref": "7M8P-3QN"
+        }
+      ]
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GRYL-L8L"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "GT6G-N4J",
+      "sources": [
+        {
+          "ref": "7M8V-KFD"
+        }
+      ]
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GT6G-N4J",
+      "sources": [
+        {
+          "ref": "7M8V-KFD"
+        }
+      ]
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GRYL-VLT"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "G8M9-XD3",
+      "sources": [
+        {
+          "ref": "3CLG-658"
+        }
+      ]
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "G8M9-XD3",
+      "sources": [
+        {
+          "ref": "3CLG-658"
+        }
+      ]
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "G8M9-59S",
+      "child": "GTJP-3L1",
+      "sources": [
+        {
+          "ref": "7MG5-9W8"
+        }
+      ]
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GTJP-3L1",
+      "sources": [
+        {
+          "ref": "7MG5-9W8"
+        }
+      ]
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "LL4N-82C",
+      "child": "GRYL-VG4"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_LL4N-82C",
+      "title": "Maria Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Bracero (PID LL4N-82C); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LL4N-82C"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GT65-49J",
+      "title": "Jovita Morales Y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jovita Morales Y Bracero (PID GT65-49J); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GT65-49J"
+    },
+    {
+      "id": "sd_person_GRYL-VG4",
+      "title": "Matilda Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Matilda Bracero (PID GRYL-VG4); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GRYL-VG4"
+    },
+    {
+      "id": "sd_person_GRDB-7WY",
+      "title": "Gregorio Morales",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Gregorio Morales (PID GRDB-7WY); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GRDB-7WY"
+    },
+    {
+      "id": "sd_person_GRYL-L8L",
+      "title": "Jovita Moralez y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jovita Moralez y Bracero (PID GRYL-L8L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GRYL-L8L"
+    },
+    {
+      "id": "sd_person_LL4N-82N",
+      "title": "Maria Jovita Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Jovita Bracero (PID LL4N-82N); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LL4N-82N"
+    },
+    {
+      "id": "sd_person_GT65-CL4",
+      "title": "Cárlos Morales Y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Cárlos Morales Y Bracero (PID GT65-CL4); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GT65-CL4"
+    },
+    {
+      "id": "sd_person_G8M9-59S",
+      "title": "Gregorio Morales",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Gregorio Morales (PID G8M9-59S); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G8M9-59S"
+    },
+    {
+      "id": "sd_person_GRD1-QQL",
+      "title": "Julia Morales",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Julia Morales (PID GRD1-QQL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GRD1-QQL"
+    },
+    {
+      "id": "sd_person_GT6G-N4J",
+      "title": "Eufemia Morales y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Eufemia Morales y Bracero (PID GT6G-N4J); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GT6G-N4J"
+    },
+    {
+      "id": "sd_person_GT65-WM4",
+      "title": "Irene E Morales Y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Irene E Morales Y Bracero (PID GT65-WM4); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GT65-WM4"
+    },
+    {
+      "id": "sd_person_GRYL-VLT",
+      "title": "Carlos Moralez y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Carlos Moralez y Bracero (PID GRYL-VLT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GRYL-VLT"
+    },
+    {
+      "id": "sd_person_G8M9-XD3",
+      "title": "Marcos Morales Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Marcos Morales Bracero (PID G8M9-XD3); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G8M9-XD3"
+    },
+    {
+      "id": "sd_person_GTJP-3L1",
+      "title": "Vicente Moralez Y Bracero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Vicente Moralez Y Bracero (PID GTJP-3L1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GTJP-3L1"
+    },
+    {
+      "id": "QYX6-K86",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8SYC : Wed May 14 06:45:31 UTC 2025), Entry for Maria Jovita Morales Bracero and Gregorio Morales, 27 Feb 1993.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8SY8"
+    },
+    {
+      "id": "QFNT-26S",
+      "title": "Maria Bracero Y Irizarry, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X975-557 : Tue Sep 29 15:28:36 UTC 2026), Entry for Maria Bracero Y Irizarry, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X975-557"
+    },
+    {
+      "id": "7M8P-91D",
+      "title": "María Bracero De Morales, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZJ"
+    },
+    {
+      "id": "QYXX-7HD",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-82GW : Wed May 14 02:17:51 UTC 2025), Entry for Juan Gutierrez and Julia Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-82GZ"
+    },
+    {
+      "id": "7MH7-6MG",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4L5G : Wed Oct 15 06:19:58 UTC 2025), Entry for Marcos Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4L55"
+    },
+    {
+      "id": "7M8V-KZ4",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4JXJ : Wed May 14 05:59:10 UTC 2025), Entry for Eufemia Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4JXK"
+    },
+    {
+      "id": "7MD3-SHT",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-563P : Wed May 14 04:59:15 UTC 2025), Entry for Julia Morales y Bracero and Gregorio Morales, 16 Oct 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-563R"
+    },
+    {
+      "id": "3CLG-XXS",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-89VF : Wed May 14 06:07:15 UTC 2025), Entry for Marcos Morales Bracero and Gregorio Morales, 13 Feb 1985.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-89VJ"
+    },
+    {
+      "id": "79F4-5QG",
+      "title": "Maria *aro, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-HVL2 : Wed May 14 02:45:51 UTC 2025), Entry for Eufemio Morales and Gregorìo Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-HVLG"
+    },
+    {
+      "id": "9FZ5-HSH",
+      "title": "María Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-W743 : Tue May 13 20:55:38 UTC 2025), Entry for Maria Jovita Bracero and María Bracero.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-W74Q"
+    },
+    {
+      "id": "QYQX-M8M",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-C486 : Wed May 14 07:16:52 UTC 2025), Entry for Marcos Moralez and Gregorio Moralez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-C48X"
+    },
+    {
+      "id": "QYLF-X2N",
+      "title": "Maria Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJ2-3Q1D : Wed May 14 03:14:24 UTC 2025), Entry for Carlos Morales Bracero and Gregorio Morales, 21 Jul 1988.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJ2-3Q1X"
+    },
+    {
+      "id": "QBTW-1BQ",
+      "title": "Maria Bracero Viuda de Moralez, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6CR-R2D : Fri Oct 17 06:42:07 UTC 2025), Entry for Maria Bracero Viuda de Moralez and Jovita Moralez y Bracero, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6CR-R2D"
+    },
+    {
+      "id": "7MDZ-S71",
+      "title": "Maria Bracero Irizarry, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8L5R : Wed May 14 03:19:36 UTC 2025), Entry for Maria Bracero Irizarry and Juan Bracero, 9 Aug 1973.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8L5R"
+    },
+    {
+      "id": "7M8P-SKM",
+      "title": "Jovita Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZK"
+    },
+    {
+      "id": "QBT4-MYZ",
+      "title": "Matilda Bracero, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6CR-R2D : Fri Oct 17 06:42:07 UTC 2025), Entry for Maria Bracero Viuda de Moralez and Jovita Moralez y Bracero, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6CR-R2N"
+    },
+    {
+      "id": "QYX6-KNN",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8SYC : Wed May 14 06:45:31 UTC 2025), Entry for Maria Jovita Morales Bracero and Gregorio Morales, 27 Feb 1993.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8SYZ"
+    },
+    {
+      "id": "QBT4-M35",
+      "title": "Jovita Moralez y Bracero, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6CR-R2D : Fri Oct 17 06:42:07 UTC 2025), Entry for Maria Bracero Viuda de Moralez and Jovita Moralez y Bracero, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6CR-R26"
+    },
+    {
+      "id": "QYX6-KZH",
+      "title": "Maria Jovita Morales Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8SYC : Wed May 14 06:45:31 UTC 2025), Entry for Maria Jovita Morales Bracero and Gregorio Morales, 27 Feb 1993.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8SYC"
+    },
+    {
+      "id": "9FZ5-HS3",
+      "title": "Maria Jovita Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-W743 : Tue May 13 20:55:38 UTC 2025), Entry for Maria Jovita Bracero and María Bracero.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-W743"
+    },
+    {
+      "id": "7M8P-3SY",
+      "title": "Cárlos Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1Z2"
+    },
+    {
+      "id": "79F4-5WK",
+      "title": "Gregorìo Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-HVL2 : Wed May 14 02:45:51 UTC 2025), Entry for Eufemio Morales and Gregorìo Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-HVLL"
+    },
+    {
+      "id": "7MDZ-9TQ",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8L5R : Wed May 14 03:19:36 UTC 2025), Entry for Maria Bracero Irizarry and Juan Bracero, 9 Aug 1973.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8L5B"
+    },
+    {
+      "id": "7MD3-9L2",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-563P : Wed May 14 04:59:15 UTC 2025), Entry for Julia Morales y Bracero and Gregorio Morales, 16 Oct 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-5635"
+    },
+    {
+      "id": "7M8P-SHL",
+      "title": "Gregorio Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZN"
+    },
+    {
+      "id": "7M8V-KD8",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4JXJ : Wed May 14 05:59:10 UTC 2025), Entry for Eufemia Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4JXV"
+    },
+    {
+      "id": "7MH7-DYW",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4L5G : Wed Oct 15 06:19:58 UTC 2025), Entry for Marcos Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4L5P"
+    },
+    {
+      "id": "QYLF-XG1",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJ2-3Q1D : Wed May 14 03:14:24 UTC 2025), Entry for Carlos Morales Bracero and Gregorio Morales, 21 Jul 1988.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJ2-3Q16"
+    },
+    {
+      "id": "QYXX-7ZP",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-82GW : Wed May 14 02:17:51 UTC 2025), Entry for Juan Gutierrez and Julia Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-82GC"
+    },
+    {
+      "id": "QYQX-M4B",
+      "title": "Gregorio Moralez, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-C486 : Wed May 14 07:16:52 UTC 2025), Entry for Marcos Moralez and Gregorio Moralez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:DFH1-8NPZ"
+    },
+    {
+      "id": "3DNH-14P",
+      "title": "Gregorio Morales in entry for Marcos Morales Bracero, \"Puerto Rico, Civil Registration, 1805-2001\"",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-89VN"
+    },
+    {
+      "id": "7MD3-JZD",
+      "title": "Julia Morales y Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-563P : Wed May 14 04:59:15 UTC 2025), Entry for Julia Morales y Bracero and Gregorio Morales, 16 Oct 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-563P"
+    },
+    {
+      "id": "7M8P-SBX",
+      "title": "Julia Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZV"
+    },
+    {
+      "id": "QYXX-7JV",
+      "title": "Julia Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-82GW : Wed May 14 02:17:51 UTC 2025), Entry for Juan Gutierrez and Julia Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-82GH"
+    },
+    {
+      "id": "79F4-5C5",
+      "title": "Eufemio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-HVL2 : Wed May 14 02:45:51 UTC 2025), Entry for Eufemio Morales and Gregorìo Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-HVL2"
+    },
+    {
+      "id": "7M8V-KVN",
+      "title": "Eufemia Morales y Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4JXJ : Wed May 14 05:59:10 UTC 2025), Entry for Eufemia Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4JXJ"
+    },
+    {
+      "id": "7M8P-3H3",
+      "title": "Irene E Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZL"
+    },
+    {
+      "id": "QBT4-MDZ",
+      "title": "Carlos Moralez y Bracero, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6CR-R2D : Fri Oct 17 06:42:07 UTC 2025), Entry for Maria Bracero Viuda de Moralez and Jovita Moralez y Bracero, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6CR-R2X"
+    },
+    {
+      "id": "7MT3-9TL",
+      "title": "Marcos Moralez Y Bracero, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X975-55W : Tue Sep 29 15:28:36 UTC 2026), Entry for Carlos Moralez Y Bracero and Marcos Moralez Y Bracero, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X975-554"
+    },
+    {
+      "id": "7MH7-DPF",
+      "title": "Marcos Morales y Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4L5G : Wed Oct 15 06:19:58 UTC 2025), Entry for Marcos Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4L5G"
+    },
+    {
+      "id": "QBTW-1T9",
+      "title": "Marcos Moralez y Bracero, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6CR-R2D : Fri Oct 17 06:42:07 UTC 2025), Entry for Maria Bracero Viuda de Moralez and Jovita Moralez y Bracero, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6CR-R2F"
+    },
+    {
+      "id": "QYLF-XYK",
+      "title": "Carlos Morales Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJ2-3Q1D : Wed May 14 03:14:24 UTC 2025), Entry for Carlos Morales Bracero and Gregorio Morales, 21 Jul 1988.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJ2-3Q1D"
+    },
+    {
+      "id": "QYNW-3Y3",
+      "title": "Marcos Morales Y Bracero, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFJN-M95 : Mon Jan 13 06:25:20 UTC 2025), Entry for Marcos Morales Y Bracero and Carmen J Bracero De Morales, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KFJN-M95"
+    },
+    {
+      "id": "QYQX-MWQ",
+      "title": "Marcos Moralez, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJZ-C486 : Wed May 14 07:16:52 UTC 2025), Entry for Marcos Moralez and Gregorio Moralez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJZ-C486"
+    },
+    {
+      "id": "QYM4-ZWW",
+      "title": "Marcos Morales Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8ZPV : Wed May 14 05:31:10 UTC 2025), Entry for Marcos Morales Bracero and Carmen Julia Rubio Bartres.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8ZPV"
+    },
+    {
+      "id": "QFNT-2XL",
+      "title": "Carlos Moralez Y Bracero, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X975-55W : Tue Sep 29 15:28:36 UTC 2026), Entry for Carlos Moralez Y Bracero and Marcos Moralez Y Bracero, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X975-55W"
+    },
+    {
+      "id": "3CLG-6XX",
+      "title": "Marcos Morales Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-89VF : Wed May 14 06:07:15 UTC 2025), Entry for Marcos Morales Bracero and Gregorio Morales, 13 Feb 1985.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-89VF"
+    },
+    {
+      "id": "7MG5-9CY",
+      "title": "Vicente Moralez Y Bracero, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X975-55W : Tue Sep 29 15:28:36 UTC 2026), Entry for Carlos Moralez Y Bracero and Marcos Moralez Y Bracero, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X975-55H"
+    },
+    {
+      "id": "QYX6-K65",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-8SYC : Wed May 14 06:45:31 UTC 2025), Entry for Maria Jovita Morales Bracero and Gregorio Morales, 27 Feb 1993.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-8SYZ"
+    },
+    {
+      "id": "7M8P-SXD",
+      "title": "Jovita Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZK"
+    },
+    {
+      "id": "QYXX-76P",
+      "title": "Julia Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-82GW : Wed May 14 02:17:51 UTC 2025), Entry for Juan Gutierrez and Julia Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-82GH"
+    },
+    {
+      "id": "7M8P-S14",
+      "title": "Cárlos Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1Z2"
+    },
+    {
+      "id": "7M8P-3QN",
+      "title": "Irene E Morales Y Bracero, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VWKY-1ZN : Sat Apr 19 00:21:18 UTC 2025), Entry for Gregorio Morales Y Bracero and María Bracero De Morales, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VWKY-1ZL"
+    },
+    {
+      "id": "7M8V-KFD",
+      "title": "Eufemia Morales y Bracero, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJC-4JXJ : Wed May 14 05:59:10 UTC 2025), Entry for Eufemia Morales y Bracero and Gregorio Morales.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJC-4JXJ"
+    },
+    {
+      "id": "3CLG-658",
+      "title": "Gregorio Morales, \"Puerto Rico, Registro Civil, 1805-2002\"",
+      "citation": "\"Puerto Rico, Registro Civil, 1805-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVJX-89VF : Wed May 14 06:07:15 UTC 2025), Entry for Marcos Morales Bracero and Gregorio Morales, 13 Feb 1985.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVJX-89VN"
+    },
+    {
+      "id": "7MG5-9W8",
+      "title": "Vicente Moralez Y Bracero, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X975-55W : Tue Sep 29 15:28:36 UTC 2026), Entry for Carlos Moralez Y Bracero and Marcos Moralez Y Bracero, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X975-55H"
+    }
+  ]
+}
