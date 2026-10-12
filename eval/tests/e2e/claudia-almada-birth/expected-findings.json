@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Claudia Almada was born about 1861 in Buenos Aires, Argentina, according to the 1869 national census of Ajó (the partido now General Lavalle), Buenos Aires, which lists her as an Argentine national; the year is computed from her census age.",
+      "details": {
+        "subject_person": "Claudia Almada (G5RB-GL5)",
+        "fact_type": "Birth",
+        "date": "about 1861",
+        "place": "Buenos Aires, Argentina"
+      },
+      "supporting_sources": [
+        "Argentina, National Census, 1869 — household entry for Claudia Almada, Ajó, Buenos Aires, born 1861"
+      ],
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "nicolas-uhres-birth",
+  "name": "Nicolas Uhres — birth about 1856, Keispelt, Luxembourg",
+  "genre": "record-hint",
+  "source_pid": "GYGJ-D1C",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Nicolas Uhres born, the husband of Marguerite Birchen and father of Johann (born 1883) and Josephine (born 1885) Uhres of Keispelt, Luxembourg?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1850s",
+    "geography": "LU"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 16, hint-samples.csv row 552, flag adds_birth, confidence 3). Draft transcribed from an 1880 Kehlen, Luxembourg census; unverified."
+}

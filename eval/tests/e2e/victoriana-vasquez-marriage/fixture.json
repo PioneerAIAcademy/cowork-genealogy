@@ -1,0 +1,19 @@
+{
+  "id": "victoriana-vasquez-marriage",
+  "name": "Victoriana Vasquez — marriage in January 1875, Degollado, Jalisco, Mexico",
+  "genre": "record-hint",
+  "source_pid": "GFG9-7H4",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Victoriana Vasquez, daughter of Remigio Vasquez and Bernarda Sandoval, marry Jose Cleofas Gutierrez?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1870s",
+    "geography": "MX"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 32, hint-samples.csv row 935, flag adds_marriage, confidence 3). Draft transcribed from an 1875 Degollado, Jalisco marriage index entry; unverified."
+}
