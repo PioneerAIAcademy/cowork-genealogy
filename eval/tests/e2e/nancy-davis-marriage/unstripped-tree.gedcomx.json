@@ -1,0 +1,3617 @@
+{
+  "persons": [
+    {
+      "id": "LJK2-JBH",
+      "ark": "ark:/61903/4:1:LJK2-JBH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Nancy",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1837",
+          "standard_date": "1837",
+          "place": "Bradley, Tennessee, United States",
+          "standard_place": "Bradley, Tennessee, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "98ZW-BBF"
+        }
+      ]
+    },
+    {
+      "id": "275B-KK6",
+      "ark": "ark:/61903/4:1:275B-KK6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Elizabeth",
+          "surname": "Glenn",
+          "type": "BirthName"
+        },
+        {
+          "id": "37675756-76dd-437c-b739-c42f4d01c305",
+          "given": "Elizabeth",
+          "surname": "Davis",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "737ef2a6-fbb2-4ef5-99ac-f445002dbb52",
+          "type": "Birth",
+          "date": "about 1813",
+          "standard_date": "Abt 1813",
+          "place": "South Carolina, United States",
+          "standard_place": "South Carolina, United States"
+        },
+        {
+          "id": "19adc850-2b41-4d14-9928-8b4c224ea0d6",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "db2c1fce-0643-49a1-bd71-77b6775dd3c2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "b894a354-5aa1-4c0a-878d-73a37d862a21",
+          "type": "Death",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "d06cb475-6949-4776-a86a-c7dab4b364ce",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q3TV-ZNL"
+        },
+        {
+          "ref": "SLX3-MQX"
+        }
+      ]
+    },
+    {
+      "id": "G72T-RGR",
+      "ark": "ark:/61903/4:1:G72T-RGR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "4df394e6-632f-4f2a-84c9-886aa55d88b6",
+          "preferred": true,
+          "given": "Thomas Jefferson",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad9943f1-e773-45b7-a85a-2d122b1964e0",
+          "type": "Birth",
+          "date": "1793",
+          "standard_date": "1793",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "116f5a15-774d-4f18-8d6c-7d815c4dede5",
+          "type": "Residence",
+          "date": "1821",
+          "standard_date": "1821",
+          "place": "Marlboro District, South Carolina, United States",
+          "standard_place": "Marlboro, South Carolina, United States",
+          "value": "Moved with parents."
+        },
+        {
+          "id": "c6f6ffcb-c148-491f-a5f2-9ec6591657ae",
+          "type": "Residence",
+          "date": "1828",
+          "standard_date": "1828",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "63295c10-6f7d-4d44-9db2-8b7995f95c68",
+          "type": "Residence",
+          "date": "1843",
+          "standard_date": "1843",
+          "place": "Missouri, United States",
+          "standard_place": "Missouri, United States"
+        },
+        {
+          "id": "cb46e5a2-6d57-452d-8ed8-9da6611ebf1e",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SLY4-7T1"
+        }
+      ]
+    },
+    {
+      "id": "LDJC-6D2",
+      "ark": "ark:/61903/4:1:LDJC-6D2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ef0eec30-b9a8-4eac-a458-c7909a2b65d7",
+          "type": "Birth",
+          "date": "10 July 1792",
+          "standard_date": "10 Jul 1792",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "8a9e4129-ccb4-457e-97d1-d0a72aa6594e",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Jefferson, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "952297b4-7143-48a9-9002-6e4187ecd13d",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "fb367537-c435-44d8-aa2c-43e9b1d12be4",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri, United States",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "505e7b0d-2417-4f72-aedd-35a4753c8ea7",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "62b04003-8c23-4f58-9959-9db61a4a22b1",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Jefferson Township, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "2bfab2b9-5551-49c8-bfb6-09753ac1e2f8",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Jefferson Township, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "c90d7fd6-6b69-43ad-a804-06018e37da6e",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "be1b6298-73e0-45f6-8a03-9d151321e2c9",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Post Oak Township, Johnson, Missouri, United States",
+          "standard_place": "Post Oak Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "960c48a3-b928-44a4-bea6-1a00ca0df25b",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Perry Township, Johnson, Arkansas, United States",
+          "standard_place": "Perry Township, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "30564ca5-0687-4449-b99c-18ef43ab796d",
+          "type": "Burial",
+          "date": "1882",
+          "standard_date": "1882",
+          "place": "Macedonia Cemetery, Lamar, Johnson, Arkansas, United States",
+          "standard_place": "Macedonia Cemetery, Lamar, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "9ec96b50-fc96-4e08-bb53-154e946277c1",
+          "type": "Death",
+          "date": "15 October 1882",
+          "standard_date": "15 Oct 1882",
+          "place": "United States",
+          "standard_place": "United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q5ZF-5GG"
+        },
+        {
+          "ref": "QG7T-YGK"
+        },
+        {
+          "ref": "Q3TV-ZF3"
+        },
+        {
+          "ref": "3KVX-MLJ"
+        },
+        {
+          "ref": "33FR-2ZK"
+        }
+      ]
+    },
+    {
+      "id": "KD1X-LX5",
+      "ark": "ark:/61903/4:1:KD1X-LX5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Rebecca",
+          "surname": "Nix",
+          "type": "BirthName"
+        },
+        {
+          "id": "f52b2f2c-da18-4e88-b37b-73a6da866547",
+          "given": "Rebekah",
+          "surname": "Patrick",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1794",
+          "standard_date": "1794",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "15 October 1882",
+          "standard_date": "15 Oct 1882",
+          "place": "Arkansas Township, Arkansas, Arkansas, United States",
+          "standard_place": "Arkansas Township, Arkansas, Arkansas, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "39BG-HKF"
+        },
+        {
+          "ref": "39BG-H6T"
+        },
+        {
+          "ref": "39BG-H45"
+        },
+        {
+          "ref": "39BG-41D"
+        },
+        {
+          "ref": "SZSV-MW3"
+        },
+        {
+          "ref": "MHXG-F18"
+        },
+        {
+          "ref": "9856-NW5"
+        }
+      ]
+    },
+    {
+      "id": "GSMC-RM1",
+      "ark": "ark:/61903/4:1:GSMC-RM1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "5fe7cf6d-60c8-4a52-8aa7-3e12bb356b8e",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Moreland",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d9d6abcb-93b7-4b8d-af5b-61286db5adb9",
+          "type": "Birth",
+          "date": "1858",
+          "standard_date": "1858",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "4c24e505-672f-4165-9bda-1a4a7fa61721",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GSMC-RJN",
+      "ark": "ark:/61903/4:1:GSMC-RJN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b15c47b8-98da-4cb5-b4a0-91dd1ebc1f02",
+          "preferred": true,
+          "given": "Sarah",
+          "surname": "Moreland",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "707d8202-bd70-47e0-8516-57af147b6d28",
+          "type": "Birth",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "8d693d5c-572a-40d8-a201-244f829366bf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LJK2-81K",
+      "ark": "ark:/61903/4:1:LJK2-81K",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "William James",
+          "surname": "Brewer",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1 January 1844",
+          "standard_date": "1 Jan 1844",
+          "place": "Waynesboro, Wayne, Tennessee, United States",
+          "standard_place": "Waynesboro, Wayne, Tennessee, United States"
+        },
+        {
+          "id": "90c780ff-3872-46f0-914d-a7a84325cd2a",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Hood, Cooke, Texas, United States",
+          "standard_place": "Hood, Cooke, Texas, United States"
+        },
+        {
+          "id": "334eddbf-c499-4da2-8fcb-e36856a2bd49",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Liberty Township, Barry, Missouri, United States",
+          "standard_place": "Liberty Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "ef270b71-ef61-4b01-bcc7-a85739963b6b",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Justice Precinct 5 (all south of r.r.), Eastland, Texas, United States",
+          "standard_place": "Justice Precinct 5, Eastland, Texas, United States"
+        },
+        {
+          "id": "6c499edb-55e8-47fd-ad6b-a222fb540210",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Rising Star, Eastland, Texas, United States",
+          "standard_place": "Rising Star, Eastland, Texas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "3 March 1925",
+          "standard_date": "3 Mar 1925",
+          "place": "Dallas, Dallas, Texas, United States",
+          "standard_place": "Dallas, Dallas, Texas, United States"
+        },
+        {
+          "id": "23d8b73c-b64e-46fc-b60f-105ed0b94f9f",
+          "type": "Obituary",
+          "date": "04 Mar 1925",
+          "standard_date": "4 Mar 1925",
+          "place": "San Antonio, Texas",
+          "standard_place": "San Antonio, Bexar, Republic of Texas"
+        },
+        {
+          "id": "52a19080-3339-40df-9b3f-b80fb7b9b521",
+          "type": "Burial",
+          "place": "Rising Star Cemetery, Rising Star, Eastland, Texas, United States",
+          "standard_place": "Rising Star Cemetery, Rising Star, Eastland, Texas, United States"
+        },
+        {
+          "id": "85687189-55c1-4c1c-ad56-b1b5dd709142",
+          "type": "Marital Status",
+          "value": "Widowed"
+        },
+        {
+          "id": "d0443215-1ab3-493b-8c96-a8e90f2fad76",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W881-W4R"
+        },
+        {
+          "ref": "W88R-5DX"
+        },
+        {
+          "ref": "QZFW-8LV"
+        },
+        {
+          "ref": "Q312-6YB"
+        },
+        {
+          "ref": "Q3BB-QTL"
+        },
+        {
+          "ref": "MCG1-DJN"
+        },
+        {
+          "ref": "Q3BB-ST6"
+        },
+        {
+          "ref": "QSZR-NKT"
+        },
+        {
+          "ref": "SPLW-S3J"
+        },
+        {
+          "ref": "S6FR-N83"
+        },
+        {
+          "ref": "S6FR-XH3"
+        },
+        {
+          "ref": "SQVN-QJY"
+        },
+        {
+          "ref": "SS3M-3TX"
+        },
+        {
+          "ref": "S9JQ-S51"
+        },
+        {
+          "ref": "9B61-VGC"
+        },
+        {
+          "ref": "9D58-DK2"
+        },
+        {
+          "ref": "MSYR-STG"
+        }
+      ]
+    },
+    {
+      "id": "G72T-F1D",
+      "ark": "ark:/61903/4:1:G72T-F1D",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "4fcfded9-e7e5-4026-9675-466072c1e869",
+          "preferred": true,
+          "given": "Elizabeth",
+          "surname": "Owen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ae3cb2c8-dd94-4cbe-b30d-ad9c50dc83bf",
+          "type": "Birth",
+          "date": "15 November 1799",
+          "standard_date": "15 Nov 1799",
+          "place": "South Carolina, United States",
+          "standard_place": "South Carolina, United States"
+        },
+        {
+          "id": "2571fc72-ba59-430c-ac08-0fe74718cdd2",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri, United States",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "817a84d2-098b-447c-b634-d95ee7d68e11",
+          "type": "Death",
+          "date": "28 July 1858",
+          "standard_date": "28 Jul 1858",
+          "place": "Anderson, Anderson, South Carolina, United States",
+          "standard_place": "Anderson, Anderson, South Carolina, United States"
+        },
+        {
+          "id": "08a3251e-564c-4f2c-b0b6-357412f2c204",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Granby, Newton, Missouri, United States",
+          "standard_place": "Granby, Newton, Missouri, United States"
+        },
+        {
+          "id": "e613000c-7743-463e-b20e-653ca37b42a0",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Granby, Newton, Missouri, United States",
+          "standard_place": "Granby, Newton, Missouri, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q3TP-LG3"
+        },
+        {
+          "ref": "Q3TP-NFK"
+        },
+        {
+          "ref": "Q3TX-WYZ"
+        },
+        {
+          "ref": "3FM6-W23"
+        }
+      ]
+    },
+    {
+      "id": "L87M-R9M",
+      "ark": "ark:/61903/4:1:L87M-R9M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Phillip Rayburn",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 August 1824",
+          "standard_date": "10 Aug 1824",
+          "place": "Blount Co., Tennessee, United States",
+          "standard_place": "Blount, Tennessee, United States"
+        },
+        {
+          "id": "bb79a25d-16ce-4e1f-b568-5cd4b8b41adf",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho Township, Newton, Missouri, United States",
+          "standard_place": "Neosho Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "93dfeb9b-2b8e-49cf-93af-5b3bfbf4edfd",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Granby Township, Newton, Missouri, United States",
+          "standard_place": "Granby Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "8db9b04a-cdda-40f7-b18d-3be12536bf18",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Granby Township, Newton, Missouri, United States",
+          "standard_place": "Granby Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Lees Creek Township, Washington, Arkansas, United States",
+          "standard_place": "Lees Creek Township, Washington, Arkansas, United States"
+        },
+        {
+          "id": "8f3813d7-0a55-4cb3-8a54-03d109fdfb07",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "West Fork Township, Washington, Arkansas, United States",
+          "standard_place": "West Fork Township, Washington, Arkansas, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "22 March 1902",
+          "standard_date": "22 Mar 1902",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "c707b3cf-0e42-4bed-94f4-f4365a00a62f",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q4WV-B6X"
+        },
+        {
+          "ref": "3LBQ-1GP"
+        },
+        {
+          "ref": "SPDY-8ZM"
+        },
+        {
+          "ref": "91CZ-QDJ"
+        },
+        {
+          "ref": "9RCM-FGM"
+        },
+        {
+          "ref": "9DG8-C5M"
+        },
+        {
+          "ref": "98ZF-72G"
+        },
+        {
+          "ref": "MS26-WWQ"
+        },
+        {
+          "ref": "MS26-9KH"
+        },
+        {
+          "ref": "MS26-SML"
+        },
+        {
+          "ref": "MS26-9GN"
+        },
+        {
+          "ref": "MS26-MRV"
+        }
+      ]
+    },
+    {
+      "id": "LJK2-NC6",
+      "ark": "ark:/61903/4:1:LJK2-NC6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "John C.",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1828",
+          "standard_date": "1828",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "a3ca8aea-4b58-4dbf-aecf-8fd8437e7791",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Neosho Township, Newton, Missouri, United States",
+          "standard_place": "Neosho Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "698c2fd7-af2c-46ce-b103-f17874202f00",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Granby, Newton, Missouri, United States",
+          "standard_place": "Granby, Newton, Missouri, United States"
+        },
+        {
+          "id": "f47723ec-e7d6-4628-8b82-0f1e6194d01e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Franklin, Newton, Missouri, United States",
+          "standard_place": "Franklin Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "place": "Missouri, United States",
+          "standard_place": "Missouri, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S26P-2ZP"
+        },
+        {
+          "ref": "Q3TP-PDG"
+        },
+        {
+          "ref": "MCPW-9N4"
+        },
+        {
+          "ref": "3HJ7-S85"
+        },
+        {
+          "ref": "98ZF-MBB"
+        },
+        {
+          "ref": "98ZF-MVL"
+        },
+        {
+          "ref": "98ZW-1MN"
+        }
+      ]
+    },
+    {
+      "id": "LZ69-9D1",
+      "ark": "ark:/61903/4:1:LZ69-9D1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Wiley Burgess",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "ce3dd1a8-8f1d-47bd-9722-5b991f20e53b",
+          "given": "Willey Burgess",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "cd27bc35-b989-45d2-b2d6-33803e7b3308",
+          "given": "Wiley E",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Wila",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "225f7404-0ba1-488d-add3-c4762bd3d2d2",
+          "given": "Wiley B.",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Wiley Burgess",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "c9075aec-0093-4635-8218-b4b05b7e90a8",
+          "given": "W B",
+          "surname": "Davis",
+          "type": "AlsoKnownAs"
+        },
+        {
+          "id": "0e3ff26f-a235-4ddf-a9a9-1345d600316c",
+          "given": "Wylie B",
+          "surname": "Davis",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "14 March 1833",
+          "standard_date": "14 Mar 1833",
+          "place": "Loudon, Tennessee, United States",
+          "standard_place": "Loudon, Tennessee, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "815e19df-36d3-463b-a6c4-14b711be86f1",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Hawkins, Tennessee, United States",
+          "standard_place": "Hawkins, Tennessee, United States"
+        },
+        {
+          "id": "ae9fd9cc-a6f8-4801-88be-fcf78ce67487",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Franklin Township, Newton, Missouri, United States",
+          "standard_place": "Franklin Township, Newton, Missouri, United States",
+          "value": "Census"
+        },
+        {
+          "id": "57e2b016-6f5d-4dc1-b2ff-e148729c3085",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Humphreys, Tennessee, United States",
+          "standard_place": "Humphreys, Tennessee, United States",
+          "value": "Census"
+        },
+        {
+          "id": "daf9b029-ca03-4bd5-b305-d8bd5dade6e8",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "9th District, Hawkins, Tennessee, United States",
+          "standard_place": "Hawkins, Tennessee, United States"
+        },
+        {
+          "id": "405e3c29-e7d2-4dcc-984c-ebccd4539e2a",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Humphreys, Tennessee, United States",
+          "standard_place": "Humphreys, Tennessee, United States"
+        },
+        {
+          "id": "38d8fd92-09aa-458a-a3d3-652f4aa62f66",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Franklin Township, Newton, Missouri, United States",
+          "standard_place": "Franklin Township, Newton, Missouri, United States",
+          "value": "Census"
+        },
+        {
+          "id": "35ea4917-9661-4bd1-ac11-d2a1acfdbb3e",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "District 2, Grainger, Tennessee, United States",
+          "standard_place": "District 2, Grainger, Tennessee, United States"
+        },
+        {
+          "id": "a943202d-8e5a-4bb0-8211-632b1358dc72",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Franklin Township, Newton, Missouri, United States",
+          "standard_place": "Franklin Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 140 Current & Jackson Townships, Texas, Missouri, United States",
+          "standard_place": "Current Township, Texas, Missouri, United States"
+        },
+        {
+          "id": "598f7302-2240-418e-8109-849eda92c825",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Current & Jackson Townships, Texas, Missouri, United States",
+          "standard_place": "Current Township, Texas, Missouri, United States"
+        },
+        {
+          "id": "077c7fa0-8675-4c4a-92e9-a5b941016296",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Franklin, Newton, Missouri, United States",
+          "standard_place": "Franklin Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "75223694-d788-41a5-b673-6f001dc24c5c",
+          "type": "Burial",
+          "date": "March 1918",
+          "standard_date": "Mar 1918",
+          "place": "Fairview, Newton, Missouri, United States",
+          "standard_place": "Fairview, Newton, Missouri, United States"
+        },
+        {
+          "id": "e3157663-21fb-4571-a340-3af655ac5d15",
+          "type": "Death",
+          "date": "17 March 1918",
+          "standard_date": "17 Mar 1918",
+          "place": "Fairview, Newton, Missouri, United States",
+          "standard_place": "Fairview, Newton, Missouri, United States"
+        },
+        {
+          "id": "0aa90fac-4de7-4910-8628-dfcdb437e08f",
+          "type": "Pension",
+          "date": "1907-1933",
+          "standard_date": "Bet 1907 and 1933",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "273022ac-90b9-4092-a5d0-54afc706035d",
+          "type": "NationalId",
+          "value": "6835"
+        },
+        {
+          "id": "27bb1b70-66c0-42ab-a9f4-514ec96d4dec",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7ZQM-MCF"
+        },
+        {
+          "ref": "Q3L8-8DZ"
+        },
+        {
+          "ref": "Q3L8-8WZ"
+        },
+        {
+          "ref": "Q3L8-ZBQ"
+        },
+        {
+          "ref": "SKGC-1BD"
+        },
+        {
+          "ref": "SKGC-YYP"
+        },
+        {
+          "ref": "SC7G-JK9"
+        },
+        {
+          "ref": "SHB5-5BC"
+        },
+        {
+          "ref": "SQD2-1FS"
+        },
+        {
+          "ref": "98ZW-B1D"
+        },
+        {
+          "ref": "9ZH4-KRM"
+        },
+        {
+          "ref": "9X52-7RZ"
+        },
+        {
+          "ref": "987C-VRF"
+        },
+        {
+          "ref": "9Y82-G4J"
+        },
+        {
+          "ref": "MM5Z-FKX"
+        },
+        {
+          "ref": "963H-5FW"
+        }
+      ]
+    },
+    {
+      "id": "LJK2-N4P",
+      "ark": "ark:/61903/4:1:LJK2-N4P",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Sarah C.",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "14 May 1833",
+          "standard_date": "14 May 1833",
+          "place": "Bradley, Tennessee, United States",
+          "standard_place": "Bradley, Tennessee, United States"
+        },
+        {
+          "id": "272688ba-9db5-4a83-94df-1744d94ed9fd",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "b9a78622-794b-43c3-bb09-f038de02ce88",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Jefferson, Johnson, Missouri, United States",
+          "standard_place": "Jefferson Township, Johnson, Missouri, United States"
+        },
+        {
+          "id": "70aec34a-b136-4b53-ad98-b57b7198ab9e",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri, United States",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S265-CDZ"
+        }
+      ]
+    },
+    {
+      "id": "LH57-13B",
+      "ark": "ark:/61903/4:1:LH57-13B",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Susannah “Susie”",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Susan",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "1 December 1833",
+          "standard_date": "1 Dec 1833",
+          "place": "Pulaski, Missouri, United States",
+          "standard_place": "Pulaski, Missouri, United States"
+        },
+        {
+          "id": "52f46e66-1008-489f-8b8f-ac4559dfaeb2",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "84c343a4-aec3-4073-9b1a-616afa5e5fb5",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "df4d77e5-5a37-47eb-b2e7-1b125928ef33",
+          "type": "Residence",
+          "date": "1876",
+          "standard_date": "1876",
+          "place": "McDonald, Missouri, United States",
+          "standard_place": "McDonald, Missouri, United States"
+        },
+        {
+          "id": "66ec8774-f9a7-4e92-8389-ee641c203b65",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Mcmillan, McDonald, Missouri, United States",
+          "standard_place": "McDonald, Missouri, United States"
+        },
+        {
+          "id": "8e3d148f-f9b7-42ca-b34f-70d8523e8260",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "McMillen Township Tiff City village, McDonald, Missouri, United States",
+          "standard_place": "McMillen Township, McDonald, Missouri, United States"
+        },
+        {
+          "id": "565a0293-c581-4fa3-bb09-d315e02d4b71",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Shoal Creek, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "43020424-b08a-4a29-bf54-3a96eb6f3603",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Wheaton, Barry, Missouri, United States",
+          "standard_place": "Wheaton, Barry, Missouri, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "18 December 1922",
+          "standard_date": "18 Dec 1922",
+          "place": "Wheaton, Barry, Missouri, United States",
+          "standard_place": "Wheaton, Barry, Missouri, United States"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "place": "Chitwood Cemetery, Wheaton, Barry, Missouri, United States",
+          "standard_place": "Chitwood Cemetery, Liberty Township, Barry, Missouri, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SGCW-9BW"
+        },
+        {
+          "ref": "SGCW-9H6"
+        },
+        {
+          "ref": "SGCW-MFP"
+        },
+        {
+          "ref": "SGCW-MS4"
+        },
+        {
+          "ref": "S2LB-GM5"
+        },
+        {
+          "ref": "S2LB-5DJ"
+        },
+        {
+          "ref": "S2LB-X38"
+        },
+        {
+          "ref": "S2LB-GHZ"
+        },
+        {
+          "ref": "S2LB-635"
+        },
+        {
+          "ref": "S2LB-NYJ"
+        },
+        {
+          "ref": "S2LB-51Y"
+        },
+        {
+          "ref": "S63J-Z7G"
+        },
+        {
+          "ref": "M9RS-2RL"
+        }
+      ]
+    },
+    {
+      "id": "LJK2-JPS",
+      "ark": "ark:/61903/4:1:LJK2-JPS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "George W.",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1834",
+          "standard_date": "1834",
+          "place": "Bradley, Tennessee, United States",
+          "standard_place": "Bradley, Tennessee, United States"
+        },
+        {
+          "id": "9f519c2e-badd-4a2d-9daf-e045d81ff136",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Granby Township, Newton, Missouri, United States",
+          "standard_place": "Granby Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "18 April 1863",
+          "standard_date": "18 Apr 1863",
+          "place": "Fayetteville, Washington, Arkansas, United States",
+          "standard_place": "Fayetteville, Washington, Arkansas, United States"
+        },
+        {
+          "id": "1b788711-69fd-4046-893e-3e30228086b4",
+          "type": "Burial",
+          "place": "Fayetteville National Cemetery, Fayetteville, Washington, Arkansas, United States",
+          "standard_place": "Fayetteville National Cemetery, Fayetteville, Washington, Arkansas, United States"
+        },
+        {
+          "id": "59c1c940-86ee-412a-900d-44560088f564",
+          "type": "LifeSketch",
+          "value": "The source for added dau. Lou Davis seems to be correct but the dates between her birth and the previous sibling seem way too far apart. Can someone help with this information?"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q3PT-PLY"
+        },
+        {
+          "ref": "Q9Q6-FD8"
+        },
+        {
+          "ref": "Q9Q6-X44"
+        }
+      ]
+    },
+    {
+      "id": "GWHW-K7F",
+      "ark": "ark:/61903/4:1:GWHW-K7F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "cedfb473-40f5-4241-a430-fe46ea582f70",
+          "preferred": true,
+          "given": "William",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d7482021-b2b0-44ad-a1b5-87c52d9879e3",
+          "type": "Birth",
+          "date": "1834",
+          "standard_date": "1834",
+          "place": "Tennessee",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "3e075a13-016e-48f0-9d40-176ad67bb169",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Hawkins, Tennessee, United States",
+          "standard_place": "Hawkins, Tennessee, United States"
+        },
+        {
+          "id": "9dbcf8a2-6696-4cb5-9ab5-bc61acb00ccb",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "9th District, Hawkins, Tennessee, United States",
+          "standard_place": "Hawkins, Tennessee, United States"
+        },
+        {
+          "id": "6036f9c3-5088-46d6-a1d3-5e2cb30f3008",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q3PY-SDB"
+        },
+        {
+          "ref": "Q3PY-S9Q"
+        }
+      ]
+    },
+    {
+      "id": "275B-K26",
+      "ark": "ark:/61903/4:1:275B-K26",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Nahru",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Nahru",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1835",
+          "standard_date": "1835",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "6da8a033-b26b-4a11-8605-1cfd59530aa7",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SLXS-11M"
+        }
+      ]
+    },
+    {
+      "id": "LH57-1Z4",
+      "ark": "ark:/61903/4:1:LH57-1Z4",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Cinthy Sarah",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1836",
+          "standard_date": "Abt 1836",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "c2d9f9b6-0002-45a8-b8cc-6351a844c397",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "0e4c315f-5737-4973-b1e8-a5d62aa61ea8",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q3TV-ZKX"
+        },
+        {
+          "ref": "SLXS-123"
+        }
+      ]
+    },
+    {
+      "id": "GLLY-7KZ",
+      "ark": "ark:/61903/4:1:GLLY-7KZ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "f8e0220b-9c3f-4e24-8149-4fbec11f4c19",
+          "preferred": true,
+          "given": "Sarah C.",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "57d809e5-f205-4040-ba79-1289101bbc1c",
+          "type": "Birth",
+          "date": "1839",
+          "standard_date": "1839",
+          "place": "Bradley, Tennessee, United States",
+          "standard_place": "Bradley, Tennessee, United States"
+        },
+        {
+          "id": "dc3f6716-2b46-49e3-8924-de045775b7bc",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MCK8-TS8",
+      "ark": "ark:/61903/4:1:MCK8-TS8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Nancy",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1841",
+          "standard_date": "1841",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "ee2a2243-ff99-4a33-a9d7-86922402b201",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SLXS-1N4"
+        }
+      ]
+    },
+    {
+      "id": "LHNF-72G",
+      "ark": "ark:/61903/4:1:LHNF-72G",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "2b64cb24-9564-41b4-ba59-301465783d75",
+          "preferred": true,
+          "given": "Thomas Hart Benton",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "cd27bc35-b989-45d2-b2d6-33803e7b3308",
+          "given": "Thomas Hart",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "987fae84-c453-47f5-b891-4de724e7968e",
+          "given": "Thomas Hart Benton",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "c9075aec-0093-4635-8218-b4b05b7e90a8",
+          "given": "Thomas H B",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Thomas B",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "T B",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "ce3dd1a8-8f1d-47bd-9722-5b991f20e53b",
+          "given": "Thomas Benton",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "4de809ce-641f-462f-b302-9fe4717e0e33",
+          "given": "Thomas",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "11 December 1848",
+          "standard_date": "11 Dec 1848",
+          "place": "Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "4a25d8ab-9854-478c-9090-a9004769dce4",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Neosho, Newton, Missouri",
+          "standard_place": "Neosho, Newton, Missouri, United States"
+        },
+        {
+          "id": "0bde5200-167a-47c6-b7ee-1eba5f4a512a",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Caldwell county, Caldwell, Missouri",
+          "standard_place": "Caldwell, Missouri, United States"
+        },
+        {
+          "id": "d11ee365-b76c-436e-a9c1-4d502dbd2caa",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Barry county, Barry, Missouri, United States",
+          "standard_place": "Barry, Missouri, United States"
+        },
+        {
+          "id": "e91362a2-3d50-4409-ad4e-02ece0716fb1",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Granby Township, Newton, Missouri, United States",
+          "standard_place": "Granby Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "1a27c26e-9107-4b9a-a041-271552b6806e",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Davis Township, Caldwell, Missouri, United States",
+          "standard_place": "Davis Township, Caldwell, Missouri, United States"
+        },
+        {
+          "id": "18a555d9-aae0-485f-92e7-a663b9dfaf6d",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "ad4d8c97-486e-4411-8d60-d7f1e41f2d98",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Precinct 1, Collin, Texas, United States",
+          "standard_place": "Justice Precinct 1, Collin, Texas, United States"
+        },
+        {
+          "id": "70b33fab-ab40-4e6f-8e9e-71e3d0c05da7",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "ED 123 Townships 1-2 S. Ranges 7-8 E., Chickasaw Nation, Indian Territory, United States",
+          "standard_place": "Chickasaw Nation Reservation, Murray, Oklahoma, United States"
+        },
+        {
+          "id": "d868b4a4-c625-4c75-aa74-43d2929e1299",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Bales, Pottawatomie, Oklahoma, United States",
+          "standard_place": "Bales Township, Pottawatomie, Oklahoma, United States"
+        },
+        {
+          "id": "6d70e2d2-d8a2-4ca3-b5c8-e166b1e591b4",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Bales, Pottawatomie, Oklahoma, United States",
+          "standard_place": "Bales Township, Pottawatomie, Oklahoma, United States"
+        },
+        {
+          "id": "444622b8-da61-4833-b413-af27a00928ea",
+          "type": "Death",
+          "date": "10 November 1930",
+          "standard_date": "10 Nov 1930",
+          "place": "Moss Landing, Monterey, California, United States",
+          "standard_place": "Moss Landing, Monterey, California, United States"
+        },
+        {
+          "id": "774891e1-e643-41e5-a459-15bab543d57e",
+          "type": "Burial",
+          "date": "12 November 1930",
+          "standard_date": "12 Nov 1930",
+          "place": "Castroville Public Cemetery, Moss Landing, Monterey, California, United States",
+          "standard_place": "Castroville Public Cemetery, Moss Landing, Monterey, California, United States"
+        },
+        {
+          "id": "2d64ac4a-89c9-4971-8683-52479f6bfc2d",
+          "type": "Scholastic-achievement",
+          "value": "back from theire honeymoon. Grandmother was pregnant"
+        },
+        {
+          "id": "f0d9fc87-cedf-49b3-a2f1-edce27268ecd",
+          "type": "Religion",
+          "value": "with Betty."
+        },
+        {
+          "id": "bc53d5c6-657a-4ef3-a04d-5f61caa8d503",
+          "type": "Occupation",
+          "value": "He was an older man a died at the train station on the way"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WCZL-C3P"
+        },
+        {
+          "ref": "Q8MM-5DF"
+        },
+        {
+          "ref": "Q3TV-ZRQ"
+        },
+        {
+          "ref": "3VBD-G2M"
+        },
+        {
+          "ref": "SLXQ-ZT3"
+        },
+        {
+          "ref": "SLXS-R2J"
+        },
+        {
+          "ref": "SM27-1J7"
+        },
+        {
+          "ref": "9TB1-T95"
+        },
+        {
+          "ref": "9TB1-T9J"
+        },
+        {
+          "ref": "9TB1-T9H"
+        },
+        {
+          "ref": "9TB1-TML"
+        },
+        {
+          "ref": "9TB1-R16"
+        },
+        {
+          "ref": "9TB1-R19"
+        },
+        {
+          "ref": "MC5T-2HH"
+        },
+        {
+          "ref": "9ZV5-CRC"
+        },
+        {
+          "ref": "9ZV5-QC5"
+        },
+        {
+          "ref": "9ZVP-ZDZ"
+        },
+        {
+          "ref": "9ZVP-CGV"
+        },
+        {
+          "ref": "9ZVF-VD7"
+        }
+      ]
+    },
+    {
+      "id": "L2N6-HPB",
+      "ark": "ark:/61903/4:1:L2N6-HPB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Harriett Josephine",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8848ebb6-e0d0-4e38-9edb-7c48ebd4175f",
+          "type": "Birth",
+          "date": "1854",
+          "standard_date": "1854",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "cc6f8320-eecb-4da9-bc10-66b9d3faf121",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Shoal Creek Township, Barry, Missouri, United States",
+          "standard_place": "Shoal Creek Township, Barry, Missouri, United States"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "1896",
+          "standard_date": "1896",
+          "place": "Arkansas, United States",
+          "standard_place": "Arkansas, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3WN1-L9K"
+        },
+        {
+          "ref": "SYN6-ZKL"
+        },
+        {
+          "ref": "9V95-3KV"
+        },
+        {
+          "ref": "9V95-956"
+        }
+      ]
+    },
+    {
+      "id": "LLQG-YNP",
+      "ark": "ark:/61903/4:1:LLQG-YNP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "William",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "2 October 1813",
+          "standard_date": "2 Oct 1813",
+          "place": "North Carolina, United States",
+          "standard_place": "North Carolina, United States"
+        },
+        {
+          "id": "d14a45fd-83e1-44a9-911a-fbf717c21e1d",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Van Buren Township, Newton, Missouri, United States",
+          "standard_place": "Van Buren Township, Newton, Missouri, United States"
+        },
+        {
+          "id": "61b7db38-3e7e-479e-9321-6d6b8f960db2",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Richwoods Township, Miller, Missouri, United States",
+          "standard_place": "Richwoods Township, Miller, Missouri, United States"
+        },
+        {
+          "id": "286d9e21-4923-4472-b2f5-de5e06695238",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Perry Township, Johnson, Arkansas, United States",
+          "standard_place": "Perry Township, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "d5f90ba5-3a3f-452c-b774-b7844fb25464",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Perry Township, Johnson, Arkansas, United States",
+          "standard_place": "Perry Township, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "640ca4a8-abdb-4961-950e-292f6bc79553",
+          "type": "Burial",
+          "date": "1883",
+          "standard_date": "1883",
+          "place": "Macedonia Cemetery, Lamar, Johnson, Arkansas, United States",
+          "standard_place": "Macedonia Cemetery, Lamar, Johnson, Arkansas, United States"
+        },
+        {
+          "id": "1365cf01-dcde-4c49-80df-8bd67e2543eb",
+          "type": "Death",
+          "date": "28 August 1883",
+          "standard_date": "28 Aug 1883",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "98a9ea8e-5b20-40c5-b515-5a00259582a8",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9YGS-RP4"
+        },
+        {
+          "ref": "9NQX-GT9"
+        },
+        {
+          "ref": "9NQX-GZC"
+        },
+        {
+          "ref": "9NQX-L9N"
+        },
+        {
+          "ref": "9NQX-2CC"
+        }
+      ]
+    },
+    {
+      "id": "L5V9-N6J",
+      "ark": "ark:/61903/4:1:L5V9-N6J",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "064e49d8-72fb-438f-a949-9bdfa1bd5318",
+          "preferred": true,
+          "given": "Elizabeth",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5257a536-bc08-4fd3-955b-51b98289a001",
+          "type": "Birth",
+          "date": "1815",
+          "standard_date": "1815",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "671b1a39-242a-4327-a40e-44c65e4d73d0",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "Wright county, Wright, Missouri, United States",
+          "standard_place": "Wright, Missouri, United States"
+        },
+        {
+          "id": "c6696597-4b96-4fe0-95b6-56e5665e5002",
+          "type": "Death",
+          "date": "1860",
+          "standard_date": "1860"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7N6Z-FJP"
+        },
+        {
+          "ref": "9PYL-F2T"
+        },
+        {
+          "ref": "9PYL-X4Y"
+        }
+      ]
+    },
+    {
+      "id": "9F3Z-D44",
+      "ark": "ark:/61903/4:1:9F3Z-D44",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Toliver Pittman",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3c3785d6-9fb8-4696-befe-da7c0e5f7d0b",
+          "type": "Birth",
+          "date": "1815",
+          "standard_date": "1815",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "624cc454-1656-40b5-a5c2-603d4753a7ed",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pleasant Hill Township, Newton, Arkansas, United States",
+          "standard_place": "Pleasant Hill Township, Newton, Arkansas, United States"
+        },
+        {
+          "id": "06eba7e3-6798-4a87-bceb-475e63867327",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Bowen, Madison, Arkansas, United States",
+          "standard_place": "Bowen Township, Madison, Arkansas, United States"
+        },
+        {
+          "id": "0a1adcaf-406e-41d3-8315-3f3d986a338e",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9YDG-8TF"
+        },
+        {
+          "ref": "9YDG-ZGH"
+        }
+      ]
+    },
+    {
+      "id": "GH18-DHR",
+      "ark": "ark:/61903/4:1:GH18-DHR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "34a32d45-1ba7-45e5-8826-8abd76d10fa8",
+          "preferred": true,
+          "given": "Ambrose",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "95c81042-1bc5-4e06-93e1-d1860cad2474",
+          "type": "Birth",
+          "date": "1817",
+          "standard_date": "1817",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "bebccfb5-5a34-4f62-9390-65a3e9b28edf",
+          "type": "Death",
+          "place": "Mount Judea, Newton, Arkansas, United States",
+          "standard_place": "Mount Judea, Newton, Arkansas, United States"
+        }
+      ]
+    },
+    {
+      "id": "K2BM-82Y",
+      "ark": "ark:/61903/4:1:K2BM-82Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "03dbe477-2ab4-4061-9662-e3c774285e4e",
+          "preferred": true,
+          "given": "Alexander S",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Alexander",
+          "surname": "Davis",
+          "type": "BirthName"
+        },
+        {
+          "id": "213e2b3a-4fe2-4211-aad3-98e83379641c",
+          "given": "Alexander S",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "12 August 1820",
+          "standard_date": "12 Aug 1820",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        },
+        {
+          "id": "f3fd150d-7570-4cbb-bf44-79f62849c486",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "White Township, Newton, Arkansas, United States",
+          "standard_place": "White Township, Newton, Arkansas, United States"
+        },
+        {
+          "id": "18667c58-c9f1-4339-a2c1-3a2a2e5663cc",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "Pleasant Hill, Newton, Arkansas, United States",
+          "standard_place": "Pleasant Hill, Newton, Arkansas, United States",
+          "value": "Census"
+        },
+        {
+          "id": "d384a1c4-01c5-4b8f-aaff-d80995efc82c",
+          "type": "Marriage License",
+          "date": "1 Jan 1877",
+          "standard_date": "1 Jan 1877"
+        },
+        {
+          "id": "c5be31e4-c57a-417a-b672-456ec4e963d8",
+          "type": "Burial",
+          "date": "12 August 1889",
+          "standard_date": "12 Aug 1889",
+          "place": "Deer Cemetery, Deer, Newton, Arkansas, United States",
+          "standard_place": "Deer Cemetery, Deer, Newton, Arkansas, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "12 August 1889",
+          "standard_date": "12 Aug 1889",
+          "place": "Deer, Newton, Arkansas, United States",
+          "standard_place": "Deer, Newton, Arkansas, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W6KR-GCV"
+        },
+        {
+          "ref": "MRGF-1PK"
+        },
+        {
+          "ref": "Q3TX-NV3"
+        },
+        {
+          "ref": "SLC9-Y2R"
+        },
+        {
+          "ref": "SFJ3-1VG"
+        },
+        {
+          "ref": "9TB2-3N4"
+        },
+        {
+          "ref": "9DDY-WQK"
+        },
+        {
+          "ref": "9DDR-17Q"
+        }
+      ]
+    },
+    {
+      "id": "L5C2-TZR",
+      "ark": "ark:/61903/4:1:L5C2-TZR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "3120222f-92d8-4fb6-a19c-4fd8fb0fb148",
+          "preferred": true,
+          "given": "Ambrose Lafayette",
+          "surname": "Davis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "36e6b59d-ba29-456c-a1fa-3c7a40e79226",
+          "type": "Birth",
+          "date": "17 November 1837",
+          "standard_date": "17 Nov 1837",
+          "place": "Missouri, United States",
+          "standard_place": "Missouri, United States"
+        },
+        {
+          "id": "d0e86aa1-5a3d-416f-982a-9f1f508a0ef2",
+          "type": "MilitaryService",
+          "date": "1864",
+          "standard_date": "1864",
+          "place": "Arkansas",
+          "standard_place": "Arkansas, United States"
+        },
+        {
+          "id": "e9db1e80-f85c-4e3a-b399-363869794fa8",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "White Township, Newton, Arkansas, United States",
+          "standard_place": "White Township, Newton, Arkansas, United States"
+        },
+        {
+          "id": "2833e4f7-5720-464c-88f1-2c49e59cb021",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "White Township, Newton, Arkansas, United States",
+          "standard_place": "White Township, Newton, Arkansas, United States"
+        },
+        {
+          "id": "2b0271fa-353d-4dd0-b775-574405c720c1",
+          "type": "Burial",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Briar Branch Cemetery, Alvord, Wise, Texas, United States",
+          "standard_place": "Briar Branch Cemetery, Briar, Wise, Texas, United States"
+        },
+        {
+          "id": "6ef8d046-954f-4628-aae0-141bb388e734",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Wise, Texas, United States",
+          "standard_place": "Wise, Texas, United States"
+        },
+        {
+          "id": "f6bea58b-6026-48ba-bf1e-6c9ca996424e",
+          "type": "Death",
+          "date": "13 September 1900",
+          "standard_date": "13 Sep 1900",
+          "place": "United States",
+          "standard_place": "United States"
+        },
+        {
+          "id": "6252f857-82a9-4fc8-9bd3-92d14abeb23a",
+          "type": "Ethnicity",
+          "value": "White"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W6KD-RL8"
+        },
+        {
+          "ref": "W6KD-RJV"
+        },
+        {
+          "ref": "W6KD-R6V"
+        },
+        {
+          "ref": "W6KD-RHT"
+        },
+        {
+          "ref": "W6KD-RQ1"
+        },
+        {
+          "ref": "QZNX-Z2X"
+        },
+        {
+          "ref": "Q3B9-KGP"
+        },
+        {
+          "ref": "3XFS-36M"
+        },
+        {
+          "ref": "S1CL-112"
+        },
+        {
+          "ref": "SM7R-8XP"
+        },
+        {
+          "ref": "9GVG-39S"
+        },
+        {
+          "ref": "9FXL-6HF"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LJK2-81K",
+      "person2": "LJK2-JBH"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "G72T-RGR",
+      "person2": "275B-KK6"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "G72T-RGR",
+      "person2": "G72T-F1D",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "before 1828",
+          "standard_date": "Bef 1828",
+          "place": "Marlboro District, South Carolina, United States",
+          "standard_place": "Marlboro, South Carolina, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "SLY4-7T1"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "Couple",
+      "person1": "LDJC-6D2",
+      "person2": "KD1X-LX5",
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Marriage",
+          "date": "1813",
+          "standard_date": "1813",
+          "place": "Tennessee, United States",
+          "standard_place": "Tennessee, United States"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LJK2-JBH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "G72T-F1D",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "LJK2-JBH"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "LJK2-81K",
+      "child": "GSMC-RM1"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "LJK2-JBH",
+      "child": "GSMC-RM1"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "LJK2-81K",
+      "child": "GSMC-RJN"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "LJK2-JBH",
+      "child": "GSMC-RJN"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LH57-13B"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LH57-13B"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LJK2-NC6"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LJK2-NC6"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "MCK8-TS8"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "MCK8-TS8"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LJK2-N4P"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LJK2-N4P"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LH57-1Z4"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LH57-1Z4"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "GWHW-K7F"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "GWHW-K7F"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "L87M-R9M"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "L87M-R9M"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "GLLY-7KZ"
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "GLLY-7KZ"
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "275B-K26"
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "275B-K26"
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LJK2-JPS"
+    },
+    {
+      "id": "R33",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LJK2-JPS"
+    },
+    {
+      "id": "R34",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "L2N6-HPB"
+    },
+    {
+      "id": "R35",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "L2N6-HPB"
+    },
+    {
+      "id": "R36",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LHNF-72G"
+    },
+    {
+      "id": "R37",
+      "type": "ParentChild",
+      "parent": "275B-KK6",
+      "child": "LHNF-72G"
+    },
+    {
+      "id": "R38",
+      "type": "ParentChild",
+      "parent": "G72T-F1D",
+      "child": "LJK2-JPS"
+    },
+    {
+      "id": "R39",
+      "type": "ParentChild",
+      "parent": "G72T-RGR",
+      "child": "LZ69-9D1"
+    },
+    {
+      "id": "R40",
+      "type": "ParentChild",
+      "parent": "G72T-F1D",
+      "child": "LZ69-9D1"
+    },
+    {
+      "id": "R41",
+      "type": "ParentChild",
+      "parent": "G72T-F1D",
+      "child": "L87M-R9M"
+    },
+    {
+      "id": "R42",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "LJK2-N4P"
+    },
+    {
+      "id": "R43",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "LJK2-N4P"
+    },
+    {
+      "id": "R44",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "GH18-DHR"
+    },
+    {
+      "id": "R45",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "GH18-DHR"
+    },
+    {
+      "id": "R46",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "LLQG-YNP"
+    },
+    {
+      "id": "R47",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "LLQG-YNP"
+    },
+    {
+      "id": "R48",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "L5C2-TZR"
+    },
+    {
+      "id": "R49",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "L5C2-TZR"
+    },
+    {
+      "id": "R50",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "K2BM-82Y"
+    },
+    {
+      "id": "R51",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "K2BM-82Y"
+    },
+    {
+      "id": "R52",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "9F3Z-D44"
+    },
+    {
+      "id": "R53",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "9F3Z-D44"
+    },
+    {
+      "id": "R54",
+      "type": "ParentChild",
+      "parent": "LDJC-6D2",
+      "child": "L5V9-N6J"
+    },
+    {
+      "id": "R55",
+      "type": "ParentChild",
+      "parent": "KD1X-LX5",
+      "child": "L5V9-N6J"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_LJK2-JBH",
+      "title": "Nancy Davis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Nancy Davis (PID LJK2-JBH); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJK2-JBH"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_275B-KK6",
+      "title": "Elizabeth Glenn",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Elizabeth Glenn (PID 275B-KK6); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:275B-KK6"
+    },
+    {
+      "id": "sd_person_G72T-RGR",
+      "title": "Thomas Jefferson Davis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Thomas Jefferson Davis (PID G72T-RGR); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G72T-RGR"
+    },
+    {
+      "id": "sd_person_LDJC-6D2",
+      "title": "Thomas Davis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Thomas Davis (PID LDJC-6D2); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LDJC-6D2"
+    },
+    {
+      "id": "sd_person_KD1X-LX5",
+      "title": "Rebecca Nix",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Rebecca Nix (PID KD1X-LX5); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KD1X-LX5"
+    },
+    {
+      "id": "sd_person_GSMC-RM1",
+      "title": "Mary Moreland",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Mary Moreland (PID GSMC-RM1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GSMC-RM1"
+    },
+    {
+      "id": "sd_person_GSMC-RJN",
+      "title": "Sarah Moreland",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Sarah Moreland (PID GSMC-RJN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GSMC-RJN"
+    },
+    {
+      "id": "sd_person_LJK2-81K",
+      "title": "William James Brewer",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for William James Brewer (PID LJK2-81K); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJK2-81K"
+    },
+    {
+      "id": "sd_person_G72T-F1D",
+      "title": "Elizabeth Owen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Elizabeth Owen (PID G72T-F1D); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G72T-F1D"
+    },
+    {
+      "id": "98ZW-BBF",
+      "title": "Nancy Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q7C"
+    },
+    {
+      "id": "Q3TV-ZNL",
+      "title": "Elizabeth Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZX-9M5 : Mon Jul 08 11:23:01 UTC 2024), Entry for Thos Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZX-9MR"
+    },
+    {
+      "id": "SLX3-MQX",
+      "title": "Elizabeth Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VXV"
+    },
+    {
+      "id": "SLY4-7T1",
+      "title": "The Davis Family (Davies and David) in Wales and America",
+      "citation": "Harry Alexander Davis, The Davis Family (Davies and David) in Wales and America, pg 217-218."
+    },
+    {
+      "id": "Q5ZF-5GG",
+      "title": "Thomas Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VXJ"
+    },
+    {
+      "id": "QG7T-YGK",
+      "title": "Thomas Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNWZ-T1Q : Wed Sep 09 15:06:45 UTC 2026), Entry for William Davis and Jane Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNWZ-T1W"
+    },
+    {
+      "id": "Q3TV-ZF3",
+      "title": "Thos Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZX-9M5 : Mon Jul 08 11:23:01 UTC 2024), Entry for Thos Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZX-9M5"
+    },
+    {
+      "id": "3KVX-MLJ",
+      "title": "Thomas Davis, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVJ-C645 : Sun Oct 04 16:43:15 UTC 2026), Entry for Thomas Davis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVJ-C645"
+    },
+    {
+      "id": "33FR-2ZK",
+      "title": "Thomas J Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q73"
+    },
+    {
+      "id": "39BG-HKF",
+      "title": "Rebekah Nix, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21B-FKVQ : Sun Mar 10 09:16:00 UTC 2024), Entry for Thomas Patrick and Rebekah Nix, 11 Sep 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21B-FKV7"
+    },
+    {
+      "id": "39BG-H6T",
+      "title": "Rebekah Nix, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q285-Y82C : Fri May 31 23:07:47 UTC 2024), Entry for Thomas Patrick and Rebekah Nix, 11 Sep 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q285-Y826"
+    },
+    {
+      "id": "39BG-H45",
+      "title": "Rebekah Nix, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28R-MK5X : Fri May 31 23:09:28 UTC 2024), Entry for Thomas Patrick and Rebekah Nix, 11 Sep 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28R-MK5J"
+    },
+    {
+      "id": "39BG-41D",
+      "title": "Rebekah Nix, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q21B-Y3Y9 : Fri Mar 08 16:00:35 UTC 2024), Entry for Thomas Patrick and Rebekah Nix, 11 Sep 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q21B-Y3Y7"
+    },
+    {
+      "id": "SZSV-MW3",
+      "title": "Rebekah Nix, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28R-JM63 : Fri May 31 23:35:46 UTC 2024), Entry for Thomas Patrick and Rebekah Nix, 11 Sep 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28R-JM6Q"
+    },
+    {
+      "id": "MHXG-F18",
+      "title": "Rebekah Nix in entry for Thomas Patrick, \"North Carolina, Marriages, 1759-1979\"",
+      "citation": "\"North Carolina, Marriages, 1759-1979\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F8BW-NV4 : 14 February 2020), Rebekah Nix in entry for Thomas Patrick, 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F8BW-NV4"
+    },
+    {
+      "id": "9856-NW5",
+      "title": "19 Jan 1830; ",
+      "citation": "\"North Carolina, Probate Records, 1735-1970,\" images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:33SQ-LGHL-GG6?cc=1867501&wc=32K4-JWG%3A169965801%2C170892401 : 21 May 2014), Rutherford > Wills, 1782-1898, Vol. A-F > image 148 of 337; county courthouses, North Carolina.",
+      "url": "https://familysearch.org/ark:/61903/3:1:33SQ-LGHL-GG6?cc=1867501&wc=32K4-JWG:169965801,170892401"
+    },
+    {
+      "id": "W881-W4R",
+      "title": "W.J Brewer, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K365-S37 : Tue Jun 10 00:01:01 UTC 2025), Entry for Lily Brewer Smith and W.J Brewer, 22 Nov 1973.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K365-S3W"
+    },
+    {
+      "id": "W88R-5DX",
+      "title": "William J Brewer, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M2MW-C7K : Wed Aug 13 17:08:04 UTC 2025), Entry for William J Brewer, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M2MW-C7K"
+    },
+    {
+      "id": "QZFW-8LV",
+      "title": "William J Brewer, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7F-6QG7 : Sun Jul 05 10:01:46 UTC 2026), Entry for Lulu Brewer and E A McKelvy, II.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7F-6QGD"
+    },
+    {
+      "id": "Q312-6YB",
+      "title": "Wm J Brewer, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MXLB-P95 : Mon Jan 20 01:24:39 UTC 2025), Entry for Wm J Brewer and Nancy A Brewer, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MXLB-P95"
+    },
+    {
+      "id": "Q3BB-QTL",
+      "title": "William Bremer, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XNV-J1Z3 : Sun Mar 10 19:21:58 UTC 2024), Entry for William Bremer and Nancy Angeline Davis, 12 May 1868.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XNV-J1Z3"
+    },
+    {
+      "id": "MCG1-DJN",
+      "title": "William Bremer, \"Missouri, Marriages, 1750-1920\"",
+      "citation": "\"Missouri, Marriages, 1750-1920\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V28T-J7R : 18 January 2020), William Bremer, 1868.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V28T-J7R"
+    },
+    {
+      "id": "Q3BB-ST6",
+      "title": "James Brewer, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5SL-4Z1X : Sun Jul 26 12:19:41 UTC 2026), Entry for James Brewer and William, 04 Mar 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5SL-4Z1X"
+    },
+    {
+      "id": "QSZR-NKT",
+      "title": "William J. Brewer, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M66Z-BV4 : Wed Sep 09 12:37:08 UTC 2026), Entry for William J. Brewer and Lina Brewer, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M66Z-BV4"
+    },
+    {
+      "id": "SPLW-S3J",
+      "title": "Entry for Lulu McKelvy, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K78B-RVH : Tue Jun 10 00:01:51 UTC 2025), Entry for Lulu McKelvy and Harold L Jackson, 10 June 1965.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K78B-RVC"
+    },
+    {
+      "id": "S6FR-N83",
+      "title": "William James Brewer, \"Texas, Death Index, 1903-2000\"",
+      "citation": "\"Texas, Death Index, 1903-2000\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VZDQ-Q89 : Tue Feb 25 08:46:37 UTC 2025), Entry for William James Brewer, 03 Mar 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VZDQ-Q89"
+    },
+    {
+      "id": "S6FR-XH3",
+      "title": "William James Brewer, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K7DW-J1H : Mon Jun 09 23:46:03 UTC 2025), Entry for Minnie Smith and William James Brewer, 7 January 1963.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K7DW-J1C"
+    },
+    {
+      "id": "SQVN-QJY",
+      "title": "William James Brewer, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVK5-CMKW : Sat Oct 03 07:17:21 UTC 2026), Entry for William James Brewer, 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVK5-CMKW"
+    },
+    {
+      "id": "SS3M-3TX",
+      "title": "William J Brewer, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3L5-BTV : Tue Oct 21 15:48:31 UTC 2025), Entry for William J Brewer and Nancy A Brewer, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3L5-BTV"
+    },
+    {
+      "id": "S9JQ-S51",
+      "title": "Wm James Brewer, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3SF-DKP : Mon Jun 09 23:45:25 UTC 2025), Entry for George A Brewer and Wm James Brewer, 10 July 1937.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3SF-DK5"
+    },
+    {
+      "id": "9B61-VGC",
+      "title": "William James Brewer, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3QL-RB6 : Mon Jun 09 23:47:24 UTC 2025), Entry for William James Brewer and George W Brewer, 3 March 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3QL-RB6"
+    },
+    {
+      "id": "9D58-DK2",
+      "title": "William James Brewer, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K33H-SRH : Mon Jun 09 23:50:52 UTC 2025), Entry for Matie Helen Hedrick and William James Brewer, 28 February 1957.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K33H-SRC"
+    },
+    {
+      "id": "MSYR-STG",
+      "title": "William James Brewer, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8XP-M47 : Sat Mar 09 05:42:47 UTC 2024), Entry for William Elmer Brewer and Reva Dahliine Sweat, 5 May 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K8XP-M4W"
+    },
+    {
+      "id": "Q3TP-LG3",
+      "title": "Elizabeth Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M46Y-DZF : Mon Oct 13 07:18:45 UTC 2025), Entry for John Davis and Elizabeth Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M46Y-DZN"
+    },
+    {
+      "id": "Q3TP-NFK",
+      "title": "Elizabeth Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6XB-TDW : Wed Sep 09 12:50:46 UTC 2026), Entry for Thomas M. White and Nancy M. White, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6XB-TDZ"
+    },
+    {
+      "id": "Q3TX-WYZ",
+      "title": "Elizabeth Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q7Q"
+    },
+    {
+      "id": "3FM6-W23",
+      "title": "Elizabeth Davis in the Global, Find a Grave Index for Burials at Sea and other Select Burial Locations, 1300s",
+      "citation": "\"Elizabeth Davis in the Global, Find a Grave Index for Burials at Sea and other Select Burial Locations, 1300s.\" Current https://www.ancestry.com/discoveryui-content/view/4556761:60541?indiv=try&h&_phsrc=tbj73&db. Accessed 14 Dec. 2021.",
+      "url": "https://www.ancestry.com/discoveryui-content/view/4556761:60541?indiv=try&h&_phsrc=tbj73&db"
+    },
+    {
+      "id": "Q4WV-B6X",
+      "title": "Davis, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K332-3JH : Wed Oct 08 12:31:57 UTC 2025), Entry for Telitha Camille Johnson and Davis, 25 May 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K332-3JC"
+    },
+    {
+      "id": "3LBQ-1GP",
+      "title": "Philip R Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZ1-XC5 : Mon Jul 08 11:48:48 UTC 2024), Entry for Philip R Davis and Caroline Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZ1-XC5"
+    },
+    {
+      "id": "SPDY-8ZM",
+      "title": "Davis in entry for Mrs Telitha Camelle Johnson, \"Texas, Deaths and Burials, 1903-1973\"",
+      "citation": "\"Texas, Deaths and Burials, 1903-1973\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HW57-6SPZ : 8 October 2026), Davis in entry for Mrs Telitha Camelle Johnson, 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HW57-6SPZ"
+    },
+    {
+      "id": "91CZ-QDJ",
+      "title": "Philip R Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-QQ8 : Mon Oct 13 13:07:40 UTC 2025), Entry for Philip R Davis and Anarpy Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-QQ8"
+    },
+    {
+      "id": "9RCM-FGM",
+      "title": "Phillip R. Davis, \"Arkansas, Marriages, 1837-1944\"",
+      "citation": "\"Arkansas, Marriages, 1837-1944\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FQ1F-Q9M : 11 January 2020), Phillip R. Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FQ1F-Q9M"
+    },
+    {
+      "id": "9DG8-C5M",
+      "title": "Phillip Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M46Y-DZQ : Tue Oct 14 03:53:25 UTC 2025), Entry for Phillip Davis and Caroline A Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M46Y-DZQ"
+    },
+    {
+      "id": "98ZF-72G",
+      "title": "P. R. Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNWT-HYP : Wed Sep 09 15:33:09 UTC 2026), Entry for P. R. Davis and Thomas J. Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNWT-HYP"
+    },
+    {
+      "id": "MS26-WWQ",
+      "title": "Phillip R Davis, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3X6-CTG : Sat Jan 18 20:22:06 UTC 2025), Entry for Phillip R Davis and Mary A Davis, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3X6-CTG"
+    },
+    {
+      "id": "MS26-9KH",
+      "title": "Phillip R. Davis, \"Arkansas, Marriages, 1837-1944\"",
+      "citation": "\"Arkansas, Marriages, 1837-1944\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F79R-R22 : 11 January 2020), Phillip R. Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F79R-R22"
+    },
+    {
+      "id": "MS26-SML",
+      "title": "Phillip R. Davis, \"United States, Civil War Soldiers Index, 1861-1865\"",
+      "citation": "\"United States, Civil War Soldiers Index, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F9Y9-FJF : Thu Feb 13 02:48:52 UTC 2025), Entry for Phillip R. Davis, from 1861 to 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F9Y9-FJF"
+    },
+    {
+      "id": "MS26-9GN",
+      "title": "Philip R Davis, \"United States, General Index to Pension Files, 1861-1934\"",
+      "citation": "\"United States, General Index to Pension Files, 1861-1934\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KDYD-N4B : Thu Jul 09 00:33:43 UTC 2026), Entry for Philip R Davis and Mary A Davis, 1890.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KDYD-N4B"
+    },
+    {
+      "id": "MS26-MRV",
+      "title": "Philip R Davis, \"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\"",
+      "citation": "\"United States, Records of Headstones of Deceased Union Veterans, 1879-1903\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V6HQ-JJW : Thu May 14 13:52:48 UTC 2026), Entry for Philip R Davis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V6HQ-JJW"
+    },
+    {
+      "id": "S26P-2ZP",
+      "title": "John C Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZ8-S7Z : Thu Jan 16 18:21:40 UTC 2025), Entry for Thomas Jeff Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZ8-S7J"
+    },
+    {
+      "id": "Q3TP-PDG",
+      "title": "John C Davis, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XNF-1T6X : Wed Nov 19 09:01:17 UTC 2025), Entry for John C Davis and Eurely Sharp, 17 Sep 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XNF-1T6X"
+    },
+    {
+      "id": "MCPW-9N4",
+      "title": "John C. Davis, \"Missouri, Marriages, 1750-1920\"",
+      "citation": "\"Missouri, Marriages, 1750-1920\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V28T-G8Y : 18 January 2020), John C. Davis, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V28T-G8Y"
+    },
+    {
+      "id": "3HJ7-S85",
+      "title": "John Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M46Y-DZF : Mon Oct 13 07:18:45 UTC 2025), Entry for John Davis and Elizabeth Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M46Y-DZF"
+    },
+    {
+      "id": "98ZF-MBB",
+      "title": "John C. Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6XB-FKB : Wed Sep 09 12:50:01 UTC 2026), Entry for John C. Davis and Emely Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6XB-FKB"
+    },
+    {
+      "id": "98ZF-MVL",
+      "title": "John C Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZ1-W9S : Mon Jul 08 11:48:45 UTC 2024), Entry for John C Davis and Mary Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZ1-W9S"
+    },
+    {
+      "id": "98ZW-1MN",
+      "title": "John Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q7W"
+    },
+    {
+      "id": "7ZQM-MCF",
+      "title": "W B Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8TP-Z54 : Mon Jul 08 22:51:58 UTC 2024), Entry for W B Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8TP-Z54"
+    },
+    {
+      "id": "Q3L8-8DZ",
+      "title": "Wylie B Davis, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XFX-8B9N : Wed Nov 19 07:31:58 UTC 2025), Entry for Wylie B Davis and Nannie R Smallhouse, 17 Jan 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XFX-8B9N"
+    },
+    {
+      "id": "Q3L8-8WZ",
+      "title": "Wylie B Davis, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XZC-GYKD : Wed Nov 19 06:18:06 UTC 2025), Entry for Wylie B Davis and Nannie R Smallwood, 17 Jan 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XZC-GYKD"
+    },
+    {
+      "id": "Q3L8-ZBQ",
+      "title": "Wylie B Davis, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XFX-JJGT : Wed Nov 19 07:39:03 UTC 2025), Entry for Wylie B Davis and Nannie R Smallwood, 17 Jan 1893.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XFX-JJGT"
+    },
+    {
+      "id": "SKGC-1BD",
+      "title": "Wiley B Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZ1-P8N : Mon Jul 08 11:49:20 UTC 2024), Entry for Wiley B Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZ1-P8N"
+    },
+    {
+      "id": "SKGC-YYP",
+      "title": "Wiley B Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M46Y-WW9 : Tue Oct 21 02:24:26 UTC 2025), Entry for Wiley B Davis and Elizabeth Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M46Y-WW9"
+    },
+    {
+      "id": "SC7G-JK9",
+      "title": "Wylie B Davis, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M2BN-HB8 : Wed Aug 13 16:19:38 UTC 2025), Entry for Wylie B Davis and Ralph P Davis, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M2BN-HB8"
+    },
+    {
+      "id": "SHB5-5BC",
+      "title": "Wiley D Davis, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3Z1-DHJ : Tue Oct 14 20:02:21 UTC 2025), Entry for Wiley D Davis and Nancy P Davis, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3Z1-DHJ"
+    },
+    {
+      "id": "SQD2-1FS",
+      "title": "Wiley B Davis, \"United States, Veterans Administration Pension Payment Cards, 1907-1933\"",
+      "citation": "\"United States, Veterans Administration Pension Payment Cards, 1907-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K6HV-YJ9 : Sat Nov 01 07:15:50 UTC 2025), Entry for Wiley B Davis, from 1907 to 1933.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K6HV-YJ9"
+    },
+    {
+      "id": "98ZW-B1D",
+      "title": "Wiley Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q74"
+    },
+    {
+      "id": "9ZH4-KRM",
+      "title": "Willey B. Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6XB-69X : Wed Sep 09 13:46:52 UTC 2026), Entry for Willey B. Davis and Elizabeth Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6XB-69X"
+    },
+    {
+      "id": "9X52-7RZ",
+      "title": "W B Davis, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K7DW-YYR : Tue Jun 10 00:02:31 UTC 2025), Entry for William Robert Davis and W B Davis, 23 February 1963.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K7DW-YYT"
+    },
+    {
+      "id": "987C-VRF",
+      "title": "W B Davis, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3WQ-JVH : Wed Apr 22 16:18:18 UTC 2026), Entry for Rhod P Stroud and W B Davis, 21 September 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3WQ-JVC"
+    },
+    {
+      "id": "9Y82-G4J",
+      "title": "Wylie Burgess Davis, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVVD-187W : Sun Oct 04 12:37:49 UTC 2026), Entry for Wilie.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVVD-187W"
+    },
+    {
+      "id": "MM5Z-FKX",
+      "title": "Legacy NFS Source: Wiley B. Davis - Individual or family possessions: birth-name: Wiley B. Davis"
+    },
+    {
+      "id": "963H-5FW",
+      "title": "Burial record for Wylie Burgess \"Wilie\" Davis",
+      "citation": "Find A Grave Memorial #11245287",
+      "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=11245287"
+    },
+    {
+      "id": "S265-CDZ",
+      "title": "Sarah Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Q73 : Mon Oct 13 13:07:41 UTC 2025), Entry for Thomas J Davis and Elizabeth Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Q7H"
+    },
+    {
+      "id": "SGCW-9BW",
+      "title": "Susan Chitwood, \"Missouri, State and Territorial Census Records, 1732-1933\"",
+      "citation": "\"Missouri, State and Territorial Census Records, 1732-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV98-2VRT : Wed Jan 08 18:29:28 UTC 2025), Entry for Dan Young Chitwood and Susan Chitwood, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV98-2VRY"
+    },
+    {
+      "id": "SGCW-9H6",
+      "title": "Susan Chitwood, \"Missouri, State and Territorial Census Records, 1732-1933\"",
+      "citation": "\"Missouri, State and Territorial Census Records, 1732-1933\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV98-VCVR : Thu Oct 09 10:23:57 UTC 2025), Entry for Dan Young Chitwood and Susan Chitwood, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV98-VCVT"
+    },
+    {
+      "id": "SGCW-MFP",
+      "title": "Susana Chitwood, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M4XQ-RY8 : Thu Jan 16 22:57:16 UTC 2025), Entry for Danl Chitwood and Susana Chitwood, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M4XQ-RYD"
+    },
+    {
+      "id": "SGCW-MS4",
+      "title": "Susanah Chitwood, \"BillionGraves Index\"",
+      "citation": "\"BillionGraves Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VTWX-NG1 : Fri Sep 25 00:12:09 UTC 2026), Entry for Susanah Chitwood.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VTWX-NG1"
+    },
+    {
+      "id": "S2LB-GM5",
+      "title": "Susan Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VX2"
+    },
+    {
+      "id": "S2LB-5DJ",
+      "title": "Susan Chitwood, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6XL-Q1D : Wed Sep 09 12:47:40 UTC 2026), Entry for Van Chitwood and Susan Chitwood, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6XL-Q16"
+    },
+    {
+      "id": "S2LB-X38",
+      "title": "Susie Chitwood, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3ZK-FF2 : Sun Oct 19 05:07:42 UTC 2025), Entry for Van Y Chitwood and Susie Chitwood, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M3ZK-FFL"
+    },
+    {
+      "id": "S2LB-GHZ",
+      "title": "Susan Chitwood, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M2TS-YK4 : Wed Aug 13 16:10:15 UTC 2025), Entry for Van Y Chitwood and Susan Chitwood, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M2TS-YKH"
+    },
+    {
+      "id": "S2LB-635",
+      "title": "Susanah Chitwood, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8W5-BTT : Fri Sep 25 07:44:51 UTC 2026), Entry for Van Y Chitwood and Susanah Chitwood, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8W5-BTY"
+    },
+    {
+      "id": "S2LB-NYJ",
+      "title": "Susannah Davis Chitwood, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVV7-SV8F : Mon Oct 05 08:20:53 UTC 2026), Entry for Susie.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVV7-SV8F"
+    },
+    {
+      "id": "S2LB-51Y",
+      "title": "Davis, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPQZ-WKT : Tue Feb 25 17:17:39 UTC 2025), Entry for Richard William Chitwood and Chitwood, 19 Oct 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPQZ-WKB"
+    },
+    {
+      "id": "S63J-Z7G",
+      "title": "Davis, \"California, County Birth and Death Records, 1800-1994\"",
+      "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP74-8L9Q : Tue Feb 18 23:31:43 UTC 2025), Entry for Richard William Chitwood and Van Young Chitwood, 19 October 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP74-8L9W"
+    },
+    {
+      "id": "M9RS-2RL",
+      "title": "Legacy NFS Source: Susannah Davis - birth: "
+    },
+    {
+      "id": "Q3PT-PLY",
+      "title": "George Davis, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP9Y-HS7R : Fri Feb 14 06:44:52 UTC 2025), Entry for All Arrington and Lou Davis, 17 January 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP9Y-HSWW"
+    },
+    {
+      "id": "Q9Q6-FD8",
+      "title": "George Davis, \"North Carolina, County Marriages, 1762-2011 \"",
+      "citation": "\"North Carolina, County Marriages, 1762-2011 \", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KLW7-FS2 : Tue Jan 21 20:37:15 UTC 2025), Entry for All Arrington and Lou Davis, 17 Jan 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KLW7-FSG"
+    },
+    {
+      "id": "Q9Q6-X44",
+      "title": "G W Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZ1-6LF : Mon Jul 08 11:48:51 UTC 2024), Entry for G W Davis and Minerva Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZ1-6LF"
+    },
+    {
+      "id": "Q3PY-SDB",
+      "title": "William Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8T6-R48 : Mon Jul 08 22:57:18 UTC 2024), Entry for Thomas Davis and Nancy Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8T6-R46"
+    },
+    {
+      "id": "Q3PY-S9Q",
+      "title": "William Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCDJ-SNX : Fri Oct 10 08:17:40 UTC 2025), Entry for Thomas Davis and Nancy Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MCDJ-SNV"
+    },
+    {
+      "id": "SLXS-11M",
+      "title": "Na* Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VXK"
+    },
+    {
+      "id": "Q3TV-ZKX",
+      "title": "Sarah Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZX-9M5 : Mon Jul 08 11:23:01 UTC 2024), Entry for Thos Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZX-9MT"
+    },
+    {
+      "id": "SLXS-123",
+      "title": "Cinthy Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VXL"
+    },
+    {
+      "id": "SLXS-1N4",
+      "title": "Nancy Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VXG"
+    },
+    {
+      "id": "WCZL-C3P",
+      "title": "Thomas Hart Benton Davis, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XWVQ-1S9W : Fri Oct 02 22:34:37 UTC 2026), Entry for Thomas Hart Benton Davis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XWVQ-1S9W"
+    },
+    {
+      "id": "Q8MM-5DF",
+      "title": "Thomas H Bentondavis, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7X-RK6X : Sun Jul 05 21:24:30 UTC 2026), Entry for Frank Marion Davis and Thomas H Bentondavis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7X-RK6N"
+    },
+    {
+      "id": "Q3TV-ZRQ",
+      "title": "Thos B Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZX-9M5 : Mon Jul 08 11:23:01 UTC 2024), Entry for Thos Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZX-9MY"
+    },
+    {
+      "id": "3VBD-G2M",
+      "title": "Thomas H B Davis, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WGY9-3M3Z : Mon Mar 11 01:18:05 UTC 2024), Entry for Thomas H B Davis and Parthena Chitwood, 7 Apr 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WGY9-3M3Z"
+    },
+    {
+      "id": "SLXQ-ZT3",
+      "title": "Thomas B Daviss, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZS-VXJ : Wed Jan 15 11:40:10 UTC 2025), Entry for Thomas Daviss and Elizabeth Daviss, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZS-VXP"
+    },
+    {
+      "id": "SLXS-R2J",
+      "title": "Davis, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VP86-Y4M : Tue Feb 25 18:28:03 UTC 2025), Entry for Betty Thomas Hale and Davis, 09 Dec 1997.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VP86-Y49"
+    },
+    {
+      "id": "SM27-1J7",
+      "title": "Thomas B Davis, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XC4D-6DR : Thu Mar 07 21:34:43 UTC 2024), Entry for A M Davis and Eva Davis, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XC4D-66S"
+    },
+    {
+      "id": "9TB1-T95",
+      "title": "1900 United States Federal Census",
+      "citation": "Year: 1900; Census Place: Township 2, Chickasaw Nation, Indian Territory; Page: 1; Enumeration District: 0123",
+      "url": "https://search.ancestry.com/collections/7602/records/74879647"
+    },
+    {
+      "id": "9TB1-T9J",
+      "title": "California, Death Index, 1905-1939",
+      "url": "https://search.ancestry.com/collections/5187/records/567562"
+    },
+    {
+      "id": "9TB1-T9H",
+      "title": "U.S., Social Security Applications and Claims Index, 1936-2007",
+      "url": "https://search.ancestry.com/collections/60901/records/610326256"
+    },
+    {
+      "id": "9TB1-TML",
+      "title": "1880 United States Federal Census",
+      "citation": "Year: 1880; Census Place: Precinct 1, Collin, Texas; Roll: 1296; Page: 65C; Enumeration District: 018",
+      "url": "https://search.ancestry.com/collections/6742/records/6647473"
+    },
+    {
+      "id": "9TB1-R16",
+      "title": "1870 United States Federal Census",
+      "citation": "Year: 1870; Census Place: Shoal Creek, Barry, Missouri; Roll: M593_757; Page: 738A; Image: 187; Family History Library Film: 552256",
+      "url": "https://search.ancestry.com/collections/7163/records/4538669"
+    },
+    {
+      "id": "9TB1-R19",
+      "title": "Missouri, Marriage Records, 1805-2002",
+      "url": "https://search.ancestry.com/collections/1171/records/4867842"
+    },
+    {
+      "id": "MC5T-2HH",
+      "title": "Thomas H. B. Davis, \"Missouri, Marriages, 1750-1920\"",
+      "citation": "\"Missouri, Marriages, 1750-1920\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V289-2JQ : 18 January 2020), Thomas H. B. Davis, 1866.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V289-2JQ"
+    },
+    {
+      "id": "9ZV5-CRC",
+      "title": "Tho H B Davis, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MSRP-JXG : Sat Oct 18 11:52:19 UTC 2025), Entry for Tho H B Davis and Parkethema Davis, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MSRP-JXG"
+    },
+    {
+      "id": "9ZV5-QC5",
+      "title": "Davis, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VGR3-H81 : Tue Feb 25 15:23:55 UTC 2025), Entry for Melinda Lula Clark and Davis, 21 Aug 1955.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VGR3-HDM"
+    },
+    {
+      "id": "9ZVP-ZDZ",
+      "title": "Davis, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VP2P-X78 : Tue Feb 25 20:32:52 UTC 2025), Entry for Albert Monroe Davis and Davis, 20 Jul 1946.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VP2P-X7D"
+    },
+    {
+      "id": "9ZVP-CGV",
+      "title": "Tomas B Davis, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MN1M-2ML : Sun Sep 27 11:22:44 UTC 2026), Entry for Albert M Davis and Eva Lee Davis, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MN1M-2M1"
+    },
+    {
+      "id": "9ZVF-VD7",
+      "title": "Thomas B. Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFFB-QM3 : Wed Sep 09 14:23:39 UTC 2026), Entry for Thomas B. Davis and Parthenia Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MFFB-QM3"
+    },
+    {
+      "id": "3WN1-L9K",
+      "title": "Arizona Deaths, 1870-1951; https://familysearch.org/ark:/61903/3:1:S3HT-6Q3Q-Y17?cc=1534450&wc=MLJS-NBL%3A72430501%2C87681801",
+      "citation": "\"Arizona Deaths, 1870-1963,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:S3HT-6Q3Q-Y17?cc=1534450&wc=MLJS-NBL%3A72430501%2C87681801 : 16 May 2019), De > Dehart, Annie Elizabeth, 1945 > image 1 of 1; Department of Library and Archives, Phoenix, Arizona.",
+      "url": "https://familysearch.org/ark:/61903/3:1:S3HT-6Q3Q-Y17"
+    },
+    {
+      "id": "SYN6-ZKL",
+      "title": "Harriett J Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZX-9M5 : Mon Jul 08 11:23:01 UTC 2024), Entry for Thos Davis and Elizabeth Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZX-9MB"
+    },
+    {
+      "id": "9V95-3KV",
+      "title": "Josie Simon, \"Oklahoma Applications for Allotment, Five Civilized Tribes, 1899-1907\"",
+      "citation": "\"Oklahoma, Applications for Allotment, Five Civilized Tribes, 1899-1907\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2HM-YJLG : Wed Apr 16 09:23:30 UTC 2025), Entry for Josie Simon, 1899-1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2HM-YJLG"
+    },
+    {
+      "id": "9V95-956",
+      "title": "Josie Davis in entry for Annie Elizabeth Dehart, \"Arizona Deaths, 1870-1951\"",
+      "citation": "\"Arizona Deaths, 1870-1963\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FLJ9-XRP : Tue Jan 21 15:45:03 UTC 2025), Entry for Annie Elizabeth Dehart and Dick Simon, 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FLJ9-XRR"
+    },
+    {
+      "id": "9YGS-RP4",
+      "title": "William Davis, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVV5-PCPR : Sun Oct 04 17:04:32 UTC 2026), Entry for William Davis, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVV5-PCPR"
+    },
+    {
+      "id": "9NQX-GT9",
+      "title": "William Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNC4-MNM : Tue Oct 21 14:12:47 UTC 2025), Entry for William Davis and Jane Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNC4-MNM"
+    },
+    {
+      "id": "9NQX-GZC",
+      "title": "William Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNWZ-T1Q : Wed Sep 09 15:06:45 UTC 2026), Entry for William Davis and Jane Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNWZ-T1Q"
+    },
+    {
+      "id": "9NQX-L9N",
+      "title": "Wm Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHZY-BQ5 : Mon Jul 08 11:47:27 UTC 2024), Entry for Wm Davis and Jane Davis, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHZY-BQ5"
+    },
+    {
+      "id": "9NQX-2CC",
+      "title": "William David, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZF-Z5D : Tue Jan 14 23:08:09 UTC 2025), Entry for William David and Jane David, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZF-Z5D"
+    },
+    {
+      "id": "7N6Z-FJP",
+      "title": "Davis, \"Oregon, Oregon State Archives, Death Records, 1864-1968\"",
+      "citation": "\"Oregon, Oregon State Archives, Death Records, 1864-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CLG6-9D2M : Sun Jul 21 22:06:51 UTC 2024), Entry for Thomas Davis Tweedy and William Marshall Tweedy, 11 Jun 1923.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CLG6-9DT2"
+    },
+    {
+      "id": "9PYL-F2T",
+      "title": "Elizabeth Mitchell, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MDZT-3XJ : Mon Jan 13 11:25:13 UTC 2025), Entry for Marshell Tuith Mitchell and Elizabeth Mitchell, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MDZT-3XV"
+    },
+    {
+      "id": "9PYL-X4Y",
+      "title": "Elizabeth Twitty, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V5PD-HSX : Sat Oct 18 16:51:14 UTC 2025), Entry for Marshall Twitty and Elizabeth Twitty, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V5PD-HSF"
+    },
+    {
+      "id": "9YDG-8TF",
+      "title": "Toliver Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNCC-GCK : Fri Oct 17 04:12:37 UTC 2025), Entry for Toliver Davis and Drucilla Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNCC-GCK"
+    },
+    {
+      "id": "9YDG-ZGH",
+      "title": "Toliver Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNWX-H78 : Wed Sep 09 15:29:07 UTC 2026), Entry for Toliver Davis and Drusila Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNWX-H78"
+    },
+    {
+      "id": "W6KR-GCV",
+      "title": "Elexander S Davis, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M87B-RK4 : Tue Apr 21 13:33:19 UTC 2026), Entry for Elexander S Davis and [illegible] [Illegible], 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M87B-RK4"
+    },
+    {
+      "id": "MRGF-1PK",
+      "title": "Alexander Davis, \"Arkansas, Marriages, 1837-1944\"",
+      "citation": "\"Arkansas, Marriages, 1837-1944\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F7S1-BQB : 11 January 2020), Alexander Davis, 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F7S1-BQB"
+    },
+    {
+      "id": "Q3TX-NV3",
+      "title": "Alexander Davis, \"Arkansas, County Marriages, 1837-1957\"",
+      "citation": "\"Arkansas, County Marriages, 1837-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NMRF-GZS : Thu Mar 07 21:29:08 UTC 2024), Entry for Alexander Davis and Nancy Jane Dukle, 2 January 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NMRF-GZS"
+    },
+    {
+      "id": "SLC9-Y2R",
+      "title": "Alexander Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNCC-788 : Wed Jan 15 19:39:25 UTC 2025), Entry for Alexander Davis and Susan Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNCC-788"
+    },
+    {
+      "id": "SFJ3-1VG",
+      "title": "Alexander S Davis, \"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\"",
+      "citation": "\"Missouri, County Marriage, Naturalization, and Court Records, 1800-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WGYS-X1MM : Sat Mar 09 08:49:22 UTC 2024), Entry for Alexander S Davis and Susannah Davis, 28 Dec 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WGYS-X1MM"
+    },
+    {
+      "id": "9TB2-3N4",
+      "title": "Alexander S. Davis, \"Missouri, Marriages, 1750-1920\"",
+      "citation": "\"Missouri, Marriages, 1750-1920\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V28M-T1Q : 18 January 2020), Alexander S. Davis, 1843.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V28M-T1Q"
+    },
+    {
+      "id": "9DDY-WQK",
+      "title": "Alexander S. Davis, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKS-7P3L : Mon Oct 05 10:43:04 UTC 2026), Entry for Alexander S. Davis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKS-7P3L"
+    },
+    {
+      "id": "9DDR-17Q",
+      "title": "Alexander Davis, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M67D-3Y1 : Tue Oct 21 16:49:31 UTC 2025), Entry for Alexander Davis and Susana Davis, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M67D-3Y1"
+    },
+    {
+      "id": "W6KD-RL8",
+      "title": "Ambrose L Davis, \"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\"",
+      "citation": "\"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FZVZ-FWJ : Fri Jul 25 03:26:31 UTC 2025), Entry for Ambrose L Davis, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZVZ-FWJ"
+    },
+    {
+      "id": "W6KD-RJV",
+      "title": "Ambrose L Davis, \"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\"",
+      "citation": "\"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FZVZ-FW6 : Sat Jul 26 03:28:32 UTC 2025), Entry for Ambrose L Davis, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZVZ-FW6"
+    },
+    {
+      "id": "W6KD-R6V",
+      "title": "Ambrose L Davis, \"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\"",
+      "citation": "\"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FZVZ-FWK : Fri Jul 25 04:48:01 UTC 2025), Entry for Ambrose L Davis, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZVZ-FWK"
+    },
+    {
+      "id": "W6KD-RHT",
+      "title": "Ambrose L Davis, \"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\"",
+      "citation": "\"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FZVZ-44Z : Sat Jul 26 12:53:26 UTC 2025), Entry for Ambrose L Davis, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZVZ-44Z"
+    },
+    {
+      "id": "W6KD-RQ1",
+      "title": "Ambrose L Davis, \"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\"",
+      "citation": "\"Arkansas, Civil War Service Records of Union Soldiers, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FZVZ-44M : Fri Jul 25 02:32:20 UTC 2025), Entry for Ambrose L Davis, 1864.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FZVZ-44M"
+    },
+    {
+      "id": "QZNX-Z2X",
+      "title": "Ambros L Davis, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K7X-PBV3 : Fri Jul 03 02:18:21 UTC 2026), Entry for Harley Martin Davis and Ambros L Davis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K7X-PBV7"
+    },
+    {
+      "id": "Q3B9-KGP",
+      "title": "Amber Davis, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNWN-R86 : Wed Sep 09 15:26:09 UTC 2026), Entry for Amber Davis and Martha Davis, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNWN-R86"
+    },
+    {
+      "id": "3XFS-36M",
+      "title": "A L Davis, \"Oklahoma, County Marriages, 1890-1995\"",
+      "citation": "\"Oklahoma, County Marriages, 1890-1995\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q29M-4DLH : Thu Mar 14 23:17:25 UTC 2024), Entry for Harley M Davis and A L Davis, 15 May 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q29M-4DL2"
+    },
+    {
+      "id": "S1CL-112",
+      "title": "Ambrus Davis, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MNCC-9MS : Mon Jan 20 02:00:47 UTC 2025), Entry for Ambrus Davis and Martha E Davis, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MNCC-9MS"
+    },
+    {
+      "id": "SM7R-8XP",
+      "title": "Ambrous L. Davis, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKN-MV28 : Sat Oct 03 08:22:27 UTC 2026), Entry for Ambrous L. Davis.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKN-MV28"
+    },
+    {
+      "id": "9GVG-39S",
+      "title": "A L Davis, \"United States Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M35Y-TNG : Thu Jan 01 21:17:59 UTC 2026), Entry for A L Davis and Marthy Davis, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M35Y-TNG"
+    },
+    {
+      "id": "9FXL-6HF",
+      "title": "Ambrose Davis, \"Texas, Deaths, 1890-1977\"",
+      "citation": "\"Texas, Deaths, 1890-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K3QV-NSC : Mon Jun 09 23:14:06 UTC 2025), Entry for William D Davis and Ambrose Davis, 7 August 1956.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K3QV-NSZ"
+    }
+  ]
+}

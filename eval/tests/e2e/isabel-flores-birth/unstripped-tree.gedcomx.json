@@ -1,0 +1,788 @@
+{
+  "persons": [
+    {
+      "id": "GCNR-K3J",
+      "ark": "ark:/61903/4:1:GCNR-K3J",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "abadf56e-2e1b-4ec0-bfb5-d7c75729a9e6",
+          "preferred": true,
+          "given": "Isabel",
+          "surname": "Flores",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fcae91a5-58b9-4c34-b9a0-25407db003e4",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8CZ-ZZP"
+        },
+        {
+          "ref": "WSQS-4GR"
+        },
+        {
+          "ref": "3KDV-9XK"
+        },
+        {
+          "ref": "3KDJ-559"
+        },
+        {
+          "ref": "37ZM-WHY"
+        },
+        {
+          "ref": "37ZM-9RH"
+        },
+        {
+          "ref": "3748-TYK"
+        },
+        {
+          "ref": "3748-GHP"
+        }
+      ]
+    },
+    {
+      "id": "GQQF-1HY",
+      "ark": "ark:/61903/4:1:GQQF-1HY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "f761a3f0-d0d7-4852-b632-c672cc5244f0",
+          "preferred": true,
+          "given": "Cesario",
+          "surname": "Barleta",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bb320447-4006-4bd3-b0ee-76f4dba06c9d",
+          "type": "Christening",
+          "date": "29 de febrero de 1908",
+          "standard_date": "29 Feb 1908",
+          "place": "San Pablo City, Laguna, Filipinas",
+          "standard_place": "San Pablo City, Laguna, Philippines"
+        },
+        {
+          "id": "17ed93c3-d4a1-4857-a863-9c4889452ef5",
+          "type": "Birth",
+          "date": "1908",
+          "standard_date": "1908"
+        },
+        {
+          "id": "a42d6155-17b5-457c-aba9-18f6d2856e77",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8CZ-Z3N"
+        },
+        {
+          "ref": "3KDJ-RMF"
+        },
+        {
+          "ref": "37ZM-SYG"
+        }
+      ]
+    },
+    {
+      "id": "G6KK-S7Y",
+      "ark": "ark:/61903/4:1:G6KK-S7Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "34304ef3-87de-4cbf-a454-34093fbe8ef3",
+          "preferred": true,
+          "given": "Apolonio",
+          "surname": "Flores",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f59c5705-1aec-420c-b474-e1996b7b3104",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3KDV-3VZ"
+        },
+        {
+          "ref": "3KDJ-14Y"
+        }
+      ]
+    },
+    {
+      "id": "G6KK-V8D",
+      "ark": "ark:/61903/4:1:G6KK-V8D",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "e3f377fe-163c-40e7-8f04-b7135ab89613",
+          "preferred": true,
+          "given": "Catalina",
+          "surname": "Ortiz",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "d2fcef97-43ab-4a8c-8669-27693d122ef2",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3KDV-3GR"
+        },
+        {
+          "ref": "3KDJ-1V7"
+        }
+      ]
+    },
+    {
+      "id": "GCNR-JJH",
+      "ark": "ark:/61903/4:1:GCNR-JJH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "676b9040-ba29-4a36-a8e7-2b0279a3a9da",
+          "preferred": true,
+          "given": "Fermin",
+          "surname": "Barleta",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "8ac7431b-ccac-4a26-9ac8-d954e81cdfb6",
+          "type": "Birth",
+          "date": "6 de julio de 1878",
+          "standard_date": "6 Jul 1878"
+        },
+        {
+          "id": "391404e2-aa55-49a8-957c-37ffe45e185c",
+          "type": "Christening",
+          "date": "10 de julio de 1878",
+          "standard_date": "10 Jul 1878",
+          "place": "San Pablo City, Laguna, Filipinas",
+          "standard_place": "San Pablo City, Laguna, Philippines"
+        },
+        {
+          "id": "44eb9217-6230-401f-a2c9-ed6f7cac9a0d",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8CX-F69"
+        },
+        {
+          "ref": "W8CX-XSL"
+        },
+        {
+          "ref": "W8CZ-ZCP"
+        },
+        {
+          "ref": "WSQS-4GW"
+        },
+        {
+          "ref": "3KXM-NMD"
+        },
+        {
+          "ref": "3KXM-64Y"
+        },
+        {
+          "ref": "3KXM-SN1"
+        },
+        {
+          "ref": "3KDV-WR9"
+        },
+        {
+          "ref": "3KDV-9HL"
+        },
+        {
+          "ref": "3KDJ-522"
+        },
+        {
+          "ref": "37ZM-WSW"
+        },
+        {
+          "ref": "37ZM-9K4"
+        },
+        {
+          "ref": "3748-T5K"
+        },
+        {
+          "ref": "3748-GS4"
+        }
+      ]
+    },
+    {
+      "id": "GCVS-DHX",
+      "ark": "ark:/61903/4:1:GCVS-DHX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "41aa68c2-600d-4f04-a204-04486524dd7b",
+          "preferred": true,
+          "given": "Florentina",
+          "surname": "Barleta",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "de87349a-f4f2-452c-88d7-c54adec50d85",
+          "type": "Christening",
+          "date": "28 de marzo de 1911",
+          "standard_date": "28 Mar 1911",
+          "place": "San Pablo City, Laguna, Filipinas",
+          "standard_place": "San Pablo City, Laguna, Philippines"
+        },
+        {
+          "id": "fc346a56-7448-4a2b-96b3-044a193ce8b8",
+          "type": "Birth",
+          "date": "1912",
+          "standard_date": "1912"
+        },
+        {
+          "id": "29ab80d6-f7e9-48ed-bf89-5667c2b156d3",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W62D-VG5"
+        },
+        {
+          "ref": "3KDV-9R4"
+        },
+        {
+          "ref": "37ZM-49G"
+        }
+      ]
+    },
+    {
+      "id": "GCNR-XZF",
+      "ark": "ark:/61903/4:1:GCNR-XZF",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c2bc1081-0ade-4568-a2bc-02a4c54db393",
+          "preferred": true,
+          "given": "Aproniano",
+          "surname": "Barleta",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "27815744-5fcf-443a-b2e8-05a8482d6cfe",
+          "type": "Birth",
+          "date": "1904",
+          "standard_date": "1904"
+        },
+        {
+          "id": "26b891c0-2649-48e1-86d6-07d972c2c31a",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WC67-CVB"
+        },
+        {
+          "ref": "WSQS-4KT"
+        },
+        {
+          "ref": "7FX2-DJJ"
+        },
+        {
+          "ref": "7FX2-8TV"
+        },
+        {
+          "ref": "7FX2-87G"
+        },
+        {
+          "ref": "37HY-YSD"
+        },
+        {
+          "ref": "374D-Q9L"
+        },
+        {
+          "ref": "374D-935"
+        },
+        {
+          "ref": "3748-B24"
+        },
+        {
+          "ref": "3748-TNR"
+        },
+        {
+          "ref": "3748-L2C"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GCNR-JJH",
+      "person2": "GCNR-K3J",
+      "sources": [
+        {
+          "ref": "3748-G7F"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "G6KK-S7Y",
+      "person2": "G6KK-V8D",
+      "sources": [
+        {
+          "ref": "3KDJ-1D6"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G6KK-S7Y",
+      "child": "GCNR-K3J",
+      "sources": [
+        {
+          "ref": "3KDJ-1ZB"
+        },
+        {
+          "ref": "3KDJ-BB2"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G6KK-V8D",
+      "child": "GCNR-K3J",
+      "sources": [
+        {
+          "ref": "3KDJ-1ZB"
+        },
+        {
+          "ref": "3KDJ-BB2"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GCNR-JJH",
+      "child": "GCNR-XZF",
+      "sources": [
+        {
+          "ref": "3748-G7F"
+        },
+        {
+          "ref": "3748-L1T"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GCNR-K3J",
+      "child": "GCNR-XZF",
+      "sources": [
+        {
+          "ref": "3748-G7F"
+        },
+        {
+          "ref": "3748-L1T"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GCNR-JJH",
+      "child": "GQQF-1HY"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GCNR-K3J",
+      "child": "GQQF-1HY"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GCNR-JJH",
+      "child": "GCVS-DHX"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GCNR-K3J",
+      "child": "GCVS-DHX"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GCNR-K3J",
+      "title": "Isabel Flores",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Isabel Flores (PID GCNR-K3J); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GCNR-K3J"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GQQF-1HY",
+      "title": "Cesario Barleta",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Cesario Barleta (PID GQQF-1HY); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GQQF-1HY"
+    },
+    {
+      "id": "sd_person_G6KK-S7Y",
+      "title": "Apolonio Flores",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Apolonio Flores (PID G6KK-S7Y); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G6KK-S7Y"
+    },
+    {
+      "id": "sd_person_G6KK-V8D",
+      "title": "Catalina Ortiz",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Catalina Ortiz (PID G6KK-V8D); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G6KK-V8D"
+    },
+    {
+      "id": "sd_person_GCNR-JJH",
+      "title": "Fermin Barleta",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Fermin Barleta (PID GCNR-JJH); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GCNR-JJH"
+    },
+    {
+      "id": "sd_person_GCVS-DHX",
+      "title": "Florentina Barleta",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Florentina Barleta (PID GCVS-DHX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GCVS-DHX"
+    },
+    {
+      "id": "sd_person_GCNR-XZF",
+      "title": "Aproniano Barleta",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Aproniano Barleta (PID GCNR-XZF); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GCNR-XZF"
+    },
+    {
+      "id": "3748-GHP",
+      "title": "Isabel Flores, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-2WH : Thu Sep 17 01:06:08 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-2WZ"
+    },
+    {
+      "id": "37ZM-9RH",
+      "title": "Isabel Flores, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-YHW : Thu Sep 17 01:15:00 UTC 2026), Entry for Cesareo Barleta and Fermin Barleta, 9 Jan 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-YHH"
+    },
+    {
+      "id": "3748-TYK",
+      "title": "Isabel Flores, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FN3Q-R7K : Mon Sep 21 21:26:16 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FN3Q-R7L"
+    },
+    {
+      "id": "37ZM-WHY",
+      "title": "Isabel Flores, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HBTR-3D2M : Thu Sep 17 01:49:54 UTC 2026), Entry for Kiong Tan and Dayco Tan, 4 Mar 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HBTR-36W2"
+    },
+    {
+      "id": "3KDJ-559",
+      "title": "Isabel Flores, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CD"
+    },
+    {
+      "id": "WSQS-4GR",
+      "title": "Isabel Flores, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-94HX : Sat Jan 31 18:42:03 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-94HK"
+    },
+    {
+      "id": "3KDV-9XK",
+      "title": "Isabel Flores, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66NS-KNYT : Thu Aug 13 10:24:01 UTC 2026), Entry for Florentina Bastata and Francisco al, 28 de marzo de 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66NS-KNYB"
+    },
+    {
+      "id": "W8CZ-ZZP",
+      "title": "Isabel Glores, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-94Q9 : Thu Jan 29 07:22:04 UTC 2026), Entry for Cesareo Barleta and Jermin Barleta, 9 Jan 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-94Q4"
+    },
+    {
+      "id": "W8CZ-Z3N",
+      "title": "Cesareo Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-94Q9 : Thu Jan 29 07:22:04 UTC 2026), Entry for Cesareo Barleta and Jermin Barleta, 9 Jan 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-94Q9"
+    },
+    {
+      "id": "3KDJ-RMF",
+      "title": "Cesario Barleta, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CZ"
+    },
+    {
+      "id": "37ZM-SYG",
+      "title": "Cesareo Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-YHW : Thu Sep 17 01:15:00 UTC 2026), Entry for Cesareo Barleta and Fermin Barleta, 9 Jan 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-YHW"
+    },
+    {
+      "id": "3KDV-3VZ",
+      "title": "Apolonio, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66NS-KNYT : Thu Aug 13 10:24:01 UTC 2026), Entry for Florentina Bastata and Francisco al, 28 de marzo de 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66NS-KNB9"
+    },
+    {
+      "id": "3KDJ-14Y",
+      "title": "Apolonio, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CF"
+    },
+    {
+      "id": "3KDV-3GR",
+      "title": "Catalina Ortiz, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66NS-KNYT : Thu Aug 13 10:24:01 UTC 2026), Entry for Florentina Bastata and Francisco al, 28 de marzo de 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66NS-KNBS"
+    },
+    {
+      "id": "3KDJ-1V7",
+      "title": "Cata, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CN"
+    },
+    {
+      "id": "W8CX-F69",
+      "title": "Fermin Barleta, \"Philippines Civil Registration (National), 1945-1996\"",
+      "citation": "\"Philippines Civil Registration (National), 1945-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL49-DZT6 : Sat Jan 18 02:32:20 UTC 2025), Entry for Lorenzo Capule and Leonila Barleta, 17 Sep 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL49-DZTN"
+    },
+    {
+      "id": "W8CX-XSL",
+      "title": "Fermin Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-3PFK : Sat Jan 31 14:57:28 UTC 2026), Entry for Lorenzo Capule and Isaias Capule, 17 Sep 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-3PN9"
+    },
+    {
+      "id": "W8CZ-ZCP",
+      "title": "Jermin Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-94Q9 : Thu Jan 29 07:22:04 UTC 2026), Entry for Cesareo Barleta and Jermin Barleta, 9 Jan 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-94QQ"
+    },
+    {
+      "id": "WSQS-4GW",
+      "title": "Fermin Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-94HX : Sat Jan 31 18:42:03 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-94HJ"
+    },
+    {
+      "id": "3KXM-NMD",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H1NZ-VDN2 : Wed Oct 07 08:04:40 UTC 2026), Entry for Lorenzo Capulo and Isaias Capulo, 17 Sep 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H1NZ-V6MM"
+    },
+    {
+      "id": "3KXM-64Y",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HBTB-S2T2 : Thu Sep 17 01:45:24 UTC 2026), Entry for Lorenzo Capule and Isaias Capule, 12 Sep 1945.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HBTB-SLZM"
+    },
+    {
+      "id": "3KXM-SN1",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNZY-PVW : Thu Sep 17 01:12:35 UTC 2026), Entry for Fermin Barleta and Mariano Barleta, 31 Mar 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNZY-PVW"
+    },
+    {
+      "id": "3KDV-WR9",
+      "title": "Fermín Bartola, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66XW-RG7H : Thu Aug 13 06:12:23 UTC 2026), Entry for Fermín Bartola and Juan Francisco Vellon, 10 de julio de 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66XW-RG7H"
+    },
+    {
+      "id": "3KDV-9HL",
+      "title": "Fermín Balleta, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66NS-KNYT : Thu Aug 13 10:24:01 UTC 2026), Entry for Florentina Bastata and Francisco al, 28 de marzo de 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66NS-KNYY"
+    },
+    {
+      "id": "3KDJ-522",
+      "title": "Fermín Barreta, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1C8"
+    },
+    {
+      "id": "37ZM-WSW",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HBTR-3D2M : Thu Sep 17 01:49:54 UTC 2026), Entry for Kiong Tan and Dayco Tan, 4 Mar 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HBTR-363Z"
+    },
+    {
+      "id": "37ZM-9K4",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-YHW : Thu Sep 17 01:15:00 UTC 2026), Entry for Cesareo Barleta and Fermin Barleta, 9 Jan 1927.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-YH4"
+    },
+    {
+      "id": "3748-T5K",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FN3Q-R7K : Mon Sep 21 21:26:16 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FN3Q-R72"
+    },
+    {
+      "id": "3748-GS4",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-2WH : Thu Sep 17 01:06:08 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-2WC"
+    },
+    {
+      "id": "W62D-VG5",
+      "title": "Florentina Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-7FZS : Fri Jan 30 22:03:35 UTC 2026), Entry for Kiong Tan and Dayco Tan, 4 Mar 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-7FZN"
+    },
+    {
+      "id": "3KDV-9R4",
+      "title": "Florentina Bastata, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66NS-KNYT : Thu Aug 13 10:24:01 UTC 2026), Entry for Florentina Bastata and Francisco al, 28 de marzo de 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66NS-KNYT"
+    },
+    {
+      "id": "37ZM-49G",
+      "title": "Florentina Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HBTR-3D2M : Thu Sep 17 01:49:54 UTC 2026), Entry for Kiong Tan and Dayco Tan, 4 Mar 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HBTR-36MM"
+    },
+    {
+      "id": "WC67-CVB",
+      "title": "Aproniano Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQN-MVP3 : Sat Jan 31 07:54:42 UTC 2026), Entry for Ambrocio Barleta and Aproniano Barleta, 23 Jun 1954.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQN-MVPH"
+    },
+    {
+      "id": "WSQS-4KT",
+      "title": "Aproniano Barleta, \"Philippines, Civil Registration (Local), 1888-1986\"",
+      "citation": "\"Philippines, Civil Registration (Local), 1888-1986\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6BQF-94HX : Sat Jan 31 18:42:03 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6BQF-94HX"
+    },
+    {
+      "id": "7FX2-DJJ",
+      "title": "Aproniano Barleta, \"Philippines Civil Registration (National), 1945-1996\"",
+      "citation": "\"Philippines Civil Registration (National), 1945-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGKR-LR6Q : Fri Jan 17 18:54:19 UTC 2025), Entry for Eleno Barleta and Cecilia Agra, 25 May 1952.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGKR-LR67"
+    },
+    {
+      "id": "7FX2-8TV",
+      "title": "Aproniano Barleta, \"Philippines Civil Registration (National), 1945-1996\"",
+      "citation": "\"Philippines Civil Registration (National), 1945-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLF4-81F5 : Fri Jan 17 18:54:02 UTC 2025), Entry for Woncesino Centeno and Crispina Barleta, 5 Jan 1951.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLF4-81FY"
+    },
+    {
+      "id": "7FX2-87G",
+      "title": "Aproniano Barleta, \"Philippines Civil Registration (National), 1945-1996\"",
+      "citation": "\"Philippines Civil Registration (National), 1945-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8YNP-WSZM : Sun Jan 19 16:57:13 UTC 2025), Entry for Ambrocio Barleta and Aproniano Barleta, 1954.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8YNP-WS6Z"
+    },
+    {
+      "id": "37HY-YSD",
+      "title": "Apromino Borlita, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:CMRL-H62M : Mon Sep 21 22:29:07 UTC 2026), Entry for Ambrosio Borlita and Apromino Borlita, 23 Jun 1954.",
+      "url": "https://familysearch.org/ark:/61903/1:1:CMRL-H6PZ"
+    },
+    {
+      "id": "374D-Q9L",
+      "title": "Aproniano Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H13J-TLN2 : Wed Oct 07 08:12:01 UTC 2026), Entry for Elino Barleta and Aproniano Barleta, 25 May 1952.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H13J-TLPZ"
+    },
+    {
+      "id": "374D-935",
+      "title": "Aproniano Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HB6T-XM2M : Tue Oct 06 14:49:22 UTC 2026), Entry for Ambrosio Barleta and Aproniano Barleta, 23 Jun 1954.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HB6T-XMPZ"
+    },
+    {
+      "id": "3748-B24",
+      "title": "Aproniano Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H13P-6XMM : Thu Oct 08 14:47:15 UTC 2026), Entry for Wenceslao Centeno and Simeon Centeno, 5 Jan 1951.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H13P-6X6Z"
+    },
+    {
+      "id": "3748-TNR",
+      "title": "Aproniano Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FN3Q-R7K : Mon Sep 21 21:26:16 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FN3Q-R7K"
+    },
+    {
+      "id": "3748-L2C",
+      "title": "Aproniano Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-2WH : Thu Sep 17 01:06:08 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-2WH"
+    },
+    {
+      "id": "3748-G7F",
+      "title": "Isabel Flores, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-2WH : Thu Sep 17 01:06:08 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-2WZ"
+    },
+    {
+      "id": "3KDJ-1D6",
+      "title": "Cata, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CN"
+    },
+    {
+      "id": "3KDJ-1ZB",
+      "title": "Cata, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CN"
+    },
+    {
+      "id": "3KDJ-BB2",
+      "title": "Apolonio, \"Philippines, Catholic Church Records, 1520-2014\"",
+      "citation": "\"Philippines, Catholic Church Records, 1520-2014\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66X7-T1CZ : Wed Sep 03 19:27:24 UTC 2025), Entry for Cesario Barleta and Fran cisco Alcántara, 29 de febrero de 1908.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66X7-T1CF"
+    },
+    {
+      "id": "3748-L1T",
+      "title": "Fermin Barleta, \"Philippines, Marriages, 1723-1957\"",
+      "citation": "\"Philippines, Marriages, 1723-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FNDX-2WH : Thu Sep 17 01:06:08 UTC 2026), Entry for Aproniano Barleta and Fermin Barleta, 20 Nov 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FNDX-2WC"
+    }
+  ]
+}

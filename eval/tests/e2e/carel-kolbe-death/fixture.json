@@ -1,0 +1,19 @@
+{
+  "id": "carel-kolbe-death",
+  "name": "Carel Fredrik Kolbe — death in February 1876, Cape Town, South Africa",
+  "genre": "record-hint",
+  "source_pid": "G4TS-FV8",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Carel Fredrik Kolbe, baptised 6 December 1801 in Cape Town, son of Jacobus Kolbe and Johanna Magdalena Paulsen, and married to Dolphina Carolina Hartog in Cape Town in 1857, die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1870s",
+    "geography": "ZA"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 25, hint-samples.csv row 816, flags adds_death/adds_burial, confidence 3). Draft transcribed from an 1876 Cape Town Dutch Reformed Church burial register entry; unverified."
+}

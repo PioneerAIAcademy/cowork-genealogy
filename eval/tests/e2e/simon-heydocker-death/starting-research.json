@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_simon_heydocker_death",
+    "objective": "When and where did Simon Heydöcker die, the husband of Katharina and father of Juliana (born 15 June 1798) and Josef (born 11 October 1801) Heidegger at Laakirchen, Upper Austria?",
+    "subject_person_ids": [
+      "GZRZ-TNG"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}
