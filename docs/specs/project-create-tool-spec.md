@@ -294,7 +294,7 @@ the write ahead of the validation and watching two cases go red.
 > `projectPath`'s *parent*, never `projectPath` itself).
 
 > `packages/engine/mcp-server/tests/packaging/manifest.test.ts` and
-> `readme-catalog.test.ts` — the tool is registered, dispatched, listed in the
+> `catalog.test.ts` — the tool is registered, dispatched, listed in the
 > install contract, and discoverable.
 
 *Linted: every path in this section must resolve.*

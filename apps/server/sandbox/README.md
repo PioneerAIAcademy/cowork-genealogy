@@ -144,9 +144,9 @@ address: `fs_oauth.hosted_config()` writes `wikiApiUrl` into each sandbox's
 `config.json` ONLY when `WIKI_API_URL` is set on the control plane, and
 nothing in the repo sets it: `deploy/fly.toml` has no `WIKI_API_URL`, and secrets
 are set out of band with `fly secrets set`, so unless an operator has set one a
-hosted session runs on the engine's compiled-in `DEFAULT_WIKI_API_URL`. That names one developer's tailnet
-host rather than a public deployment (CLAUDE.md, "External service dependencies"),
-so these tools work from a hosted sandbox only while that host is reachable.
+hosted session runs on the engine's compiled-in `DEFAULT_WIKI_API_URL`. That names one developer's
+publicly reachable host (CLAUDE.md, "External service dependencies"), so these
+tools work from a hosted sandbox whenever that host is up.
 
 This section previously described baking a local corpus that `wiki_read` and
 `wiki_place_page` read from disk via a `wikiMarkdownDir` config key. **That code

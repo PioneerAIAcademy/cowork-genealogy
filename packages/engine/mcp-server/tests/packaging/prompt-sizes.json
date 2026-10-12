@@ -5,7 +5,7 @@
     "regenerate": "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts"
   },
   "prompts": {
-    "CLAUDE.md": 57484,
+    "CLAUDE.md": 58231,
     "packages/engine/plugin/agents/check-warnings.md": 47535,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11818,
@@ -44,6 +44,7 @@
     "tool:auth_status": 274,
     "tool:build_external_search_url": 4850,
     "tool:catalog_search": 1965,
+    "tool:census_children_gap": 2059,
     "tool:collections_search": 1344,
     "tool:convert_calendar": 4040,
     "tool:external_links_search": 2503,
