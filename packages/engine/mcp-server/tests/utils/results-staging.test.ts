@@ -283,12 +283,28 @@ describe("results-staging", () => {
       await writeResearch([
         {
           id: "log_001",
-          tool: "external_links_search",
+          tool: "fulltext_search",
           performed: new Date(Date.now() + 1000).toISOString(),
           results_available: 4,
           results_ref: null,
         },
       ]);
+      expect(await unloggedStagedSearches(dir)).toHaveLength(1);
+    });
+
+    it("ignores a legacy external_links_search file, which no longer stages (#2995)", async () => {
+      await writeResearch([]);
+      await stage("external_links_search");
+      expect(await unloggedStagedSearches(dir)).toHaveLength(0);
+    });
+
+    it("still counts a staged file whose tool is not a string", async () => {
+      await writeResearch([]);
+      const handle = await stage();
+      const path = join(dir, handle!.resultsRef);
+      const envelope = JSON.parse(await readFile(path, "utf-8"));
+      envelope.tool = 7;
+      await writeFile(path, JSON.stringify(envelope));
       expect(await unloggedStagedSearches(dir)).toHaveLength(1);
     });
 

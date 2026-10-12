@@ -388,7 +388,7 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
 # a canned payload, so we materialize the staged file here (via the compiled
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
-STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
 
 # The search tools whose production response carries `query: echoQuery(input)`
 # (record-search.ts, fulltext-search.ts). person_search echoes too but is
@@ -440,15 +440,15 @@ def _fixture_is_nil(response: dict[str, Any]) -> bool:
     """Whether a fixture response represents a genuinely nil search.
 
     Mirrors the production gate: an empty `results` AND a zero upstream total.
-    `record_search` reports that total as `totalMatches`, `fulltext_search` as
-    `totalResults`, and `external_links_search` as `totalForPlace`; a fixture that
+    `record_search` reports that total as `totalMatches` and `fulltext_search` as
+    `totalResults`; a fixture that
     omits its total is treated as 0, since a canned response with no total claims
     no matches. Keyed on the total because `results` is the post-`mapEntry` set in
     production, and a page that fails mapping empties it while the total does not.
     """
     if response.get("results"):
         return False
-    for key in ("totalMatches", "totalResults", "totalForPlace"):
+    for key in ("totalMatches", "totalResults"):
         total = response.get(key)
         if isinstance(total, (int, float)) and total > 0:
             return False
@@ -473,8 +473,7 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
-# the compactors below, not by a Python mirror). `external_links_search`
-# stages but compacts nothing, so it is absent here by design.
+# the compactors below, not by a Python mirror).
 _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
     "fulltext_search": "compactStagedFulltextSearch",
@@ -1118,7 +1117,7 @@ def create_mock_server(
                 response = reordered
 
             # The unlogged-search notes (#2056), mirrored for the same reason and
-            # inserted in the same pre-`results` slot. All three staging tools carry
+            # inserted in the same pre-`results` slot. Both staging tools carry
             # them, so this list is STAGING_SEARCH_TOOLS.
             #
             # The nil condition mirrors production's on BOTH halves, and each half
@@ -1131,14 +1130,6 @@ def create_mock_server(
             #   "the condition never held" and "the agent ignored it"
             #   indistinguishable — in the plane whose whole job is telling those
             #   apart. `_fixture_is_nil` reads whichever total the fixture carries.
-            # - external_links_search stays approximate in BOTH directions, and
-            #   structurally so: production keys on `allLinks`, the year-filtered set
-            #   before host filtering, which a fixture never carries. `totalForPlace`
-            #   sits before the year filter and `results` after the host filter, so
-            #   `allLinks` lies between the only two numbers available here. A fixture
-            #   omitting its total over-emits; one whose year filter emptied a non-zero
-            #   total under-emits. Stated structurally on purpose — the enumerated-case
-            #   version of this note went stale twice.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and "error" not in response

@@ -476,7 +476,6 @@ def test_fixture_with_matches_but_no_mapped_results_is_not_nil():
     assert _fixture_is_nil({"results": []})  # no total declared → claims no matches
     assert not _fixture_is_nil({"totalMatches": 812, "results": []})
     assert not _fixture_is_nil({"totalResults": 812, "results": []})
-    assert not _fixture_is_nil({"totalForPlace": 3, "results": []})
     assert not _fixture_is_nil({"totalMatches": 0, "results": [{"id": "x"}]})
 
 
