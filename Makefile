@@ -474,8 +474,16 @@ proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq
 	$(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim
 
 .PHONY: proto-down
-proto-down: ## D3 prototype: stop the stack and drop its volumes (the schema re-applies on the next up)
+proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
 	$(PROTO_COMPOSE) down -v
+
+# U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
+# postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
+# the ledger's level and runs no DDL (exit 3 when it is not current).
+.PHONY: proto-migrate
+proto-migrate: ## U9: apply the pending apps/server/proto/sql/*.sql to the compose postgres (ARGS=--status: report only, no DDL)
+	$(PROTO_COMPOSE) up -d --wait postgres
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py $(ARGS)
 
 .PHONY: proto-logs
 proto-logs: ## D3 prototype: follow the stack's logs (SERVICE=shim to narrow)
@@ -495,21 +503,27 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
-# fake can prove pg_try_advisory_lock. A fresh database per module, dropped at teardown.
-# CI runs the same file against a postgres:16 container (server-tests.yml).
+# fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
+# ledger and its races. U23's held-message claim the same way: the worker's release against
+# admit_message on one session. U6's claim fence the same way: a superseded attempt's
+# worker writes, transcript append and tool-server commit (two `build/http.js` processes,
+# hence the build first) are no-ops, and its transcript append dedupes a retried batch by
+# uuid. A fresh database per test or module, dropped at teardown.
+# CI runs the same files against a postgres:16 container (server-tests.yml).
 .PHONY: proto-grants-test
-proto-grants-test: ## U3: the grant-lock interleavings against the compose postgres (real advisory locks)
+proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
+	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
 # loopback listener on 127.0.0.1:1837, the dev key's only registered redirect. A second
 # sign-in, so it does not revoke the desktop login. Prints no token. After `make proto-up`
-# (the web tier's start applies 009), and again after a `proto-down -v`.
+# (its migrate one-shot applies 009), and again after a `proto-down -v`.
 .PHONY: proto-grant
 proto-grant: ## U3: sign in on the dev key and store the dev-login patron's grant (EMAIL=…); once per stack, after proto-up
 	cd apps/server && uv run python proto/grant.py $(if $(EMAIL),--email '$(EMAIL)',) --pg-dsn $(PROTO_PG_DSN)
@@ -538,26 +552,80 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
 	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}" $(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
-# PR #2870 item 0a: the resume probe the guard was gated on. The 2026-09-20 run that
-# produced the synthetic result had been killed during a BACKGROUND delegation, and
-# `--kill-on Agent` alone lands on a foreground one, which resumes cleanly -- so this
-# selects on the call's INPUT (`run_in_background: true`), read out of session_entries
-# because tool_calls has no input column. Three things have to line up or it kills
-# nothing: the selector, a message that provokes two concurrent extractions
-# (proto/probes/background-delegation.txt), and AUTONOMOUS_MAX_NUDGES > 0, which
-# proto-kill otherwise leaves at 0 so the run ends before a delegation is reached.
-#
-# `run_in_background` is MODEL-CHOSEN -- 19 of 714 committed runs, none of the eight
-# bagley-father-1884 runs -- so this may simply not fire. Billed, roughly an hour a try.
-# Do not spend more than two attempts on it: the plan's accepted fallback is the unit
-# test `test_the_named_fallback_*` in apps/server/tests/test_proto_worker.py, which is
-# already green.
+# PR #2870 item 0a: the resume probe the guard was gated on, now proto-bounds' probe_resume
+# case (U23). The worker foregrounds every delegation, so a selector on the model's
+# `run_in_background` input can no longer pick a background one; the case kills the worker
+# KILL_AFTER_S (5-20, default 10) after the turn's first SUBAGENT tool_calls row
+# (agent_id IS NOT NULL) and records whether session_entries still holds the model's
+# original Agent input. It needs a delegation, so a seeded project (proto-seed first), the
+# message that provokes two (proto/probes/background-delegation.txt, named in bounds.py)
+# and AUTONOMOUS_MAX_NUDGES > 0 -- passed here as 40, which proto-bounds keeps over its 3.
+# Billed, roughly an hour a try.
 .PHONY: proto-probe-resume
-proto-probe-resume: ## 0a probe: kill a real turn inside a BACKGROUND delegation and watch the resume — SESSION=<id> (proto-seed first); billed, ~1 h
+proto-probe-resume: ## 0a probe: kill a real turn inside a delegation and watch the resume (proto-bounds CASE=probe_resume) — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-kill SESSION="$(SESSION)" \
-	  ARGS="--kill-on Agent --kill-on-input run_in_background=true --kill-after-s $${KILL_AFTER_S-20} \
-	        --text-file proto/probes/background-delegation.txt --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
+	  ARGS="--kill-after-s $${KILL_AFTER_S-10} --deadline-s $${DEADLINE_S-2400} $(ARGS)"
+
+# U23: one live bound on compose per run -- Stop, the held-message release, the spend cap,
+# each mid-delegation and under a store outage, and the resume probe; the case list is
+# proto/bounds.py's docstring. Same `up` as proto-turn; refuses without a model key or a
+# CASE. The Stop hook is ON at 3 nudges (`:-3`), so SDK Q1 -- does a halt still dispatch
+# Stop? -- is observable without an hour-long run. SESSION_SPEND_CAP_USD reaches the
+# worker through compose (`:-35`, its default; CASE=cap_main_real wants it lowered, e.g.
+# 1). Every case POSTs /interrupt before it gives up on a turn. Billed, except CASE=precli.
+.PHONY: proto-bounds
+proto-bounds: $(ENGINE_DEPS) ## U23: record one live bound on compose — CASE=<case> [SESSION=<id>] [ARGS=…]; billed except CASE=precli (cases: proto/bounds.py)
+	@test -n "$(CASE)" || { echo "proto-bounds: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-3}"; \
+	  export SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-bounds: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) up -d --build && \
+	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
+	  cd apps/server && PROTO_COMPOSE="$(PROTO_COMPOSE)" uv run python proto/bounds.py --case '$(CASE)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
+
+# U13: the drivers against the rehearsal (apps/server/proto/eb-rehearsal) instead of
+# compose: no env.sh, no compose up, no tree-read block (the worker refuses BLOCKED_TOOLS
+# without DEV_PATHS, which a template never sets; put the block in --prompt instead).
+# BASE is the web tier (the 1837 forward or the ALB); PG_DSN the psycopg DSN through the
+# bastion's RDS forward, `host=<rds endpoint> hostaddr=127.0.0.1 port=15432 dbname=… user=…`
+# with the password only in PGPASSFILE (the DSN may hold no password and no sslmode); RDS_CA the bundle's certs/rds-global-bundle.pem; BUCKET
+# the data bucket; COOKIE_FILE the operator's signed-in wb_session (0600, never argv).
+# The seed's node-postgres takes NODE_PG_DSN, `postgresql://<user>@<rds endpoint>:15432/<db>`
+# (no password: it reads PGPASSFILE too), and needs a `127.0.0.1 <rds endpoint>` line in /etc/hosts and
+# `npm ci` in the engine (the optional pg and S3 packages). seed.py overwrites
+# PROTO_S3_ENDPOINT from --s3-endpoint, so both are set; the empty key pair sends the
+# store to the operator's default AWS credential chain.
+AWS_S3_ENDPOINT := https://s3.us-east-1.amazonaws.com
+PROTO_AWS_ENV = export PROTO_S3_ENDPOINT='$(AWS_S3_ENDPOINT)' PROTO_S3_BUCKET='$(BUCKET)' PROTO_S3_ACCESS_KEY= \
+	  PROTO_S3_SECRET_KEY= PROTO_SESSION_COOKIE_FILE='$(COOKIE_FILE)' PGSSLMODE=verify-full \
+	  PGSSLROOTCERT='$(RDS_CA)' NODE_EXTRA_CA_CERTS='$(RDS_CA)' PGPASSFILE='$(PGPASSFILE)' \
+	  PROTO_NODE_PG_DSN='$(NODE_PG_DSN)'
+proto_aws_require = $(foreach v,BASE PG_DSN NODE_PG_DSN BUCKET COOKIE_FILE RDS_CA EMAIL PGPASSFILE,$(if $($(v)),,$(error $(1): $(v)=… is required; see the U13 block above it in the Makefile)))$(if $(findstring password,$(PG_DSN))$(findstring sslmode,$(PG_DSN))$(findstring @,$(PG_DSN))$(findstring sslmode,$(NODE_PG_DSN))$(findstring password,$(NODE_PG_DSN))$(shell printf '%s' '$(NODE_PG_DSN)' | grep -E '://[^/@]*:[^/@]*@'),$(error $(1): PG_DSN or NODE_PG_DSN carries a password or sslmode; the password goes in PGPASSFILE and TLS in PGSSLMODE))
+
+.PHONY: proto-demo-aws
+proto-demo-aws: $(ENGINE_DEPS) ## U13: proto-demo against the rehearsal — BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [FIXTURE=] ARGS=…
+	$(call proto_aws_require,proto-demo-aws)
+	$(PROTO_AWS_ENV); cd apps/server && uv run python proto/demo.py --base '$(BASE)' --pg-dsn '$(PG_DSN)' \
+	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
+
+.PHONY: proto-audit-aws
+proto-audit-aws: ## U13: proto-audit over the rehearsal's tool_calls — PG_DSN= RDS_CA= PGPASSFILE= SESSION= and/or TURN=
+	$(foreach v,PG_DSN RDS_CA PGPASSFILE,$(if $($(v)),,$(error proto-audit-aws: $(v)=… is required; see the U13 block above proto-demo-aws)))
+	$(if $(SESSION)$(TURN),,$(error proto-audit-aws: SESSION=<id> or TURN=<id> is required))
+	$(if $(findstring password,$(PG_DSN))$(findstring sslmode,$(PG_DSN))$(findstring @,$(PG_DSN)),$(error proto-audit-aws: PG_DSN carries a password or sslmode; the password goes in PGPASSFILE and TLS in PGSSLMODE))
+	export PGSSLMODE=verify-full PGSSLROOTCERT='$(abspath $(RDS_CA))' PGPASSFILE='$(abspath $(PGPASSFILE))'; \
+	  cd apps/server && uv run python proto/audit.py --pg-dsn '$(PG_DSN)' $(if $(SESSION),--session '$(SESSION)',) \
+	  $(if $(TURN),--turn '$(TURN)',)
+
+.PHONY: proto-bounds-aws
+proto-bounds-aws: $(ENGINE_DEPS) ## U13: proto-bounds against the rehearsal — CASE= BASE= PG_DSN= NODE_PG_DSN= BUCKET= COOKIE_FILE= RDS_CA= EMAIL= [PROFILE=] [SESSION=] ARGS=…
+	@test -n "$(CASE)" || { echo "proto-bounds-aws: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
+	$(call proto_aws_require,proto-bounds-aws)
+	$(PROTO_AWS_ENV); cd apps/server && uv run python proto/bounds.py --target deployed \
+	  $(if $(PROFILE),--profile '$(PROFILE)',) --case '$(CASE)' --base '$(BASE)' --pg-dsn '$(PG_DSN)' \
+	  --email '$(EMAIL)' --s3-endpoint '$(AWS_S3_ENDPOINT)' $(if $(SESSION),--session '$(SESSION)',) $(ARGS)
 
 # D17 prep: a fixture's research.json / tree / sidecars into the Postgres+S3 store
 # through PgS3ProjectStore, and a web-tier session on that project. Prints the
@@ -571,8 +639,8 @@ proto-seed: $(ENGINE_DEPS) ## D17 prep: load a fixture into the store and open a
 # reads the hook allowed, denied attempts, and every completed call's duration against
 # the step ceiling. Exit 1 when criterion 3 fails.
 .PHONY: proto-audit
-proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session)
-	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',)
+proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows — SESSION=<id> (default: every session) [TURN=<id>]
+	cd apps/server && uv run python proto/audit.py $(if $(SESSION),--session '$(SESSION)',) $(if $(TURN),--turn '$(TURN)',)
 
 # D19: the D17 commands as one -- seed a fixture, post the harness's message for its
 # research question (`/research --autonomous …`), run to turn_done, print the acceptance
@@ -656,8 +724,8 @@ proto-compare: $(ENGINE_DEPS) ## D18: one table — FIXTURE=<slug> SESSION=<id> 
 PROTO_PG_DSN ?= postgresql://postgres:proto@localhost:5434/proto
 
 .PHONY: proto-web
-proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq
-	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns \
+proto-web: ## D11–12 web tier from the venv on :8085, against the compose postgres + elasticmq (a migrated database: make proto-migrate)
+	cd apps/server && PG_DSN=$(PROTO_PG_DSN) QUEUE_URL=http://localhost:9324/000000000000/turns DEV_LOGIN=true \
 	  $(PROTO_SQS_ENV) uv run python proto/web/app.py
 
 .PHONY: proto-drive
@@ -673,11 +741,13 @@ web-proto: $(JS_DEPS) ## Web client on the SSE transport against the prototype w
 # bucket one-shot — no worker, shim, queue or web tier. Same two-call shape as
 # proto-up-core: `--wait` on the one-shot exits 1 the moment it finishes, so the wait
 # names the two long-running services; the suite creates the bucket itself if the
-# one-shot has not finished by the time it starts.
+# one-shot has not finished by the time it starts. The schema (U9: no initdb) comes from
+# migrate.py run from the host venv, so the worker image is never built for it.
 .PHONY: proto-up-store
-proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot) and wait for health
+proto-up-store: ## D6–8 store: start postgres + minio (+ the bucket one-shot), wait for health, and migrate the schema
 	$(PROTO_COMPOSE) up -d postgres minio minio-init
 	$(PROTO_COMPOSE) up -d --wait postgres minio
+	cd apps/server && MIGRATE_PG_DSN=$(PROTO_PG_DSN) uv run python proto/migrate.py
 
 # Two arms. Static: the MinIO keys as GENEALOGY_S3_* (via PROTO_S3_*), with any exported
 # AWS_* keys unset so they cannot mask it. Keyless (U8): PROTO_S3_KEYLESS=1, the MinIO keys
@@ -786,6 +856,39 @@ replay-check: ## Acceptance check for the write-replay engine: reconstruct every
 	# comment. Run after any change to harness/replay.py.
 	cd eval/harness && uv run python scripts/check_replay_fidelity.py
 
+.PHONY: unit-relay-fidelity
+unit-relay-fidelity: ## How much of an agent's return survives the main thread's relay — offline report over committed unit run logs, never a gate
+	# NOT replay-check above, which is one letter away and replays e2e runs.
+	# Report only: the direct block measures the HARNESS DISPATCHER, not
+	# production, so nothing here gates a build or reaches the judge (#3188).
+	cd eval/harness && uv run python scripts/relay_fidelity_report.py
+
+.PHONY: replay-sizes
+replay-sizes: $(ENGINE_BUILD) ## Replay committed e2e tool calls against a base and a candidate engine build and diff answer sizes — zero model calls, zero network: make replay-sizes [BASE=<ref>] [TEST=<slug>] [TOOLS=a,b] [TRACKED_ONLY=1] [JSON=<path>]
+	# T1.4 of docs/plan/cost-latency-10x.md. Re-asks every recorded call to the
+	# local-state read tools (research_query, project_context, person_warnings,
+	# merge_warnings, validate_research_schema — ~36% of recorded answer chars)
+	# to the BASE build (default: merge-base with origin/main, built once into a
+	# cached sparse worktree under $$TMPDIR/genealogy-replay-builds/; remove with
+	# `git worktree remove <dir>`) and to the working-tree build, over
+	# research.json rebuilt as of each call (harness/replay.py) and the run's
+	# FINAL tree (approximate). The headline is candidate - base, never vs the
+	# recorded size. FamilySearch/wiki tools are listed as NOT REPLAYED (T1.4c).
+	# Exit 2: selection, usage or build error. Exit 3: the replay is not
+	# measuring what it claims (rebase broke, state errors over the margin, a
+	# read wrote files, a network call) — it refuses to print a misleading 0%.
+	cd eval/harness && uv run python -m e2e.replay_sizes $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TOOLS),--tools $(TOOLS),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+
+.PHONY: replay-collapse
+replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log walk against the one log×questionId call that replaces it (T2.1) — zero model calls: make replay-collapse [BASE=<ref>] [TEST=<slug>] [TRACKED_ONLY=1] [JSON=<path>]
+	# Proves the replacement returns EXACTLY the walk's question's entries (an
+	# oracle computed from the rebuilt notes), and that the walk it is compared
+	# against is the real one: each replayed walk call's count must equal the
+	# count the run recorded, else exit 3. Reports N walk calls -> M replacement
+	# calls. Exit 1 = the candidate lacks the filter; exit 2 = nothing comparable
+	# (e.g. every group unverifiable after a capture strip); exit 3 = integrity.
+	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
+
 .PHONY: eval-skill
 eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
@@ -809,8 +912,11 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	# the RAM measurement upward (#1026, `_MIN_AUTO_CONCURRENCY` in
 	# run_tests.py). This comment said "floor 4" until 2026-09-07 and sent a
 	# plan out with the wrong number.
+	#
+	# TOOL_SEARCH=0 loads every tool schema up front (default on, as the corpus
+	# runs). Experiment-only: the run log is a scratch_<ts>.json, never a candidate.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
-	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),)
+	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,)
 
 .PHONY: gate-skill
 gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]
@@ -901,7 +1007,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# entry point and reimplements this rather than shelling out to make.
 	# $(ENGINE_BUILD) rebuilds the MCP server only when stale. The run hits
 	# live FamilySearch (needs `login` first) and the judge needs an
-	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: ~20-60 min, $3-10.
+	# ANTHROPIC_API_KEY (shell or eval/.env). Expensive: about an hour and
+	# single-digit dollars, with a long tail.
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
 	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
@@ -918,6 +1025,9 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#                                                    NOT corpus-comparable: a 1M window changes the compaction count and
 	#                                                    cache-gap structure. Do NOT commit the run under eval/runlogs/e2e/ —
 	#                                                    CI rejects it (check_e2e_fixtures.py). Keep it in a sibling directory.
+	#   TOOL_SEARCH        0                             (default on; 0 loads every tool schema up front — experiment-only, refused
+	#                                                    without RUNLOG_ROOT outside eval/runlogs/e2e/, and silences the #941 backstop)
+	#   RUNLOG_ROOT        e.g. ../cost-latency-data/runs (default eval/runlogs/e2e/; where the run log is written)
 	# A/B these to find what clears a runaway-thinking subagent freeze
 	# (check subagents[].runaway_thinking; if it is empty, read
 	# subagent_capture_status before reading that as 'no runaway').
@@ -928,7 +1038,7 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# run's `compliance` is not comparable to a shadow run's (the blocked write
 	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
 .PHONY: e2e-view
 e2e-view: ## Load the latest e2e run into the Research Viewer (eval/e2e-view): make e2e-view TEST=kenneth-quass-death
@@ -996,7 +1106,8 @@ e2e-corpus: ## Three axes + violation detail over recent committed e2e runs: mak
 	# RECOMPUTE=1 also re-derives violations from tool_calls + committed sidecars
 	# (the stored field is a floor; pre-detector runs record none) and prints a
 	# spend line (recorded / estimated / unrecoverable, never blended). CALIBRATE=1
-	# reports the estimate's measured accuracy over runs carrying both (issue #1484).
+	# reports the estimate's measured accuracy over runs carrying both, less the
+	# multi-query runs, whose tokens cover their last query only (#1484, #3128).
 	cd eval/harness && uv run python -m e2e.corpus_report $(if $(TEST),--test $(TEST),) $(if $(SINCE),--since $(SINCE),) $(if $(RECOMPUTE),--recompute,) $(if $(CALIBRATE),--calibrate-cost,)
 
 .PHONY: e2e-panel
@@ -1095,8 +1206,9 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# the repo, is NOT windowed, and ignores TEST/WINDOWS/SINCE/REPLAY (#1558).
 	# SINCE=all for a maximum-sample replay.
 	# NOT a calibration tool: §7 is shadow-only permanently (its success gate
-	# cannot see skill completion — see guardrail-enforcement-spec.md §7 and
-	# `make e2e-skill-episodes`), so WINDOWS= compares are for reading the
+	# cannot see completion on either the Skill or the typed-spawn route — see
+	# guardrail-enforcement-spec.md §7 and `make e2e-skill-episodes`), so
+	# WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
 	# what runs stored: the seven post-hoc families (the §8 person_evidence
@@ -1130,17 +1242,27 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# continue-nudge with the seam it sits on and its hand-back class --
 	# step / silent / completion_claim, per classify_hand_back.
 	#
-	# A yield is NOT a defect: /research is meant to yield at every step
-	# boundary and in an e2e run the harness is the user, so a well-formed
-	# hand-back gets answered "Yes." A silent stop and a false completion claim
-	# are the defects. `step` reads 0 until a skill ends a turn on the hand-back
-	# line -- init-project and question-selection emit it since PR #2649,
-	# research/SKILL.md will with issue #2292 -- a zero is the correct result,
-	# not a broken classifier.
+	# Every yield before project.status == completed is vetoed with the
+	# worker's continue text (handoff U17), so every class is a stall. `step`
+	# is the hand-back line issue #2292 retired (PR #2870, 2026-09-27): runs
+	# since then should read 0, and earlier runs carry it from init-project
+	# and question-selection (PR #2649).
 	# `narration` replaced transcripts in #1238; committed .transcript.md files
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.
 	cd eval/harness && uv run python -m e2e.nudge_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-advisories
+e2e-advisories: ## Do the 4 advisory return-fields fire, and does the agent act? Over committed e2e runs (issue #3199): make e2e-advisories | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. For each advisory
+	# (unloggedSearches, nilSearchNeedsLog, sources-without-assertions,
+	# log-without-persistence) prints fired / acted / ignored /
+	# condition-never-held / not-observable, split by agent_type, with run and
+	# call denominators. Turns no advisory into a refusal -- it only measures;
+	# whether a note becomes a deny is the lead's call, made on these numbers.
+	cd eval/harness && uv run python -m e2e.advisory_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
@@ -1183,7 +1305,7 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-detector-diff
-e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|same-person-provenance|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
@@ -1210,12 +1332,33 @@ e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e
 	# distributed over its calls two stated ways (see the module docstring).
 	cd eval/harness && uv run python -m e2e.cache_window $(if $(TEST),--test $(TEST),) $(if $(MD),--markdown,) $(if $(SINCE),--since $(SINCE),)
 
-.PHONY: e2e-compaction
+.PHONY: e2e-report
+e2e-report: ## Readable .txt per e2e run, into eval/runlogs/e2e/<slug>/reports/: make e2e-report [TEST=<slug>] [FORCE=1]
+	# Every run already writes its own; this backfills the newest five runs per
+	# fixture (older reports are deleted; run logs are all kept). Pure
+	# formatting, no API. The judge's verdict, recall and findings stay HIDDEN
+	# until the run's .ann.json exists (spec §7.4 — runs are graded blind); a
+	# hidden report is re-rendered here once its run is graded. Gitignored.
+	cd eval/harness && uv run python -m e2e.run_report $(if $(TEST),--test $(TEST),) $(if $(FORCE),--force,)
+
+.PHONY: e2e-compare
+e2e-compare: ## Two runs of one e2e fixture side by side, saved as comparison/NN_comparison.txt: make e2e-compare TEST=<slug> | BEFORE=<run.json> AFTER=<run.json>
+	# Default: the fixture's two newest runs. Printed, and saved as the next
+	# numbered file in eval/runlogs/e2e/<slug>/comparison/ (newest five kept,
+	# gitignored). Verdict/recall only when BOTH runs are graded (spec §7.4).
+	cd eval/harness && uv run python -m e2e.run_compare $(if $(and $(BEFORE),$(AFTER)),--before $(abspath $(BEFORE)) --after $(abspath $(AFTER)),--test $(TEST))
+
+.PHONY: e2e-agent-spend
 e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): make e2e-agent-spend | TEST=<slug>
 	# Pure analysis, no API: reads committed run JSONs' subagents[].usage.
-	# Two columns per agent -- what it spends and whether it is in trouble --
+	# Per agent: what it spends, the models it ran on, whether it is in
+	# trouble, and its busiest moment (peak window) and compaction count --
 	# which is what Wave 4 of docs/plan/cost-latency-10x.md needs to decide
-	# which agent gets which model rung.
+	# which agent gets which model rung. A spawn from before a field existed
+	# is counted as not measured for that column, never as zero. Cost is per
+	# model (T1.11): each spawn at its recorded model's rate; a spawn with no
+	# model recorded at the flat Sonnet table, labelled; a model with no rate
+	# is listed as unpriced, never $0. Corpus basis (1-hour cache writes).
 	#
 	# Runs committed before #2582 carry no subagents[].usage. They are counted
 	# as UNCOVERED, never as zero: a $0.00 row would read as "this agent is
@@ -1225,6 +1368,7 @@ e2e-agent-spend: ## What each subagent costs, from subagents[].usage (#2582): ma
 	# rule, not by agent; some rule names merely coincide with an agent name.
 	cd eval/harness && uv run python -m e2e.agent_spend_report $(if $(TEST),--test $(TEST),)
 
+.PHONY: e2e-compaction
 e2e-compaction: ## record_search subjectId supply by compaction segment, over committed e2e runs (issue #1155): make e2e-compaction | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API: reads committed run JSONs' usage.timeline +
 	# tool_calls. A run is segmentable only from a run committed after
@@ -1300,6 +1444,24 @@ skill-latency: ## Per-skill output-token profile from unit runlogs: make skill-l
 		$(if $(SKILL),--skill $(SKILL) $(if $(VS_PREV),--vs-prev,),) \
 		$(if $(or $(SKILL),$(and $(BEFORE),$(AFTER))),,--all $(if $(MD),--markdown,)) \
 		$(if $(SINCE),--since $(SINCE),)
+
+.PHONY: unit-report
+unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/reports/: make unit-report [SKILL=<name>] [FORCE=1]
+	# Every harness run already writes its own report; this backfills older logs.
+	# Pure formatting, no API. Per test: result, turns, cost by model (the SDK's
+	# own per-model figure), judge cost, agent / judge / wall-clock time, and each
+	# thread's busiest moment. Removes reports whose run log was pruned (same
+	# keep-newest-5 retention). Skips logs that already have a report; FORCE=1
+	# rewrites them (needed after a log is rehashed or released under a new name).
+	# The reports/ folders are gitignored — regenerate, don't commit.
+	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
+
+.PHONY: unit-compare
+unit-compare: ## Compare a skill's newest unit run with the one before it, printed: make unit-compare SKILL=<name> | BEFORE=a.json AFTER=b.json
+	# Pure formatting, no API. Per test in BOTH runs: result, cost, change %,
+	# turns, seconds, busiest moment; plus which files the runs depended on
+	# changed between them. Totals cover only tests present in both runs.
+	cd eval/harness && uv run python -m unit_run_compare $(if $(and $(BEFORE),$(AFTER)),--before $(abspath $(BEFORE)) --after $(abspath $(AFTER)),--skill $(SKILL))
 
 .PHONY: e2e-scratch
 e2e-scratch: $(ENGINE_BUILD) ## Set up a throwaway dir (outside the repo) to run /research by hand against a fixture: make e2e-scratch TEST=kenneth-quass-death

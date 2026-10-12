@@ -193,6 +193,8 @@ describe("extraction_append: only the three call shapes", () => {
     expect((two.errors ?? []).join(" ")).toMatch(/`recordIds` and `absences` together/);
   });
 
+  // ─── research_append is untouched ─────────────────────────────────────────
+
   it("research_append still accepts person_evidence (the lane is per-tool, not global)", async () => {
     await writeProject();
     // #1731 step 3 refuses a link with no recorded same_person score. This test

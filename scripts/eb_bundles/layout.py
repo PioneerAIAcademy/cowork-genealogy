@@ -9,8 +9,8 @@ from __future__ import annotations
 
 TIERS = ("web", "worker", "tools")
 
-# Beanstalk's AppDeployDir on the AL2023 platforms (unmeasured on the target account;
-# U13 confirms it with `get-config platformconfig`).
+# Beanstalk's AppDeployDir on the AL2023 platforms: `get-config platformconfig` read
+# `/var/app/current/` on the rehearsal's worker (U13, 2026-10-07).
 APP_DIR = "/var/app/current"
 
 # The RDS CA bundle, shipped in every tier, and the absolute path its template names.
@@ -39,6 +39,19 @@ TMPDIR = "/tmp"
 
 # The SPA's directory at the web tier root; the template's WEB_DIST_DIR.
 WEB_DIST_DIR = "web-dist"
+
+# U11: compose, harness and debug switches, never in a tier's template, hook or image.
+# DEV_PATHS and DEV_LOGIN are two of the DEV_ prefix. AUTONOMOUS_MAX_NUDGES is the web tier's operator
+# cap; on the worker it is the cap for a message without one, which only the dev CLI sends.
+# WORKER_TURN_USERS=none runs every turn's CLI as the worker's own user.
+DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")
+DEV_VARIABLES = frozenset({"BLOCKED_TOOLS", "SQS_ENDPOINT", "QUEUE_NAME", "FAMILYSEARCH_CONFIG"})
+DEV_VARIABLES_BY_TIER = {
+    "web": frozenset(),
+    "worker": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
+    "tools": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
+}
+DEV_VALUES = {"WORKER_TURN_USERS": "none"}
 
 # Repo-relative sources.
 TEMPLATE_DIRS = {tier: f"apps/server/proto/eb-{tier}" for tier in TIERS}

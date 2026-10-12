@@ -14,8 +14,9 @@ Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 |---|---|
 | `POST /mcp` | Stateless Streamable HTTP, JSON responses (`sessionIdGenerator: undefined`, `enableJsonResponse: true`). One `Server` + transport per request, closed after the response. |
 | `GET` / `DELETE` / anything else on `/mcp` | `405`, `Allow: POST`, `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}` — answered by the entrypoint before any transport exists, so a client's post-initialize `GET` never gets a held-open SSE stream. The SDK client and the Claude Code CLI treat that 405 as "no server-push stream" and continue. |
-| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
+| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`, and `turns`, which the claim fence reads) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
 | `X-Genealogy-Project-Id` (request header) | The project the request's tools run against, matched against `PROJECT_ID_RE` (`src/store/project-id.ts`). Exactly one value; malformed or duplicated → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid X-Genealogy-Project-Id header."},"id":null}` before any transport exists. |
+| `X-Genealogy-Turn-Id` + `X-Genealogy-Claim-Epoch` (request headers, optional) | The claim fence (U6): the worker attempt's turn id (the `PROJECT_ID_RE` shape) and its `claim_epoch` (`[1-9][0-9]{0,17}`), both or neither. Exactly one of the two, a duplicated value, one that misses its pattern after trimming, or a fence without `X-Genealogy-Project-Id` → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, once each, with X-Genealogy-Project-Id."},"id":null}` before any transport exists. |
 | any other path | `404` JSON. |
 
 **Header → principal.** `Authorization: Bearer <token>` becomes
@@ -48,6 +49,20 @@ instruction as an `isError` result. The process store is the same unbound store,
 path — inside a request or outside one — ever reaches `FsProjectStore`. Malformed → `400`,
 above.
 
+**Header → fence.** `X-Genealogy-Turn-Id: <turn>` with `X-Genealogy-Claim-Epoch: <n>` adds
+`fence: { turnId, claimEpoch }` to that request's store. A fenced store writes only inside a
+transaction — `writeJson`, `writeBytes` and `remove` get one of their own instead of
+autocommitting — and that transaction runs `CLAIM_PRECHECK_SQL` right after `BEGIN` and
+`CLAIM_FENCE_SQL` (the same `turns` lookup on turn, project and epoch, `FOR SHARE`) right
+before `COMMIT`. When a newer claim of the turn has moved `claim_epoch` on, the write rolls
+back (the objects it put are deleted) and the tool answers `isError` with `StaleClaimError`'s
+text: "This turn was taken over by a newer attempt (turn <id>: claim epoch <n> is no longer
+current), so this write was rolled back and nothing was saved. Stop working on this turn."
+The share lock conflicts with the claim's row lock, so a commit racing an in-flight claim
+waits for it and then re-reads the epoch. Reads are never fenced. Without the pair the store
+autocommits exactly as before. The worker sends the pair on every call
+(`options.tool_server_headers`).
+
 `baseConfig` is `~/.familysearch-mcp/config.json`, read once at startup with
 `loadConfig(LOCAL)`, and then `WIKI_API_URL`, `POP_STATS_URL`, `OPENROUTER_API_KEY` and
 `OPENROUTER_MODEL` from the environment over it (`src/hosted-config-env.ts`), and only
@@ -75,8 +90,10 @@ smoke names all three.
 - **Compose** (`make proto-up`, or `docker-compose -f apps/server/proto/docker-compose.yml up -d --build tools`
   on a machine without the compose plugin): service `tools`, container `proto-tools`,
   `read_only: true` with `/tmp` the only tmpfs, the `GENEALOGY_*` store block,
-  `depends_on` `postgres` and `minio` `service_healthy`. The image is built from the
-  **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
+  `depends_on` `postgres` and `minio` `service_healthy` and `migrate`
+  `service_completed_successfully`, so `up -d --build tools` also runs the one-shot
+  `migrate` service (U9) first; the tools tier itself runs no DDL. The image is built
+  from the **repo root** (`Dockerfile` here): the root `.dockerignore` already drops
   `node_modules`/`.claude`/`eval`/`releases`, and `src/` is compiled inside the image — the
   host's `build/` is never copied. `proto-up-core` and `proto-smoke` do not include it.
 - **Host process**: `cd packages/engine/mcp-server && GENEALOGY_PG_DSN=… GENEALOGY_S3_ENDPOINT=… GENEALOGY_S3_BUCKET=… [GENEALOGY_S3_ACCESS_KEY=… GENEALOGY_S3_SECRET_KEY=…] node build/http.js [--host 127.0.0.1] [--port 8787]`
@@ -127,7 +144,8 @@ mcp_servers={"genealogy": {"type": "http", "url": "http://tools:8787/mcp",
                                        "X-Genealogy-Project-Id": "<project id>"}}}
 ```
 
-Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
+The URL is the worker's `TOOL_SERVER_URL`, required with no default (U11); compose sets
+the value above. Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
 from the patron's row, the project id from the turn. The project header is always sent; the
 bearer only when there is a token. Nothing on this service caches either. This is the
 worker's only tool server; the worker itself carries no Node, no engine and no S3
@@ -137,9 +155,11 @@ credentials.
 
 `apps/server/tests/test_proto_config.py` (`make proto-test`): the service is read-only with
 `/tmp` the only tmpfs (no `/projects`), publishes on loopback only, depends on `postgres`
-and `minio` `service_healthy`, reads the Postgres the worker reads (`GENEALOGY_PG_DSN` is
-the worker's `PG_DSN`) under the worker's anchor (`GENEALOGY_ANCHOR_PATH` is its
-`WORKER_CWD`), and `proto-up` waits on it while `proto-up-core` does not.
+and `minio` `service_healthy` and on `migrate` completing
+(`test_migrate_is_the_only_schema_applier`), reads the Postgres the worker reads
+(`GENEALOGY_PG_DSN` is the worker's `PG_DSN`) under the worker's anchor
+(`GENEALOGY_ANCHOR_PATH` is its `WORKER_CWD`), and `proto-up` waits on it while
+`proto-up-core` does not.
 `apps/server/tests/test_proto_worker.py` pins the consumer's two headers.
 `packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz` 200/503 from the readiness report and the spawned server's 503 with both stores unreachable,
 no-`LOCAL`, per-request bearers, per-request stores that cannot read each other, the

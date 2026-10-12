@@ -303,7 +303,7 @@ Written host-side by the tool that computed it, so the payload never round-trips
 through the model on the legitimate path. That is what `match_score` alone never
 was (ADR-0009 constraint 2). **It is not yet unforgeable.**
 `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers `research.json`,
-`tree.gedcomx.json` and `starting-tree.gedcomx.json` only, so nothing stops a raw
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` and `external-collections.json` only, so nothing stops a raw
 `Write` to `results/.scores/` from inside the VM: the model cannot produce the
 payload, but it can author the file. Closing that is a precondition for the
 refusal step trusting this record, and it touches ADR-0005, which owns the list.
@@ -889,7 +889,6 @@ export const samePersonSchema = {
 - **Tree-merge use case.** The platform endpoint `api.familysearch.org/platform/tree/persons/matches` is a different operation (find merge candidates for a tree person). If we eventually want that, it's a separate tool.
 - **Restructuring the input GedcomX.** The tool passes whatever the LLM provides through `toGedcomX()` unchanged. It does not re-assemble persons, build relationships, or normalize ids. If the input has parents-and-relationships, they go to the API. If it's focus-only, that goes too. The only modification is appending one `sourceDescription` for the primary anchor.
 - **Deduplicating ids across `gedcomx1` and `gedcomx2`.** The two documents live in separate `entries[]` items in the API request, so they don't share an id namespace. Both sides may use `"I1"` independently with no problem. The tool does NOT rewrite ids to make them unique across sides.
-- **Companion plan doc** (`docs/plan/match-two-examples-tool.md`) and **testing guide** (`docs/testing-guides/match-two-examples-tool-testing-guide.md`). Per CLAUDE.md convention these should exist alongside the tool — they'll be added during the implementation PR, not in the spec PR.
 
 ---
 

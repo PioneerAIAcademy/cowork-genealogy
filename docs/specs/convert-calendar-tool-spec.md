@@ -2,9 +2,7 @@
 
 > **Status:** New (2026-06-19). Migrates the deterministic arithmetic the
 > `convert-dates` skill currently performs **by hand in context** into a tested
-> MCP tool. The skill's own SKILL.md already anticipates this: *"A
-> `convert_calendar` tool is specced for the future but is **not yet
-> implemented**"* (`convert-dates/SKILL.md:64`). The LLM keeps every judgment
+> MCP tool. The LLM keeps every judgment
 > (which jurisdiction/era applies, whether conversion is even needed, which
 > correction was asked for); the tool does only the arithmetic.
 
@@ -23,15 +21,14 @@ convert_calendar({ date, corrections }) -> { original, converted, applied, notes
 ## 1. Why this exists
 
 Calendar conversion is the one place in the catalog where a hand-arithmetic slip
-changes the **year**, not just the day — `convert-dates/SKILL.md:142` lists "a
-date seems 'off by one year'" as a trigger, and the OS/NS rule (`SKILL.md:98–110`)
+changes the **year**, not just the day — the OS/NS rule (§4.2)
 turns "15 February 1720" into 1721. The century-dependent Julian→Gregorian offset
 (10/11/12/13 days across the 1700/1800/1900 leap-skip thresholds,
-`SKILL.md:84–87`) and the pre-/post-1752 Quaker month shift (`SKILL.md:126–129`)
+§4.4) and the pre-/post-1752 Quaker month shift (§4.3)
 are equally mechanical and equally easy to get wrong by a day or a month. A wrong
 result also propagates: `conflict-resolution` uses the *expected* offset to decide
 whether two dates that differ are a real conflict or a calendar artifact
-(`SKILL.md:31–36`; `convert-dates/references/calendar-conflicts.md` carried this
+(`packages/engine/plugin/skills/conflict-resolution/SKILL.md` §"4. Apply the seven weighing factors (GPS Standard 47-48)"; `convert-dates/references/calendar-conflicts.md` carried this
 until it was deleted, its numbers having moved into §4.5) — a miscomputed
 offset silently suppresses a real conflict or fabricates a fake one.
 
@@ -45,13 +42,12 @@ deterministic. It belongs in tested code.
 
 | Fact | Source |
 |------|--------|
-| The skill is knowledge-only today; conversion is "deterministic arithmetic you perform in context"; a `convert_calendar` tool is specced-but-unbuilt | `packages/engine/plugin/skills/convert-dates/SKILL.md:62–65` |
-| Julian→Gregorian offset table by jurisdiction + the "grows one day each skipped Julian leap year (1700→11, 1800→12, 1900→13)" rule, with the Feb-29-Julian threshold | `convert-dates/SKILL.md:71–87` |
-| OS/NS: legal year began March 25; dates Jan 1–Mar 24 are the "previous" year by modern reckoning; double-dated "1750/1" → use the **later** year | `convert-dates/SKILL.md:94–110, 198, 202` |
-| Quaker numbered months; the 1752 shift (before: 1st month = March; after: 1st month = January); 11th/12th month roll into the next year before 1752 | `convert-dates/SKILL.md:112–129` |
-| "Answer only the calendar question that was asked" — each correction is a **separate** operation; do not bundle unprompted | `convert-dates/SKILL.md:220–229` |
+| Julian→Gregorian offset table by jurisdiction + the "grows one day each skipped Julian leap year (1700→11, 1800→12, 1900→13)" rule, with the Feb-29-Julian threshold | `convert-dates/SKILL.md` §"Julian vs. Gregorian" at `d0915210` |
+| OS/NS: legal year began March 25; dates Jan 1–Mar 24 are the "previous" year by modern reckoning; double-dated "1750/1" → use the **later** year | `convert-dates/SKILL.md` §"Old Style / New Style (England and colonies)" at `d0915210` |
+| Quaker numbered months; the 1752 shift (before: 1st month = March; after: 1st month = January); 11th/12th month roll into the next year before 1752 | `convert-dates/SKILL.md` §"Quaker double-dating" at `d0915210` |
+| "Answer only the calendar question that was asked" — each correction is a **separate** operation; do not bundle unprompted | `packages/engine/plugin/agents/convert-dates.md` §"Rules" |
 | Standardized-date parsing/representation already exists | `src/utils/date-standardize.ts` (`stdDate`), `src/utils/date-helpers.ts` (`getDayRange`, `earliestYear`, `latestYear`) |
-| The skill writes nothing — output-only, idempotent | `convert-dates/SKILL.md:231–242` |
+| The skill writes nothing — output-only, idempotent | `packages/engine/plugin/agents/convert-dates.md` §"Re-invocation behavior" |
 
 ---
 
@@ -113,7 +109,7 @@ applied — the tool never "helpfully" bundles one the caller didn't ask for.
 ```
 
 The skill narrates from `applied`/`notes` and keeps presenting the original
-alongside the converted date (`SKILL.md:209–211`); the tool never persists
+alongside the converted date (`packages/engine/plugin/agents/convert-dates.md` §"Rules"); the tool never persists
 anything (§6).
 
 ---
@@ -138,13 +134,13 @@ noted, not refused.
 ### 4.2 `osNsYear`
 If the (calendar) `month`/`day` falls on or after **January 1** and on or before
 **March 24**, add 1 to `converted.year`; otherwise no change
-(`SKILL.md:98–101, 198`). Requires `month` (and `day` when the date is in March,
+(`convert-dates/SKILL.md` §"Old Style / New Style (England and colonies)" at `d0915210`). Requires `month` (and `day` when the date is in March,
 to test the ≤24 boundary). The day and month are unchanged — this is the
 year-start correction only.
 
 ### 4.3 `quakerMonth`
 Interpret `date.month` as a Quaker ordinal (1–12) and map to a calendar month
-(`SKILL.md:117–129`):
+(`convert-dates/SKILL.md` §"Quaker double-dating" at `d0915210`):
 - **`post_1752`:** calendar month = ordinal (1st month = January).
 - **`pre_1752`:** calendar month = `((ordinal + 1) % 12) + 1` shifted so 1st = March,
   …, 10th = December, **11th = January of `year + 1`**, **12th = February of
@@ -155,7 +151,7 @@ Interpret `date.month` as a Quaker ordinal (1–12) and map to a calendar month
 Add the era-appropriate offset to the Julian `year/month/day`, rolling month/year
 over correctly (and respecting Julian leap years). The offset is a pure function
 of the Julian date, keyed off the skipped-Julian-leap thresholds
-(`SKILL.md:84–87`):
+(`convert-dates/SKILL.md` §"Julian vs. Gregorian" at `d0915210`):
 
 | Julian date range | Offset (days) |
 |-------------------|---------------|
@@ -262,7 +258,7 @@ Then `gregorianFromJDN(FR_EPOCH_JDN + daysSinceEpoch)`.
 
 ### 5b. Single-correction discipline
 The `corrections` object is how the spec's "answer only the calendar question that
-was asked" rule (`SKILL.md:220–229`) becomes structural: the caller passes exactly
+was asked" rule (`packages/engine/plugin/agents/convert-dates.md` §"Rules") becomes structural: the caller passes exactly
 the corrections the user asked for, and the tool applies exactly those. Asking for
 the New-Style **year** of "15 February 1750/1" → `{ doubleDatedYear: true }` (or
 `{ osNsYear: true }`) and nothing else; the day offset is not applied unprompted.
@@ -298,7 +294,7 @@ to illustrate that they agree.
 
 - **Writes nothing.** Like the skill it replaces, the tool is output-only — it
   returns the conversion; it does not touch `research.json` or `tree.gedcomx.json`
-  (`SKILL.md:231–238`). Assertions keep the original record date; the conversion is
+  (`packages/engine/plugin/agents/convert-dates.md` §"Re-invocation behavior"). Assertions keep the original record date; the conversion is
   interpretation shown to the user. (No project write layer, no validation pass.)
 - **Identifies the regime when told the place — reversed 2026-09-07.** This
   section previously read "Does not identify the regime". With
@@ -391,7 +387,7 @@ to illustrate that they agree.
 - `conflict-resolution` — calls `convert_calendar` (or reads `applied[].offsetDays`)
   to get the **expected** offset between two jurisdictions, so a date difference
   that matches the calendar offset is correctly classified as an artifact, not a
-  conflict (`SKILL.md:31–36`).
+  conflict (`packages/engine/plugin/skills/conflict-resolution/SKILL.md` §"4. Apply the seven weighing factors (GPS Standard 47-48)").
 
 ---
 

@@ -8,7 +8,7 @@ import { normalizeString } from "./string-similarity.js";
 // BUNDLED_CLIENT_CONFIG_PATH in auth/config.ts.
 const CONFIG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../config");
 
-/** The table behind fulltext_search / image_transcribe's hidden expansion. */
+/** The table behind image_transcribe's hidden expansion (expandLookingFor). */
 export const GIVEN_NAME_VARIANTS_PATH = resolve(CONFIG_DIR, "given-name-variants.json");
 
 /** The table behind get_name_variants (issue #2325). */
@@ -252,100 +252,6 @@ export function lookupNameVariants(
   const { map, error } = ensureNicknameTableLoaded(tablePath);
   if (error && opts.strict) throw new Error(error);
   return map.get(normalizeString(name)) ?? [];
-}
-
-// Tokens that start with an operator or contain special Lucene syntax
-// should not be expanded — the user chose explicit query syntax.
-function hasOperator(token: string): boolean {
-  return /^[+\-"]/.test(token) || token.includes("*") || token.includes('"');
-}
-
-// A form containing a period risks Lucene field-access parse errors inside
-// an unquoted OR group — exclude from fulltext expansion, keep for VLM.
-function hasPeriod(form: string): boolean {
-  return form.includes(".");
-}
-
-/**
- * Given a full name string (e.g. "Elizabeth Martin"), expand the first
- * recognized given name into quoted-phrase variants for fulltext_search.
- *
- * FamilySearch's q.fullName does not support (A OR B) syntax — parentheses
- * and OR are treated as literal text. Instead, each variant is combined with
- * the remaining tokens as a separate quoted phrase:
- *   "Elizabeth Martin" "Betty Martin" "Bess Martin"
- *
- * Returns null if no expansion applies (no recognized given names, all
- * tokens use explicit operators, or the input contains double quotes).
- *
- * Only the first recognized given-name token is expanded — expanding
- * surname-position tokens dissolves the only discriminating half of the
- * query (e.g. "Mary Thomas" would fan "Thomas" to Thos, which is wrong).
- *
- * Period-containing forms (scribal abbreviations like "Eliz.") are excluded
- * to avoid Lucene parse errors.
- */
-export function expandNameForFulltext(name: string): NameExpansionResult | null {
-  // Bail if the input contains quotes — the caller chose explicit phrase
-  // syntax, and inserting our own quotes would corrupt it.
-  if (name.includes('"')) return null;
-
-  const tokens = name.split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return null;
-
-  // If any token uses an operator, bail entirely — the caller chose explicit
-  // query syntax and expansion would interfere.
-  if (tokens.some(hasOperator)) return null;
-
-  // Find the first token that matches a name family.
-  let expandedIndex = -1;
-  let family: NameFamily | null = null;
-  for (let i = 0; i < tokens.length; i++) {
-    family = lookupNameFamily(tokens[i]);
-    if (family) {
-      expandedIndex = i;
-      break;
-    }
-  }
-
-  if (expandedIndex === -1 || !family) return null;
-
-  const expandedToken = tokens[expandedIndex];
-  const forms = family.allForms.filter((f) => !hasPeriod(f));
-  if (forms.length <= 1) return null;
-
-  // Put the original token first, then the other variants.
-  const originalNorm = normalizeString(expandedToken);
-  const ordered = [
-    expandedToken,
-    ...forms.filter((f) => normalizeString(f) !== originalNorm),
-  ];
-
-  // Build one quoted phrase per variant, combining it with the unchanged
-  // remaining tokens. For a single-token name, emit unquoted variants
-  // (no surname context to phrase-wrap with).
-  const otherTokens = tokens.filter((_, i) => i !== expandedIndex);
-  let expanded: string;
-
-  if (otherTokens.length === 0) {
-    // Single token — space-separated variants, no quotes needed.
-    expanded = ordered.join(" ");
-  } else {
-    // Multi-token — each variant combined with the other tokens as a phrase.
-    const phrases = ordered.map((variant) => {
-      const parts = [...tokens];
-      parts[expandedIndex] = variant;
-      return `"${parts.join(" ")}"`;
-    });
-    expanded = phrases.join(" ");
-  }
-
-  const others = forms.filter((f) => normalizeString(f) !== originalNorm);
-  const expansions: Record<string, string[]> = {
-    [expandedToken]: others,
-  };
-
-  return { expanded, expansions };
 }
 
 // Words that are both given-name variants and common English words.

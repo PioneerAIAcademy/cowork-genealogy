@@ -40,14 +40,19 @@ const EXCLUDED: Record<string, string> = {
     "returns extraction_append's code-written summary verbatim (lead, 2026-09-29)",
   "project-status.md":
     "returns the user-friendly and detailed summaries, warnings first, as its whole output, by its own contract",
+  // Issue #2796, applying issue #2793's "PS return: A" ruling (2026-09-24): the
+  // agent writes nothing, so the per-source findings ARE the deliverable, and a
+  // summary_for_user paragraph (no identifiers) printed in place of the return
+  // would drop them in a production relay while the unit harness, which relays
+  // the whole return, stayed green.
+  "source-evaluation.md": "returns the audit report as its whole output; it writes nothing, so the report is the deliverable",
 };
 
 const PENDING: Record<string, string> = {
-  "person-evidence.md": "lands with its next body edit (issues #2272 / #2537)",
   "research-exhaustiveness.md": "lands with its next body edit",
   "gps-mentor.md":
     "lands with the narrative_for_user split (spec §8, §11.1) on its next body edit",
-  // NOT "lands with its next body edit" like the three above. This one is a
+  // NOT "lands with its next body edit" like the two above. This one is a
   // measured conflict, and the premise of the 2026-09-18 ruling does not hold
   // for it: that ruling exists because "an agent body without the field is an
   // agent whose work reaches the researcher as nothing", and this agent's

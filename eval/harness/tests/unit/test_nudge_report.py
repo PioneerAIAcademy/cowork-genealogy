@@ -50,7 +50,7 @@ def test_reads_a_nudge_from_narration_with_the_tool_it_yielded_after(tmp_path):
     # every seam in the report.
     assert nudge.after_tool == "mcp__genealogy__research_append"
     assert nudge.seam == "plan-written"
-    # Free prose naming a next step is NOT a hand-back: #2292 specifies a literal
+    # Free prose naming a next step is NOT a hand-back: the ruled form is a literal
     # closing line and this fixture does not carry it. Under the old ANNOUNCE_RE this
     # asserted True, which is exactly the free-prose matching the lead set aside.
     assert nudge.hand_back == "silent"
@@ -107,7 +107,7 @@ def test_seam_is_other_when_nothing_matches_and_hand_back_class_is_independent()
     assert seam == "other"
     assert hand_back == "step"
     # Free prose that merely NAMES the next step is not a hand-back — this is the
-    # case the old ANNOUNCE_RE counted and #2292's literal form does not.
+    # case the old ANNOUNCE_RE counted and the literal form does not.
     seam, hand_back = classify("Unrelated prose. Proceeding to person-evidence.", "")
     assert hand_back == "silent"
 

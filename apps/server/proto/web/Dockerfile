@@ -1,7 +1,8 @@
 # Prototype web tier (apps/server/proto/web). Build context is the REPO ROOT (as for the
 # tools image) so the image carries enqueue.py (the SQS client app.py imports), grants.py
-# (the grant custody it shares with the worker, U3), sql/
-# (applied at start), the engine's bundled FamilySearch client config, which web/auth.py
+# (the grant custody it shares with the worker, U3), migrate.py and sql/ (U9: the start
+# reads the ledger against these files and runs no DDL; `python migrate.py` from /app is the
+# one applier), the engine's bundled FamilySearch client config, which web/auth.py
 # reads for sign-in -- that file is the client id's sole source (CLAUDE.md, auth) -- and
 # the SSE build of apps/web, which web/spa.py serves at /. Nothing from apps/server/app is
 # copied: web/auth.py and web/spa.py are vendored ports, not imports.
@@ -43,6 +44,7 @@ RUN pip install --require-hashes -r requirements.txt
 
 COPY apps/server/proto/enqueue.py ./
 COPY apps/server/proto/grants.py ./
+COPY apps/server/proto/migrate.py ./
 COPY apps/server/proto/sql ./sql
 COPY apps/server/proto/web ./web
 COPY packages/engine/mcp-server/config/familysearch.json ./config/familysearch.json

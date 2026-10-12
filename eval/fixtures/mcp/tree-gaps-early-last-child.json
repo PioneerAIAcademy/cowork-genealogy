@@ -1,0 +1,53 @@
+{
+  "tool": "tree_gaps",
+  "description": "CONSTRUCTED for the tree-survey unit suite (issue #3273) -- one hole: last child born when the mother was 28, she lived to 70. Shape follows docs/specs/tree-gaps-tool-spec.md, Output.",
+  "args": {
+    "personId": "TGAP-ROT"
+  },
+  "response": {
+    "root": {
+      "personId": "TGAP-ROT",
+      "name": "Walter Ashby"
+    },
+    "gaps": [
+      {
+        "type": "early_last_child",
+        "personId": "TGAP-GF3",
+        "name": "Samuel Ashby",
+        "lifespan": "1855-1920",
+        "generation": 1,
+        "detail": "Last recorded child born 1888, when the mother was 28.",
+        "yearRange": {
+          "start": 1889,
+          "end": 1903
+        },
+        "place": "Dayton, Montgomery, Ohio, United States",
+        "coverage": {
+          "collections": 9,
+          "records": 4200000,
+          "recordTypes": [
+            "CENSUS",
+            "CHURCH_RECORD",
+            "VITAL"
+          ],
+          "censusYears": [
+            1890,
+            1900
+          ],
+          "placeLevel": "locality"
+        },
+        "spouseId": "TGAP-GM3",
+        "spouseName": "Ida Marsh"
+      }
+    ],
+    "scanned": {
+      "ancestorGenerations": 8,
+      "descendantGenerations": 4,
+      "persons": 40,
+      "descendancyReads": 9,
+      "stoppedEarly": false,
+      "stopReason": null
+    },
+    "notes": []
+  }
+}

@@ -235,8 +235,10 @@ folds a candidate document.
 
 ### 5.7 Post-materialization
 
-Run `check-warnings` (final mode) on each affected anchor; verify
-`research.json` reference integrity. (`materialize_facts` and the `tree_edit`
+Verify `research.json` reference integrity. `check-warnings` is no longer a
+required post-merge step: the merge tools refuse a write that introduces an
+unjustified genealogical warning, so the impossibility this step looked for is
+refused at the write boundary. (`materialize_facts` and the `tree_edit`
 edge writes validate the would-be project before persisting and write nothing on
 a call-introduced error (pre-existing drift rides as a warning) —
 `tree-materialization-spec.md` §4.1.)
@@ -510,6 +512,10 @@ candidate / relative mobs (warnings).
 `hasEventBeforeBirth365_2`, `hasChristeningBeforeBirth`, `hasBurialBeforeDeath`,
 `hasAgeRangeGreaterThan120`, `hasDeathBeforeChildBirth*`,
 `hasEventsOutsideLifespanFar` — biological/temporal impossibilities.
+`hasEventBeforeBirth365_2` reads each date as generously as it allows
+(`person-warnings-tool-spec.md`, its divergence note), so a cross-record
+spread of approximate births (`Abt 1850` / `Abt 1853`) does not block; that
+spread is advised by `birthRangeGreaterThan3` / `birthLikeRangeGreaterThan8`.
 
 **Advise (`warning`):** the parent-age, marriage-timing, too-many-*, similar-*,
 close-child, `hasChildDeathAfterParentBirth200` / `hasDeathAfterChildBirth90`

@@ -109,8 +109,9 @@ whatever their id looks like.
 
 Which kind a given document uses is the writer's call, made once per
 document: `person_read` snapshots (e.g. e2e fixture trees) preserve FS PIDs;
-project trees built by `init-project` deliberately synthesize `I` ids for
-**all** persons, FS-seeded ones included (see `init-project/SKILL.md`). Both
+project trees deliberately synthesize `I` ids for **all** persons, FS-seeded
+ones included; `project_create` assigns them when it builds the starting tree
+from a staged `person_read` (`project-create-tool-spec.md` §4). Both
 are valid documents under this spec.
 
 ---
@@ -246,10 +247,11 @@ Source references appear on persons, names, facts, and relationships, and link
 the holder to a source description with a locator.
 
 **On a person, a ref says only that the source is attached to that person.**
-FamilySearch attributes sources at the person level and essentially nowhere
-else (lead probe, 2026-09-20: 25 of 25 persons carry them, 0 of 157 facts and
-0 of 31 names), so `person_read` carries them here rather than discarding the
-only attribution it has. FamilySearch's `tags` on these refs are not carried: a
+FamilySearch attributes sources at the person level, on relationships, and
+essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons carry them,
+0 of 157 facts and 0 of 31 names), so `person_read` carries a person's here,
+and a relationship's on its edges (`person-read-tool-spec.md`, "5.
+Relationships"), rather than discard either. FamilySearch's `tags` on these refs are not carried: a
 `Name` tag says the record carries *a* name for the person, not *this* name,
 so it cannot attest a value, and 86% of refs carry none. Which source supports
 which name or fact is not decided here; that is source evaluation's job. The
@@ -392,6 +394,9 @@ catches is otherwise invisible: a lowercase `birth` copied across from
 `research.json` looks like a plausible value, passes every enum check that
 treats the list as open, and then hard-fails `tree_edit` mid-run. Name types
 carry no such constraint, but should follow the same PascalCase convention.
+A FamilySearch custom fact type is a label a user typed, so it can start with a
+lowercase letter, a quote or a digit; the converter tidies it to meet this rule
+before any tree is built from it (gedcomx-convert-spec.md §5.5).
 
 ---
 

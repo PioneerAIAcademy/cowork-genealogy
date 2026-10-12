@@ -1,5 +1,6 @@
 -- U3: grant custody (docs/plan/familysearch-handoff.md, U3; list 3 step 19). Idempotent
--- like every file here: the web tier and the worker apply sql/*.sql at each start.
+-- like every file here: applied once by `migrate.py`, which re-runs every file once on a
+-- database that predates its ledger (U9).
 --
 -- The web tier is the only refresher (proto/grants.py holds every statement that reads or
 -- writes these columns, so the two tiers cannot drift):

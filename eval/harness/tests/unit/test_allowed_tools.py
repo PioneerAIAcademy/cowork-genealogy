@@ -152,14 +152,6 @@ def test_referenced_but_missing_agent_is_ignored(tmp_path):
 # silently restoring a 700 KB-capped path.
 
 
-def test_search_full_text_does_not_union_image_read():
-    tools = compute_allowed_tools("search-full-text", PLUGIN_SKILLS)
-    # Non-vacuity: the union must have actually run and picked up the surviving
-    # reader, or `not in` below would pass on an empty set.
-    assert "mcp__genealogy__image_transcribe" in tools
-    assert "mcp__genealogy__image_read" not in tools
-
-
 def test_search_images_does_not_union_image_read():
     tools = compute_allowed_tools("search-images", PLUGIN_SKILLS)
     assert "mcp__genealogy__image_transcribe" in tools
@@ -181,10 +173,11 @@ def test_skill_refs_finds_every_declared_callee():
     from harness.allowed_tools import skill_refs_for_skill
 
     callees = skill_refs_for_skill(PLUGIN_SKILLS / "search-records" / "SKILL.md")
+    # search-external-sites left this list when it became an agent (issue
+    # #2802): search-records now spawns it, so it is no `Skill()` callee.
     assert callees == [
         "project-status",
         "research-plan",
-        "search-external-sites",
     ]
 
 
@@ -239,8 +232,8 @@ def test_skill_refs_for_missing_file_is_empty(tmp_path):
 def test_run_skills_callee_brings_its_own_agents_tools():
     """The union follows the AGENT axis one level down, not just the skill's.
 
-    `search-external-sites` delegates to `@plugin:record-structurer`. Union only
-    its `allowed-tools` and the callee runs holding fewer tools than it does
+    `research-plan` delegates to `@plugin:search-external-sites`. Union only its
+    `allowed-tools` and the callee runs holding fewer tools than it does
     standalone — and the failure is silent improvisation, not an error, which
     is the whole bug #1012 closed one level up (#1225 review).
 
@@ -250,14 +243,14 @@ def test_run_skills_callee_brings_its_own_agents_tools():
     """
     as_callee = set(
         compute_allowed_tools(
-            "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+            "search-records", PLUGIN_SKILLS, run_skills={"research-plan"}
         )
     )
-    standalone = set(compute_allowed_tools("search-external-sites", PLUGIN_SKILLS))
+    standalone = set(compute_allowed_tools("research-plan", PLUGIN_SKILLS))
 
-    # record-structurer's reader, which search-external-sites does not declare.
-    assert "mcp__genealogy__sidecar_read" in standalone
-    assert "mcp__genealogy__sidecar_read" in as_callee
+    # search-external-sites' URL builder, which research-plan does not declare.
+    assert "mcp__genealogy__build_external_search_url" in standalone
+    assert "mcp__genealogy__build_external_search_url" in as_callee
     assert not (standalone - as_callee), (
         "a run_skills callee must hold every tool it holds standalone; "
         f"missing: {sorted(t.split('__')[-1] for t in standalone - as_callee)}"
@@ -312,28 +305,30 @@ def test_callee_tools_absent_until_the_test_opts_in():
     preflight — an unstocked callee would abort the run 20 turns in.
     """
     tools = compute_allowed_tools("search-records", PLUGIN_SKILLS)
-    assert "mcp__genealogy__place_search" not in tools
-    assert "mcp__genealogy__external_links_search" not in tools
+    # Not `place_search`: search-records names `@plugin:search-external-sites`,
+    # whose tools are unioned unconditionally (agents run in their own context).
+    # These two belong to `Skill()` callees only.
+    assert "mcp__genealogy__place_search_all" not in tools
+    assert "mcp__genealogy__volume_search" not in tools
 
 
 def test_opting_in_unions_that_callees_tools():
     tools = compute_allowed_tools(
-        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+        "search-records", PLUGIN_SKILLS, run_skills={"research-plan"}
     )
-    # The two search-external-sites needs and search-records lacks.
-    assert "mcp__genealogy__place_search" in tools
-    assert "mcp__genealogy__external_links_search" in tools
+    # Two research-plan holds that search-records and its agent lack.
+    assert "mcp__genealogy__place_search_all" in tools
+    assert "mcp__genealogy__volume_search" in tools
     # The caller's own tools survive the union.
     assert "mcp__genealogy__record_search" in tools
 
 
 def test_opting_in_to_one_callee_does_not_grant_another():
     tools = compute_allowed_tools(
-        "search-records", PLUGIN_SKILLS, run_skills={"search-external-sites"}
+        "search-records", PLUGIN_SKILLS, run_skills={"research-plan"}
     )
-    # volume_search belongs to research-plan / record-extraction, not to
-    # search-external-sites. Declaring one callee must not widen to the rest.
-    assert "mcp__genealogy__volume_search" not in tools
+    # Declaring research-plan widens to research-plan's tools only.
+    assert "mcp__genealogy__place_search_all" in tools
 
 
 def test_declaring_a_callee_the_skill_never_invokes_is_an_error():
@@ -355,9 +350,9 @@ def test_preflight_flags_a_live_callee_with_no_fixtures():
         stubbed_skills=set(),
         registered_tools={"record_search"},
     )
-    pairs = {(c, t) for c, t in missing if c == "search-external-sites"}
-    assert ("search-external-sites", "place_search") in pairs
-    assert ("search-external-sites", "external_links_search") in pairs
+    pairs = {(c, t) for c, t in missing if c == "research-plan"}
+    assert ("research-plan", "place_search") in pairs
+    assert ("research-plan", "external_links_search") in pairs
 
 
 def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
@@ -376,7 +371,7 @@ def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
     from harness.allowed_tools import load_skill_frontmatter, uncovered_callee_fixtures
 
     callee_fm = load_skill_frontmatter(
-        PLUGIN_SKILLS / "search-external-sites" / "SKILL.md"
+        PLUGIN_SKILLS / "research-plan" / "SKILL.md"
     )
     stocked = {
         t.rsplit("__", 1)[-1] for t in (callee_fm.get("allowed-tools") or [])
@@ -391,7 +386,7 @@ def test_preflight_is_satisfied_once_the_fixtures_are_stocked():
         stubbed_skills=set(),
         registered_tools=stocked,
     )
-    assert [(c, t) for c, t in missing if c == "search-external-sites"] == []
+    assert [(c, t) for c, t in missing if c == "research-plan"] == []
 
 
 def test_preflight_ignores_a_stubbed_callee():
@@ -402,10 +397,10 @@ def test_preflight_ignores_a_stubbed_callee():
     missing = uncovered_callee_fixtures(
         "search-records",
         PLUGIN_SKILLS,
-        stubbed_skills={"search-external-sites"},
+        stubbed_skills={"research-plan"},
         registered_tools={"record_search"},
     )
-    assert all(c != "search-external-sites" for c, _ in missing)
+    assert all(c != "research-plan" for c, _ in missing)
 
 
 def test_preflight_message_names_both_remedies():

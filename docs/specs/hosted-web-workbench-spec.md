@@ -857,7 +857,7 @@ every healthy session.
 > **As built, verified 2026-08-02 — shipped as specced, and this is the load-bearing
 > one.** Both artifacts still build from the one engine, the packaging drift tests
 > still guard manifest/skill sync, and nothing is forked: the hosted sandbox image
-> copies `packages/engine/{mcp-server/build,plugin}` straight in. The build scripts
+> copies `packages/engine/mcp-server/build/` and `packages/engine/plugin/` straight in. The build scripts
 > are `scripts/build-mcpb.mjs` and `scripts/package-plugin.mjs` (Node, not the
 > `.sh` names above — the `.sh` wrappers still exist), driven by `make mcpb` /
 > `make plugin`.
@@ -957,7 +957,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
   - *Why `ANTHROPIC_API_KEY` / `E2B_API_KEY` are deliberately excluded:* their absence
     already fails loudly on the first session create. The gate is for silent failures
     only; widening it past that would make it a second, drifting copy of the env table.
-  - The durable home for this is here until a `docs/specs/hosted-deploy-spec.md`
+  - The durable home for this is here until a hosted-deploy spec under `docs/specs/`
     exists to own it.
 - **`validate_research_schema` path-traversal:** the tool takes a user-influenced
   `projectPath` and reads files — in multi-tenant it must be constrained to the

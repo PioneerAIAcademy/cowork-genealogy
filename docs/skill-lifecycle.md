@@ -266,6 +266,13 @@ That id is the `TEST=` value for step 6. (Older tests have numeric ids like
 > test after the fix has landed, the bug no longer reproduces on the un-edited
 > skill, the gate comes back `INCONCLUSIVE`, and nothing is proven either way.
 
+> **A mined test merges only in the PR that makes it pass.** Never ahead of
+> the fix, and never with an `expected_outcome: xfail` marker (lead,
+> 2026-10-06; `eval/CLAUDE.md` rules 6 and 10). If your task only finds the
+> failure, push the test to a branch, link it from the issue that owns the
+> fix, and leave the merge to that issue's PR, which runs steps 4–8 from this
+> test.
+
 > **First time improving this skill? You'll need hold-out tests.** Read the
 > hold-out note in step 4 now — they have to be set *before* the run you're
 > about to do, and setting them afterwards invalidates it.
@@ -632,11 +639,13 @@ pushing a *new commit per round* (don't amend). Most PRs land in 1–2 rounds;
 things your step-4 run can no longer satisfy, because the skill changed
 underneath it:
 
-- The latest run log per touched skill must be **active** — its snapshot still
-  matching the branch's current skill files, tests and rubric. Edit any of
-  those and the UI shows "no active version" until you re-run; that's your
-  signal the results are stale.
-- Its `.ann.json` must carry a correction for **every** (test, dimension) pair.
+- The run log your PR adds for each touched skill (or, if it adds none, the
+  latest one) must be **active** — its snapshot still matching the branch's
+  current skill files, tests and rubric. Edit any of those and the UI shows
+  "no active version" until you re-run; that's your signal the results are
+  stale.
+- Its `.ann.json` must carry a correction for **every** dimension of each
+  sampled test, and a comment on each one that is not a confirmed pass.
 
 **One *problem* per PR — which is usually, but not always, one skill.** A
 locator rule that belongs in `citation` alone is a one-skill PR. But a doctrine

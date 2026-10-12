@@ -305,9 +305,11 @@ export default function ChatPane({
     scrollToBottom()
   }
 
-  // Ask the agent to abort the running turn. The runner forwards this to the SDK
-  // (or cancels the mock); either way the turn ends with turn_done, which clears
-  // busy. Fire-and-forget — the button reflects intent, turn_done confirms it.
+  // Ask the agent to abort the running turn. On the alpha the runner forwards this to
+  // the SDK (or cancels the mock); on the prototype POST /interrupt raises a flag the
+  // worker reads before the next tool call, which it halts. Either way the turn ends with
+  // turn_done, which clears busy. Fire-and-forget — the button reflects intent,
+  // turn_done confirms it.
   const stop = (): void => {
     if (!busy) return
     conn.send({ type: 'interrupt' })

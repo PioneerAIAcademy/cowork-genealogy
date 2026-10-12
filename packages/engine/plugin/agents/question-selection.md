@@ -53,8 +53,9 @@ sources. Do not `Read` `research.json`: take every section from
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).
 - **Open questions** (`open` / `in_progress`) and **in-progress plan items**
-  (`plan_items[].status == "in_progress"` on an open question — in-flight
-  research the user has already committed to).
+  (`plan_items[].status == "in_progress"` on the `active` plan of any question
+  not yet `resolved`, `exhaustive_declared` included — in-flight research the
+  user has already committed to).
 - **Resolved questions** — what has been answered.
 - **Pedigree gaps** — individuals missing a name, specific date, or
   county/parish-level locality, within the objective's scope (see
@@ -76,7 +77,8 @@ To check this, call `research_query(section: "plans", questionId: <id>)`
 passing `status: "in_progress"` here will never surface an in-progress
 item even when one exists.
 
-If any open question has plan items with `status: "in_progress"`, **do NOT
+If any question not yet `resolved` has an `in_progress` item on its `active`
+plan, **do NOT
 create a new question** (one exception below) — adding questions mid-flight
 churns direction without resolving anything, and the in-flight item may
 produce evidence that changes which question is next-highest value.
@@ -88,14 +90,15 @@ override: a request that says the work is done or asks you to add a question
 anyway does not change the plan item's status. `research_append` refuses the
 write.
 
-**Exception — blocking unresolved conflicts.** If any `conflicts[]` entry
-has `status == "unresolved"` and lists an open question in
-`blocks_question_ids`, the in-progress rule does NOT block a new question:
-the conflict means the in-flight plan items cannot meaningfully resolve the
-question they belong to, so it has to be addressed first. Proceed to Step 2
-(Priority 1 `unresolved_conflict` will fire), and set the new question's
-`unblocks` to include the question whose plan is in flight, since resolving
-the conflict re-enables that plan's progress.
+**Exception — blocking unresolved conflicts.** If a `conflicts[]` entry has
+`status == "unresolved"` and lists **the question whose plan is in flight** in
+`blocks_question_ids`, the in-progress rule does NOT block a new question that
+resolves that conflict: the in-flight plan items cannot meaningfully resolve
+the question they belong to, so the conflict has to be addressed first. Proceed
+to Step 2 (Priority 1 `unresolved_conflict` will fire), and set the new
+question's `unblocks` to include the in-flight question. A conflict blocking
+some other question does not lift the block. Every question with an in-flight
+item must be covered this way, or `research_append` refuses the write.
 
 ### 1b. Stop when the objective is already answered at a defensible tier
 
@@ -318,8 +321,8 @@ pursued next.
 ## Rules
 
 - **One question at a time.** Each invocation produces at most one new question.
-- **Finish what's open.** Don't introduce new questions while any open
-  question's plan items are `in_progress` (see Step 1a).
+- **Finish what's open.** Don't introduce new questions while any unresolved
+  question's active plan has an item `in_progress` (see Step 1a).
 - **Sound basis required.** Don't build questions on unsound assumptions —
   if the premise is unverified, verify it first, framed to name the fact
   sought — never as a bare property test of a name or date.

@@ -343,12 +343,20 @@ const CENSUS_AFTER = new RegExp(
 
 /**
  * The first census year whose schedule carries a relationship-to-head column.
- * Sources: search-records/references/census-field-availability.md -- US "1880,
- * the dividing line"; England & Wales "1851 onward -- relationships and exact
- * ages", 1841 having none. Scotland follows E&W. A jurisdiction named but not
- * listed here returns null, which SKIPS the rule rather than guessing: the
- * doctrine is documented for these two only, and a wrong refusal blocks a
- * researcher mid-write.
+ *
+ * Sources, re-pointed by issue #2123 when
+ * search-records/references/census-field-availability.md was deleted: the
+ * FamilySearch wiki, which is now the runtime source for census schedules
+ * (ADR-0012). `United_States_Census` states "Relationships | 1880-1950" in its
+ * Federal Population Census Contents table; `England_Census` lists relationship
+ * to head under "1851-1901" and omits it from "1841". Scotland follows E&W.
+ * Both probed against the sidecar 2026-09-29 at 33,782 and 26,351 chars, and
+ * both are captured in eval/fixtures/mcp/wiki-read-united-states-census.json and
+ * wiki-read-england-census.json.
+ *
+ * A jurisdiction named but not listed here returns null, which SKIPS the rule
+ * rather than guessing: the doctrine is documented for these two only, and a
+ * wrong refusal blocks a researcher mid-write.
  */
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();
@@ -413,17 +421,303 @@ export function censusMentions(notes: string): CensusMention[] {
  * derived by `stagedPre1880UsCensusYears`, never the envelope itself.
  *
  * The payload decides only when EVERY titled row is a pre-1880 US federal
- * census, only when the note binds no census year of its own (a bound year keeps
- * precedence, so every note-only verdict is unchanged), and only when the note
- * contains one of those census years. Two rejected options: "any row is a
- * pre-1880 US census" refuses a parish-register or 1880-row note whenever the
- * same search also returned an 1850 row; "the top-ranked row only" trusts
- * `results[0]`, which is the best match only when ranking ran. The year in the
- * note is what ties the note to the census it was logged with: without it, a
- * parish-register note logged against an 1850 census search is refused for a
- * household the census never showed. A note that omits the year still passes,
- * which is the same limit the author-supplied year already had.
+ * census, and only when the note binds no census year of its own (a bound year
+ * keeps precedence, so every note-only verdict is unchanged). Two rejected
+ * options: "any row is a pre-1880 US census" refuses a parish-register or
+ * 1880-row note whenever the same search also returned an 1850 row; "the
+ * top-ranked row only" trusts `results[0]`, which is the best match only when
+ * ranking ran.
+ *
+ * THE NOTE NO LONGER HAS TO REPEAT THE YEAR (2026-10-02). The requirement hid
+ * real misses: `ut_search_records_001` ("...in household of Thomas Flynn", birth
+ * year 1845 and no census year) and `_017` ("...in household of William Mullen",
+ * birth year 1852) both wrote flat and were caught by the eval validator
+ * afterwards instead of refused at the write.
+ *
+ * What the year requirement HAD been guarding is real and is kept by other
+ * means. `stagedPre1880UsCensusYears` counts only rows carrying a
+ * `collectionTitle`, so an UNTITLED parish-register row can sit in the same
+ * staged payload as the titled 1850 rows that produced the years -- the payload
+ * cannot prove the note is about a census row. The positional carve-out below
+ * is what now separates them: a note ABOUT another source names it before the
+ * household it qualifies. Do not delete that carve-out on the strength of
+ * "every titled row is a census row"; the untitled ones are the hole.
+ *
+ * This does NOT reopen the whole-note fallback the lead declined on 2026-09-29
+ * (issue #2945): that was `saysCensus && /\b18[0-7]\d\b/` scanning the note for
+ * any year, which made 46 of 223 note-only refusals with about 38 wrong on
+ * reading. This branch reads no year out of the note at all; the payload --
+ * which the caller does not author -- is what decides.
  */
+/**
+ * A phrase that NAMES a record of another type. Every entry names a record
+ * (`will of`, never `will`): a term that doubles as ordinary English reopens
+ * the hole the bare `will` opened, where the verb cancelled the gate.
+ *
+ * EVERY NOUN HEAD CARRIES ITS PLURAL. The first version ended each alternative
+ * on a word boundary after the singular, so "Church records show Sarah in the
+ * household of William Mullen." and "Marriage records: ..." named a source and
+ * missed the list -- a carve-out that fails on the commonest spelling of its
+ * own terms is not a carve-out. The `will` entries stay singular on purpose:
+ * they are the phrases (`will of`, `will book`) that keep the bare verb out.
+ */
+const SOURCE_NAMED =
+  /\b(parish registers?|church (?:books?|records?)|baptisms?|christenings?|burial registers?|probate|will of|last will|will and testament|will book|deeds?|land records?|passenger lists?|draft (?:cards?|registrations?)|city director(?:y|ies)|gravestones?|headstones?|obituar(?:y|ies)|marriage (?:records?|certificates?|licen[cs]es?|registers?)|death (?:certificates?|records?|registers?)|birth (?:certificates?|records?|registers?)|vital records?|naturali[sz]ations?|pension files?)\b/;
+
+/**
+ * The RELATIONAL half of the household wording. These predicate co-residence:
+ * there is no way to write "co-resident spouse" or "living with Thomas" that
+ * is not a claim, so they qualify with no name attached. Split from the nouns
+ * below after a corpus re-measure -- requiring a name of the whole set freed
+ * "1860 census: Elijah Wilkins ... with Sarah Wilkins ... as co-resident
+ * spouse", a flat spouse-and-children claim that is exactly what this gate is
+ * for. Searched against `notes`, hence the `i`.
+ */
+const CORESIDENCE_CLAIM = /\b(?:co-?resident|enumerated with|living with)\b/i;
+
+/**
+ * The ABSTRACT half. `household` and `dwelling` are ordinary nouns for the
+ * CONCEPT as much as for a particular one -- "reading the record to view
+ * household members", "cannot identify the correct household", "no Stribling
+ * appeared as a household head on any readable page" -- so one of these counts
+ * only when something is PUT IN one.
+ */
+const HOUSEHOLD_NOUN = /\b(?:household|dwelling)\b/;
+
+/**
+ * Someone placed in a household, read off the GRAMMAR rather than off
+ * capitalisation.
+ *
+ * The first version of this test asked whether a capital letter sat within 24
+ * characters of the noun. That is not a test for a name and review broke it
+ * three ways in each direction at once: it missed "1850 census: amos
+ * whitfield in household of nancy doss" and "1850 census: Amos in the doss
+ * household", and it fired on "no household found in Pike County" and "Bucks
+ * Co., PA household: no Whitfield found", where the only capital is a place.
+ * No lexicon of names is available, so no window size fixes either direction.
+ *
+ * What separates the two populations is the RELATION, not the orthography: a
+ * claim puts someone IN a household or names the household OF someone, while
+ * a mention attaches the bare noun to an abstract complement (members,
+ * composition, listing, head, name). Every alternative in `HOUSEHOLD_CLAIM`
+ * is one of those relations and every one is case-free.
+ *
+ * NEGATION AND INTENT ARE NOT READ, and the limit is worth stating rather
+ * than discovering. A note that names a household in a relation is refused
+ * however it frames it, so with a staged pre-1880 payload behind them
+ * "Searched Whitfield household in Dodge Precinct: nil", "plan to check the
+ * Thomas Flynn household" and "no co-resident spouse found" are all refused
+ * -- each names a household and none asserts one. The corpus nils survive
+ * only because they name nobody ("No matching household found"), which is
+ * luck about phrasing rather than a rule. Adding a negation or intent clause
+ * is a widening of a deny and needs the corpus re-measure in
+ * `dev/measure-census-hedge-refusals.ts`, not a keyword list: the refusal
+ * costs a turn and is actionable, so the limit is tolerable where a silent
+ * miss would not be.
+ *
+ * `in` admits up to three intervening words so "in the doss household" and
+ * "in the 1850 census household" both read, while "no household found in Pike
+ * County" does not -- there the `in` governs the place and follows the noun.
+ * The possessive arm wants the apostrophe adjacent, so "Rebecca's 1840
+ * household cannot be confirmed" stays a mention.
+ *
+ * ONE SHAPE RESISTS THIS and is handled separately below: the bare noun
+ * compound, "Thomas Flynn household, Dwelling 84, Family 91". There is no
+ * relation word to read, so `hasHouseholdCompound` does read case -- but as
+ * one of three conditions, with a place blocklist and a complement guard.
+ * That blocklist is safe in a way a blocklist of CLAIM shapes would not be:
+ * a place word missing from it causes a false refusal, which is actionable,
+ * where a missing claim shape would cancel a deny silently.
+ */
+const HOUSEHOLD_NOUNS = String.raw`(?:household|dwelling)`;
+
+/**
+ * Words that make the noun ABSTRACT rather than a particular household, read
+ * off the corpus: "household composition", "household records", "household
+ * members", "a household head on any readable page". A compound whose noun
+ * carries one of these is a mention however the modifier is spelled, which is
+ * what keeps "Reading Topsham household records" out.
+ */
+const HOUSEHOLD_COMPLEMENT = String.raw`(?:members?|composition|listing|records?|data|info(?:rmation)?|structure|size|names?|heads?|co-?residents?|schedules?|pages?|groups?|entr(?:y|ies))`;
+
+/**
+ * Tokens that are a PLACE rather than a person, so a capitalised run ending
+ * in one is not a name. Short on purpose: a place word missing here causes a
+ * false refusal, which is actionable, while a person-name word wrongly listed
+ * here would cancel a deny silently.
+ */
+const PLACE_MARKER = String.raw`(?:Co|County|Counties|Twp|Township|Parish|City|Town|State|Precinct|District|Ward|Borough|Village|[A-Z]{2})`;
+
+const HOUSEHOLD_CLAIM = new RegExp(
+  [
+    // "household of Nancy Doss", "Household of William Mullen"
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+of\b`,
+    // "in the doss household", "in one dwelling", "within the household"
+    String.raw`\b(?:in|within)\s+(?:[\w.'’-]+\s+){0,3}${HOUSEHOLD_NOUNS}\b`,
+    // "Nancy Doss's household"
+    String.raw`\b[\w.’-]+(?:'s|s'|’s|s’)\s+${HOUSEHOLD_NOUNS}\b`,
+    // "Household also includes: Mary J", "Dwelling 112 holds Nancy Doss".
+    // The optional number is how a schedule numbers the dwelling it is about.
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+(?:\d+\s+)?(?:also\s+)?(?:includes?|contains?|comprises?|lists?|holds?)\b`,
+    // "heads a household in Justice Precinct 4", "heading own household with
+    // John Clark b.1822" -- the participle is not optional decoration, it is
+    // the form the one corpus instance uses.
+    String.raw`\bhead(?:s|ing|ed)?\s+(?:a|the|his|her|their|own|her\s+own|his\s+own)?\s*${HOUSEHOLD_NOUNS}\b`,
+    // ...and the reverse order, which is how a note usually writes it:
+    // "household headed by Nancy Doss".
+    String.raw`\b${HOUSEHOLD_NOUNS}\s+head(?:s|ing|ed)?\s+by\b`,
+  ].join("|"),
+  "i",
+);
+
+/**
+ * The NOUN-COMPOUND shape, which the relations above cannot reach: "Thomas
+ * Flynn household, Dwelling 84, Family 91" and "Flynn household: Patrick
+ * Flynn (32, M, Laborer)" are both flat claims and both common in the corpus
+ * -- dropping this arm freed eleven of them.
+ *
+ * Capitalisation is ONE of three conditions here, never the whole test, which
+ * is the correction review asked for. The run must also avoid a place marker,
+ * so "Bucks Co., PA household" does not qualify, and the noun must not carry
+ * an abstract complement, so "Reading Topsham household records" does not
+ * either. Case-sensitive by necessity and searched against `notes`.
+ */
+const HOUSEHOLD_COMPOUND_G = new RegExp(
+  String.raw`((?:[A-Z][\w'’-]*[ ]){1,3})(?:[Hh]ousehold|[Dd]welling)\b(?![ ]${HOUSEHOLD_COMPLEMENT}\b)`,
+  "g",
+);
+const PLACE_MARKER_ONLY = new RegExp(String.raw`^${PLACE_MARKER}$`);
+
+/**
+ * Tokens that are capitalised for a reason other than being a name --
+ * sentence-opening determiners, and the handful of ordinary words that
+ * routinely start a note's sentences here (`Census`, `Federal`, `State`,
+ * `Found`, `Reading`, `Result`). Stripped from the front of a run before it
+ * is judged, or "The household also includes: Mary J" reads as a compound
+ * named "The" -- the capital test coming back in through the arm meant to
+ * replace it.
+ */
+const SENTENCE_OPENER = /^(?:The|A|An|This|That|These|Those|His|Her|Their|Our|My|No|One|Each|Same|Both|Another|Other|New|Old|Census|Federal|State|Found|Returned|Reading|Result)$/;
+
+/**
+ * The compound arm: after dropping any sentence-opening determiner, the run
+ * must be non-empty and name no place.
+ */
+function hasHouseholdCompound(notes: string): boolean {
+  for (const m of notes.matchAll(HOUSEHOLD_COMPOUND_G)) {
+    const run = m[1].trim().split(/\s+/);
+    while (run.length > 0 && SENTENCE_OPENER.test(run[0])) run.shift();
+    if (run.length > 0 && run.every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\.$/, "")))) return true;
+  }
+  return false;
+}
+
+/**
+ * A role LABELLING a named person is a structural claim whatever else the
+ * note does: "Amos (head), Nancy (wife), Thomas (son); dwelling 112" states a
+ * family in full and names no relation in prose, so neither the household arm
+ * nor `KINSHIP_CLAIM` (which wants `wife` immediately before a capitalised
+ * name) saw it.
+ *
+ * THE SHAPE IS NARROW ON PURPOSE: the bracket holds the role and nothing else
+ * before the `,` or `)`. A looser `\(\s*role` matched four corpus notes that
+ * assert nothing -- "c_002 (mother identity)", "Anders Monsen in Norway
+ * Census (spouse Unna)", "Margret Reagan (the mother, b. 1820)" and a will's
+ * "Mary Ann Dougherty (wife of Patrick Dougherty)". Those are glosses, where
+ * the role heads the parenthetical and the person sits inside it; in a claim
+ * the bracket holds only the label. "(head, ~1822 Bavaria)" still counts --
+ * the comma ends the role.
+ *
+ * An earlier version also required a word character BEFORE the bracket, to
+ * say the person stands outside it. THAT CONDITION WAS INERT and is gone:
+ * `.` sat in its character class, so a sentence-ending period satisfied it,
+ * and relaxing it moved nothing across 4,322 corpus notes. Review asked for a
+ * test that fails without it; there is none to write, because it did nothing,
+ * and a guard that cannot fail reads as coverage. Deleted instead.
+ */
+const ROLE_IN_PARENS =
+  /\(\s*(?:head|wife|husband|son|daughter|mother|father|spouse|widow)\s*[,)]/i;
+
+/**
+ * The union of the two, for POSITION only -- where the earliest household
+ * mention sits, never whether one is claimed. DERIVED from the halves rather
+ * than spelled a third time: an edit to either half that this missed would
+ * move the carve-out's anchor silently, and a deny whose anchor drifts fails
+ * open. Lowercased input.
+ */
+const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAIM.source}`);
+
+/**
+ * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
+ * capital starts the name), so it is searched against `notes`, not `text`.
+ *
+ * `children` was missing and cost a real catch: "Household confirmed
+ * as correct family: Thomas Young ... and children Thomas (b.1829), Mary
+ * (b.1830)" states a family in full off an 1841 England schedule, which has
+ * no relationship column, and nothing else in the note reaches it. PLURAL
+ * ONLY: the singular refused "first child Martha J. born ~1860 (nine months
+ * later)", a marriage-record note reasoning from the wedding date, which
+ * asserts nothing about a census household. `spouse`
+ * is deliberately still absent -- it would re-refuse "Norway Census (spouse
+ * Unna)", a search annotation, and widening to it needs the corpus re-measure
+ * tracked on issue #3125.
+ *
+ * A role may be separated from the name by a REPORT VERB: "wife is listed as
+ * Mary A. Ranny" is the indexer's inference stated as fact, which is what
+ * this gate exists to catch. `indexed` is not among those verbs -- an index
+ * attribution is a hedge, though `INDEXED_ROLE_HEDGES` honours it only beside
+ * head/relationship/co-resident/role, never beside a bare kinship word.
+ */
+const KINSHIP_CLAIM =
+  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
+
+/**
+ * "relationship to head column", HOWEVER IT IS HYPHENATED. The separator is
+ * `[\s-]` because this tool's own refusal message spells it
+ * "relationship-to-head column", and the hedge patterns only accepted spaces:
+ * a researcher who hedged in the exact words they were handed was refused a
+ * second time, with no wording in the message that would clear it. Found in
+ * the corpus -- "Eight members enumerated: John Baker (head, ~1822 Bavaria)
+ * ... No relationship-to-head column in 1870 census" is a properly hedged note
+ * the gate refused.
+ */
+const RELATIONSHIP_COLUMN = String.raw`relationship[\s-]+(?:to[\s-]+head[\s-]+)?column`;
+const NO_RELATIONSHIP_COLUMN = new RegExp(String.raw`\bno\s+${RELATIONSHIP_COLUMN}`);
+const RELATIONSHIP_COLUMN_DENIED = new RegExp(
+  String.raw`${RELATIONSHIP_COLUMN}[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b`,
+);
+
+/**
+ * Does the note place someone in a household?
+ *
+ * The bare noun is not a claim, and treating it as one is the "cannot tell a
+ * plan from a claim" weakness `requirePre1880CensusHedge` already names below
+ * -- which the staged-payload trigger exposed on a real note.
+ * `ut_search_records_027` logged "Spouse field absent in index -- reading full
+ * record to view household members and marriage indicator" against an 1850
+ * payload and was refused for the words "household members", in a sentence
+ * that asserts no structure and only says what it is about to read. That was
+ * one of four payload ops this branch newly refused against `main`; the other
+ * three are flat "in household of <Name>" claims and stay refused.
+ *
+ * Two arms, each exercised by the suite: the relational phrases, which
+ * predicate co-residence on their own, and `HOUSEHOLD_CLAIM`, which wants the
+ * noun in a relation that puts someone in it. Case-free in both.
+ *
+ * SENTENCE BY SENTENCE, because a grammatical relation does not reach across
+ * a full stop. "…not indexed in FamilySearch. Rebecca's 1840 household cannot
+ * be confirmed" is a real corpus note where the `in` belongs to one sentence
+ * and the noun to the next, and matching the whole string refuses it. The
+ * split is on a terminator FOLLOWED BY SPACE, so "Bucks Co., PA" and "Sarah
+ * A. Mullen" are not cut at their abbreviating periods.
+ */
+function assertsHousehold(notes: string): boolean {
+  if (CORESIDENCE_CLAIM.test(notes)) return true;
+  return notes
+    .split(/[.;]\s/)
+    .some((sentence) => HOUSEHOLD_CLAIM.test(sentence) || hasHouseholdCompound(sentence));
+}
+
 export function requirePre1880CensusHedge(
   notes: string,
   stagedCensusYears?: readonly number[],
@@ -442,7 +736,8 @@ export function requirePre1880CensusHedge(
   //
   // The payload overrides it deliberately: a note logged against a staged
   // pre-1880 US census search is about that search's results, not a plan, so
-  // it is judged whatever word it uses. That also closes the word hole -- a note
+  // it is judged whatever word it uses -- unless it names another record type
+  // first, which is the carve-out below. That also closes the word hole -- a note
   // that never says "census" -- for `record_search` only. A note with no census
   // payload behind it (every other tool, a nil search) still returns here.
   // Measured at dc9766b15 (dev/measure-census-hedge-refusals.ts): the override
@@ -458,27 +753,67 @@ export function requirePre1880CensusHedge(
   // census shows Daniel in one dwelling with Margaret and sons Thomas and
   // Stephen; marriage 1871, Adams County"). The staged-payload trigger still
   // fires for `record_search` entries whose staged rows name a pre-1880 US
-  // census, provided the payload year appears in the note text.
+  // census; since 2026-10-02 the payload decides without the note repeating the
+  // year, bounded by the positional carve-out below.
   // Decided (lead, 2026-09-29), issue #2945: the whole-note fallback
   // (`saysCensus && /\b18[0-7]\d\b/`) made 46 of 223 note-only refusals over
   // ~4,000 distinct corpus notes, about 38 of them wrong on reading.
   const bound = censusMentions(notes);
+  // A note naming a DIFFERENT record type is not about the census rows, and the
+  // payload cannot rule that out: `stagedPre1880UsCensusYears` counts only rows
+  // carrying a `collectionTitle`, so an untitled parish-register row can sit in
+  // the same staged payload as the 1850 census rows that produced the years.
+  // Where the note is ABOUT such a source, the payload stops deciding and the
+  // note must bind its own census year, as it did before 2026-10-02.
+  //
+  // POSITIONAL, not a bare word list. The source must be named BEFORE the
+  // household it qualifies -- a note that is about a parish register leads with
+  // it ("Parish register 1861: baptism of Sarah, in the household of ..."),
+  // while a census note that merely mentions one later is still a census note.
+  // A list alone fails open: the first version carried a bare `will`, which the
+  // ordinary verb matched, so "...in the household of Nancy Doss. Will pass to
+  // extraction." silently skipped a gate that had refused it. Every entry below
+  // is a phrase that names a RECORD (`will of`, never `will`); adding a term
+  // that doubles as ordinary English reopens that hole, and a missing deny here
+  // fails open and silently where a missing allow merely annoys.
+  const sourceAt = text.search(SOURCE_NAMED);
+  // Anchor on the CLAIM, not on the household word alone. `householdAt < 0 ||`
+  // was the hole: a kinship claim with no household word ("...with wife Nancy
+  // and son Thomas Whitfield.") left the anchor at -1, so ANY source word
+  // anywhere in the note allowed it -- "Check baptism next." appended to a flat
+  // kinship claim walked straight through the gate it was meant to close.
+  // Both claim shapes are anchored now, on the EARLIEST of the two.
+  //
+  // POSITION comes from the broad `HOUSEHOLD_ANCHOR`, not from
+  // `assertsHousehold`, and the two answer different questions: whether a claim
+  // exists, and where the earliest household mention sits. Taking the broad one
+  // can only move `claimAt` earlier, which makes this carve-out HARDER to
+  // trigger -- the fail-closed direction, which is the one to be wrong in for a
+  // clause that cancels a deny.
+  const claimAt = [text.search(HOUSEHOLD_ANCHOR), notes.search(KINSHIP_CLAIM)]
+    .filter((i) => i >= 0)
+    .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
+  const isAboutOtherSource =
+    sourceAt >= 0 && Number.isFinite(claimAt) && sourceAt < claimAt;
   const namesColumnlessCensus = bound.length > 0
     ? bound.some((m) => m.year < m.columnFrom)
-    : payloadYears.some((y) => new RegExp(String.raw`\b${y}\b`).test(notes));
+    : payloadYears.length > 0 && !isAboutOtherSource;
   if (!namesColumnlessCensus) return;
 
-  const describesHousehold =
-    /\b(household|dwelling|co-?resident|enumerated with|living with)\b/.test(text);
+  const describesHousehold = assertsHousehold(notes);
   // Kinship asserted about a NAMED person: "mother Margaret", "plus sons Thos
   // and Stephen". The lookbehind excludes the possessive form -- "searched for
   // his wife Catherine" names a TREE-side relative who may be absent from the
   // return, which is a statement about the tree and not about what the census
   // stated. That carve-out is the eval validator's too, and dropping it made
   // this refuse a compliant note.
+  // `ROLE_IN_PARENS` is the third shape: a note that labels each person with a
+  // bracketed role states the family as completely as prose does, and neither
+  // of the other two saw it.
   const assertsKinship =
-    /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?)\s+[A-Z]/.test(notes) ||
-    /\bhead\s+of\s+household\b/.test(text);
+    KINSHIP_CLAIM.test(notes) ||
+    ROLE_IN_PARENS.test(notes) ||
+    /\bhead\s+of\s+(?:the\s+)?household\b/.test(text);
   if (!describesHousehold && !assertsKinship) return;
 
   const hedged =
@@ -487,8 +822,8 @@ export function requirePre1880CensusHedge(
     /\bunstated\b/.test(text) ||
     /\bimplied\b/.test(text) ||
     /\bpresum\w*/.test(text) ||
-    /no\s+relationship\s+(?:to\s+head\s+)?column/.test(text) ||
-    /relationship\s+column[^.]{0,40}\b(?:does not|did not|is not|was not|absent|missing)\b/.test(text) ||
+    NO_RELATIONSHIP_COLUMN.test(text) ||
+    RELATIONSHIP_COLUMN_DENIED.test(text) ||
     INDEXED_ROLE_HEDGES.some((re) => re.test(text));
   if (hedged) return;
 

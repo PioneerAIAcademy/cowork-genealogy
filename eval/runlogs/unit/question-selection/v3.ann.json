@@ -1,0 +1,166 @@
+{
+  "run_log": "v3.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_d03",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the scenario. The tree's Thomas→Patrick parent link is sourced only to an Ancestry member tree (quality 0), and h_001 holds it as untested. The agent refused the delegation's \"parentage is already established… build on it\" and wrote a verification question instead. The rationale is accurate. depends_on [] / unbl"
+    },
+    {
+      "test_id": "ut_question_selection_d03",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Recognised the unsourced compiled source, wrote a question that tests it rather than assumes it, explained why in the rationale, set dependencies, and named record types to search. One research_append; every validator passed."
+    },
+    {
+      "test_id": "ut_question_selection_d03",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Reads via project_context and research_query only (no Read of research.json), then one well-formed research_append on questions: all required fields, exhaustive_declaration unstarted, status open."
+    },
+    {
+      "test_id": "ut_question_selection_d03",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names both people with dates and places and the fact sought, so a plan can be built from it. The confirm-or-refute framing is acceptable because it tests a relationship already asserted on the tree and names both outcomes. A stricter reading of the \"seek information, not confirmation\" rule would prefer \"What do original records state about Patrick Flynn's father?\", since this claim is unverified rather than disputed. A note, not a deduction."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked the scenario: the objective is Job Purnell's parents only, so Serena (wife) and Samuel (son) are out of scope. q_001 is in_progress with pli_001 (church baptism) still planned, so no new question is right, and nothing was written. Two small slips in the reply: it quotes q_001 with the objective's wording, and it calls spouse/child research a \"FAN pivot\" that might come after an exhaustive declaration. FAN means associates, not immediate family, and that hints at future research on out-of-scope people. Not enough to deduct."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Assessed the state through project_context and research_query, named the delegation's two people and why they're out of scope, and pointed at pli_001 as the next step in plain language (a Trowbridge baptism search, c. 1824–28), without naming any skill."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context plus seven research_query calls, all on the right projectPath, and the one Read was tree.gedcomx.json (not research.json, as the body requires). No write was attempted, which is correct for a no-new-question outcome."
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No question was written, so there's nothing to grade. That's the expected outcome here."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked mid-research-flynn: q_001 in_progress, pli_006 (Thomas Flynn probate) in_progress on the active plan, c_001 resolved with no blocked questions, ps_001 probable. Nothing qualifies for the conflict exception, so writing no question is right, and none was written. One nuance: \"elevate from probable to proved\" is hedged with \"potentially\", which is fair. A will naming Patrick would strengthen the case a lot, but proved also needs the exhaustive search and a written proof."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Named pli_006 by ID, explained why it comes first, and named follow-ups (1870/1880/1900 censuses, exhaustiveness) without writing any. That's allowed by the judge context."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context plus six research_query reads on the right projectPath. The one Read was tree.gedcomx.json, not research.json. No write was attempted, which is correct here."
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No question was written, so there's nothing to grade."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked job-purnell-parents-identity: q_001 covers the objective, pli_001 (Trowbridge baptism, c. 1824–28) is still planned, and there are no conflicts or hypotheses, so writing no question is correct, and none was written. It stayed inside the objective and never drifted to Serena or Samuel."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covered the state that matters (questions, plans, conflicts, hypotheses, timelines), named pli_001, and gave a plain-language next step without naming a skill. The point that a parish baptism of that era normally names both parents is right."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context plus five research_query reads on the right projectPath. The one Read was tree.gedcomx.json, not research.json. No write was attempted, which is correct here."
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No question was written, so there's nothing to grade."
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The question asks for the value and stops there (\"What was the birth surname…?\"), with no either/or, and the doubt sits in the rationale, per the ruling. test_premise_question_names_fact passed. The rationale is accurate: Hartwell comes from an unsourced FamilySearch tree entry and may be her married name. One genealogy note: \"Ohio state vital registrations\" won't hold an 1855 birth (county births begin 1867, statewide 1908). Her marriage record, the 1860/1870 censuses, and a post-1908 death certificate are the sources that would name her birth surname."
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Wrote one question, with a rationale, selection basis and dependencies, and suggested record sets. The reply leaks a skill name (\"Use research-plan\"), which the return contract forbids in the next-step text; that's the already-measured rare leak, so noted, not deducted."
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context (which supplies the objective) and research_query reads, one Read of tree.gedcomx.json only, then one well-formed research_append: required fields present, depends_on/unblocks empty as fits a first question, declaration unstarted."
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names the person with birth year and state and the single fact sought. A plan can be built straight from it."
+    }
+  ]
+}

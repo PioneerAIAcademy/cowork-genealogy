@@ -3,8 +3,8 @@
 Phase 0 (see e2e/latency_report.py + docs/plan/research-latency-baseline-*.md)
 established that ~98% of an e2e run's active loop is the model generating, so the
 dominant latency lever is **output tokens generated** (turns × tokens/turn). A
-full e2e run costs $3-10 and ~30-70 min and needs live FamilySearch auth — far
-too heavy to gate every SKILL.md prose edit.
+full e2e run takes about an hour and single-digit dollars, with a long tail, and
+needs live FamilySearch auth — far too heavy to gate every SKILL.md prose edit.
 
 But every *unit* run log already records the model's output-token count (and, for
 newer logs, `num_turns` and `duration_api_ms`) per test and per skill. Editing a

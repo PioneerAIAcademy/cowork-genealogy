@@ -41,6 +41,7 @@
     { "name": "record_search" },
     { "name": "person_search" },
     { "name": "person_ancestors" },
+    { "name": "tree_gaps" },
     { "name": "same_person" },
     { "name": "person_record_matches" },
     { "name": "record_person_matches" },
@@ -75,7 +76,8 @@
     { "name": "project_create" },
     { "name": "sidecar_read" },
     { "name": "get_name_variants" },
-    { "name": "catalog_search" }
+    { "name": "catalog_search" },
+    { "name": "research_delivered" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

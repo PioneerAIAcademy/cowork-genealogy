@@ -62,10 +62,6 @@ const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
     path: "init-project/references/research-process-init.md",
     why: "151 lines of init decision rules and vague-data interpretation; 4 of 23 terms in the body",
   },
-  {
-    path: "research-plan/references/locality-survey-guide.md",
-    why: "79 lines of locality-survey methodology and its research.json mapping; 1 of 22 terms in the body",
-  },
 ];
 
 const EXEMPT = new Set(UNREACHED_PENDING_ADJUDICATION.map((e) => e.path));

@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py\"",
             "timeout": 20
           }
         ]

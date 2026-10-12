@@ -118,7 +118,11 @@ _VALID_MODES: frozenset[str] = frozenset({"test", "skill", "tag"})
 
 
 def is_releasable_invocation(
-    *, mode: InvocationMode, has_tag_filter: bool, runs_per_test: int = 1
+    *,
+    mode: InvocationMode,
+    has_tag_filter: bool,
+    runs_per_test: int = 1,
+    tool_search: bool = True,
 ) -> bool:
     """A run is releasable iff `--skill <name>`, no tag filter, single run.
 
@@ -133,13 +137,22 @@ def is_releasable_invocation(
     `flaky` flag; by lead ruling (issue #2816) it is a scratch run, never
     a committed candidate — so N > 1 makes the invocation non-releasable
     regardless of mode. The default 1 is the normal single-run path.
+
+    `tool_search=False` (`--no-tool-search`, every tool schema loaded up
+    front) is an experiment, not the configuration the corpus runs, so it is
+    scratch by the same mechanism.
     """
     if mode not in _VALID_MODES:
         raise ValueError(
             f"unknown invocation mode {mode!r}; expected one of "
             f"{sorted(_VALID_MODES)}"
         )
-    return mode == "skill" and not has_tag_filter and runs_per_test <= 1
+    return (
+        mode == "skill"
+        and not has_tag_filter
+        and runs_per_test <= 1
+        and tool_search
+    )
 
 
 def now_utc_filename_timestamp() -> str:

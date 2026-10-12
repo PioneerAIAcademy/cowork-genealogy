@@ -5,6 +5,9 @@
 > read-side tool, not an extension of the first (see §3 for why).
 > **Updated 2026-08-03:** added `offset` pagination so items 51+ are reachable
 > (the tool half; the skill half has since landed).
+> **Updated 2026-10-06 (T2.1, `docs/plan/cost-latency-10x.md` Wave 1):** `log`
+> takes `questionId`, so one call returns every log entry for a question's plan
+> items instead of one `planItemId` call per item (§3, "A cross-section filter").
 
 ```
 research_query({ projectPath, section, ...well-known filters }) -> { count, items, truncated }
@@ -40,7 +43,8 @@ research_query({
   projectPath: string,
   section: "questions" | "plans" | "log" | "sources" | "assertions"
          | "person_evidence" | "conflicts" | "hypotheses" | "timelines"
-         | "proof_summaries" | "evaluations" | "localities",
+         | "proof_summaries" | "evaluations" | "localities"
+         | "external_collections",   // reads external-collections.json, not research.json — §2.4
   // well-known filters — only some apply to a given section; see §2.1
   recordId?: string,
   recordRole?: string,
@@ -72,8 +76,10 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `plans` | `questionId` | `question_id` | exact |
 | | `status` | `status` | exact |
 | `log` | `planItemId` | `plan_item_id` | exact |
+| | `questionId` | `plan_item_id` ∈ the item ids of every plan whose `question_id` is the value | via plan |
 | `sources` | `sourceId` | `id` | exact |
-| `assertions` | `recordId` | `record_id` | exact |
+| `assertions` | `assertionId` | `id` | exact |
+| | `recordId` | `record_id` | exact |
 | | `recordRole` | `record_role` | exact |
 | | `sourceId` | `source_id` | exact |
 | | `questionId` | `extracted_for_question_ids` | contains |
@@ -91,6 +97,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `evaluations` | `targetId` | `target_id` | exact |
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
+| `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
+| | `recordType` | `record_types` | case-insensitive substring of any |
 
 **Sections not served, and why.** A completeness test
 (`tests/tools/research-query.test.ts`) derives the list of top-level array
@@ -123,9 +131,23 @@ actionable error, not a confusingly-empty (or confusingly-unfiltered) result.
                         // fixed shape IS a wire surface)
   truncated: boolean,  // true when matches remain beyond this page
                         // (count > offset + items.length)
+  unregisteredDisagreements?: { personId, fact, assertionIds }[],
+                        // `conflicts` only — see below
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**`conflicts` also returns `unregisteredDisagreements`:** linked assertions that
+disagree on a birth or death place or year with no `conflicts` entry naming the
+pair, computed by `unregisteredDisagreements()` in `utils/question-state.ts` —
+the same detector behind `project_context`'s `questionStatuses`. `count` covers
+registered entries only, and the router read `count: 0` as "no evidence
+conflicts" and skipped `conflict-resolution` while two disagreements sat
+unregistered (`ut_research_h22`). Scope: the question's own assertions
+(`extracted_for_question_ids`) under `questionId`, otherwise every assertion;
+narrowed to those naming `assertionId`; omitted under a `status` filter other
+than `unresolved`, since an unregistered disagreement has no other status. The
+field does not page — `offset` and the 50-item cap apply to `items` alone.
 
 Each call returns at most 50 items (`MAX_ITEMS` in `research-query.ts`). A
 caller that hits `truncated: true` either narrows the filter or **pages**: set
@@ -137,7 +159,57 @@ it is absent from the §2.1 table and applies to every section uniformly.
 rejected (not coerced) otherwise — see §4. Omitting every filter returns the
 whole section, one 50-item page at a time.
 
+### 2.4 `external_collections`
+
+The curated external collections `external_links_search` stored for this project
+(`external-links-search-tool-spec.md`, "Stored list"). Served from
+`external-collections.json`, not `research.json`: it is not a schema section, so
+it is in neither the schema-derived completeness lists nor
+`RESEARCH_QUERY_OPTIONAL_SECTIONS`, and it has its own branch that runs before
+the `research.json` read. `no_project` is answered the same way as every other
+section.
+
+Each item is one stored row — `{ key, url, link_text, record_types, place, cost,
+content_type, start_year, end_year }` — and carries its own `place`. Items are
+ordered by place, then key; the order is sorted at read time, because a
+jsonb-backed store does not keep the written key order.
+
+- **`place`** matches the place and every enclosing jurisdiction, by dropping
+  leading comma segments: `Venango, Pennsylvania, United States` returns rows of
+  that county, of `Pennsylvania, United States` and of `United States` — and never
+  of a sibling county.
+- **`recordType`** is a case-insensitive substring of any of a row's
+  `record_types`. FamilySearch's record types are free text (one Pennsylvania
+  page holds `Cemeteries` and `Cemetery Records`, `Marriage` and `Marriages`), so
+  a substring is the honest match; there is no mapping table.
+
+`count: 0` does not say whether a place was fetched: no file, a fetched place
+with `rows: []`, and a place name in another form (`Pennsylvania` for the stored
+`Pennsylvania, United States`) all answer it. To tell "fetched, nothing here"
+from "never fetched", read `project_context`'s `externalCollections`, which lists
+every fetched place, `total: 0` included.
+
 ## 3. Decisions recorded
+
+**`assertionId` means two different things, and only one of them is "the
+assertion itself".** On `assertions` it matches the item's own `id`; on
+`person_evidence`, `conflicts`, `hypotheses` and `proof_summaries` it matches a
+field holding *references* to an assertion (`assertion_id`,
+`competing_assertion_ids`, `supporting`/`contradicting_assertion_ids`,
+`supporting_assertion_ids`). One parameter name, five fields, two meanings.
+
+Before the filter was added the allow-list throw carried that distinction for free: a caller
+who meant `person_evidence` and wrote `assertions` got
+`'assertionId' is not a supported filter for section 'assertions'` and
+self-corrected. That error is now gone, and the wrong section returns a
+plausible `count: 1` holding the assertion body — which has no `person_id` and
+no `confidence`, so a caller using the "an empty result IS the answer: unlinked"
+idiom reads a hit as "already linked". The filter was still worth adding (26
+measured mis-calls on main came from its absence), but the trade is real and is
+recorded here rather than discovered.
+
+The field is `id`, never `assertion_id` — an assertion object has no such key,
+so that rule would be accepted and match nothing, ever.
 
 - **A second tool, not an extension of `project_context`.** `project_context`
   is one fixed, unfiltered projection for one consumer (the record-extractor's
@@ -153,7 +225,7 @@ whole section, one 50-item page at a time.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: ten named parameters across twelve sections, not an arbitrary path
+  scope: twelve named parameters across thirteen sections, not an arbitrary path
   language.
 - **No filter on `localities`, deliberately.** None of the ten existing
   filter keys maps onto a locality field, so a filter would mean a new MCP
@@ -209,16 +281,37 @@ whole section, one 50-item page at a time.
   both check `truncated` and page with `offset`. A tool-only fix would not have
   cleared the reported symptom on its own.
 
+- **A cross-section filter on `log`, not a nested join (2026-10-06, T2.1).**
+  `research-exhaustiveness` reads a question's log by walking it: one
+  `log × planItemId` call per plan item, the ids handed to it by its own previous
+  read (224 of 250 cases). Over the 27 runs recording answer sizes that is 45
+  walks, 222 calls, 42 of them that agent's; one `log × questionId` call per walk
+  (two where a question passes 50 entries) replaces about 219 of them with ~50.
+  A nested `include: "log"` on `plans` was rejected: it makes the answer's shape
+  depend on the arguments, and its own overflow needs this filter anyway.
+  Assertions are deliberately not nested: no recorded call walks to them, and
+  9 of 30 questions carry more than 50. The answer is **larger** than the walk
+  (≈ +37%: it returns every entry for the question, where the walk read 3–5 of
+  ~8 items), so the gain is calls and turns, not characters. An unfiltered
+  `log` read already returns the whole log in one call and agents make it 59
+  times against 428 walk calls — the walk is a model choice, so whether this
+  filter changes it is measured, not assumed.
+
 ## 4. Errors / edge cases
 
 | Condition | Behavior |
 |---|---|
-| `section` not one of the twelve supported values | `{ ok: false, errors }` |
+| `section` not one of the thirteen supported values | `{ ok: false, errors }` |
+| `section: "external_collections"` and no `external-collections.json` yet | `{ ok: true, count: 0, items: [], truncated: false }` — nothing has been fetched for this project |
+| `external-collections.json` is invalid JSON, or not an object holding a `places` object | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
 | An **optional** section (one the schema does not list as `required` — today `localities`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. |
 | A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |
+| `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
+| `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |
+| `log` × `questionId`, a plan item on a non-`active` plan | included — `research-exhaustiveness` treats those as audit trail and filters itself |
 | No filters supplied | the whole section, one 50-item page (page with `offset` for the rest) |
 | No items match | `{ ok: true, count: 0, items: [] }` — a legitimate answer, not an error |
 | More than 50 matches, no `offset` | `items` is the first 50; `count` is the true total; `truncated: true` |

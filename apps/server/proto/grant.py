@@ -12,7 +12,7 @@ tier's ``/callback`` does, on the dev key, through a one-shot loopback listener 
 the write lock included. From then on the web tier refreshes the grant between attempts.
 
 It is a second sign-in, so it does not revoke the desktop login's token (U2 measured it).
-It prints no token. Run it after ``make proto-up`` (the web tier's start applies
+It prints no token. Run it after ``make proto-up`` (its ``migrate`` service applies
 ``009_grant_session.sql``, which ``store_grant`` writes) and again after a
 ``proto-down -v``. Part of the re-run kit, never deployed. Exit 0 when the grant is
 stored, 1 when the sign-in failed, 2 when the listener or Postgres is unavailable.
@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
                                                email=args.email))
         except Exception as exc:  # noqa: BLE001 - reported, never a traceback with the query in it
             return 500, (f"could not store the grant ({type(exc).__name__}); is the stack up and the "
-                         "schema at 009 (make proto-up)?")
+                         "schema migrated (make proto-up)?")
 
     print(f"sign in at: {url}", file=sys.stderr)
     if not args.no_browser:

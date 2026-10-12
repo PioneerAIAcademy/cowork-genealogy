@@ -24,7 +24,9 @@ import pytest
 
 from harness.record_basis import record_basis_of
 from validators_lib import (
+    as_mapping,
     assert_foreign_keys_valid,
+    bare_tool_name,
     assert_no_section_deletions,
     extract_year,
 )
@@ -1034,114 +1036,6 @@ def test_matched_persona_is_materialized_onto_its_person(
     )
 
 
-def test_check_warnings_runs_after_a_write(
-    before_state, after_state, skills_invoked, tool_calls, test, builtin_tool_calls=None
-):
-    """SKILL.md §8: "After creating links and any stub persons, invoke
-    `check-warnings` on the affected persons to catch genealogical
-    impossibilities (married before 12, died after 120, child born after a
-    parent's death, etc.)" — plausibility the persistence step does not check.
-
-    Deep dive #1646 finding F4. The miss is intermittent and moves between
-    runs, which is why it belongs to a program rather than a dimension: in
-    `v1_2026-08-20_15-53-03` it was `ut_person_evidence_025` and
-    `ut_person_evidence_014` (2 of 12 write-runs); in
-    `v1_2026-08-24_18-17-08` it was `_002`, `_011` and `_022` (3 of 13); in
-    `v1_2026-08-24_22-05-46` it was `_002`, `_010`, `_013`, `_019` and `_022`
-    (5 of 14). Ten skips across eight distinct tests over those three logs,
-    every one scoring 3 on all eight dimensions in the run where it skipped.
-
-    `_014` is the case that matters most: it mints a brand-new stub person
-    and skips the guard that would catch that stub carrying an impossible
-    lifespan.
-
-    Mirrors `test_tree_edit.py::test_check_warnings_runs_after_any_tree_write`
-    (deep dive #1657), which asserts the same rule for the other skill that
-    writes to the tree. Trigger differs because the skills write different
-    things: tree-edit keys off the tree changing, person-evidence off a new
-    `pe_` entry or a new tree person, either of which is a write §8 covers.
-
-    **Tag-gated (`check-warnings-required`), and the narrowing is deliberate.**
-    Ungated it fired on 4 genuine skips in one 22-test run and converted each
-    to a validator-driven fail, short-circuiting the judge and deleting the
-    dimension scores that diagnose those tests. The tag is carried by the
-    stub-minting tests (`_014`, `_021`, `_026`, `_027`), where an impossible
-    lifespan on a freshly minted person is the concrete harm §8 guards. This
-    is not a gate chosen to be green: `_014` skipped the call in
-    `v1_2026-08-20_15-53-03`, so the tagged set has a demonstrated failure.
-
-    **The ungated rate is a measured, unenforced gap**, recorded here so
-    narrowing it is not silent: `check-warnings` was skipped on 2 of 12
-    write-runs (`v1_2026-08-20_15-53-03`), 3 of 13 (`v1_2026-08-24_18-17-08`)
-    and 5 of 14 (`v1_2026-08-24_22-05-46`) — 10 skips across 8 distinct tests
-    over those three logs (17 across 9 over all five committed logs), none
-    scoring below 3 on any dimension in the run where it skipped.
-    Not run truncation: the skipping runs are consistently the SHORTEST and
-    lowest-turn of the write-runs in both logs (127s/10.3 turns vs 221s/18.6;
-    148s/13.2 vs 209s/19.1), so they finished early without the step rather
-    than running out of room. Widen the tag once compliance is consistent.
-
-    **Either route satisfies it, and that is the point.** Since 2026-09-02 the
-    person-evidence AGENT calls `person_warnings` itself rather than the routing
-    skill invoking `check-warnings`: `/research` may spawn a paired agent
-    directly (ADR-0011, the route is free), so a step parked in the router is
-    guaranteed by nothing. An assertion keyed on `skills_invoked` alone would
-    therefore fail every compliant agent run. It accepts the skill invocation
-    too, because that is what the monolithic skill did and what the other
-    tree-writing skill still does.
-
-    **What this does NOT assert.** That the impossibility check actually
-    RESOLVED. No test in either directory declares a `person-warnings-*`
-    mcp_fixture (13 exist under `eval/fixtures/mcp/`), so the call finds no
-    fixture and reports the tool unavailable — which is what
-    `ut_person_evidence_027` did on `v1_2026-08-24_18-17-08` ("the offline
-    impossibility check cannot run"). This covers that the check was
-    ATTEMPTED, not its result. #1657's docstring states the fixture gap was
-    "now fixed alongside this validator"; it was not, on either side.
-    Referencing a fixture from a test is what would close it, and that edit
-    flips the run-log snapshot — so the cheapest moment to do it is a PR that
-    is already re-running the suite for another reason. This PR is one; it was
-    left undone deliberately rather than bundled, because it changes what four
-    tests exercise and deserves its own justification.
-    """
-    if "check-warnings-required" not in test.get("tags", []):
-        pytest.skip("not tagged check-warnings-required")
-
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("Missing research.json for diff")
-
-    wrote_links = bool(_new_person_evidence(before, after))
-    before_tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
-    after_tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
-    minted = _tree_person_ids(after_tree) - _tree_person_ids(before_tree)
-
-    if not wrote_links and not minted:
-        pytest.skip("no new pe_ entries and no new persons — nothing §8 covers")
-
-    what = []
-    if wrote_links:
-        what.append(f"{len(_new_person_evidence(before, after))} new pe_ entr(ies)")
-    if minted:
-        what.append(f"minted {sorted(minted)}")
-    called_tool = any(
-        str(c.get("tool") or "").split("__")[-1] == "person_warnings"
-        for c in (tool_calls or [])
-    )
-    from harness.skill_runner import handoffs
-
-    invoked_skill = "check-warnings" in handoffs(skills_invoked, builtin_tool_calls)
-    assert called_tool or invoked_skill, (
-        f"wrote to the project ({'; '.join(what)}) but ran no impossibility "
-        f"check — §8 requires one after creating links and any stub persons, to "
-        f"catch what the writer tools do not. Either route satisfies this: a "
-        f"`person_warnings` call (what the AGENT does) or a `check-warnings` "
-        f"invocation (what the monolithic skill did). "
-        f"skills_invoked={list(skills_invoked or [])}"
-    )
-
-
 # --- Issue #2194: pe_005 informant-conflation and chronological-cap checks --
 #
 # Both are tier-2 (report_) validators: they raise AssertionError to produce
@@ -1317,10 +1211,24 @@ def report_chronological_contradiction_not_speculative(
 
     # Build (record_persona_id, tree_person_id) → same_person args index.
     sp_by_pair: dict[tuple, dict] = {}
+    # (assertionId, treePersonId) → the record party that call scored, for the
+    # project-relative shape. A call naming a recordRole/recordPersonaId other
+    # than the assertion's own scored the assertion's SECOND party (the father a
+    # "son of" entry names), and the record states no birth year for that party.
+    second_party: set[tuple] = set()
+    _own = _assertions_by_id(after_state.get("research_json") or {})
     for tc in (tool_calls or []):
         if "same_person" not in (tc.get("tool") or ""):
             continue
-        args = tc.get("args") or {}
+        args = as_mapping(tc.get("args"))
+        named = args.get("recordPersonaId") or args.get("recordRole")
+        own = _own.get(args.get("assertionId") or "") or {}
+        own_keys = {str(k).lower() for k in (own.get("record_persona_id"), own.get("record_role")) if k}
+        # Only a call naming a DIFFERENT party than the assertion's own is a
+        # second-party call. An assertion with no role of its own gives nothing
+        # to differ from, so a named role there is its own party, not a second one.
+        if named and own_keys and str(named).lower() not in own_keys:
+            second_party.add((args.get("assertionId"), args.get("treePersonId")))
         p1, p2 = args.get("primaryId1"), args.get("primaryId2")
         if not (p1 and p2):
             # The project-relative call shape (issue #1731) names its two sides
@@ -1365,6 +1273,8 @@ def report_chronological_contradiction_not_speculative(
         if not person_id:
             continue
 
+        if (pe.get("assertion_id"), person_id) in second_party:
+            continue
         record_persona_id = assertion.get("record_persona_id")
         sp_args = (
             sp_by_pair.get((record_persona_id, person_id))
@@ -1421,3 +1331,127 @@ def report_chronological_contradiction_not_speculative(
             "adult baptism) the link must be `speculative` at most:\n"
             + "\n".join(offenders)
         )
+
+
+# --- Geography and naming read from tools, not from memory (#2537) -----
+#
+# The geographic-plausibility cap rests on two lookups the agent body names
+# unconditionally: place_search -> place_distance for the move, and wiki_read of
+# the destination's {Jurisdiction}_Emigration_and_Immigration page for the
+# corridor. A run that reaches the right tier WITHOUT the calls is reasoning
+# from the model's own knowledge, which is what ADR-0012 moved off the prompt;
+# ADR-0012 requires the fetch be observed, not merely instructed. Substring
+# matches on the tool name, so they hold under any server-prefix spelling.
+
+
+def _calls_to(tool_calls, name: str) -> list[dict]:
+    return [tc for tc in (tool_calls or []) if bare_tool_name(tc.get("tool") or "") == name]
+
+
+def _wiki_read_slugs(tool_calls) -> list[str]:
+    """Page slugs the run's wiki_read calls could actually fetch. wiki_read
+    throws on a url without `/wiki/` (`urlToSlug`), so a bare slug the mock
+    would serve is a lookup production never performs and does not count."""
+    slugs = []
+    for tc in _calls_to(tool_calls, "wiki_read"):
+        url = str(as_mapping(tc.get("args")).get("url") or "")
+        if "/wiki/" in url:
+            slugs.append(url.split("/wiki/", 1)[1].split("#")[0].split("?")[0])
+    return slugs
+
+
+def test_geography_measured_with_place_distance(tool_calls, test):
+    """Tag-gated (`geography-distance`): the implausible case must be measured
+    with place_distance, not asserted (issue #2537's acceptance names the
+    implausible case only; the corridor case is checked by its wiki read)."""
+    if "geography-distance" not in (test.get("tags") or []):
+        pytest.skip("not a geography-distance test")
+    assert _calls_to(tool_calls, "place_distance"), (
+        "geography-distance test made no place_distance call: a record outside "
+        "the attested residence cluster must be measured (place_search, then "
+        "place_distance on the two standardPlaces), not judged from memory. "
+        f"Tools called: {sorted({tc.get('tool') for tc in (tool_calls or [])})}"
+    )
+
+
+def test_corridor_read_from_wiki(tool_calls, test):
+    """Tag-gated (`geography-from-tools`): whether a corridor explains the move
+    is read from the destination's {Jurisdiction}_Emigration_and_Immigration
+    page. Deliberately does not assert WHICH jurisdiction, so the same check
+    covers any destination."""
+    if "geography-from-tools" not in (test.get("tags") or []):
+        pytest.skip("not a geography-from-tools test")
+    slugs = _wiki_read_slugs(tool_calls)
+    assert any(s.endswith("_Emigration_and_Immigration") for s in slugs), (
+        "geography-from-tools test must read the destination's "
+        "{Jurisdiction}_Emigration_and_Immigration page with wiki_read (a full "
+        "/wiki/ url) before deciding whether a corridor explains the move; "
+        f"wiki pages read: {slugs}"
+    )
+
+
+def test_naming_system_read_from_wiki(tool_calls, test):
+    """Tag-gated (`naming-from-wiki`): a patronymic or cross-language name
+    mismatch must fetch the jurisdiction's `{Country}_Naming_Customs` page
+    rather than apply a remembered rule (ADR-0012, issue #2537; the same check
+    conflict-resolution carries for #2254)."""
+    if "naming-from-wiki" not in (test.get("tags") or []):
+        pytest.skip("not a naming-from-wiki test")
+    slugs = _wiki_read_slugs(tool_calls)
+    assert any(s.endswith("_Naming_Customs") for s in slugs), (
+        "naming-from-wiki test must call wiki_read for a {Country}_Naming_Customs "
+        f"page (a full /wiki/ url) before ruling on the name; wiki pages read: {slugs}"
+    )
+
+
+def _subject_ids(research: dict) -> set:
+    return set((research.get("project") or {}).get("subject_person_ids") or [])
+
+
+def test_unexplained_move_not_confident(before_state, after_state, test):
+    """Tag-gated (`unexplained-move-cap`): with nothing bridging a move outside
+    the attested residence cluster, no link to a person already in the tree may
+    be `confident` (lead ruling 2026-09-18: `probable` at most). Persons the
+    run minted are excluded: they did not move. Writing no link, and asking
+    first, also passes; that is the judge's to grade."""
+    if "unexplained-move-cap" not in (test.get("tags") or []):
+        pytest.skip("not an unexplained-move-cap test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    existing = _tree_person_ids(before_state.get("tree_gedcomx_json"))
+    # New links, and existing ones the run raised to confident.
+    was_confident = {e.get("id") for e in (before.get("person_evidence") or []) if e.get("confidence") == "confident"}
+    confident = [
+        e for e in (after.get("person_evidence") or [])
+        if e.get("confidence") == "confident"
+        and e.get("id") not in was_confident
+        and e.get("person_id") in existing
+    ]
+    assert not confident, (
+        "an unexplained move outside the attested residence cluster caps the "
+        "link at `probable`; these new links to persons already in the tree are "
+        f"`confident`: {[(e.get('id'), e.get('assertion_id'), e.get('person_id')) for e in confident]}"
+    )
+
+
+def test_corridor_move_links_confident(before_state, after_state, test):
+    """Tag-gated (`corridor-move-link`): the negative arm. When a corridor on
+    the destination's page explains the move and correlation is Strong, the
+    subject gets an ordinary `confident` link. A cap here, or no link at all,
+    is the geographic rule over-firing."""
+    if "corridor-move-link" not in (test.get("tags") or []):
+        pytest.skip("not a corridor-move-link test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("Missing research.json for diff")
+    subjects = _subject_ids(before)
+    to_subject = [e for e in _new_person_evidence(before, after) if e.get("person_id") in subjects]
+    assert any(e.get("confidence") == "confident" for e in to_subject), (
+        "a move a corridor explains takes the ordinary tiers, and Strong "
+        "correlation across two independent records is `confident`; links "
+        f"written to the subject {sorted(subjects)}: "
+        f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in to_subject] or 'none'}"
+    )

@@ -24,7 +24,9 @@
     "record-search-anders-parent-anchored-hit",
     "record-search-anders-patronymic-hit",
     "rank-search-matches-anders-christening",
-    "record-read-anders-9xkt-m2p"
+    "record-read-anders-9xkt-m2p",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "CORE (Tool Arguments): the christening search must NOT keep 'Moen' as the surname constraint. 'Moen' is an Americanized farm name; a Norwegian church book indexes the child under a patronymic, so a surname-anchored search nils. Score Tool Arguments 3 if a record_search drops the surname and anchors on givenName Anders + recordCountry Norway + a recovered parent's given name (motherGivenName 'Marit' and/or fatherGivenName 'Hans') and/or the ~1868 birth year. Score 1 if the skill keeps surname='Moen' as the anchor and does not re-anchor. (recordCountry Norway supplies the required search anchor once the surname is dropped.)",

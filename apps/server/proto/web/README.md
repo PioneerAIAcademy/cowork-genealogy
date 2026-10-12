@@ -28,8 +28,10 @@ bundle both set it.
 `wb_session` cookie, the email allowlist, Fernet encryption of the grant). Handoff:
 U2 in `docs/plan/familysearch-handoff.md`.
 
-- **Dev-login** (`POST /auth/dev-login {email}`) is on while FamilySearch sign-in is off
-  and `PUBLIC_URL` is http, which is the default compose stack. Any email signs in, so
+- **Dev-login** (`POST /auth/dev-login {email}`) is opt-in: on only with `DEV_LOGIN=true`,
+  FamilySearch sign-in off and `PUBLIC_URL` http, which is the default compose stack. No
+  Beanstalk template may set a `DEV_` variable (U11), so a deployed host never offers it,
+  even with `PUBLIC_URL` unset. Any email signs in, so
   two emails are two patrons. `seed.py`, `demo.py`, `turn.py` and `drive.py` sign in this
   way (`--email`, default `dev@localhost`), and `seed.py` hands the project the engine
   created, which has no owner, to that patron.
@@ -37,7 +39,12 @@ U2 in `docs/plan/familysearch-handoff.md`.
   what the engine writes, is visible to nobody. Opening a session on a supplied
   `project_id` works only if the caller owns it, or under dev-login if nobody does.
   Deleting a session drops the project's documents only with its last session.
-- **FamilySearch sign-in**: `docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web`
+- **FamilySearch sign-in**: export `SESSION_SECRET` and `FS_TOKEN_ENC_KEY` (each a random
+  value, e.g. `openssl rand -hex 32`), then
+  `docker-compose -f docker-compose.yml -f docker-compose.fs-signin.yml up -d web`; the
+  overlay refuses to start without them, and the tier refuses a default. Keep the same
+  `FS_TOKEN_ENC_KEY` exported for `make proto-up` (the worker decrypts grants with it) and
+  `make proto-grant` (which encrypts with it), or turns end `signin_required`. The overlay
   publishes the tier on `127.0.0.1:1837`, the dev key's only registered redirect, and
   turns dev-login off. Put your FamilySearch email in `ALLOWED_EMAILS` first. Open the
   SPA at `http://127.0.0.1:5173` rather than `localhost`, because cookies are per host.
@@ -46,8 +53,9 @@ U2 in `docs/plan/familysearch-handoff.md`.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
   `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
   `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
-  space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL` the tier refuses to start with a
-  default or empty secret.
+  space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
+  FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty
+  secret.
 
 **Grants (U3).** Every turn's FamilySearch calls run on its project owner's grant, which
 the worker reads from `familysearch_tokens` at the start of each attempt while it holds that
@@ -93,21 +101,25 @@ and drops the one the 202's `seq` names; everything else relays.
 - **Self-contained** (`make proto-drive`) — **the mode the 17/17 acceptance ran in.**
   `drive.py --embedded-pg` starts a pip-installed PostgreSQL 16 (`pgserver`, in the
   `proto` dependency group — never installed by `uv sync` or CI; wheels exist for macOS
-  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), applies the
-  schema and runs the tier in-process with **no queue**.
+  arm64/x86_64, Linux x86_64 and Windows x86_64, **not** Linux aarch64), migrates it
+  (`migrate.migrate`, the runner step 6 uses) and runs the tier in-process on the
+  driver's own **`NullQueue`** (nothing is enqueued).
 - **Compose** (`make proto-up`): the `web` service on `127.0.0.1:8085`, `QUEUE_URL` pointed
-  at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies
-  `../sql/*.sql` (all idempotent), so a volume that predates `003_web.sql` gets its
-  columns without a `make proto-down`. **Verified on a Docker machine 2026-09-14** (in
-  review; no CI job runs any proto compose target, so this stays a hand check): the image
-  builds and the service comes up healthy, `make proto-smoke` passes 14/14 through the new
-  `proto-up-core`, dropping the three columns from a live volume and restarting `proto-web`
-  puts them back, and a turn round-trips POST → `SendMessage` → shim → worker →
-  `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
+  at the queue the shim reads, `PG_DSN` at the compose postgres. Startup applies no
+  schema (U9): the one-shot `migrate` service runs `../migrate.py` first and the tier
+  waits for it, so a volume that predates a file gets it without a `make proto-down`;
+  the tier only compares the ledger with `../sql/` and reports `schema` on
+  `/api/health`. **Verified on a Docker machine 2026-09-14** (in review; no CI job runs
+  any proto compose target, so this stays a hand check): the image builds and the service
+  comes up healthy, `make proto-smoke` passes 14/14 through the new `proto-up-core`,
+  dropping the three columns from a live volume and restarting `proto-web` put them back
+  (the start-time apply that did it is gone since U9), and a turn round-trips POST →
+  `SendMessage` → shim → worker → `turn_done` → SSE frame. `make proto-drive BASE=http://localhost:8085` drives that stack
   in worker mode — it proves the tier, not the resume, since the D3 stub's turn ends inside
   stream A (the driver says so in its own table).
 - **From the venv** (`make proto-web`): the same tier via `python proto/web/app.py`
-  against the compose postgres (`:5434`) and elasticmq (`:9324`). Compose and the venv
+  against the compose postgres (`:5434`), migrated first (`make proto-migrate`; until then
+  `schema` reads `schema: unmigrated`), and elasticmq (`:9324`). Compose and the venv
   both sign SendMessage (U7) with dummies elasticmq ignores: compose through the default
   chain's `AWS_*` env, the venv recipe with a static `GENEALOGY_SQS_*` pair, so neither
   reads `~/.aws` or probes IMDS.
@@ -133,19 +145,20 @@ and drops the one the 202's `seq` names; everything else relays.
   with a top-level `api`, `auth` or `callback`, the tier refuses to start. `make web-proto`
   still serves the SPA from Vite's dev server.
 - **Bundle** (`make eb-bundles` → `releases/eb-web.zip`). The same `/app` layout as the
-  image (`web/`, `enqueue.py`, `sql/`, `config/familysearch.json`, `web-dist/`) plus
-  vendored wheels, the RDS CA bundle at `certs/`, and `../eb-web/`'s Procfile and
+  image (`web/`, `enqueue.py`, `grants.py`, `migrate.py`, `sql/`, `config/familysearch.json`,
+  `web-dist/`) plus vendored wheels, the RDS CA bundle at `certs/`, and `../eb-web/`'s Procfile and
   `.ebextensions` at the root. Beanstalk runs
   `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000` with `WEB_DIST_DIR=web-dist`;
   why each setting: `../eb-web/README.md`.
 
-`QUEUE_URL` unset → `NullQueue`: the turn is recorded (a `turns` row, a `user_msg` event)
-and never enqueued, logged loudly at start. Under `NullQueue` nothing completes a turn, so
-a posted turn stays `turn_active` until a script closes it (the driver's seeder does, through
-`worker.complete()` itself).
+`QUEUE_URL` unset or empty refuses to start (a `RuntimeError` from the lifespan, U11): a
+tier with no queue records a turn and nothing ever runs it. The driver's embedded tier is
+the one queue-less mode, and it passes `drive.py`'s own `NullQueue` to `create_app`: the
+turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and stays
+`turn_active` until the seeder closes it through `worker.complete()` itself.
 
-Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape), `POLL_S` (1),
-`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA). With `QUEUE_URL` set (and only then), `GENEALOGY_SQS_ACCESS_KEY` +
+Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required), `POLL_S` (1),
+`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
 `QUEUE_URL` host's region). The start line names the mode, never a key:

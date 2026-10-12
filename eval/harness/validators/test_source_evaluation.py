@@ -1,6 +1,6 @@
-"""Skill-specific validators for the source-evaluation skill.
+"""Validators for the source-evaluation agent (a skill until issue #2796).
 
-source-evaluation is a read-only audit skill: it enumerates the sources
+source-evaluation is a read-only audit agent: it enumerates the sources
 already attached to a person, reads each one, classifies what disagrees
 with the profile, and reports. It writes nothing.
 
@@ -20,8 +20,12 @@ finding is an index error would be exactly that. The tests declare the
 situation; the validator asserts the rule.
 
 Tool-usage enforcement is the universal `test_tool_allowlist`'s job — it
-validates calls against the skill's own `allowed-tools` frontmatter, which
-is where the absence of `image_read` and `image_transcribe` is enforced.
+validates calls against the agent's own `tools:` frontmatter, which is
+where the absence of `image_read` and `image_transcribe` is enforced.
+
+The two reply validators grade `subject_reply_text`: on a direct test the
+main thread only relays the agent's return, so `text_response` is the
+relay's words, not the audit's.
 
 See test_universal.py module docstring for the full validator
 function-signature contract.
@@ -176,6 +180,35 @@ _SUMMARY_LEAD_RE = re.compile(
 
 _TABLE_ROW_RE = re.compile(r"^\s*\|")
 
+# A list item opens a line: "- ", "* ", "+ " or "1. " / "1) ". A line that does
+# not open one, inside a list, continues the item above it.
+_LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+
+
+def _list_items(block: str) -> list[str] | None:
+    """A block holding two or more list items, split one passage per item.
+
+    Each item keeps its continuation lines, so a detach written on the line
+    below its source's name still lands in that source's passage. Any prose
+    before the first item is a passage of its own. None when the block is not
+    a list, so the caller keeps it whole.
+    """
+    lines = block.splitlines()
+    if sum(1 for ln in lines if _LIST_ITEM_RE.match(ln)) < 2:
+        return None
+    out: list[str] = []
+    lead: list[str] = []
+    for ln in lines:
+        if _LIST_ITEM_RE.match(ln):
+            out.append(ln)
+        elif out:
+            out[-1] += "\n" + ln
+        else:
+            lead.append(ln)
+    if "".join(lead).strip():
+        out.insert(0, "\n".join(lead))
+    return out
+
 # Clause boundaries inside a recap sentence. A recap reads "correct the death
 # year on X (Finding 1), detach the 1885 census (Finding 2), and the rest are
 # fine" — each remedy is its own clause naming its own source, so splitting
@@ -184,6 +217,81 @@ _TABLE_ROW_RE = re.compile(r"^\s*\|")
 # findings without also splitting a source's own comma'd title ("Minnesota
 # Death Index, 1908-2002").
 _CLAUSE_RE = re.compile(r"(?:;|\s+and\s+|(?<=\))\s*,\s*|\.\s+)")
+
+
+# A capitalised record-title word. Case-sensitive on purpose: a title in the
+# reply is capitalised ("the 1885 Minnesota State Census"), while the generic
+# noun in "correct the index" is not, and must not count as naming a record.
+_SENTENCE_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z*])")
+_TITLE_WORDS = r"(Census|Index|Register|Registration|Collection|Records)"
+_DETACH_VERB = r"(?i:detach|unlink)\w*"
+# "Detach the 1885 Minnesota State Census": the verb, an optional article, any
+# capitalised or digit-led words, then the title word as the verb's object.
+_DETACH_ACTIVE_ON_TITLE_RE = re.compile(
+    r"\b" + _DETACH_VERB + r"\s+(?:(?i:the|this|that|a|an)\s+)?"
+    r"(?:[A-Z0-9][\w.'-]*\s+)*?" + _TITLE_WORDS + r"\b"
+)
+# "The 1885 Minnesota State Census should be detached": the title word is the
+# sentence's subject. Decided by what stands directly before the verb phrase:
+# the title phrase itself, or "and" / "and so" ("... and must be detached").
+# Anything else there ("entry", "it", a bracket or dash) is a new subject, and
+# so is a second record named before the verb ("... while the index does not
+# and should be detached"): a determiner-led record word, or a bare "it".
+_PASSIVE_VERB_PHRASE = r"(?:should|must|needs\s+to|is(?:\s+to)?)\s+(?:be\s+)?|be\s+"
+_SECOND_RECORD = (
+    r"\b(?i:(?:the|this|that|a|an|his|her|their|its|my|your|these|those)\s+"
+    r"(?:[\w'-]+\s+){0,2}?"
+    r"(?:index|entry|entries|records?|census|register|registration|collection"
+    r"|certificate|source)|it)\b"
+)
+_DETACH_PASSIVE_ON_TITLE_RE = re.compile(
+    r"^\W*(?:(?i:the|this|that|a|an)\s+)?(?:[A-Z0-9][\w.'-]*\s+)*?"
+    + _TITLE_WORDS
+    + r"\b(?:\s+|(?:(?!"
+    + _SECOND_RECORD
+    + r")[^.])*?\sand(?:\s+so)?\s+)(?:"
+    + _PASSIVE_VERB_PHRASE
+    + r")"
+    + _DETACH_VERB
+)
+
+
+def _detach_acts_on_another_title(sentence: str, protected_lower: str) -> bool:
+    """True only when the detach verb's grammatical object is a record-title
+    word that `protected` does not itself contain."""
+    for rx in (_DETACH_ACTIVE_ON_TITLE_RE, _DETACH_PASSIVE_ON_TITLE_RE):
+        for m in rx.finditer(sentence.strip()):
+            if m.group(1).lower() not in protected_lower:
+                return True
+    return False
+
+
+def _detach_names_another_record(block: str, protected: str) -> bool:
+    """True when every detach in `block` is attributed, in its own sentence, to
+    a record other than `protected`.
+
+    The fifth shape (`ut_source_evaluation_x6b`, `v1_2026-10-01_19-24-15.json`,
+    issue #2796): a closing prose paragraph covering every source, with no
+    "Summary:" lead and no list, keeping the Minnesota Death Index in one
+    sentence and saying "The 1885 Minnesota State Census should be detached"
+    in the next. One block, so the guard flagged a correct report.
+
+    Deliberately one-sided. A passage is cleared only if each sentence carrying
+    a detach term does not name `protected` and makes a record title the detach
+    verb's own object ("Detach the 1885 Census", "The 1885 Census should be
+    detached"). A title merely present elsewhere in the sentence ("Detach it
+    and rely on the 1900 Census", "Unlike the 1900 Census, it should be
+    detached") does not count, nor does a title word `protected` itself
+    contains ("Detach the Death Index record."), so those stay attributed.
+    """
+    sentences = [x for x in _SENTENCE_RE.split(block) if x.strip()]
+    detaching = [x for x in sentences if _recommends_detach(x)]
+    protected_lower = protected.lower()
+    return bool(detaching) and all(
+        protected_lower not in x.lower()
+        and _detach_acts_on_another_title(x, protected_lower)
+        for x in detaching
+    )
 
 
 def _passages(text: str) -> list[str]:
@@ -204,15 +312,24 @@ def _passages(text: str) -> list[str]:
       the original certificate" and the row below it read "Detach — it is about
       a different Christian Hole". Exactly right, and flagged.
 
-    A table row is the per-source unit the guard wants, so rows are split out
-    and judged individually. Everything else keeps the blank-line block.
+    - A per-source verdict LIST (`ut_source_evaluation_x6b`,
+      `v1_2026-10-01_18-58-11.json`, issue #2796): one bullet per source, no
+      blank lines, the Minnesota Death Index bullet reading "keep, but the
+      indexed death year (1954) needs correction" and the 1885 census bullet
+      two lines below it "detach". Exactly right, and flagged.
 
-    Three shapes needing bespoke handling, each found inside a paid run, is the
+    A multi-source prose paragraph (x6b, `v1_2026-10-01_19-24-15.json`) is
+    handled at the guard by `_detach_names_another_record`, sentence by
+    sentence. A table row or a list item is the per-source unit the guard wants, so each
+    is split out and judged individually. Everything else keeps the blank-line
+    block.
+
+    Five shapes needing bespoke handling, each found inside a paid run, is the
     signal worth recording: this guard is lexical and attribution is not, so
     the shape of the report decides whether it is right. Handle a new shape
     here rather than loosening the rule that fires, and keep `rubric.md`'s
-    Remediation doctrine bars as the judgment-based backstop. **Issue #2382**
-    owns the durable fix — narrowing to object-adjacency so shape stops
+    Remediation doctrine bars as the judgment-based backstop. **Issue #2481**
+    (which absorbed #2382) owns the durable fix — narrowing to object-adjacency so shape stops
     mattering — and records the measured constraint that passage-scoping
     `_GO_TO_SOURCE_PATTERN` breaks 23 of 24 committed positive runs.
     """
@@ -228,6 +345,8 @@ def _passages(text: str) -> list[str]:
             )
             if prose.strip():
                 out.append(prose)
+        elif (items := _list_items(block)) is not None:
+            out.extend(items)
         elif _SUMMARY_LEAD_RE.match(block.strip()):
             # A recap is one sentence carrying several sources' remedies, so
             # the block is the wrong unit — but SKIPPING it is worse than
@@ -250,7 +369,7 @@ def _requires_index_discrepancy(test) -> None:
         pytest.skip("negative tests route away and produce no audit")
 
 
-def test_index_discrepancy_recommends_reread(text_response, test):
+def test_index_discrepancy_recommends_reread(text_response, test, agent_returns=None):
     """Doctrine point 1: re-read the record, do not detach the source.
 
     On a fact conflict that looks like a transcription or indexing error,
@@ -260,6 +379,9 @@ def test_index_discrepancy_recommends_reread(text_response, test):
     index, and kept the source attached.
     """
     _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
     assert _GO_TO_SOURCE_PATTERN.search(text_response), (
         "source-evaluation reported on an index discrepancy without "
         "recommending a re-read of the original record. Doctrine point 1 "
@@ -269,7 +391,7 @@ def test_index_discrepancy_recommends_reread(text_response, test):
     )
 
 
-def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
+def test_index_discrepancy_does_not_recommend_detaching(text_response, test, agent_returns=None):
     """The other half of doctrine point 1, and the one that actually failed.
 
     Detaching is reserved for a source genuinely about a different person.
@@ -288,6 +410,9 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
     declares the situation, the validator asserts the rule.
     """
     _requires_index_discrepancy(test)
+    from harness.skill_runner import subject_reply_text
+
+    text_response = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
     protected = test.get("index_error_source")
     assert protected, (
         "this test is tagged `index-discrepancy` but no `index_error_source` "
@@ -303,6 +428,7 @@ def test_index_discrepancy_does_not_recommend_detaching(text_response, test):
         for block in _passages(text_response)
         if protected.lower() in block.lower()
         and _recommends_detach(block)
+        and not _detach_names_another_record(block, protected)
     ]
     assert not hits, (
         f"source-evaluation recommended detaching or unlinking in the same "
@@ -392,3 +518,181 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
         "carried no `detail` block: "
         f"{[(c.get('args') or {}) for c in calls]}"
     )
+
+
+#: ARKs that belong to a RELATIVE's own source in the two source-evaluation
+#: fixtures, and to nothing else. Deliberately unremarkable: an earlier revision
+#: used `1:1:REL-9999` on a person `REL-0001` with source `SD-REL-*`, so a model
+#: could skip the entry by reading "REL" in the id and never apply the audit-list
+#: rule at all -- and this validator could not tell that apart from the rule
+#: working.
+RELATIVE_ONLY_ARKS = ("MH7Q-9KZ", "MJ4T-2QB")
+
+
+def test_a_relatives_source_is_not_audited(tool_calls, test):
+    """A relative's attached source must never be `record_read` as the subject's.
+
+    `person_read` returns the relatives' attached sources in the same `sources[]`
+    array as the subject's own (issue #1689 Half 3), so "the sources array is the
+    audit list" started meaning "audit the whole family". Measured on a real
+    profile: 192 `record_read` calls where 17 were the subject's. Step 2 then
+    recommends detaching a record that is "about a different person" -- which a
+    sibling's record correctly is, so the advice is wrong and confident.
+
+    Each fixture carries one relative-only source (`SD-HOLE-E` / `SD-DRIS-H`),
+    whose ARK appears nowhere else. Nothing else grades WHICH sources were
+    read, so without this the planted relative tests nothing.
+    """
+    read_arks = [
+        str((c.get("args") or {}).get("url") or (c.get("args") or {}).get("recordId") or "")
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
+    ]
+    audited = [a for a in read_arks if any(k in a for k in RELATIVE_ONLY_ARKS)]
+    assert not audited, (
+        "a RELATIVE's attached source was audited as the subject's: "
+        f"{audited}. `person_read`'s `sources[]` carries the relatives' sources too; "
+        "the audit list is the entries `persons[0].sources[].ref` names, plus entries "
+        "carrying `artifact_url`."
+    )
+
+
+# --- front-door gate: hand back, call nothing (tag-gated) ---
+
+_HANDBACK_TAG_PREFIX = "handback-to-"
+
+
+def test_scope_handback_calls_no_tool(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (`scope-handback`): the agent's front-door gate.
+
+    The deterministic verdict for `ut_source_evaluation_b6h`, the direct
+    hand-back test that replaced the two description-routing negatives
+    deleted in issue #2796. The gate answers an out-of-scope delegation with
+    one line, "Hand-back: <name> — <clause>", and calls no tool. The
+    destination comes from a `handback-to-<name>` tag. That both project
+    files are unchanged is already asserted on every test by the two
+    unmodified-state validators above.
+
+    Fails iff the run made any MCP tool call, or the subject's own reply
+    (`subject_reply_text`: on a direct test, the agent's return and never the
+    relay) names no `Hand-back:` line for the tagged destination.
+    """
+    tags = test.get("tags") or []
+    if "scope-handback" not in tags:
+        pytest.skip("not a scope-handback scenario")
+
+    calls = [c.get("tool") for c in (tool_calls or []) if (c.get("tool") or "").startswith("mcp__")]
+    assert not calls, (
+        f"an out-of-scope delegation must be handed back before any tool call; got {calls}"
+    )
+    destinations = [t[len(_HANDBACK_TAG_PREFIX):] for t in tags if t.startswith(_HANDBACK_TAG_PREFIX)]
+    assert len(destinations) == 1, (
+        f"a scope-handback test needs exactly one `{_HANDBACK_TAG_PREFIX}<name>` tag; got {destinations}"
+    )
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    named = re.findall(r"Hand-back:\s*`?([a-z][a-z0-9-]*)", reply)
+    assert destinations[0] in named, (
+        f"expected a `Hand-back: {destinations[0]}` line; the reply named {named or 'no hand-back'}"
+    )
+
+
+def test_checklist_does_not_restate_a_finding(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (`checklist-overlap`), issue #2796 finding 3.
+
+    A CONSISTENCY sentence from `person_quality` names a profile-vs-source
+    mismatch. Where it matches a finding, printing it verbatim in the checklist
+    block files that finding under "suggestions, not errors". The test declares
+    that every CONSISTENCY issue in its fixture matches a finding, so none may
+    appear verbatim in the reply. The sentences are read off the run's own
+    `person_quality` response rather than written into this file.
+    """
+    if "checklist-overlap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare checklist-overlap")
+    sentences = [
+        issue["sentence"]
+        for c in (tool_calls or [])
+        if (c.get("tool") or "").endswith("person_quality") and isinstance(c.get("response"), dict)
+        for issue in c["response"].get("issues") or []
+        if issue.get("scoreType") == "CONSISTENCY" and issue.get("sentence")
+    ]
+    assert sentences, (
+        "no CONSISTENCY issue reached the run, so this guard checks nothing: either "
+        "person_quality was not called or its fixture lost the overlap issues"
+    )
+    from harness.skill_runner import subject_reply_text
+
+    reply = " ".join(subject_reply_text(agent_returns, text_response, "source-evaluation", test).split())
+    restated = [s for s in sentences if " ".join(s.split()) in reply]
+    assert not restated, (
+        "the checklist restated a finding instead of pointing to it: "
+        f"{restated[0][:160]!r}"
+    )
+
+
+_SCORE_HEADING_RE = re.compile(r"^\W*(COHERENCE|CONSISTENCY|VERIFIABILITY|COMPLETENESS)\W*$")
+_POINTER_RE = re.compile(r"\bfinding\s+\d+\s+above\b", re.IGNORECASE)
+# Imperatives and modals a pointer has no business carrying. The detach and
+# go-to-source vocabularies above cover the two remedies by name; this covers
+# the rest ("should be removed", "keep it", "verify the year").
+_POINTER_ACTION_RE = re.compile(
+    r"\b(?:should|must|needs?\s+to|recommend\w*|correct(?:ed|ion)?|fix|verify|keep|remove)\b",
+    re.IGNORECASE,
+)
+
+
+def test_checklist_pointer_carries_no_action(text_response, test, agent_returns=None):
+    """Tag-gated (`checklist-overlap`), issue #2796 finding 3.
+
+    The pointer replaces a restated CONSISTENCY sentence so the block files no
+    finding twice. A pointer that repeats the finding's remedy ("finding 3 above
+    (the record is misattributed and should be detached)", o3c,
+    v1_2026-10-02_10-48-01) files it twice anyway, under "suggestions". Reads
+    only the CONSISTENCY group, so a finding's own "Next:" line is out of scope,
+    and fails when that group holds no pointer, since then it checks nothing.
+    """
+    if "checklist-overlap" not in (test.get("tags") or []):
+        pytest.skip("test does not declare checklist-overlap")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    group: list[str] | None = None
+    for line in reply.splitlines():
+        heading = _SCORE_HEADING_RE.match(line.strip())
+        if heading:
+            if group is not None:
+                break
+            if heading.group(1) == "CONSISTENCY":
+                group = []
+        elif group is not None:
+            group.append(line)
+    pointers = [line for line in group or [] if _POINTER_RE.search(line)]
+    assert pointers, (
+        "no pointer line under a CONSISTENCY heading, so this guard checks nothing: "
+        "the group is missing, unheaded, or carries no 'finding N above'"
+    )
+    acting = [
+        p for p in pointers
+        if _recommends_detach(p) or _GO_TO_SOURCE_PATTERN.search(p) or _POINTER_ACTION_RE.search(p)
+    ]
+    assert not acting, f"a checklist pointer carries an action: {acting[0].strip()[:200]!r}"
+
+
+# A validator that tried to pin "name no person you have not read" lived here and
+# was REMOVED after misfiring twice, at the cost of two paid runs.
+#
+# Why it cannot be written with the data this layer has: a FamilySearch person id
+# and a source id in this corpus are the same shape -- `KD96-TV2` and `DRIS-001`
+# are both four characters, a hyphen, three. Shape cannot separate them. The
+# obvious repair, subtracting the ids the responses call sources, does not work
+# either: a `tool_calls` entry carries `tool`, `args`, `expected_args`, `matched`
+# and `response_fixture`, and NO response body, so the source ids are not
+# reachable from here at all. The first cut flagged six sources as unread persons;
+# the second cut read a `response` key that does not exist and flagged them again.
+#
+# The behaviour is real and worth catching -- `ut_source_evaluation_m8q` asserted
+# "the source is also attached to KD96-WX7, a different person named ..." without
+# reading KD96-WX7 -- and the JUDGE does catch it, which is how it was found. If
+# this is ever made deterministic it needs the test to declare which ids are
+# persons, not a pattern over the reply.

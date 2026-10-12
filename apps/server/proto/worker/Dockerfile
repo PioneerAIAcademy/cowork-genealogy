@@ -7,7 +7,7 @@
 #
 # Layout (the plan's "Container layout"): /project is the empty cwd anchor;
 # /opt/genealogy/plugin the skills; /opt/genealogy/server the import root holding app/
-# (map_message) and proto/{worker,sql,enqueue.py,grants.py}. No tokens.json is ever baked
+# (map_message) and proto/{worker,sql,enqueue.py,grants.py,migrate.py}. No tokens.json is ever baked
 # -- the bearer is the patron's grant, read from Postgres at the start of each attempt
 # (proto/grants.py) and sent as the tool server's Authorization header.
 # CLAUDE_CONFIG_DIR and TMPDIR live on a tmpfs that compose mounts.
@@ -32,11 +32,12 @@ RUN python3 -m pip install --break-system-packages --require-hashes \
         -r /tmp/worker-requirements.txt \
     && rm /tmp/worker-requirements.txt
 
-# Plugin: 14 skills + 18 agents + the shipped PreToolUse hook (python3 runs it).
+# Plugin: the skills and agents worker.py pins (EXPECTED_SKILLS, EXPECTED_AGENTS) + the
+# shipped PreToolUse hook (python3 runs it).
 COPY packages/engine/plugin /opt/genealogy/plugin
 
-# The worker and what it imports: app.agent.real_agent (map_message) and proto/sql,
-# which the worker applies at start.
+# The worker and what it imports: app.agent.real_agent (map_message) and proto/sql, whose
+# file names the worker checks the migration ledger against at start (U9: it runs no DDL).
 COPY apps/server/app               /opt/genealogy/server/app
 COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
 # 1b: the worker releases a held message when the turn holding it ends, and it is the
@@ -45,6 +46,9 @@ COPY apps/server/proto/sql         /opt/genealogy/server/proto/sql
 COPY apps/server/proto/enqueue.py  /opt/genealogy/server/proto/enqueue.py
 # U3: the grant custody the web tier shares -- the lock keys, the grant SQL, the decryption.
 COPY apps/server/proto/grants.py   /opt/genealogy/server/proto/grants.py
+# U9: the one schema applier. compose's one-shot `migrate` service runs it from this image
+# (`python3 proto/migrate.py` in WORKDIR); the worker imports it read-only for the ledger.
+COPY apps/server/proto/migrate.py  /opt/genealogy/server/proto/migrate.py
 COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
 
 ENV PYTHONPATH=/opt/genealogy/server

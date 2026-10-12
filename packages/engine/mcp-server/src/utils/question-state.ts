@@ -32,6 +32,8 @@
  * gate's population to within two runs.
  */
 
+import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
+
 export type QuestionState =
   | "framed"
   | "planned"
@@ -54,9 +56,184 @@ export interface QuestionStatus {
    *  not a defect — a reader given only `state` reports a question as settled
    *  when its own status still says `in_progress`. */
   storedStatus: string | null;
+  /** Linked assertions that disagree on a vital fact with no conflict entry
+   *  naming the pair — a conflict the evidence shows and nobody registered. */
+  unregisteredDisagreements: UnregisteredDisagreement[];
+  /** Tree persons this question bears on with more than two parents and fewer
+   *  than two hypotheses related to the question. */
+  competingParentSets: CompetingParentSet[];
+}
+
+export interface UnregisteredDisagreement {
+  personId: string;
+  /** `"birth place"`, `"birth year"`, `"death place"` or `"death year"`. */
+  fact: string;
+  assertionIds: string[];
+}
+
+export interface CompetingParentSet {
+  personId: string;
+  parentIds: string[];
 }
 
 const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
+
+/** Fact types that name one event per person, so two values are a disagreement
+ *  rather than two events. `birthplace` is folded into `birth`'s place, since
+ *  extractions record a birth's place under either. */
+const VITAL_EVENT: Readonly<Record<string, "birth" | "death">> = {
+  birth: "birth",
+  birthplace: "birth",
+  death: "death",
+  deathplace: "death",
+};
+
+/** Years further apart than this disagree. Census ages drift a year or two
+ *  between enumerations; that is ordinary, not a conflict. */
+const YEAR_TOLERANCE = 2;
+
+/** Both spellings of an assertion's place, each split into components. The raw
+ *  and standardized forms are compared separately because standardization
+ *  renames ("Forfarshire" → "Angus") and adds a country the raw form omits. */
+const placeForms = (a: any): string[][] =>
+  [a?.place, a?.standard_place]
+    .filter((p): p is string => typeof p === "string" && p.trim() !== "")
+    .map((p) => p.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean));
+
+const partsMatch = (p: string, q: string): boolean => p.startsWith(q) || q.startsWith(p);
+
+/** Places agree when every component of the less specific one matches one in
+ *  the other — "England" agrees with "Rochdale, Lancashire, England", and
+ *  "Russia" with "Russian Empire". Any pair of spellings agreeing is enough. */
+const placesAgree = (xs: string[][], ys: string[][]): boolean =>
+  xs.some((x) =>
+    ys.some((y) => {
+      const [short, long] = x.length <= y.length ? [x, y] : [y, x];
+      return short.every((p) => long.some((q) => partsMatch(p, q)));
+    }),
+  );
+
+const BOUNDED_TEXT = /\b(between|bet|after|aft|before|bef)\b/i;
+
+/** The span of years an assertion's date allows — `Bet 1836 and 1848` is
+ *  [1836, 1848]; `Bef 1880` is open below and `Aft 1870` open above, so neither
+ *  disagrees on its open side. A bounded date the standard-date parser cannot
+ *  read ("after 1870, before 1880") is left out; any other unreadable date
+ *  falls back to its first four-digit year as a one-year span. */
+const yearsOf = (a: any): [number, number] | null => {
+  for (const raw of [a?.standard_date, a?.date]) {
+    if (typeof raw !== "string") continue;
+    const lo = earliestYear(raw), hi = latestYear(raw);
+    if (lo !== null && hi !== null) {
+      return [earliestIsUnbounded(raw) ? -Infinity : lo, latestIsUnbounded(raw) ? Infinity : hi];
+    }
+    if (BOUNDED_TEXT.test(raw)) return null;
+    const m = raw.match(/\b(\d{4})\b/);
+    if (m) return [Number(m[1]), Number(m[1])];
+  }
+  return null;
+};
+
+/** Pairs of linked assertions about one person's birth or death that disagree,
+ *  with no conflict of ANY status naming both. A resolved conflict covers its
+ *  pair: the disagreement was registered and settled. At least one assertion of
+ *  each pair must be in `questionAssertionIds`. */
+export function unregisteredDisagreements(
+  research: any,
+  questionAssertionIds: ReadonlySet<string>,
+): UnregisteredDisagreement[] {
+  const byId = new Map<string, any>();
+  for (const a of arr(research?.assertions)) {
+    if (typeof a?.id === "string" && VITAL_EVENT[a?.fact_type]) byId.set(a.id, a);
+  }
+  const groups = new Map<string, any[]>();
+  for (const pe of arr(research?.person_evidence)) {
+    const a = byId.get(pe?.assertion_id);
+    if (!a || typeof pe?.person_id !== "string" || pe?.superseded_by != null) continue;
+    const key = `${pe.person_id}\u0000${VITAL_EVENT[a.fact_type]}`;
+    const g = groups.get(key) ?? [];
+    if (!g.includes(a)) g.push(a);
+    groups.set(key, g);
+  }
+  const covered = (x: string, y: string): boolean =>
+    arr(research?.conflicts).some((c) => {
+      const ids = arr(c?.competing_assertion_ids);
+      return ids.includes(x) && ids.includes(y);
+    });
+
+  const out: UnregisteredDisagreement[] = [];
+  for (const [key, group] of groups) {
+    const [personId, event] = key.split("\u0000");
+    const aspects: Array<[string, (a: any, b: any) => boolean]> = [
+      ["place", (a, b) => {
+        const pa = placeForms(a), pb = placeForms(b);
+        return pa.length > 0 && pb.length > 0 && !placesAgree(pa, pb);
+      }],
+      ["year", (a, b) => {
+        const ya = yearsOf(a), yb = yearsOf(b);
+        return ya !== null && yb !== null &&
+          (ya[0] > yb[1] + YEAR_TOLERANCE || yb[0] > ya[1] + YEAR_TOLERANCE);
+      }],
+    ];
+    for (const [aspect, disagree] of aspects) {
+      const ids = new Set<string>();
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          const a = group[i], b = group[j];
+          if (!questionAssertionIds.has(a.id) && !questionAssertionIds.has(b.id)) continue;
+          if (disagree(a, b) && !covered(a.id, b.id)) {
+            ids.add(a.id);
+            ids.add(b.id);
+          }
+        }
+      }
+      if (ids.size > 0) out.push({ personId, fact: `${event} ${aspect}`, assertionIds: [...ids].sort() });
+    }
+  }
+  return out;
+}
+
+/** Persons this question bears on — the project's subjects plus every person
+ *  its assertions are linked to — whose tree carries more than two birth
+ *  parents (no subtype, or `Biological`), while fewer than two hypotheses relate
+ *  to the question. Two candidate parent
+ *  couples with no hypothesis per candidate is identity uncertainty nobody has
+ *  set up to test. */
+export function competingParentSets(
+  research: any,
+  tree: any,
+  questionId: string,
+  questionAssertionIds: ReadonlySet<string>,
+): CompetingParentSet[] {
+  const related = arr(research?.hypotheses).filter((h) =>
+    arr(h?.related_question_ids).includes(questionId),
+  );
+  if (related.length >= 2) return [];
+  const inScope = new Set<string>(
+    arr(research?.project?.subject_person_ids).filter((id): id is string => typeof id === "string"),
+  );
+  for (const pe of arr(research?.person_evidence)) {
+    if (
+      questionAssertionIds.has(pe?.assertion_id) &&
+      typeof pe?.person_id === "string" &&
+      pe?.superseded_by == null
+    ) {
+      inScope.add(pe.person_id);
+    }
+  }
+  const parents = new Map<string, Set<string>>();
+  for (const r of arr(tree?.relationships)) {
+    if (r?.type !== "ParentChild" || typeof r?.child !== "string" || typeof r?.parent !== "string") continue;
+    if (r?.subtype != null && String(r.subtype).toLowerCase() !== "biological") continue;
+    if (!inScope.has(r.child)) continue;
+    const s = parents.get(r.child) ?? new Set<string>();
+    s.add(r.parent);
+    parents.set(r.child, s);
+  }
+  return [...parents]
+    .filter(([, s]) => s.size > 2)
+    .map(([personId, s]) => ({ personId, parentIds: [...s].sort() }));
+}
 
 /** Does `conflict` compete over any assertion in `assertionIds`?
  *
@@ -193,7 +370,7 @@ export function whyConflictBlocksCompletion(conflict: any, research: any): strin
  * question with a proof summary is `concluded` even if its plan is thin,
  * because the artifact is what any downstream check joins on.
  */
-export function questionStatus(research: any, question: any): QuestionStatus {
+export function questionStatus(research: any, question: any, tree: any = null): QuestionStatus {
   const qid = question?.id;
 
   const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
@@ -218,6 +395,9 @@ export function questionStatus(research: any, question: any): QuestionStatus {
     .map((c) => c?.id)
     .filter((id): id is string => typeof id === "string");
 
+  const disagreements = unregisteredDisagreements(research, assertionIds);
+  const parentSets = competingParentSets(research, tree, qid, assertionIds);
+
   const uncritiqued = summaries.filter((s) => !critiqued.has(s?.id));
 
   let state: QuestionState;
@@ -234,6 +414,16 @@ export function questionStatus(research: any, question: any): QuestionStatus {
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
+  } else if (disagreements.length > 0) {
+    // Registering a conflict is conflict-resolution's output, so an empty
+    // `conflicts[]` cannot be what routes there — the evidence has to.
+    nextStep =
+      "conflict-resolution — unregistered disagreement: " +
+      disagreements.map((d) => `${d.personId} ${d.fact} (${d.assertionIds.join(", ")})`).join("; ");
+  } else if (parentSets.length > 0) {
+    nextStep =
+      "hypothesis-tracking — competing parent sets: " +
+      parentSets.map((p) => `${p.personId} (${p.parentIds.join(", ")})`).join("; ");
   } else if (uncritiqued.length > 0) {
     nextStep = `gps-mentor (proof-critique) — ${uncritiqued.map((s) => s?.id).join(", ")}`;
   } else if (state === "critiqued" && !resolved) {
@@ -261,12 +451,21 @@ export function questionStatus(research: any, question: any): QuestionStatus {
   const rawStatus = question?.status;
   const storedStatus = typeof rawStatus === "string" ? rawStatus : null;
 
-  return { id: qid, state, nextStep, openConflictIds, storedStatus };
+  return {
+    id: qid,
+    state,
+    nextStep,
+    openConflictIds,
+    storedStatus,
+    unregisteredDisagreements: disagreements,
+    competingParentSets: parentSets,
+  };
 }
 
-/** Every question's state, in document order. */
-export function questionStates(research: any): QuestionStatus[] {
+/** Every question's state, in document order. `tree` is optional: without it
+ *  `competingParentSets` is always empty. */
+export function questionStates(research: any, tree: any = null): QuestionStatus[] {
   return arr(research?.questions)
     .filter((q) => typeof q?.id === "string")
-    .map((q) => questionStatus(research, q));
+    .map((q) => questionStatus(research, q, tree));
 }

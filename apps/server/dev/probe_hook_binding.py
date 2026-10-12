@@ -60,7 +60,7 @@ nothing -- the run reports VOID rather than letting the table be read.
 
 THE CONFOUND THIS RULES OUT FIRST
 
-The hook command is `python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py`.
+The hook command is `python3 "${CLAUDE_PLUGIN_ROOT}/hooks/guard_project_files.py"`.
 A negative could be `python3` missing from PATH, or the script erroring, rather
 than the loader failing to bind. The preflight runs the script directly under
 the same interpreter name with a synthetic payload and requires a deny back, so

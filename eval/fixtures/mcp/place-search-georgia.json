@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for the State of Georgia (Martha's birth state)",
+  "args": {
+    "placeName": "~Georgia"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Georgia, United States",
+        "type": "State",
+        "dateRange": "+1788/",
+        "latitude": 32.64,
+        "longitude": -83.44,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Georgia&focusedId=43"
+      }
+    ]
+  }
+}

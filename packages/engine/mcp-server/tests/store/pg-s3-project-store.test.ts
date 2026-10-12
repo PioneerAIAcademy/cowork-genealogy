@@ -11,12 +11,16 @@ import {
   HeadBucketCommand,
   HeadObjectCommand,
   ListObjectsV2Command,
+  PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import {
+  CLAIM_FENCE_SQL,
+  CLAIM_PRECHECK_SQL,
   createPgS3Backend,
+  PgS3Backend,
   PgS3ProjectStore,
   READY_TIMEOUT_MS,
-  type PgS3Backend,
+  StaleClaimError,
 } from "../../src/store/pg-s3-project-store.js";
 import { runProjectStoreConformance, type StoreFixture } from "./conformance.js";
 import { protoBackendOptions, PROTO_S3_KEYLESS } from "./pg-s3-test-env.js";
@@ -480,6 +484,260 @@ describe("PgS3ProjectStore without a stack", () => {
       });
     });
   });
+
+  describe("claim fence", () => {
+    // A recording double: one pooled client that logs every statement and
+    // answers the two claim checks with a configurable rowCount, a pool whose
+    // autocommit `query` answers the pre-check the same way, and an S3 client
+    // that records every send. `events` interleaves all three in call order,
+    // with how many clients were checked out at each S3 send.
+    // The real-Postgres race (a stale commit waiting on an in-flight claim) is
+    // apps/server/tests/test_proto_fencing_pg.py; this pins statement order.
+    const FENCE = { turnId: "turn-1", claimEpoch: "7" };
+
+    function recording(answers: { precheck: number; fence: number; failOn?: string }) {
+      const log: string[] = [];
+      const events: string[] = [];
+      let checkedOut = 0;
+      const answer = async (text: string) => {
+        if (answers.failOn && text.startsWith(answers.failOn)) throw new Error(`injected failure on ${answers.failOn}`);
+        if (text === CLAIM_PRECHECK_SQL) return { rowCount: answers.precheck, rows: [] };
+        if (text === CLAIM_FENCE_SQL) return { rowCount: answers.fence, rows: [] };
+        return { rowCount: 0, rows: [] };
+      };
+      const client = {
+        query: vi.fn(async (text: string, _values?: unknown[]) => {
+          log.push(text);
+          events.push(`client: ${text}`);
+          return answer(text);
+        }),
+        release: vi.fn(() => {
+          checkedOut -= 1;
+          events.push("release");
+        }),
+      };
+      const pool = {
+        connect: vi.fn(async () => {
+          checkedOut += 1;
+          events.push("connect");
+          return client;
+        }),
+        query: vi.fn(async (text: string, _values?: unknown[]) => {
+          events.push(`pool: ${text}`);
+          return answer(text);
+        }),
+      };
+      const s3 = {
+        send: vi.fn(async (cmd: unknown) => {
+          events.push(`s3: ${(cmd as object).constructor.name} with ${checkedOut} client(s) checked out`);
+          return {};
+        }),
+      };
+      const backend = new PgS3Backend(pool as unknown as pg.Pool, s3 as never, "projects", {
+        dsn: "postgresql://x:y@127.0.0.1:1/z",
+        s3: s3 as never,
+      });
+      const deleted: string[] = [];
+      vi.spyOn(backend, "deleteObjects").mockImplementation(async (keys) => {
+        deleted.push(...keys);
+      });
+      const putKeys = () =>
+        s3.send.mock.calls
+          .map(([cmd]) => cmd)
+          .filter((cmd): cmd is PutObjectCommand => cmd instanceof PutObjectCommand)
+          .map((cmd) => cmd.input.Key as string);
+      return { log, events, client, pool, s3, backend, deleted, putKeys };
+    }
+
+    const isWrite = (sql: string) => /^(INSERT|UPDATE|DELETE|WITH)\b/.test(sql);
+    const fenced = (r: ReturnType<typeof recording>) =>
+      new PgS3ProjectStore(r.backend, { projectId: "p", anchorPath: ANCHOR, fence: FENCE });
+
+    // The write paths whose whole body runs in one transaction: the two that
+    // would autocommit and put no object (fenced() gives them one), the two
+    // that already run one, and a locked tool body.
+    const TX_WRITES: Array<[string, (s: PgS3ProjectStore) => Promise<unknown>]> = [
+      ["writeJson(document)", (s) => s.writeJson(ANCHOR, "research.json", { a: 1 })],
+      ["remove", (s) => s.remove(ANCHOR, "images/x.jpg")],
+      [
+        "writeJsonBoth",
+        (s) =>
+          s.writeJsonBoth(ANCHOR, [
+            { ref: "tree.gedcomx.json", data: {} },
+            { ref: "research.json", data: {} },
+          ]),
+      ],
+      ["appendText", (s) => s.appendText(ANCHOR, "results/scores.log", "x\n")],
+      ["withTransaction(writeJson)", (s) => s.withTransaction(ANCHOR, () => s.writeJson(ANCHOR, "research.json", {}))],
+    ];
+
+    // The single blob or staged writes outside a transaction: the S3 PUT runs
+    // with no client held, and only a short transaction indexes it.
+    const OBJECT_WRITES: Array<[string, string, (s: PgS3ProjectStore) => Promise<unknown>]> = [
+      ["writeBytes(blob)", "images/x.jpg", (s) => s.writeBytes(ANCHOR, "images/x.jpg", new Uint8Array([1, 2]))],
+      ["writeJson(blob)", "results/r.json", (s) => s.writeJson(ANCHOR, "results/r.json", { a: 1 })],
+      [
+        "writeJson(staging)",
+        "results/.staging/s.json",
+        (s) => s.writeJson(ANCHOR, "results/.staging/s.json", { a: 1 }),
+      ],
+    ];
+
+    it.each(TX_WRITES)("%s, fence current: BEGIN → pre-check → writes → share-locked fence → COMMIT, on one client", async (_name, write) => {
+      const r = recording({ precheck: 1, fence: 1 });
+      await write(fenced(r));
+      expect(r.pool.query).not.toHaveBeenCalled();
+      expect(r.pool.connect).toHaveBeenCalledTimes(1);
+      const { log } = r;
+      expect(log[0]).toBe("BEGIN");
+      expect(log.at(-1)).toBe("COMMIT");
+      expect(log.at(-2)).toBe(CLAIM_FENCE_SQL);
+      const pre = log.indexOf(CLAIM_PRECHECK_SQL);
+      const writes = log.flatMap((sql, i) => (isWrite(sql) ? [i] : []));
+      expect(writes.length).toBeGreaterThan(0);
+      // Right after BEGIN (and the advisory lock, when the path takes one).
+      expect(log.slice(1, pre).every((sql) => sql.startsWith("SELECT pg_advisory_xact_lock"))).toBe(true);
+      expect(pre).toBeLessThan(writes[0]);
+      // The fence comes after the LAST write: at commit, not at BEGIN.
+      expect(log.indexOf(CLAIM_FENCE_SQL)).toBeGreaterThan(writes.at(-1)!);
+      expect(log.filter((sql) => sql === CLAIM_FENCE_SQL)).toHaveLength(1);
+      // Both checks carry the turn, the store's project and the epoch.
+      for (const sql of [CLAIM_PRECHECK_SQL, CLAIM_FENCE_SQL]) {
+        expect(r.client.query).toHaveBeenCalledWith(sql, ["turn-1", "p", "7"]);
+      }
+    });
+
+    it.each(TX_WRITES)("%s, superseded at commit: rejects with StaleClaimError and rolls back", async (_name, write) => {
+      const r = recording({ precheck: 1, fence: 0 });
+      const failed = write(fenced(r));
+      await expect(failed).rejects.toBeInstanceOf(StaleClaimError);
+      await expect(failed).rejects.toThrow(/newer attempt \(turn turn-1: claim epoch 7 is no longer current\)/);
+      expect(r.log.at(-1)).toBe("ROLLBACK");
+      expect(r.log).not.toContain("COMMIT");
+      expect(r.pool.query).not.toHaveBeenCalled();
+      // Every object the rolled-back transaction put is deleted again.
+      expect(r.deleted).toEqual(expect.arrayContaining(r.putKeys()));
+    });
+
+    it.each(TX_WRITES)("%s, superseded at the pre-check: nothing runs, nothing is put", async (_name, write) => {
+      const r = recording({ precheck: 0, fence: 1 });
+      await expect(write(fenced(r))).rejects.toBeInstanceOf(StaleClaimError);
+      expect(r.s3.send).not.toHaveBeenCalled();
+      expect(r.log.filter(isWrite)).toEqual([]);
+      expect(r.log).not.toContain(CLAIM_FENCE_SQL);
+      expect(r.log.at(-1)).toBe("ROLLBACK");
+    });
+
+    it.each(OBJECT_WRITES)(
+      "%s, fence current: pool pre-check → PUT with no client held → BEGIN, touch, upsert, fence, COMMIT on one client",
+      async (_name, ref, write) => {
+        const r = recording({ precheck: 1, fence: 1 });
+        await write(fenced(r));
+        const [key] = r.putKeys();
+        expect(r.putKeys()).toHaveLength(1);
+        expect(key).toMatch(objectKeyFor("p", ref));
+        // The pre-check is the pool's only query, with the turn, project and epoch.
+        expect(r.pool.query).toHaveBeenCalledTimes(1);
+        expect(r.pool.query).toHaveBeenCalledWith(CLAIM_PRECHECK_SQL, ["turn-1", "p", "7"]);
+        // The PUT: after the pre-check, before any client is checked out.
+        expect(r.events.slice(0, 3)).toEqual([
+          `pool: ${CLAIM_PRECHECK_SQL}`,
+          "s3: PutObjectCommand with 0 client(s) checked out",
+          "connect",
+        ]);
+        // One short transaction on one client: no second pre-check, the fence
+        // after the index upsert and right before COMMIT, then the release.
+        expect(r.pool.connect).toHaveBeenCalledTimes(1);
+        expect(r.log).toHaveLength(5);
+        expect(r.log[0]).toBe("BEGIN");
+        expect(r.log[1]).toMatch(/^INSERT INTO projects\b/);
+        expect(r.log[2]).toMatch(/^WITH prev AS \(SELECT s3_key FROM (staging|blobs)\b/);
+        expect(r.log[3]).toBe(CLAIM_FENCE_SQL);
+        expect(r.log[4]).toBe("COMMIT");
+        expect(r.client.query).toHaveBeenCalledWith(CLAIM_FENCE_SQL, ["turn-1", "p", "7"]);
+        expect(r.client.query.mock.calls[2][1]).toContain(key);
+        expect(r.events.at(-1)).toBe("release");
+        expect(r.deleted).toEqual([]);
+      },
+    );
+
+    it.each(OBJECT_WRITES)("%s, superseded at commit: rolls back and deletes the object it put", async (_name, _ref, write) => {
+      const r = recording({ precheck: 1, fence: 0 });
+      const failed = write(fenced(r));
+      await expect(failed).rejects.toBeInstanceOf(StaleClaimError);
+      await expect(failed).rejects.toThrow(/newer attempt \(turn turn-1: claim epoch 7 is no longer current\)/);
+      expect(r.log.at(-1)).toBe("ROLLBACK");
+      expect(r.log).not.toContain("COMMIT");
+      const keys = r.putKeys();
+      expect(keys).toHaveLength(1);
+      expect(r.deleted).toContain(keys[0]);
+    });
+
+    it.each(OBJECT_WRITES)("%s, the index transaction fails: the object it put is deleted", async (_name, _ref, write) => {
+      const r = recording({ precheck: 1, fence: 1, failOn: "BEGIN" });
+      await expect(write(fenced(r))).rejects.toThrow(/injected failure on BEGIN/);
+      const keys = r.putKeys();
+      expect(keys).toHaveLength(1);
+      expect(r.deleted).toContain(keys[0]);
+    });
+
+    it.each(OBJECT_WRITES)("%s, superseded at the pre-check: no client, nothing put", async (_name, _ref, write) => {
+      const r = recording({ precheck: 0, fence: 1 });
+      await expect(write(fenced(r))).rejects.toBeInstanceOf(StaleClaimError);
+      expect(r.s3.send).not.toHaveBeenCalled();
+      expect(r.pool.connect).not.toHaveBeenCalled();
+    });
+
+    it("a fenced writeBytes inside a transaction keeps the in-transaction path: PUT on the open client, deleted on rollback", async () => {
+      const r = recording({ precheck: 1, fence: 0 });
+      const store = fenced(r);
+      await expect(
+        store.withTransaction(ANCHOR, () => store.writeBytes(ANCHOR, "images/x.jpg", new Uint8Array([1]))),
+      ).rejects.toBeInstanceOf(StaleClaimError);
+      expect(r.pool.query).not.toHaveBeenCalled();
+      expect(r.events).toContain("s3: PutObjectCommand with 1 client(s) checked out");
+      expect(r.deleted).toEqual(r.putKeys());
+    });
+
+    it("a locked body on a store superseded at the pre-check is never invoked", async () => {
+      const r = recording({ precheck: 0, fence: 1 });
+      const body = vi.fn(async () => "ran");
+      await expect(fenced(r).withTransaction(ANCHOR, body)).rejects.toBeInstanceOf(StaleClaimError);
+      expect(body).not.toHaveBeenCalled();
+    });
+
+    it("an unfenced store's writeJson autocommits on the pool: no BEGIN, no claim check", async () => {
+      const r = recording({ precheck: 0, fence: 0 });
+      await new PgS3ProjectStore(r.backend, { projectId: "p", anchorPath: ANCHOR }).writeJson(ANCHOR, "research.json", {});
+      expect(r.pool.connect).not.toHaveBeenCalled();
+      expect(r.log).toEqual([]);
+      const sqls = r.pool.query.mock.calls.map(([sql]) => sql);
+      expect(sqls.some((sql) => sql.startsWith("INSERT INTO documents"))).toBe(true);
+      expect(sqls.some((sql) => sql.includes("claim_epoch"))).toBe(false);
+    });
+
+    it("an unfenced store's writeBytes autocommits on the pool: PUT, then touch and upsert, no claim check", async () => {
+      const r = recording({ precheck: 0, fence: 0 });
+      await new PgS3ProjectStore(r.backend, { projectId: "p", anchorPath: ANCHOR }).writeBytes(
+        ANCHOR,
+        "images/x.jpg",
+        new Uint8Array([1]),
+      );
+      expect(r.pool.connect).not.toHaveBeenCalled();
+      expect(r.events.map((e) => e.replace(/^(pool: \S+ \S+ \S+).*$/, "$1"))).toEqual([
+        "pool: INSERT INTO projects",
+        "s3: PutObjectCommand with 0 client(s) checked out",
+        "pool: WITH prev AS",
+      ]);
+    });
+
+    it("a fenced store's reads are not fenced", async () => {
+      const r = recording({ precheck: 0, fence: 0 });
+      await fenced(r).exists(ANCHOR, "research.json");
+      expect(r.pool.connect).not.toHaveBeenCalled();
+      expect(r.pool.query).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 if (!DSN || !ENDPOINT) {
@@ -594,6 +852,8 @@ if (!DSN || !ENDPOINT) {
           expect(report.checks.postgres.ok).toBe(false);
           expect(report.checks.postgres.error).toMatch(/^schema: missing /);
           expect(report.checks.postgres.error).toContain("documents");
+          // The claim fence queries `turns` (U6), so readiness requires it too.
+          expect(report.checks.postgres.error).toContain("turns");
           expect(report.checks.s3).toEqual({ ok: true });
         } finally {
           await empty.close();

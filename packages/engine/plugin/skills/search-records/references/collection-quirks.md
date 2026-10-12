@@ -3,27 +3,20 @@
 Read this reference when searching a specific collection family.
 Quirks affect how queries should be constructed for that collection.
 
-Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
-`record_search` takes **camelCase**: `q.surname` → `surname`,
-`q.fatherSurname` → `fatherSurname`, `q.fatherGivenName` →
-`fatherGivenName`, `q.motherGivenName` / `q.motherSurname` →
-`motherGivenName` / `motherSurname`, `f.collectionId` → `collectionId`.
-`q.batchNumber` → `batchNumber`.
-
 ## US Federal Censuses (1790–1940)
 
 - Indexed by community volunteers; mostly accurate but cursive
   handwriting causes common transcription errors: S/L, F/T, n/u,
   U/V confusions; double-S misread as F or "long s"
-- **Compensation:** Use surname wildcards (`q.surname=Sm?th`);
+- **Compensation:** Use surname wildcards (`surname=Sm?th`);
   search by neighbors; for unindexed enumeration districts, switch
   to image browsing
 - **A wildcard at the start or middle of a surname can be as useful as one at
   the end.** A family surnamed Bipes was indexed across records as Bipes,
   Bippes, Biepes, Bieps, Bifes, Bipers, Bippers, and Piper — no single
   trailing wildcard catches all of these. When a surname keeps resisting
-  every explicit variant, try a leading or middle wildcard (`q.surname=?ip*s`
-  or `q.surname=B*p*s`) alongside the usual trailing one.
+  every explicit variant, try a leading or middle wildcard (`surname=?ip*s`
+  or `surname=B*p*s`) alongside the usual trailing one.
 - Collection-specific forms expose extra fields (Residence Year
   locked to census year, Race, Marital Status, 1935 Residence for
   1940 census)
@@ -32,31 +25,12 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
 
 - Pre-1837 parish records extracted decades ago — static "Legacy"
   collections with no updates or corrections since 2010 publication
-- **Compensation: the IGI batch number, via `batchNumber`.** It enumerates a
-  parish exhaustively and is a very strong filter. Verified live: a batch alone
-  returned about five thousand records, the same batch plus a surname returned
-  79, and a nonexistent batch returns **0** rather than being ignored — so a nil
-  under it means the batch is wrong, not that the parish is empty.
-- **Where to get one:** the `batchNumber` field on a `record_search` result (and
-  on `ranked[]` stubs). Search the collection by name, scan the hits for one that
-  carries it, then send that batch alone. The batch numbers named in this file
-  are illustrative, not a lookup — do not send one because it appears here.
-  Most records carry none; a hit without one is not a statement about the
-  collection, and the same collection returns hits both with and without.
-- Batch number shape varies: it may lead with a digit or with a letter, and may
-  carry a trailing `-digit`. Attested live: `B01883-5`, `M01048-5` and the
-  all-numeric `8317102`. Send what the source gives
-  you; do not reject or reformat a batch on shape, and treat no shape rule
-  here as exhaustive.
-- Send the batch and it returns that batch's extracted records — the canonical
-  way to enumerate a single parish. Adding a surname searches within that
-  extraction. The tool **rejects** `batchNumber` + `recordCountry`/`recordSubdivision`: the batch
-  anchors by itself, and a country that does not match it returns 0, which
-  looks exactly like a wrong batch. A batch number carries no country
-  information, so there is nothing to guess it from.
-- Paging stops at `offset + count = 4999`, so a batch larger than that cannot
-  be walked end to end. Partition it by surname — the one field that narrows
-  within a batch without the silent-zero risk — rather than paging deeper.
+- **Compensation: the IGI batch number.** It enumerates a parish exhaustively
+  and is the canonical way to work one. How to obtain one, what it rejects, how
+  it pages and what a nil under it means are all on `record_search`'s
+  `batchNumber` parameter — read them there.
+- **Reading a nil here:** these are static extractions, so a nil under a correct
+  batch is a statement about the extraction, not about the parish.
 - Cross-check with FreeREG and FindMyPast via `search-external-sites`.
 
 ## Mexico Civil Registration
@@ -64,7 +38,7 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
 - Post-2020 indexes often produced by Computer-Aided Indexing (CAI)
   with higher OCR-style error rates, especially with accented
   characters and joined cursive
-- **Compensation:** Use wildcards generously (`q.fatherSurname=
+- **Compensation:** Use wildcards generously (`fatherSurname=
   L*pez`); search dual surnames separately; search by parents'
   names instead of the principal
 
@@ -73,16 +47,13 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
 - Sometimes indexed without parents' names due to partial indexing
   templates
 - **Compensation:** Drop the principal's name and search by
-  `q.fatherGivenName/Surname` + `q.motherGivenName/Surname`
+  `fatherGivenName/Surname` + `motherGivenName/Surname`
 
 ## Ellis Island Passenger Lists
 
-- ~~**Wildcards are explicitly disabled** in these collections~~ —
-  **refuted by measurement.** Scoped to the Ellis Island passenger
-  collection, a one-character wildcard on a rare surname returns both
-  spellings it can match, and every record of the bound spelling turns up
-  in the wildcard's results — both sets read in full rather than sampled.
-  Wildcards work here; use them like anywhere else.
+- Wildcards work here like anywhere else. (The long-standing claim that they
+  were disabled in these collections was refuted by measurement and is not
+  carried struck through — see `name-search-mechanics.md`'s Constraints.)
 - **Still useful:** multiple specific spellings, ship name + arrival year
   via other parameters, and the external Stephen Morse one-step tools —
   passenger-list indexing is rough regardless of whether wildcards work.
@@ -141,18 +112,3 @@ Parameters below are written in the upstream API's `q.*` / `f.*` syntax;
   the abbreviated patronymic ending directly: `-datter` → `-dr` (e.g.
   Halsteinsdatter → Halsteinsdr), the mirror of the vowel-substitution
   rule above for given names.
-
-## Common collection IDs (verify before use)
-
-| Collection | ID |
-|---|---|
-| US Census 1900 | `1325221` |
-| US Census 1910 | `1727033` |
-| US Census 1920 | `1488411` |
-| US Census 1930 | `1810731` |
-| US Census 1940 | `2000219` |
-| US Census 1950 | `4464515` |
-| England Births and Christenings 1538–1975 | `1473014` |
-
-When in doubt, look up the collection and read the ID from the
-response. Do not hardcode IDs without verification.

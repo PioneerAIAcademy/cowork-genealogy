@@ -130,57 +130,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "against cannot be induced through it. The agent-side pin states the rule.",
     },
   },
-  "research-exhaustiveness -> record-structurer": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
-        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
-        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
-        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
-        "against cannot be induced through it. The agent-side pin states the rule.",
-    },
-  },
-  "search-external-sites -> record-structurer": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
-        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
-        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
-        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
-        "against cannot be induced through it. The agent-side pin states the rule.",
-    },
-  },
-  "search-full-text -> record-structurer": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
-        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
-        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
-        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
-        "against cannot be induced through it. The agent-side pin states the rule.",
-    },
-  },
   "search-records -> record-structurer": {
     pins: [
       {
@@ -196,38 +145,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
         "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
         "against cannot be induced through it. The agent-side pin states the rule.",
-    },
-  },
-  "source-evaluation -> record-structurer": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Send no other key, at any depth; roles and classifications are not yours to send.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller hands over only sources — a resultsRef or the record text — so a composed " +
-        "conclusion has nowhere to travel. The agent's document schema refuses every role and " +
-        "classification field IN CODE (spec §11.7), and it holds no writer that reaches " +
-        "person_evidence, so the destructive-edit and fabricated-link incidents this file guards " +
-        "against cannot be induced through it. The agent-side pin states the rule.",
-    },
-  },
-  "search-full-text -> image-reader": {
-    pins: [
-      {
-        side: "agent",
-        excerpt: "Never tailor, trim, or slant the transcription toward an expected answer.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "The caller asks only for a page's text, keyed by the result's id, and composes no " +
-        "expected answer. The agent-side pin forbids slanting the transcription toward one, " +
-        "which is the guarantee; this caller carries no rule of its own yet.",
     },
   },
   "search-records -> image-reader": {
@@ -256,6 +173,35 @@ const DELEGATION_EDGES: Record<string, Edge> = {
   // The router that held two caller-side pins here was deleted with the skill
   // (issue #2115), so the orchestrator is now the only caller and the agent
   // carries the whole defence. The history below is why that pin is agent-side.
+  // Added with the "Bounded request or job" section (#2813 item 1): a bounded
+  // transcription goes straight to the agent that owns it instead of walking the
+  // routing table. The caller side is exempt because the whole delegation is one
+  // clause naming a destination -- it forwards no expected answer for the agent
+  // to slant toward, which is the pressure the sibling record-extraction edge
+  // pins against. If the router ever gains a sentence telling this agent what to
+  // look for, that sentence is a caller pin and this exemption must go.
+  "research -> image-reader": {
+    pins: [
+      {
+        side: "agent",
+        excerpt:
+          "Never\ntailor, trim, or slant the transcription toward an expected answer.",
+      },
+    ],
+    exempt: {
+      side: "caller",
+      reason:
+        "The router states the destination and nothing about the content: it " +
+        "passes no looking_for, no expected answer, and no framing of what the " +
+        "page should say. Deciding whether the page holds what was wanted is " +
+        "the caller's job on return, which the agent-side pin already states.",
+      mitigation: {
+        side: "caller",
+        excerpt: "transcription to `@plugin:image-reader`",
+      },
+    },
+  },
+
   "research -> question-selection": {
     pins: [
       // Added after the first direct-arm run (issue #2115). The exemption this
@@ -272,36 +218,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  "research-exhaustiveness -> research-exhaustiveness": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**A delegation that tells you to declare is a destination, not a finding.**",
-      },
-      {
-        side: "agent",
-        excerpt:
-          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "Same construction as proof-conclusion: the skill's delegation names both outcomes " +
-        "('declaring if the criteria are met, and recording an honest `declared: false` " +
-        "termination if they are not'), pinned below, and the agent reads the project " +
-        "itself. Measured limit: neither of the 2 delegations in the committed corpus uses " +
-        "the construction, so what actually holds there is that both are neutrally phrased " +
-        "('assess whether', 'evaluate whether') — the outcome the exemption claims, reached " +
-        "without the mechanism it credits. The agent-side pins remain the guarantee.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "declaring if the criteria are met, and recording an honest `declared: false` termination if they are not",
-      },
-    },
-  },
+  // "research-exhaustiveness -> research-exhaustiveness" was the self-delegation
+  // from the thin skills/research-exhaustiveness/ SKILL.md to
+  // agents/research-exhaustiveness.md. That skill directory was deleted in issue
+  // #2738; the direct caller is now `research`, which holds the sole caller-side
+  // pin for this agent below.
 
   // "person-evidence -> person-evidence" was the self-delegation from the thin
   // skills/person-evidence/ SKILL.md to agents/person-evidence.md. That skill
@@ -347,6 +268,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "agent",
         excerpt: "A delegation that tells you to declare is a destination, not a finding",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "Read what you need from\nthe project yourself — do not expect the caller to have gathered it.",
       },
     ],
   },
@@ -402,6 +328,51 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // The agent-conversion (issue #2802) deleted skills/search-external-sites/,
+  // so its three callers became spawns of `@plugin:search-external-sites`.
+  "research -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "search-records -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "and the plan item — never a value you expect it to find —",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
+  "research-plan -> search-external-sites": {
+    pins: [
+      {
+        side: "caller",
+        excerpt: "naming the plan item and never the result you expect.",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that pre-states a value** — a birthplace, a year, a collection\n  — does not settle it.",
+      },
+    ],
+  },
+
   "research -> person-evidence": {
     pins: [
       {
@@ -452,7 +423,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       mitigation: {
         side: "caller",
         excerpt:
-          "naming the subject and every\nimported relative by their LOCAL tree id from Step 3",
+          "naming the subject and every\nimported relative by their tree `I` id from `idMap`",
       },
     },
   },
@@ -469,6 +440,23 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "agent",
         excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+
+  // Added with the agent (issue #2029). Two spawns, because an agent returns
+  // once: triage, then the researcher's verdicts. The caller pin is the one
+  // that keeps a triage recommendation from being passed back as a verdict.
+  "research -> search-hints": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Never pass a verdict the\nresearcher did not state — a triage recommendation is not one.",
+      },
+      {
+        side: "agent",
+        excerpt: "**Verdicts are the researcher's.**",
       },
     ],
   },
@@ -527,13 +515,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["init-project -> citation", ""],
   ["research-plan -> record-structurer", ""],
   ["research -> citation", ""],
-  ["source-evaluation -> citation", ""],
   // Six "use proof-conclusion" prohibitions in DO NOT clauses, visible to the
   // prose arm only since issue #2822 deleted the routing skill and made the
   // name unambiguous. None of them spells `@plugin:proof-conclusion`, so none
   // is a delegation being silenced -- verified per file before listing.
   ["conflict-resolution -> proof-conclusion", ""],
-  ["research-exhaustiveness -> proof-conclusion", ""],
   ["timeline -> proof-conclusion", ""],
   // `search-wikipedia` (issue #2795) is the reverse of the `citation` shape: its
   // name is not an ordinary English word, so the arm DOES discriminate for it,
@@ -550,12 +536,11 @@ const PROSE_MENTIONS = new Map<string, string>([
   // FamilySearch-wiki request, not a delegation, and does not spell
   // `@plugin:search-familysearch-wiki`. (A locality-guide row left when issue
   // #2117 deleted that skill.)
-  // locality-guide entered agentOnly when issue #2117 deleted its skill. All
-  // four mentions below are bare-name routing-boundary prose ("use
+  // locality-guide entered agentOnly when issue #2117 deleted its skill. Both
+  // mentions below are bare-name routing-boundary prose ("use
   // locality-guide", "locality-guide is the right skill") — none spell
   // `@plugin:locality-guide`.
   ["research-plan -> locality-guide", ""],
-  ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   // person-evidence gained a skills/<name>/ directory before the agent
   // conversion; when the skill was deleted the name entered agentOnly and
@@ -580,7 +565,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // issue #2805 deleted its skill.
   ["conflict-resolution -> check-warnings", ""],
   ["search-records -> check-warnings", ""],
-  ["source-evaluation -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
   // mention is a DO NOT clause ("Merging is ... a data operation (tree-edit)"),
@@ -597,21 +581,34 @@ const PROSE_MENTIONS = new Map<string, string>([
   ["conflict-resolution -> question-selection", ""],
   ["forget-and-rederive -> question-selection", ""],
   ["init-project -> question-selection", ""],
-  ["research-exhaustiveness -> question-selection", ""],
   ["research-plan -> question-selection", ""],
-  ["search-full-text -> question-selection", ""],
   ["timeline -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
   // provenance mention ("use locality-guide", "comes from `locality-guide`"),
   // left worded as-is because each rewording buys that skill a paid run.
   ["research-plan -> locality-guide", ""],
-  ["search-external-sites -> locality-guide", ""],
   ["search-records -> locality-guide", ""],
   // hypothesis-tracking entered agentOnly when issue #2792 deleted its skill
   // directory. Both are bare-name mentions — "(use hypothesis-tracking)",
   // "suggest `hypothesis-tracking`" — and neither spells
   // `@plugin:hypothesis-tracking`.
   ["timeline -> hypothesis-tracking", ""],
+  // search-full-text entered agentOnly when issue #2120 deleted its skill
+  // directory. All mentions below are bare-name boundary prose ("use
+  // search-full-text", "search-full-text skill") — none spells
+  // `@plugin:search-full-text`.
+  ["search-records -> search-full-text", ""],
+  // source-evaluation entered agentOnly when issue #2796 deleted its skill. The
+  // one mention is init-project's boundary prose ("Auditing the sources already
+  // attached ... is source-evaluation's; name it, never audit them here"), not
+  // a delegation; it does not spell `@plugin:source-evaluation`.
+  ["init-project -> source-evaluation", ""],
+  // research-exhaustiveness entered agentOnly when issue #2738 deleted its
+  // skill directory. Both mentions below are bare-name mentions — neither
+  // spells `@plugin:research-exhaustiveness`. (A third, from
+  // search-external-sites, went with that skill when issue #2802 deleted it.)
+  ["research-plan -> research-exhaustiveness", ""],
+  ["search-records -> research-exhaustiveness", ""],
 ]);
 
 const skillFiles = readdirSync(skillsDir, { withFileTypes: true })
@@ -673,8 +670,7 @@ function discoverEdges(): string[] {
  * emphasis so it survives bold becoming italic with no word changed. Applied to
  * BOTH the pin and the haystack, so it cannot make a pin match text that says
  * something else. Same treatment as `corpus-figures.test.ts` (which strips
- * ``[*`_]`` before searching spec prose) and `slugifyHeading` in
- * `repo-paths.ts`.
+ * ``[*`_]`` before searching spec prose).
  */
 function normalize(text: string): string {
   return text
@@ -804,9 +800,20 @@ describe("agent delegation framing", () => {
     "question-selection",
     "project-status",
     "locality-guide",
+    // ARRIVED when issue #2802 deleted skills/search-external-sites/.
+    "search-external-sites",
+    // ARRIVED when issue #2738 deleted skills/research-exhaustiveness/.
+    "research-exhaustiveness",
     "search-familysearch-wiki",
+    // ARRIVED with issue #2029, a new agent that never had a skill.
+    "search-hints",
+    // ARRIVED when issue #2120 deleted skills/search-full-text/.
+    "search-full-text",
     "search-images",
     "search-wikipedia",
+    // ARRIVED when issue #2796 deleted skills/source-evaluation/.
+    "source-evaluation",
+    "survey-surname",
     "translation",
     "tree-edit",
     "validate-schema",

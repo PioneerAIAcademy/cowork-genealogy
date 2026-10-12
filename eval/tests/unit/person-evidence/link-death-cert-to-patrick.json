@@ -10,9 +10,7 @@
       "death-cert",
       "confidence-calibration",
       "pe_005"
-    ],
-    "expected_outcome": "xfail",
-    "xfail_reason": "Owned by issue #2537 (calibration at the identity decision). The agent downgrades pe_005 below `confident` on the death certificate's Pennsylvania birthplace (a_012), treating it as an open contradiction, although conflict c_001 has already resolved it in favour of Ireland. Genealogist ruling, 2026-09-29: `confident` is right, so that downgrade is a calibration error. Measured 2026-09-29 at --runs-per-test 3 after this test's judge_context was clarified: fail, partial, partial (flaky), the fail on Confidence calibration 1 where the review concluded 'confident is not justified'. The defect this marker used to name, modifying pe_005 during a review, did not occur in 9 runs: test_pe005_unchanged_when_review_confirms passed every time. The confident-versus-probable premise is settled (keep 'confident'). Remove this marker when this test comes back flaky: false and non-failing on --runs-per-test 3."
+    ]
   },
   "input": {
     "delegation": "Review the person_evidence link pe_005 (from a_013, the death certificate, to Patrick Flynn) and assess whether its confidence calibration is justified.\n\nprojectPath: <workspace>",

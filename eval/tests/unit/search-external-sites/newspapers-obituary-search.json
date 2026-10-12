@@ -10,11 +10,12 @@
       "external-site",
       "obituary",
       "url-generation",
-      "log-site-newspapers"
+      "log-site-newspapers",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search Newspapers.com for Patrick Flynn's obituary in Schuylkill County, between 1880 and 1905.",
+    "delegation": "Search Newspapers.com for Patrick Flynn's obituary in Schuylkill County, between 1880 and 1905.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

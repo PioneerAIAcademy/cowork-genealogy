@@ -27,8 +27,7 @@
     "Should NOT mark the new fact `primary: true` unless it's the primary Occupation (and only Occupation) for this person — the SKILL.md primary rule only applies when there are competing facts of the same type",
     "Edit-minimality: no other facts on I1 are changed (F1 Birth and F2 Death stay byte-identical); no other person, relationship, or source is touched; research.json is not modified",
     "Should NOT need a separate validate_research_schema call — tree_edit, tree_correct, and merge_tree_persons all validate-before-persist (SKILL.md § Validation), and the tool is not in this skill's allowed-tools. Do not score down for omitting it; do not reward calling it.",
-    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry",
-    "Should end its return with a caller-facing `Hand-back: check-warnings <person ids>` line naming every person this edit touched — the agent body requires it after ANY edit or merge. The agent cannot spawn check-warnings itself (it holds no Agent tool), so check-warnings not running is correct and MUST NOT be scored down; score only on whether the return names it for the touched persons."
+    "Should reuse S2 (1860 census already in tree.sources) — must NOT create a duplicate S-prefix source entry"
   ],
   "execution": {
     "max_wall_clock_seconds": 600

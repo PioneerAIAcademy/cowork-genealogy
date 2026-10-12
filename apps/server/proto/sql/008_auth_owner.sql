@@ -1,6 +1,6 @@
 -- U2: patron sign-in and project ownership (docs/plan/familysearch-handoff.md, U2).
--- Idempotent like every file here: the web tier and the worker apply sql/*.sql at each
--- start (until U9), and initdb applies it once.
+-- Idempotent like every file here: applied once by `migrate.py`, which re-runs every file
+-- once on a database that predates its ledger (U9).
 --
 -- projects.owner_id is NULLABLE on purpose: the engine creates projects with the id
 -- alone (PgS3ProjectStore.touchProject), so a NOT NULL owner would fail every engine
