@@ -275,7 +275,7 @@ export interface RecordSearchResult {
   searchRank?: number;
   /** 0-1 match score; null when the FS call kept failing (the row is kept). */
   matchScore?: number | null;
-  /** 1-10 confidence bucket; omitted on a no-match or a scoring failure. */
+  /** 1-5 confidence bucket; omitted on a no-match or a scoring failure. */
   matchConfidence?: number;
   /** How many facts this candidate carries that discriminate one human from
    *  another. A low count means the score is unstable in either direction —

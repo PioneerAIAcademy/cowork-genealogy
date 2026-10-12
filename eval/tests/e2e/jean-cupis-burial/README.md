@@ -28,17 +28,59 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 3, `hint-samples.csv` row 68,
-flags `adds_birth,adds_burial`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "France, Seine-Saint-Denis, Parish and Civil Registration, 1523-1932", a burial entry for Jean Baptiste de Cupis (born 1710) who died 30 April 1788 and was buried 1 May 1788 at Montreuil, Seine-Saint-Denis; the register image is from the pre-1792 Montreuil parish registers.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the May 1788 Montreuil burial, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-12 (#3326): true match.** The hint record
+`ark:/61903/1:1:DRKL-YZMM` ("France, Seine-Saint-Denis, Parish and Civil
+Registration, 1523-1932") is the burial of tree person K642-XP9, and f1 stands
+as drafted. The hint came from `filtered-list-samples-3.csv` row 3,
+`hint-samples.csv` row 68, flags `adds_birth,adds_burial`, confidence 3.
 
-A strong candidate. The indexed death date, 30 April 1788, is exactly the death date the tree already carries, and the name with the noble particle "de Cupis" fits a family the tree itself identifies through his sister Marie Anne De Cupis De Camargo, whose life sketch names her as the dancer La Camargo. The tree's son François was born in Paris in 1732, so a death in the Paris suburbs fits where the family lived. The `hint-samples.csv` country is Belgium, but the record is French; the fixture is tagged `FR` to the record. The tree person cites no sources at all, so nothing in the tree is a re-index of this entry.
+**Retrieval.** All of it used the `packages/engine/mcp-server/dev/try-*.ts`
+scripts against live FamilySearch, not familysearch.org by hand:
+`try-person-read K642-XP9`, `try-record-read` on the hint and on three
+neighbouring entries, a `try-record-search` of collection 3241307 for 1788
+Montreuil deaths, and `try-image-transcribe` on the page.
 
-The `adds_birth` flag is an indexing artefact: the index's 1710 is a year computed from an age at death, a year off the tree's 23 November 1711 Brussels christening, and nobody should replace the christening with it. The one in-tree confounder is his son Jean Baptiste Cupis (`MHT2-X6G`), but the tree has that son dead before 1778, so he cannot be the man buried in 1788. The check that would settle it is the burial act on the register image: a French burial entry of this date normally gives age, occupation and the names of witnesses or a surviving wife, and an age of about 76–77, a musician's occupation, or Constance Dufour or François Cupis named in the act would confirm the match.
+**Baseline.** The live tree person carries no record sources at all, so the
+hint does not re-index anything already attached. The tree gives christening
+23 Nov 1711 in Brussels and death 30 Apr 1788 with no place. It has no burial.
+
+**What decided it: the index alone.**
+- **Name.** The entry indexes "Jean Baptiste de Cupis", male. The noble
+  particle fits a family the tree itself identifies through his sister Marie
+  Anne De Cupis De Camargo, the dancer La Camargo.
+- **Death date.** Death 30 Apr 1788, burial 1 May 1788. The death date is
+  exactly the tree's.
+- **Birth year.** The index gives a birth year of 1710, about a year off the
+  tree's 1711 christening.
+- **The confounder.** The only in-tree confounder, his son Jean Baptiste
+  Cupis (`MHT2-X6G`), is ruled out by that birth year. A son of the 1729
+  marriage could not have been born in 1710.
+- **Place.** The index gives the burial place as Montreuil, and the register
+  image is catalogued as "Montreuil, Seine, France". So the event place is
+  Montreuil-sous-Bois, which lies today in Seine-Saint-Denis. That is the town f1 names, in modern jurisdiction, so f1's
+  place stands. A burial near Paris also fits a family whose son François was
+  born in Paris in 1732.
+- **The `adds_birth` flag.** It is an indexing artefact. The index's 1710 is
+  not a birth record, and nobody should replace the christening with it.
+
+**Image reading: failed calibration, discarded.** The page image
+`ark:/61903/3:1:3Q9M-CSLZ-X9KW-2` was transcribed with `image_transcribe`.
+Before using it, three other entries on the same image that the index already
+holds were compared on the burial fields: name, burial and death date, age, and
+spouse or parents.
+- **Match.** François Thomas Cornu (`1:1:DRKP-95N2`, buried 23 Apr 1788, aged
+  41, wife Marie Denise Gabrielle Beausse) matched.
+- **Mismatch.** Jean François Doucet (`1:1:DRKP-95W2`, buried 25 Apr 1788)
+  did not. The index names his mother Marie Antoinette **Carme** and the
+  transcription reads **Cornu**.
+- **Spelling variant.** Nicolas Robert Lardin (`1:1:DRKP-95MM`) differed only
+  in the spelling of his wife's surname, Laizier against Laissier.
+
+One of the checks differs, so everything the transcription read from the page
+is discarded, and `image_basis` is not set. Nothing above rests on the image.
+
+**What an agent must find.** The burial on 1 May 1788 at Montreuil, the day
+after the 30 April death, from the parish register entry above.
+
+**How this call was made.** The evidence was retrieved and the verdict drawn by
+Claude Code, at the direction of the assigned genealogist (@Emruthwill).

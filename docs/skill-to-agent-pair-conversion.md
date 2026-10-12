@@ -413,7 +413,6 @@ Every one below fails CI if skipped. Put the whole list in the card.
 | `docs/specs/schemas/ownership.json` | an `agentCallers` entry on every row the agent writes |
 | `tests/packaging/enum-drift.test.ts` | any closed-enum declaration the fold moved into the agent body |
 | `tests/packaging/agent-return-contract.test.ts` | a `summary_for_user` return-contract heading, or a `PENDING` entry naming when it lands |
-| `tests/packaging/prompt-sizes.json` | regenerated (`prompt-budget.test.ts`) |
 | `docs/architecture.md`, `docs/skill-dataflow.md` | the agent count and any per-tool agent tally — re-measure, do not increment |
 | `make agent-smoke` | the only check that reads what the runtime resolved; **no CI job runs it** |
 
