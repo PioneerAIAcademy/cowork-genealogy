@@ -7215,7 +7215,7 @@ describe("research_append — detected core-identifier contradiction", () => {
   });
 
   /** The tree person attests Ireland; the record states somewhere else. */
-  async function write(stated: Record<string, unknown>) {
+  async function write(stated: Record<string, unknown>, treeBirth: Record<string, unknown> = {}) {
     const r = baseResearch();
     r.assertions = [
       ...r.assertions,
@@ -7232,7 +7232,7 @@ describe("research_append — detected core-identifier contradiction", () => {
     ] as any;
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
     const tree = JSON.parse(JSON.stringify(baseTree));
-    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland" }];
+    tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland", ...treeBirth }];
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
     await attestEveryAssertion(dir);
   }
@@ -7291,6 +7291,42 @@ describe("research_append — detected core-identifier contradiction", () => {
   it("does NOT cap when the record states no place at all", async () => {
     await write({ place: null });
     expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  // 1,067 committed links were refused on place; nearly all were one place
+  // written with and without its country, or with an extra level above it.
+  it("does NOT cap a place written without the country the tree adds", async () => {
+    await write(
+      { place: "Staffordshire, England" },
+      { place: "West Bromwich, Staffordshire, England, United Kingdom" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap a bare state against the same state with its country", async () => {
+    await write({ place: "Georgia" }, { place: "Georgia, United States" });
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("does NOT cap equal text whose standard places were resolved differently", async () => {
+    await write(
+      { place: "Clydach, Wales", standard_place: "Clydach, Glamorgan, Wales, United Kingdom" },
+      { place: "Clydach, Wales", standard_place: "Clydach, Monmouthshire, Wales, United Kingdom" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
+  it("still caps two different counties of one country", async () => {
+    await write({ place: "Somerset, England" }, { place: "Gloucestershire, England" });
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
+  });
+
+  it("still caps a town whose county appears in the tree only under another town", async () => {
+    await write(
+      { place: "Bristol, Gloucestershire" },
+      { place: "Bath, Somerset, England" },
+    );
+    expect((await researchAppend(link("probable"))).ok).toBe(false);
   });
 });
 
