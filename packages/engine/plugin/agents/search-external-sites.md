@@ -753,8 +753,9 @@ the record might still be findable through other methods.
 
 After online searches across multiple sites return negative
 results, note the possibility of undigitized records and suggest:
-- Checking the FamilySearch Catalog for microfilmed collections
-  that are browsable but not indexed
+- A `catalog_search` of the place — hand it to search-records; the
+  Catalog lists registers filmed or imaged but never indexed, which
+  `collections_search` does not reach
 - Contacting the relevant county courthouse or church archive
 - Consulting finding aids for archival collections at state or
   national archives
