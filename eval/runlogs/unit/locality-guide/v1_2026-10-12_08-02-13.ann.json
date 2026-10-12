@@ -1,0 +1,542 @@
+{
+  "run_log": "v1_2026-10-12_08-02-13.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_locality_guide_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The judge is right. The test explicitly forbids naming a mother parish for Javorje or stating it was a filial. The agent\n  crossed that line by naming Škofja Loka, Poljane, Stara Loka, and Žabnica as possibilities. The underlying historical\n  knowledge (Austrian Empire, Carniola, no civil registration, Catholic parishes) is sound, but the per-test prohibition is\n  clear and was violated."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The test requires the agent to report what the Catalog actually returned and frame the absence of parish registers as a\n  coverage gap. The agent mentioned \"36 total hits\" and listed four items but didn't explicitly state that none of these are\n   parish marriage registers for 1812, which is the key finding the user needs."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls matched fixtures — place_search for Javorje, catalog_search broadening from Javorje to Škofja Loka, wiki_read\n  for Slovenia_Church_Records. No fixture_not_found errors. Arguments were well-constructed."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Austrian Empire / Carniola / Archdiocese of Ljubljana is the correct jurisdictional chain for Javorje in 1812. No civil\n  registration at that date — Catholic Church held all vital records. Historically accurate."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Correctly identifies parish marriage registers as the relevant record type, names the Nadškofijski arhiv Ljubljana, notes\n  Matricula Online as a free digitized source, and correctly states duplicate registers for civil authorities weren't\n  mandated until 1835. Grounded and specific."
+    },
+    {
+      "test_id": "ut_locality_guide_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The strategy itself is sound (Matricula Online → diocesan archive → FamilySearch Catalog), but naming specific alternative\n   parishes violates the test requirement. Consistent with the Correctness deduction — the violation affects both\n  dimensions."
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge's sole basis for the 2 is the SYNTH-PA-CHURCH fixture. But the agent handled it correctly — it identified the\n  synthetic prefix, explicitly flagged it as a test fixture, and excluded it from the persisted collections array. This is\n  the right behavior when encountering unexpected data. Every other factual claim (1906 vital registration, census details,\n  FamilySearch collection IDs, volume image counts and indexing percentages) is accurate and grounded in tool results. The\n  agent also properly attributed tool limitations (generic fallback pages). A 2 penalizes the agent for the fixture's\n  content, not for the agent's work"
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Comprehensive coverage of all required sections. The persisted loc_001 entry has all required fields populated. Tool\n  result limitations are transparently flagged rather than fabricated around."
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls matched expected patterns. No fixture_not_found errors. research_append correctly structured with all required\n  fields."
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County formation from Berks and Luzerne in 1811 is correct. Stable boundaries through 1840–1880, correct county\n   seat, correct parent county direction for pre-1811 records. Adjoining counties correctly listed."
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Specific FamilySearch collection IDs with accurate date ranges, image counts, and indexing percentages. Correctly\n  distinguishes indexed from browse-only. Start dates grounded in tool results."
+    },
+    {
+      "test_id": "ut_locality_guide_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Well-sequenced guidance with specific collection IDs and concrete pitfalls (no statewide vital registration 1840–1880,\n  browse-only volumes requiring manual paging, German-language church records, multi-court naturalization searches)."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Historically accurate. Formation date confirmed by place_search. Vital registration dates (1852 start, 1862 lapse, 1911\n  resumption) are standard Kentucky history. Tool connectivity issues transparently disclosed rather than fabricated around."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Comprehensive coverage of all major record types. Correctly surveyed only Pulaski County and explicitly noted other\n  counties need separate surveys, as the test requires."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge's own rationale says it: \"The args themselves were semantically correct; the issue is tool availability, not\n  argument construction.\" The place_search_all returned empty results and wiki pages returned generic fallbacks — those are\n  fixture/tool limitations. No fixture_not_found errors occurred. The agent's argument construction was correct throughout;\n  it cannot control what the tools return."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Pulaski County formation 1798 from Lincoln and Green counties is correct and confirmed by place_search. Stable boundaries\n  through 1840–1880. County seat (Somerset) correct. Parent county direction for pre-1798 records properly identified."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Comprehensive record classes with start dates and repositories. Transparently notes where digitization levels couldn't be\n  confirmed due to tool connectivity. Correctly distinguishes indexed/imaged from onsite-only."
+    },
+    {
+      "test_id": "ut_locality_guide_029",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Actionable guidance grounded in Kentucky's specific context: border-state Civil War records, Baptist-majority population,\n  state-land system (Kentucky Land Office, not BLM GLO), civil registration gaps. Concrete and well-ordered."
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Accurate identification of Boston as major 1840s immigration port. FamilySearch collection IDs verified. Repository\n  information correct. Tool limitations honestly acknowledged."
+    },
+    {
+      "test_id": "ut_locality_guide_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All major record types for immigration research covered. Online and physical repositories identified. Digitization levels\n  explained."
+    },
+    {
+      "test_id": "ut_locality_guide_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The collections_search call with standardPlace: 'United States' instead of a Massachusetts-specific location is a genuine\n  argument construction error that hit fixture_not_found. The agent should have scoped to Massachusetts or Suffolk County.\n  The 2 is deserved — this is distinguishable from a tool limitation."
+    },
+    {
+      "test_id": "ut_locality_guide_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Suffolk County formation (1643), Boston's stable position within it during the 1840s, and the later annexations (Roxbury\n  1867, Dorchester 1870) correctly placed outside the research window."
+    },
+    {
+      "test_id": "ut_locality_guide_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Specific collection IDs with date ranges, image counts, and indexing percentages. Correctly distinguishes full-text\n  searchable from name-indexed volumes. Repository holdings accurately described."
+    },
+    {
+      "test_id": "ut_locality_guide_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Boston Pilot Missing Persons database as the bridge between arrival and Irish origins is an excellent specific\n  recommendation. Search order is well-reasoned. The full-text vs. name-indexed distinction is correctly highlighted as\n  requested by the test context."
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent misreported its own tool call: said \"volume_search returned zero results for 1780–1820\" when the actual query\n  used 1798–1825. Minor but concrete inaccuracy in self-reporting. The core jurisdictional and record claims are sound, but\n  the imprecise framing of the tool result is a legitimate partial."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " All three jurisdictional layers (Spanish Mobile, Mississippi Territory, Alabama Territory) covered. Record types,\n  repositories, and actionable guidance all present."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " All calls matched fixtures. Date ranges (1780–1820, 1798–1825) reasonable for the pre-statehood period. No\n  fixture_not_found errors."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Spanish West Florida (1780–1813), Mississippi Territory (1798–1817), Alabama Territory (1817–1819) all correctly\n  identified with accurate date ranges and boundary implications for record location."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": " The judge is right that the agent was vague on indexed vs. imaged distinction and conflated FamilySearch volume coverage\n  with overall record availability. The statement \"no browse-only digitized image volumes\" is about FamilySearch's coverage,\n   not about whether records exist — the agent should have been clearer."
+    },
+    {
+      "test_id": "ut_locality_guide_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Actionable: BLM GLO patents first (free, name-searchable, 1811+), then 1810 census, then territorial censuses at ADAH.\n  Multi-state archive direction (ANOM, Archivo General de Indias) is concrete and specific."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The test requires every concrete factual claim to trace to a tool call in this run. The agent made unsupported claims\n  about specific repositories (Vermont State Archives, Vermont Historical Society, New Hampshire State Archives) and\n  migration patterns (\"Most Vermont settlers came from Connecticut, Massachusetts, and Rhode Island\") without tool\n  confirmation. The grounded content (1771 Grant Survey Schedule, 1857 civil registration) is accurate, but the fabricated\n  extras are a clear violation."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All required elements present: locality guide built, wiki place page pulled, guide persisted to research.json. No required\n   element omitted."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls matched fixtures. wiki_place_page calls used correct standardPlace and sections. No fixture_not_found errors."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The three-way jurisdictional overlap (New Hampshire grants 1749–1764, New York claims 1764–1791, Vermont Republic\n  1777–1791) is correctly identified and grounded in the wiki_place_page response. Historically accurate."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Core record types from the wiki_place_page are accurate, but the repository table with specific holdings and access\n  methods goes beyond what any tool returned. Fabricated repository details alongside grounded record classes makes this a\n  legitimate partial."
+    },
+    {
+      "test_id": "ut_locality_guide_023",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The grounded strategy (1771 Grant Survey Schedule, town-level church records, three grant systems, 1790 census) is solid,\n  but the elaborations (migration patterns, Quebec border parishes, specific FamilySearch collection IDs not returned by\n  tools) are unsupported. Consistent with the Correctness deduction."
+    }
+  ]
+}
