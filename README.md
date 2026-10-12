@@ -1,550 +1,210 @@
 # Genealogy Research
 
-A Claude Cowork plugin and desktop extension for GPS-conformant
-genealogy research. The project ships two coupled artifacts from this
-single repo:
+> **Alpha.** This project is in alpha testing. Expect bugs and rough edges, and
+> expect it to change often.
 
-1. **MCP Server** (`packages/engine/mcp-server/`) — A TypeScript MCP server packaged
-   as a Claude Desktop Extension (.mcpb). Runs on the host machine
-   with full network access. Wraps genealogy and reference APIs
-   (FamilySearch, Wikipedia) and exposes them as MCP tools.
-2. **Cowork Plugin** (`packages/engine/plugin/`) — Skills and templates that run
-   inside Cowork's sandboxed VM. Teaches Claude when and how to use
-   the MCP server's tools.
+Family history research with Claude, using records that are online.
 
-The two communicate only through MCP tool calls — structured JSON in,
-structured JSON out. The MCP server runs on the host because the
-Cowork VM has restricted egress; anything that touches the network
-has to live in the server.
+It is for anyone from a first-time family historian to a certified
+genealogist. Ask it a question about your family and it plans the research,
+searches online records and reads what it finds. It records every search and
+every piece of evidence, and tells you how sure it is and why. It runs in
+Claude Desktop's Cowork tab, using your FamilySearch account.
 
-> **Hosted web workbench (POC).** This repo is
-> also a pnpm/turbo monorepo for a browser version of the product — a chat agent
-> beside a live project viewer. The engine above is reused as-is (the MCP server
-> runs under the Claude Agent SDK in a per-user sandbox; the viewer is shared
-> with the Electron app via `packages/viewer-ui`). It runs fully on mocks with
-> `make install && make server-mock && make web-dev` — no E2B/Anthropic/OAuth needed.
-> See **`DEVELOPMENT.md`** and **`docs/realtime-rearch-status.md`** for the run guide,
-> what-works table, and provisioning checklist, and `make help` for commands.
+## What you can do
 
-The plugin manages two project files:
+**Research a question start to finish.** Give it a goal in your own words, such
+as "Who were John Smith's parents?" It plans, searches, reads the records,
+weighs conflicting evidence, and writes a conclusion that says how sure it is
+and why.
 
-- **`research.json`** — The GPS audit trail. Questions, plans, search
-  log, assertions, conflicts, hypotheses, timelines, and proof
-  summaries.
-- **`tree.gedcomx.json`** — The deliverable. Resolved persons,
-  relationships, and facts in simplified GedcomX format.
+**Find records**
 
-Skills read from and write to these files. There is no programmatic
-skill-to-skill invocation — Claude reads skill descriptions and
-decides what to invoke based on file state and your intent.
+- **Plan your research** — the record sets to search, in order, and where to
+  find them, without running any searches.
+- **Search for records** — FamilySearch's indexed collections, full-text
+  documents (deeds, wills, probate) and unindexed images. For Ancestry,
+  MyHeritage, Find a Grave, Newspapers.com and other sites it builds the search
+  for you to open; save the page as a PDF and upload it, and it reads that.
+- **Find missing family members** — children and siblings your tree doesn't
+  have, reported as candidates with the evidence for each.
+
+**Read records**
+
+- **Read old handwriting** — transcribes FamilySearch page scans, and reads the
+  PDFs you upload.
+- **Translate a record** in German, French, Spanish, Italian, Dutch, Latin or
+  Portuguese, with old terms and abbreviations explained.
+- **Build a timeline** — a life year by year from the records, showing the
+  gaps and anything that doesn't fit one life.
+
+**Check the FamilySearch tree**
+
+- **Check a person's sources** — which attached sources hold an indexing error
+  to correct, and which belong to someone else.
+- **Check for impossible dates** — a death before a birth, a parent too young,
+  an event after death.
+- **Decide whether two people are the same**, with the evidence for and
+  against.
+- **Review FamilySearch hints** — a recommendation to accept or reject each
+  hint on a person.
+
+**Learn and get help**
+
+- **Find out where the records are** for a place and period — what survives,
+  where it's held, and what can substitute.
+- **Get how-to answers** from the FamilySearch Research Wiki, with links to
+  the pages used.
+- **Understand the history** — boundary changes, migration, naming customs and
+  old calendars.
+- **Get your work reviewed** — a mentor reads your conclusion and tells you
+  what would make it stronger.
+- **Polish your citations** in Evidence Explained style.
+
+## Known limits
+
+- **Requires Claude Desktop.**
+- **It searches only online records.** Records held only in courthouses,
+  archives or libraries are out of its reach, so a conclusion can miss
+  evidence they hold.
+- **It's slow and uses a lot of your Claude plan.** A full research question
+  usually takes over an hour. We're working on making it faster and on
+  cutting the tokens it uses.
+- **It doesn't change FamilySearch.** It works on a copy of the tree in your
+  project folder; anything you want on FamilySearch, you change there
+  yourself.
+- **It reads at most 20 page scans from any one film in a project.**
+- **Transcriptions of handwriting contain errors.** Check names, dates and
+  numbers against the image before you rely on them. Old German script
+  (Kurrent or Sütterlin) reads poorly.
+- **Don't enter information about living people.** Nothing is encrypted yet.
+
+## What you need
+
+- **Claude Desktop** with the Cowork tab.
+- **A FamilySearch account** (free). It asks you to sign in the first time it
+  needs one.
+- **An OpenRouter API key**, to read page scans. Get one at
+  <https://openrouter.ai/keys>; you paste it in when you install. OpenRouter
+  charges per use. Without a key it can't read page scans or transcribe
+  FamilySearch memories, and hint reviews are less complete.
+
+## Install
+
+You install two files in Claude Desktop:
+
+- **The MCP server** (`genealogy-mcp.mcpb`), a desktop extension. It does the
+  searching and reading, so it runs on your computer, where it can reach the
+  internet.
+- **The plugin** (`genealogy-plugin.zip`). It teaches Claude the research
+  method and runs inside Cowork.
+
+### 1. Download both files
+
+- [genealogy-mcp.mcpb](https://github.com/PioneerAIAcademy/cowork-genealogy/releases/download/cowork-latest/genealogy-mcp.mcpb)
+- [genealogy-plugin.zip](https://github.com/PioneerAIAcademy/cowork-genealogy/releases/download/cowork-latest/genealogy-plugin.zip)
+
+They are rebuilt every time the code changes. On a Mac, Safari may unzip the
+plugin into a folder. You need the `.zip`, so if that happens, turn off Safari
+→ Settings → General → **Open "safe" files after downloading** and download it
+again.
+
+### 2. Install the MCP server
+
+Claude Desktop → **Settings** → **Extensions** → **Advanced Settings** →
+**Install extension** → select `genealogy-mcp.mcpb`. Claude Desktop warns that
+the extension isn't signed; allow it. Paste your OpenRouter key into the
+**OpenRouter API key** field, or leave it blank. "Genealogy Research" appears in
+your list of extensions; to add or change the key later, click it there.
+
+### 3. Install the plugin
+
+Claude Desktop → **Cowork** tab → **Customize** → **Add** → **Upload Plugin** →
+select `genealogy-plugin.zip`. Upload it from the Cowork tab, not the Code tab;
+the two keep separate plugin lists.
+
+### 4. Restart Claude Desktop
+
+Quit Claude Desktop completely and reopen it. Closing the window isn't enough.
+
+### Updating
+
+Download both files again and install both. The MCP server installs over the
+old one. For the plugin, remove the old one in Cowork → Customize first, then
+upload the new zip; uploading on top of the old one can leave old skills
+behind. Then restart Claude Desktop.
+
+### Building from source
+
+To install a branch or your own changes, build the two files yourself. You need
+Git (on Windows, [GitHub Desktop](https://desktop.github.com/)) and Node.js 22.9
+or later from <https://nodejs.org>.
+
+1. **Get the code.** macOS/Linux:
+
+   ```bash
+   git clone https://github.com/pioneeraiacademy/cowork-genealogy
+   cd cowork-genealogy
+   ```
+
+   Windows: in GitHub Desktop, choose **File → Clone Repository → URL**, paste
+   `https://github.com/pioneeraiacademy/cowork-genealogy`, set **Local path**
+   to `C:\src\cowork-genealogy`, and click **Clone**. Don't clone into
+   Documents or Desktop: they sync to OneDrive, which breaks the build.
+2. **Get npm 11.12**, newer than the npm that comes with Node. Run this once.
+   On Windows, run it in Command Prompt (Start → type `cmd`), not PowerShell.
+   On macOS, put `sudo` in front if it fails with a permissions error.
+
+   ```bash
+   npm install -g npm@11.12.1
+   ```
+3. **Build.** macOS/Linux, from the repo folder:
+
+   ```bash
+   node scripts/build-mcpb.mjs       # MCP server → releases/genealogy-mcp.mcpb
+   node scripts/package-plugin.mjs   # plugin     → releases/genealogy-plugin.zip
+   ```
+
+   Windows: double-click `eval\CoworkInstall.bat` in the repo folder. It runs
+   the same two commands.
+
+Then install the two files from the `releases` folder as in steps 2–4.
+
+## Using it
+
+In Cowork, open a folder for the project and say who you want to research and
+what you want to find out:
+
+> Start a project for Patrick Flynn, born about 1845 in Ireland. I want to
+> find his parents.
+
+If you know the person's FamilySearch ID, give that instead. Then:
+
+- **`/research`** works the whole question: "/research find Patrick's parents".
+- **Ask for one thing** and it does just that: "Make a research plan, but leave
+  it at that", "Translate this German baptism", "Are these hints right?",
+  "Where are the records for Schuylkill County, Pennsylvania?"
+- **"Where are we?"** picks a project back up.
 
 ## A note on responsibility
 
-These tools assist your research; they do not replace it. Every record
-returned, every match suggested, every conflict resolution is a starting
-point for you to verify against original sources. The Genealogical Proof
-Standard requires the researcher — not the tool — to weigh evidence,
-resolve conflicts, and reach conclusions. Outputs from this plugin are
-working drafts in your research process, not citable conclusions.
+These tools assist your research; they don't replace it. Every record, match
+and conclusion is a starting point to check against the original sources. Weighing the
+evidence is your job, not the tool's, so treat what it produces as a working
+draft, not a citable conclusion.
 
-This applies across the full spectrum of users — from someone starting
-their first family tree to a Certified Genealogist preparing a case for
-a Board for Certification of Genealogists peer review. The standard is
-the same; the tools just help you meet it faster.
+## Contributing
 
-## MCP tools
+- [docs/architecture.md](docs/architecture.md) — how the system fits together
+  and where a change lands. Read it before your first PR.
+- [DEVELOPMENT.md](DEVELOPMENT.md) — building, testing, adding tools and
+  agents, the eval harness, and running the hosted web version.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — what contributions are welcome.
+- [docs/catalog.md](docs/catalog.md) — every tool, skill and agent.
 
-The MCP server exposes 53 tools.
+Run `make install-hooks` once per clone (Windows: double-click
+`eval\InstallHooks.bat`).
 
-### FamilySearch records and places
+## License
 
-| Tool | Purpose | Auth |
-|------|---------|------|
-| `place_search` | FamilySearch place data + Wikipedia enrichment | None |
-| `place_search_all` | Like `place_search`, but expands each match to every jurisdiction the place has belonged to over time — for boundary or parent-jurisdiction changes across a research period | None |
-| `collections_search` | Lists FamilySearch record collections for a place (returns the derived `scope`); optional `startYear`/`endYear` filter | OAuth |
-| `catalog_search` | Searches the FamilySearch **Catalog** — microfilm, books, manuscripts and finding aids — and hydrates its top hits with holdings detail: where the originals are held, and an `imageGroupNumber` for `image_search`/`fulltext_search` where one was filmed. A different index from `collections_search` | OAuth |
-| `record_search` | FamilySearch historical-record search for a person | OAuth |
-| `record_read` | Fetch a FamilySearch historical record by its record-persona ARK (`1:1:`, i.e. `record_search`'s `recordId`) or bare entity ID — returns full simplified GEDCOMX; with `projectPath` the record is also staged (`staged.resultsRef`) so `research_log_append` retains it as a sidecar | OAuth |
-| `person_search` | FamilySearch Family Tree search for a person — ranked candidate tree persons to pick and research (chains into `person_read`) | OAuth |
-| `fulltext_search` | Full-text search of FS AI-transcribed document images — finds non-principal mentions (witnesses, neighbors, heirs) | OAuth |
-| `image_search` | Lists the image IDs inside a single image group (digitized volume) given its image group number — feeds `image_read`. With `item` / `itemImage` on a bare film number, resolves a "DGS 004528134, Item 5, Image 10" citation to its image ID. (Place + year-range volume discovery lives in `volume_search`.) | OAuth |
-| `same_person` | Asks FamilySearch whether two people are the same — match confidence + score. Takes either two GedcomX documents, or project references (`projectPath`, `assertionId`, `treePersonId`) and assembles both sides itself, recording the score it computed | OAuth |
-| `person_record_matches` | Historical-record matches for a tree person (accepted/pending/rejected) | OAuth |
-| `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
-| `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
-| `record_record_matches` | Other historical records describing the same individual | OAuth |
-| `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and attached sources, and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries), transcribed inline where the read's time budget allowed | OAuth |
-| `tree_gaps` | Survey a FamilySearch tree for holes it likely has records for (parents missing before a line ends, couples with no children, gaps between births, a wife with no surname, a person with no birth date or place, a deceased adult with no spouse or death date) across up to 8 generations of ancestors and 4 of descendants; returns the holes with a search year range, place and collection coverage (with census years and place level), never the tree; living people never carry a hole | OAuth |
-| `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
-| `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
-| `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume | OAuth |
-| `volume_bisect` | Bisect a browse-only image volume toward a target year — reads **one** page per call, folds its year into the bracket built from the readings so far, and returns the narrowed bracket plus the next image to probe. Refuses a bare image-group prefix (use `volume_search` to pick a sub-volume first) | OAuth + OpenRouter |
-| `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
-
-### FamilySearch Wiki content
-
-| Tool | Purpose | Auth |
-|------|---------|------|
-| `wiki_search` | Natural-language RAG search of the FS Wiki via a separate `wiki-query-api` server | None (v1) |
-| `wiki_read` | Fetch a specific pre-crawled wiki markdown page | None |
-| `wiki_place_page` | A FamilySearch Research Wiki page for a place (country, US state, or Canadian province) — `section` is one of `home`, `getting_started`, `online_records`, `research_tips` | None |
-
-### Project state (structured read/write)
-
-Everything that reads or writes `research.json` and `tree.gedcomx.json` goes
-through these. The writers validate the **whole** project in memory and write
-nothing on failure, and they assign every id — callers never predict one. Raw
-`Write`/`Edit` on either file is denied by a hook, so this table is the only
-way project state changes.
-
-| Tool | Purpose | Auth |
-|------|---------|------|
-| `project_create` | Create a new project — writes `research.json` and `tree.gedcomx.json` together, validated against each other. The only way to bring a project into being | None |
-| `research_append` | Append to a `research.json` section (questions, sources, assertions, person_evidence, conflicts, proof_summaries), single or batched `ops` | None |
-| `research_query` | Paged, filtered read of a `research.json` section without loading the whole document | None |
-| `sidecar_read` | Paged read of a project sidecar text file — a gps-mentor verdict body under `evaluations/` or a text upload under `uploads/`. Refuses `results/`, images, `research.json` and the tree with a pointer to the tool that serves each | None |
-| `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
-| `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. BOTH hosted planes end the turn on this tool's name via a `PreToolUse` hook, the prototype worker and the hosted alpha; in Cowork and e2e no such hook binds, so it returns a harmless acknowledgement and the run carries on | None |
-| `extraction_append` | Record-level assertion extraction — held by the `record-extractor` agent, not the main thread | None |
-| `materialize_facts` | Project extracted assertions onto tree persons | None |
-| `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
-| `tree_correct` | Correct an existing tree assertion in place | None |
-| `tree_forget` | Strip a slice of the local tree to stage a practice run (project-start only; refused once a plan exists) | None |
-| `merge_tree_persons` | Merge two local tree persons | None |
-| `merge_warnings` | Pre-merge conflict report for two tree persons | None |
-| `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the per-fact breakdown — which attached sources touch each fact and whether each agrees, plus the disagreements between sources | OAuth |
-| `rank_search_matches` | Rank search results against a named subject | None |
-| `convert_calendar` | Convert between Julian/Gregorian, Quaker, and French Republican dates | None |
-| `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, a state/regional digital newspaper archive, the National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, American Ancestors, or the Italian Genealogy forum) from structured search attributes, or a parish-page link for the Archion and Matricula church-book browse sites, including each site's access classification (free, free-but-bot-protected, or subscription) | None |
-
-### Reference and context
-
-| Tool | Purpose | Auth |
-|------|---------|------|
-| `wikipedia_search` | Wikipedia article summary lookup | None |
-| `place_population` | Historical population data + indexed record counts | None |
-| `place_distance` | Distance between two FamilySearch places | None |
-| `image_read` | Read a FamilySearch image by imageId (NUMBER_NUMBER) or by ark (a document-image ARK, resolver URL, or resolved distribution URL) and return bytes + metadata; optional `projectPath` saves the scan and returns `imageRef`. Refuses scans over ~700 KB raw. Kept for the Issue #28 OCR-comparison pipeline — no skill or agent calls it, and the eval harness denies it on the main thread. | OAuth |
-| `image_transcribe` | OCR a FamilySearch image by imageId or ark, a memory (its artifact URL or its `photos/artifacts/<id>` / `memories/<id>` page URL), or an **uploaded image/PDF inside the project folder** (`file`, e.g. `uploads/scan.jpg` — no FamilySearch login) host-side (Gemini Flash via OpenRouter) and return **text**; with `projectPath` the transcription is also staged (`staged.resultsRef` + a `digest`). No bytes cross the MCP transport; inputs over 14 MiB are refused with the remedy. The `image-reader` subagent's reader. | OpenRouter (+ OAuth for imageId/ark) |
-| `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
-| `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
-| `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
-| `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
-
-### Auth (FamilySearch OAuth 2.0 + PKCE)
-
-| Tool | Purpose |
-|------|---------|
-| `login` | Spin up local callback server, open browser, exchange code for tokens |
-| `logout` | Clear stored FamilySearch tokens |
-| `auth_status` | Report current FamilySearch session state |
-
-`logout` and `auth_status` are direct-invocation tools — Claude calls
-them in response to the user ("log me out", "am I logged in?") rather
-than as part of any skill workflow. `login` is invoked both directly
-by the `init-project` and `search-records` skills, and by the
-`search-external-sites` agent, when a tool call needs authentication.
-
-The `place_population` tool combines data from populstat (234 countries),
-gapminder, and FamilySearch indexed birth records. The `wiki_search`
-tool runs RAG retrieval over the FamilySearch Wiki. Both call hosted
-sidecar APIs (Pop Stats and `wiki-query-api`); no local setup required
-for end users.
-
-The `image_transcribe` tool OCRs page scans host-side via OpenRouter
-(default model `google/gemini-3.7-flash`). It needs an
-OpenRouter API key in `~/.familysearch-mcp/config.json` (`openRouterApiKey`);
-if the key is missing or rejected, the error directs the user to add it
-in `config.json` directly (never via a tool call). The e2e harness and the
-hosted web server bridge the key from their own environment (see
-CLAUDE.md).
-
-Tool specs live in `docs/specs/<tool>-tool-spec.md`.
-
-## Skills
-
-The plugin ships 8 skills covering the full GPS research cycle. Skills
-are listed in roughly the order you'd use them in a research project.
-For a plain-language account of the research method itself — the GPS
-cycle, the judgment made at each stage, and what to expect from a
-session — see [docs/gps-research-flow.md](./docs/gps-research-flow.md).
-
-### Starting and resuming
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **init-project** | Creates a new project from a FamilySearch person ID. If no ID is known, searches the Family Tree by name using `person_search` to find the right person first. Fetches the person and their relatives to seed the tree. | "Start a new project for person KWCJ-RN4" / "Start a project for Patrick Flynn, born 1845 Ireland — I don't have his ID" |
-| **research** | Drives the full GPS workflow on a research objective, invoking the right sub-skills based on `research.json` state and iterating until the question is resolved. For beginners who don't know which sub-skill to invoke when. The `--autonomous` flag exists only for end-to-end automated testing of the workflow; it is not intended as a way to let the AI do your family history for you. Genealogy requires *your* judgment on evidence, conflicts, and conclusions — see "A note on responsibility" above. | "/research find John Smith's parents" / "Research who Patrick Flynn's father was" |
-| **forget-and-rederive** | Sets up a practice run: strips information you already have out of the project tree so it has to be re-derived from records. Always dry-runs first and reports only redacted counts. Requires you to also not look the answer back up — the FamilySearch tree still has it, so the FS tree-reading tools are off-limits for those people afterward. | "Forget what you know about Patrick's parents and find them again" / "Hide his parents and see if you can re-derive them" |
-
-### Planning the research
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **research-plan** | Creates a sequenced plan of record sets to search, with repositories, rationale, and fallbacks. | "Plan research for this question" |
-
-### Executing searches
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **search-records** | Searches FamilySearch indexed records (census, vital, probate, etc.). Triages results by match quality. | "Search for Patrick Flynn in the 1850 census" |
-
-### Analyzing evidence
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **record-extraction** | Extracts atomic assertions from a record (MCP response, uploaded PDF, or image transcription) with first-and-final three-layer GPS classifications (Primary/Secondary/Indeterminate, Direct/Indirect/Negative) — each record is extracted by the `record-extractor` agent. | "Analyze this record" / "Extract assertions" / "Classify this evidence" |
-
-### Identity resolution and analysis
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **timeline** | Builds chronological timelines with distances between consecutive events. Surfaces gaps and geographic feasibility (logical impossibilities are check-warnings' job). | "Build a timeline" / "Do these events fit one life?" |
-| **conflict-resolution** | Analyzes conflicting evidence — independence analysis + preponderance hierarchy. | "These sources disagree" |
-
-### Concluding
-
-Writing the conclusion itself is an agent rather than a skill — see
-`proof-conclusion` in the agent table below.
-
-### Benchmark suite (not shipped — repo-local dev tooling)
-
-For contributors capturing or diagnosing fixtures in the project's
-end-to-end benchmark. These two skills are **not** part of the Cowork
-plugin — they are tooling for the internal genealogist+developer benchmark
-teams and live in [`.claude/skills/`](./.claude/skills/) (loaded by Claude
-Code in this checkout), alongside the other dev skills `compare-state` and
-`mine-unit-test`. The usage playbook is
-[docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md); the fixture format is
-specified in [docs/specs/e2e-test-spec.md](./docs/specs/e2e-test-spec.md).
-
-| Skill | What it does | Say this |
-|-------|-------------|----------|
-| **author-e2e-fixture** | Turns a finished research project into an e2e benchmark fixture — snapshots the resolved state, strips the answer from the tree, records what was stripped as expected findings. Produces the five files in a `<slug>/` subfolder of the working directory, ready to move into `eval/tests/e2e/`. | "Save this research as an e2e test" / "Make a benchmark from this" |
-| **interpret-e2e-result** | Reads an e2e run log and explains what the agent recovered and missed (from its final tree), why it stopped, and the most likely cause (agent regression, FS data drift, single-run jitter, etc.) — blind to the judge's own grades — pointing at the exact tool call and narration turn. | "Why did this fixture fail?" / "Interpret the latest e2e run" |
-| **grade-e2e-run** | Grades an e2e run into its calibration annotation: presents each expected finding + the agent's evidence (blind to the judge's grades), collects the genealogist's true/partial/false labels, and writes `run-<ts>.ann.json`. | "Grade this e2e run" / "Annotate this run for calibration" |
-
-## Agents
-
-The plugin ships twenty-five Cowork agents. Unlike skills, an agent runs in
-fresh context and is invoked by the Cowork orchestrator, by `/research`
-at its mentor checkpoint, or by the skill that delegates to it — you
-don't load it explicitly.
-
-| Agent | What it does | Say this |
-|-------|-------------|----------|
-| **translation** | Genealogy-specific translation for German, French, Spanish, Italian, Dutch, Latin, Portuguese. Period handwriting and abbreviations. | "Translate this German church record" |
-| **gps-mentor** | A Board for Certification of Genealogists (BCG)-style senior genealogist who reviews your work against GPS standards and returns a structured verdict plus a mentoring narrative. Read-only — it never edits your tree and only appends its verdict to `research.json`. `/research` calls it once per proof, after a conclusion is written; its verdict is advisory and never blocks or re-opens a resolved question. You can also ask for a review at any time. | "Review my work" / "Is this defensible?" / "Am I ready to conclude?" |
-| **record-extractor** | Extracts every assertion from **one** record — the source entry, atomic per-fact assertions, and their GPS evidence classifications — in a single validated write. The `record-extraction` skill delegates one of these per record; classifications are set here and are final. | (not invoked directly — `record-extraction` delegates) |
-| **proof-conclusion** | Writes the GPS proof conclusion for **one** question — selects the confidence tier and the proof form, writes the self-contained narrative, and encodes the conclusion into your tree once it reaches Probable or better. `/research` routes to it at the conclusion step, and you can ask for it directly; it is the only caller allowed to write the `proof_summaries` section, which is what keeps a conclusion from being hand-authored around the tier and citation rules. | "Write the conclusion" / "What's the proof?" |
-| **research-exhaustiveness** | Judges whether the research on **one** question is reasonably exhaustive — applies the GPS 5 threshold questions and the 7-point stop criteria, then either declares the question exhaustive or names what is still missing. `/research` spawns it directly at the exhaustiveness step, and a user naming it reaches the same agent; it is the only caller allowed to declare a question exhaustive, which is what keeps that claim from being hand-authored around the criteria it rests on. | "Is the research on q_001 exhaustive?" / "Are we done?" / "Can we declare exhaustive?" |
-| **person-evidence** | Resolves identity for **one** request — evaluates whether a record's person matches a tree person, writes the `person_evidence` links with their confidence and rationale, and creates stub persons when nothing matches. It is the only writer of `person_evidence`. | (spawned by `/research` directly via the agent description) |
-| **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. Logs every search for the audit trail. | "Full-text search for Flynn in Schuylkill County deeds" |
-| **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
-| **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
-| **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. A first pass recommends accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, and reads the record image before recommending against a hint; it writes nothing. Once you decide, a second pass logs your verdict on each hint, so an accepted hint flows on to extraction like any search result. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
-| **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to `record-extraction`. | "Fix citations" / "Cite this source" |
-| **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
-| **check-warnings** | Flags genealogical impossibilities and implausible patterns in one person's own data (married before 12, died after 120, child born after parent's death), deterministically from your local tree. Writes nothing. `init-project` runs it on every imported person; the tree writers refuse a write that introduces an unjustified warning, so it is no longer a step after every edit. | "Check for warnings" / "Any problems with his dates?" |
-| **locality-guide** | Produces a structured research guide for a place/time — what records exist and where they're held — and, inside a project, saves it so the research plan can use it. `/research` calls it when a question's place has not been surveyed yet. | "What records exist for Schuylkill County?" |
-| **historical-context** | Explains boundary changes, naming conventions, migration patterns, and cultural context affecting records. Writes nothing — it returns narrative context. Asked for a locality records survey, a record search, a translation, a date conversion, or a formal conflict resolution, it hands the request back by name. | "Why does the birthplace differ?" |
-| **project-status** | Reads the whole project and reports where the research stands — a plain-language story for the user and a detailed GPS-state summary, integrity warnings first, plus the recommended next step. Read-only: it never writes to either project file. It is the "resume project" path when you come back to existing work. | "Where are we?" / "What's next?" / "Status" |
-| **image-reader** | Reads **one** FamilySearch image scan and returns a full text transcription (fast, cheap — hosted Gemini Flash OCR). Used when browsing unindexed volumes or extracting from a page image; it keeps the image data out of the main conversation. | (not invoked directly — `record-extraction` and `search-images` delegate) |
-| **search-familysearch-wiki** | Searches the FamilySearch Research Wiki for **one** genealogy how-to question and saves the guidance as a markdown file in your working folder, citing the wiki pages it came from. Asked for Wikipedia, a locality records survey or narrative history, it does no search and hands the request back by name. | "Search the FamilySearch wiki for how to find Italian birth records" |
-| **search-wikipedia** | Looks **one** topic up on Wikipedia — the general-purpose encyclopedia — and saves the article summary as a markdown file in your working folder. One tool call, a template it carries in its own body, one file. Asked for narrative history, a locality records survey or the FamilySearch wiki, it does no lookup and hands the request back by name. | "Look up Albert Einstein on Wikipedia" |
-| **convert-dates** | Converts **one** date, or compares dates, across calendar systems — Julian/Gregorian, Old Style/New Style year starts, Quaker numbered months, double-dated years — using the `convert_calendar` tool's adoption table for the record's jurisdiction. It writes nothing. Asked why a convention existed, whether a date string passes the schema, or about a same-calendar conflict, it hands the request back by name. | "Convert this date to Gregorian" / "Is 30 February 1712 a real date?" |
-| **hypothesis-tracking** | Tracks competing candidates with evidence for/against each. Manages elimination. | "Could this be the same person?" |
-| **tree-edit** | Direct corrections to the tree file — add or correct a fact, create a person or relationship, list a person's attached records and record matches, and check possible duplicates. Also executes person merges after proof-conclusion confirms identity. A write that would introduce an unjustified genealogical warning is refused by the tool itself. | "Fix this name" / "Merge these two persons" |
-| **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
-| **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
-| **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
-
-## Recommended workflow
-
-```
-1. init-project              Start with a FamilySearch person ID
-2. question-selection (agent) "What should I research next?"
-3. research-plan             "How do I answer this question?"
-4. search-records            Execute indexed searches on FamilySearch
-   search-full-text          ...or full-text search for witnesses/FAN mentions
-   search-external-sites (agent) ...or on Ancestry/MyHeritage/FindMyPast
-5. record-extraction         Extract assertions from found records
-                             (evidence classifications are written
-                             here and are final at extraction)
-6. citation (agent)          Polish citations to Evidence Explained standards
-7. timeline                  Build chronological timeline, find gaps
-8. conflict-resolution       Resolve disagreements between sources
-9. hypothesis-tracking (agent) Track competing candidates
-10. research-exhaustiveness  Gate before proof — applies the seven
-                             stop criteria. If not yet exhaustive, loop
-                             back to step 3 (extend plan) or step 2
-                             (FAN pivot). If exhaustive, advance.
-11. proof-conclusion         Write the GPS conclusion
-    tree-edit (agent)        Merge persons, correct facts
-12. project-status (agent)   "Where are we? What's next?"
-```
-
-This is the ideal GPS cycle. In practice you can invoke any skill at
-any time — each checks its own preconditions and guides you if
-prerequisites are missing.
-
-Note that `research-exhaustiveness` runs **once per question, after
-all of that question's plan items are complete and the resulting
-evidence has been analyzed** — not after every search. The skill
-needs log entries and classified assertions to evaluate criteria
-like *independent verification* and *evidence class*, so it sits
-naturally between the analysis steps (5–11) and `proof-conclusion`.
-The `/research` orchestrator handles this routing automatically.
-
-## Project files
-
-| File | Purpose | Updated by |
-|------|---------|-----------|
-| `research.json` | GPS audit trail — all analytical state | Most skills |
-| `tree.gedcomx.json` | Simplified GedcomX — resolved persons, relationships, sources | init-project, record-extraction (sources), person-evidence agent (stubs), proof-conclusion (facts/relationships), tree-edit agent |
-
-Specs: `docs/specs/research-schema-spec.md` and
-`docs/specs/simplified-gedcomx-spec.md`.
-
-## Researcher profile
-
-When you start a new project with `init-project`, the skill asks one
-thing in its opening turn: what you want to find out. It does not ask
-about you. Every project gets the same `researcher_profile` in
-`research.json`: `experience_level` is `novice`, and `narration_guidance`
-is one house-style string that every skill but one reads and follows
-verbatim:
-
-> Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.
-
-Subscription sites are not asked about either. Access is assumed
-available, so nothing is recorded unless you mention a site yourself —
-a project that says nothing about access is not a project that said it
-has none.
-
-The question does not block. Skip it and the objective takes a
-documented generic default, and the summary at the end says so.
-
-### Mid-session overrides
-
-You can adjust narration on the fly. Natural-language phrases that work:
-
-- "Be more verbose" / "explain that step in more detail"
-- "Skip the explanations" / "just do it"
-- "Define genealogy terms when you use them"
-- "Drop the preambles"
-
-These take effect for the rest of the session without modifying
-`research.json`.
-
-### Updating the profile
-
-To record subscriptions later, edit `researcher_profile` directly in
-`research.json`: `subscriptions` is an array of the canonical site names.
-`experience_level` and `narration_guidance` are fixed today; a user
-setting will own the level later.
-
-## Installation (for end users)
-
-You need both pieces.
-
-### 1. Install the desktop extension
-
-1. Download `genealogy-mcp.mcpb` from the latest release
-2. Open Claude Desktop → Settings → Extensions
-3. Click "Advanced Settings" → "Install extension" and select the .mcpb file
-4. The "Genealogy Research" extension should appear in your list
-
-### 2. Install the Cowork plugin
-
-1. Download `genealogy-plugin.zip` from the latest release
-2. Open Claude Desktop → switch to Cowork tab
-3. Click "Customize" in the left sidebar
-4. Click "Add" → "Upload Plugin"
-5. Select the .zip file
-
-### Alternative: install in Claude Code
-
-The same two artifacts also work in Claude Code (CLI). The MCP server
-runs as a local stdio process; the skills are loaded from
-`~/.claude/skills/` instead of an uploaded zip.
-
-**Install the MCP server.** Claude Code does not import `.mcpb` files
-directly (that format is Claude Desktop only). Pick one of these
-documented paths:
-
-- *Already installed in Claude Desktop* (macOS / WSL only): pull the
-  config across with
-
-  ```bash
-  claude mcp add-from-claude-desktop
-  ```
-
-- *Local build* (works everywhere, requires Node and a clone of this
-  repo):
-
-  ```bash
-  cd packages/engine/mcp-server && npm install && npm run build
-  claude mcp add --transport stdio genealogy -- node "$(pwd)/build/index.js"
-  claude mcp list | grep genealogy   # expect ✓ Connected
-  ```
-
-  After rebuilding the server, run `/mcp` inside Claude Code to
-  reconnect.
-
-**Install the skills:**
-
-1. Download `genealogy-plugin.zip` from the latest release
-2. Unzip it into `~/.claude/skills/` so each skill folder
-   (`init-project/`, `record-extraction/`, …) sits directly under
-   `~/.claude/skills/`:
-
-   ```bash
-   mkdir -p ~/.claude/skills
-   unzip -o genealogy-plugin.zip -d ~/.claude/skills
-   ```
-
-Claude Code watches `~/.claude/skills/` and picks up new skills in
-the current session — no restart required.
-
-Skills run on the host in Claude Code (unlike Cowork, where they run
-in the sandboxed VM), so the host's network is available to skill
-scripts. They still call the same MCP tools for everything that
-touches a remote API.
-
-### 3. Try it out
-
-In a Cowork session, exercise any of:
-
-> "Look up Albert Einstein on Wikipedia"
-
-Delegates to the `search-wikipedia` agent — calls Wikipedia, fills a
-template, saves `albert-einstein.md` to your working folder.
-
-> "Find FamilySearch info for Ohio."
-
-Claude calls the `place_search` tool directly and reports what it learned.
-
-> "Log me in to FamilySearch. My client ID is YOUR-DEV-KEY."
-
-Exercises the OAuth flow. See
-`docs/testing-guides/oauth-tool-testing-guide.md` for getting a
-FamilySearch dev key and walking through the full flow.
-
-> "What FamilySearch record collections cover Alabama?"
-
-Once logged in, Claude calls the `collections_search` tool and reports the
-matching record collections with their record, person, and image
-counts.
-
-> "How do I find Italian birth records?"
-
-Delegates to the `search-familysearch-wiki` agent — calls the `wiki_search` MCP tool,
-which runs RAG retrieval over the FamilySearch Wiki via the hosted
-`wiki-query-api` service, then saves the synthesized guidance to a
-markdown file. See `docs/specs/wiki-search-tool-spec.md`.
-
-> "What was the population of Utah in 1960?"
-
-Claude chains `place_search` to resolve "Utah" to a FamilySearch place
-ID, then calls `place_population` with that ID and returns Utah's
-historical population from multiple sources, plus FamilySearch indexed
-birth record coverage. Calls a hosted Pop Stats API.
-
-> "Find Abraham Lincoln, born 1809 in Kentucky."
-
-Claude calls the `record_search` tool with a tight birth-year range and
-returns ranked persona records (name, dates and places, source
-collection, and a clickable persistent URL). For collection-scoped
-queries, Claude chains `collections_search` first to pick a `collectionId`,
-then narrows the search.
-
-## Project status
-
-What's shipped:
-
-- **53 MCP tools.** See the tables above for the full catalog, by category:
-  FamilySearch records and places, FamilySearch Wiki content, reference and
-  context, project state (the writer and projection tools), and auth.
-- **8 shipped skills.** Full GPS research cycle from `init-project`
-  through the conclusion. The three
-  e2e-benchmark skills (author-e2e-fixture, interpret-e2e-result, grade-e2e-run)
-  are repo-local dev tooling under `.claude/skills/`, not shipped in the plugin.
-- **25 Cowork agents.** `translation` (genealogy-specific translation of foreign-language
-  records), `gps-mentor` (BCG-style senior-genealogist review,
-  invoked by `/research` at GPS checkpoints and on demand), `record-extractor`
-  (per-record assertion extraction), `proof-conclusion` (the proof conclusion
-  for one question, and the only writer of `proof_summaries`),
-  `research-exhaustiveness` (the exhaustiveness judgment for one question, and
-  the only caller that may declare one exhaustive), `person-evidence` agent (identity
-  resolution, and the only writer of `person_evidence`), `citation` (Evidence
-  Explained refinement of citations on sources that already exist),
-  `convert-dates` (calendar-system date conversion), `question-selection`
-  (the next research question, and the only minter of questions), `search-images`
-  (page-by-page browse of an unindexed volume), `search-external-sites`
-  (external-site search URLs, the capture hand-off and its triage),
-  `search-hints` (review of a person's FamilySearch hints, and the log of the
-  researcher's verdict on each),
-  `check-warnings` (genealogical-impossibility checks on one person's data),
-  `validate-schema` (read-only schema audit of both project files),
-  `search-familysearch-wiki` (FamilySearch Research Wiki how-to guidance saved
-  as a markdown file), `search-wikipedia` (one encyclopedia lookup saved as a markdown file),
-  `tree-edit` (direct corrections to the tree, and person merges after a proof
-  conclusion), `hypothesis-tracking` (competing-candidate hypotheses, and the
-  only writer of `hypotheses`), `source-evaluation` (read-only audit of the
-  sources attached to one FamilySearch profile), `project-status` (read-only
-  summary of where the research stands), `locality-guide` (the records survey for one
-  place and period), `historical-context` (narrative historical context for
-  interpreting records — boundary changes, naming conventions, migration),
-  `image-reader` (page OCR), `project-status` (a read-only report of where the research stands) and `survey-surname` (surname
-  household tabulation across censuses).
-- **Researcher profile.** `init-project` asks only the research objective, in
-  one non-blocking opening turn; the profile itself is fixed (`novice`, one
-  house-style narration string) and nothing about the researcher is asked.
-- **Eval harness** under `eval/` for skill regression testing.
-
-## Developer and contributor docs
-
-### First, install the git hooks
-
-Once per clone (not once per branch), run:
-
-```bash
-make install-hooks          # Windows: double-click eval\InstallHooks.bat
-```
-
-This installs `post-checkout`, which makes a new worktree usable — it links the
-shared gitignored files (`eval/.env`, `apps/server/.env`, the engine's
-`node_modules`) and installs the pnpm workspace there. It's safe to re-run, and
-refuses rather than clobbering a hook it didn't write. Details in
-[DEVELOPMENT.md → Git hooks](./DEVELOPMENT.md#git-hooks).
-
-
-### Where to read next
-
-- [docs/architecture.md](./docs/architecture.md) — how the system fits
-  together and where a change lands. Each section ends with an "If you're
-  asked to…" block naming every site a change touches and which of them
-  nothing checks. **Read this before your first PR.**
-- [DEVELOPMENT.md](./DEVELOPMENT.md) — building, testing, smoke-tests,
-  adding tools and skills, running the eval harness.
-- [CONTRIBUTING.md](./CONTRIBUTING.md) — what kinds of contributions
-  are welcome, constraints, and how to submit.
-- [CLAUDE.md](./CLAUDE.md) — architecture and conventions Claude reads
-  when editing the code.
-- [docs/alpha-feedback-guide.md](./docs/alpha-feedback-guide.md) — how to
-  triage a user feedback submission, fix the bug, and lock it in
-  with a regression test, walked through as one worked story. Start
-  here when a feedback zip lands.
-- [docs/skill-lifecycle.md](./docs/skill-lifecycle.md) — the shared loop
-  every fix goes through: mine a test, run it, annotate, improve, gate,
-  release. Ends with a worked example of the whole loop.
-- [eval/README.md](./eval/README.md) — eval harness for skill
-  regression testing: how to run it, add cases, and interpret results.
-- [scripts/windows/README.md](./scripts/windows/README.md) — `cmd.exe`
-  wrappers for the developer `make` targets, for Windows machines without
-  Git Bash or WSL.
-- [docs/e2e-testing-guide.md](./docs/e2e-testing-guide.md) — authoring and
-  running the end-to-end research benchmark.
-
+Apache 2.0 — see [LICENSE](LICENSE).

@@ -1,0 +1,133 @@
+{
+  "tool": "record_search",
+  "description": "Catch-all for any other Ackerman search in ut_search_records_027 -- typically the spouse-free retry for George. Returns the same 1860 Bucks County record as record-search-ackerman-1860-spouse-absent.json, as production would, minus relativeTerms, which record_search reports only when a relative's name was supplied. Without it the follow-up fell through to fixture_not_found, which the judge then scored as an unescalated nil. Must be listed LAST of the Ackerman record_search fixtures.",
+  "args": {
+    "surname": "~Ackerman"
+  },
+  "response": {
+    "query": {
+      "surname": "Ackerman",
+      "givenName": "George",
+      "recordType": "census",
+      "residencePlace": "Pennsylvania, United States",
+      "residenceYearFrom": 1860,
+      "residenceYearTo": 1860
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "M7QZ-8KD",
+        "recordId": "M7QZ-8KD",
+        "personName": "George Ackerman",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "about 1818",
+        "birthPlace": "Pennsylvania, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1860",
+            "place": "Bucks, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:M7QZ-8KD",
+        "collectionId": "1473181",
+        "collectionTitle": "United States Census, 1860",
+        "recordTitle": "George Ackerman in household of George Ackerman, 1860",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "George",
+                  "surname": "Ackerman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1860",
+                  "place": "Bucks, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1818",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Henry",
+                  "surname": "Ackerman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Birth",
+                  "date": "about 1851",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Margaret",
+                  "surname": "Ackerman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1854",
+                  "place": "Pennsylvania, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P2"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P3"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

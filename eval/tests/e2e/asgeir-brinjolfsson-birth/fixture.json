@@ -1,0 +1,19 @@
+{
+  "id": "asgeir-brinjolfsson-birth",
+  "name": "Ásgeir Brinjólfsson — birth about 1777, Iceland",
+  "genre": "record-hint",
+  "source_pid": "KHJ9-95M",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Ásgeir Brinjólfsson born, the husband of Sigríður Pétursdóttir and father of Málfríður (christened 5 August 1808) and Sólveig (christened 25 June 1812) at Hvammur in Hvammssveit, Dalasýsla, Iceland?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1770s",
+    "geography": "IS"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 13, hint-samples.csv row 486, flag adds_birth, confidence 3). Draft transcribed from an 1808 Hvammur, Dalasýsla church census entry; unverified."
+}

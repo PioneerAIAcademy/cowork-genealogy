@@ -1,0 +1,19 @@
+{
+  "id": "john-nielssen-birth",
+  "name": "John Nielssen — birth about 1846, Norway",
+  "genre": "record-hint",
+  "source_pid": "KHKC-867",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was John Nielssen born, the husband of Anne Torjusdatter whose children Ingeborg (1870) and Nils (1872) were baptized in Bygland, Aust-Agder, Norway?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1840s",
+    "geography": "NO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 18, hint-samples.csv row 616, flag adds_birth, confidence 3). Draft transcribed from an 1877 Bygland, Aust-Agder church book baptism entry; unverified."
+}

@@ -16,7 +16,7 @@ echo Files here sync to the cloud, and that stops the setup from finishing.
 echo It will fail partway through, with errors that change each time you retry.
 echo.
 echo To fix it: close this window, delete this folder, and clone again to
-echo C:\src\cowork-genealogy. In GitHub Desktop, set "Local path" to C:\src
+echo C:\src\cowork-genealogy. In GitHub Desktop, set "Local path" to C:\src\cowork-genealogy
 echo before you click Clone.
 echo.
 choice /c YN /n /m "Continue anyway? (Y/N) "

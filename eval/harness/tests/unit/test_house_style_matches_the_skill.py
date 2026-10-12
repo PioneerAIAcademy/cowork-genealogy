@@ -1,6 +1,6 @@
 """The validator's copy of the narration string must equal the one that ships.
 
-`init-project/SKILL.md` tells the skill to store one `narration_guidance` string
+`agents/init-project.md` tells the agent to store one `narration_guidance` string
 "verbatim", and `validators/test_init_project.py` holds its own copy as
 `_HOUSE_STYLE` and asserts exact equality against what a run actually wrote --
 "stored verbatim, not paraphrased".
@@ -35,7 +35,10 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_init_project import _HOUSE_STYLE  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[4]
-SKILL = REPO / "packages" / "engine" / "plugin" / "skills" / "init-project" / "SKILL.md"
+#: init-project became an AGENT and its skill dir was deleted (issue #2122). The
+#: narration house style moved with the body, so this follows it rather than
+#: asserting against a path that no longer exists.
+SKILL = REPO / "packages" / "engine" / "plugin" / "agents" / "init-project.md"
 
 
 def _shipped_guidance() -> str:
@@ -72,7 +75,7 @@ def test_house_style_is_byte_identical_to_the_shipped_string():
     `ut_init_project_*` run is about to go red at $8-12 a time."""
     assert _shipped_guidance() == _HOUSE_STYLE, (
         "validators/test_init_project.py::_HOUSE_STYLE and "
-        "init-project/SKILL.md's narration_guidance have diverged.\n"
+        "agents/init-project.md's narration_guidance have diverged.\n"
         f"  SKILL.md:      {_shipped_guidance()!r}\n"
         f"  _HOUSE_STYLE:  {_HOUSE_STYLE!r}\n"
         "Change BOTH, and see docs/plan/research-as-a-job-phase5-prose.md for the "

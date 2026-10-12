@@ -1,0 +1,481 @@
+{
+  "persons": [
+    {
+      "id": "GLPD-4GL",
+      "ark": "ark:/61903/4:1:GLPD-4GL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "a4b3b9cf-cd5c-44de-95d5-525217d03030",
+          "preferred": true,
+          "given": "Katherine Ganden",
+          "surname": "Smith",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4abbe0ca-7e9a-4b43-b9dc-00b3a00bf7b6",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QFYL-X64"
+        }
+      ]
+    },
+    {
+      "id": "G4ND-45P",
+      "ark": "ark:/61903/4:1:G4ND-45P",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "f15ccb2a-5b48-4434-be0d-9a07e0ea06fc",
+          "preferred": true,
+          "given": "Richard Alma",
+          "surname": "Cullen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7f7a516c-b0c3-4ff4-8082-74ebbaab9166",
+          "type": "Birth",
+          "date": "1854",
+          "standard_date": "1854",
+          "place": "Camberwell, London, England, United Kingdom",
+          "standard_place": "Camberwell, Southwark, London, England, United Kingdom"
+        },
+        {
+          "id": "a36383ce-d670-417e-ad4a-5662b7a1efe1",
+          "type": "Residence",
+          "date": "1891",
+          "standard_date": "1891",
+          "place": "Battersea, London, England, United Kingdom",
+          "standard_place": "Battersea, London, England, United Kingdom"
+        },
+        {
+          "id": "873c8491-30e2-4702-a9b2-817e5a345213",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Wimbledon, Surrey, England, United Kingdom",
+          "standard_place": "Wimbledon, Surrey, England, United Kingdom"
+        },
+        {
+          "id": "7f66abb2-13b0-48ab-9723-37d588ce5eea",
+          "type": "Death",
+          "date": "1904",
+          "standard_date": "1904",
+          "place": "Kingston, Surrey, England, United Kingdom",
+          "standard_place": "Kingston, Surrey, England, United Kingdom"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QFYL-HBL"
+        },
+        {
+          "ref": "SB4L-GQF"
+        },
+        {
+          "ref": "SB4L-VFP"
+        }
+      ]
+    },
+    {
+      "id": "MMC1-FBL",
+      "ark": "ark:/61903/4:1:MMC1-FBL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Richard Henry",
+          "surname": "Cullen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "28 MAY 1828",
+          "standard_date": "28 May 1828",
+          "place": "Saint Mary Magdalene,Bermondsey,London,England",
+          "standard_place": "Bermondsey, London, England, United Kingdom"
+        },
+        {
+          "id": "c09e90d5-8010-450e-8347-9bf1cab355fb",
+          "type": "Birth",
+          "date": "1828",
+          "standard_date": "1828",
+          "place": "St George Southwark, Surrey, England, United Kingdom",
+          "standard_place": "St George Southwark, Surrey, England, United Kingdom"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QFYL-HV7"
+        },
+        {
+          "ref": "QFY2-BY3"
+        },
+        {
+          "ref": "SJT6-DF5"
+        },
+        {
+          "ref": "M6FV-5QG"
+        }
+      ]
+    },
+    {
+      "id": "K8Y1-1KG",
+      "ark": "ark:/61903/4:1:K8Y1-1KG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Kate Kingsnorth",
+          "surname": "Cullen",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Kate",
+          "surname": "Culen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "195bfd0a-0ad9-49d0-aa3e-062f6c1cad08",
+          "type": "Birth",
+          "date": "17 April 1852",
+          "standard_date": "17 Apr 1852",
+          "place": "Camberwell, London, England, United Kingdom",
+          "standard_place": "Camberwell, Southwark, London, England, United Kingdom"
+        },
+        {
+          "id": "26d3fb15-0f44-4cf3-bd32-0c1655408d1c",
+          "type": "Birth Registration",
+          "date": "1852",
+          "standard_date": "1852",
+          "place": "Camberwell, London, England",
+          "standard_place": "Camberwell, Southwark, London, England, United Kingdom"
+        },
+        {
+          "id": "563e4fb3-e634-43ff-9aeb-3d58b317a38f",
+          "type": "Immigration",
+          "date": "1914",
+          "standard_date": "1914",
+          "place": "Honolulu, Honolulu, Hawaii, United States",
+          "standard_place": "Honolulu, Oahu, Hawaii, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QFY2-Y99"
+        },
+        {
+          "ref": "QFLF-MWF"
+        },
+        {
+          "ref": "QFLX-13B"
+        },
+        {
+          "ref": "QFLX-RHQ"
+        },
+        {
+          "ref": "QFLX-PH5"
+        },
+        {
+          "ref": "QFLX-GRS"
+        },
+        {
+          "ref": "QFLX-GMD"
+        },
+        {
+          "ref": "QFLX-VPV"
+        },
+        {
+          "ref": "QFLX-FJS"
+        },
+        {
+          "ref": "SHNZ-GJN"
+        },
+        {
+          "ref": "9GJ2-7WK"
+        },
+        {
+          "ref": "M8BR-L4N"
+        },
+        {
+          "ref": "9LF5-QB4"
+        },
+        {
+          "ref": "9LF5-QFD"
+        },
+        {
+          "ref": "9LFP-TQ4"
+        },
+        {
+          "ref": "9LFP-RR9"
+        },
+        {
+          "ref": "9LFP-G5R"
+        },
+        {
+          "ref": "9LFP-LZW"
+        },
+        {
+          "ref": "9LFP-RBG"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "MMC1-FBL",
+      "person2": "GLPD-4GL"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "MMC1-FBL",
+      "child": "K8Y1-1KG"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GLPD-4GL",
+      "child": "K8Y1-1KG"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "MMC1-FBL",
+      "child": "G4ND-45P"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GLPD-4GL",
+      "child": "G4ND-45P"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GLPD-4GL",
+      "title": "Katherine Ganden Smith",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Katherine Ganden Smith (PID GLPD-4GL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GLPD-4GL"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_G4ND-45P",
+      "title": "Richard Alma Cullen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Richard Alma Cullen (PID G4ND-45P); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G4ND-45P"
+    },
+    {
+      "id": "sd_person_MMC1-FBL",
+      "title": "Richard Henry Cullen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Richard Henry Cullen (PID MMC1-FBL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:MMC1-FBL"
+    },
+    {
+      "id": "sd_person_K8Y1-1KG",
+      "title": "Kate Culen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Kate Culen (PID K8Y1-1KG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K8Y1-1KG"
+    },
+    {
+      "id": "QFYL-X64",
+      "title": "Katharine Ganden Smith, \"England and Wales, Marriage Registration Index, 1837-2005\"",
+      "citation": "\"England and Wales, Marriage Registration Index, 1837-2005,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:2D3B-P9Q : 13 December 2014), Katharine Ganden Smith, 1851; from \"England & Wales Marriages, 1837-2005,\" database, <i>findmypast</i> (http://www.findmypast.com : 2012); citing 1851, quarter 3, vol. 4, p. 44, Camberwell, London, England, General Register Office, Southport, England.\n",
+      "url": "https://familysearch.org/ark:/61903/1:1:2D3B-P9Q"
+    },
+    {
+      "id": "QFYL-HBL",
+      "title": "Richard Alma Cullen, \"England and Wales, Death Registration Index 1837-2007\"",
+      "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2NRN-8H3 : Fri Feb 28 04:43:13 UTC 2025), Entry for Richard Alma Cullen, 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2NRN-8H3"
+    },
+    {
+      "id": "SB4L-GQF",
+      "title": "Richard A Cullen, \"England and Wales, Census, 1901\"",
+      "citation": "\"England and Wales, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9X8-XQY : Thu Feb 13 05:05:04 UTC 2025), Entry for Richard A Cullen and Caroline H Cullen, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9X8-XQY"
+    },
+    {
+      "id": "SB4L-VFP",
+      "title": "Richard A Cullen, \"England and Wales, Census, 1891\"",
+      "citation": "\"England and Wales, Census, 1891\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QSHR-L3Z : Tue Jan 21 13:26:03 UTC 2025), Entry for Richard A Cullen and Caroline H Cullen, 1891.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QSHR-L3Z"
+    },
+    {
+      "id": "QFYL-HV7",
+      "title": "Richard Henry Cullen, \"England and Wales, Marriage Registration Index, 1837-2005\"",
+      "citation": "\"England and Wales, Marriage Registration Index, 1837-2005,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:2D3T-HB9 : 13 December 2014), Richard Henry Cullen, 1851; from \"England & Wales Marriages, 1837-2005,\" database, <i>findmypast</i> (http://www.findmypast.com : 2012); citing 1851, quarter 3, vol. 4, p. 44, Camberwell, London, England, General Register Office, Southport, England.\n",
+      "url": "https://familysearch.org/ark:/61903/1:1:2D3T-HB9"
+    },
+    {
+      "id": "QFY2-BY3",
+      "title": "Richard Culler, \"England and Wales, Census, 1851\"",
+      "citation": "\"England and Wales, Census, 1851\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:SGTQ-PZF : Fri Aug 21 09:04:15 UTC 2026), Entry for Jeffery Culler and Sarah Culler, 1851.",
+      "url": "https://familysearch.org/ark:/61903/1:1:SGTQ-PZV"
+    },
+    {
+      "id": "SJT6-DF5",
+      "title": "Richard Cullen, \"England and Wales, Census, 1841\"",
+      "citation": "\"England and Wales, Census, 1841\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MQVB-3XK : Tue Sep 08 21:40:48 UTC 2026), Entry for Jeffery Cullen and Sarah Cullen, 1841.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MQVB-3XP"
+    },
+    {
+      "id": "M6FV-5QG",
+      "title": "Richard Henry Cullen, \"England, Births and Christenings, 1538-1975\"",
+      "citation": "\"England, Births and Christenings, 1538-1975\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NLYZ-QV4 : 3 February 2023), Richard Henry Cullen, 1828.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NLYZ-QV4"
+    },
+    {
+      "id": "QFY2-Y99",
+      "title": "Kate Kingsnorth Cullen, \"England and Wales, Birth Registration Index, 1837-2008\"",
+      "citation": "\"England and Wales, Birth Registration Index, 1837-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2N7Y-GHS : Tue May 12 04:22:17 UTC 2026), Entry for Kate Kingsnorth Cullen, 1852.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2N7Y-GHS"
+    },
+    {
+      "id": "QFLF-MWF",
+      "title": "Not Given in entry for Gilman, \"California, Births and Christenings, 1812-1988\"",
+      "citation": "\"California, Births and Christenings, 1812-1988\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4VGC-3MT2 : 8 October 2026), Not Given in entry for Gilman, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4VGC-3MT2"
+    },
+    {
+      "id": "QFLX-13B",
+      "title": "<Unknown>, \"California, County Birth and Death Records, 1800-1994\"",
+      "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGLQ-396K : Fri Apr 24 18:42:16 UTC 2026), Entry for Gilman and Chas H Gilman, 1 August 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGLQ-39X9"
+    },
+    {
+      "id": "QFLX-RHQ",
+      "title": "Cullen, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPD9-FFZ : Tue Feb 25 19:21:36 UTC 2025), Entry for Charles Edward Gilman and Gilman, 11 Apr 1941.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPD9-FFD"
+    },
+    {
+      "id": "QFLX-PH5",
+      "title": "Kate Cullen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL41-912X : Wed Jul 23 13:04:26 UTC 2025), Entry for Charles Edward Gilman and Chas H Gilman, 14 Jun 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL41-91L5"
+    },
+    {
+      "id": "QFLX-GRS",
+      "title": "Kate Culen in entry for Mary Katheren Gilman, \"California, Births and Christenings, 1812-1988\"",
+      "citation": "\"California, Births and Christenings, 1812-1988\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4VGJ-ZL6Z : 11 January 2020), Kate Culen in entry for Mary Katheren Gilman, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4VGJ-ZL6Z"
+    },
+    {
+      "id": "QFLX-GMD",
+      "title": "Kate Culen in entry for Mary Katheren Gilman, \"California, Births and Christenings, 1812-1988\"",
+      "citation": "\"California, Births and Christenings, 1812-1988\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:4V2L-6KMM : 11 January 2020), Kate Culen in entry for Mary Katheren Gilman, .",
+      "url": "https://familysearch.org/ark:/61903/1:1:4V2L-6KMM"
+    },
+    {
+      "id": "QFLX-VPV",
+      "title": "Kate Cullen, \"Delaware, Wilmington, Vital Records, 1847-1954\"",
+      "citation": "\"Delaware, Wilmington, Vital Records, 1847-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q28Y-8XXK : Sat Feb 22 23:51:30 UTC 2025), Entry for Philip K Gilman and Ellen C Carey Burbank, 2 March 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q28Y-8XFC"
+    },
+    {
+      "id": "QFLX-FJS",
+      "title": "Kate Culen, \"California, County Birth and Death Records, 1800-1994\"",
+      "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGL4-7NH9 : Sun Mar 10 12:49:45 UTC 2024), Entry for Mary Katherin Gilman and Charles H Gilman, 12 September 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGL4-7NCT"
+    },
+    {
+      "id": "SHNZ-GJN",
+      "title": "Kate Gilman, \"Hawaii, Honolulu, Passenger Lists, 1900-1954\"",
+      "citation": "\"Hawaii, Honolulu, Passenger Lists, 1900-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9Z-HQF8 : Fri Jul 03 07:56:23 UTC 2026), Entry for Kate Gilman, 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9Z-HQF8"
+    },
+    {
+      "id": "9GJ2-7WK",
+      "title": "Kate K. Cullen in entry for Katharine G. Irving, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2WT3-9FF : Wed Mar 26 22:14:00 UTC 2025), Entry for Katharine G. Irving and Charles E. Gilman, 10 Nov 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2WT3-9FJ"
+    },
+    {
+      "id": "M8BR-L4N",
+      "title": "Kate K. Cullen in entry for George Henry Irving, Jr., \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F6W7-JPX : 21 January 2020), Kate K. Cullen in entry for George Henry Irving, Jr., 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6W7-JPX"
+    },
+    {
+      "id": "9LF5-QB4",
+      "title": "Kate K. Cullen in entry for George Irving, Jr. and Mary Gilman, \"New York, New York City Marriage Records, 1829-1940\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2497-F3Y : Fri Jul 25 10:22:18 UTC 2025), Entry for George Irving, Jr. and Mary Gilman, 9 Apr 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2497-FQS"
+    },
+    {
+      "id": "9LF5-QFD",
+      "title": "Kate K Cullen, \"California, County Marriages, 1850-1952\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8D2-S6F : Wed Mar 06 04:11:06 UTC 2024), Entry for Charles H Gilman and Kate K Cullen, 1 December 1877.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K8D2-S6N"
+    },
+    {
+      "id": "9LFP-TQ4",
+      "title": "Culler in entry for Philip K Gilman, \"California Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPQY-823 : Tue Feb 25 17:31:00 UTC 2025), Entry for Philip K Gilman and Gilman, 07 Sep 1948.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPQY-827"
+    },
+    {
+      "id": "9LFP-RR9",
+      "title": "Kate Culen in entry for Mary Katheren Gilman, \"California Births and Christenings, 1812-1988\"",
+      "citation": "\"California, Births and Christenings, 1812-1988\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:V2XP-F5Z : 6 January 2020), Kate Culen in entry for Mary Katheren Gilman, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2XP-F5Z"
+    },
+    {
+      "id": "9LFP-G5R",
+      "title": "Kat* Gilman, \"United States Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M9GV-VJL : Tue Oct 21 18:16:48 UTC 2025), Entry for Kat* Gilman and Philip K Gilman, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M9GV-VJL"
+    },
+    {
+      "id": "9LFP-LZW",
+      "title": "Kate Gillman in household of Edward Gillman, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GL-H4Y : Wed Sep 09 13:57:32 UTC 2026), Entry for Edward Gillman and Mary Gillman, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M6GL-HHM"
+    },
+    {
+      "id": "9LFP-RBG",
+      "title": "K. Culen in entry for Mary Catherine Gilman, \"California Births and Christenings, 1812-1988\"",
+      "citation": "\"California, Births and Christenings, 1812-1988\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V2X2-VXG : 8 October 2026), K. Culen in entry for Mary Catherine Gilman, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V2X2-VXG"
+    }
+  ]
+}

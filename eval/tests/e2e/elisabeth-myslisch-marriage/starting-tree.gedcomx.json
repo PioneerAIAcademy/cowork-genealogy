@@ -1,0 +1,178 @@
+{
+  "persons": [
+    {
+      "id": "KV1W-XVF",
+      "ark": "ark:/61903/4:1:KV1W-XVF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Elisabeth",
+          "surname": "Myslisch",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Elisabeth",
+          "surname": "Myslisz",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L4NZ-WWJ",
+      "ark": "ark:/61903/4:1:L4NZ-WWJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Valentin",
+          "surname": "Netzel",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "14 Feb 1847",
+          "standard_date": "14 Feb 1847",
+          "place": "Oxhöft, Westpreußen, Preußen, Germany",
+          "standard_place": "Oxhöft, Putzig, West Prussia, Prussia, Germany"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KV1W-XV6",
+      "ark": "ark:/61903/4:1:KV1W-XV6",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Elisabeth",
+          "surname": "Netzel",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "26 Nov 1845",
+          "standard_date": "26 Nov 1845",
+          "place": "Oxhöft, Westpreußen, Preußen, Germany",
+          "standard_place": "Oxhöft, Putzig, West Prussia, Prussia, Germany"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L4NZ-WWK",
+      "ark": "ark:/61903/4:1:L4NZ-WWK",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Anton",
+          "surname": "Netzel",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L4NZ-WWK",
+      "person2": "KV1W-XVF"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "L4NZ-WWK",
+      "child": "KV1W-XV6"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KV1W-XVF",
+      "child": "KV1W-XV6"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L4NZ-WWK",
+      "child": "L4NZ-WWJ"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KV1W-XVF",
+      "child": "L4NZ-WWJ"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_KV1W-XVF",
+      "title": "Elisabeth Myslisch",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Elisabeth Myslisch (PID KV1W-XVF); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KV1W-XVF"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_L4NZ-WWJ",
+      "title": "Valentin Netzel",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Valentin Netzel (PID L4NZ-WWJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L4NZ-WWJ"
+    },
+    {
+      "id": "sd_person_KV1W-XV6",
+      "title": "Elisabeth Netzel",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Elisabeth Netzel (PID KV1W-XV6); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KV1W-XV6"
+    },
+    {
+      "id": "sd_person_L4NZ-WWK",
+      "title": "Anton Netzel",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Anton Netzel (PID L4NZ-WWK); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L4NZ-WWK"
+    }
+  ]
+}
