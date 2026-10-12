@@ -35,6 +35,7 @@ turn and rebuilds the client when it changes.
 from __future__ import annotations
 
 import asyncio
+import functools
 import json
 import os
 import shutil
@@ -43,6 +44,7 @@ import urllib.request
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from ..build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     CONTINUE_REASON,
     DELEGATION_TOOLS,
@@ -545,6 +547,19 @@ def _turn_cost_url() -> str | None:
     return base[: -len(_PROXY_SUFFIX)] + "/api/turn-cost"
 
 
+_BUILD_INFO = Path(BUILD_INFO_PATH)
+
+
+@functools.cache
+def _sandbox_build() -> str | None:
+    """The build this sandbox's code came from, for the cost report. None outside the
+    image (local dev) or when the stamp is unreadable."""
+    try:
+        return build_label(_BUILD_INFO.read_bytes())
+    except (OSError, ValueError):
+        return None
+
+
 def _post_turn_cost(url: str, api_key: str, payload: dict) -> None:
     """Blocking; run off the event loop. A failed report is logged, never raised."""
     req = urllib.request.Request(
@@ -655,7 +670,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     sandboxes in one process cannot read each other's progress. It is what
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
-    counter = {"tool_calls": 0, "delivered": False}
+    counter = {"tool_calls": 0, "delivered": False, "continuations": 0}
     # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
     # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
     # across two stops); `delivered` is not, and the dict outlives the turn because
@@ -720,17 +735,23 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         ]
     }
     if AUTONOMOUS_MAX_NUDGES > 0:
+        stop = make_stop_hook(
+            project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
+            tool_count=lambda: counter["tool_calls"],
+            pending_user_message=(agent.pending_user_message if agent else None),
+            delivered=lambda: counter["delivered"],
+        )
+
+        async def counted_stop(input_data, tool_use_id, ctx):
+            """Counts the stops it overrides, so each turn's cost report says how much
+            of the turn ran past a stop the model chose."""
+            out = await stop(input_data, tool_use_id, ctx)
+            if out.get("decision") == "block":
+                counter["continuations"] += 1
+            return out
+
         hooks["Stop"] = [
-            HookMatcher(
-                matcher=None,
-                hooks=[make_stop_hook(
-                    project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
-                    tool_count=lambda: counter["tool_calls"],
-                    pending_user_message=(agent.pending_user_message if agent else None),
-                    delivered=lambda: counter["delivered"],
-                )],
-                timeout=_PRETOOL_TIMEOUT_S,
-            )
+            HookMatcher(matcher=None, hooks=[counted_stop], timeout=_PRETOOL_TIMEOUT_S)
         ]
     return hooks
 
@@ -1297,12 +1318,14 @@ class RealAgent:
         first cut cleared on the next tool call instead, and was wrong twice: a turn
         that yields without calling any tool never cleared it, and the clearing was
         not main-thread gated, so a straggler subagent call could clear a
-        main-thread delivery. `tool_calls` is deliberately NOT reset -- the
+        main-thread delivery. `continuations` counts THIS turn's overridden stops for
+        the cost report. `tool_calls` is deliberately NOT reset -- the
         no-progress arm compares it across two stops.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
             counter["delivered"] = False
+            counter["continuations"] = 0
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -1510,12 +1533,15 @@ class RealAgent:
                     )
                     url = _turn_cost_url()
                     if url and d_cost is not None:
+                        counter = getattr(self, "_hook_counter", None)
                         asyncio.get_running_loop().run_in_executor(
                             None, _post_turn_cost, url, current_api_key(), {
                                 "cost_usd": d_cost,
                                 "model": os.environ.get("MODEL") or None,
                                 "input_tokens": d_in,
                                 "output_tokens": d_out,
+                                "build": _sandbox_build(),
+                                "continuations": counter.get("continuations") if counter else None,
                             },
                         )
                     yield _event(
