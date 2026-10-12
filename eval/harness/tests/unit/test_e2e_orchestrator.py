@@ -994,8 +994,8 @@ def test_provenance_gap_reason_names_the_satisfiable_call_shape():
 def test_provenance_gap_reason_offers_no_escape_for_a_locally_minted_id():
     """The reason must NOT tell the agent a locally-minted id is unscorable.
 
-    person-evidence/SKILL.md says such an id returns a degenerate score to treat
-    as "no score available" (2026-07-02). That is stale: the match-engine
+    person-evidence/SKILL.md (deleted) said such an id returned a degenerate score
+    to treat as "no score available" (2026-07-02). That was stale: the match-engine
     mint-hardening (2026-07-07) made an ARK-less focus person score on document
     content. Probed live — dev/probe-same-person-local-id.ts — the tree focus
     with its ARK removed scores 0.9999484 against a 0.999967 control, identical
