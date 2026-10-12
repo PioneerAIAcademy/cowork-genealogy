@@ -2346,59 +2346,67 @@ this section before reopening one.
 
 - **A surname arm on `research_append`'s person_evidence invariants** — refuse a
   `confident` link when the project documents the person under another surname.
-  Worked through and **set aside 2026-10-05**, on measurement rather than
-  taste. Three facts decided it:
+  Worked through and **set aside**. Three facts decided it, all re-measured at
+  891262244:
 
-  1. **It cannot fire on the case it was written for.** The motivating case is
-     the `jimmie-jewel-neal` fixture, where six committed runs attach the wrong
-     parents and the right surname — Sampson — appears nowhere in any run's
-     transcript, tool calls or final state. Only two of the six carry a
-     `confident` link to that person at all, and in both the tree records her
-     under one surname (`Wood`), so a predicate keyed on a *second documented*
-     surname reaches neither. "Sampson" occurs only under `judge_output`, which
-     comes from the answer key, not from anything the agent could read.
-  2. **Any predicate that does fire is a constant, not a guardrail.** Re-run
-     2026-10-09 at aefc2e5f9 over 204 committed e2e final states: **5,734**
-     confident
-     person_evidence links, **1,518** attached to a person carrying more than
-     one distinct surname, **858** surviving an escape of a `MarriedName` name
-     type, a `Marriage` fact, or a `Couple` relationship carrying one — **858 of
-     5,734 (15.0%)** of all confident links, every figure here measured at
-     aefc2e5f9 by the command below. ADR-0011 limit 2's shipped precedent is the plan-completeness
-     rate recorded in the enforcement-layers table above, and a 52% rate was
-     rejected in those terms; 15.0% sits in the same reject band. "Read every
-     refusal" is not tractable at 858.
-  3. **The refusals inspect as false positives, and one class contradicts
-     shipped doctrine.** Sampled from the surviving set: `anders-monsen-ancestry`
-     on KZHH-VTX (Halsteinsdatter / Halstensdatter / Nielsdatter) and
-     `anna-findejsova-daughter` on P915-SXM (Michal / Michl) are orthographic
-     and patronymic variants, which `agents/person-evidence.md` explicitly rules
-     must not downgrade a match. Separating "a variant" from "another surname"
-     is genealogical judgment, and the document-decidable version of the rule
-     does not make that cut.
+  1. **It cannot reach the link it was written for.** The motivating case is the
+     `jimmie-jewel-neal` fixture, where six committed runs attach Wood parents to
+     Martha J and the right surname — Sampson — appears nowhere an agent could
+     read it (it occurs only under `judge_output`, which is the answer key). The
+     harmful Wood-parent link is `confident` in exactly two of the six runs
+     (`run-2026-07-24_22-09-47` `pe_020`/`pe_022`, `run-2026-07-25_15-53-31`
+     `pe_006`/`pe_008`), and in **both** the tree records `LKYG-VKB` under one
+     surname, so a predicate keyed on a second documented surname does not
+     reach it. Where she *does* carry several surnames the link is `probable`
+     (`run-2026-07-31_13-02-13` `pe_086`/`pe_087`) or absent. State the claim at
+     this width: she carries *other* `confident` links in five of the six runs,
+     so "no confident link to that person" is false and was the error in this
+     entry's first draft.
+  2. **The escape clears the case independently anyway.** `LKYG-VKB` sits in a
+     `Couple` relationship carrying a `Marriage` fact in all six runs, so even a
+     `confident` Wood-parent link on a multi-surname tree person would be
+     cleared. Two separate reasons, either sufficient.
+  3. **Inside its own motivating fixture the predicate fires only on the wrong
+     links.** It refuses 80 links across `jimmie-jewel-neal`, 74 of them on
+     `KNXW-M3T` — the fixture's *subject*, once "Yarbro" joins "Neal" — and none
+     on the Wood-parent link it was written for. A predicate whose noise and
+     whose target are in the same fixture, and which hits only the noise, is not
+     a guardrail for this case.
+
+  **Rate, for scale rather than as the reason.** Over 203 committed e2e final
+  states (`git ls-files`, not a glob — the glob picks up a gitignored
+  `scratch_*` run): 5,727 confident person_evidence links, 1,518 on a person
+  carrying more than one distinct surname, **858 of 5,727 (15.0%)** refused
+  after the escape, in 46 of 203 runs (22.7%), measured at 891262244. ADR-0011
+  limit 2 is explicit that *"a rate never substitutes for"* inspection, so this
+  is context, not the argument — facts 1–3 are. The refusals collapse to **65**
+  distinct (fixture, person) pairs across 31 fixtures, which is a tractable
+  inspection set should anyone reopen this; `dev/measure-surname-arm.ts --pairs`
+  prints it.
+
+  **The escape is one coarse arm, not three.** Over the 1,518 multi-surname
+  links the arms fire `Couple`-with-`Marriage` 535, a `Marriage` fact 146, and a
+  `MarriedName` name type **15** (they overlap, so they do not sum). The escape
+  is effectively "is this person married at all", not "is this second surname a
+  married name" — which is what makes fact 2 hold, and what anyone tightening
+  the predicate would have to change first.
+
+  **One argument deliberately NOT carried forward.** Earlier drafts rejected the
+  arm partly on the ground that its refusals are "orthographic and patronymic
+  variants" that must not downgrade a match. Only the **orthographic** half of
+  that is doctrine: `agents/person-evidence.md` rules that transcription
+  variants do not downgrade strength, but it separately rules that a
+  **patronymic mismatch IS a core-identifier conflict** capping confidence at
+  `speculative`. So a sampled refusal like `anders-monsen-ancestry` on KZHH-VTX
+  (Halsteinsdatter / Halstensdatter / **Nielsdatter**) reads as a *true*
+  positive, not a false one. Do not reuse that argument; facts 1–3 do not
+  depend on it.
 
   Reshaping it onto `coreIdentifierContradictionInvariants` was considered and
   rejected for the same reason as (1): no anchor in the project documents names
-  the other surname, so no reshaped predicate reaches the case. The numbers move
-  as the corpus grows — re-run before reopening:
-
-  ```
-  python3 -c "
-  import json,glob
-  A=B=C=0
-  for r in sorted(glob.glob('eval/runlogs/e2e/*/*.final-research.json')):
-      d=json.load(open(r,encoding='utf-8')); t=json.load(open(r.replace('final-research','final-tree.gedcomx'),encoding='utf-8'))
-      P={p['id']:p for p in t.get('persons',[])}
-      wed={v for rel in t.get('relationships',[]) if rel.get('type')=='Couple' and any(f.get('type')=='Marriage' for f in rel.get('facts') or []) for k,v in rel.items() if k in ('person1','person2')}
-      for pe in d.get('person_evidence') or []:
-          if pe.get('confidence')!='confident': continue
-          C+=1; p=P.get(pe.get('person_id')) or {}; n=p.get('names') or []
-          s={(x.get('surname') or '').strip().lower() for x in n if (x.get('surname') or '').strip()}
-          if len(s)<2: continue
-          A+=1
-          if not (any(x.get('type')=='MarriedName' for x in n) or any(f.get('type')=='Marriage' for f in p.get('facts') or []) or p.get('id') in wed): B+=1
-  print(C,A,B)"
-  ```
+  the other surname. The numbers move as the corpus grows — re-run
+  `npx tsx dev/measure-surname-arm.ts` from `packages/engine/mcp-server/`
+  before reopening.
 
 - **Requiring a new shadow guard to name its graduation instrument, sample and
   read-date at filing.** Dropped by lead ruling **2026-10-06**, on the ground
