@@ -10,11 +10,12 @@
       "opening-turn",
       "single-turn-decomposition",
       "issue-1510",
-      "fixed-profile"
+      "fixed-profile",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "init-project: Start a new project for FamilySearch ID LZNY-BRF. I want to identify his parents. About me: I'm experienced.",
+    "delegation": "init-project: Start a new project for FamilySearch ID LZNY-BRF. I want to identify his parents. About me: I'm experienced.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [
@@ -28,20 +29,7 @@
     "`researcher_profile.subscriptions` should be **absent** — site access is never asked, and the field is left unwritten rather than defaulted."
   ],
   "execution": {
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    
   },
   "judge_reads_files": true
 }

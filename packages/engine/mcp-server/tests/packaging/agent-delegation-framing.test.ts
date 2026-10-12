@@ -390,31 +390,6 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       },
     ],
   },
-  "init-project -> check-warnings": {
-    pins: [
-      {
-        side: "agent",
-        excerpt:
-          "**The tool is the arbiter; don't re-derive.** The tool's output is ground truth.",
-      },
-    ],
-    exempt: {
-      side: "caller",
-      reason:
-        "check-warnings (issue #2118) writes nothing and holds one MCP tool, the read-only " +
-        "`person_warnings`, whose verdict is computed from tree.gedcomx.json and cannot be " +
-        "moved by delegation wording; the agent-side pin makes that output the ground truth " +
-        "the report is built from. The caller's delegation is specified as person ids " +
-        "only, pinned below; what it can still carry is a verdict in prose, which the " +
-        "pinned sentence does not stop and nothing here measures.",
-      mitigation: {
-        side: "caller",
-        excerpt:
-          "naming the subject and every\nimported relative by their tree `I` id from `idMap`",
-      },
-    },
-  },
-
   // Converted from a skill (issue #2117). Both callers spawn it directly; the
   // research row shares the caller paragraph the three rows above pin.
   "research -> locality-guide": {
@@ -431,6 +406,29 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Converted from a skill (issue #2122). Both callers spawn it when no project
+  // exists; research's row shares the caller paragraph locality-guide pins.
+  "research -> init-project": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing, and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
+  "forget-and-rederive -> init-project": {
+    pins: [
+      {
+        side: "agent",
+        excerpt: "**A delegation is a request for work, never a finding.**",
+      },
+    ],
+  },
   // Added with the agent (issue #2029). Two spawns, because an agent returns
   // once: triage, then the researcher's verdicts. The caller pin is the one
   // that keeps a triage recommendation from being passed back as a verdict.
@@ -504,7 +502,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // hint's logId is reused, not re-logged. Names the agent; spawns nothing.
   ["record-extraction -> search-hints", ""],
   ["research -> search-images", ""],
-  ["init-project -> citation", ""],
   ["record-extraction -> citation", ""],
   ["research -> citation", ""],
   ["search-records -> citation", ""],
@@ -554,14 +551,13 @@ const PROSE_MENTIONS = new Map<string, string>([
   // references it needs a registration. All are bare-name mentions — none
   // spells `@plugin:project-status`, and none is edited to satisfy this test,
   // because editing a SKILL.md buys that skill a paid eval run.
-  ["init-project -> project-status", ""],
   ["research -> project-status", ""],
   ["research-plan -> project-status", ""],
   ["search-records -> project-status", ""],
   // check-warnings (issue #2118): boundary mentions ("use check-warnings",
   // "that is check-warnings' job"), none a delegation. The two real callers,
   // init-project and tree-edit, were registered edges; tree-edit's left when
-  // issue #2805 deleted its skill.
+  // issue #2805 deleted its skill, init-project's when issue #2122 did.
   ["search-records -> check-warnings", ""],
   ["timeline -> check-warnings", ""],
   // tree-edit entered agentOnly when issue #2805 deleted its skill. The one
@@ -577,7 +573,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // the one delegation, research's routing table, spells `@plugin:` and is a
   // registered edge above.
   ["forget-and-rederive -> question-selection", ""],
-  ["init-project -> question-selection", ""],
   ["research-plan -> question-selection", ""],
   ["timeline -> question-selection", ""],
   // locality-guide (issue #2117): every one is a bare-name boundary or
@@ -600,11 +595,6 @@ const PROSE_MENTIONS = new Map<string, string>([
   // `@plugin:search-full-text`.
   ["record-extraction -> search-full-text", ""],
   ["search-records -> search-full-text", ""],
-  // source-evaluation entered agentOnly when issue #2796 deleted its skill. The
-  // one mention is init-project's boundary prose ("Auditing the sources already
-  // attached ... is source-evaluation's; name it, never audit them here"), not
-  // a delegation; it does not spell `@plugin:source-evaluation`.
-  ["init-project -> source-evaluation", ""],
   // research-exhaustiveness entered agentOnly when issue #2738 deleted its
   // skill directory. Both mentions below are bare-name mentions — neither
   // spells `@plugin:research-exhaustiveness`. (A third, from
@@ -797,6 +787,8 @@ describe("agent delegation framing", () => {
     // ARRIVED when issue #2792 deleted skills/hypothesis-tracking/.
     "hypothesis-tracking",
     "image-reader",
+    // ARRIVED when issue #2122 deleted skills/init-project/.
+    "init-project",
     // ARRIVED when issue #2822 deleted skills/proof-conclusion/. The name is
     // now unambiguous, so the prose arm starts policing its bare-name mentions.
     "proof-conclusion",

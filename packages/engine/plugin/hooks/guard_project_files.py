@@ -239,6 +239,14 @@ AGENT_WRITABLE_SECTIONS = {
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
     "conflict-resolution": frozenset({"conflicts"}),
+    # init-project writes the fixed researcher profile, the volunteered
+    # holdings and one `sources` entry per transcribed memory, through
+    # research_append after project_create. It owns `project` (ownership.json),
+    # which project_create writes; `project.status` stays routed to
+    # proof-conclusion above. A lane, not a route: nothing is routed to this
+    # agent. It leaves out `questions`, which question-selection owns
+    # (issue #2122).
+    "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.

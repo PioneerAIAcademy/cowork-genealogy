@@ -9,6 +9,8 @@ import {
   unloggedStagedSearches,
   stripQueryPlumbing,
   readStagedEnvelopeQuery,
+  resolveStagedRef,
+  readStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -434,5 +436,87 @@ describe("results-staging", () => {
         }),
       ).rejects.toThrow(/does not match log entry tool/);
     });
+  });
+});
+
+// The cases reproduce the copy errors a corpus-wide scan of the committed run
+// logs found (11 of 3,636 ref-carrying calls): the init-project k8d pair is
+// verbatim; for the others the differing characters are the real ones and the
+// rest of the UUID is filled in.
+describe("resolveStagedRef", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "resolve-ref-test-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const stage = async (...names: string[]) => {
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    for (const n of names) await writeFile(join(dir, STAGING_SUBDIR, `${n}.json`), "{}");
+  };
+  const at = (n: string) => `${STAGING_SUBDIR}/${n}.json`;
+
+  it("returns an exact ref unchanged, with no correction", async () => {
+    await stage("dbef78b1-1e5f-438a-ac1d-9bee233874f9");
+    expect(await resolveStagedRef(dir, at("dbef78b1-1e5f-438a-ac1d-9bee233874f9"))).toEqual({
+      ref: at("dbef78b1-1e5f-438a-ac1d-9bee233874f9"),
+    });
+  });
+
+  it.each([
+    ["a dropped character (init-project k8d)", "dbef78b1-1e5f-438a-ac1d-9ee233874f9", "dbef78b1-1e5f-438a-ac1d-9bee233874f9"],
+    ["one character changed (pedro-chaves-spouse)", "0b7e5f0c-61d4-4b8e-88a8-2173d1390cb4", "0b7e5f0c-61d4-4b8e-88a8-2273d1390cb4"],
+    ["one character changed (anders-monsen)", "5d2c3a10-7c1e-4d55-a1b2-9824097a7245", "5d2c3a10-7c1e-4d55-a1b2-9824099a7245"],
+    ["two characters changed (anders-monsen)", "87521b4-0e6f-4a8b-9c1d-2e3f4a5b6c7d", "87521cd4-0e6f-4a8b-9c1d-2e3f4a5b6c7d"],
+  ])("maps a near-copy onto the one staged file — %s", async (_label, bad, good) => {
+    await stage(good, "11111111-2222-4333-8444-555555555555");
+    expect(await resolveStagedRef(dir, at(bad))).toEqual({ ref: at(good), correctedFrom: at(bad) });
+  });
+
+  it.each([
+    ["a bare UUID", "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b"],
+    ["a bare UUID with .json", "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b.json"],
+    ["a .staging/ prefix with no results/", ".staging/6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b.json"],
+  ])("restores a dropped results/.staging/ prefix — %s", async (_label, bad) => {
+    await stage("6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b");
+    expect(await resolveStagedRef(dir, bad)).toEqual({
+      ref: at("6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b"),
+      correctedFrom: bad,
+    });
+  });
+
+  it("completes a name cut short to a unique prefix of 8 or more characters", async () => {
+    await stage("e2e868d0-91aa-4c2b-8f3e-0a1b2c3d4e5f", "77777777-2222-4333-8444-555555555555");
+    expect(await resolveStagedRef(dir, at("e2e868d0"))).toEqual({
+      ref: at("e2e868d0-91aa-4c2b-8f3e-0a1b2c3d4e5f"),
+      correctedFrom: at("e2e868d0"),
+    });
+  });
+
+  it.each([
+    ["two staged files are both near it", ["aaaaaaaa-1111-4222-8333-444444444444", "aaaaaaaa-1111-4222-8333-444444444445"], at("aaaaaaaa-1111-4222-8333-44444444444")],
+    ["it is more than three edits from every file", ["aaaaaaaa-1111-4222-8333-444444444444"], at("aaaaaaaa-1111-4222-8333-4444444xxxx4")],
+    ["a prefix shorter than 8 characters", ["e2e868d0-91aa-4c2b-8f3e-0a1b2c3d4e5f"], at("e2e868d")],
+    ["it names a finalized sidecar, not a staged file", ["aaaaaaaa-1111-4222-8333-444444444444"], "results/log_027.json"],
+    ["it names another directory", ["aaaaaaaa-1111-4222-8333-444444444444"], "elsewhere/aaaaaaaa-1111-4222-8333-444444444444.json"],
+    ["it walks out of the project", ["aaaaaaaa-1111-4222-8333-444444444444"], "../aaaaaaaa-1111-4222-8333-444444444444.json"],
+  ])("never guesses when %s", async (_label, names, bad) => {
+    await stage(...(names as string[]));
+    expect(await resolveStagedRef(dir, bad as string)).toEqual({ ref: bad });
+  });
+
+  it("returns the ref unchanged when there is no staging directory at all", async () => {
+    expect(await resolveStagedRef(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual({
+      ref: at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"),
+    });
+  });
+
+  it("reads a near-copy through readStagedResults, and still refuses a ref near nothing", async () => {
+    const good = "dbef78b1-1e5f-438a-ac1d-9bee233874f9";
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    await writeFile(join(dir, STAGING_SUBDIR, `${good}.json`), JSON.stringify({ payload: { results: [{ id: "R1" }] } }));
+    expect(await readStagedResults(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual([{ id: "R1" }]);
+    await expect(readStagedResults(dir, at("00000000-0000-4000-8000-000000000000"))).rejects.toThrow("does not exist");
   });
 });

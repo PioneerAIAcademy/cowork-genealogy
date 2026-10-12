@@ -221,15 +221,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 | Component | Count | Where | What it is for |
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
-| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **7** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **26** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **6** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **27** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints` and `conflict-resolution`.
+`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution` and `init-project`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -353,7 +353,7 @@ descriptions because a user may still invoke any of them directly.
 
 ### 3.3 `references/` — the fourth artifact, duplicated on purpose
 
-5 of the 7 skills carry a `references/` folder, loaded on demand, in-session,
+4 of the 6 skills carry a `references/` folder, loaded on demand, in-session,
 for material too long to sit in the skill body.
 
 **A reference is loaded deliberately only if its own `SKILL.md` names it** — or if
@@ -479,7 +479,7 @@ identically is **physically duplicated** into each one rather than linked.
 
 | File | Copies | Distinct contents | Lint |
 |---|---|---|---|
-| `places-guidance.md` | 9 | 2 | `tests/packaging/skill-guidance.test.ts` |
+| `places-guidance.md` | 5 | 2 | `tests/packaging/skill-guidance.test.ts` |
 
 The other two families are **gone**. `validation-protocol.md` ran 11 → 2 → 1
 (the `citation` copy went) → **0**, and `research-log-protocol.md` 3 → 1 → **0**,
@@ -498,17 +498,19 @@ it writes `questions` or `plans`, never `assertions` or `person_evidence`. A
 duplicated family with no lint decayed in exactly the way the guarded one did
 not.
 
-The `places-guidance` lint holds 8 copies byte-identical to a canonical at
+The `places-guidance` lint holds 4 copies byte-identical to a canonical at
 `packages/engine/plugin/references/places-guidance.md` — a path deliberately
 **absent from `package-plugin.mjs`'s `INCLUDE`**, so the canonical is a
-build-time anchor that never ships into the VM. The 9th copy belongs to
-`research-plan`, which had three place tools dropped from its `allowed-tools`
-in 8bf43be2 (and never held a fourth), so the canonical text would name tools it
-cannot call. It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY` — but
-pinned to a **sha256 of its own content**, so an edit inside it fails CI until
-the hash moves in the same diff. **Copy that shape, not a bare exemption**, when
-a fourth family gets a lint: every skill must land in exactly one of the two
-lists, and the test asserts that too.
+build-time anchor that never ships into the VM. The 5th copy belongs to
+`init-project`, whose canonical "copy it from a `person_read` result" bullet
+names a step it no longer takes (`project_create` carries the
+`standard_place`). It is exempted **by name** in `SKILLS_WITH_SPECIALIZED_COPY`
+— but pinned to a **sha256 of its own content**, so an edit inside it fails CI
+until the hash moves in the same diff. `research-plan` carried a specialized
+copy too until it was deleted under the lead's 2026-08-31 ruling and the two
+rules it needed were inlined into its `SKILL.md`. **Copy that shape, not a bare
+exemption**, when a fourth family gets a lint: every skill must land in exactly
+one of the two lists, and the test asserts that too.
 
 > **Today:** editing a duplicated reference means editing every copy by hand and
 > knowing which divergences are deliberate — now only for `places-guidance.md`,
@@ -846,7 +848,7 @@ There **is** an orchestrator, and it is a skill:
    owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
    continuous work shipped (2026-09-23). Three surfaces already said so and the router
    contradicted all three: `docs/specs/schemas/ownership.json` names
-   `skill:init-project` and `skill:proof-conclusion` as the `project` section's
+   `agent:init-project` and `agent:proof-conclusion` as the `project` section's
    only callers, `agents/proof-conclusion.md` §8 makes the call, and the
    router's own `allowed-tools` grants no writer tool. The router verifies the
    two gates and re-invokes `proof-conclusion`; it never writes the status.
@@ -1508,13 +1510,12 @@ document** — never mixing them across the repo, which is intentional.
 
 ### 6.5 State reaches the prompt too
 
-All 7 skills carry a `**Narration:**` line (`init-project` spells it
-`**Narration**`, without the colon) — 7 of them as the first line of the body,
-the other one further down — instructing Claude to read
+All 6 skills carry a `**Narration:**` line as the first line of the body,
+instructing Claude to read
 `researcher_profile.narration_guidance` from `research.json` and apply it as that
-invocation's narration style. `init-project` writes the profile from two
-questions it answers from the opening message or from defaults — it **never
-blocks** waiting for them.
+invocation's narration style. The `init-project` agent writes the profile at
+project creation as fixed values and asks only the research objective — it
+**never blocks** waiting for it.
 
 It exists because of the same constraint as §3.3: with no plugin-level
 `CLAUDE.md` auto-load and no shared reference loading, a cross-cutting
@@ -1949,7 +1950,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `agent-tool-names.test.ts` | all three spellings; derives both `display_name` prefixes from the manifest; all five registration sites agree on `genealogy`; no `select:mcp__…` in any plugin body |
 | `plugin-hooks.test.ts` | `INCLUDE` carries `"hooks"`; runs the real guard script |
 | `skill-description-length.test.ts` | the 1024-char cap |
-| `skill-guidance.test.ts` | 8 `places-guidance.md` copies byte-identical to the canonical, the 9th pinned to its own sha256, and every skill in exactly one of the two lists |
+| `skill-guidance.test.ts` | 4 `places-guidance.md` copies byte-identical to the canonical, the 5th (`init-project`) pinned to its own sha256, and every skill in exactly one of the two lists |
 | `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
 | `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |

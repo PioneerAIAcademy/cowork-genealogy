@@ -274,6 +274,7 @@ EXPECTED_AGENTS = frozenset({
     "historical-context",
     "hypothesis-tracking",
     "image-reader",
+    "init-project",
     "locality-guide",
     "person-evidence",
     "project-status",
@@ -294,9 +295,9 @@ EXPECTED_AGENTS = frozenset({
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 8
-# skills registers 8 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 7
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 6
+# skills registers 6 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 6
 
 _stdout_lock = threading.Lock()
 
