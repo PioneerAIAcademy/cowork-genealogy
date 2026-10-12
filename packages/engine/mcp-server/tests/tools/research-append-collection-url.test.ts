@@ -165,11 +165,21 @@ describe("research_append: plan_item.collection_url must be a stored collection"
     expect(good.ok, JSON.stringify(good)).toBe(true);
   });
 
-  it("does not re-check an update that leaves it alone", async () => {
-    // A url stored before the list was re-fetched without it must not strand the item.
+  it("does not re-check a url an item already had, when a plans update re-sends items whole", async () => {
+    // A url stored before a re-fetch dropped its row must not strand the plan:
+    // re-sending items[] (to add one) carries the old url through unchanged.
     seed([item({ collection_url: INVENTED })]);
     storeCollections([STORED]);
-    const r = await run({ section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "in_progress" } });
+    const r = await run({ section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [item({ collection_url: INVENTED }), item({ id: "pli_002", sequence: 2 })] } });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  it("does not re-check a plan_items update that re-sends the same url", async () => {
+    seed([item({ collection_url: INVENTED })]);
+    storeCollections([STORED]);
+    const r = await run({ section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { collection_url: INVENTED, status: "in_progress" } });
     expect(r.ok, JSON.stringify(r)).toBe(true);
   });
 

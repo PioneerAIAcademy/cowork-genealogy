@@ -54,7 +54,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 |------|---------|
 | `collections_search` | Which FamilySearch record collections cover this place — the records to consider planning |
 | `volume_search` | Digitized volumes (image groups) for this place/period — browse-only films not in indexed collections |
-| `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2b) |
+| `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
 | `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |

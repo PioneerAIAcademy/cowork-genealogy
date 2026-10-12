@@ -140,20 +140,17 @@ def _is_error(call: dict) -> bool:
     return bool(call.get("is_error"))
 
 
-def _stopped_emitting(call: dict) -> bool:
-    """An `external_links_search` call from after it stopped staging (2026-10).
+def _stopped_emitting(call: dict, doc: dict) -> bool:
+    """An `external_links_search` call from a run after the tool stopped staging.
 
-    Every earlier call given a projectPath returned `staged` (null on a staging
-    failure), and the notes needed a projectPath, so a readable response with no
-    `staged` key could never carry either note. Such a call is a list fetch, not
-    a search the log is owed, so it is neither an emitter nor a search in the
-    search/log ratio. Keyed on the response rather than a ship commit, so
-    committed runs score exactly as before. An unreadable response stays an
-    emitter, as it was."""
-    if _bare(call) != "external_links_search":
-        return False
-    doc = unwrap(call.get("response_summary")) if call.get("response_summary") else None
-    return isinstance(doc, dict) and "staged" not in doc
+    That change landed with the harness change that records
+    `external_collection_keys` on every e2e result, so a run carrying the key ran
+    the non-staging engine, and a run without it did not. In such a run a fetch
+    can carry neither note and is a list fetch, not a search the log is owed, so
+    it is neither an emitter nor a search in the search/log ratio. Keyed on the
+    run rather than the response: most committed responses are truncated before
+    any `staged` key, and a run predating the change scores exactly as before."""
+    return _bare(call) == "external_links_search" and "external_collection_keys" in doc
 
 
 def _as_dict(value: object) -> dict:
@@ -470,7 +467,7 @@ def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
         version_ok = version_observable(doc, path, spec.ship_commit, spec.ship_date, probe)
         fired_at: dict[int, int] = {}  # call index -> its row's position
         for i, call in enumerate(calls):
-            if _is_error(call) or _bare(call) not in spec.emitters or _stopped_emitting(call):
+            if _is_error(call) or _bare(call) not in spec.emitters or _stopped_emitting(call, doc):
                 continue
             agent = agent_label(call)
             if not version_ok or not _capture_observable(call, spec):
@@ -512,7 +509,7 @@ def search_vs_log(doc: dict, path: Path) -> list[SearchLogRatio]:
         if _is_error(call):
             continue
         bare = _bare(call)
-        if bare in SEARCH_TOOLS and not _stopped_emitting(call):
+        if bare in SEARCH_TOOLS and not _stopped_emitting(call, doc):
             searches[agent_label(call)] += 1
         elif bare == LOG_APPEND:
             logs[agent_label(call)] += 1

@@ -1563,9 +1563,12 @@ def test_external_links_search_stores_stored_rows_by_each_rows_place(tmp_path):
          "content_type": "index", "startYear": "", "endYear": ""},
     ]
     fixtures = _links_fixture_dir(tmp_path, rows)
-    (tmp_path / "ws").mkdir()
-    (tmp_path / "ws" / "research.json").write_text("{}", encoding="utf-8")
-    body = _links_call(tmp_path, fixtures, {"standardPlace": _SCHUYLKILL, "projectPath": str(tmp_path / "ws")})
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "research.json").write_text("{}", encoding="utf-8")
+    _server, _log, tools_by_name = create_mock_server(["links"], fixtures, workspace=ws)
+    body = _extract_response_dict(_invoke(
+        tools_by_name, "external_links_search", {"standardPlace": _SCHUYLKILL, "projectPath": str(ws)}))
 
     assert body["stored"] == {"file": "external-collections.json", "places": [_PA, _SCHUYLKILL]}
     doc = json.loads((tmp_path / "ws" / "external-collections.json").read_text(encoding="utf-8"))
@@ -1573,6 +1576,12 @@ def test_external_links_search_stores_stored_rows_by_each_rows_place(tmp_path):
     assert doc["places"][_SCHUYLKILL]["rows"][0]["record_types"] == ["Church Records"]
     # The served rows stay production's inline shape.
     assert all(set(r) == {"url", "linkText"} for r in body["results"])
+    # The real reader accepts the file the mock wrote: a county query reaches its
+    # own rows and its state's (acceptance #6).
+    read = _extract_response_dict(_invoke(tools_by_name, "research_query", {
+        "section": "external_collections", "place": _SCHUYLKILL, "recordType": "census"}))
+    assert read.get("ok") is True, read
+    assert [r["key"] for r in read["items"]] == ["ancestry:7163"]
 
 
 @pytest.mark.requires_engine_build

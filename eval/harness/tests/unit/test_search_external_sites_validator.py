@@ -676,3 +676,17 @@ def test_collection_url_fires_when_no_call_names_the_item():
 def test_collection_url_skips_untagged_tests():
     with pytest.raises(pytest.skip.Exception):
         check_collection_url(_coll_before(), [], POSITIVE)
+
+
+def test_ancestry_key_regex_matches_the_engines():
+    """The validator keys an Ancestry URL exactly as the engine stores it; a drift
+    in either copy would make a stored id read as unbacked."""
+    import re as _re
+    from test_search_external_sites import _ANCESTRY_ID
+
+    ts = (Path(__file__).resolve().parents[4] / "packages/engine/mcp-server/src/utils/"
+          "external-collections-store.ts").read_text(encoding="utf-8")
+    m = _re.search(r"const ANCESTRY_ID = /(.+)/i;", ts)
+    assert m, "ANCESTRY_ID not found in external-collections-store.ts"
+    assert m.group(1).replace("\\/", "/") == _ANCESTRY_ID.pattern
+    assert _ANCESTRY_ID.flags & _re.I

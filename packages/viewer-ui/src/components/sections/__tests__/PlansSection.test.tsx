@@ -32,7 +32,8 @@ describe('PlansSection', () => {
   it("shows a plan item's collection_url as a link", async () => {
     const url = 'https://www.ancestry.com/search/collections/7163/'
     const [plan] = patrickFlynnResearch.plans
-    const items = plan.items.map((item, i) => (i === 0 ? { ...item, collection_url: url } : item))
+    const [first, ...rest] = plan.items
+    const items: typeof plan.items = [{ ...first, collection_url: url }, ...rest]
     mockResearch({ plans: [{ ...plan, items }] })
     render(<PlansSection />)
     await expandCardByTitle(plan.id)

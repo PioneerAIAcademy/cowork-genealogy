@@ -1,6 +1,6 @@
 {
   "tool": "external_links_search",
-  "description": "external_links_search — mixed-site, duplicate-heavy curated links for Schuylkill County. Exercises the skill's host-filter + dedupe consumption rules: the same Ancestry probate URL appears three times under different record-type labels, alongside MyHeritage, Find A Grave, FamilySearch-wiki, and Newspapers.com links.",
+  "description": "external_links_search — mixed-site curated links for Schuylkill County. The raw API rows (`stored_rows`) list the same Ancestry probate collection three times under different record-type labels, alongside MyHeritage, Find A Grave, FamilySearch-wiki and Newspapers.com links; the tool dedupes, so the served `results[]` carries collection 8800 once, as production does.",
   "args": {
     "standardPlace": "~"
   },
@@ -10,16 +10,12 @@
       "startYear": 1870,
       "endYear": 1890
     },
-    "totalForPlace": 8,
-    "returned": 8,
+    "totalForPlace": 6,
+    "returned": 6,
     "results": [
       {
         "url": "https://www.ancestry.com/search/collections/8800/",
         "linkText": "Pennsylvania, U.S., Wills and Probate Records, 1683-1993"
-      },
-      {
-        "url": "https://www.ancestry.com/search/collections/8800/",
-        "linkText": "Pennsylvania Probate Records - Schuylkill County"
       },
       {
         "url": "https://www.ancestry.com/search/collections/1276/",
@@ -36,10 +32,6 @@
       {
         "url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy",
         "linkText": "Schuylkill County Genealogy - FamilySearch Wiki"
-      },
-      {
-        "url": "https://www.ancestry.com/search/collections/8800/",
-        "linkText": "Wills and Probates 1870-1890"
       },
       {
         "url": "https://www.newspapers.com/papers/?state=pennsylvania",

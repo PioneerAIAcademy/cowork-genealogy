@@ -426,8 +426,13 @@ def test_external_collection_keys_is_empty_when_missing_or_unusable(tmp_path: Pa
     from e2e.stop_checker import read_external_collection_keys
 
     assert read_external_collection_keys(tmp_path) == {}
-    for bad in ("{not json", "[1]", json.dumps({"places": []}),
-                json.dumps({"places": {"P": {"rows": "x"}}})):
+    for bad, expected in (
+        ("{not json", {}),
+        ("[1]", {}),
+        (json.dumps({"places": []}), {}),
+        (json.dumps({"places": {"P": {"rows": "x"}}}), {"P": []}),
+        (json.dumps({"places": {"P": "x"}}), {"P": []}),
+        (json.dumps({"places": {"P": {"rows": ["x", {"key": 7}, {"key": "ancestry:1"}]}}}), {"P": ["ancestry:1"]}),
+    ):
         _write_collections(tmp_path, bad)
-        got = read_external_collection_keys(tmp_path)
-        assert got in ({}, {"P": []}), bad
+        assert read_external_collection_keys(tmp_path) == expected, bad

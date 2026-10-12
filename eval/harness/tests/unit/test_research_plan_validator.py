@@ -1182,6 +1182,13 @@ def test_collection_url_fires_when_nothing_is_stored():
         check_coll(*_coll_states([_ext("pli_011", STORED_URL)], stored=None), COLL)
 
 
+def test_collection_url_on_a_familysearch_item_does_not_satisfy_the_external_check():
+    fs = _item("pli_010")
+    fs["collection_url"] = STORED_URL
+    with pytest.raises(AssertionError, match="no new non-FamilySearch"):
+        check_coll(*_coll_states([fs, _ext("pli_011")]), COLL)
+
+
 def test_collection_url_skips_untagged_tests():
     with pytest.raises(pytest.skip.Exception):
         check_coll(*_coll_states([_ext("pli_011")]), {"tags": []})

@@ -29,6 +29,10 @@ FIXTURES = _HARNESS.parent / "fixtures" / "mcp"
 
 
 def main(argv: list[str]) -> int:
+    # Place names are printed; a cp1252 Windows console cannot encode every one.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     if len(argv) < 2:
         print(__doc__, file=sys.stderr)
         return 2
