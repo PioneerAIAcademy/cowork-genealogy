@@ -1021,16 +1021,15 @@ def test_rule7_same_pr_run_and_release_passes(monkeypatch, tmp_path):
     "timestamp",
     ["not-a-timestamp", "../../../etc/passwd", "2026-08-01_00-00-00.json"],
 )
-def test_rule7_promotion_synthesis_rejects_an_unusable_timestamp(
-    monkeypatch, tmp_path, timestamp
-):
-    """The synthesized candidate name comes from a file THIS PR adds, so it is
-    only as trustworthy as that envelope. A `timestamp` that does not reconstruct
-    a candidate of the same version must be discarded rather than injected into
-    the union: admitting an arbitrary name would hand a release PR a free prunable
-    slot, which is the one way this fix could wave a real hand-deletion through.
+def test_rule7_a_malformed_timestamp_widens_nothing(monkeypatch, tmp_path, timestamp):
+    """A malformed `timestamp` must not widen the prunable set.
 
-    Dropping it falls back to today's arithmetic, so the deletion blocks."""
+    Note the mechanism, because the name is easy to misread: the bad value IS
+    synthesized into a name and the union DOES receive it. What saves this is
+    downstream, in `prunable_candidates`, which drops any name it cannot parse as
+    a candidate. Nothing here rejects it. Only a WELL-FORMED timestamp can move
+    the arithmetic, which is why the version-keyed skip, not name validation, is
+    the guard that matters."""
     _make_present_skill(tmp_path, monkeypatch)
     survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
     _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
@@ -1093,9 +1092,15 @@ def test_rule7_a_drifted_release_timestamp_buys_no_prunable_slot(monkeypatch, tm
     assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
 
 
-def test_rule7_a_fabricated_release_envelope_buys_no_slot(monkeypatch, tmp_path):
-    """Same guard from the other side: a release whose version is among the
-    deletions gets no synthesis at all, however its envelope reads."""
+def test_rule7_a_release_whose_version_was_deleted_gets_no_synthesis(
+    monkeypatch, tmp_path
+):
+    """The version-keyed skip from the other side: a release whose version is
+    among the deletions gets no synthesis at all, however its envelope reads.
+
+    This does NOT show that a fabricated release is caught in general. One whose
+    version is absent from the deletions is not covered by this skip and does buy
+    a slot at the keep boundary; see the PR body's residual-hole note."""
     _make_present_skill(tmp_path, monkeypatch)
     survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
     _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
@@ -1160,6 +1165,79 @@ def test_rule7_synthesis_is_released_only_not_any_added_candidate(
         tmp_path, ["v9_2026-08-01_00-00-00.json"], set()
     )
     assert names == set()
+
+
+@pytest.mark.parametrize("timestamp", [None, 123, {"a": 1}, []])
+def test_rule7_a_non_string_timestamp_does_not_raise(monkeypatch, tmp_path, timestamp):
+    """The `isinstance(ts, str)` guard had no test: deleting it left all tests
+    green, while a `null` timestamp would raise AttributeError and crash the whole
+    check. A released log is author-written, so a non-string here is reachable."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp=timestamp)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_two_releases_in_one_pr_synthesize_nothing(monkeypatch, tmp_path):
+    """run -> release -> run -> release must not credit two emptied slots.
+
+    Measured before this guard: 0 errors here against 2 on main, so rule 7's own
+    answer was wrong even though `rule1_max_one_released` fails the PR anyway.
+    Rule 7 should be right without leaning on another rule's verdict."""
+    _make_present_skill(tmp_path, monkeypatch)
+    head = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(3, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*head, "v9.json", "v10.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    _write_released(tmp_path, "v10.json", version=10, timestamp="2026-08-02_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",
+    }
+    added = {"present-skill": ["v9.json", "v10.json"]}
+    assert check_runlogs.rule7_deletions(deleted, added) == 2
+
+
+def test_rule7_version_skip_and_mains_version_exemption_compose(monkeypatch, tmp_path):
+    """The path where synthesis is SKIPPED and main's version exemption carries
+    the deletion: a same-PR release whose pruned candidate shares its version.
+    Neither mechanism alone is obviously sufficient, so pin that they compose."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {"eval/runlogs/unit/present-skill/v9_2026-08-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 0
+
+
+def test_rule7_a_release_with_no_matching_deletion_buys_one_slot(monkeypatch, tmp_path):
+    """KNOWN, BOUNDED HOLE — characterized, not fixed.
+
+    A released log whose version is absent from the deletions is indistinguishable
+    from a real promotion by filename alone, so it synthesizes a phantom candidate
+    and widens the union by one. At the keep boundary that authorises exactly ONE
+    deletion (the oldest) which main blocks. Bound: one, and only the oldest.
+
+    Not closed by requiring the synthesized name to exist in branch history: a
+    junior who runs and releases in a single commit never committed the candidate,
+    so that check reinstates the very false positive this PR removes. Rules 2 and 3
+    independently scrutinize a hand-added release (active snapshot, full
+    annotation).
+
+    If this starts failing, the hole was closed or widened — either way, read the
+    diff rather than updating the expectation."""
+    _make_present_skill(tmp_path, monkeypatch)
+    head = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*head, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    added = {"present-skill": ["v9.json"]}
+    assert check_runlogs.rule7_deletions(deleted, added) == 0
+
+    # the bound: a SECOND hand-deletion is not bought by the same phantom
+    deleted.add("eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json")
+    assert check_runlogs.rule7_deletions(deleted, added) == 1
 
 
 def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):

@@ -994,11 +994,24 @@ def _promoted_candidate_names(
         for n in deleted_candidates
         if (v := classify(n).version) is not None
     }
+    releases = [
+        c
+        for name in added
+        if (c := classify(name)).kind == "released" and c.version is not None
+    ]
+    # At most ONE release may synthesize. Two promotions in one PR would credit
+    # two emptied slots and authorise two deletions where the harness performed
+    # one per write; measured as 0 errors here against 2 on main for
+    # run -> release -> run -> release. `rule1_max_one_released` already fails
+    # that PR, but rule 7 should be right on its own rather than leaning on
+    # another rule's verdict, and its docstring claims it reconstructs the
+    # directory.
+    if len(releases) != 1:
+        return set()
+
     out: set[str] = set()
-    for name in added:
-        c = classify(name)
-        if c.kind != "released" or c.version is None:
-            continue
+    for c in releases:
+        name = f"v{c.version}.json"
         if c.version in deleted_versions:
             continue
         try:
