@@ -52,6 +52,10 @@ LATEST = sorted(q.name for q in migrate.SQL_DIR.glob("*.sql"))[-1]
 #: the loader refuses a repeated prefix, so every `_pg` test in this file errored at
 #: collection -- and they are skipped without Postgres, so only CI ever said so.
 NEXT_PREFIX = f"{int(LATEST[:3]) + 1:03d}"
+#: One ABOVE that, for the out_of_order case: it needs a ledger row a newer build
+#: recorded that the late FILE sorts below. Collapsing the two into one constant
+#: turns that case into "behind", which is a different verdict.
+AHEAD_PREFIX = f"{int(LATEST[:3]) + 2:03d}"
 
 RACE_SQLSTATES = {"23505", "42P07", "42710", "XX000"}
 
@@ -378,12 +382,14 @@ def test_a_changed_file_is_refused_and_a_comment_edit_is_not(monkeypatch, tmp_pa
 async def test_build_and_schema_versions_in_either_order(monkeypatch):
     with database() as dsn:
         # A newer schema under this build: an old build stays healthy.
-        sql(dsn, "INSERT INTO schema_migrations (name, sha256) VALUES ('012_future.sql', 'f')")
+        sql(dsn, "INSERT INTO schema_migrations (name, sha256) VALUES (%s, 'f')",
+            (f"{NEXT_PREFIX}_future.sql",))
         got = migrate.verdict(FILES, ledger(dsn))
         assert got.label is None and got.ahead == [f"{NEXT_PREFIX}_future.sql"]
         assert await asyncio.to_thread(migrate.migrate, dsn) == []
         # A newer build on an older schema: 503 until someone migrates, then 200 with no restart.
-        sql(dsn, "DELETE FROM schema_migrations WHERE name IN ('012_future.sql', %s)", (LATEST,))
+        sql(dsn, "DELETE FROM schema_migrations WHERE name IN (%s, %s)",
+            (f"{NEXT_PREFIX}_future.sql", LATEST))
         monkeypatch.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.05)
         monkeypatch.setattr(app, "STARTUP_BACKOFF_MAX_S", 0.05)
         async with web_tier(monkeypatch, dsn) as (_application, client):
@@ -412,10 +418,11 @@ async def test_a_lower_prefixed_new_file_is_refused(monkeypatch, tmp_path):
             status, body = await health(client)
         assert status == 503 and body["checks"]["schema"] == {"ok": False, "error": label}
         # A file sorting below a row a newer build recorded.
-        sql(dsn, "INSERT INTO schema_migrations (name, sha256) VALUES ('013_future.sql', 'f')")
+        sql(dsn, "INSERT INTO schema_migrations (name, sha256) VALUES (%s, 'f')",
+            (f"{AHEAD_PREFIX}_future.sql",))
         late = sql_dir(tmp_path / "b", {f"{NEXT_PREFIX}_late.sql": "ALTER TABLE turns ADD COLUMN u9_late int;\n"})
-        assert migrate.verdict(migrate.load(late), ledger(dsn)).label == "schema: out_of_order 012_late.sql"
-        with pytest.raises(migrate.MigrateRefused, match="out_of_order 012_late.sql"):
+        assert migrate.verdict(migrate.load(late), ledger(dsn)).label == f"schema: out_of_order {NEXT_PREFIX}_late.sql"
+        with pytest.raises(migrate.MigrateRefused, match=f"out_of_order {NEXT_PREFIX}_late.sql"):
             await asyncio.to_thread(migrate.migrate, dsn, sql_dir=late)
         assert "u9_late" not in columns(dsn, "turns")
 
