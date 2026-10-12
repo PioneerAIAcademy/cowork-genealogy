@@ -7316,6 +7316,14 @@ describe("research_append — detected core-identifier contradiction", () => {
     expect((await researchAppend(link("confident"))).ok).toBe(true);
   });
 
+  it("does NOT cap an abbreviated state whose standard place is the tree's", async () => {
+    await write(
+      { place: "Ky", standard_place: "Kentucky, United States" },
+      { place: "Muhlenberg, Kentucky, United States", standard_place: "Muhlenberg, Kentucky, United States" },
+    );
+    expect((await researchAppend(link("confident"))).ok).toBe(true);
+  });
+
   it("still caps two different counties of one country", async () => {
     await write({ place: "Somerset, England" }, { place: "Gloucestershire, England" });
     expect((await researchAppend(link("probable"))).ok).toBe(false);

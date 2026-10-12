@@ -56,7 +56,7 @@ function research(opts: { sources: any[]; assertions: any[]; subjectIds?: string
     log: [],
     sources: opts.sources,
     assertions: opts.assertions,
-    person_evidence: [],
+    person_evidence: [] as any[],
     conflicts: [],
     hypotheses: [],
     timelines: [],
