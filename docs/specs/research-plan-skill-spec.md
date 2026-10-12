@@ -32,7 +32,7 @@ So the split is:
 | Jurisdictions, boundary changes, register start dates, indexing quirks, record loss and substitutes | place | `locality-guide` | the `localities` entry research-plan reads |
 | Levy rolls for sons, naming conventions | subject × country | `research-plan` | `wiki_read` in the Step 3 pre-work block |
 | Which records exist for the place | place | `research-plan` | `collections_search`, `volume_search`, `external_links_search` |
-| Relatives, facts and attached sources the project tree lacks (issue #2208) | the question person | `research-plan` | `person_read`, for each question person whose tree entry has an `ark`, before any plan item |
+| Relatives, facts and attached sources the project tree lacks | the question person | `research-plan` | `person_read`, for each question person whose tree entry has an `ark`, before any plan item |
 | Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and `references/` |
 
 `wiki_search`, `wiki_place_page` and `place_population` stay forbidden to
