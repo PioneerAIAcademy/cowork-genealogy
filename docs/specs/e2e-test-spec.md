@@ -1622,7 +1622,7 @@ invoking `person-evidence`, `conflict-resolution`, `proof-conclusion` or
 enforce, however good the answer looks. The unit harness has always failed a
 positive test whose skill was never invoked; this is the e2e equivalent.
 
-After the agent stops, the harness runs three deterministic, **non-windowed**
+After the agent stops, the harness runs two deterministic, **non-windowed**
 checks over the final project state and the run's tool-call log
 (`e2e.orchestrator.check_guardrail_compliance`, implemented in
 `harness/skill_invocation.py`):
@@ -1639,10 +1639,7 @@ checks over the final project state and the run's tool-call log
    nothing. The message reads `'<arm>' was never successfully invoked in this
    run (no Skill call and no typed Agent/Task spawn of that name)` for every
    arm.
-2. **`find_missing_mentor_verdicts`** — a resolved question's
-   `proof_summaries` entry has no matching `proof-critique` entry in
-   `evaluations[]`, i.e. the mandatory `gps-mentor` gate never fired.
-3. **`find_person_evidence_missing_same_person`** — a brand-new tree person
+2. **`find_person_evidence_missing_same_person`** — a brand-new tree person
    received a **scoreable** `person_evidence` link without a single
    `same_person` call for it. Narrower than check 1 on purpose: a run can
    invoke `person-evidence` somewhere and still skip identity scoring for the
@@ -1666,24 +1663,24 @@ checks over the final project state and the run's tool-call log
 
 Any violation sets `compliance: fail`. Since the §8 detectors were demoted
 it does not move `outcome`, which is the `verdict`. The
-checks are **not** vacuous on a treeless run — check 2 reads no tree at all,
-and check 1's exhaustiveness arm reads only `research.json` — so every run the
+checks are **not** vacuous on a treeless run — check 1's exhaustiveness arm
+reads only `research.json` — so every run the
 harness performs gets a real compliance result.
 
-**Check 3 has a live pre-write sibling, and one run mode makes check 3 itself
+**Check 2 has a live pre-write sibling, and one run mode makes check 2 itself
 vacuous.** The sibling runs in `pretool_hook` and asks the stricter question —
 was the identity scored *before* the link, not anywhere in the run — recording
 into `guardrail_shadow_violations` without denying. It can be switched to a real
 deny for **one** fixture with `make e2e-run TEST=<slug>
 PERSON_EVIDENCE_GUARD=deny` (default `shadow`), which is how the recovery
 evidence its graduation needs gets gathered; it fires in roughly 80% of runs that
-link a person, so this is not a suite-wide setting. **Under `deny`, check 3
+link a person, so this is not a suite-wide setting. **Under `deny`, check 2
 passes vacuously**: the blocked write never lands, so there is no
 `person_evidence` entry left for it to read. `usage.person_evidence_guard`
 records the mode — read it before comparing a run's `compliance` to another's.
 Design, limits, and the loop valve: `docs/specs/guardrail-enforcement-spec.md` §4.
 
-**A fourth check runs in shadow mode only: citation-string
+**A third check runs in shadow mode only: citation-string
 nulling.** `find_citation_nulling_in_conclusions` (in
 `harness/skill_invocation.py`) reads the final `research.json` and flags a
 source that **backs a written conclusion** — i.e. one a `proof_summaries`
@@ -1694,12 +1691,12 @@ cover: a null *source-ref* on authored tree content is already unrepresentable
 (the mandatory-ref golden in `materialize-facts.test.ts` / `tree-edit.test.ts`),
 but the citation *string* is explicitly out of scope there
 (`tree-materialization-spec.md`, "The ESM citation string is out of scope
-here"), and none of the three checks above read it. It is the cruz "11/14
+here"), and neither check above reads it. It is the cruz "11/14
 citation-less tree sources" / birkeland "F1/F2 citation-less conclusion facts"
 class from `record-extraction-consolidation-closing-report.md` §4, invisible to
 the judge.
 
-Unlike the three hard checks, this one **logs to
+Unlike the two hard checks, this one **logs to
 `guardrail_shadow_violations` and never touches `compliance`/`outcome`** — the
 repository's shadow → measure → graduate posture (same as the `same_person`
 provenance check). **Not** the same as §7's recency check, which shares the
@@ -1821,7 +1818,7 @@ for work in progress: a replay only means something if the checks are pinned to
 the version each run actually executed, and nothing records that version per run.
 Recording it is the prerequisite for any corpus-wide compliance number.
 
-**Check 3 got LOOSER when the persona-reachability narrowing landed.** A run's
+**Check 2 got LOOSER when the persona-reachability narrowing landed.** A run's
 stored violation count can therefore exceed what today's detector recomputes
 from the same trace — the opposite direction from the `is_error` join below, and
 the correct reading rather than a bug. `make e2e-corpus RECOMPUTE=1` names every
@@ -1948,7 +1945,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `cli_version` | So a harness-vs-Cowork gap can be checked against a CLI-version delta. Read from the init message's `claude_code_version` (the key CLI 2.1.139 writes), falling back to `version` / `cli_version`; `null` on every run before that read was added. |
 | `tool_search` | `true` (default) / `false` — what `--tool-search` / `--no-tool-search` asked for, sent to the CLI as `ENABLE_TOOL_SEARCH`. Absent on runs before the flag. **A run with this `false` is not comparable to the corpus:** every tool schema is loaded up front, so its first call's context, its cache figures and its ToolSearch count all move. `run_e2e.py` refuses `--no-tool-search` under the default run-log root, and the mid-run dead-server backstop (`tool_search_miss_streak`) is inert under it (no ToolSearch reply to count). **Enforced:** `check_e2e_fixtures.py` rejects a PR-added-or-renamed run log under `eval/runlogs/e2e/` whose `tool_search` or `tool_search_offered` is `false`. |
 | `tool_search_offered` | Whether the FIRST init message's `tools` list included `ToolSearch`; `null` when that init carried no list. **Listed at init; blind to the per-model gate — `false` proves off, `true` does not prove on:** a model on the CLI's unsupported list (default `["haiku"]`) defers nothing yet is still offered ToolSearch. The only proof that tool search took effect is the size of the first `"main"` row of `message_usage`. |
-| `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-3 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 3 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
+| `person_evidence_guard` | `shadow` (default) or `deny` — how the §7.5 check-2 *live* sibling behaved (`--person-evidence-guard`). **Read this before comparing a run's `compliance`:** under `deny` the blocked write never lands, so check 2 finds no `person_evidence` entry for that person and passes **vacuously**. Deny-mode provenance entries also carry `kind: "person_evidence_deny"` and are excluded from `guardrail_shadow_report`'s stored scan. |
 | `deny_shell` | `true` / `false` (default) — whether `--deny-shell` refused `Bash` and `PowerShell` for the run (§6.1 filesystem denials). **A run with this on is not comparable to one without:** the agent had no shell, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "shell"`. |
 | `deny_project_reads` | `true` / `false` (default) — whether `--deny-project-reads` refused `Read`/`Grep`/`Glob` of the project folder (§6.1 filesystem denials). **A run with this on is not comparable to one without:** its project reads were rerouted through the MCP tools, and every refused attempt sits in `blocked_tree_reads[]` as `blocked_by: "path"`. |
 | `timeline[]` | Per-message `[elapsed_seconds, kind, tool_names, wall_ts, message_id]`, plus the `caps` used. Five columns since 2026-10-02; rows written before that are three wide and the earliest are two, so **index, never unpack**. `wall_ts` is ISO-8601 UTC with milliseconds (`2026-09-18T06:52:42.431Z`), matching byte-for-byte what a subagent transcript record and the copied `.session.jsonl` write, so lining a row up against either is a match rather than a conversion. It is derived as `run_started_wall + (now - run_started)` so column 0 keeps its monotonic clock, which cannot jump backwards over an NTP correction mid-run. `message_id` is the SDK's own id on an assistant row and `null` on every other kind. **Neither join target is committed** — the session transcript is gitignored and the subagent cache is ephemeral — so on a committed run log these two columns join to a locally held artifact or to nothing. The offsets are raw monotonic, so on Windows they include standby: compare them with `wall_clock_seconds + counted_sleep_seconds`, not `wall_clock_seconds` (§6 "Clocks"). |

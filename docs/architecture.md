@@ -290,9 +290,10 @@ how to word it:
 | for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
 | within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
 
-> **Direction.** Both gates the §4 law named have moved into the tool: the
-> **mentor gate** as a refusal, and the **tree-encoding gate** as a warning on
-> `opWarnings` — it diffs the final tree against a write-once
+> **Direction.** Both gates the §4 law named moved into the tool: the
+> **mentor gate** as a refusal — since removed, with gps-mentor off the default
+> `/research` path — and the **tree-encoding gate** as a warning on
+> `opWarnings`, which diffs the final tree against a write-once
 > `starting-tree.gedcomx.json` baseline, and ships warn-only rather than as a
 > refusal per the 2026-08-24 no-override ruling (a shape-match gate cannot
 > hard-block correct work when a wrong refusal has no override). **If you are
@@ -683,7 +684,7 @@ Architecturally:
 - **Also touch, and nothing will tell you if you don't:** `src/types/<name>.ts`
   (shared response types), `dev/try-<name>.ts` (a one-shot live-API smoke script
   — your only real debugger when the MCP harness swallows errors),
-  `tests/tools/<name>.test.ts`, `README.md`'s tool table, and — if a skill will
+  `tests/tools/<name>.test.ts`, `docs/catalog.md`'s tool table, and — if a skill will
   call it — an `eval/fixtures/mcp/` fixture.
 - **Changing an existing tool's response type also breaks its fixtures**, in the
   other direction: add or rename a required field and every fixture for that tool
@@ -833,25 +834,26 @@ There **is** an orchestrator, and it is a skill:
    places: the trigger list in `research/SKILL.md`'s description, and the
    message the e2e harness and `make proto-demo` still build. So no offline suite
    sees the difference; only the paid eval runs do.
-   **The router does not yield on a mentor verdict.** The one verdict table in the file is advisory
+   **gps-mentor runs only when the user asks for a second opinion, and the router
+   does not yield on its verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
    resolved question, or force a remediation skill. A second, blocking table
    said the opposite for seven weeks — a merge had restored text that an
    earlier change deliberately deleted — and it was ruled out and removed.
-4. **Completion is gated twice.** Before `project.status = "completed"` is
-   written via `research_append`: the **tree-encoding gate** — every
-   tier-≥-probable conclusion must be encoded in `tree.gedcomx.json`; and the
-   **mentor gate** — every `ps_id` a resolved question references must carry a
-   `focus: "proof-critique"` verdict in `evaluations[]`, written by
-   `@plugin:gps-mentor`. The mentor gate is mandatory to *invoke and record*; its
-   recommendation stays advisory and never forces rework. **`proof-conclusion`
-   owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
+4. **Completion is gated once in the router, once in the tool.** Before
+   `project.status = "completed"` is written via `research_append`, the router
+   checks the **tree-encoding gate** — every tier-≥-probable conclusion must be
+   encoded in `tree.gedcomx.json` — and the tool refuses while a blocking conflict
+   is unresolved. No `proof-critique` verdict is required: gps-mentor is off the
+   default path, and `proof-conclusion`'s completing summary tells the user they
+   can ask for a second opinion. **`proof-conclusion` owns that write** — ruled 2026-09-01 and applied to `research/SKILL.md` when
    continuous work shipped (2026-09-23). Three surfaces already said so and the router
    contradicted all three: `docs/specs/schemas/ownership.json` names
    `agent:init-project` and `agent:proof-conclusion` as the `project` section's
    only callers, `agents/proof-conclusion.md` §8 makes the call, and the
    router's own `allowed-tools` grants no writer tool. The router verifies the
-   two gates and re-invokes `proof-conclusion`; it never writes the status.
+   tree-encoding gate and re-invokes `proof-conclusion`; it never writes the
+   status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
 
@@ -1950,7 +1952,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `skill-guidance.test.ts` | 4 `places-guidance.md` copies byte-identical to the canonical, the 5th (`init-project`) pinned to its own sha256, and every skill in exactly one of the two lists |
 | `skill-reference-reachability.test.ts` | both directions between a skill's `references/` folder and its `SKILL.md`: every file present is named by the body or by a reference the body names (one transitive hop), and every file the body names is present. Carries each pending case as a **shrink-only** exemption list with a measured reason, and fails when an entry becomes stale — deleted, wired up, or created — so neither list can outlive the problem |
 | `enum-drift.test.ts` | prose enum tables ↔ `enums.schema.json` |
-| `readme-catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `README.md`, and any stated tool or skill count matches the code |
+| `catalog.test.ts` | every registered tool, shipped skill, and plugin agent is named in `docs/catalog.md`, and any stated tool or skill count matches the code |
 | `tool-schema-enums.test.ts` | no MCP tool input schema re-types a closed enum's values, exactly **or stale**; two documented `sex` exemptions |
 | `research-append-examples.test.ts` | the worked `research_append` payloads ↔ their `research.schema.json` `$def` — field names, enum values, and one example per writable section |
 | `field-render-drift.test.ts` | a `research.json` field is not an unexplained outlier among its own siblings in the viewer — if its object is displayed, each field renders or carries a reason it should not |
@@ -2308,7 +2310,7 @@ questions that only look open.
 | How do I build / run / test / deploy? | [`DEVELOPMENT.md`](../DEVELOPMENT.md) |
 | What rule must I follow to make a correct change? | [`CLAUDE.md`](../CLAUDE.md) — the operating manual, auto-loaded every session |
 | What does tool X do? | `docs/specs/<tool>-tool-spec.md` — **wins over this guide on conflict** |
-| What tools / skills / agents exist, for a user? | [`README.md`](../README.md) |
+| What tools / skills / agents exist? | [`docs/catalog.md`](catalog.md) |
 | Which skill or agent runs when, and what does it read and write? | [`docs/skill-dataflow.md`](skill-dataflow.md) — every skill and agent in call order with its gate, its responsibility, and its reads and writes, plus the inverse view of who may write each section of persisted state |
 | Why is it built this way? | [`docs/adrs/`](adrs/) — one decision per file, with the alternatives that were tried and rejected. Index in §0. For decisions with no ADR yet, the linked spec. |
 | Has this idea already been tried and disproved? | [`ADR-0009`](adrs/ADR-0009-refuted-agent-design-claims.md), each ADR's `Alternatives considered`, and [`guardrail-enforcement-spec.md`](specs/guardrail-enforcement-spec.md) §9 "Options set aside" — three ledgers, all negative records. Plus [`ADR-0010`](adrs/ADR-0010-record-structural-bets-in-a-ledger.md)'s structural-bet ledger, where **only a `rejected` row is a bar** — its `set aside` and `deferred` rows record ideas nobody researched, and re-proposing one is expected |

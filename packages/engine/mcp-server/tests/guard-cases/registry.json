@@ -53,11 +53,6 @@
       "detector": "find_effects_without_invocation",
       "kind": null,
       "reason": "section 8 post-run compliance detector, enforcing (fails the run) before the case-file rule"
-    },
-    {
-      "detector": "find_missing_mentor_verdicts",
-      "kind": null,
-      "reason": "the mentor-verdict completion check, also a research_append completion gate, before the case-file rule"
     }
   ],
   "not_a_candidate": [
