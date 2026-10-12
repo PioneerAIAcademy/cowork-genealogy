@@ -490,22 +490,34 @@ Scope, and why it is this narrow:
   `ut_search_records_027`'s "Spouse field absent in index — reading full record
   to view household members and marriage indicator" only says what it is about
   to read, and "no Stribling appeared as a household head on any readable page"
-  is a negative result. The relational phrases (`co-resident`, `enumerated
-  with`, `living with`) are exempt, because they predicate co-residence on their
-  own. A role labelling a named person — `Amos (head), Nancy (wife)` — counts on
-  the kinship side.
+  is a negative result. The relational phrases (`co-resident` and its plural,
+  `enumerated with`, `living with`) are exempt, because they predicate
+  co-residence on their own; the plural was missing, and "sidecar co-residents
+  are Henry and Margaret Ackerman only" walked through. A role labelling a named
+  person — `Amos (head), Nancy (wife)` — counts on the kinship side, as does a
+  plural role parted from its names by punctuation (`plus sons, Thos T McElwee
+  and Stephen McElwee`) and, against a staged pre-1880 payload only, a
+  possessive (`are Amos's children`). The singular roles keep needing a space
+  (`Groom's father: Christopher Jespersen` is a marriage record's field label),
+  and the possessive is not read in a note alone (`JPW's children were
+  christened` sat beside an 1810 census mention); both narrowings come from the
+  corpus re-measure, where the wider forms refused exactly those two notes.
 
   **A household phrase followed by a roster is a claim too**, because it places
   people in the household exactly as `household includes ⟨X⟩` does: `Household
   shows George, Henry, and Margaret Ackerman`, `household members George, Henry
-  Ackerman, and Margaret`, `Household per sidecar: George, Henry, Margaret`. All
-  three are real `ut_search_records_027` notes that passed this gate unhedged and
-  failed the eval validator. A pasted transcription with no household phrase in
-  front of it is not affected, so the transcription paragraph below still holds.
-  The roster arm reads case under the compound arm's terms — one of three
-  conditions: the household phrase, two or more capitalised runs joined by a
-  comma or `and`, and at least two of them naming no place (`Household shows
-  Bucks Co., PA …` is not a roster). A roster written in lower case is missed.
+  Ackerman, and Margaret`, `Household per sidecar: George, Henry, Margaret`,
+  `Household indexed as George, Henry, and Margaret Ackerman`. All four are real
+  `ut_search_records_027` notes that passed this gate unhedged. Up to three
+  lower-case words of any kind may sit between the noun and the list: a list of
+  linking verbs was tried first, and each round of runs found a wording it
+  lacked, while the list's own shape is what carries the claim. A pasted
+  transcription with no household phrase in front of it is not affected, so the
+  transcription paragraph below still holds. The roster arm reads case under the
+  compound arm's terms — one of three conditions: the household phrase, two or
+  more capitalised runs joined by a comma or `and`, and at least two of them
+  naming no place (`Household shows Bucks Co., PA …` is not a roster). A roster
+  written in lower case is missed.
 
   **Capitalisation is never the test.** The first version asked whether a
   capital sat within 24 characters of the noun, which is not a test for a name
@@ -522,7 +534,7 @@ Scope, and why it is this narrow:
 
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
-  than trusting this sentence: it takes each of the twenty-six out in turn and
+  than trusting this sentence: it takes each of the twenty-nine out in turn and
   exits non-zero on any the suite does not notice. Two rounds of this card
   shipped a mechanism no test exercised, each time because a note written for
   one clause incidentally satisfied a neighbour, so reading the tests does not
@@ -556,18 +568,26 @@ Scope, and why it is this narrow:
   be confirmed" the `in` belongs to the first sentence and the noun to the
   second. The split is on a terminator followed by a space, so `Bucks Co., PA`
   and `Sarah A. Mullen` are not cut at their abbreviating periods.
-- **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'"), as it
-  is in the eval-plane validator. Flagging a *name* as indexed is not.
+- **"Indexed" beside a role word is a hedge** ("Role indexed as 'Head'").
+  Flagging a *name* as indexed is not.
 - **The hedge is accepted however it is hyphenated.** The refusal message spells
   it "relationship-to-head column"; the hedge patterns accepted only spaces, so
   a caller who hedged in the exact words they were handed was refused a second
   time with no wording in the message that would clear it.
-- **"No relationships stated" and "does not record … relationship" are hedges**,
-  as they are in the eval validator's marker list. The gate must not refuse a
-  note the grader passes: a `ut_search_records_027` note saying both was graded
-  compliant on every dimension.
+- **"No relationships stated" and "does not record … relationship" are hedges.**
+  A `ut_search_records_027` note saying both was graded compliant on every
+  dimension.
 - **"pre-1880 census" binds as a census before 1880.** Read as 1880, which has
   the column, it skipped the whole note whatever else the note asserted.
+- **The eval grades with this function, not a copy of the rule.**
+  `search-records`' `test_pre1880_census_structure_marked_inferred` replays the
+  compiled `requirePre1880CensusHedge` on each logged note with the rows of its
+  own results sidecar. It used to carry wider word lists of its own, so a note
+  this gate accepted could still fail grading, with nothing at write time to
+  tell the model — `ut_search_records_027` flapped on exactly that. With one
+  rule, a refused note is never logged and an accepted one passes; widening what
+  counts as a claim is done here, measured and mutation-tested, and the grader
+  follows.
 
 Measured over the 4,322 distinct `notes` arguments in the committed run logs
 (2026-10-04; re-derive with
@@ -586,6 +606,15 @@ payload axis, every one of the 11 already among the 41, so they are repeats of
 the same strings rather than a separate population. All three newly refused are
 flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
 the rule exists for.
+
+The roster arm, the plural `co-residents`, the punctuated plural role, the
+payload-only possessive, the two "no relationship" hedges and the `pre-1880`
+binding, measured together against `main` at d73b35895 (2026-10-12), newly
+refuse **0** and newly free **0** notes or paired payload ops in the committed
+corpus. Each closes a wording seen in uncommitted
+`ut_search_records_027` scratch runs, or one the eval validator caught before it
+became a replay of this check; the corpus measures that none of them reaches a
+note it did not already judge the same way.
 
 Every one of the 41 freed was read, and the right summary is that **none is an
 unhedged claim** — not that none names anyone. Most are search plans, nil

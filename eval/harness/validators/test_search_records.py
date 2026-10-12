@@ -24,6 +24,7 @@ from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import hashable_key as _hashable_key
 from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import pre1880_census_hedge_refusals as _pre1880_census_hedge_refusals
 from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
@@ -90,212 +91,60 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
 
 # --- Pre-1880 census: family structure must be marked inferred --------
 
-# Words a log note uses when it is describing the household around the hit,
-# rather than the hit alone. The rule below only applies once the note starts
-# describing the household — a note that reports the focus person and nothing
-# else has no family structure to qualify.
-_HOUSEHOLD_MENTIONS = (
-    "household",
-    "dwelling",
-    "co-resident",
-    "coresident",
-    "enumerated with",
-    "living with",
-)
-
-# Role assertions that can only be read off a relationship column. Bare role
-# words are deliberately NOT listed: a note may legitimately name a tree-side
-# relative ("searched for George's wife Catherine", where Catherine turns out
-# to be absent from the record), and that is not a claim about what the census
-# stated. These forms are — "head of household", "X as father" — so they
-# trigger the requirement even when the word "household" never appears.
-_ROLE_ASSERTIONS = (
-    r"head\s+of\s+household",
-    r"household\s+head",
-    r"\bas\s+[\"'“‘]?(?:his|her|the)?\s*[\"'“‘]?"
-    r"(?:head|wife|husband|son|daughter|father|mother)\b",
-)
-
-# Possessive kinship claims about a specific named person found in the
-# record — "Amos's children", "Doss's son" — a second phrasing of the same
-# claim _ROLE_ASSERTIONS's "as ROLE" form catches, which "as" alone misses.
-# Scoped to a capitalized name's possessive for the same reason
-# _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
-# is common in a legitimate tree-side reference. This does not exclude every
-# tree-side mention -- "George's wife Catherine" matches -- which is accepted:
-# a pre-1880 note naming a kinship relation with no hedge anywhere is worth
-# flagging either way.
-_POSSESSIVE_KINSHIP_ASSERTIONS = (
-    r"\b(?-i:[A-Z])[a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
-)
-
-# A plural kinship noun immediately followed by a capitalised word, which in
-# a census note is nearly always a name being introduced — "plus sons Thos
-# T McElwee and Stephen McElwee" — the exact phrasing behind issue #1912's
-# production report. Scoped to the PLURAL forms only (never bare
-# "son"/"daughter"/"wife"/"husband"): a search routinely names a single
-# already-known tree-side relative this way ("anchored on his wife
-# Catherine"), which is not a claim about the record; introducing multiple
-# same-role people by a plural noun is not that pattern. Punctuation
-# (comma, colon, dash) between the noun and the name is treated as
-# adjacent; a sentence boundary is not.
-_PLURAL_KINSHIP_INTRODUCING_NAME = (
-    r"\b(?:sons|daughters|children)\b[\s,:;\u2013\u2014-]+(?-i:[A-Z])",
-)
-
-_CLAIM_PATTERNS = (
-    _ROLE_ASSERTIONS
-    + _POSSESSIVE_KINSHIP_ASSERTIONS
-    + _PLURAL_KINSHIP_INTRODUCING_NAME
-)
-
-# Any of these in the note satisfies the rule. The skill does not have to use
-# SKILL.md's exact sentence — it has to say, in some form, that the structure
-# is an inference rather than something the record stated.
-_ROLE_WORD = r"(?:heads?|relationships?|co-?residents?|roles?)"
-# Deliberately excludes the bare kinship words (wife/husband/son/daughter/
-# father/mother/parent) that _ROLE_ASSERTIONS/_CLAIM_PATTERNS use elsewhere:
-# "Mother indexed as Sarah A. Price" would satisfy an index-near-role check
-# on the NAME being indexed while a flat, unhedged "Household head: Thomas
-# Flynn" sits elsewhere in the same note -- the marker would fire for a
-# reason unrelated to the household-relationship claim it exists to qualify.
-# "household" is excluded too: it is one of the initial describes_household
-# gate words, and adding it here would let ANY "indexed ... household"
-# combination satisfy the marker regardless of what "indexed" modifies
-# (chesworthrm review, issue #1642; verified against all 28 pinned cases).
-
-_INFERENCE_MARKERS = (
-    r"infer",             # infer, infers, inferred, inferring, inference(s) --
-                          # was "inferr" (double-r only), which missed the
-                          # present-tense "indexer infers ParentChild
-                          # relationships" and false-failed a compliant note
-                          # (issue #1642, ut_search_records_010 2026-08-24_16-32-45)
-    r"\bnot\s+(?:a\s+)?stated\b",
-    r"\bunstated\b",
-    r"\bimplied\b",
-    r"\bpresum\w*\b",   # presumed, presumably, presuming -- was
-                          # "presumed" only, which missed a compliant
-                          # "presumably her mother" (issue #1642,
-                          # ut_search_records_017 2026-08-24_12-28-26)
-    r"no\s+relationship\s+(?:to\s+head\s+)?column",
-    r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
-    r"was\s+not|never|absent)\b",
-    # "indexed"/"indexing" near the actual role/relationship word it
-    # qualifies -- "ParentChild relationships indexed", "indexed as Head
-    # of Household", "co-residents indexed". Deliberately NOT a bare
-    # "index" anywhere in the note: that would also accept "indexed
-    # spelling" / "surname indexed as Flyn" -- notes that flag a NAME or
-    # DATE as indexed while still asserting the household ROLE flat, which
-    # says nothing about the relationship being an inference (issue #1642,
-    # ut_search_records_010/_014/_027 2026-08-28_15-20-05).
-    rf"\bindex\w*\b[^.;,]{{0,20}}\b{_ROLE_WORD}\b",
-    rf"\b{_ROLE_WORD}\b[^.;,]{{0,20}}\bindex\w*\b",
-    # Two more phrasings of "the record states no relationship", both from
-    # ut_search_records_027's compliant note (v4_2026-10-08_16-05-44, log_002:
-    # "...no relationships stated (pre-1880 census). The 1860 schedule does not
-    # record marriage year or relationship to head."), which the list above
-    # false-failed though the judge scored every dimension 3. Across every
-    # household-describing note in the committed search-records run logs (122),
-    # these two flip exactly that one note and no other.
-    r"\bno\s+relationships?\s+(?:is\s+|are\s+|was\s+|were\s+)?"
-    r"(?:stated|given|recorded|listed)\b",
-    r"\b(?:does|did)(?:\s+not|n['’]t)\s+record\b[^.]{0,60}\brelationship",
-)
-
-
 def test_pre1880_census_structure_marked_inferred(
     before_state, after_state, test
 ):
-    """Tag-gated (pre-1880-census-household): a log note that describes a
-    pre-1880 US census household must mark the family structure inferred.
+    """Tag-gated (pre-1880-census-household): no logged `record_search` note
+    states a pre-1880 US census household's structure as fact.
 
     SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
-    column, so every "head"/"wife"/"son" read off such a household — and the
-    record's own `ParentChild`/`Couple` edges, which are the indexer's
-    inference from the same signals — is an inference. The body prescribes
-    the output: "Daniel, Margaret, Hannah in one dwelling; family structure
-    inferred from surname, ages and order, not stated", *not* "head Daniel +
-    wife Margaret + daughter Hannah".
+    column, so every "head"/"wife"/"son" read off such a household is an
+    inference and the note must say so (issue #1284).
 
-    Deterministic rather than judged because compliance is genuinely
-    inconsistent, not because the judge misreads it. See issue #1284.
+    The grader IS production's check. `research_log_append` refuses such a note
+    at write time (`requirePre1880CensusHedge`, judged with the census years
+    its staged rows name), and this replays the same compiled function on each
+    logged note with the rows of its own results sidecar. It used to carry its
+    own wider word lists, and that split was the flake: a note the tool
+    accepted could still fail here on wording, and the model had no signal at
+    write time to avoid it (ut_search_records_027, issue #3054). With one rule,
+    a note the tool refuses is never logged and one it accepts passes.
 
-    Re-measured for this round (issue #1642, chesworthrm review): the PR #1946
-    figure this superseded -- "44 logged searches, marker in 26, 23 pass / 21
-    fail" -- was already stale by the time it was reviewed, because retention
-    keeps only 5 candidate run logs and this PR's own commits rolled three of
-    the five past that measurement. This citation will do the same to whoever
-    reads it next; re-derive rather than trust it. As of this commit, across
-    the 5 committed run logs, the 9 `pre-1880-census-household`-tagged tests
-    produced 43 logged searches; the marker appears in 32. The prior
-    docstring's pass/fail split was a per-note judge-qualification tally
-    (whether a present marker actually qualifies its claim in context, not
-    just appears in the note -- see "the validator is a floor, not a
-    ceiling" in the deep-dive findings doc) and was not re-derived this round;
-    it needs a judge-rationale read per note, not a regex count, so state it
-    freshly rather than carry a guessed number forward. Re-derive the counts
-    above by scanning `research_log_append` notes in
-    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
-    a call there is sometimes a single entry, sometimes a batched `ops`
-    array of several; count each op with `outcome` in (positive, partial)
-    as one logged search, matching `_new_log_entries`'s own unit of work.
-
-    Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
-    or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference
-    marker (`_INFERENCE_MARKERS`) must appear somewhere in the note. This is
-    the original #1284 rule — what catches a bare listing with no hedge
-    anywhere ("...in household of Thomas Flynn and Mary Flynn.", no marker
-    at all) or a flat, unhedged claim ("plus sons Thos T McElwee and Stephen
-    McElwee", issue #1912's actual production text, no marker anywhere in
-    that log entry).
-
-    `_CLAIM_PATTERNS` covers three shapes the same underlying rule reads off:
-    `_ROLE_ASSERTIONS` ("as father", "household head"), a possessive kinship
-    claim naming a specific person ("Amos's children"), and a plural kinship
-    noun bare-introducing named individuals ("sons Thos T McElwee and
-    Stephen McElwee").
-
-    PR #1946 review (issue #1912): a per-sentence variant of this check was
-    tried, to catch a marker present elsewhere in the note that never
-    actually qualifies a specific claim (e.g. "...likely Amos's children.
-    Pre-1880 census — no relationship column; family structure inferred
-    ..."). Withdrawn: `ut_search_records_015`'s own committed, correctly-
-    hedged output ("...household headed by William Mullen ... Indexer-
-    inferred ParentChild/Couple relationships — 1860 census carries no
-    relationship column ...") has the identical two-sentence shape —
-    claim, then the SKILL.md-prescribed hedge as its own following sentence
-    — and no reliable mechanical signal separates the two. Note-wide is the
-    right precision for what a validator (rather than the judge, who reads
-    the whole note as a person would) can safely automate; confirmed against
-    every note in every committed `search-records` run log to date (168
-    notes, tag forced on all of them) with zero false positives.
+    So in a sound run this cannot fail. It fails when a note reached the log
+    without the tool judging it as production does — a write path that skips
+    the check, or a staged payload the census years were not read from — which
+    is the wiring it pins. What counts as a claim and as a hedge is specified,
+    measured and mutation-tested with the tool (research-log-editor-spec.md
+    § 8.2, `dev/mutate-census-hedge.ts`), not here.
     """
     if "pre-1880-census-household" not in test.get("tags", []):
         pytest.skip("not a pre-1880 census household scenario")
 
-    offenders = []
+    files = (after_state or {}).get("files", {}) or {}
+    entries, items = [], []
     for e in _new_log_entries(before_state, after_state):
-        if e.get("tool") != "record_search":
+        if e.get("tool") != "record_search" or not e.get("notes"):
             continue
-        if e.get("outcome") not in ("positive", "partial"):
-            continue  # a nil found no household to describe
-        notes = e.get("notes") or ""
+        rows = None
+        sidecar = files.get(e.get("results_ref") or "")
+        if sidecar is not None:
+            rows = ((json.loads(sidecar) or {}).get("payload") or {}).get("results")
+        entries.append(e)
+        items.append({"notes": e["notes"], "rows": rows if isinstance(rows, list) else None})
+    if not items:
+        pytest.skip("no record_search log note to judge")
 
-        describes_household = any(
-            m in notes.lower() for m in _HOUSEHOLD_MENTIONS
-        ) or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
-        if not describes_household:
-            continue
-        if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):
-            continue
-        offenders.append((e.get("id"), notes))
-
+    offenders = [
+        (e.get("id"), e["notes"], refusal)
+        for e, refusal in zip(entries, _pre1880_census_hedge_refusals(items))
+        if refusal is not None
+    ]
     assert not offenders, (
-        "a pre-1880 US census has no relationship column, so a log note that "
-        "describes the household must say the family structure is inferred "
-        "rather than stated (SKILL.md Step 4). These entries describe the "
-        "household and assert its structure flat: "
-        + "; ".join(f"{eid}: {notes!r}" for eid, notes in offenders)
+        "research_log_append's pre-1880 census check refuses these logged notes "
+        "(a pre-1880 US census has no relationship column, so the family structure "
+        "must be marked inferred — SKILL.md Step 4), so they reached the log "
+        "without that check: "
+        + "; ".join(f"{eid}: {notes!r} — {refusal}" for eid, notes, refusal in offenders)
     )
 
 

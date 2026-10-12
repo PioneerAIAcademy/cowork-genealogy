@@ -7,12 +7,20 @@ only inside a paid per-skill run.
 
 What it guards: SKILL.md Step 4's rule that 1850/1860/1870 US censuses carry no
 "relationship to head" column, so a log note describing such a household must
-mark the family structure inferred rather than stated. Every `notes` string
-below is quoted from a committed `search-records` run log, so these tests pin
-the validator to phrasing the skill has actually produced rather than to
-phrasing invented to suit it (issue #1284).
+mark the family structure inferred rather than stated. Most `notes` strings
+below are quoted from a committed `search-records` run log, so these tests pin
+the rule to phrasing the skill has actually produced rather than to phrasing
+invented to suit it (issue #1284).
+
+The validator now replays `research_log_append`'s compiled check rather than
+carrying word lists of its own (issue #3054), so these cases are also the
+cross-language half of that check's tests: every entry is given a staged 1850
+census sidecar, which is what the tool reads its census years from. The
+symbols some comments below name (`_ROLE_ASSERTIONS`, `_PLURAL_KINSHIP_...`)
+were the validator's own lists before that, and are kept as history.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -33,12 +41,28 @@ UNTAGGED = {"tags": ["search", "census", "1880"]}
 EMPTY_BEFORE = {"research_json": {"log": []}}
 
 
-def after(*entries):
-    return {"research_json": {"log": list(entries)}}
+# What a logged pre-1880 search stages: rows titled with the census they came
+# from, which is where the tool reads the census years it judges a note by.
+CENSUS_1850_ROWS = [{"collectionTitle": "United States Census, 1850"}]
 
 
-def entry(notes, outcome="positive", tool="record_search", eid="log_005"):
-    return {"id": eid, "tool": tool, "outcome": outcome, "notes": notes}
+def after(*entries, rows=CENSUS_1850_ROWS):
+    files = {
+        e["results_ref"]: json.dumps({"payload": {"results": rows}})
+        for e in entries
+        if e.get("results_ref")
+    }
+    return {"research_json": {"log": list(entries)}, "files": files}
+
+
+def entry(notes, outcome="positive", tool="record_search", eid="log_005", staged=True):
+    return {
+        "id": eid,
+        "tool": tool,
+        "outcome": outcome,
+        "notes": notes,
+        "results_ref": f"results/{eid}.json" if staged else None,
+    }
 
 
 # --- Notes the rule accepts (from runs that carried the marker) -------
@@ -375,6 +399,7 @@ def test_a_nil_search_has_no_household_to_qualify():
         "she would have been 8 years old in 1860 and still carried the Mullen "
         "birth surname. No index entry found under Price in the 1860 census.",
         outcome="negative",
+        staged=False,
     )
     check(EMPTY_BEFORE, after(nil), TAGGED)
 
@@ -396,15 +421,13 @@ def test_a_note_that_describes_no_household_passes():
 
 def test_a_tree_side_relative_is_not_a_record_side_role_claim():
     """ut_search_records_027's search anchor. Naming the spouse the search was
-    built around - and saying she is absent from the record - is not a claim
-    about what the census stated, so the bare role word must not trigger on
-    its own. (027's real note fails anyway, on "Household persons"; this pins
-    the reason to the household listing, not to "wife Catherine".)"""
+    built around, as HIS wife, and saying she is absent from the record is not
+    a claim about what the census stated."""
     check(
         EMPTY_BEFORE,
         after(entry(
-            "Ad-hoc spouse-anchored search: 1860 US Census, George Ackerman + "
-            "wife Catherine, Pennsylvania. One result (matchScore 0.9412). "
+            "Ad-hoc spouse-anchored search: 1860 US Census, George Ackerman and "
+            "his wife Catherine, Pennsylvania. One result (matchScore 0.9412). "
             "relativeTerms.spouse.status = absent: Catherine is NOT named as "
             "spouse in this indexed record."
         )),
@@ -412,23 +435,44 @@ def test_a_tree_side_relative_is_not_a_record_side_role_claim():
     )
 
 
+def test_a_tree_side_relative_without_the_possessive_is_refused():
+    """The same anchor written "+ wife Catherine" passed the validator's own
+    word lists, but research_log_append refuses it at write time: without
+    his/her/their the tool cannot tell the anchor from a record-side role. The
+    grader is the tool now, so a note the tool refuses fails here too."""
+    with pytest.raises(AssertionError):
+        check(
+            EMPTY_BEFORE,
+            after(entry(
+                "Ad-hoc spouse-anchored search: 1860 US Census, George Ackerman + "
+                "wife Catherine, Pennsylvania. One result (matchScore 0.9412). "
+                "relativeTerms.spouse.status = absent: Catherine is NOT named as "
+                "spouse in this indexed record."
+            )),
+            TAGGED,
+        )
+
+
 def test_only_record_search_entries_are_checked():
     """A log entry from another tool has no census household behind it."""
-    check(
-        EMPTY_BEFORE,
-        after(entry(OFFENDER_BARE_LISTING, tool="fulltext_search")),
-        TAGGED,
-    )
+    with pytest.raises(pytest.skip.Exception):
+        check(
+            EMPTY_BEFORE,
+            after(entry(OFFENDER_BARE_LISTING, tool="fulltext_search")),
+            TAGGED,
+        )
 
 
 def test_a_missing_notes_field_does_not_crash():
-    check(EMPTY_BEFORE, after(entry(None)), TAGGED)
+    with pytest.raises(pytest.skip.Exception):
+        check(EMPTY_BEFORE, after(entry(None)), TAGGED)
 
 
 def test_a_pre_existing_entry_is_not_re_judged():
     """Only the entries this run added are the run's responsibility."""
     old = entry(OFFENDER_BARE_LISTING, eid="log_001")
-    check({"research_json": {"log": [old]}}, {"research_json": {"log": [old]}}, TAGGED)
+    with pytest.raises(pytest.skip.Exception):
+        check({"research_json": {"log": [old]}}, after(old), TAGGED)
 
 
 def test_every_offending_entry_is_named_not_just_the_first():
@@ -488,3 +532,45 @@ def test_no_relationship_stated_phrasings_pass(notes):
 def test_near_misses_of_the_new_markers_still_fail(notes):
     with pytest.raises(AssertionError):
         check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
+
+
+# --- The grader is the compiled tool: what it reads, and that it cannot pass by not running
+
+
+def test_the_sidecar_rows_decide_not_the_tag():
+    """A flat household note naming no census year is judged on the census years
+    its own staged rows name, as the tool judged it at write time: refused
+    against 1850 rows, let through against 1880 rows (which have the column) and
+    against no sidecar at all."""
+    flat = "One result: Patrick Flynn in household of Thomas Flynn and Mary Flynn."
+    with pytest.raises(AssertionError):
+        check(EMPTY_BEFORE, after(entry(flat)), TAGGED)
+    check(EMPTY_BEFORE, after(entry(flat), rows=[{"collectionTitle": "United States Census, 1880"}]), TAGGED)
+    check(EMPTY_BEFORE, after(entry(flat, staged=False)), TAGGED)
+
+
+def test_a_missing_build_raises_rather_than_passing(monkeypatch, tmp_path):
+    import harness.mock_mcp as mock_mcp
+
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", tmp_path)
+    with pytest.raises(RuntimeError, match="missing"):
+        check(EMPTY_BEFORE, after(entry(COMPLIANT_HEDGED)), TAGGED)
+
+
+@pytest.mark.parametrize(
+    "returncode, stdout",
+    [(1, ""), (0, ""), (0, "not json"), (0, "[]"), (0, '{"a": 1}')],
+    ids=["non-zero-exit", "no-output", "garbage", "wrong-length", "not-a-list"],
+)
+def test_a_broken_node_run_raises_rather_than_passing(monkeypatch, returncode, stdout):
+    import subprocess
+
+    import harness.mock_mcp as mock_mcp
+
+    monkeypatch.setattr(
+        mock_mcp,
+        "_run_node_eval",
+        lambda *a, **k: subprocess.CompletedProcess([], returncode, stdout=stdout, stderr="boom"),
+    )
+    with pytest.raises(RuntimeError, match="did not run"):
+        check(EMPTY_BEFORE, after(entry(COMPLIANT_HEDGED)), TAGGED)

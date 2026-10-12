@@ -4,7 +4,8 @@ import { censusMentions, requirePre1880CensusHedge, stagedPre1880UsCensusYears }
 /**
  * Issue #1284's rule, enforced where it binds. Both directions matter equally:
  * a refusal that fires on a compliant note blocks a researcher mid-write, which
- * is why the check is narrower than the eval validator's.
+ * is why the check reads grammar rather than any household word. The eval
+ * validator replays this function, so these tests are the rule's whole spec.
  */
 describe("requirePre1880CensusHedge", () => {
   const bad = (n: string, years?: number[]) =>
@@ -643,7 +644,35 @@ describe("requirePre1880CensusHedge refuses a household roster and accepts the g
     "Ad-hoc search. Full record read shows household members George, Henry Ackerman, and Margaret Ackerman; Catherine not present.",
     "Ad-hoc user request. 1 result: George Ackerman, matchScore 0.9412, Bucks Co., PA (1860 census, collection 1473181). Household per sidecar: George, Henry, Margaret Ackerman. relativeTerms.spouse absent — Catherine not indexed on this persona.",
     "Household shows Henry Ackerman and Margaret Ackerman with George.",
+    // Any lower-case linking words between the noun and the list, not a verb list.
+    "One result: George Ackerman, Bucks County, PA, 1860 (collection 1473181). Household indexed as George, Henry, and Margaret Ackerman — spouse Catherine is absent from the index (relativeTerms.spouse: absent). Original image must be examined to determine whether Catherine appears on the page but was not indexed. Ad-hoc user-requested search; no plan item.",
+    "Household as returned: George, Henry and Margaret Ackerman.",
   ])("refuses the roster %#", (n) => bad(n));
+
+  it.each([
+    "Ad-hoc user search. One result: George Ackerman, born ~1818, Pennsylvania, residing Bucks County 1860 (M7QZ-8KD, matchScore 0.9412). Spouse field absent in index stub; sidecar co-residents are Henry and Margaret Ackerman only — Catherine not present. Project objective specifies Berks County; this result is Bucks County — possible county mismatch or indexing error. Project already holds M4QZ-7YT (src_001, 7 assertions); live read of that record needed to confirm the Berks County household and Catherine's presence.",
+    "Sidecar co-residents are Henry and Margaret Ackerman only.",
+  ])("refuses the plural co-residents %#", (n) => bad(n));
+
+  it("refuses 'household of' one named person, which no roster reaches", () => {
+    bad("Amos Whitfield listed under the Household of Nancy Doss.");
+  });
+
+  it("refuses a plural role parted from its names by punctuation, not a singular field label", () => {
+    bad("James M McElwee (b. 1817 Louisiana) plus sons, Thos T McElwee (b. 1839) and Stephen McElwee (b. 1842).");
+    ok("Marriage entry matches the christening. Groom's father: Christopher Jespersen, a new name.");
+  });
+
+  it("refuses a possessive kinship claim only against a staged census payload", () => {
+    const n = "Amos Whitfield (b. 1817, Georgia), 1850 census entry filed under Nancy Doss. Ezra and Noah Whitfield, also in that entry, are Amos's children.";
+    bad(n);
+    expect(() => requirePre1880CensusHedge(n)).not.toThrow();
+    ok("Ezra and Noah Whitfield, also in that entry, are likely Amos's children, inferred from surname and age.");
+  });
+
+  it("accepts plural co-residents beside an index hedge", () => {
+    ok("Co-residents indexed: Henry and Margaret Ackerman.");
+  });
 
   it.each([
     "Ad-hoc user-requested search. One George Ackerman found in Bucks County, PA, born about 1818 in Pennsylvania. Household lists George, Henry Ackerman, and Margaret Ackerman — no Catherine appears. Full record read confirms three household members only; no relationships stated (pre-1880 census). The 1860 schedule does not record marriage year or relationship to head.",
