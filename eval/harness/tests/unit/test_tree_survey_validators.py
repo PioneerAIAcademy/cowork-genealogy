@@ -31,12 +31,23 @@ def call(tool, **args):
     return {"tool": f"mcp__genealogy__{tool}", "args": args}
 
 
-def survey_test(*, tags=("survey",), fixtures=("tree-gaps-many-holes",), person="TGAP-ROT"):
+def gaps_call(fixture="tree-gaps-many-holes", person="TGAP-ROT"):
+    """A tree_gaps call as the orchestrator records it, with the fixture it was served."""
+    return {
+        "tool": "mcp__genealogy__tree_gaps",
+        "args": {"personId": person},
+        "response_fixture": fixture,
+    }
+
+
+def survey_test(*, tags=("survey",), person="TGAP-ROT"):
+    # The shape the orchestrator threads in: the inner `test` block plus
+    # `user_message` (the delegation on a direct test). It carries no
+    # `mcp_fixtures`; the served fixture is read off each tool call.
     return {
         "skill": "tree-survey",
         "tags": list(tags),
-        "mcp_fixtures": list(fixtures),
-        "input": {"delegation": f"What should I research?\n\npersonId: {person}"},
+        "user_message": f"What should I research?\n\npersonId: {person}",
     }
 
 
@@ -56,28 +67,28 @@ GOOD = (
 
 def test_once_passes_on_one_call_and_fails_on_none_or_two():
     t = survey_test()
-    check_once([call("tree_gaps", personId="TGAP-ROT")], t)
+    check_once([gaps_call()], t)
     with pytest.raises(AssertionError):
         check_once([], t)
     with pytest.raises(AssertionError):
-        check_once([call("tree_gaps", personId="TGAP-ROT"), call("tree_gaps", personId="TGAP-ROT")], t)
+        check_once([gaps_call(), gaps_call()], t)
 
 
 def test_once_fails_when_the_delegations_person_is_not_used():
     with pytest.raises(AssertionError):
-        check_once([call("tree_gaps", personId="OTHER-123")], survey_test())
+        check_once([gaps_call(person="OTHER-123")], survey_test())
     # A delegation that names no person: no argument is required.
     t = survey_test()
-    t["input"]["delegation"] = "What should I research in my tree?"
+    t["user_message"] = "What should I research in my tree?"
     check_once([call("tree_gaps")], t)
 
 
 def test_no_search_fires_on_a_search_and_accepts_tree_gaps_alone():
     t = survey_test(tags=("survey", "no-holes"))
-    check_no_search([call("tree_gaps", personId="TGAP-ROT")], t)
+    check_no_search([gaps_call()], t)
     for tool in ("record_search", "person_quality", "person_record_matches", "collections_search", "place_search"):
         with pytest.raises(AssertionError):
-            check_no_search([call("tree_gaps", personId="TGAP-ROT"), call(tool, x=1)], t)
+            check_no_search([gaps_call(), call(tool, x=1)], t)
     # Skipped on a test that has holes.
     with pytest.raises(pytest.skip.Exception):
         check_no_search([call("record_search", surname="x")], survey_test())
@@ -99,24 +110,45 @@ def test_prose_fires_on_an_identifier_and_accepts_plain_words():
         check_prose(reply(GOOD.replace("Pick one.", "Pick LZJW-C31.")), None, t)
 
 
+def test_a_year_range_in_the_prose_is_not_an_identifier():
+    check_prose(reply(GOOD.replace("Pick one.", "He lived 1850-1919. Pick one.")), None, survey_test())
+
+
 def test_ids_pass_for_hole_people_and_fail_for_a_stray_or_a_sixth_or_a_repeat():
     t = survey_test()
-    check_ids(reply(GOOD), None, t)
+    calls = [gaps_call()]
+    check_ids(calls, reply(GOOD), None, t)
     with pytest.raises(AssertionError):
-        check_ids(reply(GOOD.replace("TGAP-H2A", "TGAP-ZZZ")), None, t)  # not a hole
-    six = "\n".join(f"TGAP-H{n}A: q" for n in (1, 1, 2, 3, 4, 5))
+        check_ids(calls, reply(GOOD.replace("TGAP-H2A", "TGAP-ZZZ")), None, t)  # not a hole
+    repeat = "\n".join(f"TGAP-H{n}A: q" for n in (1, 1, 2, 3))
     with pytest.raises(AssertionError):
-        check_ids(reply(six + "\n---\nprose"), None, t)  # a repeat
-    five_plus_spouse = "\n".join(f"{i}: q" for i in ("TGAP-H1A", "TGAP-H1B", "TGAP-H2A", "TGAP-H3A", "TGAP-H4A", "TGAP-H5B"))
+        check_ids(calls, reply(repeat + "\n---\nprose"), None, t)  # a person twice
+    six = "\n".join(f"{i}: q" for i in ("TGAP-H1A", "TGAP-H1B", "TGAP-H2A", "TGAP-H3A", "TGAP-H4A", "TGAP-H5B"))
     with pytest.raises(AssertionError):
-        check_ids(reply(five_plus_spouse + "\n---\nprose"), None, t)  # six people
+        check_ids(calls, reply(six + "\n---\nprose"), None, t)  # six people
     # A spouse of a couple hole is a legitimate suggested person.
-    check_ids(reply("TGAP-H5B: q\n---\nprose"), None, t)
+    check_ids(calls, reply("TGAP-H5B: q\n---\nprose"), None, t)
+
+
+def test_a_mention_of_an_id_that_is_not_a_suggestion_line_is_not_counted():
+    # The hint to the caller names the id again; a bold or numbered lead still counts.
+    text = (
+        "**1. TGAP-H3A** Who were the parents of Samuel Weis?\n"
+        "- TGAP-H2A: Who were the parents of Hannah Pruitt?\n"
+        "When you pick one, run init-project with person ID TGAP-H3A.\n"
+        "---\nprose"
+    )
+    check_ids([gaps_call()], reply(text), None, survey_test())
+
+
+def test_ids_fail_when_no_tree_gaps_fixture_was_served():
+    with pytest.raises(AssertionError):
+        check_ids([], reply(GOOD), None, survey_test())
 
 
 def test_ids_skipped_on_a_tree_with_no_holes():
     with pytest.raises(pytest.skip.Exception):
-        check_ids(reply("x\n---\ny"), None, survey_test(tags=("survey", "no-holes")))
+        check_ids([], reply("x\n---\ny"), None, survey_test(tags=("survey", "no-holes")))
 
 
 def test_ranking_fires_unless_the_fitting_hint_is_first():
