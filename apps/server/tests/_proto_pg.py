@@ -1,4 +1,5 @@
-"""What the real-Postgres prototype suites share (test_proto_grants_pg.py, test_proto_migrate_pg.py).
+"""What the real-Postgres prototype suites share (test_proto_grants_pg.py, test_proto_migrate_pg.py,
+test_proto_queue_pg.py, test_proto_fencing_pg.py, test_proto_session_store_pg.py).
 
 Each test or module gets a database of its own, created from ``PROTO_TEST_PG_DSN`` and
 dropped ``WITH (FORCE)`` at teardown, with the schema applied the way every deploy applies
@@ -16,12 +17,14 @@ import secrets
 import sys
 import uuid
 from collections.abc import Iterator
+from datetime import datetime, timezone
 from pathlib import Path
 
 import psycopg
 import pytest
 from psycopg import sql as pgsql
 from psycopg.conninfo import make_conninfo
+from psycopg.types.json import Jsonb
 
 from proto import migrate
 
@@ -59,6 +62,35 @@ def sql(dsn: str, statement: str, params: tuple = ()) -> list[tuple]:
     with psycopg.connect(dsn, autocommit=True) as conn:
         cur = conn.execute(statement, params)
         return cur.fetchall() if cur.description else []
+
+
+def session(dsn: str, *, running: bool = False, held: tuple[str, ...] = ()):
+    """A fresh session with one completed turn, optionally a running one, and ``held``
+    messages queued oldest-first. A ``web.app.SessionRow``."""
+    if str(PROTO) not in sys.path:
+        sys.path.insert(0, str(PROTO))
+    from web.app import SessionRow
+
+    sid, pid = "sess_" + uuid.uuid4().hex[:10], "proj_" + uuid.uuid4().hex[:10]
+    sql(dsn, "INSERT INTO sessions (session_id, project_id) VALUES (%s, %s)", (sid, pid))
+    turn(dsn, sid, pid, "done", completed=True, outcome="ok")
+    if running:
+        turn(dsn, sid, pid, "running")
+    for text in held:
+        turn(dsn, sid, pid, text, outcome="queued")
+    now = datetime.now(tz=timezone.utc)
+    return SessionRow(sid, pid, "t", "m", now, now)
+
+
+def turn(dsn: str, sid: str, pid: str, text: str, *, completed: bool = False, outcome: str | None = None) -> str:
+    """``enqueued_at`` from this host's clock, as the web tier stamps it: the oldest-first
+    claim compares it with the web tier's own stamps, and the database's clock can differ."""
+    turn_id = "turn_" + uuid.uuid4().hex[:10]
+    sql(dsn, "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, completed_at, outcome) "
+             "VALUES (%s, %s, %s, %s, %s, CASE WHEN %s THEN now() END, %s)",
+        (turn_id, sid, pid, Jsonb({"turn_id": turn_id, "session_id": sid, "project_id": pid, "text": text}),
+         datetime.now(tz=timezone.utc), completed, outcome))
+    return turn_id
 
 
 async def ungranted_advisory(dsn: str, classid: int | None = None, timeout_s: float = 10.0) -> None:

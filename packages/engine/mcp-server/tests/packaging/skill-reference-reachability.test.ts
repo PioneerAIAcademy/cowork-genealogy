@@ -78,10 +78,6 @@ const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
     path: "record-extraction/references/places-guidance.md",
     why: "byte-identical copy pinned by skill-guidance.test.ts — deleting it fails that lint, so the two must be resolved together",
   },
-  {
-    path: "research-plan/references/locality-survey-guide.md",
-    why: "79 lines of locality-survey methodology and its research.json mapping; 1 of 22 terms in the body",
-  },
 ];
 
 const EXEMPT = new Set(UNREACHED_PENDING_ADJUDICATION.map((e) => e.path));

@@ -149,6 +149,15 @@ project with no owner -- closes the turn ``signin_required`` (``detail.cause``) 
 CLI exists and answers 200. A lock connection that dies mid-attempt halts it at the next
 tool call (``grant_lock_lost``) and the attempt raises ``GrantLockLost`` (500): the
 redelivery takes the lock again and reads the current grant.
+
+Claim fencing (U6, R8): a claim is never refused -- a redelivery is the resume path -- so
+the newest claim wins and the older attempt is fenced out. Every claim of an open turn
+mints ``turns.claim_epoch`` (``010_claim_epoch.sql``), and every write a superseded attempt
+could still make matches it: ``complete()`` raises ``Superseded`` rather than close, the
+zero-progress counter, the transcript mirror, and the tool server's commit (the attempt's
+``X-Genealogy-Turn-Id``/``X-Genealogy-Claim-Epoch`` headers). A halt clause checks the
+epoch before every tool call. A superseded attempt answers 200 ``superseded`` and closes
+and releases nothing; the sweep's epoch-less close bumps the epoch, which is its expiry.
 """
 
 from __future__ import annotations
@@ -172,7 +181,7 @@ import uuid
 from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Callable, Iterator
+from typing import Any, Callable, Iterator, NamedTuple
 from urllib.parse import urlparse
 
 import anyio
@@ -336,6 +345,13 @@ GRANT_LOCK_LOST_REASON = (
 # reach the store, so Stop, the handover and the spend cap cannot be read: the attempt
 # halts and raises StoreUnavailable before complete(), and the redelivery reads them fresh.
 STORE_UNAVAILABLE = "store_unavailable"
+# U6: a halt reason, never a turn outcome, like GRANT_LOCK_LOST. A newer claim holds the
+# turn, so this attempt raises Superseded and is answered 200 with nothing closed.
+SUPERSEDED = "superseded"
+SUPERSEDED_REASON = (
+    "This turn was taken over by a newer attempt. Stop now; nothing more you do on this "
+    "turn will be saved."
+)
 
 def _env_float(name: str, default: float) -> float:
     """A float from the environment that cannot crash-loop the container -- the shared
@@ -399,6 +415,19 @@ class GrantLockLost(RuntimeError):
     """U3: the attempt's grant lock connection ended mid-attempt, so the web tier may have
     refreshed (and revoked) the token it bears. Raised after the halt, before complete():
     500, and the redelivery takes the lock again."""
+
+
+class Superseded(RuntimeError):
+    """U6: a newer claim of this turn holds it, so this attempt's writes are no-ops. It is
+    answered 200 ``superseded`` and never closes or releases anything: the newer attempt
+    owns the turn's close and its handover."""
+
+
+class Claim(NamedTuple):
+    """What ``claim`` grants: the message to run and the attempt's fencing epoch."""
+
+    message: dict
+    epoch: int
 
 
 class StoreUnavailable(RuntimeError):
@@ -492,16 +521,21 @@ CLAIM_TURN_SQL = (
     "entries_seq_before = COALESCE(turns.entries_seq_before, "
     "(SELECT COALESCE(max(seq), 0) FROM session_entries)), "
     "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
-    "ELSE turns.outcome END "
+    "ELSE turns.outcome END, "
+    "claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
+    "ELSE turns.claim_epoch END "
     "FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
     "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id "
-    "RETURNING turns.message"
+    "RETURNING turns.message, turns.claim_epoch"
 )
+# U6: whether this attempt's epoch is still the turn's claim -- the halt clause's check.
+CLAIM_CURRENT_SQL = "SELECT 1 FROM turns WHERE turn_id = %s AND claim_epoch = %s"
 UNKNOWN_TURN_ERROR = "no turn row matches this turn_id, session_id and project_id"
 
 
-def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> dict | None:
-    """Record the claim and return the message to run, or None to refuse the delivery.
+def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> Claim | None:
+    """Record the claim and return the message to run with its epoch, or None to refuse
+    the delivery.
 
     A real turn (U4) claims only the row the web tier wrote, matched on turn, session and
     the session's project, and returns that row's ``message`` -- never the queue body,
@@ -517,14 +551,20 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> dict | No
     after a put-back whose send had in fact landed -- so the claim clears the mark (a
     put-back that comes AFTER this claim matches nothing: ``hold_queued_turn``). Left
     held, TURN_ACTIVE_SQL would not see the running turn and either tier would start a
-    second one beside it, or claim and enqueue this one again."""
+    second one beside it, or claim and enqueue this one again.
+
+    U6: a claim is never refused, because a redelivery is the resume path -- the latest
+    claim wins; the earlier attempt is fenced. A claim of an OPEN row mints the next
+    ``claim_epoch`` (the row lock serialises racing claims, so epochs are distinct and
+    increase); a claim of a closed row keeps the closer's, so the closer's trailing
+    transcript flush is not fenced out by a late duplicate."""
     if is_real_turn(turn["message"]) or not dev_paths(os.environ):
         with conn.cursor() as cur:
             cur.execute(CLAIM_TURN_SQL, (receive_count, QUEUED_OUTCOME, turn["turn_id"],
                                          turn["session_id"], turn["project_id"]))
             row = cur.fetchone()
         conn.commit()
-        return row[0] if row else None
+        return Claim(row[0], int(row[1])) if row else None
     with conn.cursor() as cur:
         cur.execute(
             "INSERT INTO sessions (session_id, project_id, created_at) VALUES (%s, %s, now()) "
@@ -533,14 +573,17 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> dict | No
         )
         cur.execute(
             "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, "
-            "claimed_at, receive_count, entries_seq_before) "
+            "claimed_at, receive_count, entries_seq_before, claim_epoch) "
             "VALUES (%s, %s, %s, %s, COALESCE(%s::timestamptz, now()), now(), %s, "
-            "(SELECT COALESCE(max(seq), 0) FROM session_entries)) "
+            "(SELECT COALESCE(max(seq), 0) FROM session_entries), 1) "
             "ON CONFLICT (turn_id) DO UPDATE "
             "SET claimed_at = now(), receive_count = EXCLUDED.receive_count, "
             "entries_seq_before = COALESCE(turns.entries_seq_before, EXCLUDED.entries_seq_before), "
             "outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
-            "ELSE turns.outcome END",
+            "ELSE turns.outcome END, "
+            "claim_epoch = CASE WHEN turns.completed_at IS NULL THEN turns.claim_epoch + 1 "
+            "ELSE turns.claim_epoch END "
+            "RETURNING claim_epoch",
             (
                 turn["turn_id"],
                 turn["session_id"],
@@ -551,8 +594,17 @@ def claim(conn: psycopg.Connection, turn: dict, receive_count: int) -> dict | No
                 QUEUED_OUTCOME,
             ),
         )
+        epoch = int(cur.fetchone()[0])
     conn.commit()
-    return turn["message"]
+    return Claim(turn["message"], epoch)
+
+
+def claim_current(conn: psycopg.Connection, turn_id: str, epoch: int) -> bool:
+    """Whether ``epoch`` is still the turn's claim (U6): False once a newer claim, or the
+    sweep's close, has moved it."""
+    with conn.cursor() as cur:
+        cur.execute(CLAIM_CURRENT_SQL, (turn_id, epoch))
+        return cur.fetchone() is not None
 
 
 def refuse_unknown_turn(turn: dict, receive_count: int) -> tuple[int, dict]:
@@ -640,6 +692,7 @@ def complete(
     outcome: str = OK_OUTCOME,
     detail: dict[str, Any] | None = None,
     only_if_open: bool = False,
+    claim_epoch: int | None,
 ) -> int | None:
     """Append the turn_done event (per-session seq via next_session_seq) and close the
     turn -- with the ResultMessage's figures when there are any, the token sum over
@@ -655,13 +708,24 @@ def complete(
     read first, and a missing or completed row writes nothing and returns None. Two
     closers can race on one turn -- an attempt finishing while SIGTERM's last-receive close
     runs, or the sweep -- and only the one that gets a seq back may release a held
-    message."""
+    message.
+
+    ``claim_epoch`` (U6) is required, so every caller decides: an int fences the close to
+    that attempt, and a newer claim raises ``Superseded`` -- raised, not None, because
+    ``close_on_last_receive`` reads None as "already closed" and releases a held message.
+    ``None`` means "not an attempt": the close fences every attempt out by bumping the
+    epoch (the sweep, the dev seeder)."""
     with conn.transaction():
         with conn.cursor() as cur:
-            if only_if_open:
-                cur.execute("SELECT completed_at FROM turns WHERE turn_id = %s FOR UPDATE", (turn["turn_id"],))
+            if only_if_open or claim_epoch is not None:
+                cur.execute("SELECT completed_at, claim_epoch FROM turns WHERE turn_id = %s FOR UPDATE",
+                            (turn["turn_id"],))
                 row = cur.fetchone()
-                if row is None or row[0] is not None:
+                if row is None:
+                    return None
+                if claim_epoch is not None and row[1] != claim_epoch:
+                    raise Superseded(f"turn {turn['turn_id']}: claim epoch {claim_epoch} superseded by {row[1]}")
+                if only_if_open and row[0] is not None:
                     return None
             cur.execute("SELECT next_session_seq(%s)", (turn["session_id"],))
             seq = cur.fetchone()[0]
@@ -691,9 +755,12 @@ def complete(
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
                 "output_tokens = COALESCE(%s, output_tokens), "
-                "nudges = COALESCE(%s, nudges, 0) WHERE turn_id = %s"
+                "nudges = COALESCE(%s, nudges, 0), "
+                "claim_epoch = CASE WHEN %s::bigint IS NULL THEN claim_epoch + 1 ELSE claim_epoch END "
+                "WHERE turn_id = %s AND (%s::bigint IS NULL OR claim_epoch = %s)"
                 + (" AND completed_at IS NULL" if only_if_open else ""),
-                (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, turn["turn_id"]),
+                (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, claim_epoch, turn["turn_id"],
+                 claim_epoch, claim_epoch),
             )
     conn.commit()
     return seq
@@ -745,31 +812,35 @@ def read_research(conn: psycopg.Connection, project_id: str) -> dict[str, Any] |
     return doc if isinstance(doc, dict) else None
 
 
-def bump_zero_progress(conn: psycopg.Connection, turn_id: str) -> int:
+def bump_zero_progress(conn: psycopg.Connection, turn_id: str, epoch: int) -> int:
     """Count this redelivered attempt as zero-progress and return the new total (0a).
     One statement on an autocommit connection, so the count survives the raise that
     follows it -- without that the next redelivery would start from zero and the loop
-    the cap exists to bound would never terminate."""
+    the cap exists to bound would never terminate. Only while ``epoch`` holds the claim
+    (U6): the count bounds a paid redelivery loop, so a superseded attempt must not move
+    it, and raises ``Superseded`` rather than fall through to ResumeFailure."""
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE turns SET zero_progress_attempts = zero_progress_attempts + 1 "
-            "WHERE turn_id = %s RETURNING zero_progress_attempts",
-            (turn_id,),
+            "WHERE turn_id = %s AND claim_epoch = %s RETURNING zero_progress_attempts",
+            (turn_id, epoch),
         )
         row = cur.fetchone()
-    return int(row[0]) if row and row[0] is not None else 0
+    if row is None:
+        raise Superseded(f"turn {turn_id}: claim epoch {epoch} is superseded; zero-progress count left alone")
+    return int(row[0]) if row[0] is not None else 0
 
 
-def reset_zero_progress(conn: psycopg.Connection, turn_id: str) -> None:
+def reset_zero_progress(conn: psycopg.Connection, turn_id: str, epoch: int) -> None:
     """Clear the counter because this attempt did work (0a). Called at the attempt's FIRST
     tool call, not at completion: an attempt killed at the step ceiling -- or by a crash,
     a deploy or SIGTERM -- after real work never reaches completion, and must still clear
-    the count."""
+    the count. Only while ``epoch`` holds the claim (U6)."""
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE turns SET zero_progress_attempts = 0 "
-            "WHERE turn_id = %s AND zero_progress_attempts <> 0",
-            (turn_id,),
+            "WHERE turn_id = %s AND claim_epoch = %s AND zero_progress_attempts <> 0",
+            (turn_id, epoch),
         )
 
 
@@ -1069,6 +1140,7 @@ def close_turn(
     release: bool = True,
     reason: str | None = None,
     detail: dict[str, Any] | None = None,
+    claim_epoch: int | None,
 ) -> int | None:
     """Close a turn the worker is giving up on (U5 D3): ``complete(only_if_open=True)``
     with ``detail.cause`` (and ``detail.reason`` when given: U3's refusal code; ``detail``'s
@@ -1076,10 +1148,11 @@ def close_turn(
     only if THIS call closed the row -- the session's next held message. ``release=False``
     leaves the release to the caller, which SIGTERM's close needs: the held turn must not
     start while the old attempt's CLI is still alive. Returns the turn_done seq, or None
-    when the row was already closed."""
+    when the row was already closed. ``claim_epoch`` is ``complete()``'s (U6): the
+    attempt's, so a superseded one raises ``Superseded``, or None for the sweep."""
     detail = {"cause": cause, **({"reason": reason} if reason is not None else {}), **(detail or {})}
     seq = complete(conn, turn, receive_count, outcome=outcome, detail=detail,
-                   sdk_session_id=sdk_session_id, only_if_open=True)
+                   sdk_session_id=sdk_session_id, only_if_open=True, claim_epoch=claim_epoch)
     if seq is None:
         return None
     log(ev="close", turn_id=turn["turn_id"], session_id=turn["session_id"], outcome=outcome,
@@ -1292,7 +1365,8 @@ def require_start_config(env: Mapping[str, str]) -> str:
 
 
 def tmpdir_free_mb() -> int | None:
-    """Free MB under the temp dir, for the start line; no threshold until U13 measures it."""
+    """Free MB under the temp dir, for the start line. No threshold: `/tmp` is a 3,912 MB
+    tmpfs on the rehearsal's t3.large worker (U13, 2026-10-07)."""
     try:
         st = os.statvfs(tempfile.gettempdir())
     except (AttributeError, OSError):
@@ -2011,7 +2085,8 @@ async def _run_turn(
     counters = {"events": 0, "activity": 0, "tool_calls": 0, "nudges": 0}
     # Set by the Stop hook when it ALLOWS a stop (1b/1c); None means the turn just ended.
     terminal: dict[str, Any] = {"reason": None}
-    store = PgSessionStore(PG_DSN, project_id)
+    # U6: this attempt's transcript appends land only while its claim epoch holds the turn.
+    store = PgSessionStore(PG_DSN, project_id, turn_id=turn_id, claim_epoch=turn["claim_epoch"])
     config_dir = tempfile.mkdtemp(prefix="worker-cfg-")
     # The directory the CLI really runs in: on a resumed turn the SDK repoints it to its
     # own mkdtemp, which is where the tool-result spill then lands.
@@ -2029,7 +2104,8 @@ async def _run_turn(
         if bound is not None:
             outcome, detail = bound
             seq = close_turn(conn, turn, receive_count, outcome=outcome, cause="before_cli",
-                             detail=detail, sdk_session_id=sdk_session_id, release=False)
+                             detail=detail, sdk_session_id=sdk_session_id, release=False,
+                             claim_epoch=turn["claim_epoch"])
             released = release_next_held(conn, session_id) if seq is not None else None
             log(ev="bound_before_cli", turn_id=turn_id, session_id=session_id, outcome=outcome,
                 **{k: v for k, v in detail.items() if k == "spent_usd"})
@@ -2041,7 +2117,8 @@ async def _run_turn(
         held = await acquire_grant(project_id)
         if isinstance(held, NoGrant):
             seq = close_turn(conn, turn, receive_count, outcome=SIGNIN_REQUIRED_OUTCOME, cause=held.cause,
-                             reason=held.reason, sdk_session_id=sdk_session_id, release=False)
+                             reason=held.reason, sdk_session_id=sdk_session_id, release=False,
+                             claim_epoch=turn["claim_epoch"])
             released = release_next_held(conn, session_id) if seq is not None else None
             return {"seq": seq, "outcome": SIGNIN_REQUIRED_OUTCOME, "cause": held.cause,
                     "released_turn": released, "resumed": False}
@@ -2073,15 +2150,27 @@ async def _run_turn(
                 # by a crash, a deploy or SIGTERM, after real work never reaches
                 # completion, and the stale count would then terminate a healthy turn
                 # two redeliveries later.
-                reset_zero_progress(conn, turn_id)
+                reset_zero_progress(conn, turn_id, turn["claim_epoch"])
                 attempt["progress_reset"] = True
 
         # 1c: the halt predicate, checked before EVERY tool call. The Stop hook fires at
         # a voluntary yield -- a median of once per run -- so a Stop wired to it would
         # answer after 53 minutes. This one answers in a median of 2.6 s. Each clause is
         # one function in halt_clauses, run in its own try by halt() below.
+        def epoch_clause() -> str | None:
+            # U6: first. A newer claim holds the turn, so nothing this attempt does is
+            # saved; stop before the call reaches the tool server (a doomed paid
+            # image_transcribe, say). R8's heartbeat: a conditioned check per tool call.
+            if not claim_current(conn, turn_id, turn["claim_epoch"]):
+                terminal["reason"] = SUPERSEDED
+                terminal["halted"] = True
+                log(ev="superseded_halt", turn_id=turn_id, session_id=session_id,
+                    claim_epoch=turn["claim_epoch"])
+                return SUPERSEDED_REASON
+            return None
+
         def lock_clause() -> str | None:
-            # U3: first. A lock connection that died (a server idle cut, an admin
+            # U3: after the epoch. A lock connection that died (a server idle cut, an admin
             # terminate, a proxy) released the lock while the CLI still bears the token,
             # so the next refresh would revoke it mid-attempt: stop now and redeliver.
             if not held.held_on(conn):
@@ -2154,8 +2243,8 @@ async def _run_turn(
                     return SPEND_CAP_REASON.format(cap=SPEND_CAP_USD)
             return None
 
-        halt_clauses = (("lock", lock_clause), ("stop", stop_clause), ("handover", handover_clause),
-                        ("transcript", transcript_clause), ("spend", spend_clause))
+        halt_clauses = (("epoch", epoch_clause), ("lock", lock_clause), ("stop", stop_clause),
+                        ("handover", handover_clause), ("transcript", transcript_clause), ("spend", spend_clause))
 
         def halt() -> str | None:
             """U23: fail closed on a store outage. A clause that cannot reach Postgres
@@ -2274,6 +2363,8 @@ async def _run_turn(
             resume=resume,
             session_id=None if resume else sdk_session_id,
             bearer=held.token,
+            turn_id=turn_id,
+            claim_epoch=turn["claim_epoch"],
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
             stop_hook=stop_hook,
             turn_user=slot.name if slot else None,
@@ -2311,11 +2402,18 @@ async def _run_turn(
                                 f"the CLI is running session {sid}, not the chosen {sdk_session_id}"
                             )
                     if isinstance(msg, MirrorErrorMessage):
+                        # U6: a refused append on a superseded store is the fence, not a lost batch.
+                        if store.superseded:
+                            raise Superseded(f"turn {turn_id}: claim epoch {turn['claim_epoch']} superseded "
+                                             "(transcript append refused)")
                         raise MirrorError(f"session store append failed: {msg.error or msg.data}")
                     for event in map_message(msg, tool_names, tasks, live):
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
                     if isinstance(msg, ResultMessage):
                         pass_result = msg
+                    if terminal["reason"] == SUPERSEDED:
+                        # Mid-stream, as MirrorError: the finally disconnects the client.
+                        raise Superseded(f"turn {turn_id}: claim epoch {turn['claim_epoch']} superseded")
                 if require_init and not saw_init:
                     # Without this the session-id assertion above fails open: a CLI whose init
                     # message stopped matching would run unverified and pass.
@@ -2333,6 +2431,9 @@ async def _run_turn(
             for index, prompt in enumerate(attempt_prompts(text, resume)):
                 await client.query(prompt)
                 result = await receive(require_init=index == 0)
+                # U6: before any later store write -- a re-query, the bump, complete().
+                if terminal["reason"] == SUPERSEDED:
+                    raise Superseded(f"turn {turn_id}: claim epoch {turn['claim_epoch']} superseded")
                 # U23: before anything below reads the store -- a re-query, the Stop flag,
                 # the zero-progress count, complete(). 500, as for a lost grant lock.
                 if terminal["reason"] == STORE_UNAVAILABLE:
@@ -2393,7 +2494,7 @@ async def _run_turn(
                     and not transcript_lost
                     and receive_count > 1
                     and not attempt_did_work(result, counters["tool_calls"])):
-                zero_progress = bump_zero_progress(conn, turn_id)
+                zero_progress = bump_zero_progress(conn, turn_id, turn["claim_epoch"])
                 log(ev="zero_progress_attempt", turn_id=turn_id, session_id=session_id,
                     receive_count=receive_count, attempts=zero_progress, cap=ZERO_PROGRESS_CAP,
                     num_turns=result.num_turns, tool_calls=counters["tool_calls"])
@@ -2428,6 +2529,8 @@ async def _run_turn(
                 # U5 D3: SIGTERM's last-receive close may have closed the row first; then
                 # this writes nothing, returns None, and releases nothing.
                 only_if_open=True,
+                # U6: a newer claim raises Superseded here and closes nothing.
+                claim_epoch=turn["claim_epoch"],
             )
         finally:
             await client.disconnect()
@@ -2510,6 +2613,17 @@ def _shutdown_body(turn_id: str) -> dict:
     return {"ok": False, "turn_id": turn_id, "error": "worker shutting down", "shutdown": True}
 
 
+def superseded_reply(turn: dict, receive_count: int) -> tuple[int, dict]:
+    """U6: a newer claim holds this turn, so this attempt closes and releases nothing.
+    200, not 500: at the shipped sqsd settings the POST was already abandoned, and a 500 on
+    a live one would make the newer receive visible early -- a redelivery that fences the
+    live attempt in turn, a paid cascade."""
+    turn_id = turn["turn_id"]
+    log(ev="superseded", turn_id=turn_id, receive_count=receive_count, claim_epoch=turn.get("claim_epoch"))
+    return 200, {"ok": True, "turn_id": turn_id, "receive_count": receive_count, "superseded": True,
+                 "claim_epoch": turn.get("claim_epoch")}
+
+
 def close_on_last_receive(
     turn: dict, receive_count: int, *, connect, cause: str, sdk_session_id: str | None,
     defer: bool = False, error: str | None = None,
@@ -2526,8 +2640,11 @@ def close_on_last_receive(
     try:
         with connect(PG_DSN) as conn:
             seq = close_turn(conn, turn, receive_count, cause=cause, sdk_session_id=sdk_session_id,
-                             release=not defer)
+                             release=not defer, claim_epoch=turn["claim_epoch"])
             prior = turn_outcome(conn, turn_id) if seq is None else None
+    except Superseded:
+        # U6: a newer claim owns the close and the handover; this one touches neither.
+        return superseded_reply(turn, receive_count)
     except Exception as exc:  # noqa: BLE001 - a failed close must not swallow the reply
         log(ev="close_failed", turn_id=turn_id, receive_count=receive_count, cause=cause,
             error=f"{type(exc).__name__}: {exc}")
@@ -2577,10 +2694,10 @@ def serve_after_shutdown(turn: dict, receive_count: int, *, connect) -> tuple[in
         return 503, _shutdown_body(turn_id)
     try:
         with connect(PG_DSN) as conn:
-            message = claim(conn, turn, receive_count)
-            if message is None:
+            claimed = claim(conn, turn, receive_count)
+            if claimed is None:
                 return refuse_unknown_turn(turn, receive_count)
-            turn = {**turn, "message": message}
+            turn = {**turn, "message": claimed.message, "claim_epoch": claimed.epoch}
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else session_sdk_id(conn, turn["session_id"])
     except psycopg.Error as exc:
@@ -2612,10 +2729,10 @@ def serve_real_turn(
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
-            message = claim(conn, turn, receive_count)
-            if message is None:
+            claimed = claim(conn, turn, receive_count)
+            if claimed is None:
                 return refuse_unknown_turn(turn, receive_count)
-            turn = {**turn, "message": message}
+            turn = {**turn, "message": claimed.message, "claim_epoch": claimed.epoch}
             done = turn_completed(conn, turn_id)
             sdk_session_id = None if done else choose_sdk_session_id(conn, turn["session_id"], str(uuid.uuid4()))
             if done:
@@ -2635,6 +2752,9 @@ def serve_real_turn(
     kind, value = await_attempt(entry, lambda: run(turn, receive_count, sdk_session_id))
     if kind == "shutdown" or isinstance(value, WorkerShutdown):
         return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=sdk_session_id)
+    if kind == "error" and isinstance(value, Superseded):
+        # U6: first among the errors. Never the last-receive close, never _ANSWERED.
+        return superseded_reply(turn, receive_count)
     if kind == "error" and isinstance(value, TranscriptLost):
         # U10 D6: the turn is already closed transcript_lost. 500 so sqsd redelivers and
         # the redelivery answers 200 already_completed; on the last receive the close
@@ -2703,8 +2823,10 @@ def serve_stub_turn(
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
         with connect(PG_DSN) as conn:
-            if claim(conn, turn, receive_count) is None:
+            claimed = claim(conn, turn, receive_count)
+            if claimed is None:
                 return refuse_unknown_turn(turn, receive_count)
+            turn = {**turn, "message": claimed.message, "claim_epoch": claimed.epoch}
     except psycopg.Error as exc:
         error = f"{type(exc).__name__}: {exc}"
         log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500, error=error)
@@ -2730,11 +2852,13 @@ def serve_stub_turn(
         if SHUTDOWN.is_set():
             raise WorkerShutdown("worker shutting down before the stub completed")
         with connect(PG_DSN) as conn:
-            return complete(conn, turn, receive_count, only_if_open=True)
+            return complete(conn, turn, receive_count, only_if_open=True, claim_epoch=turn["claim_epoch"])
 
     kind, value = await_attempt(entry, attempt)
     if kind == "shutdown" or isinstance(value, WorkerShutdown):
         return shutdown_reply(turn, receive_count, connect=connect, sdk_session_id=None)
+    if kind == "error" and isinstance(value, Superseded):
+        return superseded_reply(turn, receive_count)
     if kind == "error":
         error = f"{type(value).__name__}: {value}"
         log(ev="turn", turn_id=turn_id, behaviour=behaviour, receive_count=receive_count, status=500, error=error)
@@ -2809,8 +2933,11 @@ def sweep_once(
             turn = {"turn_id": turn_id, "session_id": session_id, "project_id": project_id}
             # A turn never claimed has no high-water mark, and TURN_USAGE_SQL would then sum
             # the whole session's history onto it: close it with no token sum instead.
+            # U6: epoch-less, so the close bumps claim_epoch -- the expiry that fences an
+            # attempt still alive on another instance.
             seq = close_turn(conn, turn, int(receive_count or 0), cause="sweep",
-                             sdk_session_id=sdk_session_id if seq_before is not None else None)
+                             sdk_session_id=sdk_session_id if seq_before is not None else None,
+                             claim_epoch=None)
             conn.commit()
             if seq is None:
                 break

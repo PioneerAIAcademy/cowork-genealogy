@@ -111,8 +111,8 @@ and in this build's place retry.
   `text`, `image_ref` and `artifact_url` are response-only and dropped. The
   read's top-level `notes` is dropped too.
 - **References:** every person fact, relationship, and relationship fact gets
-  `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level
-  `sources` refs are re-pointed at their `S` ids.
+  `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
+  relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
 - **Places** a fact from the read carries with no `standard_place` go through
   the same resolver `person_read` uses, once more (`standardizePlaces`): the

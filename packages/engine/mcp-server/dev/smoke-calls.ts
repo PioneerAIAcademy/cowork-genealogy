@@ -464,6 +464,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // reaches both with no flag (the tool ignores `relatives`).
   tokenStep("person_read", { personId: FS_PID }),
   tokenStep("person_ancestors", { personId: FS_PID }),
+  tokenStep("tree_gaps", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
   tokenStep("collections_search", { standardPlace: "England" }),
