@@ -99,6 +99,11 @@ WIDENED: dict[str, set[str]] = {
     #: agent writes only through `research_log_append`, which takes no `section`, so
     #: the widening adds a writer to an append-only, multi-writer section.
     "log": {"survey-surname", "search-hints"},
+    #: `sources` gains `init-project` (issue #2122). The skill always wrote one
+    #: `sources` entry per transcribed memory through `research_append` (its
+    #: Step 4a) with no row naming it; the agent's hook lane makes that write
+    #: explicit, so the manifest now says so. A widening cannot newly fail a test.
+    "sources": {"init-project"},
 }
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's

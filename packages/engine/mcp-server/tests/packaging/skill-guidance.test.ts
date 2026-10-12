@@ -52,15 +52,9 @@ const AGENTS_WITH_PLACES_GUIDANCE = ["historical-context"];
 //
 // research-plan's specialized copy was deleted with issue #2251 (issue #1112's
 // ruling); the rules it needed are inlined in that SKILL.md.
+// init-project's went with issue #2122: the skill is now an agent, and
+// project_create standardizes its places.
 const SKILLS_WITH_SPECIALIZED_COPY: Array<{ skill: string; why: string; sha256: string }> = [
-  {
-    skill: "init-project",
-    // Issue #2944: project_create builds the starting tree from the staged
-    // person_read, standard_place included, so the canonical "copy it from a
-    // person_read result" bullet describes a step init-project no longer takes.
-    why: "project_create carries person_read's standard_place; the canonical copy-it bullet names a step init-project no longer takes",
-    sha256: "8b907a20b43d3393ebf9160224b5ff60ae89a30f1ef435f90453f752baffb3fd",
-  },
 ];
 
 // LF-normalized, matching the eval snapshot's text rule (eval/CLAUDE.md

@@ -38,6 +38,8 @@ import {
   finalizeStagedResults,
   readStagedEnvelopeQuery,
   readStagedResults,
+  resolveStagedRef,
+  stagedRefCorrectionWarning,
   STAGING_SEARCH_TOOLS,
   STAGING_SUBDIR,
 } from "../utils/results-staging.js";
@@ -1439,6 +1441,27 @@ export async function researchLogAppend(
     const stagedConsumed: string[] = [];
     // Tool-level warnings (retention gaps), merged with the validator's on success.
     const opWarnings: string[] = [];
+
+    // A mis-copied staged ref is mapped onto the one staged file it names before
+    // any check reads it, so every check, the finalize and the consume below all
+    // see the same canonical ref (resolveStagedRef).
+    const resolveRef = async (op: { stagedResultsRef?: string | null }, field: string) => {
+      const raw = op.stagedResultsRef;
+      if (typeof raw !== "string" || raw === "null") return;
+      const { ref, correctedFrom } = await resolveStagedRef(projectPath, raw);
+      if (correctedFrom === undefined) return;
+      op.stagedResultsRef = ref;
+      opWarnings.push(stagedRefCorrectionWarning(field, correctedFrom, ref));
+    };
+    if (Array.isArray(input.ops)) {
+      for (let i = 0; i < input.ops.length; i++) {
+        if (input.ops[i] && typeof input.ops[i] === "object") {
+          await resolveRef(input.ops[i], `ops[${i}].stagedResultsRef`);
+        }
+      }
+    } else {
+      await resolveRef(input, "stagedResultsRef");
+    }
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {

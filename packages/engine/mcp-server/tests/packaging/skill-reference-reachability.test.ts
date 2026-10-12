@@ -57,12 +57,7 @@ const skillsDir = join(repoRoot, "plugin", "skills");
 // wired into its SKILL.md; adding one means shipping a file no SKILL.md names —
 // which a globbing model can still read, unreviewed, which is the thing this
 // test exists to prevent.
-const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
-  {
-    path: "init-project/references/research-process-init.md",
-    why: "151 lines of init decision rules and vague-data interpretation; 4 of 23 terms in the body",
-  },
-];
+const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [];
 
 const EXEMPT = new Set(UNREACHED_PENDING_ADJUDICATION.map((e) => e.path));
 
