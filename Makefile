@@ -1489,6 +1489,12 @@ unit-report: ## Readable .txt per unit run log, into eval/runlogs/unit/<skill>/r
 	# The reports/ folders are gitignored — regenerate, don't commit.
 	cd eval/harness && uv run python -m unit_run_report $(if $(SKILL),--skill $(SKILL),) $(if $(FORCE),--force,)
 
+.PHONY: unit-pg-parity
+unit-pg-parity: ## U15: each skill's newest --store pg unit run vs its newest file-store run — flips, store faults: make unit-pg-parity [SKILL=<name>]
+	# Pure formatting, no API. Exit 1 when a live tool response reads as a store
+	# fault (Postgres, S3, the prelude, a ref the Postgres store refused).
+	cd eval/harness && uv run python -m unit_pg_parity $(if $(SKILL),--skill $(SKILL),)
+
 .PHONY: unit-compare
 unit-compare: ## Compare a skill's newest unit run with the one before it, printed: make unit-compare SKILL=<name> | BEFORE=a.json AFTER=b.json
 	# Pure formatting, no API. Per test in BOTH runs: result, cost, change %,
