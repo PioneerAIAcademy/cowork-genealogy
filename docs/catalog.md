@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 53 tools.
+The MCP server exposes 54 tools.
 
 ### FamilySearch records and places
 
@@ -82,6 +82,7 @@ way project state changes.
 | `person_quality` | FamilySearch's data-quality score for a tree person, as plain-English issues in four categories. `detail: true` adds the per-fact breakdown — which attached sources touch each fact and whether each agrees, plus the disagreements between sources | OAuth |
 | `rank_search_matches` | Rank search results against a named subject | None |
 | `convert_calendar` | Convert between Julian/Gregorian, Quaker, and French Republican dates | None |
+| `census_children_gap` | From a mother's 1900/1910 US census children-born and children-living counts, work out how many of her children the tree is missing and each one's exact birth window, bounded by the census days | None |
 | `build_external_search_url` | Build a pre-filled search URL for a supported external genealogy site (Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, a state/regional digital newspaper archive, the National Archives Catalog, Internet Archive, BillionGraves, Digitalarkivet, Portale Antenati, Library and Archives Canada, American Ancestors, or the Italian Genealogy forum) from structured search attributes, or a parish-page link for the Archion and Matricula church-book browse sites, including each site's access classification (free, free-but-bot-protected, or subscription) | None |
 
 ### Reference and context
