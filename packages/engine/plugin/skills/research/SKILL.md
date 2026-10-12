@@ -143,6 +143,7 @@ regardless of how directly the request named the destination.
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
+   | `tree.gedcomx.json` gives the subject **more than one set of parents** (`ParentChild` relationships to two or more different parent couples) and no `hypotheses` entry covers each set — `Read` the tree to check; `research_query` does not see it | `@plugin:hypothesis-tracking`, naming each parent couple's tree ids — one hypothesis per set. Never compare or eliminate the sets yourself |
    | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
@@ -174,7 +175,9 @@ regardless of how directly the request named the destination.
    compared), then cite the resulting `h_`/`c_` id in the narrative — never
    the reverse. A proof narrative that names an elimination or an identity
    comparison with no backing `hypotheses`/`conflicts` entry is incomplete,
-   whatever tier it claims.
+   whatever tier it claims. This binds your summary after a hand-off too: list
+   each candidate neutrally, never which one the evidence favours, and report
+   only what the callee's return states it wrote.
 
    **Exhaustiveness/proof-conclusion contract — enforced, not advisory.**
    `research-exhaustiveness`, `proof-conclusion` and `person-evidence` are
