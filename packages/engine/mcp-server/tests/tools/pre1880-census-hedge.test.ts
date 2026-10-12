@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { requirePre1880CensusHedge, stagedPre1880UsCensusYears } from "../../src/tools/research-log-append.js";
+import { censusMentions, requirePre1880CensusHedge, stagedPre1880UsCensusYears } from "../../src/tools/research-log-append.js";
 
 /**
  * Issue #1284's rule, enforced where it binds. Both directions matter equally:
  * a refusal that fires on a compliant note blocks a researcher mid-write, which
- * is why the check is narrower than the eval validator's.
+ * is why the check reads grammar rather than any household word. The eval
+ * validator replays this function, so these tests are the rule's whole spec.
  */
 describe("requirePre1880CensusHedge", () => {
   const bad = (n: string, years?: number[]) =>
@@ -621,5 +622,147 @@ describe("stagedPre1880UsCensusYears", () => {
     expect(stagedPre1880UsCensusYears(rows(undefined, undefined))).toEqual([]);
     expect(stagedPre1880UsCensusYears([])).toEqual([]);
     expect(stagedPre1880UsCensusYears([null, 7, "x"])).toEqual([]);
+  });
+});
+
+/**
+ * ut_search_records_027 notes from 2026-10-08, verbatim, judged with the 1860
+ * census payload their search staged. Each failed the eval validator while this
+ * gate let it through -- a roster after a household phrase, with no relation word
+ * from `HOUSEHOLD_CLAIM` -- so nothing made the agent add the hedge. And the
+ * first hedged note below was graded compliant while this gate would have
+ * refused it.
+ */
+describe("requirePre1880CensusHedge refuses a household roster and accepts the grader's hedges", () => {
+  const bad = (n: string) =>
+    expect(() => requirePre1880CensusHedge(n, [1860])).toThrow(/relationship-to-head/);
+  const ok = (n: string) => expect(() => requirePre1880CensusHedge(n, [1860])).not.toThrow();
+
+  it.each([
+    "Ad-hoc search. One hit: George Ackerman, born ~1818 PA, residing Bucks Co. PA. relativeTerms.spouse = absent — Catherine is NOT named in this record. Household shows George, Henry, and Margaret Ackerman only. Treating as partial pending a spouse-free retry to check for other households.",
+    "Ad-hoc search. One result: George Ackerman, b. ~1818 PA, Bucks County 1860, matchScore 0.9412. Catherine not in the index (spouse relativeTerms = absent); household shows George, Henry, Margaret only.",
+    "Ad-hoc search. Full record read shows household members George, Henry Ackerman, and Margaret Ackerman; Catherine not present.",
+    "Ad-hoc user request. 1 result: George Ackerman, matchScore 0.9412, Bucks Co., PA (1860 census, collection 1473181). Household per sidecar: George, Henry, Margaret Ackerman. relativeTerms.spouse absent — Catherine not indexed on this persona.",
+    "Household shows Henry Ackerman and Margaret Ackerman with George.",
+    // Any lower-case linking words between the noun and the list, not a verb list.
+    "One result: George Ackerman, Bucks County, PA, 1860 (collection 1473181). Household indexed as George, Henry, and Margaret Ackerman — spouse Catherine is absent from the index (relativeTerms.spouse: absent). Original image must be examined to determine whether Catherine appears on the page but was not indexed. Ad-hoc user-requested search; no plan item.",
+    "Household as returned: George, Henry and Margaret Ackerman.",
+  ])("refuses the roster %#", (n) => bad(n));
+
+  it.each([
+    "Ad-hoc user search. One result: George Ackerman, born ~1818, Pennsylvania, residing Bucks County 1860 (M7QZ-8KD, matchScore 0.9412). Spouse field absent in index stub; sidecar co-residents are Henry and Margaret Ackerman only — Catherine not present. Project objective specifies Berks County; this result is Bucks County — possible county mismatch or indexing error. Project already holds M4QZ-7YT (src_001, 7 assertions); live read of that record needed to confirm the Berks County household and Catherine's presence.",
+    "Sidecar co-residents are Henry and Margaret Ackerman only.",
+  ])("refuses the plural co-residents %#", (n) => bad(n));
+
+  it("refuses 'household of' one named person, which no roster reaches", () => {
+    bad("Amos Whitfield listed under the Household of Nancy Doss.");
+  });
+
+  it("refuses a plural role parted from its names by punctuation, not a singular field label", () => {
+    bad("James M McElwee (b. 1817 Louisiana) plus sons, Thos T McElwee (b. 1839) and Stephen McElwee (b. 1842).");
+    ok("Marriage entry matches the christening. Groom's father: Christopher Jespersen, a new name.");
+  });
+
+  it("refuses a possessive kinship claim only against a staged census payload", () => {
+    const n = "Amos Whitfield (b. 1817, Georgia), 1850 census entry filed under Nancy Doss. Ezra and Noah Whitfield, also in that entry, are Amos's children.";
+    bad(n);
+    expect(() => requirePre1880CensusHedge(n)).not.toThrow();
+    ok("Ezra and Noah Whitfield, also in that entry, are likely Amos's children, inferred from surname and age.");
+  });
+
+  it.each([
+    "Mary Flynn listed as wife.",
+    "Thomas Flynn as head, Mary as wife.",
+    "Household head Thomas Flynn, b. 1822.",
+  ])("refuses a role stated with 'as' or after 'household head' %#", (n) => bad(n));
+
+  it.each([
+    // A negative result names no head.
+    "1850 census: no Stribling appeared as a household head on any readable page.",
+    // What another record states, in the sentence that names it, initial and all.
+    "Born ~1785 per 1870 census. Gerusha's identity is ruled out by the death records naming Sarah A. Bagley as mother.",
+    "Top matches are child baptism records attached to KN3K-9Q3 (Chresten Nielsen as father).",
+    // An index attribution is a hedge.
+    "Thomas Flynn indexed as head.",
+  ])("leaves a role 'as' alone where it is not a census claim %#", (n) => ok(n));
+
+  it.each([
+    "One result: Patrick Flynn. No co-residents listed.",
+    "One result: Patrick Flynn. Co-residents not checked.",
+  ])("does not read plural co-residents with no names as a claim %#", (n) => ok(n));
+
+  it("reads state and country names in a roster as places, but not a state that is also a given name", () => {
+    ok("Household search covered Ohio, Indiana and Kentucky.");
+    ok("Household shows New York and Ireland as birthplaces.");
+    bad("Household lists George and Virginia.");
+  });
+
+  it("reads a punctuated plural role only against a staged payload", () => {
+    const n = "Searched 1850 census for children, Mary and John: nil.";
+    expect(() => requirePre1880CensusHedge(n)).not.toThrow();
+    bad(n);
+  });
+
+  it("takes 'before' off the year it touches, not every year in the run", () => {
+    expect(censusMentions("before 1880 and 1880 census")).toEqual([
+      { year: 1879, columnFrom: 1880 },
+      { year: 1880, columnFrom: 1880 },
+    ]);
+  });
+
+  it.each([
+    // A tree-side role in a nil note is the tree's claim, not the census's.
+    "Searched the 1860 census for Margaret Flynn, recorded in the tree as wife of Thomas; 0 results in Adams Co.",
+    // A list of spellings is not a list of people.
+    "1860 census nil. Household spellings tried: Flynn, Flinn and Flynne; none found.",
+    // A list ending in a plural place noun is a list of places.
+    "1850 census: household search of Fayette, Greene and Washington counties found no Ackerman.",
+    // "None" after the colon names nobody.
+    "Co-residents: None listed on the index.",
+  ])("leaves a nil or search note alone that only looks like a claim %#", (n) => ok(n));
+
+  it("still reads a roster after 'names', which lists people", () => {
+    bad("Household names: George, Henry and Margaret.");
+  });
+
+  it("does not read 'spouse' as a role: in the corpus it is a search anchor", () => {
+    ok("Anders Monsen in Norway Census with spouse Unna. All 50 results from 1801 census.");
+  });
+
+  it("accepts plural co-residents beside an index hedge", () => {
+    ok("Co-residents indexed: Henry and Margaret Ackerman.");
+  });
+
+  it.each([
+    "Ad-hoc user-requested search. One George Ackerman found in Bucks County, PA, born about 1818 in Pennsylvania. Household lists George, Henry Ackerman, and Margaret Ackerman — no Catherine appears. Full record read confirms three household members only; no relationships stated (pre-1880 census). The 1860 schedule does not record marriage year or relationship to head.",
+    "Household shows George, Henry, and Margaret Ackerman; relationships inferred, not stated.",
+    "Household lists George, Henry and Margaret; no relationship given.",
+    "Household lists George and Henry. The 1860 schedule does not record relationship to head.",
+  ])("accepts the hedged roster %#", (n) => ok(n));
+
+  it.each([
+    // A plan naming no one, and a nil: no roster follows the phrase.
+    "Spouse field absent in index -- reading full record to view household members and marriage indicator.",
+    "Bucks Co., PA household: no Whitfield found.",
+    // One name is a subject, not a roster.
+    "Household shows George only; Catherine absent.",
+    // A list of places is not a list of people.
+    "Household shows Bucks Co., PA and Pike Co., KY as residences.",
+  ])("leaves a non-roster alone %#", (n) => ok(n));
+
+  it("reads 'pre-1880 census' as a columnless census, not as 1880", () => {
+    // Bound as 1880 it skipped the note outright, payload or not.
+    expect(() =>
+      requirePre1880CensusHedge("Household lists George, Henry and Margaret Ackerman (pre-1880 census)."),
+    ).toThrow(/relationship-to-head/);
+    expect(() =>
+      requirePre1880CensusHedge("Household lists George and Henry (pre-1880 census); structure inferred."),
+    ).not.toThrow();
+    expect(censusMentions("pre-1880 census")).toEqual([{ year: 1879, columnFrom: 1880 }]);
+    expect(censusMentions("1880 census")).toEqual([{ year: 1880, columnFrom: 1880 }]);
+  });
+
+  it("does not take 'does not record' about another field as a hedge", () => {
+    bad("Household lists George, wife Margaret and son Henry. The schedule does not record the street address.");
   });
 });
