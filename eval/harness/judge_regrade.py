@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+import inspect
 import json
 import sys
 from dataclasses import dataclass, field
@@ -36,7 +37,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
-from harness import judge, loader, rubric, snapshot
+from harness import judge, loader, rubric, snapshot, validator_runner
 from harness.auth import resolve_auth
 from harness.judge import (
     DEFAULT_JUDGE_MODEL,
@@ -286,20 +287,71 @@ def _splice_tool_responses(tool_calls: list[dict[str, Any]]) -> list[dict[str, A
     return out
 
 
-def _harness_observations_from_warnings(warnings: list[dict[str, Any]]) -> list[str]:
-    """Extract `prose_observation` entries from `runs[].output.warnings[]`.
+def _split_observations_from_warnings(
+    warnings: list[dict[str, Any]], skill: str
+) -> tuple[list[str], list[str]]:
+    """Partition `prose_observation` entries into (response, state) by signature.
 
-    The trap this works around: `as_dicts` in `validator_runner.py` drops
-    reporting-only validator results, so tier-2 observations never reach
-    `runs[].validators.results` — they live only in output.warnings[].
+    A live run splits tier-2 observations using `_run_module`'s state-derived
+    rule in `validator_runner.py`: a `report_*` whose parameters draw only
+    from `_STATE_ARGS` AND include at least one of before_state/after_state
+    is state-derived. The regrade recovers the SAME partition by re-importing
+    the validator modules (`validators/test_universal.py` and
+    `validators/test_<skill>.py`) and inspecting each named function's
+    signature. A warning that names a function the modules do not expose
+    (deleted since the log was written, or a skill with no own-module file)
+    falls back to the response slot — the orchestrator's conservative default.
+
+    Returns (response_observations, state_observations) with the same semantics
+    as `validator_runner.split_observations`.
     """
-    out: list[str] = []
+    vdir = REPO_ROOT / "eval/harness/validators"
+    mods = []
+    try:
+        mods.append(
+            validator_runner._import_validator_module(
+                vdir / "test_universal.py", "regrade_universal"
+            )
+        )
+    except (OSError, ImportError, RuntimeError):
+        pass
+    own = vdir / f"test_{skill.replace('-', '_')}.py"
+    if own.exists():
+        try:
+            mods.append(
+                validator_runner._import_validator_module(
+                    own, f"regrade_{skill.replace('-', '_')}"
+                )
+            )
+        except (OSError, ImportError, RuntimeError):
+            pass
+    response_obs: list[str] = []
+    state_obs: list[str] = []
     for w in warnings or []:
-        if (w or {}).get("kind") == "prose_observation":
-            obs = w.get("observation") or w.get("message") or ""
-            if obs:
-                out.append(obs)
-    return out
+        if (w or {}).get("kind") != "prose_observation":
+            continue
+        obs = w.get("observation") or w.get("message") or ""
+        if not obs:
+            continue
+        fname = w.get("check") or w.get("name") or ""
+        fn = next(
+            (getattr(m, fname, None) for m in mods if hasattr(m, fname)),
+            None,
+        )
+        if fn is None:
+            # Validator function not found in any imported module — fall back
+            # to the response slot (orchestrator's `_run_module` would have
+            # recorded no `state_derived` flag either).
+            response_obs.append(obs)
+            continue
+        params = set(inspect.signature(fn).parameters)
+        is_state = (
+            bool(params)
+            and params <= validator_runner._STATE_ARGS
+            and bool(params & validator_runner._READS_STATE)
+        )
+        (state_obs if is_state else response_obs).append(obs)
+    return response_obs, state_obs
 
 
 def _gating_validator_failure_names(validators_block: dict[str, Any]) -> list[str]:
@@ -375,7 +427,9 @@ def _build_grade_kwargs_for_run_entry(
     tool_calls = _splice_tool_responses(output.get("tool_calls") or [])
     file_changes = output.get("file_changes") or []
     warnings = output.get("warnings") or []
-    harness_observations = _harness_observations_from_warnings(warnings)
+    harness_observations, state_observations = _split_observations_from_warnings(
+        warnings, skill
+    )
     validator_failures = _gating_validator_failure_names(
         run_entry.get("validators") or {}
     )
@@ -390,7 +444,7 @@ def _build_grade_kwargs_for_run_entry(
         before_snapshot=before_snapshot,
         validator_failures=validator_failures,
         harness_observations=harness_observations,
-        state_observations=None,
+        state_observations=state_observations,
     )
 
 
@@ -502,7 +556,9 @@ def regrade_run_log(path: Path) -> RegradeResult:
             activated = bool(output.get("activated"))
             builtin_tool_calls = output.get("builtin_tool_calls") or []
             warnings = _strip_prior_coerced_warnings(output.get("warnings") or [])
-            harness_observations = _harness_observations_from_warnings(warnings)
+            harness_observations, state_observations = (
+                _split_observations_from_warnings(warnings, result.skill)
+            )
             validators_block = run_entry.get("validators") or {}
             # Judge prompt gets bare gating-failure names; _compute_outcome
             # takes the frozenset including reporting-only failures.
@@ -521,7 +577,7 @@ def regrade_run_log(path: Path) -> RegradeResult:
                     judge_model=DEFAULT_JUDGE_MODEL,
                     validator_failures=validator_failure_names,
                     harness_observations=harness_observations,
-                    state_observations=None,
+                    state_observations=state_observations,
                 )
             except JudgeError as e:
                 result.error = f"test {test_id} run {run_entry.get('run_index')}: {e}"

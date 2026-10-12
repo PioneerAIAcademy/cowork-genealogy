@@ -32,6 +32,7 @@ import pytest
 
 from harness import judge
 from harness import orchestrator as _orchestrator
+from harness import validator_runner
 import judge_regrade
 
 
@@ -127,6 +128,7 @@ def disk_tree(tmp_path, monkeypatch):
     mcp_fixtures = repo / "eval" / "fixtures" / "mcp"
     runlogs = repo / "eval" / "runlogs" / "unit" / "demo"
     judge_prompt_dir = repo / "eval" / "harness" / "judge"
+    validators_dir = repo / "eval" / "harness" / "validators"
 
     _write(
         tests_unit / "test-001.json",
@@ -141,6 +143,22 @@ def disk_tree(tmp_path, monkeypatch):
     _write(scenarios / "research.json", "{}")
     _write(scenarios / "tree.gedcomx.json", "{}")
     _write(mcp_fixtures / "demo.json", json.dumps({"tool": "x", "args": {}, "response": {"ok": True}}))
+
+    # Two real validator functions — one response-derived (reads text_response),
+    # one state-derived (reads before_state/after_state only). The parity test
+    # proves `_split_observations_from_warnings` reads their signatures the
+    # same way `validator_runner._run_module` does. Without this file the
+    # test's "live" side used to call the regrade's own helper and both paths
+    # agreed vacuously (chesworthrm, 2026-10-12).
+    _write(validators_dir / "test_universal.py", "")
+    _write(
+        validators_dir / "test_demo.py",
+        "def report_demo_response_check(text_response, test):\n"
+        "    assert False, 'response-side observation'\n"
+        "\n"
+        "def report_demo_state_check(before_state, after_state):\n"
+        "    assert False, 'state-side observation'\n",
+    )
 
     # Judge prompt — minimal but non-empty so JUDGE_PROMPT_PATH.read_text works.
     _write(
@@ -440,7 +458,22 @@ def _run_entry_for(test_id: str, *, direct: bool = False) -> dict:
             if direct
             else []
         ),
-        "warnings": [],
+        # Two observations — one about the reply, one about saved files —
+        # named by `check` so `_split_observations_from_warnings` can look
+        # the function's signature up in the disk tree's validator module.
+        # Without both kinds the parity assertion is vacuous.
+        "warnings": [
+            {
+                "kind": "prose_observation",
+                "check": "report_demo_response_check",
+                "observation": "response-side observation",
+            },
+            {
+                "kind": "prose_observation",
+                "check": "report_demo_state_check",
+                "observation": "state-side observation",
+            },
+        ],
     }
     return {
         "run_index": 0,
@@ -588,8 +621,31 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
     live_validator_failures = judge_regrade._gating_validator_failure_names(
         run_entry["validators"]
     )
-    live_harness_observations = judge_regrade._harness_observations_from_warnings(
-        run_entry["output"]["warnings"]
+    # Build the live-side observations the way the orchestrator does: run the
+    # demo validator module (two real `report_*` functions in the disk tree)
+    # through `_run_module`, then feed its results to `split_observations`.
+    # The regrade's helper reads the SAME functions' signatures off disk, so
+    # if the regrade and the live run disagree about which section a given
+    # observation belongs in, these two tuples diverge and the kwargs don't
+    # match. Chesworthrm's 2026-10-12 review named this as the drift the
+    # old parity test failed to detect — both sides had called the regrade's
+    # own helper, so both made the same mistake.
+    _demo_validator_module = validator_runner._import_validator_module(
+        disk_tree["repo"] / "eval" / "harness" / "validators" / "test_demo.py",
+        "live_demo",
+    )
+    _live_validator_results = validator_runner._run_module(
+        _demo_validator_module,
+        {
+            "text_response": run_entry["output"]["text_response"],
+            "test": live_spec,
+            "before_state": {},
+            "after_state": {},
+            "skill_frontmatter": {},
+        },
+    )
+    live_harness_observations, live_state_observations = (
+        validator_runner.split_observations(_live_validator_results)
     )
 
     # Try the full `_run_judge`; if the stubbed dispatch isn't where
@@ -607,7 +663,7 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
             judge_model="claude-haiku-4-5",
             validator_failures=live_validator_failures,
             harness_observations=live_harness_observations,
-            state_observations=None,
+            state_observations=live_state_observations,
         )
     except Exception:
         # The stub may not match every private contract inside grade();
