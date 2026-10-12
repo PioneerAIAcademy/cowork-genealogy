@@ -563,7 +563,7 @@ agents.**
 | **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor` → `claude-sonnet-5`; `record-extractor`, `image-reader`, `proof-conclusion`, `research-exhaustiveness` + `person-evidence` → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
 | **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | no agent pins one |
-| **Session effort** | `.claude/settings.json` `effortLevel`; never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted inherits |
+| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching subagents on CLI 2.1.215 and 2.1.220 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12; the harnesses' CLI 2.1.139 is unprobed); never set by `real_agent.build_options` | both harnesses pin `high` to match Cowork; hosted sets none, and the CLI default already sends `output_config.effort: high` on a `claude-sonnet-4-6` subagent's request |
 
 > **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
 > unit harness (`harness/orchestrator.py` honours the field, falling back to
