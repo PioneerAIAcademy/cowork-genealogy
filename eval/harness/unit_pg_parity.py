@@ -59,11 +59,18 @@ def newest(paths: list[Path]) -> tuple[Path, dict[str, Any]] | None:
 
 
 def live_faults(test: dict[str, Any]) -> tuple[int, list[str], list[str]]:
-    """(live calls, store-fault lines, timeout lines) across a test's runs."""
+    """(live calls, store-fault lines, timeout lines) across a test's runs: a
+    live response that reads as a store fault, and every `pg_store_fault`
+    warning — what the prelude recorded from any node process, the mock-side
+    pipelines that swallow their failures included."""
     calls = 0
     faults: list[str] = []
     timeouts: list[str] = []
     for run in test.get("runs") or []:
+        for w in (run.get("output") or {}).get("warnings") or []:
+            if w.get("kind") == "pg_store_fault":
+                for f in w.get("faults") or [{"op": "?", "message": w.get("advisory", "")}]:
+                    faults.append(f"{f.get('op', '?')} (recorded by the prelude): {f.get('message', '')[:240]}")
         for call in (run.get("output") or {}).get("tool_calls") or []:
             if (call.get("matched") or {}).get("kind") != "live":
                 continue

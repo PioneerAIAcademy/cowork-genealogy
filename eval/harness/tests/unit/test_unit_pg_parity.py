@@ -100,3 +100,18 @@ def test_results_across_several_pg_logs_merge_newest_wins(roots, capsys):
     out = capsys.readouterr().out
     assert "2/2 pass on pg, 2 shared, 0 flip(s)" in out
     assert "scratch_2026-10-12_00-00-00.json, scratch_2026-10-12_01-00-00.json" in out
+
+
+def test_a_pg_store_fault_warning_fails_the_report(roots, capsys):
+    """A fault the mock-side pipelines swallowed reaches the run log only as a
+    warning; the report must count it, not call the flip wobble."""
+    pg, fs = roots
+    t1 = _test("t1", "fail", {"ok": True})
+    t1["runs"][0]["output"]["warnings"] = [
+        {"kind": "pg_store_fault", "advisory": "x", "faults": [{"op": "writeBytes", "message": "NoSuchBucket"}]}
+    ]
+    _write(pg, "scratch_2026-10-12_00-00-00.json", _log("2026-10-12_00-00-00", [t1, _test("t2", "pass", {"ok": True})]))
+    assert unit_pg_parity.main(["--pg-root", str(pg), "--fs-root", str(fs)]) == 1
+    out = capsys.readouterr().out
+    assert "STORE FAULT t1 writeBytes (recorded by the prelude): NoSuchBucket" in out
+    assert "(no store fault)" not in out

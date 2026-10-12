@@ -42,6 +42,7 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 import time
 import uuid
 from collections import Counter
@@ -729,6 +730,11 @@ def main(argv: list[str] | None = None) -> int:
         # subprocess's prelude (the per-run project-id nonce).
         os.environ["PROTO_STORE"] = "pg"
         os.environ["HARNESS_PG_RUN"] = uuid.uuid4().hex
+        # Where the prelude records a store fault from any node process
+        # (mock_mcp.pg_store_faults reads it back per workspace).
+        os.environ["HARNESS_PG_FAULT_LOG"] = str(
+            Path(tempfile.gettempdir()) / f"harness-pg-faults-{os.environ['HARNESS_PG_RUN']}.jsonl"
+        )
 
     if args.list_skills:
         skills = _list_skills(tests_dir)

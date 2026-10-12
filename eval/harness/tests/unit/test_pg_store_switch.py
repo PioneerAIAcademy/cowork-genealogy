@@ -155,10 +155,13 @@ def test_main_store_end_to_end(tmp_path, monkeypatch, capsys, store):
     )
     _stub_anthropic_ok(monkeypatch)
     env_at_run: list = []
+    fault_log_at_run: list = []
+    monkeypatch.delenv("HARNESS_PG_FAULT_LOG", raising=False)
     monkeypatch.setattr(
         run_tests, "run_one_test",
         lambda spec, **kw: (env_at_run.append(os.environ.get("PROTO_STORE")),
-                            _stub_log(spec.id, spec.skill, "pass"))[1],
+                            fault_log_at_run.append(os.environ.get("HARNESS_PG_FAULT_LOG")),
+                            _stub_log(spec.id, spec.skill, "pass"))[2],
     )
     written: list[tuple[str, dict]] = []
 
@@ -179,12 +182,14 @@ def test_main_store_end_to_end(tmp_path, monkeypatch, capsys, store):
     ])
     os.environ.pop("PROTO_STORE", None)
     os.environ.pop("HARNESS_PG_RUN", None)
+    os.environ.pop("HARNESS_PG_FAULT_LOG", None)
 
     assert rc == 0
     filename, log = written[0]
     out = capsys.readouterr().out
     if store == "pg":
         assert env_at_run == ["pg"]
+        assert fault_log_at_run[0] and fault_log_at_run[0].endswith(".jsonl")
         assert filename.startswith("scratch_")
         assert log["store"] == "pg" and log["releasable"] is False
         assert "store: pg (run " in out
@@ -277,3 +282,63 @@ def test_a_seeded_document_that_is_not_json_fails_the_seed(tmp_path, pg_run):
     (tmp_path / "research.json").write_text("{not json", encoding="utf-8")
     with pytest.raises(RuntimeError, match="'research.json' is not JSON"):
         mock_mcp.seed_pg_workspace(tmp_path)
+
+
+# ---- store faults from any node process -------------------------------------
+
+
+def test_pg_store_faults_reads_only_this_workspaces_lines(tmp_path, monkeypatch):
+    log = tmp_path / "faults.jsonl"
+    ws, other = tmp_path / "ws", tmp_path / "other"
+    ws.mkdir(), other.mkdir()
+    log.write_text(
+        "\n".join([
+            json.dumps({"dir": str(ws), "op": "writeBytes", "message": "NoSuchBucket: gone"}),
+            json.dumps({"dir": str(other), "op": "readText", "message": "elsewhere"}),
+            "not json",
+        ]),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("HARNESS_PG_FAULT_LOG", str(log))
+    monkeypatch.delenv("PROTO_STORE", raising=False)
+    assert mock_mcp.pg_store_faults(ws) == []
+    monkeypatch.setenv("PROTO_STORE", "pg")
+    assert mock_mcp.pg_store_faults(ws) == [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
+
+
+def test_a_recorded_fault_becomes_a_registered_warning():
+    from harness.orchestrator import _build_warnings
+
+    out = _build_warnings([], pg_faults=[{"op": "writeBytes", "message": "NoSuchBucket: gone"}])
+    (w,) = [w for w in out if w["kind"] == "pg_store_fault"]
+    assert w["faults"] == [{"op": "writeBytes", "message": "NoSuchBucket: gone"}]
+    assert not [w for w in _build_warnings([], pg_faults=[]) if w["kind"] == "pg_store_fault"]
+
+
+@live
+def test_the_prelude_records_a_store_fault_but_not_an_ordinary_answer(tmp_path, pg_run, monkeypatch):
+    log = tmp_path / "faults.jsonl"
+    monkeypatch.setenv("HARNESS_PG_FAULT_LOG", str(log))
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "research.json").write_text("{}", encoding="utf-8")
+    mock_mcp.seed_pg_workspace(ws)
+    w = str(ws).replace("\\", "/")
+    # Ordinary answers: an absent ref, and an error the tool's own body throws in a transaction.
+    _node(
+        f"import {{ getProjectStore }} from '{_ps_url()}'; const s = getProjectStore();"
+        f" await s.readText('{w}', 'absent.json').catch(() => {{}});"
+        f" await s.withTransaction('{w}', async () => {{ throw new Error('the tool refused'); }}).catch(() => {{}});"
+        " process.stdout.write('{}');"
+    )
+    assert mock_mcp.pg_store_faults(ws) == []
+    # A real one: the bucket the blob write needs does not exist.
+    monkeypatch.setenv("PROTO_S3_BUCKET", "no-such-bucket-u15")
+    _node(
+        f"import {{ getProjectStore }} from '{_ps_url()}';"
+        f" await getProjectStore().writeBytes('{w}', 'results/x.txt', new Uint8Array([1])).catch(() => {{}});"
+        " process.stdout.write('{}');"
+    )
+    faults = mock_mcp.pg_store_faults(ws)
+    assert [f["op"] for f in faults] == ["writeBytes"]
+    assert "NoSuchBucket" in faults[0]["message"] or "bucket" in faults[0]["message"].lower()

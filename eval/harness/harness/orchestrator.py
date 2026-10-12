@@ -33,7 +33,12 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN, seed_pg_workspace
+from harness.mock_mcp import (
+    NODE_EVAL_TIMEOUT_LONG,
+    NODE_EVAL_TIMEOUT_PATTERN,
+    pg_store_faults,
+    seed_pg_workspace,
+)
 from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
@@ -895,6 +900,7 @@ async def _execute_single_run(
                     unread_skill_calls=result.unread_skill_calls,
                     judge_warnings=judge_dimension_warnings,
                     harness_observations=_harness_observation_pairs,
+                    pg_faults=getattr(result, "pg_store_faults", None),
                 ))
                 else {}
             ),
@@ -1100,6 +1106,7 @@ async def _execute_skill_with_retry(
                     )
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)
+                    result.pg_store_faults = pg_store_faults(workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
@@ -1163,6 +1170,7 @@ def _build_warnings(
     unread_skill_calls: list[list[str]] | None = None,
     judge_warnings: list[dict[str, Any]] | None = None,
     harness_observations: list[tuple[str, str]] | None = None,
+    pg_faults: list[dict[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -1279,6 +1287,21 @@ def _build_warnings(
                 f"recovery as a skill error. Tools: {timed_out_tools}."
             ),
             "tools": timed_out_tools,
+        })
+
+    # --store pg (U15): a call the Postgres store failed, from any node process
+    # this test spawned (mock_mcp.pg_store_faults). The mock-side pipelines
+    # swallow their own failures, so without this the fault surfaces a step
+    # later as "nothing staged", which unit_pg_parity would read as wobble.
+    if pg_faults:
+        warnings.append({
+            "kind": "pg_store_fault",
+            "advisory": (
+                f"{len(pg_faults)} call(s) failed in the Postgres store under --store pg — "
+                "a harness/store fault, not a skill defect. Do not grade the "
+                "recovery as a skill error."
+            ),
+            "faults": pg_faults[:20],
         })
 
     # Single chokepoint: every output.warnings entry — this function's own, the

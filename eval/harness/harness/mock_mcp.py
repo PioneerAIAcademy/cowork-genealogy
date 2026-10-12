@@ -329,6 +329,35 @@ def seed_pg_workspace(workspace: Path) -> None:
         )
 
 
+def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
+    """The store faults the prelude recorded for `workspace` under
+    ``--store pg`` (``HARNESS_PG_FAULT_LOG``, one JSON line each); [] on the
+    file store or when there were none.
+
+    Read from every node process the test spawned — the live tools and the
+    mock-side staging and scoring pipelines alike, which swallow their own
+    failures — so a fault there reaches the run log instead of surfacing a step
+    later as "nothing staged" read as model wobble.
+    """
+    log = os.environ.get("HARNESS_PG_FAULT_LOG")
+    if os.environ.get("PROTO_STORE") != "pg" or not log:
+        return []
+    try:
+        lines = Path(log).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    want = os.path.realpath(workspace)
+    out: list[dict[str, str]] = []
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(entry, dict) and os.path.realpath(str(entry.get("dir", ""))) == want:
+            out.append({"op": str(entry.get("op", "")), "message": str(entry.get("message", ""))})
+    return out
+
+
 def _run_node_eval(
     script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
 ) -> subprocess.CompletedProcess[str]:

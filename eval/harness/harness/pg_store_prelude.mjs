@@ -16,13 +16,20 @@
 // and the agent's own Read see what Postgres holds. A document whose value did
 // not change keeps its bytes: jsonb keeps neither key order nor whitespace.
 //
+// A store call that fails for a reason other than the store's ordinary
+// answers (an absent ref, a ref refused as escaping the project) is appended to
+// HARNESS_PG_FAULT_LOG as one JSON line naming the workspace, whatever node
+// process made it — the mock-side staging and scoring pipelines swallow their
+// own failures, so this is the only place such a fault is still visible. The
+// orchestrator attaches a test's lines to its run log as `pg_store_fault`.
+//
 // The engine suites' counterpart is tests/helpers/pg-routing-store.ts, which
 // re-imports disk before every call because its tests seed and edit fixtures on
 // disk between calls; a workspace is seeded once.
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
-import { realpathSync } from "node:fs";
+import { appendFileSync, realpathSync } from "node:fs";
 import { lstat, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
@@ -109,11 +116,29 @@ async function walk(dir) {
   return out;
 }
 
+const FAULT_LOG = process.env.HARNESS_PG_FAULT_LOG;
+
+/** An error the store raised that is not one of its ordinary answers. */
+function isFault(e) {
+  return !(e && (e.code === "ENOENT" || e.name === "ProjectEscapeError"));
+}
+
+function recordFault(dir, op, e) {
+  if (!FAULT_LOG) return;
+  try {
+    const message = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    appendFileSync(FAULT_LOG, `${JSON.stringify({ dir, op, message })}\n`, { encoding: "utf-8" });
+  } catch {
+    // The fault log is evidence, never a reason to fail the call twice.
+  }
+}
+
 class WorkspaceMirrorStore {
   constructor() {
     this.stores = new Map();
     this.seeded = new Map();
     this.inTx = new AsyncLocalStorage();
+    this.bodyErrors = new WeakSet();
     this.nowhere = new PgS3ProjectStore(backend, { projectId: `h-${RUN}-nowhere`, anchorPath: "\0" });
   }
 
@@ -214,7 +239,20 @@ class WorkspaceMirrorStore {
     }
   }
 
-  async route(projectPath, write, fn) {
+  async route(projectPath, write, fn, op = "call") {
+    try {
+      return await this.routeUnguarded(projectPath, write, fn);
+    } catch (e) {
+      // An error the tool's own code threw inside a transaction body is the
+      // tool's answer, not the store's.
+      if (!this.bodyErrors.has(e) && isFault(e) && typeof projectPath === "string") {
+        recordFault(this.dirOf(projectPath), op, e);
+      }
+      throw e;
+    }
+  }
+
+  async routeUnguarded(projectPath, write, fn) {
     if (typeof projectPath !== "string" || projectPath.trim() === "") return fn(this.nowhere);
     const store = this.storeFor(projectPath);
     if (this.inTx.getStore()?.has(store.projectId)) return fn(store);
@@ -229,47 +267,60 @@ class WorkspaceMirrorStore {
   }
 
   withTransaction(projectPath, fn) {
-    return this.route(projectPath, true, (s) => {
-      const ids = new Set(this.inTx.getStore());
-      ids.add(s.projectId);
-      return this.inTx.run(ids, () => s.withTransaction(projectPath, fn));
-    });
+    const body = async () => {
+      try {
+        return await fn();
+      } catch (e) {
+        if (e && typeof e === "object") this.bodyErrors.add(e);
+        throw e;
+      }
+    };
+    return this.route(
+      projectPath,
+      true,
+      (s) => {
+        const ids = new Set(this.inTx.getStore());
+        ids.add(s.projectId);
+        return this.inTx.run(ids, () => s.withTransaction(projectPath, body));
+      },
+      "withTransaction",
+    );
   }
   classifyProject(p) {
-    return this.route(p, false, (s) => s.classifyProject(p));
+    return this.route(p, false, (s) => s.classifyProject(p), "classifyProject");
   }
   projectDirState(p) {
-    return this.route(p, false, (s) => s.projectDirState(p));
+    return this.route(p, false, (s) => s.projectDirState(p), "projectDirState");
   }
   findNestingAncestor(p) {
-    return this.route(p, false, (s) => s.findNestingAncestor(p));
+    return this.route(p, false, (s) => s.findNestingAncestor(p), "findNestingAncestor");
   }
   exists(p, ref) {
-    return this.route(p, false, (s) => s.exists(p, ref));
+    return this.route(p, false, (s) => s.exists(p, ref), "exists");
   }
   readText(p, ref) {
-    return this.route(p, false, (s) => s.readText(p, ref));
+    return this.route(p, false, (s) => s.readText(p, ref), "readText");
   }
   readBytes(p, ref) {
-    return this.route(p, false, (s) => s.readBytes(p, ref));
+    return this.route(p, false, (s) => s.readBytes(p, ref), "readBytes");
   }
   list(p, dirRef) {
-    return this.route(p, false, (s) => s.list(p, dirRef));
+    return this.route(p, false, (s) => s.list(p, dirRef), "list");
   }
   writeJson(p, ref, data) {
-    return this.route(p, true, (s) => s.writeJson(p, ref, data));
+    return this.route(p, true, (s) => s.writeJson(p, ref, data), "writeJson");
   }
   writeJsonBoth(p, writes, options) {
-    return this.route(p, true, (s) => s.writeJsonBoth(p, writes, options));
+    return this.route(p, true, (s) => s.writeJsonBoth(p, writes, options), "writeJsonBoth");
   }
   writeBytes(p, ref, bytes) {
-    return this.route(p, true, (s) => s.writeBytes(p, ref, bytes));
+    return this.route(p, true, (s) => s.writeBytes(p, ref, bytes), "writeBytes");
   }
   appendText(p, ref, text) {
-    return this.route(p, true, (s) => s.appendText(p, ref, text));
+    return this.route(p, true, (s) => s.appendText(p, ref, text), "appendText");
   }
   remove(p, ref) {
-    return this.route(p, true, (s) => s.remove(p, ref));
+    return this.route(p, true, (s) => s.remove(p, ref), "remove");
   }
 }
 
