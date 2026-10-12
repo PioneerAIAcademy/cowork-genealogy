@@ -249,14 +249,18 @@ async def test_retention_skips_a_session_being_deleted(pg_dsn):
     assert await asyncio.wait_for(delete, WAIT_S) is True
 
 
-async def test_two_passes_at_once_retire_each_session_once(pg_dsn):
-    rows = [session(pg_dsn) for _ in range(6)]
-    for row in rows:
+async def test_a_session_row_another_transaction_holds_is_skipped_not_waited_on(pg_dsn):
+    """A rename, an admit or a second retention pass can hold the sessions row; the pass
+    moves on to the next idle session instead of waiting behind it (SKIP LOCKED)."""
+    held, other = session(pg_dsn), session(pg_dsn)
+    for row in (held, other):
         idle(pg_dsn, row.session_id)
-    a, b = await asyncio.gather(asyncio.to_thread(run, pg_dsn), asyncio.to_thread(run, pg_dsn))
-    ours = {r.session_id for r in rows}
-    got = [s for s in a["retired"] + b["retired"] if s in ours]
-    assert sorted(got) == sorted(ours), (a, b)
+    with psycopg.connect(pg_dsn) as locker:
+        locker.execute("SELECT 1 FROM sessions WHERE session_id = %s FOR UPDATE", (held.session_id,))
+        passed = await asyncio.wait_for(asyncio.to_thread(run, pg_dsn), WAIT_S)
+        locker.rollback()
+    assert held.session_id not in passed["retired"] and other.session_id in passed["retired"], passed
+    assert retired_at(pg_dsn, held.session_id) is None
 
 
 def test_the_try_lock_takes_the_queue_lock_s_own_key():
