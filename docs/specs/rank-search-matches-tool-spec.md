@@ -235,7 +235,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null on persistent FS-call failure — never dropped
-      "matchConfidence": 5,        // 1–10; omitted on no-match
+      "matchConfidence": 5,        // 1–5; omitted on no-match
       "attachedToSubject": false,  // only when checkAttachments
       "attachedToOther": true,
       "relativeTerms": {           // only when the search anchored on a relative
