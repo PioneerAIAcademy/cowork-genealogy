@@ -401,6 +401,20 @@ def _stage_runlog_dir(tmp_path, monkeypatch, skill="present-skill", candidates=(
     return d
 
 
+def _write_released(tmp_path, name, *, version, timestamp, skill="present-skill"):
+    """Write a released `v{N}.json` carrying the envelope `timestamp` that
+    `release.ts` preserves ("`timestamp` is kept", release.ts:5). Rule 7 reads it
+    to reconstruct the candidate filename the promotion consumed."""
+    import json as _json
+    d = tmp_path / "runlogs-unit" / skill
+    d.mkdir(parents=True, exist_ok=True)
+    (d / name).write_text(
+        _json.dumps({"version": version, "timestamp": timestamp, "released": True}),
+        encoding="utf-8",
+    )
+    return d / name
+
+
 def _five_newer_candidates() -> list[str]:
     """Five v1 candidates all newer than 2026-06-01, so a deleted 2026-06-01
     pair falls outside the keep-newest-5 window and reads as a real prune."""
@@ -970,6 +984,88 @@ def test_rule7_promotion_passes(monkeypatch, tmp_path):
     # Without the promotion the same deletion is a within-K hand-deletion and
     # blocks — proof the exemption, not the deleted-skill skip, is what passes it.
     assert check_runlogs.rule7_deletions(deleted, {}) == 1
+
+
+def test_rule7_same_pr_run_and_release_passes(monkeypatch, tmp_path):
+    """A PR that WRITES a candidate and RELEASES it in the same branch must not
+    have the harness's own prune flagged.
+
+    The documented flow (`docs/plan/eval-runlog-versioning.md` C3) is: the junior
+    runs and grades, the senior clicks Release and pushes to the SAME branch. The
+    write prunes the oldest candidate and prints "commit the deletions"; the
+    release then renames `v{N}_<ts>.json` to `v{N}.json`.
+
+    That promoted candidate is in neither set rule 7 unions: it is not a candidate
+    at head (it is a release now) and it was never deleted (it was renamed inside
+    the PR, so the net three-dot diff shows only the add). The union loses a
+    member, and at keep=5 `prunable_candidates` of 5 names returns nothing, so the
+    harness's own prune reads as a hand-deletion. Measured on PRs #3235 and #3286:
+    eight restores in one day, which is why `record-extraction` and `timeline`
+    carry 6 committed candidates where the cap is 5.
+    """
+    _make_present_skill(tmp_path, monkeypatch)
+    # Head: the four surviving older candidates, plus the release just promoted.
+    # The promoted candidate's own file is GONE from head under that name.
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    # The harness pruned the oldest when it wrote the v9 candidate.
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json",
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 0
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    ["", "   ", "not-a-timestamp", "../../../etc/passwd", "2026-08-01_00-00-00.json"],
+)
+def test_rule7_promotion_synthesis_rejects_an_unusable_timestamp(
+    monkeypatch, tmp_path, timestamp
+):
+    """The synthesized candidate name comes from a file THIS PR adds, so it is
+    only as trustworthy as that envelope. A `timestamp` that does not reconstruct
+    a candidate of the same version must be discarded rather than injected into
+    the union: admitting an arbitrary name would hand a release PR a free prunable
+    slot, which is the one way this fix could wave a real hand-deletion through.
+
+    Dropping it falls back to today's arithmetic, so the deletion blocks."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp=timestamp)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_promotion_synthesis_survives_a_corrupt_release(monkeypatch, tmp_path):
+    """An unreadable or non-JSON release must not raise: the guard falls back to
+    today's arithmetic rather than crashing the whole check."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    d = _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    (d / "v9.json").write_text("{not json", encoding="utf-8")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_over_deletion_still_blocks_in_a_release_pr(monkeypatch, tmp_path):
+    """The other direction: counting the promoted candidate must not wave through
+    a SECOND deletion that the prune rule does not reach.
+
+    With the promoted candidate counted the reconstructed dir holds 6, so exactly
+    one name is prunable. A hand-deletion of a second, newer candidate alongside
+    it must still flag, or the fix would have bought a free slot per release."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(3, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",   # the real prune
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",   # one too many
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
 
 
 def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):

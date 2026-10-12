@@ -943,6 +943,36 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     return bad
 
 
+def _promoted_candidate_names(skill_dir: Path, added: list[str]) -> set[str]:
+    """Filenames of the candidates this PR's added releases were promoted from.
+
+    `v{N}.json` carries the `timestamp` of the run, not of the release, so the
+    candidate it consumed was `v{N}_{timestamp}.json`. Returns the empty set when
+    the file is unreadable, is not valid JSON, or carries no usable `timestamp`:
+    the conservative direction, since a missing name only shrinks the prunable
+    set back to today's behaviour and can never wave a deletion through.
+    """
+    out: set[str] = set()
+    for name in added:
+        c = classify(name)
+        if c.kind != "released" or c.version is None:
+            continue
+        try:
+            doc = json.loads((skill_dir / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        ts = doc.get("timestamp")
+        if not isinstance(ts, str) or not ts.strip():
+            continue
+        # No validation of the reconstructed name is needed, and adding some was
+        # dead code: `prunable_candidates` already ignores anything it does not
+        # parse as a candidate, so a malformed envelope contributes nothing to
+        # the union rather than injecting a filename. Pinned by
+        # test_rule7_promotion_synthesis_rejects_an_unusable_timestamp.
+        out.add(f"v{c.version}_{ts.strip()}.json")
+    return out
+
+
 def rule7_deletions(
     deleted_paths: set[str], added_by_skill: dict[str, list[str]]
 ) -> int:
@@ -955,8 +985,11 @@ def rule7_deletions(
     of the names, and `prune_old_candidates` deletes exactly its output plus each
     pruned log's `.ann.json` (and `runs/` sidecars). So per skill a deletion is a
     legitimate prune iff the deleted candidate is in
-    `prunable_candidates(head_candidates ∪ deleted_candidates, keep=K)` — the
-    union reconstructs what the dir held before the prune. The #2579 incident
+    `prunable_candidates(head_candidates ∪ deleted_candidates ∪ promoted_candidates,
+    keep=K)` — the union reconstructs what the dir held before the prune. The third
+    term is the candidate a same-PR release was promoted FROM: it is neither at
+    head nor deleted, and without it the union undercounts by one and flags the
+    harness's own prune. The #2579 incident
     (`v1_2026-09-03_11-42-59.{json,ann.json}` dropped with 4 candidates on disk
     where the rule keeps 5) recomputes to an empty prunable set and is flagged.
 
@@ -1002,9 +1035,27 @@ def rule7_deletions(
                 for p in skill_dir.iterdir()
                 if p.is_file() and classify(p.name).kind == "candidate"
             }
+        # A candidate WRITTEN AND PROMOTED inside this PR is in neither set above:
+        # it is no longer a candidate at head (it is `v{N}.json` now) and it was
+        # never deleted (the rename is a net add in the three-dot diff). The
+        # union would lose a member and, at the cap, `prunable_candidates` would
+        # return nothing -- flagging the prune the harness itself performed when
+        # it wrote that very run. Reconstruct the consumed candidate's filename
+        # from the released log's envelope `timestamp`, which the release flow
+        # preserves by contract (`eval/app/lib/release.ts:5`, "`timestamp` is
+        # kept"). A candidate that existed at the merge-base needs no synthesis:
+        # its rename shows as `D`, so it is already in `deleted_candidate_json`,
+        # and the set dedupes the overlap.
+        promoted_candidate_json = _promoted_candidate_names(
+            skill_dir, added_by_skill.get(skill, [])
+        )
         prunable = set(
             prunable_candidates(
-                list(head_candidate_json | deleted_candidate_json),
+                list(
+                    head_candidate_json
+                    | deleted_candidate_json
+                    | promoted_candidate_json
+                ),
                 keep=DEFAULT_KEEP_CANDIDATES,
             )
         )
