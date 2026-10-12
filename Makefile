@@ -1591,9 +1591,10 @@ eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim):
 # `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
 # exporting the stale lock.
 .PHONY: proto-requirements
-proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+proto-requirements: ## Export uv.lock's proto-web/proto-worker/sandbox groups to apps/server/{proto/web,proto/worker,sandbox}/requirements.txt (hashes; commit all three after any uv.lock change)
 	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
 	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group sandbox --no-emit-project --format requirements-txt -o sandbox/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for
