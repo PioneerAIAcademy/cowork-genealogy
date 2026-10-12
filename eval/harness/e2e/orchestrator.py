@@ -3146,6 +3146,21 @@ async def _run_agent(
                     if aborted_reason is None and message.stop_reason == "max_turns":
                         aborted_reason = "max_turns"
 
+                # The PreToolUse deny's `continue_: False` does not end the session:
+                # past the cap every call is denied, a denied call still counts as
+                # activity, and the Stop hook nudged the agent on until cost or the
+                # wall clock ended it (hannah 2026-10-05: 56 denied calls, 38 nudges).
+                # The cap is crossed mid-run, so it outranks a cost_cap set from the
+                # final ResultMessage.
+                if tool_call_count["n"] > fixture.caps.tool_calls and aborted_reason in (
+                    None,
+                    "cost_cap",
+                ):
+                    aborted_reason = "max_tool_calls"
+                    error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+                    await _shutdown(iterator)
+                    return
+
                 # Progress watchdog: a stall is "stream alive, no progress". The
                 # plain inactivity timer above misses it (messages keep arriving),
                 # which is why the observed stall burned to the wall-clock cap.
