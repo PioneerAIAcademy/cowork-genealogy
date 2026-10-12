@@ -431,7 +431,7 @@ the table above:
 | the agent's `description` | the deleted skill's user trigger phrases, now that it is the only thing a user's words match; within 1024 characters (`skill-description-length.test.ts`) | no |
 | `agent-delegation-framing.test.ts` | the router self-edge replaced by the real caller's edge; every bare-name mention in another `SKILL.md` registered in `PROSE_MENTIONS`; the name added to `PROSE_ARM_COVERS` | no |
 | `ownership.json` | `skill:<name>` → `agent:<name>` as owner and caller | no |
-| README, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
+| `docs/catalog.md`, `architecture.md` skill counts; `EXPECTED_SKILLS` | decremented and the row moved to the Agents table | no |
 
 Every check in both tables is local and free to run. Run the whole packaging suite
 (`npx vitest run tests/packaging` in `packages/engine/mcp-server/`) and

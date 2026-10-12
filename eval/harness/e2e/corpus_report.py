@@ -120,7 +120,6 @@ VIOLATION_ARMS: tuple[tuple[str, str], ...] = (
     ("proof-conclusion", "proof-conclusion"),
     ("conflict-resolution", "conflict-resolution"),
     ("person-evidence", "person-evidence (no link)"),
-    ("proof-critique", "mentor verdict"),
 )
 
 
