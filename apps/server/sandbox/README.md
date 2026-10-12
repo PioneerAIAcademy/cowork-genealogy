@@ -31,7 +31,8 @@ Everything lands under `/opt/genealogy-agent/` (`$AGENT_HOME`):
 | `BUILD_INFO.json` | `{"commit", "dirty", "built_at"}` — which build this image IS | `E2BProvider`, which reports the commit on `/api/health` |
 
 Runtimes: **Python 3.12** (Ubuntu 24.04 system python) + **Node 22** (NodeSource).
-`claude-agent-sdk>=0.2.93` is pip-installed system-wide; it ships its own
+The `claude-agent-sdk` package is pip-installed system-wide at exactly the version
+`apps/server/uv.lock` resolves (a test holds the two equal); it ships its own
 bundled `claude` CLI (`claude_agent_sdk/_bundled/claude`), so **no separate
 Claude CLI install is needed**.
 

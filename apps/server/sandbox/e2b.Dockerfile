@@ -48,9 +48,14 @@ RUN mkdir -p "${AGENT_HOME}"
 #    mock_agent is stdlib-only; real_agent imports only claude_agent_sdk. We
 #    install at the system level so `python3 -m app.agent.runner` resolves the
 #    SDK without a venv activation step. PEP 668 marks 24.04's python externally
-#    managed, hence --break-system-packages (this is a single-purpose image). ──
+#    managed, hence --break-system-packages (this is a single-purpose image).
+#    The SDK is pinned EXACTLY to apps/server/uv.lock's version: it decides which
+#    CLI the hosted agent runs, and a range installed whatever was newest at
+#    build time (CLI 2.1.215 in the issue #3159 bundle, while the lock's SDK
+#    bundles 2.1.220; issue #3263). test_sandbox_image_provenance.py holds the
+#    two equal. ──
 RUN python3 -m pip install --break-system-packages \
-        "claude-agent-sdk>=0.2.93" "websockets>=13"
+        "claude-agent-sdk==0.2.128" "websockets>=13"
 
 # ── Agent package: only what `python -m app.agent.runner` needs. The runner
 #    + mock_agent + real_agent live under app/agent/; the app/ and app/agent/

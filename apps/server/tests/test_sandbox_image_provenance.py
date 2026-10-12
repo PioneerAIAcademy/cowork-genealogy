@@ -213,3 +213,83 @@ def test_the_dirty_flag_is_written_as_a_json_boolean():
         f"_dirty must be assigned exactly the JSON boolean literals; found "
         f"{sorted(assigned)}. Anything else silently drops the dirty marker."
     )
+
+
+# The SDK pin (issue #3263). The image's `claude-agent-sdk` decides which Claude Code CLI
+# the hosted agent runs, and the image installs it with pip, outside uv.lock. A range
+# there installed whatever was newest at build time: the issue #3159 bundle ran CLI
+# 2.1.215 while the lock's SDK bundles 2.1.220. Nothing else compares the two.
+
+UV_LOCK = REPO_ROOT / "apps" / "server" / "uv.lock"
+# A mention of the package: not inside a path or a longer identifier, then an optional
+# version spec up to a shell separator. A trailing `-...` (a repo name, a sdist) counts.
+_SDK_MENTION = re.compile(
+    r"(?<![\w/.-])claude[-_.]+agent[-_.]+sdk(?:\[[^\]]*\])?(?![\w/.])"
+    r"(?P<spec>\s*(?:===|==|~=|!=|>=|<=|>|<)\s*[^\s\"';&|)<>]*)?",
+    re.IGNORECASE,
+)
+# The package's own wheel or sdist, a URL or VCS source naming it, or a source checkout
+# (the hyphenated name as a directory; installed packages use underscores): never a pin
+# the guard can read, and outside the path exclusion above.
+_SDK_ARTIFACT = re.compile(
+    r"(?:git\+|https?://)[^\s\"']*claude[-_.]+agent[-_.]+sdk[^\s\"']*"
+    r"|claude[-_.]+agent[-_.]+sdk-[^\s\"']*\.(?:whl|zip|tgz|tar\.(?:gz|bz2|xz))"
+    r"|/claude-agent-sdk(?:-python)?/?(?=[\s\"';&|)]|$)",
+    re.IGNORECASE,
+)
+
+
+# Python code naming the module (`import x`, `from x import`, `python -m x`), not pip.
+_MODULE_BEFORE = re.compile(r"(?<![\w-])(?:import|from|-m)\s+(?:[\w.]+\s*,\s*)*$")
+_MODULE_AFTER = re.compile(r"^\s+import(?![\w-])")
+
+
+def _dockerfile_sdk_specs() -> list[tuple[int, str]]:
+    """(line number, version spec) for every claude-agent-sdk requirement in the Dockerfile.
+
+    Deliberately not a shell parser: every non-comment mention of the package counts,
+    whatever wraps it (`;`, `&&`, a pipe, `sh -c "..."`, the exec form, a heredoc, a
+    blank continuation line). A path into the installed package does not, nor does the
+    bare module name where Python code imports or runs it. A mention with no spec reads
+    as unpinned, so an extra mention fails loudly instead of slipping past; so does the
+    package's own wheel or sdist.
+    """
+    out: list[tuple[int, str]] = []
+    for n, line in enumerate(_dockerfile_lines(), start=1):
+        if line.lstrip().startswith("#"):
+            continue
+        for m in _SDK_MENTION.finditer(line):
+            spec = re.sub(r"\s+", "", m.group("spec") or "")
+            if not spec and "-" not in m.group(0) and (
+                _MODULE_BEFORE.search(line[: m.start()]) or _MODULE_AFTER.match(line[m.end():])
+            ):
+                continue
+            out.append((n, spec))
+        for m in _SDK_ARTIFACT.finditer(line):
+            out.append((n, f" from file {m.group(0)}"))
+    return out
+
+
+def _locked_sdk_version() -> str:
+    import tomllib
+
+    lock = tomllib.loads(UV_LOCK.read_text(encoding="utf-8"))
+    versions = {p["version"] for p in lock.get("package", []) if p.get("name") == "claude-agent-sdk"}
+    assert len(versions) == 1, f"uv.lock resolves claude-agent-sdk to {sorted(versions)}, expected one"
+    return versions.pop()
+
+
+def test_the_image_pins_the_sdk_the_lock_resolves():
+    specs = _dockerfile_sdk_specs()
+    assert len(specs) == 1, (
+        f"expected exactly one claude-agent-sdk mention in e2b.Dockerfile outside comments, "
+        f"Python imports and paths, got (line, spec) {specs}. Each mention counts as a "
+        f"requirement; a spec of '' is an unpinned one."
+    )
+    line, spec = specs[0]
+    locked = _locked_sdk_version()
+    assert spec == f"=={locked}", (
+        f"e2b.Dockerfile line {line} installs claude-agent-sdk{spec or ' (unpinned)'}, but "
+        f"apps/server/uv.lock resolves {locked}. Pin it exactly (=={locked}): a range runs "
+        f"whichever CLI was newest at image build, not the one the tests ran."
+    )
