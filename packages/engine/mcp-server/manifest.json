@@ -75,6 +75,7 @@
     { "name": "merge_tree_persons" },
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
+    { "name": "census_children_gap" },
     { "name": "build_external_search_url" },
     { "name": "tree_edit" },
     { "name": "tree_correct" },
