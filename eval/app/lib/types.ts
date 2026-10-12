@@ -402,6 +402,8 @@ export interface RunLogFile {
    *  logs written before the field existed, all of which ran with it on. */
   tool_search?: boolean;
   judge_prompt_hash: string;
+  /** Judge model used for this run log. Optional — absent in logs pre-dating the field (issue #2479 PR 1). */
+  judge_model?: string;
   /** {repo-relative-path: sha256-of-normalized-content}. Digests, not bytes. */
   snapshot: Record<string, string>;
   tests: TestEntry[];
