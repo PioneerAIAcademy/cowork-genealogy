@@ -30,7 +30,7 @@ Built for the **child-link exhaustiveness gate** (research-exhaustiveness).
 
 ## What it exercises
 
-The child-link rule in `research-exhaustiveness/SKILL.md`: a parentage conclusion
+The child-link rule in `research-exhaustiveness.md` (the agent): a parentage conclusion
 at probable+ needs an *examined record that places the child with the concluded
 parents* (christening, census household, emigration, probate naming the child). A
 couple's **marriage to each other does NOT satisfy this** — it proves they married,

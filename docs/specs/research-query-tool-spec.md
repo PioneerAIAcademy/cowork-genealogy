@@ -43,7 +43,8 @@ research_query({
   projectPath: string,
   section: "questions" | "plans" | "log" | "sources" | "assertions"
          | "person_evidence" | "conflicts" | "hypotheses" | "timelines"
-         | "proof_summaries" | "evaluations" | "localities",
+         | "proof_summaries" | "evaluations" | "localities"
+         | "external_collections",   // reads external-collections.json, not research.json — §2.4
   // well-known filters — only some apply to a given section; see §2.1
   recordId?: string,
   recordRole?: string,
@@ -77,7 +78,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `log` | `planItemId` | `plan_item_id` | exact |
 | | `questionId` | `plan_item_id` ∈ the item ids of every plan whose `question_id` is the value | via plan |
 | `sources` | `sourceId` | `id` | exact |
-| `assertions` | `recordId` | `record_id` | exact |
+| `assertions` | `assertionId` | `id` | exact |
+| | `recordId` | `record_id` | exact |
 | | `recordRole` | `record_role` | exact |
 | | `sourceId` | `source_id` | exact |
 | | `questionId` | `extracted_for_question_ids` | contains |
@@ -95,6 +97,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `evaluations` | `targetId` | `target_id` | exact |
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
+| `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
+| | `recordType` | `record_types` | case-insensitive substring of any |
 
 **Sections not served, and why.** A completeness test
 (`tests/tools/research-query.test.ts`) derives the list of top-level array
@@ -127,9 +131,23 @@ actionable error, not a confusingly-empty (or confusingly-unfiltered) result.
                         // fixed shape IS a wire surface)
   truncated: boolean,  // true when matches remain beyond this page
                         // (count > offset + items.length)
+  unregisteredDisagreements?: { personId, fact, assertionIds }[],
+                        // `conflicts` only — see below
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**`conflicts` also returns `unregisteredDisagreements`:** linked assertions that
+disagree on a birth or death place or year with no `conflicts` entry naming the
+pair, computed by `unregisteredDisagreements()` in `utils/question-state.ts` —
+the same detector behind `project_context`'s `questionStatuses`. `count` covers
+registered entries only, and the router read `count: 0` as "no evidence
+conflicts" and skipped `conflict-resolution` while two disagreements sat
+unregistered (`ut_research_h22`). Scope: the question's own assertions
+(`extracted_for_question_ids`) under `questionId`, otherwise every assertion;
+narrowed to those naming `assertionId`; omitted under a `status` filter other
+than `unresolved`, since an unregistered disagreement has no other status. The
+field does not page — `offset` and the 50-item cap apply to `items` alone.
 
 Each call returns at most 50 items (`MAX_ITEMS` in `research-query.ts`). A
 caller that hits `truncated: true` either narrows the filter or **pages**: set
@@ -141,7 +159,57 @@ it is absent from the §2.1 table and applies to every section uniformly.
 rejected (not coerced) otherwise — see §4. Omitting every filter returns the
 whole section, one 50-item page at a time.
 
+### 2.4 `external_collections`
+
+The curated external collections `external_links_search` stored for this project
+(`external-links-search-tool-spec.md`, "Stored list"). Served from
+`external-collections.json`, not `research.json`: it is not a schema section, so
+it is in neither the schema-derived completeness lists nor
+`RESEARCH_QUERY_OPTIONAL_SECTIONS`, and it has its own branch that runs before
+the `research.json` read. `no_project` is answered the same way as every other
+section.
+
+Each item is one stored row — `{ key, url, link_text, record_types, place, cost,
+content_type, start_year, end_year }` — and carries its own `place`. Items are
+ordered by place, then key; the order is sorted at read time, because a
+jsonb-backed store does not keep the written key order.
+
+- **`place`** matches the place and every enclosing jurisdiction, by dropping
+  leading comma segments: `Venango, Pennsylvania, United States` returns rows of
+  that county, of `Pennsylvania, United States` and of `United States` — and never
+  of a sibling county.
+- **`recordType`** is a case-insensitive substring of any of a row's
+  `record_types`. FamilySearch's record types are free text (one Pennsylvania
+  page holds `Cemeteries` and `Cemetery Records`, `Marriage` and `Marriages`), so
+  a substring is the honest match; there is no mapping table.
+
+`count: 0` does not say whether a place was fetched: no file, a fetched place
+with `rows: []`, and a place name in another form (`Pennsylvania` for the stored
+`Pennsylvania, United States`) all answer it. To tell "fetched, nothing here"
+from "never fetched", read `project_context`'s `externalCollections`, which lists
+every fetched place, `total: 0` included.
+
 ## 3. Decisions recorded
+
+**`assertionId` means two different things, and only one of them is "the
+assertion itself".** On `assertions` it matches the item's own `id`; on
+`person_evidence`, `conflicts`, `hypotheses` and `proof_summaries` it matches a
+field holding *references* to an assertion (`assertion_id`,
+`competing_assertion_ids`, `supporting`/`contradicting_assertion_ids`,
+`supporting_assertion_ids`). One parameter name, five fields, two meanings.
+
+Before the filter was added the allow-list throw carried that distinction for free: a caller
+who meant `person_evidence` and wrote `assertions` got
+`'assertionId' is not a supported filter for section 'assertions'` and
+self-corrected. That error is now gone, and the wrong section returns a
+plausible `count: 1` holding the assertion body — which has no `person_id` and
+no `confidence`, so a caller using the "an empty result IS the answer: unlinked"
+idiom reads a hit as "already linked". The filter was still worth adding (26
+measured mis-calls on main came from its absence), but the trade is real and is
+recorded here rather than discovered.
+
+The field is `id`, never `assertion_id` — an assertion object has no such key,
+so that rule would be accepted and match nothing, ever.
 
 - **A second tool, not an extension of `project_context`.** `project_context`
   is one fixed, unfiltered projection for one consumer (the record-extractor's
@@ -157,7 +225,7 @@ whole section, one 50-item page at a time.
   params, not a free-text query language), validated per-section — the same
   reasoning that rejected an open-ended query surface for `project_context`
   would reject one here too. What's different from that prior rejection is
-  scope: ten named parameters across twelve sections, not an arbitrary path
+  scope: twelve named parameters across thirteen sections, not an arbitrary path
   language.
 - **No filter on `localities`, deliberately.** None of the ten existing
   filter keys maps onto a locality field, so a filter would mean a new MCP
@@ -233,7 +301,9 @@ whole section, one 50-item page at a time.
 
 | Condition | Behavior |
 |---|---|
-| `section` not one of the twelve supported values | `{ ok: false, errors }` |
+| `section` not one of the thirteen supported values | `{ ok: false, errors }` |
+| `section: "external_collections"` and no `external-collections.json` yet | `{ ok: true, count: 0, items: [], truncated: false }` — nothing has been fetched for this project |
+| `external-collections.json` is invalid JSON, or not an object holding a `places` object | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |

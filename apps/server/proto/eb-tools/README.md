@@ -21,9 +21,9 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
   `? & % #`, so `GENEALOGY_PG_DSN` carries no `sslmode`; a DSN `sslmode` would override
   `PGSSLMODE`. Against an RDS Proxy or a non-RDS CA, override both at API level.
 - **`02-tools-alb.config` is a file of its own** because a validation error drops the whole
-  file. In a SingleInstance environment there is no load balancer: whether Beanstalk
-  ignores the namespace or rejects the deploy is a U13 measurement, and if it rejects, the
-  setting moves to an API-level one.
+  file. A SingleInstance environment has no load balancer and ignores the file, and one
+  created with a Classic load balancer silently loses its 1,800 s idle timeout (U13,
+  2026-10-07).
 - **Application Load Balancer, chosen at creation.** `create-environment` must pass
   `Namespace=aws:elasticbeanstalk:environment,OptionName=LoadBalancerType,Value=application`
   (and `EnvironmentType` `LoadBalanced`). The API default is `classic`, whose 60 s idle

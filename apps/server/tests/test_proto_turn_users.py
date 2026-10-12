@@ -62,6 +62,7 @@ def test_a_pool_that_cannot_isolate_turns_refuses(raw, euid, users, match):
         turn_users.parse(raw, euid=euid, getpwnam=users.__getitem__)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX uids/signals")
 def test_process_creds_drop_groups_take_the_pool_gid_and_umask(monkeypatch):
     calls = []
     monkeypatch.setattr(turn_users.os, "setgroups", lambda g: calls.append(("setgroups", g)))
@@ -131,6 +132,7 @@ def test_uid_pids_reads_real_uids_from_proc(tmp_path):
     assert sorted(turn_users.uid_pids(901, proc=str(tmp_path))) == [10, 12]
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX uids/signals")
 def test_kill_uid_sigkills_what_the_slot_left_and_tolerates_a_race():
     sent = []
 
@@ -143,6 +145,7 @@ def test_kill_uid_sigkills_what_the_slot_left_and_tolerates_a_race():
     assert {s for _, s in sent} == {turn_users.signal.SIGKILL}
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX uids/signals")
 def test_chown_tree_owns_dirs_0700_files_0600_and_leaves_symlinks(tmp_path, monkeypatch):
     (tmp_path / "d" / "e").mkdir(parents=True)
     (tmp_path / "d" / "mcp.json").write_text("{}", encoding="utf-8")
@@ -188,7 +191,8 @@ def _opts(tmp_path, worker_env, **kw):
     return options.build_worker_options(
         project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
         store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
-        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", **kw,
+        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", turn_id="turn-1",
+        claim_epoch=1, **kw,
     )
 
 
@@ -221,6 +225,7 @@ def test_a_slot_turn_runs_as_its_user_in_its_own_home(tmp_path):
     assert plain.user is None and plain.env["TMPDIR"] == "/tmp" and "CLAUDE_CODE_TMPDIR" not in plain.env
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX uids/signals")
 def test_start_kills_what_a_previous_worker_left_on_each_slot_before_probing(monkeypatch):
     """Outside a container a crashed worker's CLI children survive it; the new pool would
     hand their uid to the next patron, who shares it with them."""
@@ -247,6 +252,7 @@ def test_start_kills_what_a_previous_worker_left_on_each_slot_before_probing(mon
             "purged": {"genealogy-turn-0": 1, "genealogy-turn-1": 0}} in logged
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX uids/signals")
 def test_purge_removes_only_the_uids_entries_and_never_follows_a_link(tmp_path):
     """An unclean exit leaves a turn's whole dir (mcp.json, a patron's bearer) behind, and an
     agent can write anywhere world-writable; the next patron on the uid must find neither."""

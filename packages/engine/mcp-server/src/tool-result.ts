@@ -32,11 +32,15 @@ export type McpToolResult = {
  * Tools whose `{ ok: false }` means **the call could not do what was asked**.
  *
  * The rule is that, not "the tool writes" — which is why the constant is named
- * for the rule. Four non-writers qualify (`convert_calendar`,
- * `research_query`, `project_context`, `sidecar_read`): each returns
+ * for the rule. Five non-writers qualify (`convert_calendar`,
+ * `census_children_gap`, `research_query`, `project_context`, `sidecar_read`): each returns
  * `errors[]` and no payload, and each one's own spec calls the case a failure.
  * `build_external_search_url` qualifies on the same grounds and also writes —
  * its in-flight log entry, when given a `projectPath`.
+ * `external_links_search` is listed too: it writes `external-collections.json`
+ * (neither project document, hence also in `NOT_A_DOCUMENT_WRITER`) and reports
+ * failure by throwing, so today membership only routes its arm through
+ * `writerToolResult`.
  *
  * `merge_warnings` is deliberately ABSENT. Its `{ ok: false }` is the tool's
  * *answer about its subject* — a dry run reporting that a merge would be
@@ -60,9 +64,11 @@ export const OK_FALSE_IS_FAILURE = [
   "merge_tree_persons",
   "tree_forget",
   "convert_calendar",
+  "census_children_gap",
   "build_external_search_url",
   "research_query",
   "project_context",
+  "external_links_search",
   "project_create",
   "sidecar_read",
 ] as const;
@@ -78,9 +84,11 @@ export const OK_FALSE_IS_FAILURE = [
  */
 export const NOT_A_DOCUMENT_WRITER = [
   "convert_calendar",
+  "census_children_gap",
   "research_query",
   "project_context",
   "sidecar_read",
+  "external_links_search",
 ] as const satisfies readonly (typeof OK_FALSE_IS_FAILURE)[number][];
 
 /**

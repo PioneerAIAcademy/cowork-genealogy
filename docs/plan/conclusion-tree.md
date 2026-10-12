@@ -91,7 +91,6 @@ only.
 ## Stages
 
 Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
-- Every stage that changes a tool description, input schema or agent body regenerates `tests/packaging/prompt-sizes.json` with `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts`, or "matches the sizes computed at HEAD" fails.
 - Stage 1b may be built while 1a is in review, but merges after it (Decision 25) and rebases onto its `src/tools/tree-edit.ts` changes.
 - Stage 1a and PR #3207 both edit `tree-edit.ts`, `materialize-facts.ts`, `mob.ts`, `person-warnings.ts` and `introduced-warnings.ts`, so whichever lands second rebases.
 - Stage 1b starts after PR #3207, PR #3131 and PR #3040 merge. It changes PR #3207's check; it pays the proof-conclusion, research and tree-edit slots those PRs commit run logs for; and PR #3040 rewrites the completion gate in `research-append.ts` and `nextStep` in `question-state.ts`, both of which Stage 1b extends. PR #3131 also makes `computeTouchedPersonIds` read ParentChild endpoints through `relationshipEndpoints`; until it does, the write gate sees no person touched by a ParentChild retype or removal, so Stage 1b's `update_relationship` and import-removal warnings depend on it.
@@ -439,7 +438,11 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
   - status chips in `components/shared/PersonCard.tsx` and `components/sections/ProjectOverview.tsx`;
   - `lib/relationship-label.ts` stops treating untyped as biological;
   - per-record found-in-records rows in `components/sections/PersonEvidenceSection.tsx`;
-  - rival parent sets side by side (a new component);
+  - rival parent sets side by side (a new component). A child's parent sets are derived from the Couple edges among its parents, because the tree stores one ParentChild edge per parent and not FamilySearch's child-and-parents grouping (lead decision on issue #3229, 2026-10-08):
+    - a Couple whose two partners are both parents of the child is one set of two;
+    - a parent that no such Couple names is a set of one, and a parent in two such Couples is in both sets;
+    - on all 6 children with more than two parents in the 136 committed e2e starting trees, this recovers FamilySearch's pairing (Python walk, 2026-10-08): two separate couples in the 4-parent cases, a shared father with both wives in the 3-parent cases, and an uncoupled leftover mother as a set of one;
+    - known gap: a cross-marriage among the parents (for example, the birth father also married the adoptive mother) adds a Couple that is not a FamilySearch group, so the derived pairing is ambiguous. There are 0 instances in the 136 trees, and the component handles it when it meets one.
   - the new labels and colours in `components/shared/StatusBadge.tsx`. Each new `statusColorMap` key is copied into `eval/app/components/scenario/components/shared/StatusBadge.tsx` (`eval/app/tests/unit/statusBadgeParity.test.ts`), and each new label is added to the display-label table in `docs/specs/research-schema-spec.md` §5.11, whose 2026-09-14 rule reserves "conclusion" for `proved`.
 - **Agents:**
   - `packages/engine/plugin/agents/project-status.md` and `hypothesis-tracking.md` gain `project_context` in all three spellings, with an updated `tests/packaging/agent-tool-names.test.ts` snapshot.
@@ -489,7 +492,7 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
 - **The widened rival arm's refusal** → Stage 2b.
 - **Retiring link-time writes** → Stage 3.
 - **The verdict switch** → Stage 4.
-- **FamilySearch relationship sources in `person_read`** → issue #3229, filed 2026-10-07 for imported relationship-level sources and the child-and-parents grouping.
+- **FamilySearch relationship sources in `person_read`** → issue #3229 (filed 2026-10-07), delivered: `person_read` carries them onto every edge whose relationship names the subject or one of its parents, with the descriptions behind them, and `project_create` keeps them beside `S1`. The child-and-parents grouping is not stored: the viewer derives it from the Couple edges (the rival parent sets item above).
 
 ### Stage 2b — the widened rival arm refuses (0 paid slots)
 
@@ -536,7 +539,7 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
   - `packages/engine/plugin/agents/proof-conclusion.md`;
   - `packages/engine/plugin/agents/record-extractor.md`: intent records are labelled; the pre-1880 rule stays;
   - `eval/tests/unit/tree-edit/rubric.md` ("Evidence grounding") and `eval/tests/unit/proof-conclusion/rubric.md` (the tree-encoding dimension: evidence facts no longer sit on the tree, and the concluded edge is no longer "usually already present"), with the `eval/harness/scripts/check_rubric_tool_drift.py` SUPPRESSIONS quotes these edits remove (`test_every_suppression_quote_is_verbatim`);
-  - `README.md`'s `materialize_facts` row.
+  - `docs/catalog.md`'s `materialize_facts` row.
 - **Harness:**
   - `eval/harness/harness/skill_invocation.py`: `owning_skills` attributes edge and fact writes by claim, not to proof-conclusion; `find_effects_without_invocation` and `find_conclusions_without_tree_encoding` read claims; `find_citation_nulling_in_tree_sources` says "concluded" where it says "uploads";
   - `eval/harness/e2e/guardrail_shadow_report.py`'s "uploaded tree source(s)" labels, and `docs/specs/e2e-test-spec.md`'s paragraph on the citation-nulling check, say "concluded";

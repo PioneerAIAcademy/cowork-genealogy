@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Deny raw Write/Edit/NotebookEdit on research.json and tree.gedcomx.json.
 
+Also on external-collections.json, which only `external_links_search` (given a
+`projectPath`) writes: it is the curated-collections list skills read back.
+
 Every write to those two files must go through the MCP writer tools, which
 validate before persisting. A direct file write never validates. `project_create`
 brings a project into being (both files, one validated call); `research_append`,
@@ -44,7 +47,7 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
@@ -201,6 +204,14 @@ AGENT_WRITABLE_SECTIONS = {
     # hypothesis-tracking states, links and rules out hypotheses, and writes
     # nothing else in research.json.
     "hypothesis-tracking": frozenset({"hypotheses"}),
+    # init-project writes the fixed researcher profile, the volunteered
+    # holdings and one `sources` entry per transcribed memory, through
+    # research_append after project_create. It owns `project` (ownership.json),
+    # which project_create writes; `project.status` stays routed to
+    # proof-conclusion above. A lane, not a route: nothing is routed to this
+    # agent. It leaves out `questions`, which question-selection owns
+    # (issue #2122).
+    "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
 }
 
 # The deny NAMES THE ROUTE OUT, and that is load-bearing rather than polite.
@@ -248,7 +259,8 @@ REASON = (
     "must go through the writer tools. To CREATE a new project use project_create, "
     "which writes both files together; to add to an existing one use "
     "research_append, research_log_append, tree_edit or tree_correct. These "
-    "validate before persisting. Direct file writes never validate."
+    "validate before persisting. Direct file writes never validate. "
+    "external-collections.json is written only by external_links_search given a projectPath."
 )
 
 

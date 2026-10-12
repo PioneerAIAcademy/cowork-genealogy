@@ -60,6 +60,16 @@ USAGE_FIELDS = (
     "cache_creation_input_tokens",
 )
 
+#: The fields that make up the window one message was sent against — everything
+#: the model had to read to produce it. The same three as
+#: `orchestrator._WINDOW_FIELDS`, for the same reason: `output_tokens` is what it
+#: wrote, not what it read.
+WINDOW_FIELDS = (
+    "input_tokens",
+    "cache_read_input_tokens",
+    "cache_creation_input_tokens",
+)
+
 
 def _bare_tool_name(name: str) -> str:
     """`mcp__genealogy__project_context` -> `project_context`; leave others as-is."""
@@ -303,6 +313,20 @@ def subagent_usage(records: list[dict[str, Any]]) -> dict[str, int]:
     this field existed has **no** `usage` key at all, which the merge treats as
     unknown — never back-derive it from `turns[]`, which is the ~2x error above.
     """
+    totals = dict.fromkeys(USAGE_FIELDS, 0)
+    for counted in _per_message_usage(records).values():
+        for field in USAGE_FIELDS:
+            totals[field] += counted[field]
+    return totals
+
+
+def _per_message_usage(records: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
+    """Each assistant message's four token fields, keyed once per message id.
+
+    The keying rules are `subagent_usage`'s — see its docstring for why each one
+    exists. Shared so the sum (`subagent_usage`) and the max
+    (`subagent_peak_window`) can never disagree about what a message is.
+    """
     per_message: dict[str, dict[str, int]] = {}
     anon = 0
     for rec in records:
@@ -319,12 +343,110 @@ def subagent_usage(records: list[dict[str, Any]]) -> dict[str, int]:
             key = f"__anon_{anon}"
             anon += 1
         per_message[key] = {field: _as_int(usage.get(field)) for field in USAGE_FIELDS}
+    return per_message
 
-    totals = dict.fromkeys(USAGE_FIELDS, 0)
-    for counted in per_message.values():
-        for field in USAGE_FIELDS:
-            totals[field] += counted[field]
-    return totals
+
+def subagent_peak_window(records: list[dict[str, Any]]) -> int:
+    """The tallest single window this subagent read: a MAX, never a sum.
+
+    `subagent_usage` answers "what did it spend"; this answers "how close did it
+    come to the compaction line", which is what decides whether the helper is
+    safe on a cheaper model (`docs/plan/cost-latency-10x.md` §7). Two helpers
+    that each spend 300k — ten 30k reads against two 150k reads — are identical
+    to the sum and opposite here.
+
+    A peak saturates once the helper compacts: it stops at the trigger however
+    much more it needed. Read it beside `subagent_compactions`, whose count is
+    the signal past that point (`compaction_report.py`'s verdict for the main
+    thread, #2491). 0 when no message carries usage.
+    """
+    return max(
+        (sum(counted[f] for f in WINDOW_FIELDS) for counted in _per_message_usage(records).values()),
+        default=0,
+    )
+
+
+def _token_or_none(value: Any) -> int | None:
+    """A token count, or None when absent or not a number — never a fake 0."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return int(value)
+
+
+def subagent_compactions(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """One entry per time Claude Code compacted this subagent's own context.
+
+    The CLI the harness runs writes a subagent's compaction into that
+    subagent's own transcript as
+    `{"type": "system", "subtype": "compact_boundary", "compactMetadata":
+    {"trigger", "preTokens", "postTokens", ...}}`. The *count* is the signal:
+    `pre_tokens` is kept for completeness and saturates at the trigger exactly as
+    the peak does. `postTokens` is optional in the CLI.
+
+    A missing or non-numeric figure is None, never 0 — a 0 `post_tokens` would
+    read as "compacted to nothing". A malformed or missing `compactMetadata`
+    still yields an entry: the compaction happened. Never raises.
+    """
+    out: list[dict[str, Any]] = []
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        if rec.get("type") != "system" or rec.get("subtype") != "compact_boundary":
+            continue
+        meta = rec.get("compactMetadata")
+        meta = meta if isinstance(meta, dict) else {}
+        trigger = meta.get("trigger")
+        out.append({
+            "trigger": trigger if isinstance(trigger, str) else None,
+            "pre_tokens": _token_or_none(meta.get("preTokens")),
+            "post_tokens": _token_or_none(meta.get("postTokens")),
+        })
+    return out
+
+
+def subagent_models(records: list[dict[str, Any]]) -> list[str]:
+    """The distinct model ids this subagent's messages ran on, first-seen order.
+
+    A list, not one value, so a helper that changed model mid-run is not
+    reported as having used one. Ids starting with `<` are skipped: Claude Code
+    writes `<synthetic>` on placeholder messages no model produced.
+    """
+    seen: list[str] = []
+    for rec in records:
+        if not isinstance(rec, dict):
+            continue
+        message = rec.get("message")
+        if not isinstance(message, dict) or message.get("role") != "assistant":
+            continue
+        model = message.get("model")
+        if isinstance(model, str) and model and not model.startswith("<") and model not in seen:
+            seen.append(model)
+    return seen
+
+
+def subagent_duration_seconds(records: list[dict[str, Any]]) -> float | None:
+    """Seconds from the earliest to the latest record timestamp, or None.
+
+    Earliest/latest, not first/last: `queued_command` attachment records carry
+    their enqueue time, so timestamps can step backwards within a transcript.
+    Measured against the CLI's own `duration_ms` on the 16 helpers of the
+    2026-10-05 catharina run: within 0.1 s. None with fewer than two parseable
+    timestamps — never a fake 0.
+    """
+    from datetime import datetime
+
+    moments = []
+    for rec in records:
+        stamp = rec.get("timestamp") if isinstance(rec, dict) else None
+        if not isinstance(stamp, str):
+            continue
+        try:
+            moments.append(datetime.fromisoformat(stamp.replace("Z", "+00:00")).timestamp())
+        except ValueError:
+            continue
+    if len(moments) < 2:
+        return None
+    return round(max(moments) - min(moments), 3)
 
 
 def summarize_transcript(
@@ -357,6 +479,12 @@ def summarize_transcript(
         # `subagent_usage`. `turns[]` stays one entry per record because the
         # runaway readers and `max_output_tokens` need per-record shape.
         "usage": subagent_usage(records),
+        # The tallest single read (a max), how many times the context was
+        # compacted, and which models ran — see each function's docstring.
+        "peak_window_tokens": subagent_peak_window(records),
+        "compactions": subagent_compactions(records),
+        "models": subagent_models(records),
+        "duration_seconds": subagent_duration_seconds(records),
         "turns": turns,
     }
     if transcript_name:
@@ -460,6 +588,55 @@ def find_subagent_transcripts(workspace: Path, cache_dir: Path | None = None) ->
         meta = jsonl.parent / (jsonl.stem + ".meta.json")
         pairs.append((jsonl, meta if meta.exists() else None))
     return pairs
+
+
+def find_session_transcript(workspace: Path, cache_dir: Path | None = None) -> Path | None:
+    """The main thread's own `<session-uuid>.jsonl`, or None. Never raises.
+
+    It sits at the top of the cache directory; subagent transcripts live a level
+    down under `<uuid>/subagents/`, so a top-level glob never picks one up. The
+    newest file wins, which is the run's own session when the cache directory
+    is per-workspace (it is: the key is the workspace path).
+    """
+    try:
+        cache = cache_dir if cache_dir is not None else sdk_cache_dir(workspace)
+        if cache is None:
+            return None
+        candidates = list(cache.glob("*.jsonl"))
+        if not candidates:
+            return None
+        return max(candidates, key=lambda p: p.stat().st_mtime)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return None
+
+
+def collect_main_thread(workspace: Path) -> dict[str, Any] | None:
+    """The main thread's busiest moment, compactions and models, or None.
+
+    The unit harness runs a routed test's skill on the main thread, not in a
+    subagent, so `collect_subagents` alone would report nothing for it. Records
+    marked `isSidechain` are skipped so a subagent's messages, should any land
+    in the parent file, never inflate the main thread's peak. None when the
+    transcript cannot be found or read — never a zeroed block, which would read
+    as "the main thread read nothing". Never raises.
+    """
+    try:
+        path = find_session_transcript(workspace)
+        if path is None:
+            return None
+        records = [
+            r for r in parse_jsonl(path, errors="replace")
+            if r.get("isSidechain") is not True
+        ]
+        if not records:
+            return None
+        return {
+            "peak_window_tokens": subagent_peak_window(records),
+            "compactions": subagent_compactions(records),
+            "models": subagent_models(records),
+        }
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return None
 
 
 def collect_subagents(workspace: Path) -> tuple[list[dict[str, Any]], str]:

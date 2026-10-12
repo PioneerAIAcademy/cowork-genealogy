@@ -124,7 +124,7 @@ def test_malformed_tool_name_does_not_raise(malformed):
 # `blocked_tree_reads` is.
 
 
-def _fixture(tmp_path: Path):
+def _fixture(tmp_path: Path, caps: dict | None = None):
     """A minimal valid fixture on disk, loaded via the real `load_fixture`."""
     fixture_dir = tmp_path / "fx"
     fixture_dir.mkdir()
@@ -138,7 +138,7 @@ def _fixture(tmp_path: Path):
                 "researcher_question": "Who were John's parents?",
                 "tags": {"question_type": "parents", "era": "1850s", "geography": "US-VA"},
                 "model": {"agent": "claude-sonnet-4-6", "judge": "claude-haiku-4-5-20251001"},
-                "caps": {},
+                "caps": caps or {},
             }
         ),
         encoding="utf-8",
@@ -281,6 +281,65 @@ def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
     assert sink["cred"]["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert "credentials directory" in sink["cred"]["hookSpecificOutput"]["permissionDecisionReason"]
     assert sink["plain"] == {}
+
+
+def _run_with_mcp_calls(tmp_path, monkeypatch, n_calls: int, cap: int):
+    """Drive `n_calls` genealogy calls through the PreToolUse hook against a
+    tool_calls cap of `cap`, then stream three messages. Returns the run's
+    aborted_reason and how many of the three messages `_run_agent` consumed."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    stream: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            (f"c{i}", {"tool_name": "mcp__genealogy__research_query", "tool_input": {}})
+            for i in range(n_calls)
+        ]
+        stream["agent"] = _HookDrivingAgent(
+            hook,
+            inputs,
+            [
+                SystemMessage(subtype="init", data={"session_id": "S1"}),
+                SystemMessage(subtype="status", data={}),
+                _result(),
+            ],
+            {},
+        )
+        return stream["agent"]
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    result = asyncio.run(
+        _run_agent(
+            fixture=_fixture(tmp_path, caps={"tool_calls": cap}),
+            workspace=tmp_path,
+            mcp_server_entry=Path("dummy"),
+        )
+    )
+    return result[3], stream["agent"]._i
+
+
+def test_crossing_the_tool_calls_cap_ends_the_run(tmp_path, monkeypatch):
+    """The deny's `continue_: False` did not stop the session, so a capped run
+    kept going on denied calls and continue-nudges until cost or the wall clock
+    ended it, labelled `cost_cap` or `timeout`. The loop must stop at the first
+    message after the cap is crossed, not drain the stream."""
+    aborted_reason, consumed = _run_with_mcp_calls(tmp_path, monkeypatch, n_calls=3, cap=2)
+    assert aborted_reason == "max_tool_calls"
+    assert consumed == 1
+
+
+def test_a_run_at_the_tool_calls_cap_is_not_ended(tmp_path, monkeypatch):
+    """Reaching the cap exactly is allowed; only exceeding it ends the run."""
+    aborted_reason, consumed = _run_with_mcp_calls(tmp_path, monkeypatch, n_calls=2, cap=2)
+    assert aborted_reason is None
+    assert consumed == 3
 
 
 def _result(session="S1"):
@@ -751,3 +810,62 @@ def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monk
     assert "status" in text, text
     assert "proof-conclusion" in text, text
     assert "outside this agent's lane" not in text, text
+
+
+# ── the SDK's per-model ledger (T1.11) ──
+
+
+def _usage_after(tmp_path, monkeypatch, result_message):
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        messages = [SystemMessage(subtype="init", data={"session_id": "S1"}), result_message]
+        return _HookDrivingAgent(hook, [], messages, {})
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    result = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )
+    return result[2]
+
+
+def test_the_sdks_per_model_ledger_is_kept_on_the_result_path(tmp_path, monkeypatch):
+    ledger = {"claude-sonnet-4-6": {"inputTokens": 5, "costUSD": 1.0},
+              "claude-haiku-4-5-20251001": {"inputTokens": 2, "costUSD": 0.01}}
+    message = _result()
+    message.model_usage = ledger
+    assert _usage_after(tmp_path, monkeypatch, message)["model_usage"] == ledger
+
+
+def test_no_ledger_means_the_key_is_absent_not_null(tmp_path, monkeypatch):
+    assert "model_usage" not in _usage_after(tmp_path, monkeypatch, _result())
+
+
+def test_a_run_with_no_result_message_carries_no_ledger(tmp_path, monkeypatch):
+    """The abort path (`_fallback_usage`): no ResultMessage ever arrived, so
+    there is no ledger to keep — the key is absent, never null or {}."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingAgent(hook, [], [SystemMessage(subtype="init", data={"session_id": "S1"})], {})
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    usage = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )[2]
+    assert usage is not None and usage.get("total_cost_usd") is None  # the fallback block
+    assert "model_usage" not in usage

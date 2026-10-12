@@ -5,15 +5,22 @@ Blocking rules plus two warn-only rules (2b, 2f) per
 docs/plan/eval-runlog-versioning.md §C6:
 
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
-    Rule 2   latest full-skill run log per touched skill is "active on
-             skill-side files" (snapshot matches working tree).
-    Rule 2b  (warn-only) the same run log's judge_prompt_hash matches
-             eval/harness/judge/prompt.md.
+    Rule 2   the graded run log per touched skill is "active on skill-side
+             files" (snapshot matches working tree). That is the run log this
+             PR adds (a released v{N}.json it adds, else its newest
+             candidate), or, for a PR that adds none, the latest full-skill
+             run log on disk.
+    Rule 2b  BLOCKS on a PR that touches eval/harness/judge/prompt.md:
+             every suite's latest run log must carry the current
+             judge_prompt_hash; satisfy with `make judge-regrade`.
+             Downgrades to a warning on a run log rule 2 already
+             reports skill-side stale (a regrade cannot satisfy a log
+             that owes a paid `make eval-skill` run).
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale
              (#1094 — see rule2_fixture_touched for why it only warns).
-    Rule 3   the same run log's .ann.json has corrections for every
+    Rule 3   the graded run log's .ann.json has corrections for every
              (test_id, dimension_source, dimension_name) triple of the tests
              named in its `review_sample` (3 rotation + 1 targeted + 1
              random, plus every test that failed, scored a 1 or 2 on any dimension, or
@@ -141,6 +148,43 @@ def gh_error(message: str, *, file: str | None = None) -> None:
 def gh_warning(message: str, *, file: str | None = None) -> None:
     prefix = f"::warning file={file}::" if file else "::warning::"
     print(f"{prefix}{message}")
+
+
+def head_candidates_by_skill() -> dict[str, set[str]] | None:
+    """Candidate run-log filenames per skill AS OF THE PR'S OWN HEAD COMMIT.
+
+    Rule 7 otherwise reads them from the working tree, and CI checks out the
+    MERGE commit (`check-runlogs.yml`, `actions/checkout@v7`). On a branch behind
+    a main that also ran the same skill, the merge tree holds main's candidates
+    too, which widens the prunable set and accepts a hand-deletion the PR's own
+    tree would flag -- measured by clack391 on #3306 as main 1 error against 0.
+
+    Returns None when HEAD_SHA is unset (a local run, and every unit test), where
+    the working tree IS the PR's tree and the directory scan is already correct.
+    """
+    head = os.environ.get("HEAD_SHA")
+    if not head:
+        return None
+    try:
+        out = subprocess.check_output(
+            ["git", "ls-tree", "-r", "--name-only", head, "--", str(RUNLOGS_DIR)],
+            text=True,
+            encoding="utf-8",
+        )
+    except (subprocess.CalledProcessError, OSError):
+        # Fail OPEN to the directory scan rather than crash the whole check: a
+        # listing we cannot read is not a reason to stop grading deletions.
+        return None
+    listing: dict[str, set[str]] = {}
+    for line in out.splitlines():
+        parts = line.strip().split("/")
+        if len(parts) < 2:
+            continue
+        name = parts[-1]
+        if classify(name).kind != "candidate":
+            continue
+        listing.setdefault(parts[-2], set()).add(name)
+    return listing
 
 
 def git_diff_changes() -> list[tuple[str, str | None]]:
@@ -362,6 +406,50 @@ def resolve_latest_runlog(
     return "ok", latest
 
 
+def pr_added_runlog(skill_dir: Path, added: list[str]) -> str | None:
+    """The run log rules 2, 2b and 3 grade for a skill: the one this PR adds.
+
+    `added` is the skill's entry in `added_by_skill`: released and candidate
+    names only, `.ann.json` and scratch already excluded. A released `v{N}.json`
+    wins, because the candidate -> release rename arrives as an add (rule 1
+    allows one; if there were two, the higher version). Otherwise the newest
+    candidate by (version, timestamp), the order `prunable_candidates` sorts by:
+    a PR can add several iterations, and the newest is the run it ships. Rule 6
+    still grades every one of them.
+
+    Returns None when the PR adds no run log; the caller then falls back to
+    `resolve_latest_runlog`, exactly as it did before this existed.
+
+    A name with no file in `skill_dir` is dropped first. `added` comes from a git
+    diff and the files from disk, and the two can disagree
+    (`test_added_runlog_still_marks_skill_touched` lists a name nothing wrote).
+    Without this the caller's parse raises FileNotFoundError, which nothing there
+    catches.
+    """
+    released: list[tuple[int, str]] = []
+    candidates: list[tuple[int, str, str]] = []
+    for name in added:
+        if not (skill_dir / name).is_file():
+            continue
+        c = classify(name)
+        if c.kind == "released" and c.version is not None:
+            released.append((c.version, name))
+        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
+            candidates.append((c.version, c.timestamp, name))
+    if released:
+        return max(released)[1]
+    if candidates:
+        return max(candidates)[2]
+    return None
+
+
+# How the messages of rules 2, 2b and 3 name the run log they graded, and why that
+# one. `main()` passes the first when the PR adds a run log and the second when it
+# adds none; the third is the default for a caller that does not say.
+GRADED_ADDED = "the run log this PR adds"
+GRADED_FALLBACK = "the latest full-skill run log on disk (this PR adds none)"
+GRADED_DEFAULT = "the latest full-skill run log"
+
 COSMETIC_SKIP_LABEL_PREFIX = "eval-cosmetic-skip:"
 
 
@@ -378,8 +466,13 @@ def cosmetic_skip_labels() -> set[str]:
     return {line.strip() for line in raw.splitlines() if line.strip()}
 
 
-def rule2_active(skill: str, log: dict, filename: str) -> int:
-    """Rule 2 (blocking): latest run log's snapshot matches disk.
+def rule2_active(
+    skill: str, log: dict, filename: str, *, graded: str = GRADED_DEFAULT
+) -> int:
+    """Rule 2 (blocking): the graded run log's snapshot matches disk.
+
+    `graded` says which log that is and why, for the messages: `main()` passes
+    the run log this PR adds, or the latest on disk when the PR adds none.
 
     Cosmetic-skip escape hatch, per skill: when the PR carries the label
     `eval-cosmetic-skip:<skill>` (applied by a senior, passed in by the
@@ -404,7 +497,7 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
     labels = cosmetic_skip_labels()
     if label in labels:
         gh_warning(
-            f"skill `{skill}`: latest run log `{filename}` differs from the working "
+            f"skill `{skill}`: `{filename}`, {graded}, differs from the working "
             f"tree in {len(diffs)} file(s), but the `{label}` label bypasses rule 2 "
             f"for this skill — no re-run required. Confirm the change is "
             f"behavior-neutral before approving.\n" + diff_lines,
@@ -417,7 +510,7 @@ def rule2_active(skill: str, log: dict, filename: str) -> int:
         else ""
     )
     gh_error(
-        f"skill `{skill}`: latest full-skill run log `{filename}` is NOT active — "
+        f"skill `{skill}`: `{filename}`, {graded}, is NOT active — "
         f"{len(diffs)} snapshot file(s) differ from the working tree. Re-run the "
         f"harness (`uv run python eval/harness/run_tests.py --skill {skill}`) so "
         f"the run log reflects the PR-branch state. If this skill's change is "
@@ -471,17 +564,66 @@ def rule2_fixture_touched(
     )
 
 
-def rule2b_judge_prompt(skill: str, log: dict, filename: str) -> None:
-    """Rule 2b (warn-only): judge_prompt_hash matches current judge prompt."""
+def rule2b_judge_prompt(
+    skill: str,
+    log: dict,
+    filename: str,
+    *,
+    graded: str = GRADED_DEFAULT,
+    judge_prompt_edited: bool = False,
+) -> int:
+    """Rule 2b: judge_prompt_hash matches current judge prompt.
+
+    BLOCKS on a PR that touches `eval/harness/judge/prompt.md`
+    (`judge_prompt_edited=True`): every suite's latest run log must carry the
+    current hash; satisfy with `make judge-regrade`. On any other PR a
+    mismatch stays warn-only — a mixed-era corpus is expected across
+    judge-prompt cadences, and the cheap satisfaction path only exists when
+    the PR itself is the thing moving the hash.
+
+    **Exception.** On a run log whose snapshot is already stale against the
+    working tree (skill-side; rule 2 blocks for its own reason), rule 2b
+    downgrades to a warning: a regrade cannot be taken on that log, so
+    blocking it would owe a paid `make eval-skill` run that this PR is not
+    asking for.
+
+    `graded` is as for `rule2_active`. Returns 1 on block, 0 otherwise.
+    """
     expected = log.get("judge_prompt_hash") or ""
     actual = hash_file("eval/harness/judge/prompt.md", JUDGE_PROMPT_PATH)
-    if expected and actual and expected != actual:
+    if not (expected and actual and expected != actual):
+        return 0
+    # Skill-side stale? Downgrade to warn.
+    snap = log.get("snapshot") or {}
+    skill_side_stale = len(diff_snapshot_vs_disk(snap, REPO_ROOT)) > 0
+    header = (
+        f"skill `{skill}`: `{filename}`, {graded}, was scored against an "
+        f"older judge prompt (hash {expected[:12]}…). Current judge prompt "
+        f"hash is {actual[:12]}…."
+    )
+    if skill_side_stale:
         gh_warning(
-            f"skill `{skill}`: latest run log `{filename}` was scored against an "
-            f"older judge prompt (hash {expected[:12]}…). Current judge prompt "
-            f"hash is {actual[:12]}…. Re-running would likely produce different "
-            f"scores — interpret the corrected mean cautiously.",
+            f"{header} Rule 2 already reports this log as skill-side stale, "
+            f"so rule 2b warns rather than blocks — a `make judge-regrade` "
+            f"cannot satisfy a log that owes a paid `make eval-skill` run.",
         )
+        return 0
+    if not judge_prompt_edited:
+        # PR did not touch eval/harness/judge/prompt.md, so a hash mismatch
+        # is expected (a mixed-era corpus across judge-prompt cadences).
+        # Warn so the reviewer can note it, but do not block.
+        gh_warning(
+            f"{header} Re-running would likely produce different scores — "
+            f"interpret the corrected mean cautiously.",
+        )
+        return 0
+    gh_error(
+        f"{header} Satisfy by running `make judge-regrade` and committing the "
+        f"refreshed run log in this PR. (A regrade stamps the new hash + judge "
+        f"model and costs ~$0.25/skill of judge-only spend; it leaves the "
+        f"skill output and the `.ann.json` alone.)",
+    )
+    return 1
 
 
 def _is_confirmed_non_failing(correction: dict) -> bool:
@@ -496,9 +638,17 @@ def _is_confirmed_non_failing(correction: dict) -> bool:
     return llm == corrected and llm in (3, None)
 
 
-def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) -> int:
+def rule3_completeness(
+    skill: str,
+    log: dict,
+    filename: str,
+    skill_dir: Path,
+    *,
+    graded: str = GRADED_DEFAULT,
+) -> int:
     """Rule 3 (blocking): every dimension of each sampled test has a correction
     entry in .ann.json, and each that is not a confirmed pass carries a comment.
+    `graded` is as for `rule2_active`.
 
     Falls back to the pre-sampling every-dimension rule when the run log has no
     `review_sample`, or when the one it has cannot be trusted (see the three
@@ -507,7 +657,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     ann_path = skill_dir / ann_filename
     if not ann_path.exists():
         gh_error(
-            f"skill `{skill}`: latest run log `{filename}` has no annotation file "
+            f"skill `{skill}`: `{filename}`, {graded}, has no annotation file "
             f"(`{ann_filename}` missing). Review the sampled tests before opening "
             f"the PR.",
         )
@@ -521,8 +671,8 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         ann = json.loads(ann_path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
         gh_error(
-            f"skill `{skill}`: annotation `{ann_filename}` is not valid JSON "
-            f"({exc}). Restore the last valid version from git, or delete it "
+            f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, is not "
+            f"valid JSON ({exc}). Restore the last valid version from git, or delete it "
             f"and re-annotate in the CRUD UI — never hand-edit it.",
         )
         return 1
@@ -542,9 +692,9 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     ]
     if malformed:
         gh_error(
-            f"skill `{skill}`: annotation `{ann_filename}` has {len(malformed)} "
-            f"of {len(corrections)} correction(s) missing required keys "
-            f"{REQUIRED_KEYS} — likely hand-written or in the deprecated "
+            f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, has "
+            f"{len(malformed)} of {len(corrections)} correction(s) missing required "
+            f"keys {REQUIRED_KEYS} — likely hand-written or in the deprecated "
             f"run_index/dimension/source shape. Annotations must be produced by "
             f"the CRUD UI, not written by hand. Delete the file and re-review "
             f"every dimension in the UI.",
@@ -569,8 +719,8 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
     ungraded = zero_dimension_test_ids(tests)
     if ungraded:
         gh_warning(
-            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}` have no "
-            f"reviewable dimensions, so nothing is required of them here: "
+            f"skill `{skill}`: {len(ungraded)} test(s) in `{filename}`, {graded}, "
+            f"have no reviewable dimensions, so nothing is required of them here: "
             f"{', '.join(ungraded[:5])}. Read their `aborted_reason` / judge "
             f"`error` before treating this run as a clean pass.",
         )
@@ -601,15 +751,15 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
                      f"({', '.join(sorted(unknown)[:3])})"
             )
             gh_warning(
-                f"skill `{skill}`: `{filename}`'s `review_sample` {reason}; "
-                f"ignoring it and requiring every dimension. The harness writes "
+                f"skill `{skill}`: the `review_sample` of `{filename}`, {graded}, "
+                f"{reason}; ignoring it and requiring every dimension. The harness writes "
                 f"this field — a hand-edited one is not trusted.",
             )
             required_test_ids = None
         elif not required_test_ids & gradeable:
             gh_warning(
-                f"skill `{skill}`: `{filename}`'s `review_sample` names only "
-                f"tests with no graded dimensions, so it would require nothing; "
+                f"skill `{skill}`: the `review_sample` of `{filename}`, {graded}, "
+                f"names only tests with no graded dimensions, so it would require nothing; "
                 f"requiring every dimension instead.",
             )
             required_test_ids = None
@@ -649,7 +799,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         if uncommented:
             shown = ", ".join(f"{t}/{s}/{n}" for t, s, n in sorted(uncommented)[:5])
             gh_error(
-                f"skill `{skill}`: annotation `{ann_filename}` has "
+                f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, has "
                 f"{len(uncommented)} sampled correction(s) with no comment "
                 f"(e.g., {shown}). The sample is small so each test in it gets "
                 f"read — write a sentence on any dimension that is not a "
@@ -669,7 +819,7 @@ def rule3_completeness(skill: str, log: dict, filename: str, skill_dir: Path) ->
         else f"every dimension of the {len(required_test_ids)} sampled test(s)"
     )
     gh_error(
-        f"skill `{skill}`: annotation `{ann_filename}` is incomplete — "
+        f"skill `{skill}`: annotation `{ann_filename}`, for {graded}, is incomplete — "
         f"{len(missing)} dimension(s) are unreviewed (e.g., {sample}). "
         f"Review {scope} in the CRUD UI before opening the PR.",
     )
@@ -880,8 +1030,116 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     return bad
 
 
+def _promoted_candidate_names(
+    skill_dir: Path, added: list[str], deleted_candidates: set[str]
+) -> set[str]:
+    """Filenames of the candidates this PR's added releases were promoted from.
+
+    `v{N}.json` carries the `timestamp` of the run, not of the release, so the
+    candidate it consumed was `v{N}_{timestamp}.json`.
+
+    Synthesis is SKIPPED when a candidate of that version is already among the
+    deletions, and that skip is what makes this safe. It covers two shapes, not
+    one. The first is the merge-base promotion. The second is a SAME-PR run and
+    release whose prune happens to carry the released version: there the first
+    two terms do not reconstruct the directory either, but main's own
+    `c.version in added_released_versions` exemption already accepts that
+    deletion, so synthesizing would add nothing and is declined
+    (`test_rule7_version_skip_and_mains_version_exemption_compose`). The first is
+    the merge-base shape,
+    where the rename shows as `D` and the union is complete unaided. The first
+    draft deduped on the synthesized STRING instead, which a one-second drift
+    between the envelope `timestamp` and the candidate filename defeats: the
+    phantom name becomes a sixth member, buys a free prunable slot, and a
+    hand-deletion of a WITHIN-keep candidate is then accepted. That was a
+    regression against the old arithmetic, not a pre-existing hole, and it was
+    reproduced before this guard replaced the string compare.
+
+    Returns the empty set when the file is unreadable, when `json.loads` yields
+    anything but an object, or when it carries no usable `timestamp` -- the
+    conservative direction, since a missing name only shrinks the prunable set
+    back to today's behaviour.
+
+    A malformed-but-present `timestamp` is NOT rejected here: it is synthesized
+    and then ignored downstream, because `prunable_candidates` drops any name it
+    cannot parse as a candidate. Only a WELL-FORMED timestamp can move the
+    arithmetic, which is why the version-keyed skip above, not name validation,
+    is the guard that matters.
+    """
+    # Synthesize NOTHING if this PR also ADDED a candidate for the skill. A write
+    # that lands after the release refills the slot the promotion emptied, so
+    # crediting the promoted candidate as well describes a directory that never
+    # existed and authorises one deletion more than the harness ever performed.
+    # Measured: run -> release -> run again prunes ONCE (the release leaves the
+    # dir at 4, so the second write prunes nothing), yet the credited union makes
+    # TWO deletions prunable, waving through a hand-deletion of committed grading.
+    #
+    # The cost of this bail-out is the run -> run -> release shape, where two
+    # prunes really did happen and the second still reads as a hand-deletion.
+    # That is the behaviour on main today, so this is not a regression. The fix
+    # opens ONE bounded hole, pinned by
+    # `test_rule7_a_release_with_no_matching_deletion_buys_one_slot`: a released
+    # log whose version is absent from the deletions is indistinguishable from a
+    # real promotion by filename alone, so it buys a single slot (the oldest) at
+    # the keep boundary. Rule 7 guards grading that cannot be recovered, so a
+    # surviving false positive beats a wider hole.
+    if any(classify(n).kind == "candidate" for n in added):
+        return set()
+
+    deleted_versions = {
+        v
+        for n in deleted_candidates
+        if (v := classify(n).version) is not None
+    }
+    # `kind == "released"` is an INVARIANT here, not a live filter, and no input can
+    # distinguish its removal: the bail-out above returns early if any added name is a
+    # candidate, and `classify` gives a non-None version to released and candidate
+    # names only -- so everything reaching this line with a version IS a release. It is
+    # kept because it states the set being built and would start doing work the moment
+    # the bail-out moved; it is not break-tested because it cannot be (clack391, #3306).
+    releases = [
+        c
+        for name in added
+        if (c := classify(name)).kind == "released" and c.version is not None
+    ]
+    # At most ONE release may synthesize. Two promotions in one PR would credit
+    # two emptied slots and authorise two deletions where the harness performed
+    # one per write; measured as 0 errors here against 2 on main for
+    # run -> release -> run -> release. `rule1_max_one_released` already fails
+    # that PR, but rule 7 should be right on its own rather than leaning on
+    # another rule's verdict, and its docstring claims it reconstructs the
+    # directory.
+    if len(releases) != 1:
+        return set()
+
+    out: set[str] = set()
+    for c in releases:
+        name = f"v{c.version}.json"
+        if c.version in deleted_versions:
+            continue
+        try:
+            doc = json.loads((skill_dir / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(doc, dict):
+            continue  # a valid-JSON array or scalar has no envelope
+        ts = doc.get("timestamp")
+        if not isinstance(ts, str) or not ts.strip():
+            continue
+        # NOT ts.strip(): the blank check above uses strip() to reject an
+        # all-whitespace envelope, but padding inside a real value is corruption,
+        # and silently repairing it would synthesize a name the release flow never
+        # wrote. Left as-is, a padded timestamp yields a name
+        # `prunable_candidates` cannot parse, so it buys no slot -- the same
+        # fail-closed direction every other guard here takes.
+        out.add(f"v{c.version}_{ts}.json")
+    return out
+
+
 def rule7_deletions(
-    deleted_paths: set[str], added_by_skill: dict[str, list[str]]
+    deleted_paths: set[str],
+    added_by_skill: dict[str, list[str]],
+    head_listing: dict[str, set[str]] | None = None,
 ) -> int:
     """Rule 7 (blocking): a deleted run log / annotation must be a legitimate
     keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
@@ -892,8 +1150,11 @@ def rule7_deletions(
     of the names, and `prune_old_candidates` deletes exactly its output plus each
     pruned log's `.ann.json` (and `runs/` sidecars). So per skill a deletion is a
     legitimate prune iff the deleted candidate is in
-    `prunable_candidates(head_candidates ∪ deleted_candidates, keep=K)` — the
-    union reconstructs what the dir held before the prune. The #2579 incident
+    `prunable_candidates(head_candidates ∪ deleted_candidates ∪ promoted_candidates,
+    keep=K)` — the union reconstructs what the dir held before the prune. The third
+    term is the candidate a same-PR release was promoted FROM: it is neither at
+    head nor deleted, and without it the union undercounts by one and flags the
+    harness's own prune. The #2579 incident
     (`v1_2026-09-03_11-42-59.{json,ann.json}` dropped with 4 candidates on disk
     where the rule keeps 5) recomputes to an empty prunable set and is flagged.
 
@@ -932,16 +1193,41 @@ def rule7_deletions(
         deleted_candidate_json = {
             n for n in deleted_names if classify(n).kind == "candidate"
         }
+        # The PR's OWN head tree when main() could read it, else the working tree.
+        # Under CI the two differ: the checkout is the MERGE commit, so the scan
+        # would also see candidates main contributed (clack391, #3306).
         head_candidate_json: set[str] = set()
-        if skill_dir.is_dir():
+        if head_listing is not None:
+            head_candidate_json = set(head_listing.get(skill, set()))
+        elif skill_dir.is_dir():
             head_candidate_json = {
                 p.name
                 for p in skill_dir.iterdir()
                 if p.is_file() and classify(p.name).kind == "candidate"
             }
+        # A candidate WRITTEN AND PROMOTED inside this PR is in neither set above:
+        # it is no longer a candidate at head (it is `v{N}.json` now) and it was
+        # never deleted (the rename is a net add in the three-dot diff). The
+        # union would lose a member and, at the cap, `prunable_candidates` would
+        # return nothing -- flagging the prune the harness itself performed when
+        # it wrote that very run. Reconstruct the consumed candidate's filename
+        # from the released log's envelope `timestamp`, which the release flow
+        # preserves by contract (`eval/app/lib/release.ts:5`, "`timestamp` is
+        # kept"). A candidate that existed at the merge-base needs no synthesis:
+        # its rename shows as `D`, so the VERSION-KEYED skip in
+        # `_promoted_candidate_names` declines to synthesize for it. An earlier
+        # draft relied on the synthesized string colliding with that deletion
+        # instead, which a one-second timestamp drift defeated.
+        promoted_candidate_json = _promoted_candidate_names(
+            skill_dir, added_by_skill.get(skill, []), deleted_candidate_json
+        )
         prunable = set(
             prunable_candidates(
-                list(head_candidate_json | deleted_candidate_json),
+                list(
+                    head_candidate_json
+                    | deleted_candidate_json
+                    | promoted_candidate_json
+                ),
                 keep=DEFAULT_KEEP_CANDIDATES,
             )
         )
@@ -1300,6 +1586,20 @@ def main() -> int:
     fixture_touched_skills -= touched_skills
     touched_skills -= exempt_suiteless
 
+    # Judge-prompt arm (issue #2479 PR 1): if the PR touches
+    # `eval/harness/judge/prompt.md`, every suite in the corpus — minus the
+    # suiteless exemptions — joins `judge_prompt_touched_skills` and faces
+    # rule 2b. Does NOT join `touched_skills` (that would make rules 2 and 3
+    # fire on 23+ unrelated suites for a prose-only prompt edit); fires rule 2b
+    # alone. Blocking satisfaction is `make judge-regrade`.
+    judge_prompt_touched_skills: set[str] = set()
+    if "eval/harness/judge/prompt.md" in touched_paths:
+        if RUNLOGS_DIR.is_dir():
+            judge_prompt_touched_skills = {
+                p.name for p in RUNLOGS_DIR.iterdir() if p.is_dir()
+            }
+        judge_prompt_touched_skills -= exempt_suiteless
+
     # Drop DELETED skills: when a PR removes a skill entirely — its skill dir
     # AND its unit-test dir are both absent from the working tree — there is
     # nothing left to re-run, so rules 2 + 3 have no gate target. Historical
@@ -1348,33 +1648,76 @@ def main() -> int:
     # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
     # rule that destroys committed grading. Keyed on the same deleted set rule 3
     # reads and the merge-base-safe `added_by_skill` main() already computed.
-    fails += rule7_deletions(deleted_paths, added_by_skill)
+    fails += rule7_deletions(
+        deleted_paths, added_by_skill, head_listing=head_candidates_by_skill()
+    )
 
     graded_logs = graded_tests = 0
+
+    # Rule 2b blocks when the PR itself edits the judge prompt (issue #2479 PR 1):
+    # that is the only case where `make judge-regrade` is the satisfaction path.
+    # On every other PR a hash mismatch stays warn-only. Flag resolved once so
+    # the main loop and the secondary suite loop below see the same value.
+    judge_prompt_edited = "eval/harness/judge/prompt.md" in touched_paths
 
     for skill in sorted(touched_skills):
         fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
         skill_dir = RUNLOGS_DIR / skill
-        status, latest = resolve_latest_runlog(skill_dir)
-        if status == "no_dir":
-            gh_error(
-                f"skill `{skill}` was touched but has no run logs at "
-                f"`eval/runlogs/unit/{skill}/`. Re-run the harness with "
-                f"`--skill {skill}` and commit the result before opening this PR.",
+        # Rules 2, 2b and 3 grade the run log THIS PR adds, for the reason rule 6
+        # does (see `added_by_skill`): `latest_full_skill_runlog` prefers ANY
+        # released `v{N}.json`, so once main has released one newer than the PR's
+        # own candidate it is graded in the candidate's place and the PR's run is
+        # checked by nothing. One log, the one that decides the PR
+        # (`pr_added_runlog`), not every iteration it adds: an earlier stale
+        # candidate is not what the PR ships, and rule 6 below still grades them
+        # all. A PR that adds none (SKILL.md-only, annotation-only, cosmetic-skip)
+        # resolves exactly as it always did.
+        target: tuple[str, dict] | None
+        added_name = pr_added_runlog(skill_dir, added_by_skill.get(skill, []))
+        if added_name is not None:
+            graded = GRADED_ADDED
+            try:
+                target = (
+                    added_name,
+                    json.loads((skill_dir / added_name).read_text(encoding="utf-8")),
+                )
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                # Nothing to grade. The rule 6 loop below parses this same file and
+                # reports it as unreadable, so skip rules 2, 2b and 3 and fall
+                # through to it. NOT `continue`: that would skip rule 6 as well,
+                # nothing else reports the file, and the PR would pass.
+                target = None
+        else:
+            graded = GRADED_FALLBACK
+            status, target = resolve_latest_runlog(skill_dir)
+            if status == "no_dir":
+                gh_error(
+                    f"skill `{skill}` was touched but has no run logs at "
+                    f"`eval/runlogs/unit/{skill}/`. Re-run the harness with "
+                    f"`--skill {skill}` and commit the result before opening this PR.",
+                )
+                fails += 1
+                continue
+            if status == "no_runlog":
+                gh_error(
+                    f"skill `{skill}` was touched but has no full-skill run log. "
+                    f"Re-run the harness with `--skill {skill}` to produce one.",
+                )
+                fails += 1
+                continue
+        if target is not None:
+            filename, log = target
+            fails += rule2_active(skill, log, filename, graded=graded)
+            fails += rule2b_judge_prompt(
+                skill,
+                log,
+                filename,
+                graded=graded,
+                judge_prompt_edited=judge_prompt_edited,
             )
-            fails += 1
-            continue
-        if status == "no_runlog":
-            gh_error(
-                f"skill `{skill}` was touched but has no full-skill run log. "
-                f"Re-run the harness with `--skill {skill}` to produce one.",
+            fails += rule3_completeness(
+                skill, log, filename, skill_dir, graded=graded
             )
-            fails += 1
-            continue
-        filename, log = latest
-        fails += rule2_active(skill, log, filename)
-        rule2b_judge_prompt(skill, log, filename)
-        fails += rule3_completeness(skill, log, filename, skill_dir)
         # Rule 6 grades the log(s) this PR added. Rule 1 caps released logs at one
         # per skill but does not bound candidates, and it never short-circuits
         # main(), so N added logs are all graded -- any red in any of them blocks.
@@ -1424,6 +1767,25 @@ def main() -> int:
             continue
         filename, log = latest
         rule2_fixture_touched(skill, log, filename, touched_fixture_paths)
+
+    # Judge-prompt arm (issue #2479 PR 1): fires rule 2b on every suite in
+    # `judge_prompt_touched_skills`. Empty set on a non-prompt PR → no-op. On a
+    # judge-prompt-only PR this is the gate `make judge-regrade` satisfies.
+    # Skills already in `touched_skills` ran rule 2b in the main loop above with
+    # the same `judge_prompt_edited=True` flag; skip them here to avoid a
+    # duplicate annotation (the main loop's `graded` value is the honest one).
+    for skill in sorted(judge_prompt_touched_skills - touched_skills):
+        skill_dir = RUNLOGS_DIR / skill
+        status, latest = resolve_latest_runlog(skill_dir)
+        if status in ("no_dir", "no_runlog"):
+            # No baseline to check — rule 2b has nothing to say. A skill with no
+            # committed full-skill log is already surfaced by rule 2 if the PR
+            # touches it directly; otherwise silence is correct here.
+            continue
+        filename, log = latest
+        fails += rule2b_judge_prompt(
+            skill, log, filename, judge_prompt_edited=True
+        )
 
     # Every way rule 6 can end up inert also prints a clean pass, so it reports its
     # denominator -- the same standard eval/CLAUDE.md sets for conflict_verdict_report.

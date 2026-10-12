@@ -25,6 +25,7 @@ import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
+import { treeGapsToolSchema } from "./tools/tree-gaps.js";
 import { samePersonSchema } from "./tools/same-person.js";
 import {
   personRecordMatchesSchema,
@@ -47,6 +48,7 @@ import { volumeSearchSchema } from "./tools/volume-search.js";
 import { mergeTreePersonsSchema } from "./tools/merge-tree-persons.js";
 import { researchLogAppendSchema } from "./tools/research-log-append.js";
 import { convertCalendarSchema } from "./tools/convert-calendar.js";
+import { censusChildrenGapSchema } from "./tools/census-children-gap.js";
 import { treeEditSchema } from "./tools/tree-edit.js";
 import { treeCorrectSchema } from "./tools/tree-correct.js";
 import { treeForgetSchema } from "./tools/tree-forget.js";
@@ -90,6 +92,7 @@ export const allToolSchemas = [
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,
+  treeGapsToolSchema,
   samePersonSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
@@ -110,6 +113,7 @@ export const allToolSchemas = [
   mergeTreePersonsSchema,
   researchLogAppendSchema,
   convertCalendarSchema,
+  censusChildrenGapSchema,
   treeEditSchema,
   treeCorrectSchema,
   treeForgetSchema,

@@ -64,12 +64,13 @@ any stubbed name is denied too and ends the run.
 
 ## What is NOT covered (and why)
 
-Two routing-table rows are blocked on #1492 (research/SKILL.md reconciliation):
-
-- **Row 14 post-verdict**: the `address_first` verdict handler has two
-  contradictory tables. The routing decision TO `proof-critique` is testable;
-  the handler for its return is not.
-- **Row 16**: who writes `project.status = "completed"` — the routing table,
+- **Second-opinion hand-off and verdict handling**: gps-mentor is not a
+  routing row; it runs only on request. Neither the on-demand hand-off nor what
+  the router does with the returned verdict is tested. A `/research` entry
+  never records `research` as invoked, so a positive test of the hand-off fails
+  even when it routes correctly; a bare second-opinion request bypasses the
+  router and spawns gps-mentor directly (9 of 9 scratch runs, three wordings).
+- **Row 16** (blocked on #1492, research/SKILL.md reconciliation): who writes `project.status = "completed"` — the routing table,
   the ownership validator, the tool comments, and the empirical run logs all
   disagree. Cannot test until the ruling lands.
 
@@ -142,6 +143,15 @@ is the failure. Deterministic, via the `attached-first` tag and
 `test_reads_attachments_before_searching`, which reads the MCP call log and the
 hand-off list so a turn that only narrates having checked cannot pass.
 
+`ut_research_c1k` (`compound-bounded-ask.json`) pins the COMPOUND direction: a
+message asking for two deliverables that are each on the list is still bounded.
+It grades with `delivers:<skill>` tags rather than `routes-to:`, and the reason is
+worth knowing before copying either. `routes-to:` asserts only the FIRST hand-off,
+so on a compound ask it passes a turn that delivers one and silently drops the
+other — which is precisely the pre-change behaviour. A blind review proved that by
+executing the validator against four synthetic run shapes. `delivers:` requires a
+hand-off for every tag, in any order, because the skill body imposes no ordering.
+
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock
 registers a tool outside that set *only* for a test that declares a fixture for it
@@ -193,5 +203,12 @@ negatives whose tags (`no-browse-no-write`, `no-browse-on-indexed`) gate
 deterministic validators now in `validators/test_research.py`. They test
 that the research router does not trigger a browse when the request belongs
 to research-plan or search-records.
+
+### Moved from research-exhaustiveness (issue #2738)
+
+- **ut_research_018** (`negative-next-question.json`): near-miss negative — user asks "what should I research next?" (→ question-selection). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
+- **ut_research_024** (`negative-research-plan-exhaustiveness.json`): near-miss negative — user asks to plan more searches (→ research-plan). Tag: `no-exhaustive-declaration`, `grade_on_invariant`. Moved from research-exhaustiveness suite when the routing skill was deleted.
+
+**Future hazard:** ut_research_024 names `correct_skill: ["research-plan"]`; when issue #2116 deletes that skill directory the test will abort at `runnability.py`'s `correct_skill` check. ut_research_018 names `correct_skill: ["question-selection"]`, which is already an agent (not a skill) and remains runnable because the check accepts agent names — but if the agent is ever renamed or deleted, the test aborts the same way.
 
 A live `make e2e-run` remains the only end-to-end instrument.

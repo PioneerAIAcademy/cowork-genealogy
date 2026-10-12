@@ -238,7 +238,7 @@ export interface SamePersonRelativeMatch {
   targetId: string;        // persons[].id in gedcomx1
   candidateId: string;     // persons[].id in gedcomx2
   score: number;           // float 0-1 from FamilySearch (the real answer)
-  confidence?: number;     // integer 1-10 bucket, omitted on no-match
+  confidence?: number;     // integer 1-5 bucket, omitted on no-match
   preScore: number;        // the local heuristic score (transparency/debugging)
 }
 

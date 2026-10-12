@@ -32,7 +32,8 @@
     "wiki-place-page-pennsylvania-research-tips",
     "wiki-place-page-pennsylvania-online-records",
     "volume-search-schuylkill",
-    "collections-search-us-national"
+    "collections-search-us-national",
+    "wiki-read-ireland-military-records"
   ],
   "judge_context": [
     "Plan items should propose at least one substantive next source — probate, post-1860 censuses, FAN research, naturalization, immigration records — and explain in `rationale` why each is expected to advance q_001"
@@ -40,6 +41,6 @@
   "judge_reads_files": true,
   "execution": {
     "max_wall_clock_seconds": 900,
-    "sdk_message_silence_seconds": 300
+    "sdk_message_silence_seconds": 360
   }
 }

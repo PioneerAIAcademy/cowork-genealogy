@@ -59,10 +59,6 @@ const skillsDir = join(repoRoot, "plugin", "skills");
 // test exists to prevent.
 const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
   {
-    path: "init-project/references/research-process-init.md",
-    why: "151 lines of init decision rules and vague-data interpretation; 4 of 23 terms in the body",
-  },
-  {
     path: "record-extraction/references/information-classification-at-extraction.md",
     why: "147 lines of informant analysis incl. the three-informant death-certificate worked example; 2 of 22 terms in the body",
   },
@@ -77,10 +73,6 @@ const UNREACHED_PENDING_ADJUDICATION: Array<{ path: string; why: string }> = [
   {
     path: "record-extraction/references/places-guidance.md",
     why: "byte-identical copy pinned by skill-guidance.test.ts — deleting it fails that lint, so the two must be resolved together",
-  },
-  {
-    path: "research-plan/references/locality-survey-guide.md",
-    why: "79 lines of locality-survey methodology and its research.json mapping; 1 of 22 terms in the body",
   },
 ];
 

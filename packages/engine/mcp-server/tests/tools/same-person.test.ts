@@ -617,6 +617,75 @@ describe("samePerson — project-relative arm", () => {
     expect(treeSide).toBe(true);
   });
 
+  it("leaves out tree facts and names sourced only from the record it scores", async () => {
+    const OTHER = "https://www.familysearch.org/ark:/61903/1:1:CENS-1880";
+    const r = research({
+      sources: [
+        { id: "src_001", gedcomx_source_description_id: "S50" },
+        { id: "src_002", gedcomx_source_description_id: "S60" },
+      ],
+    });
+    r.assertions = r.assertions.map((a: any) => ({ ...a, source_id: "src_001" }));
+    r.assertions.push({
+      id: "a_020", record_id: OTHER, record_role: "head", source_id: "src_002",
+      fact_type: "residence", value: null, record_basis: "stated", log_entry_id: "log_1",
+    });
+    await project(r, {
+      persons: [
+        {
+          id: "I1", gender: "Male",
+          names: [
+            { given: "Thomas", surname: "Flynn" },
+            { given: "Thomas", surname: "Flinn", sources: [{ ref: "S50" }] },
+          ],
+          facts: [
+            { type: "Residence", date: "1875", sources: [{ ref: "S50" }] },
+            { type: "Residence", date: "1880", sources: [{ ref: "S60" }] },
+            { type: "Birth", date: "1844", sources: [{ ref: "#S50" }, { ref: "S60" }] },
+          ],
+        },
+        {
+          id: "I2", gender: "Female",
+          names: [{ given: "Mary", surname: "Doyle", sources: [{ ref: "S50" }] }],
+          facts: [{ type: "Residence", date: "1877", sources: [{ ref: "S50" }] }],
+        },
+      ],
+      relationships: [{ type: "Couple", person1: "I1", person2: "I2" }],
+    });
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+
+    const treeSide = JSON.stringify(JSON.parse(mockFetch.mock.calls[0][1].body).entries[1]);
+    expect(treeSide).not.toContain("1875");
+    expect(treeSide).not.toContain("1877");
+    expect(treeSide).not.toContain("Flinn");
+    expect(treeSide).toContain("1880");
+    expect(treeSide).toContain("1844");
+    expect(treeSide).toContain("Doyle");
+  });
+
+  it("keeps a fact whose source reaches the scored record and another one too", async () => {
+    const OTHER = "https://www.familysearch.org/ark:/61903/1:1:CENS-1880";
+    const r = research({ sources: [{ id: "src_001", gedcomx_source_description_id: "S50" }] });
+    r.assertions = r.assertions.map((a: any) => ({ ...a, source_id: "src_001" }));
+    r.assertions.push({
+      id: "a_020", record_id: OTHER, record_role: "head", source_id: "src_001",
+      fact_type: "residence", value: null, record_basis: "stated", log_entry_id: "log_1",
+    });
+    await project(r, {
+      ...TREE,
+      persons: [
+        { ...TREE.persons[0], facts: [{ type: "Residence", date: "1875", sources: [{ ref: "S50" }] }] },
+        TREE.persons[1],
+      ],
+    });
+    okScore();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL);
+
+    const treeSide = JSON.stringify(JSON.parse(mockFetch.mock.calls[0][1].body).entries[1]);
+    expect(treeSide).toContain("1875");
+  });
+
   it("prefers the record's own GedcomX, and names the persona it scored", async () => {
     recordReadMock.mockResolvedValue({
       persons: [
@@ -901,6 +970,14 @@ describe("buildRecordedScore", () => {
     const r = buildRecordedScore(
       research({ id: "a_001", record_id: "r1", log_entry_id: "log_1" },
                [{ id: "log_1", tool: "record_search", results_ref: "results/log_1.json" }]),
+      "a_001", "I1", undefined, RESULT);
+    expect(r?.record_source).toBe("record_read");
+  });
+
+  it("reads as record_read for an accepted FamilySearch hint (search-hints, #2029)", () => {
+    const r = buildRecordedScore(
+      research({ id: "a_001", record_id: "ark:/61903/1:1:MABC", log_entry_id: "log_1" },
+               [{ id: "log_1", tool: "person_record_matches" }]),
       "a_001", "I1", undefined, RESULT);
     expect(r?.record_source).toBe("record_read");
   });
