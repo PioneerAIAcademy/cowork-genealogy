@@ -508,11 +508,6 @@ a future reviewer, spends that again.
 - The harness's `DENY_PROJECT_READS=1` **strands `search-images`** — it grants `Read`
   but no `research_query`, `project_context` or `sidecar_read` — and breaks the 14
   fixtures shipping `provided-documents/`. Zero committed runs exercise the flag.
-- Deleting the gps-mentor gate means removing, **in one change**, the `research_append`
-  completion precondition, the harness's `find_missing_mentor_verdicts` detector and
-  the gate rows in `skills/research/SKILL.md`. Leaving the precondition makes
-  `project.status = "completed"` unreachable, and the run walls at the cap. Issue
-  #2951 carries the site list.
 - Granting `search-images` an MCP read route needs **all three server spellings** plus
   the `AGENT_PERMISSIONS` snapshot in the same commit.
 - Experiment runs write into `eval/runlogs/e2e` by default — corpus pollution.
