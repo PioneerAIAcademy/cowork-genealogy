@@ -1596,3 +1596,53 @@ def test_surname_hint_degrades_with_a_warning_on_node_failure(tmp_path, monkeypa
 def test_node_module_url_is_the_one_import_specifier(monkeypatch, platform, path, expected):
     monkeypatch.setattr(mock_mcp.sys, "platform", platform)
     assert mock_mcp._node_module_url(path) == expected
+
+
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize(
+    "notes, refused",
+    [
+        ("One result: Patrick Flynn in household of Thomas Flynn and Mary Flynn.", True),
+        (
+            "One result: Patrick Flynn in one dwelling with Thomas and Mary Flynn; "
+            "family structure inferred from surname, ages and order, not stated.",
+            False,
+        ),
+    ],
+    ids=["unhedged-refused", "hedged-logged"],
+)
+def test_live_log_append_applies_the_census_check_to_a_staged_1850_search(tmp_path, notes, refused):
+    """The production census check runs on the eval write path: a staged 1850
+    `record_search` logged with an unhedged household note is refused by the
+    compiled `research_log_append`, and the hedged note is logged."""
+    import shutil
+
+    scenario = REPO_ROOT / "eval/fixtures/scenarios/flynn-first-plan"
+    for name in ("research.json", "tree.gedcomx.json"):
+        shutil.copy(scenario / name, tmp_path / name)
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_search", {**_ECHO_ARGS, "projectPath": str(tmp_path)})
+    )
+    ref = (body.get("staged") or {}).get("resultsRef")
+    assert ref, "test assumes staging succeeded — check the build"
+    result = _invoke(
+        tools_by_name,
+        "research_log_append",
+        {
+            "projectPath": str(tmp_path),
+            "tool": "record_search",
+            "outcome": "positive",
+            "resultsExamined": 1,
+            "stagedResultsRef": ref,
+            "notes": notes,
+        },
+    )
+    out = _extract_response_dict(result)
+    if refused:
+        assert out.get("ok") is False and result.get("is_error") is True, out
+        assert "relationship-to-head" in json.dumps(out), out
+    else:
+        assert out.get("ok") is True, out

@@ -17,6 +17,19 @@ describe("patronymicVariants", () => {
     ]);
   });
 
+  it("abbreviates a patronymic followed by a farm name, with and without the farm", () => {
+    expect(patronymicVariants("Halsteinsdatter Bakke")).toEqual([
+      "Halsteinsdr Bakke",
+      "Halsteinsdtr Bakke",
+      "Halsteinsd Bakke",
+      "Halsteinsdr",
+      "Halsteinsdtr",
+      "Halsteinsd",
+    ]);
+    expect(patronymicVariants("Halsteinsdatter-Bakke")[0]).toBe("Halsteinsdr-Bakke");
+    expect(patronymicVariants("Monsen Bakke")).toEqual([]);
+  });
+
   it("abbreviates the Swedish -dotter the same way", () => {
     expect(patronymicVariants("Larsdotter")).toEqual(["Larsdr", "Larsdtr", "Larsd"]);
   });

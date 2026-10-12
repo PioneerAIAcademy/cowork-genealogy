@@ -74,20 +74,43 @@ export const SURNAME_VARIANT_HINTS_NOTE =
   "the record is not indexed. These are spellings to TRY, not evidence: a " +
   "record found under one must still be evaluated as this person.";
 
-/** The abbreviated forms of one surname, or [] when it is not a -datter/-dotter
+/** The abbreviated forms of one word, or [] when it is not a -datter/-dotter
  *  patronymic with at least one letter before the ending. */
-export function patronymicVariants(surname: string): string[] {
-  const trimmed = surname.trim();
-  const lower = trimmed.toLowerCase();
+function abbreviateWord(word: string): string[] {
+  const lower = word.toLowerCase();
   for (const [ending, abbreviations] of Object.entries(PATRONYMIC_ABBREVIATIONS)) {
     if (!lower.endsWith(ending)) continue;
-    const stem = trimmed.slice(0, trimmed.length - ending.length);
+    const stem = word.slice(0, word.length - ending.length);
     if (!/\p{L}/u.test(stem)) return [];
-    const written = trimmed.slice(stem.length);
+    const written = word.slice(stem.length);
     const upper = written === written.toUpperCase();
     return abbreviations.map((a) => stem + (upper ? a.toUpperCase() : a));
   }
   return [];
+}
+
+/** The abbreviated forms of one surname, or [] when no word in it is a
+ *  -datter/-dotter patronymic. A tree often stores the patronymic with a farm
+ *  name ("Halsteinsdatter Bakke"; the wiki's three-part example is "John
+ *  Aamundsen Folkedal"), so the patronymic word is abbreviated wherever it sits,
+ *  and each form is offered both with the rest of the name and on its own, as an
+ *  index may carry either. */
+export function patronymicVariants(surname: string): string[] {
+  const trimmed = surname.trim();
+  const parts = trimmed.split(/([\s-]+)/);
+  const out: string[] = [];
+  parts.forEach((part, i) => {
+    if (i % 2 === 1) return;
+    for (const form of abbreviateWord(part)) {
+      out.push([...parts.slice(0, i), form, ...parts.slice(i + 1)].join(""));
+    }
+  });
+  if (parts.length > 1) {
+    parts.forEach((part, i) => {
+      if (i % 2 === 0) out.push(...abbreviateWord(part));
+    });
+  }
+  return [...new Set(out)];
 }
 
 /**

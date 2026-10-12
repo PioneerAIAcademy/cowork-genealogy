@@ -710,6 +710,25 @@ describe("requirePre1880CensusHedge refuses a household roster and accepts the g
     ]);
   });
 
+  it.each([
+    // A tree-side role in a nil note is the tree's claim, not the census's.
+    "Searched the 1860 census for Margaret Flynn, recorded in the tree as wife of Thomas; 0 results in Adams Co.",
+    // A list of spellings is not a list of people.
+    "1860 census nil. Household spellings tried: Flynn, Flinn and Flynne; none found.",
+    // A list ending in a plural place noun is a list of places.
+    "1850 census: household search of Fayette, Greene and Washington counties found no Ackerman.",
+    // "None" after the colon names nobody.
+    "Co-residents: None listed on the index.",
+  ])("leaves a nil or search note alone that only looks like a claim %#", (n) => ok(n));
+
+  it("still reads a roster after 'names', which lists people", () => {
+    bad("Household names: George, Henry and Margaret.");
+  });
+
+  it("does not read 'spouse' as a role: in the corpus it is a search anchor", () => {
+    ok("Anders Monsen in Norway Census with spouse Unna. All 50 results from 1801 census.");
+  });
+
   it("accepts plural co-residents beside an index hedge", () => {
     ok("Co-residents indexed: Henry and Margaret Ackerman.");
   });

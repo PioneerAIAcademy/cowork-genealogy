@@ -489,7 +489,7 @@ Strict surname + birth-place match:
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] \| undefined | The results in FamilySearch's own search order. **Omitted when `ranked` carries the same rows in a usable form** — `ranked` then holds every scored candidate, ordered by match score and carrying the same triage fields, so shipping both was the same records twice. Present whenever ranking did not run, threw (`rankingError`), or returned a ranking the caller must not triage on (`subjectResolvable: false`, either branch). |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
-| `surnameVariantHints` | object \| undefined | Present **only** on a search that did not find the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. Needs neither `projectPath` nor `subjectId`. **Serialized before `results`**; never staged. See below. |
+| `surnameVariantHints` | object \| undefined | Present **only** on a search that did not identify the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. A nil search needs neither `projectPath` nor `subjectId`; a search that returned rows fires only through ranking's `subjectResolvable: false`, which needs both. **Serialized before `results`**; never staged. See below. |
 
 ### `unloggedSearches` / `nilSearchNeedsLog` — the log obligation, at the tool
 
@@ -1075,8 +1075,10 @@ Fires when **both** of:
   `dotter` (trimmed, case-insensitive) with at least one letter before the
   ending.
 
-It needs no tree, so unlike `jurisdictionHints` it does not require
-`projectPath` or `subjectId`.
+It needs no tree, so on a nil search, unlike `jurisdictionHints`, it does not
+require `projectPath` or `subjectId`. On a search that returned rows it fires
+only when ranking reported `subjectResolvable: false`, and ranking runs only
+when the call carries both.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1997,7 +1999,7 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
-cover `batchNumber`; 65–70 cover `surnameVariantHints`, whose rule is also
+cover `batchNumber`; 65–72 cover `surnameVariantHints`, whose rule is also
 unit-tested in `tests/utils/surname-variant-hints.test.ts`.
 
 ### Smoke-test script

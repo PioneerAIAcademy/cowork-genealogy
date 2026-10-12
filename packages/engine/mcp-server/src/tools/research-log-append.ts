@@ -491,10 +491,11 @@ const CORESIDENCE_CLAIM = /\b(?:co-?resident|enumerated with|living with)\b/i;
  * stops short of the plural, so that ut_search_records_027 note walked through.
  * A name has to follow the noun, directly or after `are`/`were`/`include`/a
  * colon, so a note that says co-residents were not listed or not checked is
- * left alone. Case-sensitive for the name, against `notes`.
+ * left alone, and so is "Co-residents: None listed". Case-sensitive for the name,
+ * against `notes`.
  */
 const CORESIDENTS_NAMED =
-  /\b[Cc]o-?residents\b\s*(?:(?:are|were|include[sd]?|including)\s+|:\s*)?[A-Z]/;
+  /\b[Cc]o-?residents\b\s*(?:(?:are|were|include[sd]?|including)\s+|:\s*)?(?!(?:None|No|Not|Nil|N\/A)\b)[A-Z]/;
 
 /**
  * The ABSTRACT half. `household` and `dwelling` are ordinary nouns for the
@@ -686,13 +687,25 @@ const isPlaceRun = (run: string): boolean =>
   ROSTER_PLACE_NAMES.has(run.replace(/\.$/, "")) ||
   run.split(" ").some((t) => PLACE_MARKER_ONLY.test(t.replace(/\.$/, "")));
 const HOUSEHOLD_ROSTER_G = new RegExp(
-  String.raw`\b[Hh]ousehold\b(?:[ ][a-z][\w.'’-]*){0,3}[ ]?:?[ ]+(${ROSTER_NAME}(?:(?:[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+)${ROSTER_NAME})+)`,
+  String.raw`\b[Hh]ousehold\b((?:[ ][a-z][\w.'’-]*){0,3})[ ]?:?[ ]+(${ROSTER_NAME}(?:(?:[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+)${ROSTER_NAME})+)`,
   "g",
 );
 
+/**
+ * A list that is not of people, read off the words around it: "Household
+ * spellings tried: Flynn, Flinn and Flynne" lists spellings, and "household search
+ * of Fayette, Greene and Washington counties" ends in a plural place noun. Both
+ * were refused before these. `names` is deliberately not a list word: "Household
+ * names: George, Henry and Margaret" is a roster.
+ */
+const ROSTER_OF_SPELLINGS = /\b(?:spellings?|variants?|surnames?|forms?)\b/;
+const ROSTER_OF_PLACES = /^[ ]+(?:counties|townships|parishes|states|districts|precincts|wards|towns|cities)\b/;
+
 function hasHouseholdRoster(sentence: string): boolean {
   for (const m of sentence.matchAll(HOUSEHOLD_ROSTER_G)) {
-    const people = m[1]
+    if (ROSTER_OF_SPELLINGS.test(m[1])) continue;
+    if (ROSTER_OF_PLACES.test(sentence.slice((m.index ?? 0) + m[0].length))) continue;
+    const people = m[2]
       .split(/[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+/)
       .filter((run) => !isPlaceRun(run));
     if (people.length >= 2) return true;
@@ -746,9 +759,11 @@ const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAI
  * ONLY: the singular refused "first child Martha J. born ~1860 (nine months
  * later)", a marriage-record note reasoning from the wedding date, which
  * asserts nothing about a census household. `spouse`
- * is deliberately still absent -- it would re-refuse "Norway Census (spouse
- * Unna)", a search annotation, and widening to it needs the corpus re-measure
- * tracked on issue #3125.
+ * is deliberately still absent, here and in `AS_ROLE`. Re-measured 2026-10-12:
+ * adding it newly refused 6 notes and 3 payload ops in the corpus, every one a
+ * search anchor ("with spouse Unna", "Mary Dwyer spouse Michael Dwyer", "added
+ * spouse anchor Juana Flores", "index does not name Catherine as spouse") and
+ * not one a claim -- even with a bracketed "(spouse Unna)" excluded.
  *
  * A role may be separated from the name by a REPORT VERB: "wife is listed as
  * Mary A. Ranny" is the indexer's inference stated as fact, which is what
@@ -772,7 +787,9 @@ const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAI
  * `AS_ROLE` counts only in a sentence that names no other record type
  * (`SOURCE_NAMED`): "the death records naming Sarah A. Bagley as mother" and
  * "child baptism records ... (Chresten Nielsen as father)" are what those
- * records state, and the corpus re-measure refused both without this.
+ * records state, and the corpus re-measure refused both without this. Nor in a
+ * sentence about the tree: "Margaret Flynn, recorded in the tree as wife of
+ * Thomas" is the tree's claim, not the census's.
  */
 const AS_ROLE =
   /\bas\s+["'“‘]?(?:(?:his|her|the)\s+)?["'“‘]?(?:head|wife|husband|son|daughter|father|mother)\b/i;
@@ -780,7 +797,9 @@ const HOUSEHOLD_HEAD_NAMED = /\b[Hh]ousehold\s+head\s*[:,\u2013\u2014-]?\s*[A-Z]
 
 const assertsAsRole = (notes: string): boolean =>
   // Not cut at an initial, or "naming Sarah A. Bagley as mother" loses its source.
-  notes.split(/(?<!\b[A-Z])[.;]\s/).some((sentence) => AS_ROLE.test(sentence) && !SOURCE_NAMED.test(sentence.toLowerCase()));
+  notes
+    .split(/(?<!\b[A-Z])[.;]\s/)
+    .some((sentence) => AS_ROLE.test(sentence) && !SOURCE_NAMED.test(sentence.toLowerCase()) && !/\btree\b/i.test(sentence));
 const KINSHIP_CLAIM =
   /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
 

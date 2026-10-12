@@ -398,58 +398,6 @@ def tool_input_keys(tool: str, nested: str | None = None) -> frozenset[str] | No
     return frozenset(props) if isinstance(props, dict) and props else None
 
 
-_CENSUS_HEDGE_JS = """
-import { requirePre1880CensusHedge, stagedPre1880UsCensusYears } from '__MODULE__';
-let input = '';
-for await (const chunk of process.stdin) input += chunk;
-const out = JSON.parse(input).map(({ notes, rows }) => {
-  try {
-    requirePre1880CensusHedge(notes, Array.isArray(rows) ? stagedPre1880UsCensusYears(rows) : undefined);
-    return null;
-  } catch (e) {
-    return String(e && e.message || e);
-  }
-});
-process.stdout.write(JSON.stringify(out));
-"""
-
-
-def pre1880_census_hedge_refusals(items: list[dict[str, Any]]) -> list[str | None]:
-    """Production's own pre-1880 census check over `[{notes, rows}]`: the
-    refusal message `research_log_append` would return for each note, or None.
-
-    `rows` is the staged payload's `results` (None when the entry staged none),
-    turned into census years by the same compiled `stagedPre1880UsCensusYears`
-    the tool applies, so a note is judged on exactly what the tool saw. One node
-    process for the whole list. Raises RuntimeError when the build cannot answer:
-    a grader that cannot run must not read as a pass.
-    """
-    import subprocess
-
-    from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, _MCP_BUILD, _node_module_url, _run_node_eval
-
-    module = _MCP_BUILD / "tools" / "research-log-append.js"
-    if not module.exists():
-        raise RuntimeError(f"{module} is missing — build packages/engine/mcp-server")
-    try:
-        proc = _run_node_eval(
-            _CENSUS_HEDGE_JS.replace("__MODULE__", _node_module_url(module)),
-            input_str=json.dumps(items),
-            timeout=NODE_EVAL_TIMEOUT_LONG,
-        )
-    except (OSError, subprocess.TimeoutExpired) as e:
-        raise RuntimeError(f"the compiled census check did not run: {e}") from e
-    try:
-        out = json.loads(proc.stdout)
-    except ValueError:
-        out = None
-    if proc.returncode != 0 or not isinstance(out, list) or len(out) != len(items):
-        raise RuntimeError(
-            f"the compiled census check did not run (exit {proc.returncode}): {proc.stderr.strip()[:500]}"
-        )
-    return out
-
-
 # Inputs a search tool echoes that are not filters: host plumbing, and paging /
 # response-shape controls. Mirrors NOT_A_FILTER in
 # packages/engine/mcp-server/src/tools/research-log-append.ts; a claim about one

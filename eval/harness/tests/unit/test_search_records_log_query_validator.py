@@ -208,6 +208,17 @@ def test_an_exact_trace_still_leaves_a_false_claim_reported():
         check(BEFORE, after, calls)
 
 
+def test_a_bare_entry_does_not_steal_the_narrow_call_from_its_own_entry():
+    """Narrow call first, logged broad-first: the bare {surname} entry also traces
+    to the narrow call, and must not take it from the entry naming recordType."""
+    calls = [search({"surname": "Flynn", "recordType": "marriage"}), search({"surname": "Flynn"})]
+    after = state(
+        entry("log_001", {"surname": "Flynn"}),
+        entry("log_002", {"surname": "Flynn", "recordType": "marriage"}),
+    )
+    check(BEFORE, after, calls)
+
+
 def test_more_entries_than_calls_sharing_a_surname_leaves_the_extra_alone():
     calls = [search({"surname": "Flynn"})]
     after = state(

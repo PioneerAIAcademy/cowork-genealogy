@@ -915,8 +915,7 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     staging_js = _MCP_BUILD / "utils" / "results-staging.js"
     if not staging_js.exists():
         return None
-    posix = str(staging_js).replace("\\", "/").replace("'", "\\'")
-    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    url = _node_module_url(staging_js)
     script = (
         f"import {{ readStagedResults }} from '{url}';"
         " import { readFileSync } from 'node:fs';"
@@ -1826,8 +1825,7 @@ def _make_compiled_tool_handler(
             stdin_obj: Any = input_obj
             table_import = ""
             if place_table is not None:
-                resolver_js = str(_MCP_BUILD / "utils" / "place-resolver.js").replace("\\", "/")
-                resolver_url = ("file:///" + resolver_js) if sys.platform == "win32" else resolver_js
+                resolver_url = _node_module_url(_MCP_BUILD / "utils" / "place-resolver.js")
                 table_import = (
                     f" import {{ __usePlaceTableForTests }} from '{resolver_url}';"
                     " __usePlaceTableForTests(payload.placeTable);"

@@ -24,7 +24,6 @@ from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import hashable_key as _hashable_key
 from validators_lib import new_log_entries as _new_log_entries
-from validators_lib import pre1880_census_hedge_refusals as _pre1880_census_hedge_refusals
 from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
@@ -91,60 +90,79 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
 
 # --- Pre-1880 census: family structure must be marked inferred --------
 
-def test_pre1880_census_structure_marked_inferred(
-    before_state, after_state, test
-):
-    """Tag-gated (pre-1880-census-household): no logged `record_search` note
-    states a pre-1880 US census household's structure as fact.
+_CENSUS_REFUSAL = "relationship-to-head"
+
+
+def _log_append_ops(call) -> list[dict]:
+    """The ops one research_log_append call sent, single-op or `ops[]`."""
+    args = _as_mapping(call.get("args"))
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    return [_as_mapping(o) for o in ops] if isinstance(ops, list) else [args]
+
+
+def _op_key(op: dict):
+    """Which search a log op records: its staged handle, else its tool and query."""
+    ref = op.get("stagedResultsRef")
+    if isinstance(ref, str) and ref:
+        return ("ref", ref)
+    return ("query", op.get("tool"), _hashable_key(_as_mapping(op.get("query"))))
+
+
+def test_pre1880_census_structure_marked_inferred(tool_calls, test):
+    """Tag-gated (pre-1880-census-household): a log note that `research_log_append`
+    refused for stating a pre-1880 census household's structure as fact must be
+    re-sent and logged, hedged, in a later call.
 
     SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
     column, so every "head"/"wife"/"son" read off such a household is an
-    inference and the note must say so (issue #1284).
+    inference (issue #1284). The tool enforces that at write time
+    (`requirePre1880CensusHedge`), and that is the only copy of the rule:
+    what counts as a claim and as a hedge is specified, measured and
+    mutation-tested with the tool (research-log-editor-spec.md § 8.2,
+    `dev/mutate-census-hedge.ts`), and `test_mock_mcp` proves the eval's write
+    path applies it. This validator used to grade notes with its own wider word
+    lists, which made ut_search_records_027 flap on wording the tool had
+    accepted (issue #3054); it then replayed the tool's check, which could not
+    fail, because a refused note is never logged.
 
-    The grader IS production's check. `research_log_append` refuses such a note
-    at write time (`requirePre1880CensusHedge`, judged with the census years
-    its staged rows name), and this replays the same compiled function on each
-    logged note with the rows of its own results sidecar. It used to carry its
-    own wider word lists, and that split was the flake: a note the tool
-    accepted could still fail here on wording, and the model had no signal at
-    write time to avoid it (ut_search_records_027, issue #3054). With one rule,
-    a note the tool refuses is never logged and one it accepts passes.
-
-    So in a sound run this cannot fail. It fails when a note reached the log
-    without the tool judging it as production does — a write path that skips
-    the check, or a staged payload the census years were not read from — which
-    is the wiring it pins. What counts as a claim and as a hedge is specified,
-    measured and mutation-tested with the tool (research-log-editor-spec.md
-    § 8.2, `dev/mutate-census-hedge.ts`), not here.
+    What the model CAN still get wrong is the recovery: a refusal is an error
+    the model must act on, and dropping the search from the log instead leaves
+    it unrecorded. So every op of a refused call (a batch is all-or-nothing) must
+    be logged by a later successful call, matched on its staged handle, else on
+    its tool and query.
     """
     if "pre-1880-census-household" not in test.get("tags", []):
         pytest.skip("not a pre-1880 census household scenario")
-
-    files = (after_state or {}).get("files", {}) or {}
-    entries, items = [], []
-    for e in _new_log_entries(before_state, after_state):
-        if e.get("tool") != "record_search" or not e.get("notes"):
-            continue
-        rows = None
-        sidecar = files.get(e.get("results_ref") or "")
-        if sidecar is not None:
-            rows = ((json.loads(sidecar) or {}).get("payload") or {}).get("results")
-        entries.append(e)
-        items.append({"notes": e["notes"], "rows": rows if isinstance(rows, list) else None})
-    if not items:
-        pytest.skip("no record_search log note to judge")
-
-    offenders = [
-        (e.get("id"), e["notes"], refusal)
-        for e, refusal in zip(entries, _pre1880_census_hedge_refusals(items))
-        if refusal is not None
+    appends = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "research_log_append"]
+    refused_at = [
+        i for i, c in enumerate(appends)
+        if _as_mapping(c.get("response")).get("ok") is False
+        and _CENSUS_REFUSAL in json.dumps(c.get("response"))
     ]
-    assert not offenders, (
-        "research_log_append's pre-1880 census check refuses these logged notes "
-        "(a pre-1880 US census has no relationship column, so the family structure "
-        "must be marked inferred — SKILL.md Step 4), so they reached the log "
-        "without that check: "
-        + "; ".join(f"{eid}: {notes!r} — {refusal}" for eid, notes, refusal in offenders)
+    if not refused_at:
+        pytest.skip("research_log_append refused no census note this run")
+
+    unrecovered = []
+    for i in refused_at:
+        later = {
+            _op_key(op)
+            for c in appends[i + 1:]
+            if _as_mapping(c.get("response")).get("ok") is True
+            for op in _log_append_ops(c)
+        }
+        for op in _log_append_ops(appends[i]):
+            if _op_key(op) not in later:
+                unrecovered.append(op.get("stagedResultsRef") or op.get("query"))
+    assert not unrecovered, (
+        "research_log_append refused a note for stating a pre-1880 census "
+        "household's structure as fact, and the search it recorded was never "
+        "logged afterwards with the structure marked inferred (SKILL.md Step 4): "
+        + "; ".join(repr(u) for u in unrecovered)
     )
 
 
@@ -703,15 +721,17 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
     # reported four faithful entries of ut_search_records_026 (v5_2026-10-12_12-15-56)
     # as claiming filters their calls never sent. Each call is claimed once, so two
     # entries cannot both trace to one call and hide a claim the other never sent.
-    still_unpaired = []
-    for e in unpaired:
+    # Most specific entry first: a bare {surname} also traces to a narrower call,
+    # and taken first it steals that call from the entry that names its filters.
+    traced: set[int] = set()
+    for e in sorted(unpaired, key=lambda e: -len(_as_mapping(e.get("query")))):
         pool = free.get(_hashable_key(_as_mapping(e.get("query")).get("surname")), [])
         match = next((c for c in pool if _traces(e, c)), None)
-        if match is None:
-            still_unpaired.append(e)
-        else:
+        if match is not None:
             pool.remove(match)
+            traced.add(id(e))
             pairs.append((e, match, "exact trace"))
+    still_unpaired = [e for e in unpaired if id(e) not in traced]
     positions: dict[str, int] = {}
     for e in still_unpaired:
         surname = _as_mapping(e.get("query")).get("surname")
