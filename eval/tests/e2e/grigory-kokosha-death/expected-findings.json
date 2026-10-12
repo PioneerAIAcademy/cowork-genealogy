@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Григорий Захаров Кокоша died on 18 September 1846 in Zhydivska Hreblia, Tarashcha, Kiev; the death is recorded in the metric book of the church of St John the Theologian (Иоанно-Богословская церковь) there, which gives his birth as about 1821.",
+      "details": {
+        "subject_person": "Григорий Захаров Кокоша (GSTD-C4H)",
+        "fact_type": "Death",
+        "date": "18 September 1846",
+        "place": "Zhydivska Hreblia, Tarashcha, Kiev, Russian Empire"
+      },
+      "supporting_sources": [
+        "Ukraine, Kyiv, Orthodox Consistory Church Book Duplicates, 1723-1931 — death entry for Григорий Кокоша, 18 Sep 1846"
+      ],
+      "required": true
+    }
+  ]
+}

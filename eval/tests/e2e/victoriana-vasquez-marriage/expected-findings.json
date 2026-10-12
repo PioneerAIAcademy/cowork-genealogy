@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Victoriana Vasquez married Jose Cleofas Gutierrez on 9 January 1875 in Degollado, Jalisco, Mexico, according to a marriage index entry that spells her surname Vazquez and names no parents.",
+      "details": {
+        "subject_person": "Victoriana Vasquez (GFG9-7H4)",
+        "fact_type": "Marriage",
+        "date": "9 January 1875",
+        "place": "Degollado, Jalisco, Mexico"
+      },
+      "supporting_sources": [
+        "Mexico, Marriages, 1570-1950 — marriage entry for Jose Cleofas Gutierrez and Victoriana Vazquez, 9 Jan 1875"
+      ],
+      "required": true
+    }
+  ]
+}
