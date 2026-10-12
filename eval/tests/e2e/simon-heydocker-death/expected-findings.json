@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Simon Heydöcker died on 24 August 1808, aged about 30 (born about 1778), according to an entry indexed as Simon Heydocker in the Catholic death register of Laakirchen, Gmunden, Upper Austria; the index gives only Austria as the place, and the register image is from Laakirchen.",
+      "details": {
+        "subject_person": "Simon Heydöcker (GZRZ-TNG)",
+        "fact_type": "Death",
+        "date": "24 August 1808",
+        "place": "Laakirchen, Gmunden, Upper Austria, Austria"
+      },
+      "supporting_sources": [
+        "Österreich, Katholische Kirchenbücher, 1565-2007 — death entry for Simon Heydocker, 24. August 1808"
+      ],
+      "required": true
+    }
+  ]
+}

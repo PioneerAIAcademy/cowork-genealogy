@@ -1070,3 +1070,57 @@ def test_not_reinit_refuses_a_scenario_with_no_existing_project():
 def test_not_reinit_skips_untagged_tests():
     with pytest.raises(pytest.skip.Exception):
         check_not_reinit({}, {}, [{"tool": "mcp__genealogy__person_read"}], POSITIVE)
+
+
+# --- V3: hand-built path, places project_create standardized itself ------
+
+_BOSTON = "Boston, Suffolk, Massachusetts, United States"
+
+
+def _hand_create(place="Boston, Massachusetts", value=_BOSTON, ok=True):
+    """A hand-built project_create (no personReadRef) reporting one place it resolved."""
+    return {"tool": "mcp__genealogy__project_create",
+            "args": {"objective": "x", "tree": {"persons": []}},
+            "response": {"ok": ok, "placesFilled": [{"place": place, "standardPlace": value}]}}
+
+
+def _hand_tree(value=_BOSTON, place="Boston, Massachusetts"):
+    return _tree(persons=[{"id": "I1", "facts": [
+        {"type": "Birth", "place": place, "standard_place": value}]}])
+
+
+def test_v3_passes_a_place_the_hand_built_create_standardized():
+    check_std_place(_as_built(_hand_tree()), [_hand_create()])
+
+
+def test_v3_fires_on_a_value_the_create_did_not_report():
+    after = _as_built(_hand_tree(value="Boston, Massachusetts, United States"))
+    assert "match neither" in _fails(check_std_place, after, [_hand_create()])
+
+
+def test_v3_fires_when_the_report_names_a_different_raw_place():
+    after = _as_built(_hand_tree(place="Boston, Mass."))
+    assert "match neither" in _fails(check_std_place, after, [_hand_create(place="Boston, Massachusetts")])
+
+
+def test_v3_fires_when_the_hand_built_create_was_refused():
+    assert "match neither" in _fails(check_std_place, _as_built(_hand_tree()), [_hand_create(ok=False)])
+
+
+def test_v3_fires_when_the_value_is_not_what_the_create_wrote():
+    import json
+    after = _hand_tree()
+    after = {**after, "files": {"starting-tree.gedcomx.json": json.dumps(
+        _hand_tree(value="Boston, Massachusetts, United States")["tree_gedcomx_json"])}}
+    assert "match neither" in _fails(check_std_place, after, [_hand_create()])
+
+
+def test_v3_passes_a_second_spelling_of_a_place_the_create_reported_once():
+    after = _as_built(_hand_tree(place="boston,  MASSACHUSETTS "))
+    check_std_place(after, [_hand_create(place="Boston, Massachusetts")])
+
+
+def test_v3_passes_an_addition_place_a_ref_create_standardized():
+    create = _hand_create()
+    create["args"] = {"objective": "x", "personReadRef": "results/.staging/x.json", "tree": {"persons": []}}
+    check_std_place(_as_built(_hand_tree()), [create])

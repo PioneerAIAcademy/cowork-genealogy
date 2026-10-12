@@ -1,0 +1,479 @@
+{
+  "persons": [
+    {
+      "id": "K642-XP9",
+      "ark": "ark:/61903/4:1:K642-XP9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Jean- Baptiste",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "30 Apr 1788",
+          "standard_date": "30 Apr 1788"
+        },
+        {
+          "id": "4474d31c-e0d3-40af-a37a-d84e4555c04f",
+          "type": "Christening",
+          "date": "23 Nov 1711",
+          "standard_date": "23 Nov 1711",
+          "place": "Brussels, Belgium",
+          "standard_place": "Brussels, Brabant, Belgium"
+        }
+      ]
+    },
+    {
+      "id": "K6WL-MGG",
+      "ark": "ark:/61903/4:1:K6WL-MGG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Constance",
+          "surname": "Dufour",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "<1708>",
+          "standard_date": "Bef 1708",
+          "place": "<Belgium>",
+          "standard_place": "Belgium"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KZBB-C86",
+      "ark": "ark:/61903/4:1:KZBB-C86",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Marie- Anne",
+          "surname": "De Smedt",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Marie- Anne De",
+          "surname": "Smedt",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "<1688>",
+          "standard_date": "Bef 1688",
+          "place": "<Brussels, Belgium>",
+          "standard_place": "Brussels, Brussels-Capital, Belgium"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K4NV-ZL9",
+      "ark": "ark:/61903/4:1:K4NV-ZL9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Ferdinand- Joseph",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "29 Feb 1684",
+          "standard_date": "29 Feb 1684",
+          "place": "Brussel, Belgium",
+          "standard_place": "Brussels, Brussels-Capital, Belgium"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "19 Mar 1757",
+          "standard_date": "19 Mar 1757"
+        }
+      ]
+    },
+    {
+      "id": "MHT2-XX8",
+      "ark": "ark:/61903/4:1:MHT2-XX8",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Marc- Susanne- Jean",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "<1732>",
+          "standard_date": "Bef 1732",
+          "place": "<Belgium>",
+          "standard_place": "Belgium"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "MHT2-X6G",
+      "ark": "ark:/61903/4:1:MHT2-X6G",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Jean Baptiste",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "Bef 1778",
+          "standard_date": "Bef 1778",
+          "place": "Belgium",
+          "standard_place": "Belgium"
+        }
+      ]
+    },
+    {
+      "id": "MHT2-X8F",
+      "ark": "ark:/61903/4:1:MHT2-X8F",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Charles",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "<1713>",
+          "standard_date": "Bef 1713",
+          "place": "<Brussels, Belgium>",
+          "standard_place": "Brussels, Brussels-Capital, Belgium"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M86T-NMK",
+      "ark": "ark:/61903/4:1:M86T-NMK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Marie Anne De Cupis De",
+          "surname": "Camargo",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Marie Anne De",
+          "surname": "Cupis De Camargo",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "43a773a3-5607-4fbc-b89b-e8cff09f21f9",
+          "type": "Birth",
+          "date": "15 APR 1727",
+          "standard_date": "15 Apr 1727",
+          "place": "Brussel,Brabant,Belgium",
+          "standard_place": "Brussels, Brabant, Belgium"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "28 Apr 1770",
+          "standard_date": "28 Apr 1770"
+        },
+        {
+          "id": "ca83f86d-051c-443e-9812-0f6d4c7e0916",
+          "type": "LifeSketch",
+          "value": "Was a French dancer. The first woman to execute the entrechat quatre, Camargo was also allegedly responsible for two innovations in ballet as she was one of the first dancers to wear slippers instead of heeled shoes, and, while there is no evidence that she was the first woman to wear the short calf-length ballet skirt and the now standardized ballet tights, she did help to popularize these."
+        }
+      ]
+    },
+    {
+      "id": "MHT2-XD3",
+      "ark": "ark:/61903/4:1:MHT2-XD3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Francois",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 Nov 1732",
+          "standard_date": "10 Nov 1732",
+          "place": "Paris, France",
+          "standard_place": "Paris, France"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "13 Oct 1808",
+          "standard_date": "13 Oct 1808"
+        }
+      ]
+    },
+    {
+      "id": "LBZM-21D",
+      "ark": "ark:/61903/4:1:LBZM-21D",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "a4bec4e4-eeb2-421f-a629-5faaa1b4c26f",
+          "preferred": true,
+          "given": "Madeleine",
+          "surname": "Cupis",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "768151dc-1731-4faa-b0e6-1620799628bf",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "K642-XP9",
+      "person2": "K6WL-MGG",
+      "facts": [
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "       1729",
+          "standard_date": "1729",
+          "place": "Belgium",
+          "standard_place": "Belgium"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "K4NV-ZL9",
+      "person2": "KZBB-C86",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "<1709>",
+          "standard_date": "Bef 1709",
+          "place": "<Brussels, Belgium>",
+          "standard_place": "Brussels, Brussels-Capital, Belgium"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K4NV-ZL9",
+      "child": "K642-XP9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KZBB-C86",
+      "child": "K642-XP9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K642-XP9",
+      "child": "MHT2-XX8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "K6WL-MGG",
+      "child": "MHT2-XX8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "K642-XP9",
+      "child": "MHT2-X6G",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "K6WL-MGG",
+      "child": "MHT2-X6G",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "K4NV-ZL9",
+      "child": "LBZM-21D"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KZBB-C86",
+      "child": "LBZM-21D"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "K4NV-ZL9",
+      "child": "M86T-NMK"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KZBB-C86",
+      "child": "M86T-NMK"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "K4NV-ZL9",
+      "child": "MHT2-XD3"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "KZBB-C86",
+      "child": "MHT2-XD3"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "K4NV-ZL9",
+      "child": "MHT2-X8F"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "KZBB-C86",
+      "child": "MHT2-X8F"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_K642-XP9",
+      "title": "Jean- Baptiste Cupis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jean- Baptiste Cupis (PID K642-XP9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K642-XP9"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_K6WL-MGG",
+      "title": "Constance Dufour",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Constance Dufour (PID K6WL-MGG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K6WL-MGG"
+    },
+    {
+      "id": "sd_person_KZBB-C86",
+      "title": "Marie- Anne De Smedt",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Marie- Anne De Smedt (PID KZBB-C86); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KZBB-C86"
+    },
+    {
+      "id": "sd_person_K4NV-ZL9",
+      "title": "Ferdinand- Joseph Cupis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ferdinand- Joseph Cupis (PID K4NV-ZL9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K4NV-ZL9"
+    },
+    {
+      "id": "sd_person_MHT2-XX8",
+      "title": "Marc- Susanne- Jean Cupis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Marc- Susanne- Jean Cupis (PID MHT2-XX8); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:MHT2-XX8"
+    },
+    {
+      "id": "sd_person_MHT2-X6G",
+      "title": "Jean Baptiste Cupis",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jean Baptiste Cupis (PID MHT2-X6G); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:MHT2-X6G"
+    }
+  ]
+}

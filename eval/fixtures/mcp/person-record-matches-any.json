@@ -1,0 +1,15 @@
+{
+  "tool": "person_record_matches",
+  "description": "person_record_matches catch-all -- matches ANY id (predicate '~') and returns no matches, so a hint check not covered by a specific fixture degrades to an empty result. Order LAST in a test's mcp_fixtures.",
+  "args": {
+    "id": "~"
+  },
+  "response": {
+    "queryArk": "",
+    "resultCount": 0,
+    "returned": 0,
+    "title": "Matches",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": []
+  }
+}

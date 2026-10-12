@@ -1,0 +1,19 @@
+{
+  "id": "claudia-almada-birth",
+  "name": "Claudia Almada — birth about 1861, Buenos Aires, Argentina",
+  "genre": "record-hint",
+  "source_pid": "G5RB-GL5",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Claudia Almada born, the daughter of Gregoria Almada who married Alejandro Sequeira on 12 May 1879 at Nuestra Señora de la Merced, General Lavalle, Buenos Aires, Argentina?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1860s",
+    "geography": "AR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 34, hint-samples.csv row 16, flag adds_birth, confidence 3). Draft transcribed from an 1869 Ajó (General Lavalle), Buenos Aires national census entry; unverified."
+}

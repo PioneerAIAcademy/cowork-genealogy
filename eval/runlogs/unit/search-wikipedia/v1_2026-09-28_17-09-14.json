@@ -8,7 +8,7 @@
   "timestamp": "2026-09-28_17-09-14",
   "harness_version": "0.1.0",
   "model": "claude-sonnet-4-6",
-  "judge_prompt_hash": "336b49771264743815da14b20b7ebd6f07d132eaa3f01c260dee582823a30daa",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
   "snapshot": {
     "packages/engine/plugin/agents/search-wikipedia.md": "13c2befd76e6ee2df2fbae389ed2b7ed3fcb5c250911899b5481568a1414a75b",
     "eval/tests/unit/search-wikipedia/decline-out-of-scope.json": "0afebb2d881f04ce5328acb382f2e53b8346286716e8ec8b75e439e2aec8614e",
@@ -156,7 +156,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "This request is outside this toolkit's scope, as I handle genealogy research tasks only. I'm not able to help with general programming questions."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -386,27 +387,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that the request (writing a Python CSV parser) is outside the genealogy toolkit's scope and declined appropriately. The response accurately states the skill's domain limitation without fabricating information or making unsupported claims."
+                "rationale": "The skill correctly declined the request. The user asked for help writing a Python CSV parser, which is a general programming task entirely outside the genealogy research scope. The skill's response accurately identified this as out of scope and appropriately declined without attempting to perform the task or invoke any genealogy-related skill."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the required behavior for this negative test: it declined the out-of-scope request clearly and accurately. No further action was required. The decline is complete and sufficient."
+                "rationale": "The decline is complete. The skill provided a clear, direct explanation of why it cannot help: the request is outside the toolkit's scope as it handles genealogy research tasks only. No further action was required on a negative test where the correct behavior is to decline without routing or performing the task."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A."
+                "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
               }
             ],
-            "judge_cost_usd": 0.007455000000000001,
+            "judge_cost_usd": 0.007964,
             "duration_ms": 3063.955099998566,
             "error": null,
-            "input_tokens": 6100,
+            "input_tokens": 6394,
             "cached_input_tokens": 0,
-            "output_tokens": 271
+            "output_tokens": 314
           },
           "started_at": 1790615487.7131836,
           "ended_at": 1790615506.4119675
@@ -598,7 +599,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `united-states-census.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -828,45 +830,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response with title 'United States census', and confirmed saving the file. The response text does not assert any facts beyond what the tool returned. No fabricated material or unsupported claims are present."
+                "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response with title, extract, and URL, and confirmed saving the file. The response text accurately reflects what the tool returned without fabrication or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to save a Wikipedia summary about the United States census. The agent called wikipedia_search with an appropriate query, received the response, and confirmed saving the file to the expected filename. All required work was completed."
+                "rationale": "The delegation asked to save a Wikipedia summary about the United States census. The agent completed this task by calling wikipedia_search with an appropriate query and confirming the file was saved. All required work was performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with query 'the United States census', which matches the expected_args pattern '~census'. The query directly targets the census topic as required by the per-test context. The call was successful with matched.kind == 'predicate', indicating correct tool usage."
+                "rationale": "The agent called wikipedia_search with query 'the United States census', which matches the expected_args pattern '~census' and targets the correct subject. The query is well-aimed at the article the delegation requested."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with the statement 'Saved the Wikipedia summary to `united-states-census.md`.' The response contains no assertions beyond what the tool response supports. The confirmation is brief and appropriate."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to `united-states-census.md`.' The response contains no facts absent from the tool response and follows the ideal brief confirmation format."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the United States census' targets the census topic as required. The returned title 'United States census' is accepted at face value and matches the query intent. The agent proceeded without remarking on any query-versus-title difference or re-querying. The single response was taken correctly."
+                "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and matches the query intent. The agent proceeded without remarking on any discrepancy or re-querying."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `united-states-census.md`.' This matches the required return contract precisely. No mid-workflow narration, article characterization, or genealogical assertions are present. The response is appropriately terse."
+                "rationale": "The reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `united-states-census.md`.' This matches the required return contract precisely\u2014no mid-workflow narration, no article characterization, no extra sentences."
               }
             ],
-            "judge_cost_usd": 0.006390099999999999,
+            "judge_cost_usd": 0.005951,
             "duration_ms": 8368.499500000325,
             "error": null,
-            "input_tokens": 2801,
-            "cached_input_tokens": 4441,
-            "output_tokens": 629
+            "input_tokens": 3051,
+            "cached_input_tokens": 0,
+            "output_tokens": 580
           },
           "started_at": 1790615410.5451095,
           "ended_at": 1790615448.9937785
@@ -1058,7 +1060,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `great-famine-ireland.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -1288,45 +1291,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting the Great Famine in Ireland, received the correct article (Great Famine (Ireland)), and confirmed saving the file. The response contains no fabricated facts and accurately reflects what the tool returned."
+                "rationale": "The agent called wikipedia_search with a query targeting the Great Famine in Ireland, received the correct article (Great Famine (Ireland)), and confirmed saving the file. The response contains no fabricated material and accurately reflects what the tool returned."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query and confirming the file was saved. All required work was done."
+                "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query and confirming the file was saved. All required work was performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent passed query='the Great Famine in Ireland' to wikipedia_search, which matches the expected_args pattern '~Great Famine'. The query targets the correct article and the tool call succeeded with matched.kind='predicate'."
+                "rationale": "The agent called wikipedia_search with query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine'. The query is well-aimed at the article requested in the delegation and the tool returned the correct article title."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with a single-line response. The response makes no claims beyond what the tool returned\u2014it does not assert facts about the famine's significance or context."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with a single-line response. The response does not assert any facts absent from the tool response\u2014it simply names the saved file without adding unsupported framing or context."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the Great Famine in Ireland' targets the correct article. The tool returned 'Great Famine (Ireland)' as the title, which is the formal Wikipedia article title. The agent accepted this redirect without remarking on the difference, which is correct behavior."
+                "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The tool returned 'Great Famine (Ireland)' as the title, which is the formal Wikipedia article title following a redirect from the query. The agent accepted this returned title at face value, which is correct behavior."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' This matches the required return contract\u2014naming the saved file and nothing else. No mid-workflow narration, no article characterization, no extra sentences."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' This matches the required return contract precisely\u2014naming the saved file and nothing else, with no mid-workflow narration, characterization of content, or assertions about genealogical significance."
               }
             ],
-            "judge_cost_usd": 0.0062121,
+            "judge_cost_usd": 0.0065621,
             "duration_ms": 6759.395799999766,
             "error": null,
-            "input_tokens": 2803,
+            "input_tokens": 3053,
             "cached_input_tokens": 4441,
-            "output_tokens": 593
+            "output_tokens": 613
           },
           "started_at": 1790615453.3619783,
           "ended_at": 1790615490.5155003
@@ -1518,7 +1521,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `albert-einstein.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -1748,45 +1752,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting Albert Einstein, received the correct article, and confirmed saving the file. The response contains no fabricated facts and accurately reflects what the tool returned."
+                "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article summary, and confirmed saving the file. The response text makes no claims beyond what the tool returned. No fabricated material or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent addressed the delegation's request to look up Albert Einstein on Wikipedia. It called the appropriate tool, received the response, and confirmed saving the result to a file as required."
+                "rationale": "The agent completed the full task: queried Wikipedia for Albert Einstein, received the response, and confirmed saving the result to a file. All required actions were performed as specified in the delegation."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The tool call was well-aimed and successful."
+                "rationale": "The agent called wikipedia_search with query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the Albert Einstein article. The argument is well-formed and semantically correct."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file. The response does not assert any facts beyond what the tool returned. The brief confirmation line 'Saved the Wikipedia summary to `albert-einstein.md`' is the ideal caller-facing output."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file. The response does not assert any facts beyond what the tool returned. The confirmation line 'Saved the Wikipedia summary to `albert-einstein.md`' is appropriately brief and does not fabricate content."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'Albert Einstein' directly targets the article the delegation named. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying."
+                "rationale": "The query 'Albert Einstein' directly targets the article the delegation named. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted the response at face value without remarking on any discrepancy or re-querying."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `albert-einstein.md`.' This matches the required return contract precisely \u2014 no mid-workflow narration, no article characterization, no extra sentences."
+                "rationale": "The reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `albert-einstein.md`.' This matches the required return contract precisely\u2014no mid-workflow narration, no article characterization, no summary content duplicated in the reply."
               }
             ],
-            "judge_cost_usd": 0.0060521,
+            "judge_cost_usd": 0.0063871,
             "duration_ms": 7429.889600000024,
             "error": null,
-            "input_tokens": 2818,
+            "input_tokens": 3068,
             "cached_input_tokens": 4441,
-            "output_tokens": 558
+            "output_tokens": 575
           },
           "started_at": 1790615444.668655,
           "ended_at": 1790615487.5153284
@@ -1978,7 +1982,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -2208,45 +2213,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the correct query targeting Schuylkill County, Pennsylvania. The response confirms saving the file with the exact filename expected. No fabricated content or unsupported claims are present in the brief reply."
+                "rationale": "The agent called wikipedia_search with the correct query targeting Schuylkill County, Pennsylvania. The tool returned a valid response with title, extract, and URL. The agent's reply accurately names the saved file without fabricating or asserting facts beyond what the tool response supports."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed the full task: it called wikipedia_search for the requested location, received the article summary, and confirmed saving the result to a file. All required actions were performed."
+                "rationale": "The delegation asked to look up Schuylkill County, Pennsylvania on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query and confirming the file was saved. No required steps were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call passed args matching the fixture's expected_args. The query 'Schuylkill County, Pennsylvania' satisfies the expected substring match '~Schuylkill' and targets the correct article as requested in the delegation."
+                "rationale": "The agent called wikipedia_search with query 'Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The call matched successfully (kind: 'predicate') and the arguments are semantically correct."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file. The brief confirmation 'Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.' is the ideal caller-facing line. No facts are asserted beyond what the tool response supports."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file. The reply states only 'Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.' without asserting facts beyond what the tool response supports. No fabricated content is present."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'Schuylkill County, Pennsylvania' directly targets the article the delegation named. The returned title matches the query exactly, and the agent accepted the response at face value without remarking on any discrepancy or re-querying."
+                "rationale": "The query 'Schuylkill County, Pennsylvania' directly targets the article the delegation named. The tool returned a title matching the query exactly, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.' This matches the required return contract precisely \u2014 nothing else, no mid-workflow narration, no article characterization or genealogical claims."
+                "rationale": "The agent's reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `schuylkill-county-pennsylvania.md`.' This matches the required return contract precisely. No mid-workflow narration, article characterization, or extra sentences are present."
               }
             ],
-            "judge_cost_usd": 0.006251099999999999,
+            "judge_cost_usd": 0.0066561,
             "duration_ms": 6847.765399998025,
             "error": null,
-            "input_tokens": 2812,
+            "input_tokens": 3062,
             "cached_input_tokens": 4441,
-            "output_tokens": 599
+            "output_tokens": 630
           },
           "started_at": 1790615415.7697346,
           "ended_at": 1790615452.9145849
@@ -2438,7 +2443,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `kirchenbuch.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -2668,45 +2674,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'Kirchenbuch', received a valid response with title, extract, and URL, and confirmed saving the file. The response text accurately reflects what the tool returned without fabricating or misrepresenting any facts. The brief confirmation statement is factually correct."
+                "rationale": "The agent called wikipedia_search with the query 'Kirchenbuch', received a valid response with title, extract, and URL, and confirmed saving the file. The response text accurately reflects what the tool returned without fabrication or unsupported claims. The brief confirmation 'Saved the Wikipedia summary to `kirchenbuch.md`' is factually correct and supported by the tool call."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The agent successfully retrieved the Wikipedia article via the tool call and confirmed saving it. The per-test context explicitly states that a brief confirmation is the correct and complete response, and the agent provided exactly that."
+                "rationale": "The delegation asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The agent completed this task by calling wikipedia_search with the correct query, receiving the article summary, and confirming the file was saved. The per-test context explicitly states that a brief confirmation naming the file is the correct and complete response, and the agent provided exactly that."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with query 'Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The tool call was well-aimed at the article the delegation named, and the matched.kind is 'predicate' indicating successful resolution. No critical arguments were wrong."
+                "rationale": "The agent called wikipedia_search with query 'Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The call was well-aimed at the article the delegation named. The matched.kind is 'predicate' (not 'none'), indicating successful tool execution with correct arguments."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a complete response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to `kirchenbuch.md`.' The response does not assert any facts absent from the tool response. The brief confirmation is the ideal caller-facing line per the rubric."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with the statement 'Saved the Wikipedia summary to `kirchenbuch.md`.' The response contains no facts absent from the tool response. The per-test context confirms that '(no file changes)' in the summary is expected and correct for this skill, and the brief confirmation is the ideal caller-facing line."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'Kirchenbuch' directly targets the article the delegation asked for. The returned title 'Kirchenbuch' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The response demonstrates correct interpretation of the single tool response."
+                "rationale": "The agent sent one wikipedia_search call with query 'Kirchenbuch' targeting the article the delegation named. The returned title 'Kirchenbuch' matches the query exactly. The agent accepted the response at face value and proceeded to confirm saving, without remarking on any discrepancy or re-querying. This is correct behavior."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's text response is exactly one line: 'Saved the Wikipedia summary to `kirchenbuch.md`.' This matches the required return contract precisely \u2014 naming the saved file and nothing else. The response does not restate, summarize, or quote article content, and does not add mid-workflow narration or characterization."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to `kirchenbuch.md`.' This matches the required return contract precisely \u2014 naming the saved file and nothing else. The response does not restate, summarize, or quote article content, and does not characterize the subject. This is the complete and correct return format."
               }
             ],
-            "judge_cost_usd": 0.006900099999999999,
+            "judge_cost_usd": 0.0074701,
             "duration_ms": 8573.550400000386,
             "error": null,
-            "input_tokens": 3106,
+            "input_tokens": 3356,
             "cached_input_tokens": 4441,
-            "output_tokens": 670
+            "output_tokens": 734
           },
           "started_at": 1790615354.8629866,
           "ended_at": 1790615415.4378996
@@ -2898,7 +2904,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `wurttemberg.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -3128,45 +3135,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the correct article, and confirmed saving it to the file. The response makes no unsupported claims and does not assert facts absent from the tool response. The one-line confirmation is factually accurate."
+                "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received a valid response with title, extract, and URL, and confirmed saving the file. The response text 'Saved the Wikipedia summary to `wurttemberg.md`.' is factually accurate and supported by the tool call. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to look up W\u00fcrttemberg on Wikipedia. The agent completed this task by calling wikipedia_search, receiving the article summary, and confirming the file was saved. The mention of tracing a family in the 1840s is context for the request, not a second task requiring emigration research or records lists, as clarified in the per-test context."
+                "rationale": "The delegation asked to look up W\u00fcrttemberg on Wikipedia. The agent completed this task by calling wikipedia_search with the correct query and confirming the file was saved. The mention of tracing a family in the 1840s is context for the request, not a separate task requiring emigration research or records lists, which belong to other skills per the per-test context."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with query 'W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically. The matched.kind is 'predicate' (not 'fixture_not_found'), confirming the tool call was valid. The argument targets the correct article as requested in the delegation."
+                "rationale": "The tool call passed query='W\u00fcrttemberg' which matches the expected_args pattern '~rttemberg' semantically. The matched.kind is 'predicate' (not 'none'), indicating successful matching. The query correctly targets the article the delegation named."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file with 'Saved the Wikipedia summary to `wurttemberg.md`.' The response does not assert facts absent from the tool response. No file contents are shown, which is correct per the agent's design."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with 'Saved the Wikipedia summary to `wurttemberg.md`.' The response makes no claims beyond what the tool response supports. No invented facts or unsupported assertions about the content."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title is 'W\u00fcrttemberg', matching the query exactly. The agent accepts the response at face value and proceeds to save it without remarking on any discrepancy or re-querying."
+                "rationale": "The query 'W\u00fcrttemberg' directly targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted at face value. The agent proceeded without remarking on any query-versus-title difference or asking for confirmation, which is correct behavior."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to `wurttemberg.md`.' This matches the required return contract precisely\u2014naming the saved file and nothing else. No mid-workflow narration, no article characterization, no summary paragraphs appear."
+                "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to `wurttemberg.md`.' This matches the required return contract precisely\u2014naming the saved file and nothing else. No mid-workflow narration, no article characterization, no summary or quotes of the content."
               }
             ],
-            "judge_cost_usd": 0.006487,
+            "judge_cost_usd": 0.0071711,
             "duration_ms": 7496.23050000082,
             "error": null,
-            "input_tokens": 3192,
-            "cached_input_tokens": 0,
-            "output_tokens": 659
+            "input_tokens": 3442,
+            "cached_input_tokens": 4441,
+            "output_tokens": 657
           },
           "started_at": 1790615354.8525965,
           "ended_at": 1790615410.3112166
@@ -3358,7 +3365,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `o-brien-surname.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -3588,45 +3596,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting O'Brien surname, received the article 'O'Brien (surname)' with its extract and URL, and confirmed saving the file. The response contains no fabricated facts and accurately reflects what the tool returned."
+                "rationale": "The agent called wikipedia_search with a query targeting O'Brien surname, received the article 'O'Brien (surname)' with its extract and URL, and confirmed saving the file. The response makes no claims beyond what the tool returned. No fabricated material or unsupported assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent performed this task by calling wikipedia_search with an appropriate query and confirmed saving the result. All required work was completed."
+                "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent performed the lookup, received the article, and confirmed saving it. The task was fully addressed with no omissions."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with query 'the surname O'Brien', which matches the expected_args pattern '~O'Brien' semantically. The query targets the correct subject and the tool call succeeded with matched.kind == 'predicate'."
+                "rationale": "The agent called wikipedia_search with query 'the surname O'Brien', which matches the expected_args pattern '~O'Brien'. The query targets the correct article and the tool returned the expected result with matched.kind='predicate', indicating successful fixture matching."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with a brief one-line statement. The response does not assert any facts beyond what the tool response supports."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and URL, and confirmed saving the file with 'Saved the Wikipedia summary to `o-brien-surname.md`.' The response contains no assertions unsupported by the tool response. The confirmation is brief and appropriate."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the surname O'Brien' targets the article the delegation named. The returned title 'O'Brien (surname)' is accepted at face value and represents the formal Wikipedia article title, which is correct behavior following a redirect from the query."
+                "rationale": "The query 'the surname O'Brien' targets the article the delegation named. The tool returned 'O'Brien (surname)' as the title, which is the formal Wikipedia article title. The agent accepted this returned title at face value without remarking on any discrepancy or re-querying."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line naming the saved file: 'Saved the Wikipedia summary to `o-brien-surname.md`.' This matches the required return contract precisely \u2014 no narration, no article content, no characterization."
+                "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to `o-brien-surname.md`.' This matches the required return contract precisely\u2014naming the saved file and nothing else. No mid-workflow narration, no characterization of the article, no extra sentences."
               }
             ],
-            "judge_cost_usd": 0.006005099999999999,
+            "judge_cost_usd": 0.006475099999999999,
             "duration_ms": 7809.224699998595,
             "error": null,
-            "input_tokens": 2721,
+            "input_tokens": 2971,
             "cached_input_tokens": 4441,
-            "output_tokens": 568
+            "output_tokens": 612
           },
           "started_at": 1790615410.0101674,
           "ended_at": 1790615444.4387138
@@ -3819,7 +3827,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `great-famine-ireland.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -4049,45 +4058,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting the potato famine, received the article 'Great Famine (Ireland)', and confirmed saving it to the correctly-named file. The response contains no fabricated material and accurately reflects what the tool returned."
+                "rationale": "The agent called wikipedia_search with a query targeting the potato famine, received the article 'Great Famine (Ireland)', and confirmed saving it to the correct filename derived from the returned title. The response contains no fabricated material and accurately reflects what the tool returned."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed the full task: it searched for the potato famine topic as requested, received the Wikipedia article, and confirmed saving the result. All required actions were performed."
+                "rationale": "The agent completed the full task: it searched for the potato famine topic as delegated, received the Wikipedia article, and confirmed saving the result. The single-sentence response naming the saved file is the complete and correct output per SKILL.md step 5."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The tool call passed query='the potato famine', which matches the expected_args predicate '~potato' (substring match). The query targets the correct subject and the tool returned the expected article title."
+                "rationale": "The agent called wikipedia_search with query 'the potato famine', which matches the expected_args predicate '~potato'. The query targets the correct subject and the tool returned the expected article title 'Great Famine (Ireland)'. No argument mismatches or fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response does not assert facts beyond what the tool returned\u2014it simply names the saved file without adding unsupported framing."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only that the summary was saved to the filename\u2014it makes no claims about the article content that the tool response does not support. No unsupported framing or context was added."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the potato famine' targets the correct article. The returned title 'Great Famine (Ireland)' is accepted at face value and used to build the filename, following the expected redirect behavior. No re-querying or title override occurred."
+                "rationale": "The agent sent a query 'the potato famine' that targets the article the delegation asked for. The returned title 'Great Famine (Ireland)' differs from the query wording but represents the formal article title; the agent correctly accepted this as the article's identity and built the filename from it, following the expected redirect behavior."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The response is exactly one line naming the saved file: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' This matches the required return contract precisely\u2014no mid-workflow narration, no article summary, no characterization beyond the filename."
+                "rationale": "The response is exactly one line naming the saved file: 'Saved the Wikipedia summary to `great-famine-ireland.md`.' This matches the required return contract precisely\u2014no mid-workflow narration, no article characterization, no content duplication. The brevity is correct, not a defect."
               }
             ],
-            "judge_cost_usd": 0.005993,
+            "judge_cost_usd": 0.0071071,
             "duration_ms": 7307.281099998363,
             "error": null,
-            "input_tokens": 3173,
-            "cached_input_tokens": 0,
-            "output_tokens": 564
+            "input_tokens": 3423,
+            "cached_input_tokens": 4441,
+            "output_tokens": 648
           },
           "started_at": 1790615354.880683,
           "ended_at": 1790615409.7643485
@@ -4279,7 +4288,8 @@
                 "subagent_type": "search-wikipedia",
                 "text": "Saved the Wikipedia summary to `naturalization-act-of-1906.md`."
               }
-            ]
+            ],
+            "warnings": []
           },
           "validators": {
             "passed": true,
@@ -4509,45 +4519,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting the Naturalization Act of 1906, received the correct article, and confirmed saving it to the appropriately slugified filename. The response contains no fabricated material and accurately reflects what the tool returned."
+                "rationale": "The agent called wikipedia_search with a query targeting the Naturalization Act of 1906, received accurate information about the act, and confirmed saving the file. The response contains no fabricated material and accurately reflects what the tool returned."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to look up the Naturalization Act of 1906 on Wikipedia. The agent completed this task by calling wikipedia_search, receiving the article summary, and confirming the file was saved. No required work was omitted."
+                "rationale": "The agent fully addressed the delegation's request to look up the Naturalization Act of 1906 on Wikipedia. It made the required tool call, received the response, and confirmed saving the result to a file with the correct slug."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The agent passed query='the Naturalization Act of 1906' to wikipedia_search, which matches the expected_args pattern '~Naturalization'. The query targets the correct article and the tool call succeeded with matched.kind='predicate'."
+                "rationale": "The agent called wikipedia_search with query 'the Naturalization Act of 1906', which matches the expected_args predicate '~Naturalization'. The query targets the correct article and the tool matched successfully with kind 'predicate'."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only 'Saved the Wikipedia summary to naturalization-act-of-1906.md' without asserting facts beyond what the tool response supports. No unsupported framing or context was added."
+                "rationale": "The agent called wikipedia_search, received a response with title, extract, and url, and confirmed saving the file. The response states only 'Saved the Wikipedia summary to `naturalization-act-of-1906.md`.' without asserting facts absent from the tool response. No unsupported claims are present."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the Naturalization Act of 1906' targets the correct article. The returned title 'Naturalization Act of 1906' is accepted at face value and matches the delegation's request. The agent proceeded without remarking on any query-title difference or re-querying."
+                "rationale": "The query 'the Naturalization Act of 1906' directly targets the article the delegation named. The returned title 'Naturalization Act of 1906' matches the query intent exactly. The agent accepted the response at face value without re-querying or remarking on any discrepancy."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The response is exactly one line: 'Saved the Wikipedia summary to naturalization-act-of-1906.md.' This matches the required return contract precisely \u2014 naming the saved file and nothing else. No article content, narration, or characterization appears in the reply."
+                "rationale": "The response is exactly one line: 'Saved the Wikipedia summary to `naturalization-act-of-1906.md`.' This matches the required return contract precisely\u2014naming the saved file and nothing else. No article content, narration, or characterization appears in the reply."
               }
             ],
-            "judge_cost_usd": 0.006638100000000001,
+            "judge_cost_usd": 0.0068631,
             "duration_ms": 7535.642700000608,
             "error": null,
-            "input_tokens": 3099,
+            "input_tokens": 3349,
             "cached_input_tokens": 4441,
-            "output_tokens": 619
+            "output_tokens": 614
           },
           "started_at": 1790615449.34692,
           "ended_at": 1790615488.492115
@@ -4594,5 +4604,6 @@
       "ut_search_wikipedia_w8m"
     ],
     "seed": 2624
-  }
+  },
+  "judge_model": "claude-haiku-4-5-20251001"
 }

@@ -10,11 +10,12 @@
       "no-relatives",
       "isolated-person",
       "fan-principle",
-      "single-turn-decomposition"
+      "single-turn-decomposition",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to identify his parents.",
+    "delegation": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to identify his parents.\n\nprojectPath: <workspace>",
     "scenario": null
   },
   "mcp_fixtures": [
@@ -29,21 +30,7 @@
     "tree.gedcomx.json should contain exactly one person (the subject) and no relationships"
   ],
   "execution": {
-    "max_wall_clock_seconds": 480,
-    "stub_skills": [
-      {
-        "skill": "question-selection",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "research-plan",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      },
-      {
-        "skill": "locality-guide",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
-      }
-    ]
+    "max_wall_clock_seconds": 480
   },
   "judge_reads_files": true
 }
