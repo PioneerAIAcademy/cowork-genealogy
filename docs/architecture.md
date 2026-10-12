@@ -222,14 +222,14 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **7** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **26** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **27** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The twenty-six agents are `gps-mentor`, `record-extractor`, `image-reader`,
+The twenty-seven agents are `gps-mentor`, `record-extractor`, `image-reader`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`, `project-status`,
-`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints` and `init-project`.
+`search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `init-project` and `tree-survey`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -780,7 +780,7 @@ tool (§5.2), pin `model:` deliberately, and give it an `AGENT_WRITABLE_SECTIONS
 lane if it holds `research_append` (plus `agentCallers` rows for every writer
 tool it holds — "Give an agent a new tool", §5). Register it in the worker's
 `EXPECTED_AGENTS`, in `DELEGATION_EDGES`, and in `agent-return-contract.test.ts`
-(heading or `PENDING`), and regenerate `prompt-sizes.json` — the full list, with
+(heading or `PENDING`) — the full list, with
 what each wants, is in `docs/skill-to-agent-pair-conversion.md` → "What adding an
 agent trips". Then run `make agent-smoke` (§8) — and note that no CI job runs it.
 
@@ -1960,7 +1960,7 @@ Drift is CI-enforced, not conventional. In `packages/engine/mcp-server/tests/pac
 | `gps-terminology.test.ts` | no plugin prose collapses the two evidence axes into "primary/secondary source" or "primary/secondary evidence", with an allow-list keyed to (file, line) for the `citation` agent, which must quote the wrong phrasing back to correct it |
 | `adr-links.test.ts` | ADR required fields; every repo path cited in an ADR's **live** `Applies to` / `Enforcement` still resolves. `doc-links.test.ts` now also checks every section of every ADR, so this path check is a subset of that one |
 | `doc-links.test.ts` | every repo path, markdown link, `make` target and **slash command** cited by `docs/task-lifecycle.md`, `CLAUDE.md`, `docs/skill-to-agent-pair-conversion.md` and by **`.claude/{agents,commands,skills}`** still resolves; the same minus slash commands for every `.md` under **`docs/`** except `docs/plan/` and `docs/deep-dives/`. A path absent on purpose — retired, gitignored, cited in a dated record as it stood then, or named as a file still to create — is a named `KNOWN_ABSENT` entry with its reason. Also bans `:NNN` line cites to `.ts`/`.py`/`.mjs`/`.md` files anywhere under `docs/` except `docs/plan/` and `docs/deep-dives/`. Shares its extraction rules with `adr-links.test.ts` via `repo-paths.ts` |
-| `prompt-budget.test.ts` | the report is warn-only; the baseline file must be current. `prompt-sizes.json` records byte sizes for every `SKILL.md`, agent body and `CLAUDE.md`, and character sizes for every MCP tool description (`description.length + JSON.stringify(inputSchema).length`). The staleness test fails when the file disagrees with the sizes computed at HEAD; the delta report stays warn-only — no ceiling, no threshold. Regenerate: `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts` |
+| `prompt-budget.test.ts` | warn-only: prints the byte-size change a PR makes to every `SKILL.md`, agent body and `CLAUDE.md`, reading the base side from `origin/<base>` with `git ls-tree`. No ceiling, no threshold, nothing committed. Tool descriptions are not covered |
 
 Plus, from `.github/workflows/check-runlogs.yml`:
 `check_skill_frontmatter.py` (for **skills and agents**: description length and

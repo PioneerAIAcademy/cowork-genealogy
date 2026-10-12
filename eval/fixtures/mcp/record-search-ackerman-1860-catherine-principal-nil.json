@@ -1,0 +1,21 @@
+{
+  "tool": "record_search",
+  "description": "Role-swapped follow-up for ut_search_records_027: Catherine Ackerman searched as the principal (givenName Catherine, George as spouse). Returns nothing, as production would: the 1860 Bucks County household names no Catherine (record-search-ackerman-1860-spouse-absent.json reports relativeTerms.spouse absent). Without it the call fell through to fixture_not_found, which the judge read as a nil the skill failed to escalate. Must be listed after record-search-ackerman-1860-spouse-absent and before record-search-ackerman-1860-catch-all.",
+  "args": {
+    "surname": "~Ackerman",
+    "givenName": "~Catherine"
+  },
+  "response": {
+    "query": {
+      "surname": "Ackerman",
+      "givenName": "Catherine",
+      "spouseGivenName": "George"
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 100,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}
