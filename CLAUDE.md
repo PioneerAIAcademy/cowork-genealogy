@@ -788,7 +788,10 @@ Where to look first:
   Postgres jsonb, blobs and staged results in S3 with a Postgres index; its
   dependencies (`pg`, `@aws-sdk/client-s3`, `@smithy/node-http-handler`) are
   `optionalDependencies` omitted from the `.mcpb`, and `make proto-store-test`
-  runs its conformance against the compose stack.
+  runs its conformance against the compose stack. `make engine-test-pg` (CI:
+  `vitest-pg`) runs the whole engine suite on it; a new test that asserts
+  file-system behaviour with no Postgres meaning calls `fileStoreOnly(reason)`
+  (`tests/helpers/store-backend.ts`) rather than skipping.
 - **`src/types/`** — shared API response and tool I/O types live
   here. If a second tool touches the same upstream API, put the
   response shape here so both stay in sync.

@@ -758,13 +758,25 @@ proto-store-test: proto-up-store ## D6–8 store: PgS3ProjectStore conformance +
 	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
 	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
 	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
-	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts
 	cd $(ENGINE_DIR) && env -u AWS_PROFILE -u AWS_SESSION_TOKEN \
 	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects \
 	  PROTO_S3_KEYLESS=1 PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
 	  AWS_ACCESS_KEY_ID=proto AWS_SECRET_ACCESS_KEY=protoproto \
 	  AWS_SHARED_CREDENTIALS_FILE=/nonexistent AWS_CONFIG_FILE=/nonexistent AWS_EC2_METADATA_DISABLED=true \
-	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts
+	  npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts
+
+# U15: the whole engine suite with every tool's project I/O on PgS3ProjectStore
+# (PROTO_STORE=pg: tests/setup/proto-store.ts installs tests/helpers/pg-routing-store.ts),
+# failing on any skipped test, then proto-store-test's keyless arm. CI's twin is
+# engine-tests.yml's vitest-pg job. Static keys, with exported AWS_* unset as above.
+.PHONY: engine-test-pg
+engine-test-pg: proto-up-store $(ENGINE_DEPS) ## U15: engine vitest suite on the Postgres/S3 store (compose postgres/minio), nothing may skip
+	cd $(ENGINE_DIR) && env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY PROTO_STORE=pg \
+	  PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 \
+	  PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto \
+	  npm test
+	$(MAKE) proto-store-test
 
 .PHONY: engine-test
 engine-test: $(ENGINE_DEPS) ## Genealogy engine tests — packages/engine/mcp-server (vitest)
