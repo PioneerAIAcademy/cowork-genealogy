@@ -108,14 +108,23 @@ only read one thing.** Only `source_attachments` accepts an array. `record_read`
 `person_ancestors`, `place_population`, `wiki_place_page` and `place_distance` each take
 exactly one id, url or name.
 
-**So the agent has no choice but to iterate.** Only **2.7%** of assistant messages
-emit more than one tool call — that is not the model failing to batch, it is the tool
-surface making batching impossible. The fix is a build, not a prompt.
+**Re-measured 2026-10-11: the agent already batches.** **27%** of tool-carrying
+assistant messages emit more than one tool call — 303 of 1,129 across the five
+2026-10-05 runs, the only ones whose `usage.timeline` records message ids. The
+earlier figure of 2.7% does not reproduce. `research_query` alone: 375 calls in 174
+messages, about two per trip to the model. Singular tools do not stop the model asking
+for several things in one turn; it already does.
 
 MEASURED, Aug+Sep, n=56 runs: **64 singular-read calls per run**, and **52.8
-back-to-back same-tool repeats per run** — calls made consecutively against one tool
-because it could not be asked once. Against 174 model calls/run that is the largest
-identified block of avoidable turns in the system.
+back-to-back same-tool repeats per run** — calls made consecutively against one tool.
+That count reproduces (52.1/run over the 51 Aug–Sep runs present at the pinned
+commit), but **it counts calls, not turns.** A turn is one trip to the model, which
+re-reads the whole context; calls sent together in one message cost one trip. Lined
+up against message ids on the five 2026-10-05 runs, list arguments on every candidate
+tool would save about **5.8 trips per run**, and the first slice worth building
+(`research_query`'s four id filters) about **2.6 — roughly $0.04/run, 0.4% of $10.57**
+(corpus basis). n = 5 runs; every new run adds message ids for free. This is not the
+largest block of avoidable turns, and plural arguments are parked (2026-10-11).
 
 | tool | median calls/run | back-to-back repeats |
 |---|---|---|
@@ -139,12 +148,13 @@ identified block of avoidable turns in the system.
    assertions with their classifications, the `person_evidence` links on them, their
    sources, the conflicts that touch it, and its stop record. That is what
    `research-exhaustiveness` and `proof-conclusion` re-read on every spawn — 87% and
-   75% of their tool budgets.
-2. **Plural args — collapses N same-tool calls into one.** 52.8/run of measured
-   headroom. Build in the order of the table above.
-3. **Parallel tool calls — collapses N different-tool calls into one turn.** Unlocked
-   by the first two: you cannot make the model batch by asking, but you can make
-   batching the shape of the tool.
+   75% of their tool budgets. *Parked 2026-10-10: shares of calls, not of cost; priced
+   at ≈ $0.10/run (≈ 1%), and it needs a multi-section answer, which the research-query
+   spec §3 rules out ("a filter, not a nested join").*
+2. **Plural args — collapses N same-tool calls into one.** 52.8 calls/run, but only
+   ≈ 5.8 model trips/run (above). *Parked 2026-10-11 at ≈ $0.04/run for the first slice.*
+3. **Parallel tool calls — collapses N different-tool calls into one turn.** Already
+   happening: 27% of tool-carrying messages carry more than one call (above).
 
 Also in this wave: **`tree_query`**, the missing sibling to `research_query`. Tree
 reads are **64%** of the project-file reads that remain, and no projection exists.
@@ -216,8 +226,10 @@ Two pieces of work, in order:
 `ToolSearch` calls per run while tool search stays on. Tool search on plus a small
 always-loaded set is cheaper than either extreme. Size that set against the off arm.
 
-**Wave 1 before Wave 2**: collapsing calls first means the payload work measures
-against fewer, larger results rather than chasing a moving denominator.
+**Wave 2 no longer waits on Wave 1.** The ordering assumed collapsing calls would move
+Wave 2's denominator; re-measured (section 4), the collapse is ≈ 5.8 model trips/run
+and the plural and join work is parked, so payload shaping can be priced against the
+current call mix.
 
 ## 6. Wave 3 — conversion (NOT YOURS — others do this)
 
@@ -491,8 +503,9 @@ a future reviewer, spends that again.
 - **Reverting the three skill→agent conversions.** The arithmetic favours agents
   (section 6), and the attributable share of the Jul→Sep regression was 0–25% of wall
   with the cost rise not surviving a within-fixture control.
-- **Memoising repeat tool calls: $0.065/run.** Below noise. The win is in collapsing the
-  calls (Wave 1), not in caching their results.
+- **Memoising repeat tool calls: $0.065/run.** Below noise. Collapsing the same calls
+  with list arguments re-measured at the same order (≈ $0.04/run, section 4), so neither
+  caching nor collapsing repeat reads is where the money is.
 - **Capping research-exhaustiveness spawns makes a run unfinishable.** No counting
   mechanism exists, and `OWNED_DECLARATIONS` in `guard_project_files.py` routes
   `declared: true` to that agent alone, so a capped question can never be declared and
