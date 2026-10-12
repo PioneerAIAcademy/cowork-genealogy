@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import inspect
 import os
-import pwd
 import re
 import shutil
 import signal
@@ -48,9 +47,12 @@ class Slot:
     gid: int
 
 
-def parse(raw: str | None, *, euid: int, getpwnam: Callable[[str], Any] = pwd.getpwnam) -> list[Slot] | None:
+def parse(raw: str | None, *, euid: int, getpwnam: Callable[[str], Any] | None = None) -> list[Slot] | None:
     """The pool, or None when disabled. Raises ``TurnUsersError`` for a configuration that
     would run a CLI as root or let two turns share a uid."""
+    if getpwnam is None:
+        import pwd
+        getpwnam = pwd.getpwnam
     value = (raw or "").strip()
     if not value:
         raise TurnUsersError(f"{ENV_VAR} is unset: name one unprivileged user per sqsd connection, or {DISABLED!r}")
