@@ -102,7 +102,14 @@ def build_workspace(
         # only when a scenario ships one: copying tree.gedcomx.json in its place
         # would also exempt persons a mid-research fixture minted in an earlier
         # session.
-        for fname in ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json"):
+        # `external-collections.json` is the stored curated list research_query
+        # reads (#2995); a test that seeds one must see it.
+        for fname in (
+            "research.json",
+            "tree.gedcomx.json",
+            "starting-tree.gedcomx.json",
+            "external-collections.json",
+        ):
             f = src / fname
             if f.exists():
                 shutil.copy(f, target / fname)

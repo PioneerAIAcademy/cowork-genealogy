@@ -116,10 +116,15 @@ def test_escalation_passes_on_a_spawn_and_fails_without_one():
 def test_live_callee_hand_off_passes_on_a_spawn_and_fails_without_one():
     mod = _validators("test_search_records")
     live = {"tags": ["live-callee"]}
-    tools = [{"tool": "mcp__genealogy__external_links_search"}]
+    tools = [{"tool": "mcp__genealogy__build_external_search_url"}]
     mod.test_live_callee_used_its_own_tools(tools, [], [_spawn("search-external-sites")], live)
     with pytest.raises(AssertionError):
         mod.test_live_callee_used_its_own_tools(tools, [], [], live)
+    # A fetch alone is not a URL built by the tool.
+    with pytest.raises(AssertionError):
+        mod.test_live_callee_used_its_own_tools(
+            [{"tool": "mcp__genealogy__external_links_search"}], [], [_spawn("search-external-sites")], live
+        )
 
 
 # --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------

@@ -445,10 +445,12 @@ def test_live_callee_used_its_own_tools(
     its own tools.
 
     This is the entire point of `execution.run_skills` (issue #1012). Before
-    the sub-skill union the callee held neither `place_search` nor
-    `external_links_search`, and the failure was silent — it invented an
-    Ancestry URL from prose rather than erroring. A regression would look
-    identical: plausible links, no tool call behind them.
+    the sub-skill union the callee held neither `place_search` nor its URL
+    tools, and the failure was silent — it invented an Ancestry URL from prose
+    rather than erroring. A regression would look identical: plausible links,
+    no tool call behind them. `build_external_search_url` is the call every
+    hand-off must make; `external_links_search` is not, since the agent reads a
+    stored list when the project has one.
 
     Deterministic rather than judged, for the same reason
     test_escalates_to_external_sites_after_fs_exhaustion is. Asked to verify
@@ -464,9 +466,8 @@ def test_live_callee_used_its_own_tools(
     if "live-callee" not in test.get("tags", []):
         pytest.skip("only the live-callee seam test")
     # Delegation first: without it the tool assert below is satisfiable the
-    # wrong way. The unit harness grants every MCP tool to the main thread and
-    # the test stocks `external_links_search`'s fixture, so `search-records`
-    # can call it itself, never spawn the agent, and still show the tool in
+    # wrong way. The unit harness grants every MCP tool to the main thread, so
+    # `search-records` can call `build_external_search_url` itself, never spawn the agent, and still show the tool in
     # `tool_calls` — the seam this test exists for would be untested and green.
     #
     # Nothing else covers it: this test's own `judge_context` forbids the judge
@@ -481,11 +482,11 @@ def test_live_callee_used_its_own_tools(
         f"thread is the failure this asserts against, not a pass. handoffs={handed}"
     )
     called = {c.get("tool", "").split("__")[-1] for c in (tool_calls or [])}
-    assert "external_links_search" in called, (
+    assert "build_external_search_url" in called, (
         "the search-external-sites agent ran live, so it had to reach its own "
-        "tools — external_links_search is what turns a place into real "
-        "third-party collection links. Absent, the agent can only have "
-        f"invented any URLs it presented. tools called: {sorted(called)}"
+        "tools — build_external_search_url is the only way it may produce a "
+        "search URL. Absent, the agent can only have invented any URL it "
+        f"presented. tools called: {sorted(called)}"
     )
 
 

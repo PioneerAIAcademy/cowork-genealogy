@@ -402,3 +402,30 @@ def test_nil_fires_on_a_search_capture_cut_mid_document(tmp_path):
     calls = [{"tool": "mcp__genealogy__record_search", "response_summary": raw[:40] + "..."},
              _log_append(outcome="negative")]
     assert _states(scan([_write_run(tmp_path, calls)]).rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+# --- external_links_search stopped staging (2026-10) -------------------------
+
+
+def test_a_links_fetch_without_staged_is_neither_an_emitter_nor_a_search(tmp_path):
+    """After the tool stopped staging, a fetch can carry neither note; counting it
+    would add a never-held row and a phantom search to every locality survey."""
+    fetch = _search({"results": [{"url": "u"}], "totalForPlace": 1,
+                     "stored": {"file": "external-collections.json", "places": ["P"]}},
+                    tool="mcp__genealogy__external_links_search")
+    result = scan([_write_run(tmp_path, [fetch])])
+    assert [r for r in result.rows if r.field in ("nilSearchNeedsLog", "unloggedSearches")] == []
+    assert all(r.searches == 0 for r in result.ratios)
+
+
+def test_a_links_fetch_that_staged_still_scores_as_before(tmp_path):
+    fetch = _search({"results": [], "totalForPlace": 0, "staged": None,
+                     "nilSearchNeedsLog": "A nil search is a finding…"},
+                    tool="mcp__genealogy__external_links_search")
+    rows = scan([_write_run(tmp_path, [fetch, _log_append(outcome="negative")])]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter({ACTED: 1})
+
+
+def test_a_links_fetch_with_no_readable_response_stays_an_emitter(tmp_path):
+    rows = scan([_write_run(tmp_path, [{"tool": "mcp__genealogy__external_links_search"}])]).rows
+    assert _states(rows, "nilSearchNeedsLog") == Counter({NOT_OBSERVABLE: 1})
