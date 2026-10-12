@@ -321,6 +321,12 @@ class E2eResult:
     git_sha: str | None = None
     skills_hash: str | None = None
 
+    # The curated Ancestry collections the run's project stored, place -> sorted
+    # `ancestry:<id>` keys (#2995). What build-external-search-url-tool-spec.md
+    # §9.1 checks a generated collection URL against. A key set rather than a
+    # copy of the file: the file is ~0.15-0.3 MB per state.
+    external_collection_keys: dict[str, list[str]] = field(default_factory=dict)
+
     # Schema marker for readers. See HARNESS_SCHEMA_VERSION.
     harness_schema_version: int = HARNESS_SCHEMA_VERSION
 
