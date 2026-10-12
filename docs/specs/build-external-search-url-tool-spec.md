@@ -701,7 +701,7 @@ Standard MCP tool: implementation in
 `src/tools/build-external-search-url.ts`, schema added to `allToolSchemas` in
 `src/tool-schemas.ts`, dispatch in `src/server.ts` (to
 `buildExternalSearchUrlTool`), name in `manifest.json`'s `tools` array,
-`README.md` tool table row (and its tool-count line). Signals its failure modes
+`docs/catalog.md` tool table row (and its tool-count line). Signals its failure modes
 by returning `ok: false`, so it is listed in `tool-result.ts`'s
 `OK_FALSE_IS_FAILURE` — and, since it writes the hand-off log entry (§6), not
 in `NOT_A_DOCUMENT_WRITER`. It is a `writerTools` entry on the `log` row of

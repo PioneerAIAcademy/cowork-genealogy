@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_tree_survey_009",
+    "skill": "tree-survey",
+    "name": "Planning for a chosen question — hand back to research-plan, call no tool",
+    "type": "negative",
+    "description": "The request is to plan searches for a question already chosen, which is research-plan's job. The agent must hand back naming research-plan and call no tool. A DIRECT negative graded on its invariant, gated by test_hand_back_names_its_owner (hand-back).",
+    "tags": [
+      "hand-back",
+      "handback-to-research-plan",
+      "direct-arm",
+      "routing"
+    ]
+  },
+  "input": {
+    "delegation": "Plan the searches for my research question about Hannah Pruitt's parents."
+  },
+  "negative": {
+    "correct_skill": [
+      "research-plan"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "This is not a tree-wide survey before a project exists; it belongs to research-plan."
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "The correct reply is a one-line hand-back naming research-plan. Calling any tool, not even tree_gaps, is a fail."
+  ]
+}
