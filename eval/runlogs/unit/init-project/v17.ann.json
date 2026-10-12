@@ -1,89 +1,9 @@
 {
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v16_2026-10-08_22-36-19.ann.json
-  "run_log": "v16_2026-10-08_22-36-19.json",
-  "annotator": "mercybocumy2000@gmail.com",
-  "corrections": [
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q4v",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_q7b",
-========
   "run_log": "v17.json",
   "annotator": "okeziepascal2@gmail.com",
   "corrections": [
     {
       "test_id": "ut_init_project_002",
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v17.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -222,208 +142,12 @@
       "test_id": "ut_init_project_004",
       "dimension_source": "rubric",
       "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_009",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "correctly did not invoke the init-project skill"
-    },
-    {
-      "test_id": "ut_init_project_009",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": "correctly did not invoke the init-project skill"
-    },
-    {
-      "test_id": "ut_init_project_009",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v16_2026-10-08_22-36-19.ann.json
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_010",
-========
       "test_id": "ut_init_project_001",
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v17.ann.json
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -431,17 +155,11 @@
       "comment": null
     },
     {
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v16_2026-10-08_22-36-19.ann.json
-      "test_id": "ut_init_project_vqx",
-========
       "test_id": "ut_init_project_001",
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v17.ann.json
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v16_2026-10-08_22-36-19.ann.json
-========
       "comment": null
     },
     {
@@ -490,7 +208,6 @@
       "dimension_name": "Known-holdings capture",
       "llm_score": null,
       "corrected_score": null,
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v17.ann.json
       "comment": null
     },
     {
@@ -499,9 +216,6 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v16_2026-10-08_22-36-19.ann.json
-      "comment": "The AI incorrectly flagged Josephine’s missing relationship subtype as a structural defect; the fixture documents this as expected FamilySearch behavior, not an error."
-========
       "comment": "Per the judge guidelines and criteria, init-project is responsible only for reporting the imported state; performing error checking, structural analysis, or flagging missing relationships as data entry inconsistencies is out-of-scope for initialization (which belongs to check-warnings). Framing the absence of a direct couple/marriage link between Jean Baptiste and Marie Dubois as a \"notable gap\" or potential \"data entry oversight concern\" constitutes an unsupported inference/analysis beyond the initialization role."
     },
     {
@@ -559,10 +273,25 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": null
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v17.ann.json
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -570,7 +299,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
@@ -578,7 +307,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Project section seeding & schema validity",
       "llm_score": 3,
@@ -586,7 +315,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Researcher profile",
       "llm_score": 3,
@@ -594,7 +323,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Place standardization",
       "llm_score": 3,
@@ -602,7 +331,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_init_project_vqx",
+      "test_id": "ut_init_project_wzk",
       "dimension_source": "rubric",
       "dimension_name": "Known-holdings capture",
       "llm_score": 3,
@@ -615,75 +344,7 @@
       "dimension_name": "Stub & tree fidelity",
       "llm_score": 3,
       "corrected_score": 3,
-<<<<<<<< HEAD:eval/runlogs/unit/init-project/v16_2026-10-08_22-36-19.ann.json
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "rubric",
-      "dimension_name": "Known-holdings capture",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "rubric",
-      "dimension_name": "Place standardization",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "rubric",
-      "dimension_name": "Researcher profile",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "rubric",
-      "dimension_name": "Project section seeding & schema validity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "rubric",
-      "dimension_name": "Stub & tree fidelity",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_init_project_j4n",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-========
       "comment": "Agent's own report and the tree are correct (\"Mary's unknown parent… sex not yet known\", I3 gender Unknown). The \"Mary's mother\" wording is in the harness dispatcher's relay (text_response), not the agent's return."
->>>>>>>> origin/main:eval/runlogs/unit/init-project/v17.ann.json
     }
   ]
 }
