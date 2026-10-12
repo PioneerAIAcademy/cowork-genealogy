@@ -139,6 +139,8 @@ it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Two
 parents are one fact, not two — never split such an objective into a father
 question and a mother question.
+A motivation objective ("why did they move?") is never restated: write the
+fact question it rests on (Appendix A, "Two Types of Genealogical Questions").
 
 **Exception — an explicitly unverified, load-bearing premise.** When the
 objective rests on a fact sourced only to compiled/unsourced data (an online
@@ -486,8 +488,8 @@ event question its answer rests on — when they arrived, or where they
 lived before, or who was already there; one fact, never two joined by
 "and". Paragraph 1 of `summary_for_user` must say the reason itself will
 be explained from the history of the time and place once those facts are
-established, not proved like a question. A stated date
-window bounds the questions, not the evidence that may answer them.
+established, not proved like a question. A stated date window bounds the
+questions, not the evidence that may answer them.
 
 ## Balancing Breadth and Focus
 
