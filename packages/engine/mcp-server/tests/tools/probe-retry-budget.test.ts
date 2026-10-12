@@ -12,16 +12,9 @@
  *
  * Asserted on the REQUEST COUNT rather than elapsed time.
  *
- * The first version asserted exactly 1 on real timers and was flaky at about
- * 7.5%, which is how it reached `main` and then reddened an unrelated PR.
- * Jitter never mattered: the first backoff is at least 200ms, so against a
- * 40ms budget the sleep is always clamped to exactly the time remaining. A
- * second request starts only when that sleep resolves while `Date.now()` is
- * still short of the deadline, and on CI it sometimes does. Faking
- * `setTimeout` and `Date` together puts both on one clock, so the fail-fast
- * case is exactly 1 every run. The hang case cannot be faked that way
- * (`AbortSignal.timeout` is a real timer), so it asserts only that the call
- * stops short of the full attempt set.
+ * `fetchWithRetry` stops rather than sleep into its deadline, and the first
+ * backoff (at least 200ms) is longer than a 40ms budget ever has left, so
+ * both capped cases make exactly 1 request.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -73,9 +66,8 @@ describe("image_search retry budget", () => {
     // Uncapped this is 3: `fetchWithRetry` keeps retrying inside its own 10s
     // budget, so the call outlives the timeout the caller asked for and the §8
     // arithmetic understates this leg. Capped, the budget expires during the
-    // first backoff, so the attempt set cannot be exhausted: 1 or 2 depending
-    // on the real clock, never 3.
-    expect(requests).toBeLessThan(3);
+    // first backoff, so no retry fits.
+    expect(requests).toBe(1);
   });
 
   it("leaves a default-timeout caller on the default retry budget", async () => {
