@@ -540,7 +540,7 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
   - `packages/engine/plugin/agents/proof-conclusion.md`;
   - `packages/engine/plugin/agents/record-extractor.md`: intent records are labelled; the pre-1880 rule stays;
   - `eval/tests/unit/tree-edit/rubric.md` ("Evidence grounding") and `eval/tests/unit/proof-conclusion/rubric.md` (the tree-encoding dimension: evidence facts no longer sit on the tree, and the concluded edge is no longer "usually already present"), with the `eval/harness/scripts/check_rubric_tool_drift.py` SUPPRESSIONS quotes these edits remove (`test_every_suppression_quote_is_verbatim`);
-  - `README.md`'s `materialize_facts` row.
+  - `docs/catalog.md`'s `materialize_facts` row.
 - **Harness:**
   - `eval/harness/harness/skill_invocation.py`: `owning_skills` attributes edge and fact writes by claim, not to proof-conclusion; `find_effects_without_invocation` and `find_conclusions_without_tree_encoding` read claims; `find_citation_nulling_in_tree_sources` says "concluded" where it says "uploads";
   - `eval/harness/e2e/guardrail_shadow_report.py`'s "uploaded tree source(s)" labels, and `docs/specs/e2e-test-spec.md`'s paragraph on the citation-nulling check, say "concluded";

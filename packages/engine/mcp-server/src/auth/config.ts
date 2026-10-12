@@ -59,21 +59,44 @@ export const HOSTED_REAUTH_INSTRUCTION =
   "the login tool: it cannot open a sign-in page from here.)";
 
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
-  "No OpenRouter API key is configured. Tell the user to add their " +
-  "OpenRouter API key (from https://openrouter.ai/keys) to " +
+  "No OpenRouter API key is configured. Tell the user to get one at " +
+  "https://openrouter.ai/keys and enter it in Claude Desktop under Settings → " +
+  "Extensions → Genealogy Research, or add it to " +
   "~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. " +
   "Do not ask the user to paste the key into the chat.";
 
+// The one variable the stdio entrypoint reads. manifest.json's `user_config`
+// asks for the key in Claude Desktop's extension install dialog, and its
+// `mcp_config.env` hands the answer over under this name — an environment
+// variable is the only channel `user_config` has.
+export const INSTALL_OPENROUTER_KEY_ENV = "GENEALOGY_OPENROUTER_API_KEY";
+
+/**
+ * What the install dialog collected, as config for `localPrincipal`. A field
+ * left blank arrives empty or as the unsubstituted `${user_config...}`
+ * placeholder (the mcpb reference loader keeps a variable it has no value for);
+ * both mean "not set", so `config.json` still applies.
+ */
+export function installConfigFromEnv(env: NodeJS.ProcessEnv): AppConfig {
+  const key = env[INSTALL_OPENROUTER_KEY_ENV]?.trim();
+  return key && !key.startsWith("${") ? { openRouterApiKey: key } : {};
+}
+
 /**
  * The per-user config `principal` acts with: the desktop's
- * `~/.familysearch-mcp/config.json` for the local principal, the config that
- * travelled with the request for a bearer. Every getter below takes the
- * principal for the same reason `getValidToken` does (auth/principal.ts).
+ * `~/.familysearch-mcp/config.json` for the local principal, with its
+ * `overlay` on top, and the config that travelled with the request for a
+ * bearer. Every getter below takes the principal for the same reason
+ * `getValidToken` does (auth/principal.ts).
  */
 export async function loadConfig(principal: Principal): Promise<AppConfig> {
   if (principal.kind === "bearer") {
     return principal.config;
   }
+  return { ...(await readConfigFile()), ...principal.overlay };
+}
+
+async function readConfigFile(): Promise<AppConfig> {
   try {
     const raw = await readFile(CONFIG_STORAGE_PATH, "utf8");
     const parsed: unknown = JSON.parse(raw);
@@ -135,9 +158,11 @@ export async function getWikiApiUrl(principal: Principal): Promise<string> {
 // OpenRouter key resolution is config-only (no env-var fallback, per the repo
 // rule): the server reads it here in every runtime, and no tool reaches for it in
 // the environment. Each runtime fills the config before that: e2e and the hosted
-// sandbox write config.json at the orchestration layer, and the prototype's two
-// container entrypoints layer their own environment over it (hosted-config-env.ts) —
-// see docs/specs/image-transcribe-tool-spec.md, "Key provisioning across runtimes".
+// sandbox write config.json at the orchestration layer, the prototype's two
+// container entrypoints layer their own environment over it (hosted-config-env.ts),
+// and the desktop stdio entrypoint layers the install dialog's answer over it
+// (installConfigFromEnv) — see docs/specs/image-transcribe-tool-spec.md, "Key
+// provisioning across runtimes".
 export async function getOpenRouterApiKey(principal: Principal): Promise<string> {
   const config = await loadConfig(principal);
   const key = config.openRouterApiKey?.trim();

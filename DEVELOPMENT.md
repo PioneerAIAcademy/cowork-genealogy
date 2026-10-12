@@ -626,7 +626,7 @@ restart. Order matters:
    scripts/package-plugin.sh    # if packages/engine/plugin/skills/ changed
    ```
 5. **Re-install via the Cowork UI** (same path end users follow — see
-   `README.md` § "Installation"):
+   `README.md` § "Install"):
    - **MCP:** Claude Desktop → Settings → Extensions → Advanced Settings
      → "Install extension" → pick the rebuilt
      `releases/genealogy-mcp.mcpb`. Installs over the old copy; no
