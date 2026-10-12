@@ -1665,7 +1665,7 @@ In order:
    `staged: null`, is reported and skipped; the others proceed.
 3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
    finalizing each staged file into its sidecar. A record an accepted
-   FamilySearch hint already logged is the exception (issue #3157): the
+   FamilySearch hint already logged is the exception: the
    positive `person_record_matches` entry naming its ark, which no assertion
    cites yet, is the record's own log entry. The record is still read and
    staged, but no second `record_read` entry is written; the source and
