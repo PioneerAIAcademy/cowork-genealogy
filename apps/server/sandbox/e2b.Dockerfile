@@ -49,13 +49,15 @@ RUN mkdir -p "${AGENT_HOME}"
 #    install at the system level so `python3 -m app.agent.runner` resolves the
 #    SDK without a venv activation step. PEP 668 marks 24.04's python externally
 #    managed, hence --break-system-packages (this is a single-purpose image).
-#    The SDK is pinned EXACTLY to apps/server/uv.lock's version: it decides which
-#    CLI the hosted agent runs, and a range installed whatever was newest at
-#    build time (CLI 2.1.215 in the issue #3159 bundle, while the lock's SDK
-#    bundles 2.1.220; issue #3263). test_sandbox_image_provenance.py holds the
-#    two equal. ──
-RUN python3 -m pip install --break-system-packages \
-        "claude-agent-sdk==0.2.128" "websockets>=13"
+#    The closure is uv.lock's `sandbox` group, exported with hashes by
+#    `make proto-requirements`, so the hosted agent runs the SDK (and the CLI
+#    it bundles) the lock resolves rather than whatever was newest at build
+#    (issue #3263). test_proto_config.py holds the file to the lock and this
+#    install to hash mode. Full destination path, per the COPY note below. ──
+COPY apps/server/sandbox/requirements.txt /tmp/sandbox-requirements.txt
+RUN python3 -m pip install --break-system-packages --require-hashes \
+        -r /tmp/sandbox-requirements.txt \
+    && rm /tmp/sandbox-requirements.txt
 
 # ── Agent package: only what `python -m app.agent.runner` needs. The runner
 #    + mock_agent + real_agent live under app/agent/; the app/ and app/agent/

@@ -78,7 +78,6 @@ import asyncio
 import http.client
 import json
 import os
-import shutil
 import ssl
 import subprocess
 import sys
@@ -159,6 +158,7 @@ class Capture:
     def __init__(self, marker: str):
         self.marker = marker
         self.rows: list[dict] = []
+        self.statuses: list[int] = []
         self.subagent_seen = threading.Event()
         self.lock = threading.Lock()
 
@@ -209,6 +209,9 @@ def make_handler(cap: Capture):
             try:
                 conn.request(self.command, self.path, body=raw or None, headers=headers)
                 resp = conn.getresponse()
+                if self.path.startswith("/v1/messages"):
+                    with cap.lock:
+                        cap.statuses.append(resp.status)
                 self.send_response(resp.status)
                 for k, v in resp.getheaders():
                     if k.lower() in ("transfer-encoding", "connection", "content-length"):
@@ -253,6 +256,7 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
     from app.agent import real_agent
 
     cap = Capture(marker)
+    drain_error = None
     server = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(cap))
     threading.Thread(target=server.serve_forever, daemon=True).start()
     base = f"http://127.0.0.1:{server.server_address[1]}"
@@ -261,16 +265,17 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
     try:
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
-            plugin = tmp / "plugin"
-            shutil.copytree(PLUGIN_DIR, plugin)
             project = tmp / "project"
             project.mkdir()
             if settings_effort:
                 (project / ".claude").mkdir()
                 (project / ".claude" / "settings.json").write_text(
                     json.dumps({"effortLevel": settings_effort}) + "\n", encoding="utf-8")
-            real_agent._PLUGIN_DIR = str(plugin)
+            real_agent._PLUGIN_DIR = str(PLUGIN_DIR)
             real_agent._MCP_BUILD = str(ENGINE_BUILD)
+            # `_current_base_url` reads a secrets file before the environment; a missing
+            # one keeps the CLI on this arm's proxy.
+            real_agent._SECRETS_PATH = str(tmp / "absent-secrets.json")
             options = real_agent.build_options(project, api_key=key)
             if option_effort:
                 options.effort = option_effort
@@ -290,6 +295,8 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
                 waiter = asyncio.create_task(asyncio.to_thread(cap.subagent_seen.wait, 240))
                 await asyncio.wait({drainer, waiter}, return_when=asyncio.FIRST_COMPLETED)
                 cap.subagent_seen.set()
+                if drainer.done() and not drainer.cancelled() and drainer.exception():
+                    drain_error = repr(drainer.exception())
                 for t in (drainer, waiter):
                     t.cancel()
             finally:
@@ -299,6 +306,7 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
                     pass
     finally:
         server.shutdown()
+        server.server_close()
         if old_base is None:
             os.environ.pop("ANTHROPIC_BASE_URL", None)
         else:
@@ -312,7 +320,12 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
         "subagent_first_request": sub[0] if sub else None,
         "main_first_request": main[0] if main else None,
         "requests_logged": len(cap.rows),
-        "verdict": "CAPTURED" if sub else "VOID (no subagent request seen)",
+        "drain_error": drain_error,
+        "upstream_statuses": cap.statuses,
+        "verdict": "CAPTURED" if sub else (
+            f"VOID (no subagent request seen; /v1/messages statuses {cap.statuses}"
+            + (f"; {drain_error}" if drain_error else "") + ")"
+        ),
     }
 
 

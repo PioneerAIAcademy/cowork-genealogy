@@ -900,8 +900,19 @@ def test_migrate_is_the_only_schema_applier():
         assert condition == "service_completed_successfully", f"{name} must wait for the migration, not {condition}"
 
 
-REQUIREMENTS = {"web": PROTO / "web" / "requirements.txt", "worker": PROTO / "worker" / "requirements.txt"}
-REGENERATE = "run `make proto-requirements` and commit apps/server/proto/{web,worker}/requirements.txt"
+# Each image that installs a uv group's export: tier -> (Dockerfile, committed export, uv group).
+# "sandbox" is the hosted E2B agent image (issue #3263): its SDK decides which Claude Code CLI
+# every hosted session runs.
+TIERS = {
+    "web": (PROTO / "web" / "Dockerfile", PROTO / "web" / "requirements.txt", "proto-web"),
+    "worker": (PROTO / "worker" / "Dockerfile", PROTO / "worker" / "requirements.txt", "proto-worker"),
+    "sandbox": (PROTO.parent / "sandbox" / "e2b.Dockerfile", PROTO.parent / "sandbox" / "requirements.txt", "sandbox"),
+}
+REQUIREMENTS = {tier: requirements for tier, (_, requirements, _) in TIERS.items()}
+REGENERATE = (
+    "run `make proto-requirements` and commit "
+    "apps/server/{proto/web,proto/worker,sandbox}/requirements.txt"
+)
 
 
 def _locked_version(package: str) -> str:
@@ -939,7 +950,7 @@ def _uv_export(group: str) -> str:
     if not uv:
         pytest.fail("uv is not on PATH: the requirements drift check needs it, and a skip would hide drift")
     proc = subprocess.run(
-        [uv, "export", "--locked", "--only-group", f"proto-{group}", "--no-emit-project",
+        [uv, "export", "--locked", "--only-group", group, "--no-emit-project",
          "--format", "requirements-txt", "--no-header"],
         cwd=PROTO.parent, capture_output=True, text=True, encoding="utf-8",
     )
@@ -958,17 +969,17 @@ def test_proto_images_install_their_requirements_in_hash_mode(tier):
     """U12: each image installs the committed export of its uv group, every pip line in
     hash mode, so the image runs uv.lock's closure (the versions the suite tested) and a
     wheel that does not match the lock's hash fails the build."""
-    dockerfile = PROTO / tier / "Dockerfile"
+    dockerfile, requirements, _ = TIERS[tier]
     lines = _dockerfile_logical_lines(dockerfile)
-    source = f"apps/server/proto/{tier}/requirements.txt"
+    source = requirements.relative_to(REPO).as_posix()
     dests = [line.split()[-1] for line in lines if re.match(rf"COPY (--\S+ )*{re.escape(source)} ", line)]
-    assert len(dests) == 1, f"{dockerfile.relative_to(PROTO)} must COPY {source} exactly once"
+    assert len(dests) == 1, f"{dockerfile.relative_to(PROTO.parent)} must COPY {source} exactly once"
     [dest] = dests
     if dest.endswith("/"):
         dest += "requirements.txt"
     accepted = {dest, dest.removeprefix("./")}
     pips = [line for line in lines if re.match(r"RUN\b.*\bpip3? install\b", line)]
-    assert pips, f"{dockerfile.relative_to(PROTO)} has no pip install"
+    assert pips, f"{dockerfile.relative_to(PROTO.parent)} has no pip install"
     for pip in pips:
         # Every command in the RUN: a second pip chained after the first decides hash mode
         # on its own.
@@ -988,11 +999,11 @@ def test_committed_requirements_are_the_uv_export(tier):
     (name, version, marker) set and the same hashes. A Dependabot bump to uv.lock that moves
     a package in either closure fails here until the files are regenerated."""
     committed, options = _requirements(REQUIREMENTS[tier].read_text(encoding="utf-8"))
-    fresh, _ = _requirements(_uv_export(tier))
-    assert not options, f"{REQUIREMENTS[tier].relative_to(PROTO)} carries options {options}; {REGENERATE}"
+    fresh, _ = _requirements(_uv_export(TIERS[tier][2]))
+    assert not options, f"{REQUIREMENTS[tier].relative_to(PROTO.parent)} carries options {options}; {REGENERATE}"
     stale = {n: (committed.get(n), fresh.get(n)) for n in committed.keys() | fresh.keys() if committed.get(n) != fresh.get(n)}
     assert not stale, (
-        f"proto/{tier}/requirements.txt differs from uv.lock's proto-{tier} group; {REGENERATE}. "
+        f"{REQUIREMENTS[tier].relative_to(PROTO.parent)} differs from uv.lock's {TIERS[tier][2]} group; {REGENERATE}. "
         f"(committed, uv.lock) per package: " + "; ".join(
             f"{n}: {(c or ('absent',))[:2]} vs {(f or ('absent',))[:2]}" + (" (hashes differ)" if c and f and c[:2] == f[:2] else "")
             for n, (c, f) in sorted(stale.items())
@@ -1017,6 +1028,9 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("worker", "botocore", None),
         # U3: grants.py decrypts what web/auth.py encrypts, at the one locked version.
         ("worker", "cryptography", None),
+        # Issue #3263: the hosted agent's SDK, which bundles the CLI every session runs.
+        ("sandbox", "claude-agent-sdk", "0.2.128"),
+        ("sandbox", "websockets", None),
     ],
 )
 def test_requirements_carry_what_the_tiers_import_at_the_locked_version(tier, package, pinned):
