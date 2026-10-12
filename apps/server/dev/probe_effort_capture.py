@@ -158,7 +158,7 @@ class Capture:
     def __init__(self, marker: str):
         self.marker = marker
         self.rows: list[dict] = []
-        self.statuses: list[int] = []
+        self.statuses: list[int | str] = []
         self.subagent_seen = threading.Event()
         self.lock = threading.Lock()
 
@@ -196,8 +196,9 @@ def make_handler(cap: Capture):
         def _forward(self):
             length = int(self.headers.get("content-length") or 0)
             raw = self.rfile.read(length) if length else b""
-            if self.command == "POST" and self.path.startswith("/v1/messages") \
-                    and not self.path.startswith("/v1/messages/count_tokens"):
+            messages_call = self.command == "POST" and self.path.startswith("/v1/messages") \
+                and not self.path.startswith("/v1/messages/count_tokens")
+            if messages_call:
                 cap.record(self.path, raw)
             headers = {k: v for k, v in self.headers.items()
                        if k.lower() not in ("host", "content-length", "connection",
@@ -209,7 +210,7 @@ def make_handler(cap: Capture):
             try:
                 conn.request(self.command, self.path, body=raw or None, headers=headers)
                 resp = conn.getresponse()
-                if self.path.startswith("/v1/messages"):
+                if messages_call:
                     with cap.lock:
                         cap.statuses.append(resp.status)
                 self.send_response(resp.status)
@@ -230,6 +231,11 @@ def make_handler(cap: Capture):
                 self.wfile.flush()
             except (BrokenPipeError, ConnectionResetError):
                 pass
+            except Exception as exc:
+                if messages_call:
+                    with cap.lock:
+                        cap.statuses.append(f"proxy error: {type(exc).__name__}")
+                raise
             finally:
                 conn.close()
 
