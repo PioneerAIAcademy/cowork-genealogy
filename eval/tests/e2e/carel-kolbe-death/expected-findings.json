@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Carel Fredrik Kolbe died on 21 February 1876 and was buried in Cape Town; the Dutch Reformed Church burial entry indexes him as Carel Fredrik Kolbey and gives no age or relatives.",
+      "details": {
+        "subject_person": "Carel Fredrik Kolbe (G4TS-FV8)",
+        "fact_type": "Death",
+        "date": "21 February 1876",
+        "place": "Cape Town, Western Cape, South Africa"
+      },
+      "supporting_sources": [
+        "South Africa, Dutch Reformed Church Registers (Cape Town Archives), 1660-1994 — burial entry for Carel Fredrik Kolbey, died 21 Feb 1876"
+      ],
+      "required": true
+    }
+  ]
+}

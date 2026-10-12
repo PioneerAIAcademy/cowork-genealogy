@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Ásgeir Brinjólfsson was born about 1777, according to the 1808 church census of Hvammur parish, Dalasýsla, which lists him as a farm hand (vinnumaður) in the household of Helgi Jónsson and Guðrún Pétursdóttir alongside a maid, Sigríður Pétursdóttir; the census gives no birthplace.",
+      "details": {
+        "subject_person": "Ásgeir Brinjólfsson (KHJ9-95M)",
+        "fact_type": "Birth",
+        "date": "about 1777",
+        "place": "Iceland"
+      },
+      "supporting_sources": [
+        "Iceland, Church Census, 1744-1965 — 1808 household entry for Helgi Jónsson and Guðrún Pétursdóttir, Dalasýsla, listing Ásgeir Brinjólfsson, born 1777"
+      ],
+      "required": true
+    }
+  ]
+}

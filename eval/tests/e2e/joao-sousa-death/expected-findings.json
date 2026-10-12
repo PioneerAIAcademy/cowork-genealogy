@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "João Gomes de Sousa died in Câmara de Lobos, Madeira, Portugal, on 14 December 1919 (the index gives the death date as \"hoje\", the day of the entry, dated 14 December 1919); the civil death entry names his parents as João Gomes de Souza and Maria Barria Henriques and records burial in Câmara de Lobos.",
+      "details": {
+        "subject_person": "João Gomes de Sousa (GLRZ-VRK)",
+        "fact_type": "Death",
+        "date": "14 December 1919",
+        "place": "Câmara de Lobos, Madeira, Portugal"
+      },
+      "supporting_sources": [
+        "Portugal, Registro Civil, 1437-2023 — death entry for João Gomes de Souza, son of João Gomes de Souza and Maria Barria Henriques, 14 Dec 1919"
+      ],
+      "required": true
+    }
+  ]
+}

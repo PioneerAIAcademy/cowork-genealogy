@@ -667,7 +667,7 @@ the `max_cost_usd` note in §6 step 5.
    | Project completed | `completed` | `research.json::project.status == "completed"` |
    | Inactivity | `inactivity` | No SDK message at all for `caps.inactivity_seconds` (silence), OR no *progress* — no assistant text and no tool call/result — for `caps.progress_stall_seconds` while the stream stays alive (the **progress watchdog**: a stall can keep emitting non-progress messages, so a plain silence timer misses it) |
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
-   | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls` |
+   | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
    | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress). The terminal hand-back is classified and counted in `usage.hand_back_classes` — these are the two gate-False reasons that ARE agent defects — see note below |
