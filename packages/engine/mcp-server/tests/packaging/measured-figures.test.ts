@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { allToolSchemas } from "../../src/tool-schemas.js";
 
 /**
  * Keeps the qualifier documentation honest about `dev/measured-figures.json`.
@@ -87,8 +88,15 @@ const EVIDENCE_SURFACES = [
  * It needs "an unqualified county scope barely narrows", not `35,509` — and a
  * figure here goes stale on every re-run, which is how six documents came to
  * disagree with each other and with the artifact.
+ *
+ * The markdown half is DERIVED, not listed (issue #2486): every skill body,
+ * skill reference and agent body in the plugin. A hand-written list covered
+ * whichever files somebody remembered — at one point 1 of 28 skill bodies and 0
+ * agent bodies — so a new skill quoting a stale total passed by not being on
+ * it. The two tool files below stay listed whole-file; every other tool is
+ * held through its advertised descriptions (`TOOL_DESCRIPTION_SURFACES`).
  */
-const AGENT_SURFACES = [
+const AGENT_TOOL_FILES = [
   // `person-search.ts` is a MODEL-READ surface, so it belongs here even though it
   // is deliberately not an EVIDENCE surface: this list forbids absolute totals,
   // which is exactly what should never appear in a description the ruling keeps
@@ -99,15 +107,55 @@ const AGENT_SURFACES = [
   // The fulltext tool file is model-read. Section J's FORBIDDEN_WHEN rules
   // guard the place-parameter wording here via the union scan at line 579.
   "packages/engine/mcp-server/src/tools/fulltext-search.ts",
-  "packages/engine/plugin/skills/search-records/SKILL.md",
-  "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md",
-  // `place-date-mechanics.md` was here until issue #2123 deleted it: its place,
-  // date and relative-qualifier findings now live in `record_search`'s own
-  // parameter descriptions, and `record-search.ts` is already an EVIDENCE surface
-  // above, so the wording scan still covers every sentence that moved.
-  "packages/engine/plugin/skills/search-records/references/search-strategy-levers.md",
-  "packages/engine/plugin/skills/search-records/references/collection-quirks.md",
 ];
+
+function pluginMarkdown(): string[] {
+  const plugin = "packages/engine/plugin";
+  const out: string[] = [];
+  const skills = join(projectRoot, plugin, "skills");
+  for (const d of readdirSync(skills).sort()) {
+    if (existsSync(join(skills, d, "SKILL.md"))) out.push(`${plugin}/skills/${d}/SKILL.md`);
+    const refs = join(skills, d, "references");
+    if (!existsSync(refs)) continue;
+    for (const f of readdirSync(refs).sort()) {
+      if (f.endsWith(".md")) out.push(`${plugin}/skills/${d}/references/${f}`);
+    }
+  }
+  for (const f of readdirSync(join(projectRoot, plugin, "agents")).sort()) {
+    if (f.endsWith(".md")) out.push(`${plugin}/agents/${f}`);
+  }
+  return out;
+}
+
+const AGENT_SURFACES = [...AGENT_TOOL_FILES, ...pluginMarkdown()].filter(
+  (s) => !EVIDENCE_SURFACES.includes(s)
+);
+
+function descriptionsOf(node: unknown, out: string[] = []): string[] {
+  if (Array.isArray(node)) node.forEach((n) => descriptionsOf(n, out));
+  else if (node && typeof node === "object") {
+    for (const [k, v] of Object.entries(node)) {
+      if (k === "description" && typeof v === "string") out.push(v);
+      else descriptionsOf(v, out);
+    }
+  }
+  return out;
+}
+
+/**
+ * Every advertised tool description, the nested parameter descriptions
+ * included — the text the model pays for, read from `allToolSchemas` rather
+ * than by a regex over the source, which misses concatenated literals and breaks
+ * under a reflow. `record_search` is skipped: its file is an EVIDENCE surface.
+ * Comments in a tool file are not scanned; only what is advertised.
+ */
+const TOOL_DESCRIPTION_SURFACES = allToolSchemas
+  .filter((s) => s.name !== "record_search")
+  .map((s) => ({
+    rel: `packages/engine/mcp-server/src/tools/${s.name.replace(/_/g, "-")}.ts`,
+    name: s.name,
+    text: descriptionsOf(s).join("\n"),
+  }));
 
 /**
  * Scanned for CONTRADICTED WORDING.
@@ -359,6 +407,13 @@ const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
       scope: ["docs/specs/fulltext-search-tool-spec.md"],
     },
   ],
+  [
+    40000,
+    {
+      reason: "sidecar_read's page-size cap, a design limit chosen to keep one page inside the host's tool-result budget — not a measurement, so nothing in the artifact can trace it",
+      scope: ["packages/engine/mcp-server/src/tools/sidecar-read.ts"],
+    },
+  ],
 ]);
 
 /** Documented API limits, not measurements — allowed on agent surfaces. */
@@ -504,6 +559,32 @@ describe("measured figures stay traceable to the probe artifact", () => {
     });
   }
 
+  for (const tool of TOOL_DESCRIPTION_SURFACES) {
+    it(`${tool.name}'s advertised descriptions carry no absolute totals`, () => {
+      const found = collectFigures(tool.text, ABSOLUTE_TOTAL)
+        .filter((f) => !API_LIMITS.has(f.value))
+        .filter((f) => {
+          const scope = EXEMPT.get(f.value)?.scope;
+          return !(scope && scope.includes(tool.rel));
+        })
+        .map((f) => f.raw);
+      expect(
+        [...new Set(found)],
+        `a tool description is model-read: describe the behaviour, not a total that\n` +
+          `  drifts on every re-run. A design limit belongs in EXEMPT, scoped to this file.`
+      ).toEqual([]);
+    });
+  }
+
+  it("the agent population is derived, and reaches every kind of model-read file", () => {
+    const has = (re: RegExp) => AGENT_SURFACES.some((s) => re.test(s));
+    expect(has(/\/skills\/[^/]+\/SKILL\.md$/), "skill bodies").toBe(true);
+    expect(has(/\/skills\/[^/]+\/references\/[^/]+\.md$/), "skill references").toBe(true);
+    expect(has(/\/agents\/[^/]+\.md$/), "agent bodies").toBe(true);
+    expect(TOOL_DESCRIPTION_SURFACES.length, "tool descriptions").toBeGreaterThan(40);
+    expect(TOOL_DESCRIPTION_SURFACES.some((t) => t.text.length === 0), "a tool with no description text").toBe(false);
+  });
+
   /**
    * Two sections must not record opposite answers to the same question.
    *
@@ -646,11 +727,12 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // metadata only. Guard against prose that claims it searches transcripts.
       // The [^.,;] clause boundary is a proxy for negation awareness — it stops
       // the pattern before a semicoloned contrast or a comma-not clause can
-      // match, which is good enough for the sentence shapes this repo uses.
+      // match; the gap after the verb also stops at "not"/"only", because a
+      // dash contrast ("metadata only — NOT transcript") has no comma to stop it.
       verdict: "J.verdict:q.recordPlace searches",
       activeWhen: /^metadata only$/,
       mustNotSay:
-        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;]{0,40}(?:transcript|full[- ]?text|document text)|place[^.,;]{0,40}(?:searches|matches)[^.,;]{0,40}(?:transcript|both)/i,
+        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)(?:(?!\bnot\b|\bonly\b)[^.,;]){0,40}(?:transcript|full[- ]?text|document text)|place[^.,;]{0,40}(?:searches|matches)(?:(?!\bnot\b|\bonly\b)[^.,;]){0,40}(?:transcript|both)/i,
       why: "section J measured q.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
     {
@@ -686,8 +768,16 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // Deduped: `person-search.ts` is in both AGENT_SURFACES (no absolute totals)
       // and WORDING_ONLY_SURFACES (contradicted wording), so without this it is read
       // twice and any offending line is reported twice in the failure message.
-      for (const rel of new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES])) {
-        const text = readFileSync(join(projectRoot, rel), "utf8");
+      const files = new Set([...EVIDENCE_SURFACES, ...AGENT_SURFACES, ...WORDING_ONLY_SURFACES]);
+      const sources = [
+        ...[...files].map((rel) => ({ rel, text: readFileSync(join(projectRoot, rel), "utf8") })),
+        // A tool whose whole file is already scanned above is not read twice.
+        ...TOOL_DESCRIPTION_SURFACES.filter((t) => !files.has(t.rel)).map((t) => ({
+          rel: `${t.rel} (description)`,
+          text: t.text,
+        })),
+      ];
+      for (const { rel, text } of sources) {
         // Test per line AND against a whitespace-collapsed whole-file copy. A claim
         // reflowed across two markdown lines ("birth, death, marriage and\nresidence
         // … on the record index") slips a per-line pattern entirely — which is how a
@@ -726,6 +816,9 @@ describe("measured figures stay traceable to the probe artifact", () => {
   for (const [label, sentence] of [
     ["contrast with semicolon", "q.recordPlace matches against collection metadata only; the transcript is reached by q.text."],
     ["contrast with comma-not", "q.recordPlace matches collection metadata, not the transcript."],
+    // A dash, unlike a comma or semicolon, does not stop the gap, so the negation
+    // has to: agents/search-full-text.md's Place row reads exactly this way.
+    ["contrast with dash-NOT", "| Place | Place name | Matches collection metadata only — NOT transcript text. |"],
     ["plain metadata-only", "q.recordPlace matches against collection metadata only."],
     ["generic advice", "Place qualifiers search metadata; use q.text for transcript terms."],
   ] as const) {
