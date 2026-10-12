@@ -1207,6 +1207,23 @@ with `planItemId` — which is available whenever the search was not already
 logged unattributed. Only a paid eval run could show how often the narrow case
 is reached.
 
+### A plan item's `collection_url` is a stored curated collection
+
+`research_append` refuses a plan item whose `collection_url` is not the `url` of a
+row in `external-collections.json`, on both routes that write an item: a
+`plan_items` append or update, and the inline `items[]` of a `plans` op. The field
+exists so a plan names a collection FamilySearch curates for the place, not an id
+recalled from memory — the failure that produced Ancestry ids 9093, 7549 and 60207
+before `build_external_search_url` existed. Both halves live in the project folder,
+so the question is decidable from the documents alone.
+
+**Only a url the op sets is checked.** An update that leaves `collection_url` as it
+was is not re-checked, so an item planned before a re-fetch dropped its row is not
+stranded by an unrelated edit. A missing file refuses every url and names the
+fetch that creates it; an unreadable file refuses with the read error rather than
+throwing. Omitting the field is always accepted: it means a site-wide search.
+`collectionUrlInvariants`.
+
 ### Blocking conflicts before completion
 
 `project.status` may not be set to `"completed"` while any `conflicts[]` entry is

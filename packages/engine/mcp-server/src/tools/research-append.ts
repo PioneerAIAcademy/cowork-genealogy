@@ -61,6 +61,7 @@ export { countryConsistency };
 import { stdDate } from "../utils/date-standardize.js";
 import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
+import { readExternalCollections, EXTERNAL_COLLECTIONS_FILE } from "../utils/external-collections-store.js";
 import {
   ASSERTION_FACT_ATTRS,
   assertionFactAttr,
@@ -2286,6 +2287,66 @@ function planItemSkipInvariants(
   return errors;
 }
 
+/** The curated collection urls in `external-collections.json`, or why they could
+ *  not be read. Read once per call, before the sync apply loop, and only when an
+ *  op mentions `collection_url`. */
+export type StoredCollectionUrls = { urls: ReadonlySet<string> } | { error: string };
+
+async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
+  try {
+    const doc = await readExternalCollections(projectPath);
+    const urls = new Set<string>();
+    for (const entry of Object.values(doc?.places ?? {})) {
+      for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
+        if (typeof row?.url === "string") urls.add(row.url);
+      }
+    }
+    return { urls };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** A plan item's `collection_url` must be a curated collection FamilySearch
+ *  returned for a place, not one recalled from memory (#2995). Decidable from
+ *  `external-collections.json` alone, so it is a writer precondition (ADR-0011).
+ *  Only a url this op SETS is checked: one stored before a re-fetch dropped it
+ *  is left alone, or an unrelated edit to that item would be refused. A
+ *  non-string value is the validator's type error, not this rule's. */
+function collectionUrlInvariants(
+  item: any,
+  stored: StoredCollectionUrls | undefined,
+  previous?: unknown,
+): string[] {
+  const url = item?.collection_url;
+  if (typeof url !== "string" || url === "" || url === previous) return [];
+  const pid = item?.id ?? "(new)";
+  const remedy =
+    "Copy a row's url from research_query({section: \"external_collections\", place, recordType}), " +
+    "or omit collection_url for a site-wide search.";
+  if (!stored) return [];
+  if ("error" in stored) {
+    return [
+      `plan_items[${pid}]: collection_url cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be ` +
+        `read (${stored.error}). Re-fetch the place with external_links_search({standardPlace, projectPath}), ` +
+        "or omit collection_url.",
+    ];
+  }
+  if (stored.urls.size === 0) {
+    return [
+      `plan_items[${pid}]: collection_url '${url}' is not a stored curated collection — nothing is ` +
+        `stored for this project yet. Fetch the place with external_links_search({standardPlace, ` +
+        `projectPath}) first, then ${remedy.charAt(0).toLowerCase()}${remedy.slice(1)}`,
+    ];
+  }
+  if (!stored.urls.has(url)) {
+    return [
+      `plan_items[${pid}]: collection_url '${url}' is not in ${EXTERNAL_COLLECTIONS_FILE}. ${remedy}`,
+    ];
+  }
+  return [];
+}
+
 /** The two tiers that are a final answer rather than a stalled one: `proved`
  *  establishes the claim, `disproved` affirmatively refutes it. `not_proved` is
  *  deliberately absent — it is a non-answer, so something IS holding it back. */
@@ -3377,6 +3438,7 @@ function applyOne(
   startingPersonIds?: ReadonlySet<string>,
   createdAssertions?: ReadonlySet<string>,
   personLinks?: ReadonlyArray<PersonLink>,
+  storedCollectionUrls?: StoredCollectionUrls,
 ): AppliedOp {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -3808,6 +3870,12 @@ function applyOne(
         if (item && !alreadySkipped.has(item.id)) {
           invariantErrors.push(...planItemSkipInvariants(item, {}, true));
         }
+        const storedItem = (Array.isArray(storedPlan?.items) ? storedPlan.items : []).find(
+          (it: any) => it && item && it.id === item.id,
+        );
+        invariantErrors.push(
+          ...collectionUrlInvariants(item, storedCollectionUrls, storedItem?.collection_url),
+        );
       }
     }
   }
@@ -3857,6 +3925,15 @@ function applyOne(
           itemFields,
           op.op === "append",
           storedItem?.rationale,
+        ),
+      );
+    }
+    if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
+      invariantErrors.push(
+        ...collectionUrlInvariants(
+          resultEntry,
+          storedCollectionUrls,
+          op.op === "update" ? storedItem?.collection_url : undefined,
         ),
       );
     }
@@ -5163,6 +5240,10 @@ export async function researchAppend(
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt);
 
+    const storedCollectionUrls = JSON.stringify(ops).includes("collection_url")
+      ? await loadStoredCollectionUrls(projectPath)
+      : undefined;
+
     // ─── Apply every op in-memory ─────────────────────────────────────────────
     const applied: AppliedOp[] = [];
     const appendedThisBatch = new Set<string>();
@@ -5182,6 +5263,7 @@ export async function researchAppend(
             prep.startingPersonIds,
             prep.createdAssertions,
             prep.personLinks,
+            storedCollectionUrls,
           ),
         );
       } catch (e) {

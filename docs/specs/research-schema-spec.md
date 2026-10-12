@@ -616,6 +616,7 @@ Array of plan objects. When a plan fails and is re-planned for the same question
 | `status` | `plan_item_status` | yes | Current status |
 | `skip_category` | `skip_category` | no | Why a `skipped` item was skipped, as something the exhaustiveness gate can read; `status` alone cannot tell these apart. Two of the seven — `inaccessible` and `no_coverage` — say the source could not be evaluated at all; the other five are decisions taken with the source reachable. That split is the line the gate's pursued-and-unavailable exception turns on. See the discussion below |
 | `skip_reason` | string | no | One line on why this item was skipped. Distinct from `rationale`, which is why the item was *planned* — without this field that prose lands in `rationale` and corrupts a required one |
+| `collection_url` | string | no | The curated collection an external-repository item targets: the `url` of a row in `external-collections.json`, which `research_append` checks on write. The executing search uses it as its base URL; absent means a site-wide search |
 
 ### 5.4 `log`
 
