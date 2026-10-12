@@ -4,7 +4,7 @@ Grading dimensions for init-project unit tests. Evaluated by the LLM judge
 alongside the base rubric (Correctness, Completeness, Tool Arguments).
 
 > **DRAFT — pending genealogist review.** Expanded from the original
-> single "Stub person quality" dimension to cover all five jobs the skill
+> single "Stub person quality" dimension to cover all five jobs the agent
 > performs (define problem, survey tree, survey holdings, fixed
 > profile, write + validate files). Genealogist to confirm thresholds
 > and wording before release. Not every dimension applies to every test —
@@ -18,9 +18,9 @@ fabrication? Stub persons carry whatever facts are known (name, gender if
 known, approximate dates/places); unknown fields are omitted, not guessed.
 FamilySearch-derived facts are sourced to a tree source (`S1`) at
 `quality: 1` (questionable), and local `I` person IDs are used throughout.
-When the skill passes `person_read`'s `staged.resultsRef` as `personReadRef`,
+When the agent passes `person_read`'s `staged.resultsRef` as `personReadRef`,
 `project_create` builds all of that from the read: grade the written tree as
-usual, and grade the skill on what it supplies itself (the stubs its statements
+usual, and grade the agent on what it supplies itself (the stubs its statements
 imply) and on passing the ref rather than re-typing the read into `tree`.
 
 - **pass:** Subject and all known relatives have known fields populated and
@@ -39,16 +39,18 @@ imply) and on passing the ref rather than re-typing the read into `tree`.
 Is `research.json` initialized with the correct shape — `project` block
 filled (id, objective, subject_person_ids, status, created/updated, title),
 and every other section present as an empty array (or populated where the
-skill is meant to populate it)? Does the written file conform to the
+agent is meant to populate it)? Does the written file conform to the
 schema on inspection?
 
-Grade on the **content the skill actually wrote** (the written files /
+Grade on the **content the agent actually wrote** (the written files /
 file diff), not on whether the chat summary re-displays every field. A
 concise 3–6 word title like "Patrick Flynn's parents" or "Mary Sullivan's
 origins" is exactly right — do NOT dock it as "sentence-like." Objective
 length is not graded here: objectives are meant to be broad, so an 8-word
 objective is fine. Only a genuinely restated full-sentence title (the whole
 objective copied into the title field) is a weakness.
+
+The report describes the import only (lead ruling, 2026-10-08): no gaps, errors, research targets or advice. Errors are check-warnings', gaps and the first research question are question-selection's. Do not mark a reply down for leaving them out; mark it down for adding them.
 
 - **pass:** `project` block complete and sensible; all required sections
   present (empty arrays where nothing was gathered); the written
@@ -68,20 +70,22 @@ objective copied into the title field) is a weakness.
 The profile is fixed and never asked (lead ruling 2026-09-18): `experience_level`
 is `novice` and `narration_guidance` is the house-style string, stored verbatim,
 on every project. A level the user volunteers is not persisted. The research
-objective is the one opening-turn question, non-blocking (issue #1510): when
-unanswered, does the skill ask it, proceed in the same pass, and store the
+objective is the one question it asks, non-blocking (issue #1510): when
+unanswered, does the agent ask it in its return, proceed in the same pass, and store the
 generic default rather than a hallucinated specific direction?
 
-Site access is never asked. `subscriptions` should be **absent** from the
-written profile — the field is left unwritten rather than defaulted, since
-`["none"]` asserts the researcher told us they have nothing. A volunteered
-access statement may still be recorded.
+Site access is never asked. `subscriptions` records only what the user's own
+words volunteered: **absent** when they named no access (or only FamilySearch),
+and the normalized values when they did. It is never defaulted — `["none"]`
+asserts the researcher told us they have nothing. When the user volunteered
+access, writing it is correct, not a defect; its exact values are checked by a
+deterministic validator, so do not grade them here.
 
 - **pass:** `experience_level` is `novice` and `narration_guidance` is the
   house-style string verbatim, whatever the user said about themselves;
-  `subscriptions` absent (or, if the user volunteered access unprompted,
-  recording it is equally correct). Objective defaulting:
-  when no objective is stated, the agent asks in the opening turn, does not
+  `subscriptions` absent when no access was volunteered, and written when it
+  was. Objective defaulting:
+  when no objective is stated, the agent asks in its return, does not
   block, and writes the stated generic default — never a hallucinated specific
   direction — in the same single pass as the profile default.
 - **partial:** Level correct but `narration_guidance` paraphrased rather than
@@ -106,18 +110,18 @@ so grading dates on every test, is a rubric change the genealogist should make
 deliberately rather than inherit as a side effect of a wording fix.
 
 **Tool-supplied places.** When a `person_read` fact arrives carrying a
-`standard_place`, that value is **kept verbatim**. NOT calling
-`place_search` on it is the correct behavior and must never be penalized
+`standard_place`, that value is **kept verbatim**. Not refining it is the
+correct behavior and must never be penalized
 as a "missed opportunity," even if the place is only country-level (e.g.
 "Ireland"). Init-project does not refine or enrich tree-supplied places.
-"Kept as-is" means the value the tool returned, not a string the skill
+"Kept as-is" means the value the tool returned, not a string the agent
 re-derived from the fact's free-text `place` — the fixtures return
 standardized names that differ from `place` (FamilySearch drops
 "County"), so the two are distinguishable in the written tree.
 
 **Hand-entered places.** A place drawn from the user's objective text is
-resolved with `place_search` and its `standard_place` populated from the
-result.
+entered as stated; `project_create` standardizes it itself, so its
+`standard_place` is the tool's. The agent writes no `standard_place`.
 
 Score this dimension **N/A (null)** only when the test involves no places
 at all. A test whose places all came from `person_read` is still scored:
@@ -127,12 +131,13 @@ the tool left without one. A value `project_create` resolved host-side, on the
 `personReadRef` path, for a fact the read returned with a `place` and no
 `standard_place` is not invented: the host retries the same place resolver.
 
-- **pass:** Every hand-entered place is standardized via `place_search`
-  and its `standard_place` is populated from the result. Every
-  tool-supplied `standard_place` appears in the tree exactly as returned.
-- **partial:** A hand-entered place is standardized, but `standard_place`
-  is hand-written without the `place_search` call, or only some
-  hand-entered places are resolved.
+- **pass:** Every hand-entered place reaches the tree as stated, with the
+  `standard_place` `project_create` gave it (or none, when nothing
+  resolves). Every tool-supplied `standard_place` appears in the tree exactly
+  as returned.
+- **partial:** The agent supplied a `standard_place` of its own for a
+  hand-entered place (project_create replaced it and warned), or changed the
+  place text it was given.
 - **fail:** A hand-entered place that resolves is left with no/empty
   `standard_place`, a standardized string is fabricated without the tool
   (including a `standard_place` copied from the fact's free-text `place`),
