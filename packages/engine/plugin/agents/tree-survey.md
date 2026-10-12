@@ -121,9 +121,10 @@ retry.
 
 Rank by the strongest signal: a search whose top result fits the hole, then a pending
 hint whose type fits it, then the census issue or a non-empty `coverage.censusYears`, then
-the collections floor. Break ties by the hole's closeness to
-the root (`generation`, then smaller absolute value first). Drop a hole with no
-signal at all unless fewer than three remain.
+the collections floor. A hole with a search or hint signal comes before every hole without
+one, however far from the root. Break ties by the hole's closeness to the root
+(`generation`, then smaller absolute value first). Drop a hole with no signal at all unless
+fewer than three remain.
 
 ### 4. Suggest 3-5
 

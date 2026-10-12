@@ -138,6 +138,6 @@ def test_the_hole_with_a_fitting_hint_ranks_first(agent_returns, text_response, 
     ids = _suggested_ids(_reply(agent_returns, text_response, test))
     assert ids, "no suggestion carried an identifier"
     assert ids[0] == "TGAP-H3A", (
-        "the hole with a pending hint whose record type fits it must come first; "
+        "the hole with a pending hint that fits it must come first, ahead of nearer holes with no signal; "
         f"got {ids}"
     )
