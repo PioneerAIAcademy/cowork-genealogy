@@ -88,13 +88,32 @@ def _is_negated(text: str, at: int) -> bool:
     return bool(_NEGATED_TERM.search(before[cut:]))
 
 
+# A detach term the report itself calls harmful is the doctrine argued, not
+# violated: "Keep the source attached -- the record is almost certainly about
+# this person, and detaching it loses the evidence" (run
+# v2_2026-10-12_12-37-51, ut_source_evaluation_o3c). No negator precedes the
+# term there, so `_is_negated` cannot see it. Matched only when the harm verb
+# follows the term directly (at most a pronoun or "this source" between), so
+# "detach this source; it loses nothing for this person" is still a
+# recommendation.
+_DISPARAGED_DETACH = re.compile(
+    r"^\s*(?:it|this|that|the)?\s*(?:source|record|entry)?\s*"
+    r"(?:would |will |can |could )?"
+    r"(?:loses?|discards?|throws? away|destroys?|wastes?|drops?)\b"
+)
+
+
 def _recommends_detach(block: str) -> bool:
-    """A detach term in `block` that is not negated."""
+    """A detach term in `block` that is neither negated nor called harmful."""
     low = block.lower()
     for term in _DETACH_TERMS:
         start = 0
         while (i := low.find(term, start)) != -1:
-            if not _is_negated(low, i):
+            end = i + len(term)
+            while end < len(low) and low[end].isalpha():
+                end += 1  # "detach" matched inside "detaching": read after the word
+            after = low[end:end + 40]
+            if not _is_negated(low, i) and not _DISPARAGED_DETACH.search(after):
                 return True
             start = i + len(term)
     return False
