@@ -1615,7 +1615,7 @@ export const researchLogAppendSchema = {
         type: "string",
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
-          "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
+          "'fulltext_search', 'record_read', 'image_search', 'person_read', or " +
           "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
           "may be omitted alongside stagedResultsRef, which records it.",
       },

@@ -275,8 +275,7 @@ export async function fulltextSearchTool(
           ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
         }
       : {}),
-    // What separates this tool from external_links_search is only that no HOST
-    // FILTER narrows the inline copy. `results` is still the post-`mapEntry` set —
+    // `results` is the post-`mapEntry` set —
     // `mapEntry` returns null on a missing `entry.id` and those nulls are filtered
     // out above — so an empty `results` means nothing survived mapping, not that
     // the search found nothing. `totalResults` (`data.results`) is independent, so

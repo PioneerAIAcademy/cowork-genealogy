@@ -421,8 +421,8 @@ async function resolveRecordSide(
   // rest. It writes nothing, stages nothing and logs nothing, so calling it
   // here is safe.
   //
-  // Only a record_search sidecar carries a persona. A fulltext_search or
-  // external_links_search entry also has a results_ref, but its results hold no
+  // Only a record_search sidecar carries a persona. A fulltext_search entry (or
+  // a legacy external_links_search one) also has a results_ref, but its results hold no
   // gedcomx and key on `id` rather than `recordId`
   // (PERSONA_BEARING_PRODUCERS) — passing one would look up nothing.
   const log: any[] = Array.isArray(research?.log) ? research.log : [];

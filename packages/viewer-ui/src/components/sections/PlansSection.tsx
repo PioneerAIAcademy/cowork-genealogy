@@ -74,6 +74,9 @@ export default function PlansSection(): React.JSX.Element {
                         {item.rationale && (
                           <div className={styles.itemRationale}><Linkify text={item.rationale} /></div>
                         )}
+                        {item.collection_url && (
+                          <div className={styles.itemRationale}>Collection: <Linkify text={item.collection_url} /></div>
+                        )}
                         {item.status === 'skipped' && (item.skip_category || item.skip_reason) && (
                           <div className={styles.itemRationale}>
                             {item.skip_category && <StatusBadge value={item.skip_category} />}

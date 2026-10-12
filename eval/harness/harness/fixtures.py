@@ -85,6 +85,11 @@ def build_manifest(fixtures: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         )
         source = fixture.get("_source_name")
         bucket["predicated"].append((args, fixture["response"], source))
+        # `external_links_search` fixtures may carry the raw API rows the real tool
+        # stores in external-collections.json (record_type, place, years). They are
+        # never served: the inline `results[]` production returns is {url, linkText}.
+        if "stored_rows" in fixture:
+            bucket.setdefault("stored_rows", {})[source] = fixture["stored_rows"]
         if "input_schema" in fixture:
             bucket["input_schema"] = fixture["input_schema"]
     return manifest

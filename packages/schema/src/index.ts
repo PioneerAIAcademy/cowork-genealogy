@@ -98,6 +98,7 @@ export interface PlanItem {
   status: PlanItemStatus
   skip_category?: SkipCategory
   skip_reason?: string
+  collection_url?: string
 }
 
 export interface Plan {

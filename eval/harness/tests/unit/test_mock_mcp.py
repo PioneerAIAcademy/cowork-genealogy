@@ -1512,3 +1512,96 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert [e["id"] for e in log] == [out["logId"]]
     assert log[0]["outcome"] == "partial"
     assert log[0]["external_site"]["url_generated"] == out["url"]
+
+
+# --- external_links_search stores the place's list (#2995) ---------------------
+
+_PA = "Pennsylvania, United States"
+_SCHUYLKILL = "Schuylkill, Pennsylvania, United States"
+
+
+def _links_fixture_dir(tmp_path: Path, stored_rows: list[dict] | None) -> Path:
+    d = tmp_path / "fixtures"
+    d.mkdir()
+    fixture = {
+        "tool": "external_links_search",
+        "description": "test",
+        "args": {"standardPlace": "~Schuylkill"},
+        "response": {
+            "query": {"standardPlace": _SCHUYLKILL},
+            "totalForPlace": 2,
+            "returned": 2,
+            "results": [
+                {"url": "https://www.ancestry.com/search/collections/7163/", "linkText": "1870 Census"},
+                {"url": "https://example.org/schuylkill-churches", "linkText": "Churches"},
+            ],
+        },
+    }
+    if stored_rows is not None:
+        fixture["stored_rows"] = stored_rows
+    (d / "links.json").write_text(json.dumps(fixture), encoding="utf-8")
+    return d
+
+
+def _links_call(tmp_path: Path, fixtures: Path, args: dict) -> dict:
+    ws = tmp_path / "ws"
+    ws.mkdir(exist_ok=True)
+    _server, _log, tools_by_name = create_mock_server(["links"], fixtures, workspace=ws)
+    return _extract_response_dict(_invoke(tools_by_name, "external_links_search", args))
+
+
+@pytest.mark.requires_engine_build
+def test_external_links_search_stores_stored_rows_by_each_rows_place(tmp_path):
+    """The mock writes external-collections.json through the compiled store, from the
+    fixture's never-served `stored_rows`, filing each row under its own place."""
+    rows = [
+        {"url": "https://www.ancestry.com/search/collections/7163/", "linkText": "1870 Census",
+         "place": _PA, "record_type": "Census", "cost": "paid", "content_type": "index",
+         "startYear": "1870", "endYear": "1870"},
+        {"url": "https://example.org/schuylkill-churches", "linkText": "Churches",
+         "place": _SCHUYLKILL, "record_type": "Church Records", "cost": "free",
+         "content_type": "index", "startYear": "", "endYear": ""},
+    ]
+    fixtures = _links_fixture_dir(tmp_path, rows)
+    (tmp_path / "ws").mkdir()
+    (tmp_path / "ws" / "research.json").write_text("{}", encoding="utf-8")
+    body = _links_call(tmp_path, fixtures, {"standardPlace": _SCHUYLKILL, "projectPath": str(tmp_path / "ws")})
+
+    assert body["stored"] == {"file": "external-collections.json", "places": [_PA, _SCHUYLKILL]}
+    doc = json.loads((tmp_path / "ws" / "external-collections.json").read_text(encoding="utf-8"))
+    assert [r["key"] for r in doc["places"][_PA]["rows"]] == ["ancestry:7163"]
+    assert doc["places"][_SCHUYLKILL]["rows"][0]["record_types"] == ["Church Records"]
+    # The served rows stay production's inline shape.
+    assert all(set(r) == {"url", "linkText"} for r in body["results"])
+
+
+@pytest.mark.requires_engine_build
+def test_external_links_search_without_stored_rows_files_results_under_the_queried_place(tmp_path):
+    fixtures = _links_fixture_dir(tmp_path, None)
+    (tmp_path / "ws").mkdir()
+    (tmp_path / "ws" / "research.json").write_text("{}", encoding="utf-8")
+    body = _links_call(tmp_path, fixtures, {"standardPlace": _SCHUYLKILL, "projectPath": str(tmp_path / "ws")})
+
+    assert body["stored"]["places"] == [_SCHUYLKILL]
+    doc = json.loads((tmp_path / "ws" / "external-collections.json").read_text(encoding="utf-8"))
+    assert len(doc["places"][_SCHUYLKILL]["rows"]) == 2
+
+
+@pytest.mark.requires_engine_build
+def test_external_links_search_outside_a_project_reports_collections_error(tmp_path):
+    fixtures = _links_fixture_dir(tmp_path, None)
+    body = _links_call(tmp_path, fixtures, {"standardPlace": _SCHUYLKILL, "projectPath": str(tmp_path / "ws")})
+    assert "stored" not in body
+    assert "projectPath does not name a project folder" in body["collectionsError"]
+    assert not (tmp_path / "ws" / "external-collections.json").exists()
+
+
+@pytest.mark.parametrize("project_path", [None, "", "   "])
+def test_external_links_search_stores_nothing_without_project_path(tmp_path, project_path):
+    fixtures = _links_fixture_dir(tmp_path, None)
+    args: dict = {"standardPlace": _SCHUYLKILL}
+    if project_path is not None:
+        args["projectPath"] = project_path
+    body = _links_call(tmp_path, fixtures, args)
+    assert "stored" not in body and "collectionsError" not in body
+    assert not (tmp_path / "ws" / "external-collections.json").exists()

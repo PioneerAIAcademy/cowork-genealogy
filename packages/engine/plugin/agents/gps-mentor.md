@@ -28,7 +28,6 @@ tools:
   - mcp__genealogy__place_search
   - mcp__genealogy__place_distance
   - mcp__genealogy__collections_search
-  - mcp__genealogy__external_links_search
   - mcp__genealogy__wiki_place_page
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__research_query
@@ -39,7 +38,6 @@ tools:
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__remote-devices__Genealogy_Research__place_distance
   - mcp__remote-devices__Genealogy_Research__collections_search
-  - mcp__remote-devices__Genealogy_Research__external_links_search
   - mcp__remote-devices__Genealogy_Research__wiki_place_page
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__research_query
@@ -50,7 +48,6 @@ tools:
   - mcp__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_distance
   - mcp__Genealogy_Research__collections_search
-  - mcp__Genealogy_Research__external_links_search
   - mcp__Genealogy_Research__wiki_place_page
   - mcp__Genealogy_Research__wiki_search
 ---
@@ -472,8 +469,8 @@ plan that was too narrow to begin with.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses,
    neighbors, or associates? If not — and direct-evidence searches
-   are complete — flag as must-address. Use `external_links_search`
-   to surface FAN-relevant repositories.
+   are complete — flag as must-address. Name FAN-relevant repositories
+   from the stored list (see check 4).
 
 3. **Original-vs-derivative (Standard 32).** Examine the assertions
    linked to this question. For each cited derivative source, does
@@ -481,11 +478,13 @@ plan that was too narrow to begin with.
    consulted, flag as must-address.
 
 4. **Repository diversity.** If only one repository was used (only
-   FamilySearch, or only Ancestry), call `external_links_search`
-   and `wiki_place_page` (`section: "research_tips"`) to identify
-   what other
-   repositories cover this jurisdiction. Flag single-repository
-   research as consider-addressing.
+   FamilySearch, or only Ancestry), name what other repositories cover
+   this jurisdiction: `research_query({ section: "external_collections",
+   place })` and `wiki_place_page` (`section: "research_tips"`). Flag
+   single-repository research as consider-addressing. If the place is
+   absent from `project_context`'s `externalCollections`, its curated links
+   were never fetched: say so as a finding with `suggested_skill:
+   "locality-guide"`.
 
 5. **Negative-result documentation (Standard 13).** Are nil
    searches logged with the same rigor as positive ones? An
@@ -724,8 +723,9 @@ not abstract.
   Otherwise cite that locality's `quirks` and its `loc_` id, and use
   `collections_search` (above) for live coverage rather than the
   locality's stored `collections`.
-- **`external_links_search`** — Use when flagging repository
-  diversity gaps. Name the specific third-party site.
+- **`research_query`** with `section: "external_collections"` (`place`,
+  `recordType`) — Use when flagging repository diversity gaps. Name the
+  specific third-party collection.
 - **`place_distance`** + **`place_search`** — Use whenever an
   assertion or proof implies the same person traveled between two
   named places. Resolve each via `place_search` and pass the two

@@ -4732,10 +4732,10 @@ async function prepareOps(
         const results = await readSidecarResults(ref);
         if (results) {
           // Only record_search stages GedcomX personas; its results key on
-          // `recordId`. fulltext_search / external_links_search stage transcript
-          // text and links keyed on `id`, with no persona document — matching
-          // them on `recordId` (a field they never carry) matched nothing every
-          // time, which either rejected a persona-linked write with an empty
+          // `recordId`. fulltext_search stages transcript text (and a legacy
+          // external_links_search sidecar holds links) keyed on `id`, with no
+          // persona document — matching them on `recordId` (a field they never
+          // carry) matched nothing every time, which either rejected a persona-linked write with an empty
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
           const personaBearing = PERSONA_BEARING_PRODUCERS.has(logEntry.tool);
