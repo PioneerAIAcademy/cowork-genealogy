@@ -195,7 +195,7 @@ specified in [specs/e2e-test-spec.md](specs/e2e-test-spec.md).
 
 ## Agents
 
-The plugin ships twenty-six Cowork agents. Unlike skills, an agent runs in
+The plugin ships twenty-seven Cowork agents. Unlike skills, an agent runs in
 fresh context and is invoked by the Cowork orchestrator, by `/research`
 when you ask for a second opinion, or by the skill that delegates to it — you
 don't load it explicitly.
@@ -228,6 +228,7 @@ don't load it explicitly.
 | **validate-schema** | Validates both project files against the published schemas — required fields, enum values, ID prefixes, cross-references — and reports each error with a suggested fix. Read-only: it never edits a file. The writer tools already validate before they persist, so this is an on-demand audit of the whole project. Asked about genealogical impossibilities or GPS quality, it hands the request back by name. | "Validate the project files" / "Is the schema valid?" |
 | **source-evaluation** | Audits the sources already attached to a person's FamilySearch profile. Classifies each finding as an indexing error (re-read the original and correct the index), a genuinely misattributed source (detach), or un-actionable FamilySearch backend metadata (not a to-do) — and where the evidence does not decide between the first two, says so rather than picking one. A source that merely states a fact more precisely than the profile is reported as an improvement, not a contradiction. A disagreement between two attached sources is characterised and handed on with no verdict, since weighing them belongs to the conflict workflow. Closes with FamilySearch's own profile checklist — its completeness and source-tagging suggestions, grouped by category and kept out of the findings count, because they are suggestions rather than errors. Read-only. | "Evaluate the sources on this profile" / "Are these sources right?" |
 | **survey-surname** | Tabulates every household of a surname across a place's US federal censuses — one `record_search` per census year, staged results, a markdown table sectioned by year. Stops and asks for counties when a single year exceeds 600 matches. | "Find every Dixon family in Virginia" / "List all the Smiths in Ohio censuses 1820-1850" |
+| **tree-survey** | Surveys a FamilySearch tree for holes it likely has records for before any project exists, checks what FamilySearch holds for the strongest ones, and suggests 3-5 people with one research question each. Writes nothing; the user picks one and `init-project` starts from it. | "What should I research in my tree?" / "Find gaps in my tree" / "Where should I start?" |
 
 ## Recommended workflow
 
