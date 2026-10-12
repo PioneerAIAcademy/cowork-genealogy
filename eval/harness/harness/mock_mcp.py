@@ -11,11 +11,13 @@ contract for tool results.
 ## Live tools
 
 Some MCP tools are deterministic functions of local workspace state — their
-return value depends on what the skill just wrote. One exception reaches the
-network: `project_create` with `personReadRef` retries, through the anonymous
-Places API, any place the staged read left without a `standard_place`. No
-committed `person-read-*` fixture has such a fact, so unit runs make no call;
-a fixture that adds one makes the run network-dependent. Canning their response as a fixture would be dishonest: a fixture
+return value depends on what the skill just wrote. `project_create` resolves
+places (every place the caller enters, and any place a staged read left without
+a `standard_place`) through the anonymous Places API; the mock gives the
+compiled resolver a table built from the test's own `place_search` fixtures for
+the places in the call's `tree` (`_place_table`), so it stays offline. A place
+not in the table resolves to null, which includes a staged read's unresolved
+place. Canning their response as a fixture would be dishonest: a fixture
 can't reflect the actual file content the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
@@ -734,6 +736,73 @@ def _unlogged_staged_handles(workspace: Path) -> list[dict[str, Any]]:
         return []
 
 
+#: Fixture-backed tools that read a staged/finalized sidecar by ref in
+#: production, and the argument that carries the ref.
+STAGED_REF_READERS: dict[str, str] = {
+    "record_read": "resultsRef",
+    "rank_search_matches": "stagedResultsRef",
+}
+
+
+def _readable_sidecar(workspace: Path, ref: str) -> bool:
+    """True when `ref` names, exactly, a sidecar `readStagedResults` reads as is:
+    a file under `results/.staging/` or a top-level `results/*.json`, whose
+    `payload.results` is a list. Anything else goes to the compiled check."""
+    root = workspace.resolve()
+    path = Path(ref)
+    path = (path if path.is_absolute() else root / path).resolve()
+    results = root / "results"
+    if not (path.is_relative_to(results / ".staging")
+            or (path.parent == results and path.suffix == ".json")):
+        return False
+    try:
+        envelope = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    payload = envelope.get("payload") if isinstance(envelope, dict) else None
+    return isinstance(payload, dict) and isinstance(payload.get("results"), list)
+
+
+def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str | None:
+    """Production's refusal of a staged ref the workspace does not hold, or None.
+
+    A fixture answers `record_read` and `rank_search_matches` whatever ref they
+    carry, so a mis-copied ref used to read as a success here and a refusal in
+    production (one silent slip in `search-records` v2, among 104 unchecked
+    calls). The ref is checked by the COMPILED `readStagedResults` -- the same
+    read, near-copy resolution and refusal production runs -- so the rule has
+    one definition. None when the call carries no ref, or when node or the
+    build is unavailable: a harness fault must not read as a bad ref.
+    """
+    field = STAGED_REF_READERS.get(tool)
+    ref = args.get(field) if field else None
+    if not isinstance(ref, str) or not ref.strip():
+        return None
+    if _readable_sidecar(workspace, ref):
+        return None
+    staging_js = _MCP_BUILD / "utils" / "results-staging.js"
+    if not staging_js.exists():
+        return None
+    posix = str(staging_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ readStagedResults }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const { projectPath, ref } = JSON.parse(readFileSync(0, 'utf-8'));"
+        " try { await readStagedResults(projectPath, ref); process.stdout.write(JSON.stringify({ ok: true })); }"
+        " catch (e) { process.stdout.write(JSON.stringify({ ok: false, message: String(e?.message ?? e) })); }"
+    )
+    payload = {"projectPath": str(workspace).replace("\\", "/"), "ref": ref}
+    try:
+        proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = json.loads(proc.stdout.strip()) if proc.stdout.strip() else None
+    except Exception:
+        return None
+    if not isinstance(out, dict) or out.get("ok") is not False:
+        return None
+    return str(out.get("message") or f"{field} could not be read")
+
+
 def _stage_person_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -887,7 +956,13 @@ def create_mock_server(
 
             response: dict[str, Any] | None = None
             source_name: str | None = None
-            for i, (predicate, resp, src) in enumerate(_predicated):
+            ref_error = (
+                _staged_ref_error(_workspace, _name, args) if _workspace is not None else None
+            )
+            if ref_error is not None:
+                entry["matched"] = {"kind": "staged_ref_refused", "index": None}
+                response = {"error": "staged_ref_not_found", "tool": _name, "message": ref_error}
+            for i, (predicate, resp, src) in enumerate(_predicated if ref_error is None else []):
                 if matches(predicate, args):
                     entry["matched"] = {"kind": "predicate", "index": i}
                     entry["expected_args"] = dict(predicate)
@@ -1113,7 +1188,10 @@ def create_mock_server(
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
     for live_tool_name in sorted(LIVE_TOOLS - fixture_backed - {"person_quality"}):
-        live_handler = _make_live_handler(live_tool_name, workspace, call_log)
+        live_handler = _make_live_handler(
+            live_tool_name, workspace, call_log,
+            place_predicated=list((manifest.get("place_search") or {}).get("predicated") or []),
+        )
         description = tool_descriptions.get(
             live_tool_name, f"Live {live_tool_name} — calls real implementation."
         )
@@ -1200,6 +1278,7 @@ def _make_live_handler(
     tool_name: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    place_predicated: list | None = None,
 ):
     """Return an async handler for a live tool."""
     if tool_name == "validate_research_schema":
@@ -1211,8 +1290,45 @@ def _make_live_handler(
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
+        place_table = (
+            (lambda args: _place_table(place_predicated or [], args))
+            if tool_name == "project_create" else None
+        )
+        return _make_compiled_tool_handler(
+            tool_name, js_file, export_name, workspace, call_log, place_table=place_table
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
+
+
+def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
+    """The place resolver's answers for one `project_create` call, from the test's
+    own `place_search` fixtures.
+
+    `project_create` standardizes every place the caller enters, and retries a
+    read's unresolved ones, through the anonymous Places API. The harness stays
+    offline, so the compiled resolver is given this table instead
+    (`__usePlaceTableForTests`): each place in the call's `tree` argument (a
+    staged read's places are not in it, so an unresolved one stays null), matched against
+    the fixtures with the same `matches` a `place_search` call is, answered with
+    the first result's `standardPlace`. A place no fixture matches resolves to
+    null, as an unknown place does in production.
+    """
+    tree = args.get("tree") if isinstance(args.get("tree"), dict) else {}
+    places: list[str] = []
+    for holder in [*(tree.get("persons") or []), *(tree.get("relationships") or [])]:
+        for fact in (holder.get("facts") if isinstance(holder, dict) else None) or []:
+            if isinstance(fact, dict) and isinstance(fact.get("place"), str) and fact["place"].strip():
+                places.append(fact["place"])
+    table: dict[str, str | None] = {}
+    for place in places:
+        hit = next(
+            (resp for (pred, resp, _src) in place_predicated if matches(pred, {"placeName": place})),
+            None,
+        )
+        results = (hit or {}).get("results") or []
+        first = results[0] if results and isinstance(results[0], dict) else {}
+        table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
+    return table
 
 
 def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
@@ -1508,6 +1624,7 @@ def _make_compiled_tool_handler(
     export_symbol: str,
     workspace: Path | None,
     call_log: list[dict[str, Any]],
+    place_table=None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -1558,16 +1675,36 @@ def _make_compiled_tool_handler(
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
+            # A tool that resolves places gets the test's own answers and no
+            # network: the table is installed in the resolver module the tool
+            # itself imports (same build path, so the same module instance).
+            stdin_obj: Any = input_obj
+            table_import = ""
+            if place_table is not None:
+                resolver_js = str(_MCP_BUILD / "utils" / "place-resolver.js").replace("\\", "/")
+                resolver_url = ("file:///" + resolver_js) if sys.platform == "win32" else resolver_js
+                table_import = (
+                    f" import {{ __usePlaceTableForTests }} from '{resolver_url}';"
+                    " __usePlaceTableForTests(payload.placeTable);"
+                )
+                stdin_obj = {"input": input_obj, "placeTable": place_table(args)}
+            read_input = (
+                " const payload = JSON.parse(readFileSync(0, 'utf-8'));"
+                " const input = payload.input;"
+                if place_table is not None
+                else " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+            )
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"
                 f"{principal_import}"
                 " import { readFileSync } from 'node:fs';"
-                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+                f"{read_input}"
+                f"{table_import}"
                 f" const r = await {export_symbol}({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
-                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+                proc = _run_node_eval(script, json.dumps(stdin_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
                 if proc.stdout.strip():
                     response = json.loads(proc.stdout)
                 else:

@@ -1,0 +1,350 @@
+{
+  "run_log": "v17.json",
+  "annotator": "okeziepascal2@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Per the judge guidelines and criteria, init-project is responsible only for reporting the imported state; performing error checking, structural analysis, or flagging missing relationships as data entry inconsistencies is out-of-scope for initialization (which belongs to check-warnings). Framing the absence of a direct couple/marriage link between Jean Baptiste and Marie Dubois as a \"notable gap\" or potential \"data entry oversight concern\" constitutes an unsupported inference/analysis beyond the initialization role."
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_vqx",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Known-holdings capture",
+      "llm_score": 3,
+      "corrected_score": null,
+      "comment": "Disagreeing with LLM score of 3. The user did not volunteer any known holdings in this test. Since no holdings survey was performed or required, this dimension should be evaluated as N/A rather than 3."
+    },
+    {
+      "test_id": "ut_init_project_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agent's own report and the tree are correct (\"Mary's unknown parent… sex not yet known\", I3 gender Unknown). The \"Mary's mother\" wording is in the harness dispatcher's relay (text_response), not the agent's return."
+    }
+  ]
+}

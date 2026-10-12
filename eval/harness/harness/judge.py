@@ -119,6 +119,7 @@ class JudgeOutput:
     cached_input_tokens: int
     output_tokens: int
     prompt_hash: str
+    model: str = ""
     # Advisories from _extract_dimensions: a dropped unknown/duplicate
     # dimension (#1361). Empty on the common path. Shape matches the
     # run-log's generic `output.warnings[]` (kind + additionalProperties),
@@ -536,6 +537,11 @@ def grade(
 
     cost = _compute_cost(response, model)
     usage = response.usage
+    # Prefer the response's own model id over the requested model string:
+    # Anthropic normalises aliases (e.g. "claude-haiku-4-5" → the dated id),
+    # and the stamped value should reflect what actually ran. Falls back to
+    # the requested model when the response omits it (older SDKs).
+    actual_model = getattr(response, "model", None) or model
     return JudgeOutput(
         dimensions=dimensions,
         warnings=extraction_warnings,
@@ -546,6 +552,7 @@ def grade(
         ),
         output_tokens=getattr(usage, "output_tokens", 0) or 0,
         prompt_hash=judge_prompt_hash(),
+        model=actual_model,
     )
 
 
