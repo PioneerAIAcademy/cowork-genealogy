@@ -22,4 +22,4 @@ Verify the carve before relying on the test.
 
 ## PII
 
-The persons are deceased, public Family Tree persons already named on public issue #3177, and the competing parent sets are the finding under test. Names are kept, as for a recorded e2e run. Review before committing.
+The persons are deceased, public Family Tree persons already named on public issue #3177, and the competing parent sets are the finding under test. Names are kept, as for a recorded e2e run.

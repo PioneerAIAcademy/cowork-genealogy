@@ -30,6 +30,7 @@ authorized to make:
 | `proof-conclusion` | the tier on a conclusion (`proof_summaries[].tier`) and its tree encoding |
 | `person-evidence` | identity — that a record's subject is the tree person (`person_evidence[]`) |
 | `conflict-resolution` | how competing assertions are weighed (`conflicts[]` independence/weighing analysis) |
+| `hypothesis-tracking` | competing parent sets — that a question whose in-scope persons have >2 distinct `ParentChild` parents in the tree is routed through hypothesis-tracking before a `proof_summaries` conclusion is written (`competingParentSetsInvariants` write-guard) |
 
 **The invariant:** a judgment's recorded effect must not exist unless the skill
 that owns it produced it. The router (`/research`, the main thread) may
