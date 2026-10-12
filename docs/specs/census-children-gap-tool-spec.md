@@ -102,8 +102,10 @@ is "born on or before 1900-06-01", not "born between James and Catherine".
 ### 4.2 Placing the known children
 
 For each census, each known child is `not_born`, `living` or `dead` on its day.
-A partial date is an interval (`1900` is 1900-01-01 … 1900-12-31). When the
-interval straddles the census day the child cannot be placed, and that census is
+A partial date is an interval (`1900` is 1900-01-01 … 1900-12-31). A death
+wholly before the census day places the child as dead whatever the birth's
+precision (an infant born "1900" who died 1900-03-10 was born before
+1900-06-01). Otherwise, when an interval straddles the census day the child cannot be placed, and that census is
 reported in `undetermined` and left out of the arithmetic. The other census is
 still used. The children that can be placed are still a lower bound, so a
 contradiction they already prove (more known dead than the census's dead count)

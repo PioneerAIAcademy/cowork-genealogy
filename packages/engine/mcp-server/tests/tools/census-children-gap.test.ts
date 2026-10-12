@@ -45,6 +45,17 @@ const BRANNON: CensusChildrenGapInput = {
   ],
 };
 
+// mulberry32: stays in 32-bit integers, so the sequence does not degrade.
+function makeRand(initial: number) {
+  let seed = initial;
+  return (n: number) => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) % n;
+  };
+}
+
 describe("census_children_gap", () => {
   it("Mercer: one child dead before 1900 and one living child born between the censuses", () => {
     const r = ok(censusChildrenGap(MERCER));
@@ -206,6 +217,18 @@ describe("census_children_gap", () => {
     expect(fine.censusesUsed).toEqual([1900, 1910]);
   });
 
+  it("a death before the census day places a year-only birth in the census year", () => {
+    const r = ok(
+      censusChildrenGap({
+        censuses: [{ year: 1900, childrenBorn: 1, childrenLiving: 0 }],
+        knownChildren: [{ name: "Infant", birthDate: "1900", deathDate: "1900-03-10" }],
+      }),
+    );
+    expect(r.undetermined).toEqual([]);
+    expect(r.censusesUsed).toEqual([1900]);
+    expect(r.totalMissing).toBe(0);
+  });
+
   it("an undetermined census still reports what the placed children prove", () => {
     const r = ok(
       censusChildrenGap({
@@ -309,15 +332,49 @@ describe("census_children_gap", () => {
     }
   });
 
+  it("property: counts derived from a real family are never a conflict", () => {
+    const rand = makeRand(67890);
+    // Includes census-day births and deaths, and a year-only birth placed by its death.
+    const ARCH: KnownChild[] = [
+      { birthDate: "1890", deathDate: "1895" }, { birthDate: "1890", deathDate: "1905" }, { birthDate: "1890" },
+      { birthDate: "1905", deathDate: "1907" }, { birthDate: "1905" }, { birthDate: "1912" },
+      { birthDate: "1900-06-01" }, { birthDate: "1898", deathDate: "1900-06-01" },
+      { birthDate: "1910-04-15" }, { birthDate: "1902", deathDate: "1910-04-15" },
+      { birthDate: "1900", deathDate: "1900-03-10" },
+    ];
+    const latest = (d: string) => d.padEnd(10, "-12-31");
+    const earliest = (d: string) => d.padEnd(10, "-01-01");
+    const diedBefore = (c: KnownChild, day: string) => !!c.deathDate && latest(c.deathDate) < day;
+    const bornBy = (c: KnownChild, day: string) => latest(c.birthDate) <= day || diedBefore(c, day);
+    const livingOn = (c: KnownChild, day: string) =>
+      bornBy(c, day) && (!c.deathDate || earliest(c.deathDate) >= day);
+    const count = (fam: KnownChild[], year: 1900 | 1910, day: string) => ({
+      year,
+      childrenBorn: fam.filter((c) => bornBy(c, day)).length,
+      childrenLiving: fam.filter((c) => livingOn(c, day)).length,
+    });
+    let unresolvedSeen = 0;
+    for (let i = 0; i < 3000; i++) {
+      const fam = Array.from({ length: 1 + rand(5) }, () => ARCH[rand(ARCH.length)]);
+      const known = fam.filter(() => rand(2) === 0);
+      const r = ok(
+        censusChildrenGap({
+          censuses: [count(fam, 1900, "1900-06-01"), count(fam, 1910, "1910-04-15")],
+          knownChildren: known,
+        }),
+      );
+      expect(r.conflicts).toEqual([]);
+      expect(r.undetermined).toEqual([]);
+      expect(r.totalMissing).toBe(
+        fam.filter((c) => bornBy(c, "1910-04-15")).length - known.filter((c) => bornBy(c, "1910-04-15")).length,
+      );
+      if (r.unresolved.length > 0) unresolvedSeen++;
+    }
+    expect(unresolvedSeen).toBeGreaterThan(10);
+  });
+
   it("property: arbitrary valid input is either a conflict or a non-negative, summing answer", () => {
-    // mulberry32: stays in 32-bit integers, so the sequence does not degrade.
-    let seed = 12345;
-    const rand = (n: number) => {
-      seed = (seed + 0x6d2b79f5) | 0;
-      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-      return ((t ^ (t >>> 14)) >>> 0) % n;
-    };
+    const rand = makeRand(12345);
     let unresolvedSeen = 0;
     const years = [1885, 1890, 1895, 1899, 1902, 1905, 1909, 1912];
     let feasible = 0;

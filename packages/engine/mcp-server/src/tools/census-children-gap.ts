@@ -156,6 +156,8 @@ function placeChild(child: ParsedChild, year: CensusYear): CensusStatus | { reas
   const day = censusDay(year);
   const iso = ENUMERATION_DAYS[year];
   if (child.birth.earliest > day) return "not_born";
+  // A death before the census day proves the birth was before it too.
+  if (child.death && child.death.latest < day) return "dead";
   if (child.birth.latest > day) {
     return { reason: `the birth date cannot be placed before or after the ${year} census day (${iso}); give the month or day` };
   }
