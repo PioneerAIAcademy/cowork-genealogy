@@ -451,8 +451,7 @@ plan that was too narrow to begin with.
    they assume classified evidence with the relevant persons identified.
 
 1. **Topical breadth (Standard 14).** Get the log for this question —
-   `research_query({ section: "plans", questionId })` for its plan items,
-   then `research_query({ section: "log", planItemId })` per item.
+   `research_query({ section: "log", questionId })`.
    What record types are represented? Call
    `wiki_place_page` (`section: "online_records"`) and
    `collections_search` for the

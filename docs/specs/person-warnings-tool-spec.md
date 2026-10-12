@@ -468,11 +468,11 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
-| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact | Wrong birth date, wrong event attribution, or identity confusion |
+| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact, with each date read as generously as it allows — see the divergence note below | Wrong birth date, wrong event attribution, or identity confusion |
 | `hasEventAfterDeath1` | contradiction | An event is dated more than 1 year after the person's latest death-like fact (the nine-type death-like family raises the anchor; see the `hasEventAfterDeath1` section above) | A same-name person's records merged in, a wrong death date, or a posthumous mention typed outside the death-like family |
 | `hasAgeRangeGreaterThan120` | contradiction | Earliest death-like year minus latest birth-like year is greater than 120 | Wrong birth or death date, or two people merged |
 | `hasChristeningBeforeBirth` | contradiction | The latest Christening day is strictly before the earliest Birth day (year-only dates get a year of slack each side) | Data-entry error or wrong attribution |
-| `hasEventBeforeChristening365_3` | contradiction | An event other than a Birth or event registration is dated more than 3 years before the latest Christening or Baptism | Wrong event attribution or two persons merged |
+| `hasEventBeforeChristening365_3` | contradiction | An event other than a Birth or event registration is dated more than 3 years before the latest Christening or Baptism, with each date read as generously as it allows (year-only and approximate dates get a year of slack each side) — see the divergence note below | Wrong event attribution or two persons merged |
 | `hasBurialBeforeDeath` | contradiction | Every recorded burial precedes every recorded death — compared on exact day-month-year dates when both sides have them, otherwise on years | Data error or transcription mistake |
 | `hasDeathBeforeChildBirth30_10` | contradiction | Male anchor: the father's latest Death day is more than 300 days before a child's earliest Birth day (exact Death and Birth fact types, not the death-like/birth-like families; day-level, not restricted to full day-month-year dates) | Wrong death date or wrong child attribution |
 | `hasDeathBeforeChildBirth365_2` | contradiction | Male anchor: the father's latest death-like fact is more than 2 years before a child's earliest birth-like fact (looser family-level variant) | Wrong death date or wrong parent-child link |
@@ -555,6 +555,63 @@ cases where the recorded precision cannot support the claim. The helper it
 calls, `factDaysDiffLatestEarliest`, has no Java counterpart.
 `hasDelayedBurial365` and `hasStillbirthConflict` use it too, for the same
 reason (§ The four `person_quality` parity checks).
+
+**`hasEventBeforeBirth365_2` diverges from the Java port on purpose, for the
+same reason.** Java computes `latestBirthLike − earliestAnyFact > 730`, the
+two bounds that maximise the gap. An imprecise date then fires against
+itself: a lone Birth `Abt 1868` spans 1867..1869, both bounds come from that
+one fact, and the tool reported a contradiction on a person with nothing else
+recorded. Two approximate facts in the same year, and a year-only date read
+as 1 January, fire the same way.
+
+The implementation reads the latest birth-like fact at its **earliest**
+possible day and the earliest fact at its **latest** possible day, so it fires
+only when an event precedes the birth by more than 2 years under **every**
+reading the recorded dates permit. A fact paired with itself gives at most 0,
+so no identity check is needed. `factDaysDiffLatestEarliest` is not usable
+here: its first set is "any fact", whose latest bound is the last fact
+recorded.
+
+| Event | Latest birth-like | Java pairing | Generous pairing | Fires now? |
+|---|---|---|---|---|
+| (none) | Birth `Abt 1868` | +1,094 | −1,094 | no (was a false positive) |
+| Residence `Abt 1870` | Birth `Abt 1870` | +1,094 | −1,094 | no (was a false positive) |
+| Residence `1858` | Birth `1860` | +1,094 | +366 | no |
+| Birth `1893` | Baptism `9 Sep 1895` | +981 | +617 | no |
+| Residence `Abt 1850` | Birth `Abt 1860` | +4,744 | +2,556 | **yes** |
+| Death `1 Jan 1847` | Birth `1 Jan 1850` | +1,095 | +1,095 | **yes** |
+
+Measured 2026-10-02 over every tree in the repo (e2e unstripped and starting
+trees, scenario trees, `person-read` fixtures; 1,882 persons): fires fell from
+308 to 49, and none was added. Of the 259 removed, 251 were a fact firing
+against its own bounds, and 8 were distinct facts whose gap is under 2 years
+on the generous reading (late baptisms, year-only residences). No removed
+fire rested on exact dates.
+
+In `merge_warnings` this is a Block, so it now blocks only on the generous
+reading too: two records with approximate births a few years apart (`Abt
+1850`, `Abt 1853`) no longer block a merge. That spread is still advised by
+`birthRangeGreaterThan3` and `birthLikeRangeGreaterThan8`.
+
+**`hasEventBeforeChristening365_3` diverges the same way.** Its event set is
+every fact except a Birth or event registration, so it includes the
+christening itself, and Java's pairing fires a lone `Abt 1868` or `Bet 1860
+and 1868` christening against itself. The implementation reads the latest
+Christening or Baptism at its **earliest** possible day and the earliest event
+at its **latest**. Unlike `hasEventBeforeBirth365_2`, it keeps Java's 365-day
+slack for an imprecise date, applied on the generous side, so a year-only or
+approximate date counts as up to a year later (for the event) or earlier (for
+the christening) than its own range. Exact dates take no slack and give Java's
+answer.
+
+Measured 2026-10-12 over every tree in the repo (4,682 persons): fires fell
+from 58 to 47, and none was added. One of the 11 removed was a fact firing
+against itself (Christening `October ~1720`). The other 10 pair an exact or
+late christening with a year-only residence, census or membership: a
+Residence `1940` against a Christening `31 May 1943` on a person born
+`16 Jan 1940`, a Census `1850` against a Baptism `1851`. One of them is a real
+error, a Membership `1803` on a person born `16 Sep 1806`, and
+`hasEventBeforeBirth365_2` still flags it.
 
 #### Family structure and names (`implausible`)
 
@@ -1064,8 +1121,8 @@ renamed from the retired `error` / `warning`.
 > - `BIRTH_AFTER_FATHER_DEATH` → `hasDeathBeforeChildBirth365_2` (loose)
 >   and `hasDeathBeforeChildBirth30_10` (exact-day).
 > - `MARRIAGE_BEFORE_BIRTH` → covered by `hasEventBeforeBirth365_2`, which
->   fires on any event dated more than 2 years before birth, marriage
->   included.
+>   fires on any event dated more than 2 years before birth under every
+>   reading of the dates, marriage included.
 > - `CHILD_TOO_OLD` → covered by the `earliestChildBirthToBirth` family: a
 >   child older than the parent yields a parent-age below the cutoff and
 >   fires the check.
