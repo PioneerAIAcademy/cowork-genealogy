@@ -143,7 +143,7 @@ the user that historical scores may differ from a re-run because the
 judge has moved on.
 
 **`judge_model` is stamped on the run log envelope** (reversed by
-issue #2479 PR 1, lead ruling 2026-10-06). It was removed from the run
+issue #2479). It was removed from the run
 log in the original versioning plan on the grounds that a judge-model
 bump was out-of-band tracked elsewhere; the reversal makes it a dated
 field on the artifact instead, so `make judge-regrade` can refresh it
@@ -487,14 +487,16 @@ from this PR or main) is **active on skill-side files** — its
 snapshot matches the current PR-branch state of all snapshot-tracked
 files, normalized per §A7.
 
-**Rule 2b (warn-only)**: The same run log's `judge_prompt_hash`
-matches the current `judge/prompt.md` (normalized). A mismatch
-produces a warning annotation on the PR but does not block merge.
-Rationale: judge-prompt edits are project-wide events on a separate
-cadence; we don't want every open PR to fail every time the monthly
-judge review lands. The active state still applies to skill-side
-files; the warning just notes that a re-run today would score
-differently than the historical numbers.
+**Rule 2b (blocks on judge-prompt PRs)**: On a PR that touches
+`eval/harness/judge/prompt.md`, every suite's latest full-skill run
+log must carry a `judge_prompt_hash` that matches the current prompt;
+satisfy with `make judge-regrade`. Warns instead on a log that rule 2
+already reports skill-side stale (those owe a `make eval-skill` run,
+not a judge-only regrade). On a PR that does **not** touch the judge
+prompt a `judge_prompt_hash` mismatch stays non-blocking — a mixed-era
+corpus is expected across judge-prompt cadences, and the cheap
+satisfaction path only exists when the PR itself is the thing moving
+the hash.
 
 **Rule 3**: The latest full-skill run log's `.ann.json` is
 **complete** — has an entry for every `(test_id, dimension_source,

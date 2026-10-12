@@ -33,6 +33,7 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from harness import judge, loader, rubric, snapshot
@@ -41,15 +42,13 @@ from harness.judge import (
     DEFAULT_JUDGE_MODEL,
     JUDGE_PROMPT_PATH,
     JudgeError,
-    grade,
     render_prompt_parts,
 )
 from harness.loader import InvalidTestError
 from harness.orchestrator import (
     _compute_outcome,
-    _negative_judge_context,
-    _summarize_before_state,
-    _summarize_changes,
+    _run_judge,
+    build_judge_grade_kwargs,
     flag_routing_negative_judge_fail,
 )
 from harness.outcomes import aggregate_per_run_outcome
@@ -176,11 +175,14 @@ def collect_regradeable_logs(
 
 # ---- Per-test prompt reconstruction (B6) ----------------------------------
 #
-# The issue body's trace: eight of eleven slots come out of the run log; three
-# come off disk. The function below rebuilds every input `judge.grade` needs
-# from a committed run entry, by re-reading disk for `rubric`, `scenario_readme`,
-# `judge_context`, `user_message` and the before-state (research + tree), and
-# splicing predicate-matched tool responses from `eval/fixtures/mcp/`.
+# Reconstruct the exact kwargs a live run would pass to `grade()` by funnelling
+# every call through the same `orchestrator.build_judge_grade_kwargs` the live
+# path uses. Hand-rebuilding `grade()`'s inputs in a second place is what
+# produces the drift this PR exists to prevent: a full rubric on a negative
+# test, empty `skills_invoked` on a direct test, "name: error" validator
+# strings where production sends bare names. Disk reads here are limited to
+# the three slots the run log does not carry (rubric, scenario README,
+# before-state) and the predicate-matched tool-response splice.
 
 
 def _load_test_spec(skill: str, test_id: str) -> loader.TestSpec:
@@ -300,25 +302,95 @@ def _harness_observations_from_warnings(warnings: list[dict[str, Any]]) -> list[
     return out
 
 
-def _validator_failure_strings(validators_block: dict[str, Any]) -> list[str]:
-    """Human-readable summaries for the judge prompt's `validator_failures` slot."""
+def _gating_validator_failure_names(validators_block: dict[str, Any]) -> list[str]:
+    """Bare names of gating (non-reporting) validator failures, in order.
+
+    Mirrors the live path in `orchestrator._execute_test`:
+      `[r.name for r in validator_results if not r.passed and not r.reporting_only]`.
+    The judge prompt renders this list as `- {name}` bullets (see
+    `judge.render_prompt_parts::failures_text`) — a "name: error" string here
+    is drift from the live render, which is exactly what this PR fixes.
+    """
     results = (validators_block or {}).get("results") or []
-    out: list[str] = []
-    for r in results:
-        if r.get("passed") is False:
-            name = r.get("name") or "unknown"
-            err = r.get("error") or ""
-            out.append(f"{name}: {err}" if err else name)
-    return out
+    return [
+        r.get("name") or "unknown"
+        for r in results
+        if r.get("passed") is False and not r.get("reporting_only", False)
+    ]
 
 
 def _failed_validator_names(validators_block: dict[str, Any]) -> frozenset[str]:
-    """Validator names (bare) for `_compute_outcome`'s `failed_validators` arg."""
+    """Validator names (bare) for `_compute_outcome`'s `failed_validators` arg.
+
+    Includes reporting-only failures too (they can still signal outcome shape
+    for callers that use the frozenset for `_COMMISSION_VALIDATORS` membership
+    tests), where the judge-prompt slot filters them out.
+    """
     results = (validators_block or {}).get("results") or []
     return frozenset(
         r.get("name") or "unknown"
         for r in results
         if r.get("passed") is False
+    )
+
+
+def _build_result_namespace(
+    run_entry: dict[str, Any],
+    tool_calls: list[dict[str, Any]],
+) -> SimpleNamespace:
+    """Shape run-log fields as the `result` protocol `_run_judge` reads.
+
+    `tool_calls` is already spliced by the caller (`_splice_tool_responses`)
+    so predicate-matched calls carry the response the judge saw at the time.
+    `slash_entry_skill` is not persisted on the run log — None is the
+    right value for a regrade; a slash-command test gets its initial entry
+    marked only when the live runner captures it.
+    """
+    output = run_entry.get("output") or {}
+    return SimpleNamespace(
+        text_response=output.get("text_response") or "",
+        tool_calls=tool_calls,
+        skills_invoked=output.get("skills_invoked") or [],
+        builtin_tool_calls=output.get("builtin_tool_calls") or [],
+        agent_returns=output.get("agent_returns") or [],
+        slash_entry_skill=None,
+    )
+
+
+def _build_grade_kwargs_for_run_entry(
+    log: dict[str, Any],
+    test_entry: dict[str, Any],
+    run_entry: dict[str, Any],
+) -> dict[str, Any]:
+    """Return the kwargs a live `grade()` call would receive for this test run."""
+    skill = log["skill"]
+    test_id = test_entry["test_id"]
+    spec = _load_test_spec(skill, test_id)
+    rub = _load_rubric(skill)
+    scenario = spec.scenario if hasattr(spec, "scenario") else None
+    scenario_readme = _load_scenario_readme(scenario)
+    before_snapshot = _load_before_snapshot(scenario)
+
+    output = run_entry.get("output") or {}
+    tool_calls = _splice_tool_responses(output.get("tool_calls") or [])
+    file_changes = output.get("file_changes") or []
+    warnings = output.get("warnings") or []
+    harness_observations = _harness_observations_from_warnings(warnings)
+    validator_failures = _gating_validator_failure_names(
+        run_entry.get("validators") or {}
+    )
+
+    result = _build_result_namespace(run_entry, tool_calls)
+    return build_judge_grade_kwargs(
+        spec=spec,
+        rubric=rub,
+        scenario_readme=scenario_readme,
+        result=result,
+        file_changes=file_changes,
+        before_snapshot=before_snapshot,
+        validator_failures=validator_failures,
+        harness_observations=harness_observations,
+        state_observations=None,
     )
 
 
@@ -331,10 +403,11 @@ def render_judge_prompt_for_test(
 ) -> str:
     """Reconstruct the judge prompt for one test run — reads disk, bypasses cache.
 
-    Signature differs from PLAN.md v3 (which said `(log, run_index, test_index,
-    repo_root)`): we pass the dict objects directly rather than indices, since
-    the caller already has them from the per-test loop. Same resolved behavior;
-    cleaner call sites.
+    Shapes grade()'s kwargs through `orchestrator.build_judge_grade_kwargs` —
+    the same helper the live path calls — so the prompt a DRY render hashes is
+    byte-identical to the one a live run would send. Rebuilding the kwargs here
+    is the drift PR #3290's first review found; funnelling both paths through
+    one builder is how it is prevented.
 
     Returns `prefix + suffix` concatenated. Clears `judge.judge_prompt_template`'s
     @lru_cache before every call so the body is re-read from disk — nothing
@@ -349,51 +422,8 @@ def render_judge_prompt_for_test(
     # amortizes across tests within one grade() invocation.
     judge.judge_prompt_template.cache_clear()
 
-    skill = log["skill"]
-    test_id = test_entry["test_id"]
-    spec = _load_test_spec(skill, test_id)
-    rub = _load_rubric(skill)
-    scenario = spec.scenario if hasattr(spec, "scenario") else None
-    scenario_readme = _load_scenario_readme(scenario)
-    before_snapshot = _load_before_snapshot(scenario)
-
-    # judge_context: test's own list from spec, plus _negative_judge_context
-    # framing if the test is negative.
-    if spec.negative is not None:
-        judge_context = _negative_judge_context(spec)
-    else:
-        judge_context = list(spec.judge_context or [])
-
-    output = run_entry.get("output") or {}
-    tool_calls = _splice_tool_responses(output.get("tool_calls") or [])
-    skills_invoked = output.get("skills_invoked") or []
-    text_response = output.get("text_response") or ""
-    file_changes = output.get("file_changes") or []
-    warnings = output.get("warnings") or []
-    harness_observations = _harness_observations_from_warnings(warnings)
-
-    validators = run_entry.get("validators") or {}
-    validator_failures = _validator_failure_strings(validators)
-
-    file_changes_summary = _summarize_changes(
-        file_changes, tool_calls, include_content=bool(spec.judge_reads_files)
-    )
-    before_state = _summarize_before_state(before_snapshot)
-
-    prefix, suffix = render_prompt_parts(
-        rubric=rub,
-        judge_context=judge_context,
-        scenario_readme=scenario_readme,
-        user_message=spec.user_message,
-        skills_invoked=skills_invoked,
-        text_response=text_response,
-        file_changes_summary=file_changes_summary,
-        tool_calls=tool_calls,
-        before_state=before_state,
-        validator_failures=validator_failures,
-        harness_observations=harness_observations,
-        state_observations=None,
-    )
+    kwargs = _build_grade_kwargs_for_run_entry(log, test_entry, run_entry)
+    prefix, suffix = render_prompt_parts(**kwargs)
     return prefix + suffix
 
 
@@ -412,6 +442,19 @@ def _strip_prior_coerced_warnings(warnings: list[dict[str, Any]]) -> list[dict[s
     idempotent given a cleaned input.
     """
     return [w for w in (warnings or []) if (w or {}).get("kind") != "coerced_routing_negative_to_na"]
+
+
+def _judge_was_skipped(run_entry: dict[str, Any]) -> bool:
+    """True iff the live run never produced judge dimensions.
+
+    Field is `judge.skipped`, not `judge_skipped`. A hand-rolled top-level
+    `judge_skipped` would silently never fire — one of the small fixes in this
+    PR's second review round. `aborted_reason` is covered too, since the live
+    orchestrator skips the judge whenever the run aborted.
+    """
+    if run_entry.get("aborted_reason"):
+        return True
+    return bool((run_entry.get("judge") or {}).get("skipped"))
 
 
 def regrade_run_log(path: Path) -> RegradeResult:
@@ -437,57 +480,46 @@ def regrade_run_log(path: Path) -> RegradeResult:
         scenario = spec.scenario if hasattr(spec, "scenario") else None
         scenario_readme = _load_scenario_readme(scenario)
         before_snapshot = _load_before_snapshot(scenario)
-        if spec.negative is not None:
-            judge_context = _negative_judge_context(spec)
-        else:
-            judge_context = list(spec.judge_context or [])
-        before_state = _summarize_before_state(before_snapshot)
 
         old_outcome = test_entry.get("outcome")
         new_outcomes: list[str] = []
 
         for run_entry in test_entry.get("runs") or []:
-            if run_entry.get("judge_skipped"):
-                # The original run skipped the judge (e.g. validator failure
-                # before judging); respect that — a regrade doesn't resurrect it.
+            if _judge_was_skipped(run_entry):
+                # The original run skipped the judge (abort before judging,
+                # or `judge.skipped` set); respect that — a regrade doesn't
+                # resurrect it.
                 continue
             # Several fields live under `output`, not at the run-entry top:
             # `activated`, `skills_invoked`, `text_response`, `tool_calls`,
-            # `file_changes`, `builtin_tool_calls`, `warnings`. Reading them off
-            # the top of `run_entry` returns None/[] and silently flips every
-            # routed positive test to fail downstream.
+            # `file_changes`, `builtin_tool_calls`, `warnings`, `agent_returns`.
+            # Reading them off the top of `run_entry` returns None/[] and
+            # silently flips every routed positive test to fail downstream.
             output = run_entry.get("output") or {}
             tool_calls = _splice_tool_responses(output.get("tool_calls") or [])
             skills_invoked = output.get("skills_invoked") or []
-            text_response = output.get("text_response") or ""
             file_changes = output.get("file_changes") or []
             activated = bool(output.get("activated"))
             builtin_tool_calls = output.get("builtin_tool_calls") or []
             warnings = _strip_prior_coerced_warnings(output.get("warnings") or [])
             harness_observations = _harness_observations_from_warnings(warnings)
             validators_block = run_entry.get("validators") or {}
-            # Two shapes: the judge prompt wants readable "name: error" lines;
-            # _compute_outcome wants the bare names as a frozenset.
-            validator_failure_lines = _validator_failure_strings(validators_block)
+            # Judge prompt gets bare gating-failure names; _compute_outcome
+            # takes the frozenset including reporting-only failures.
+            validator_failure_names = _gating_validator_failure_names(validators_block)
             failed_validator_names = _failed_validator_names(validators_block)
-            file_changes_summary = _summarize_changes(
-                file_changes, tool_calls, include_content=bool(spec.judge_reads_files)
-            )
 
             try:
-                judge_out = grade(
+                judge_out = _run_judge(
+                    spec=spec,
                     rubric=rub,
-                    judge_context=judge_context,
                     scenario_readme=scenario_readme,
-                    user_message=spec.user_message,
-                    skills_invoked=skills_invoked,
-                    text_response=text_response,
-                    file_changes_summary=file_changes_summary,
-                    tool_calls=tool_calls,
+                    result=_build_result_namespace(run_entry, tool_calls),
+                    file_changes=file_changes,
+                    before_snapshot=before_snapshot,
                     auth=auth,
-                    model=DEFAULT_JUDGE_MODEL,
-                    before_state=before_state,
-                    validator_failures=validator_failure_lines,
+                    judge_model=DEFAULT_JUDGE_MODEL,
+                    validator_failures=validator_failure_names,
                     harness_observations=harness_observations,
                     state_observations=None,
                 )

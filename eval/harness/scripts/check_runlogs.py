@@ -7,8 +7,12 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 1   ≤1 added-or-renamed-into-place v{N}.json per skill.
     Rule 2   latest full-skill run log per touched skill is "active on
              skill-side files" (snapshot matches working tree).
-    Rule 2b  (warn-only) the same run log's judge_prompt_hash matches
-             eval/harness/judge/prompt.md.
+    Rule 2b  BLOCKS on a PR that touches eval/harness/judge/prompt.md:
+             every suite's latest run log must carry the current
+             judge_prompt_hash; satisfy with `make judge-regrade`.
+             Downgrades to a warning on a run log rule 2 already
+             reports skill-side stale (a regrade cannot satisfy a log
+             that owes a paid `make eval-skill` run).
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale

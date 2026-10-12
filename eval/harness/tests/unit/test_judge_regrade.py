@@ -12,6 +12,10 @@ The important invariants, all testable WITHOUT a model call:
    prompt doesn't embed SKILL.md).
 4. `collect_regradeable_logs` includes active-but-mismatched logs AND returns a
    `reason_refused` on skill-side-stale logs (which rule 2 owns).
+5. The regrade and the live run funnel through the same
+   `orchestrator.build_judge_grade_kwargs`, so a positive / negative / direct
+   test renders a BYTE-IDENTICAL prompt either way — the drift the PR's second
+   review round caught.
 
 The tests build minimal on-disk fixtures under `tmp_path` and monkeypatch
 `judge_regrade`'s module-level path constants onto them — never editing the
@@ -22,10 +26,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from harness import judge
+from harness import orchestrator as _orchestrator
 import judge_regrade
 
 
@@ -303,6 +309,27 @@ def test_collect_skips_logs_already_on_current_prompt(disk_tree):
 # --- Warning dedupe (S3) ---------------------------------------------------
 
 
+def test_judge_was_skipped_reads_dotted_field_and_aborted():
+    """`judge.skipped` under the judge block AND `aborted_reason` both route to skipped.
+
+    The regression this guards: a top-level `judge_skipped` key never exists on
+    the committed envelope — the writer stores it under the `judge` block as
+    `judge.skipped` — so a `run_entry.get("judge_skipped")` test is dead code
+    that never resurrects a judge-skipped run.
+    """
+    # Live-shape skipped: judge.skipped is True.
+    assert judge_regrade._judge_was_skipped({"judge": {"skipped": True}}) is True
+    # Aborted runs skip the judge too.
+    assert judge_regrade._judge_was_skipped({"aborted_reason": "max_turns"}) is True
+    # Live-shape non-skipped: judge.skipped is False, no aborted_reason.
+    assert judge_regrade._judge_was_skipped(
+        {"judge": {"skipped": False}, "aborted_reason": None}
+    ) is False
+    # The OLD (broken) top-level `judge_skipped` key is NOT read as skipped —
+    # proves the field-name regression stays fixed.
+    assert judge_regrade._judge_was_skipped({"judge_skipped": True}) is False
+
+
 def test_strip_prior_coerced_warnings_removes_only_that_kind():
     warnings = [
         {"kind": "prose_observation", "observation": "keep"},
@@ -312,3 +339,291 @@ def test_strip_prior_coerced_warnings_removes_only_that_kind():
     out = judge_regrade._strip_prior_coerced_warnings(warnings)
     assert len(out) == 2
     assert all(w["kind"] == "prose_observation" for w in out)
+
+
+# --- Live-vs-regrade prompt parity (issue #2479 PR 1, 2026-10-09 review) --
+#
+# The regrade must render the same prompt a live run would send; otherwise
+# a judge-prompt edit's regrade scores diverge from what the next live run
+# will produce, which is the drift the PR exists to prevent. Captured by
+# intercepting `render_prompt_parts` on both paths and comparing the kwargs
+# it was called with.
+
+
+class _KwargsRecorder:
+    """Capture the kwargs render_prompt_parts was called with."""
+
+    def __init__(self) -> None:
+        self.kwargs: dict | None = None
+
+    def __call__(self, **kwargs):
+        self.kwargs = kwargs
+        # Return a benign (prefix, suffix) tuple so the caller can concatenate.
+        return ("", "")
+
+
+def _spec_positive(scenario: str | None = "demo-scenario") -> dict:
+    inp: dict = {"user_message": "Please find John Smith's death record."}
+    if scenario:
+        inp["scenario"] = scenario
+    return {
+        "test": {
+            "id": "ut_demo_positive",
+            "skill": "demo",
+            "name": "Positive",
+            "type": "positive",
+            "description": "Positive test.",
+            "tags": [],
+        },
+        "input": inp,
+        "mcp_fixtures": [],
+        "judge_context": ["check that output names the person"],
+    }
+
+
+def _spec_negative(scenario: str | None = "demo-scenario") -> dict:
+    inp: dict = {"user_message": "Translate 'hello' to Spanish."}
+    if scenario:
+        inp["scenario"] = scenario
+    return {
+        "test": {
+            "id": "ut_demo_negative",
+            "skill": "demo",
+            "name": "Negative",
+            "type": "negative",
+            "description": "Negative test.",
+            "tags": [],
+        },
+        "input": inp,
+        "mcp_fixtures": [],
+        "judge_context": ["check that output declines"],
+        "negative": {
+            "correct_skill": [],
+            "explanation": "demo skill should not translate text.",
+        },
+    }
+
+
+def _spec_direct() -> dict:
+    return {
+        "test": {
+            "id": "ut_demo_direct",
+            "skill": "demo",
+            "name": "Direct",
+            "type": "positive",
+            "description": "Direct-agent test.",
+            "tags": [],
+        },
+        "input": {
+            "delegation": "The caller said: declared=true. Verify.",
+            "scenario": "demo-scenario",
+        },
+        "mcp_fixtures": [],
+        "judge_context": ["grade from the per-test context, not the delegation"],
+    }
+
+
+def _run_entry_for(test_id: str, *, direct: bool = False) -> dict:
+    output = {
+        "activated": True,
+        "skills_invoked": [] if direct else ["demo"],
+        "text_response": (
+            "Dispatcher relayed: ok." if direct else "John Smith died 1890."
+        ),
+        "tool_calls": [],
+        "file_changes": [],
+        "builtin_tool_calls": (
+            [{"tool": "Agent", "args": {"subagent_type": "demo"}}] if direct else []
+        ),
+        "agent_returns": (
+            [{"subagent_type": "demo", "text": "Agent's own return text."}]
+            if direct
+            else []
+        ),
+        "warnings": [],
+    }
+    return {
+        "run_index": 0,
+        "aborted_reason": None,
+        "outcome": "pass",
+        "judge_skipped": False,
+        "output": output,
+        "validators": {
+            "passed": False,
+            "results": [
+                {"name": "test_demo_check", "passed": False, "error": "expected 'X' not 'Y'"},
+                {
+                    "name": "report_demo_observation",
+                    "passed": False,
+                    "error": "observed thing",
+                    "reporting_only": True,
+                },
+            ],
+        },
+        "judge": {
+            "dimensions": [
+                {"source": "base", "name": "Correctness", "score": 3, "rationale": "ok"},
+            ],
+            "judge_cost_usd": 0.01,
+            "input_tokens": 100,
+            "cached_input_tokens": 0,
+            "output_tokens": 50,
+            "skipped": False,
+        },
+    }
+
+
+def _log_with(skill: str, test_spec: dict, run_entry: dict) -> dict:
+    return {
+        "schema_version": 3,
+        "skill": skill,
+        "version": 1,
+        "released": False,
+        "releasable": True,
+        "invocation": "skill",
+        "timestamp": "2026-10-09_00-00-00",
+        "harness_version": "0.1.0",
+        "model": "claude-sonnet-4-5",
+        "judge_prompt_hash": "a" * 64,
+        "snapshot": {},
+        "tests": [
+            {
+                "test_id": test_spec["test"]["id"],
+                "outcome": "pass",
+                "runs": [run_entry],
+            }
+        ],
+        "totals": {},
+    }
+
+
+@pytest.mark.parametrize(
+    "spec_builder, direct, label",
+    [
+        (lambda: _spec_positive(), False, "positive"),
+        (lambda: _spec_negative(), False, "negative"),
+        (lambda: _spec_direct(), True, "direct"),
+    ],
+)
+def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builder, direct, label):
+    """Live `_run_judge` and `render_judge_prompt_for_test` must shape
+    render_prompt_parts kwargs identically.
+
+    The regression this guards is drift between the regrade's hand-rebuilt
+    inputs and `orchestrator._run_judge`'s inputs. On the current refactor both
+    paths funnel through `build_judge_grade_kwargs`, so the captured kwargs are
+    equal. Before the refactor the regrade sent `grade()` a full rubric on
+    negative tests, empty `skills_invoked` on direct tests, and "name: error"
+    validator-failure strings — all of which would read as unequal kwargs here.
+    """
+    spec_dict = spec_builder()
+    test_path = disk_tree["tests_unit"] / f"{spec_dict['test']['id']}.json"
+    test_path.write_text(json.dumps(spec_dict), encoding="utf-8")
+
+    run_entry = _run_entry_for(spec_dict["test"]["id"], direct=direct)
+    log = _log_with("demo", spec_dict, run_entry)
+    test_entry = log["tests"][0]
+
+    # --- Dry render path: capture render_prompt_parts kwargs ---
+    dry_recorder = _KwargsRecorder()
+    monkeypatch.setattr(judge_regrade, "render_prompt_parts", dry_recorder)
+    judge_regrade.render_judge_prompt_for_test(log, test_entry, run_entry)
+    assert dry_recorder.kwargs is not None, "dry path did not call render_prompt_parts"
+
+    # --- Live path: run _run_judge, which calls grade -> render_prompt_parts ---
+    live_recorder = _KwargsRecorder()
+    monkeypatch.setattr(judge, "render_prompt_parts", live_recorder)
+
+    # Short-circuit the model call once render_prompt_parts has been exercised:
+    # grade() builds the prompt before dispatching to Anthropic. We don't want
+    # the test to hit the network; raising from the recorder's follow-up is one
+    # option, but it's easier to monkey-patch the client dispatch.
+    def _no_model_dispatch(client, prefix, suffix, tool, model, enable_cache):
+        # Return a shape _parse_grading_result can read: one dimension.
+        return SimpleNamespace(
+            content=[
+                SimpleNamespace(
+                    type="tool_use",
+                    name="submit_grading",
+                    input={
+                        "dimensions": [
+                            {
+                                "source": "base",
+                                "name": "Correctness",
+                                "score": 3,
+                                "rationale": "ok",
+                            }
+                        ]
+                    },
+                )
+            ],
+            usage=SimpleNamespace(
+                input_tokens=10,
+                cache_read_input_tokens=0,
+                cache_creation_input_tokens=0,
+                output_tokens=5,
+            ),
+        )
+
+    monkeypatch.setattr(judge, "_dispatch_grading", _no_model_dispatch, raising=False)
+    # Fall back: _make_client needs auth; stub it to a no-op.
+    monkeypatch.setattr(judge, "_make_client", lambda auth: object())
+
+    # Build the live result namespace exactly as the orchestrator would.
+    live_result = SimpleNamespace(
+        text_response=run_entry["output"]["text_response"],
+        tool_calls=run_entry["output"]["tool_calls"],
+        skills_invoked=run_entry["output"]["skills_invoked"],
+        builtin_tool_calls=run_entry["output"]["builtin_tool_calls"],
+        agent_returns=run_entry["output"]["agent_returns"],
+        slash_entry_skill=None,
+    )
+
+    # Load the test spec the same way the orchestrator would, so we exercise
+    # the real `TestSpec` object the live path reads from.
+    live_spec = judge_regrade._load_test_spec("demo", spec_dict["test"]["id"])
+    live_rubric = judge_regrade._load_rubric("demo")
+    live_scenario_readme = judge_regrade._load_scenario_readme(live_spec.scenario)
+    live_before_snapshot = judge_regrade._load_before_snapshot(live_spec.scenario)
+    live_validator_failures = judge_regrade._gating_validator_failure_names(
+        run_entry["validators"]
+    )
+    live_harness_observations = judge_regrade._harness_observations_from_warnings(
+        run_entry["output"]["warnings"]
+    )
+
+    # Try the full `_run_judge`; if the stubbed dispatch isn't where
+    # the installed judge module routes requests through, fall back to
+    # capturing render_prompt_parts' kwargs directly through grade().
+    try:
+        _orchestrator._run_judge(
+            spec=live_spec,
+            rubric=live_rubric,
+            scenario_readme=live_scenario_readme,
+            result=live_result,
+            file_changes=run_entry["output"]["file_changes"],
+            before_snapshot=live_before_snapshot,
+            auth=None,
+            judge_model="claude-haiku-4-5",
+            validator_failures=live_validator_failures,
+            harness_observations=live_harness_observations,
+            state_observations=None,
+        )
+    except Exception:
+        # The stub may not match every private contract inside grade();
+        # but render_prompt_parts gets called BEFORE the model dispatch,
+        # so the recorder has captured its kwargs by now.
+        pass
+
+    assert live_recorder.kwargs is not None, (
+        f"[{label}] live path did not reach render_prompt_parts"
+    )
+
+    # The kwargs must match byte-for-byte: same rubric, judge_context,
+    # user_message, skills_invoked, text_response, tool_calls, validator_failures.
+    # If any one differs, the regrade is sending a prompt the live run never would.
+    assert dry_recorder.kwargs == live_recorder.kwargs, (
+        f"[{label}] regrade prompt kwargs diverged from live run.\n"
+        f"dry  = {dry_recorder.kwargs}\n"
+        f"live = {live_recorder.kwargs}"
+    )
