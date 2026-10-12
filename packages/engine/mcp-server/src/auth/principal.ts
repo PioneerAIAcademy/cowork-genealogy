@@ -22,8 +22,9 @@ export type Principal =
    * The desktop `.mcpb` and both eval harnesses: one user per process, tokens
    * and config in `~/.familysearch-mcp`, refresh done here. Also the hosted
    * alpha, whose control plane provisions those two files into the sandbox.
+   * `overlay` is layered over `config.json` (see `localPrincipal`).
    */
-  | { readonly kind: "local" }
+  | { readonly kind: "local"; readonly overlay?: AppConfig }
   /**
    * A hosted request: the credential and the per-user config travel with the
    * request. The tool server never refreshes — the web tier owns the grant and
@@ -34,6 +35,13 @@ export type Principal =
 /** The one-user-per-process principal. The stdio entrypoint passes it to every
  *  tool; tests and dev scripts pass it where a tool needs one. */
 export const LOCAL: Principal = { kind: "local" };
+
+/** The local principal with per-user values the entrypoint received at start-up
+ *  layered over `config.json`: the stdio server passes what Claude Desktop's
+ *  extension install dialog collected (`installConfigFromEnv`, auth/config.ts). */
+export function localPrincipal(overlay: AppConfig): Principal {
+  return { kind: "local", overlay };
+}
 
 /** A per-request principal for a hosted entrypoint. `config` carries the
  *  per-user tunables the desktop reads from `config.json` (wiki API URL,
