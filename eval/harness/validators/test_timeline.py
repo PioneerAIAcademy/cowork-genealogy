@@ -26,29 +26,6 @@ from validators_lib import assert_foreign_keys_valid
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
 _PAREN_RE = re.compile(r"\([^()]*\)")
-# A parenthetical OPENING with a genealogy vital-event marker -- the
-# complement of opening with a year. A round-5 review found the comma-before-
-# year check this replaced too loose: "(m. Margaret Hayes, 1849)" and "(bapt.
-# Skibbereen, 1814)" both have a comma before the year for a reason that has
-# nothing to do with naming the census (separating a name, or a baptism
-# place, from its own date), and the comma rule read both as the census year.
-# Checking the OPENING token instead of punctuation anywhere in the string is
-# the same structural move "opens with year" already makes -- a parenthetical
-# starts with the one thing it's actually labelled by, a year or a vital-
-# event abbreviation, not scattered punctuation. This list is the exact set
-# issue #2797's and #3231's review rounds found in practice: "married"/
-# "marriage"/"m.", "wed", "born"/"b.", "died"/"death"/"d.", "bapt."/
-# "baptised"/"baptized", "buried"/"burial", "widow"/"widowed",
-# "emigrated"/"emigration". It is closed over GENEALOGY VITAL-EVENT
-# VOCABULARY, not over jurisdictions or census names -- a materially
-# different, much smaller kind of list than the per-country table ADR-0012
-# forbids.
-_LIFE_EVENT_OPEN_RE = re.compile(
-    r"^(?:marr(?:y|ied|iage)|m|wed(?:ding)?|born|b|died|death|d|"
-    r"bapt(?:is(?:ed|m)|iz(?:ed|m))?|bur(?:ial|ied)|widow(?:ed)?|"
-    r"emigrat(?:ed|ion))\.?(?=\s|$)",
-    re.IGNORECASE,
-)
 
 
 # --- Helpers ----------------------------------------------------------
@@ -277,25 +254,35 @@ def _census_year_of_entry(entry: str) -> int | None:
     # 1859)", "(m. 1859)", "(bapt. 1859)", "(buried 1870)", "(widowed 1859)",
     # "(emigrated 1859)" all open with a marker and must not be returned as
     # the census year (finding #4). "(1861, England & Wales)" opens with the
-    # year itself. "(England & Wales, 1861)" opens with neither -- "England"
-    # is not a marker -- so it still correctly names the census year without
-    # needing to recognize it as a jurisdiction at all.
+    # year itself. "(England & Wales, 1861)" opens with neither a year nor a
+    # marker -- it opens with a capitalized jurisdiction name -- so it still
+    # correctly names the census year.
     #
-    # A round-5 review found a PRIOR version of this check, which looked for
-    # a comma before the year anywhere in the parenthetical rather than a
-    # marker at its start, too loose: "(m. Margaret Hayes, 1849)" and "(bapt.
-    # Skibbereen, 1814)" both carry a comma before their year for a reason
-    # that has nothing to do with naming the census -- separating a name, or
-    # a baptism place, from its own date -- and the comma rule misread both
-    # as the census year. Checking the opening token is the same structural
-    # move "opens with year" already makes: a parenthetical is introduced by
-    # the one thing it is actually labelled with, not by punctuation that can
-    # appear for unrelated reasons anywhere inside it.
+    # A round-5 review found a PRIOR version of this check too loose in one
+    # direction (a comma anywhere in the parenthetical, not just at its
+    # start, misread "(m. Margaret Hayes, 1849)" and "(bapt. Skibbereen,
+    # 1814)" -- a name/place separated from ITS OWN date, nothing to do with
+    # naming the census -- as the census year), and the fix that followed it
+    # too tight in the other: a hand-enumerated marker list ("married"/"m.",
+    # "bapt.", "born"/"b.", ...) stops working the moment a genealogist uses
+    # one it doesn't contain ("res.", "chr.", "nat.", "engaged" all misread
+    # their own date as the census year, reproducing finding #4's exact bug
+    # for a marker that wasn't on the list) -- the same closed-enumeration
+    # problem issue #2797 already solved once for the "does it open with a
+    # year" half of this same check, and ADR-0012 forbids for jurisdictions.
+    # The genuinely structural signal is capitalization, not vocabulary: a
+    # genealogical vital-event marker is a common noun or verb and is always
+    # written lowercase in this corpus (the project's own `fact_type` enum
+    # values are lowercase too), while a jurisdiction name is a proper noun
+    # and is always capitalized. Checking the opening letter's case instead
+    # of matching it against either a comma or a word list needs no
+    # enumeration at all and closes every marker the hand-written list missed
+    # by construction, not by addition.
     def _names_census_year(paren_text: str) -> bool:
         inner = paren_text[1:-1].lstrip()
         if _YEAR_RE.match(inner) is not None:
             return True
-        return _LIFE_EVENT_OPEN_RE.match(inner) is None
+        return inner[:1].isupper()
 
     bounding_spans = [
         m.span() for m in _PAREN_RE.finditer(entry) if not _names_census_year(m.group(0))

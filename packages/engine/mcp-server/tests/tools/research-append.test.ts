@@ -2255,6 +2255,28 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok).toBe(false);
     });
 
+    // Two independent self-reviews found the round-5 exclusion words above
+    // also work as FILLER between a real foreign jurisdiction and "census",
+    // not just as the word adjacent to it: "Essex County census" and "Danish
+    // Population Census" each had their actual jurisdiction word captured by
+    // nothing (the word immediately before "census" is excluded), fell
+    // through to arm 3, and were wrongly refused on this mixed timeline even
+    // though neither names the US. Pins the opposite direction from the
+    // block above -- a real jurisdiction two words from "census", separated
+    // by one of the same exclusion words -- so a future narrowing of this
+    // regex cannot reopen it silently.
+    it.each([
+      ["a US-style county name on a foreign jurisdiction", "Essex County census 1890"],
+      ["an Irish county name", "Cork County census 1890"],
+      ["an English county name", "Yorkshire County census 1890"],
+      ["a nationality adjective before the bureau descriptor", "Danish Population Census 1890"],
+      ["a nationality adjective before the other descriptor", "Swedish Decennial Census 1890"],
+    ])("allows a foreign jurisdiction separated from 'census' by a descriptor word, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
     // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
     // in the entry, which wrongly silenced every one of these on the exact
     // immigrant timeline this guard exists for -- none names a jurisdiction

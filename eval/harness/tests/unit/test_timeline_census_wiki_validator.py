@@ -213,6 +213,29 @@ def test_passes_when_a_vital_event_aside_also_carries_a_comma():
     check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
 
 
+def test_passes_on_a_vital_event_marker_outside_the_old_hand_written_list():
+    """Two independent self-reviews found the round-5 fix's hand-enumerated
+    marker list ("married"/"m.", "bapt.", "born"/"b.", ...) was itself a
+    closed vocabulary list of the kind issue #2797 already learned not to
+    rely on for "does this open with a year" -- any genealogical vital-event
+    marker NOT on that list ("christened", "naturalized", "confirmed",
+    "res.") read as naming the census year, reproducing finding #4's exact
+    bug for a word the list happened to omit. The fix generalizes from a
+    word list to the parenthetical's opening letter CASE -- lowercase is a
+    marker/verb, capitalized is a jurisdiction name -- which needs no
+    enumeration and closes every marker, known or not. The real census
+    year, 1861, is named plainly elsewhere in the same gap. Must NOT raise."""
+    gap = [{"start": "1850", "end": "1861",
+            "expected_events": [
+                "England census (christened 1850)",
+                "England census (naturalized 1859)",
+                "England census (confirmed 1855)",
+                "England census 1861",
+            ],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
 def test_fires_on_cross_country_page_contamination():
     """Finding #3: a year attributed to Ireland that is absent from the Ireland
     page but present on another fetched page (England's 1921) must be caught.
