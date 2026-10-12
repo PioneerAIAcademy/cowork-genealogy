@@ -12,7 +12,7 @@ echo /research that is really just running stale code. Do both, every time an
 echo MCP tool or a skill changes.
 echo.
 echo Same as "make cowork-install" on Mac. Runs the two Node build scripts. No
-echo bash or zip needed -- just Node, which Setup.bat already installs.
+echo bash or zip needed -- just Node 22.9+ and npm 11.12 (README, "Building from source").
 echo.
 
 where node >nul 2>nul
