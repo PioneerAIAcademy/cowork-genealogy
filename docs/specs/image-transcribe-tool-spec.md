@@ -39,10 +39,11 @@
 > 2. **Image persistence + viewing (§8.5).** The backing JPEG is saved for
 >    **retained** sources so the Electron viewer (then the hosted web
 >    viewer) can show the scan beside its transcription.
-> 3. **Key handling stays config-only (§6.4–§6.5)** — the MCP server reads
->    the key only from `~/.familysearch-mcp/config.json`, never from env —
->    with two orchestration-layer bridges added for e2e and the hosted
->    sandbox.
+> 3. **Key handling stays config-only (§6.4–§6.5)** — `getOpenRouterApiKey`
+>    reads the key only from the config, never from env. Each runtime's
+>    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`
+>    install dialog layered over it, and bridges for e2e, the hosted sandbox
+>    and the prototype's container.
 >
 > **Phase 0 is COMPLETE — spike PR 723.**
 > The gate passed: build the tool and route large scans to a hosted VLM on
@@ -595,7 +596,7 @@ list the caller can turn into assertions.
 | `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | the shared `Unrecognized memoryArtifactUrl.` message, which names **both** accepted forms — a near-miss page URL (`http://`, a singular `/photos/artifact/`, a non-numeric id) lands here, so it must not name only the artifact form. Refused before any request |
 | A Memories page lookup returns non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` Says to open the page URL in a browser to confirm the memory exists and is visible; if restricted, call `login` and retry; otherwise transcribe by another route |
 | A Memories page resolves to no readable artifact | `FamilySearch returned no readable artifact for memory <id>.` Names the likely cause — a story with no attached file, or an audio memory — and directs to `person_read`'s source text instead |
-| No OpenRouter key configured | LLM-instruction error directing the user to set `openRouterApiKey` in `~/.familysearch-mcp/config.json` directly (§6.3). The tool never accepts an API key as a parameter. |
+| No OpenRouter key configured | LLM-instruction error directing the user to set the key in the extension's settings in Claude Desktop or as `openRouterApiKey` in `~/.familysearch-mcp/config.json` (§6.4). The tool never accepts an API key as a parameter. |
 | FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused; `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message. |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present) |
@@ -933,14 +934,15 @@ flow. Storage follows the existing per-user config convention exactly:
   `0o600`. Nothing in the engine writes that file.
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
-  cannot obtain on its own. The key is set by the user directly in
+  cannot obtain on its own. The user sets the key in the `.mcpb`'s install
+  dialog (the extension's **OpenRouter API key** field, §6.5) or directly in
   `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
   never passes through a tool-call argument, so it never appears in the
-  session transcript. `openRouterModel` is set the same way. There is no
+  session transcript. `openRouterModel` is set in `config.json` only. There is no
   configuration tool: `configure_openrouter` lost its key parameter to keep keys out
   of the transcript, and was retired on 2026-09-27 with no caller. Flow: `image_transcribe` errors
-  "no key" → Claude tells the user to set `openRouterApiKey` in `config.json`
-  directly → user edits the file → retry.
+  "no key" → Claude tells the user to set it in the extension's settings or in
+  `config.json` → user sets it → retry.
 
 ### 6.5 Key provisioning across runtimes
 
@@ -957,7 +959,7 @@ as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user edits `~/.familysearch-mcp/config.json` directly |
+| **Cowork desktop** | host (`.mcpb`) | the user enters it in the extension's install dialog (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The dialog's key wins when both are set |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other three per-user keys over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
@@ -967,11 +969,13 @@ when the key is needed: no tool reads a credential from the environment, and
 `getOpenRouterApiKey` stays the single resolution point with a single source. That is
 what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
 was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
-`process.env` reads: `http.ts` reads these four, and a shipped tool
+`process.env` reads: `http.ts` reads these four, `index.ts` reads
+`GENEALOGY_OPENROUTER_API_KEY`, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables, which `http.ts` also reads
 only to name them at start-up (`research-append-tool-spec.md` §11.5). The bridge is at the
-**entrypoint** for a container and at the **orchestrator** for a sandbox; both are
-outside the tool, which is the line that matters. The hosted-path
+**entrypoint** for a container and for the desktop install dialog, and at the
+**orchestrator** for a sandbox; all are outside the tool, which is the line that
+matters. The hosted-path
 `fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,
 called from `sessions.py:create_project`) is the exact pattern the
 `write_config` sibling follows.
@@ -1189,8 +1193,8 @@ one, because the key is `image_filename`, not imageId:
   transcription + extracted-facts list and keeps the NOT-READ→pivot-to-indexes
   behavior. Thread `projectPath` through so the subagent's `image_transcribe`
   call can stage the JPEG (§8.5). For desktop setup, when `image_transcribe`
-  errors "no key" the error directs the user to set `openRouterApiKey` in
-  `~/.familysearch-mcp/config.json` directly. Preserve the "reserve image transcription for facts that exist only on
+  errors "no key" the error directs the user to the extension's settings or
+  `openRouterApiKey` in `~/.familysearch-mcp/config.json`. Preserve the "reserve image transcription for facts that exist only on
   the image" guidance. (A Sonnet-5 second-opinion escalation was considered and
   **dropped** — the viewer lets a human verify a cite-worthy read against the
   scan; a user-invoked Opus transcription is parked in §15.9.)
@@ -1332,7 +1336,7 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 - `src/tools/person-read.ts` — narrows the widened return; `src/tools/sidecar-read.ts` — `not_text` points at `image_transcribe({ file })`
 - `tests/tools/{image-transcribe,record-read,no-project,research-log-append,sidecar-read}.test.ts`, `tests/utils/results-staging.test.ts`
 - `eval/harness/tests/unit/test_mock_mcp.py` (parity lint compares the SEARCH sets), `eval/CLAUDE.md` (parity list)
-- `docs/specs/search-result-staging-spec.md` §2 / §5 / §11, `docs/specs/sidecar-read-tool-spec.md` §7, `README.md`
+- `docs/specs/search-result-staging-spec.md` §2 / §5 / §11, `docs/specs/sidecar-read-tool-spec.md` §7, `docs/catalog.md`
 
 *Extracted for `volume_bisect` — behaviour unchanged, 88/88 of this tool's tests
 passed unedited across the move:*

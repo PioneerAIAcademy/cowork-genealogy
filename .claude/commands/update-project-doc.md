@@ -1,5 +1,5 @@
 ---
-description: Update README.md and CLAUDE.md (and optionally other docs) to reflect the latest state of the project. Asks clarifying questions before editing and waits for review before declaring done.
+description: Update docs/catalog.md, README.md and CLAUDE.md (and optionally other docs) to reflect the latest state of the project. Asks clarifying questions before editing and waits for review before declaring done.
 ---
 
 You are updating project documentation to match the current state of this
@@ -14,7 +14,7 @@ Run these in parallel and read the docs that may need editing:
 - `git log main..HEAD --oneline` — commits on this branch
 - `git status --short` — uncommitted modifications
 - `git diff main...HEAD --stat` — files touched on this branch
-- Read `README.md` and `CLAUDE.md` so you know their current shape
+- Read `docs/catalog.md`, `README.md` and `CLAUDE.md` so you know their current shape
   and voice before proposing edits
 
 If the branch has no diff against `main` and a clean working tree, ask
@@ -32,8 +32,8 @@ Then use `AskUserQuestion` to confirm:
 
 1. **Is this the change to document?** (yes / no, let me describe it /
    only some of it)
-2. **Which files should be updated?** README.md and CLAUDE.md are the
-   default. Also offer:
+2. **Which files should be updated?** docs/catalog.md, README.md and
+   CLAUDE.md are the default. Also offer:
    - `DEVELOPMENT.md` — if the change affects build, test, or
      feature-addition workflows
    - `CONTRIBUTING.md` — if the change changes what contributions are
@@ -57,10 +57,12 @@ to change before each `Edit` call.
 
 Patterns that match the existing style (read surrounding text first):
 
-- **README.md** — tools table under "What it does today"; usage
-  example under "Try it out" if the new tool benefits from one;
-  "Project status" paragraph. Keep the table column order:
-  Tool / Purpose / Auth.
+- **docs/catalog.md** — the tool, skill and agent tables, and any count
+  they state. Keep the tool table column order: Tool / Purpose / Auth.
+- **README.md** — a short user page. Edit it only when what a user can
+  do, its known limits, or the install steps change: the "What you can
+  do" bullets, "Known limits", "What you need", "Install". Never add a
+  tool, skill or agent catalog to it.
 - **CLAUDE.md** — "Implemented tools" for shipped tools (mirror the
   existing `collections` entry: signature, returns, spec link);
   "Specced tools (not yet implemented)" for shipped specs whose code
@@ -85,7 +87,7 @@ work, no "we're excited to" framing. The repo's docs describe what
 
 After all edits are applied, summarize each edit as one bullet:
 file + section + what changed (e.g.,
-"README.md §What it does today — added `search` row").
+"docs/catalog.md §MCP tools — added `search` row").
 
 Then say:
 
