@@ -50,7 +50,6 @@ FROZEN_OWES_CASE_FILE = frozenset(
         ("find_protected_writes_by_unnamed_delegate", None),
         ("find_person_evidence_missing_same_person", "PERSON_EVIDENCE_DENY_KIND"),
         ("find_effects_without_invocation", None),
-        ("find_missing_mentor_verdicts", None),
     }
 )
 FROZEN_NOT_A_CANDIDATE = frozenset({("find_unguarded_protected_writes", None)})
