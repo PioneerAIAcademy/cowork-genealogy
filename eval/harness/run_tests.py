@@ -43,6 +43,7 @@ import json
 import os
 import sys
 import time
+import uuid
 from collections import Counter
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
@@ -63,6 +64,7 @@ from harness.runlog import (
     unexpected_pass,
     write_partial_runlog,
     write_run_log,
+    unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
 from harness.snapshot import build_snapshot, hash_file
@@ -211,6 +213,18 @@ def _build_parser() -> argparse.ArgumentParser:
         "the committed corpus runs. --no-tool-search loads every tool schema "
         "up front — experiment-only: the invocation is non-releasable (writes "
         "scratch_<ts>.json) and the run log records `tool_search: false`.",
+    )
+    parser.add_argument(
+        "--store",
+        choices=("fs", "pg"),
+        default="fs",
+        help="The project store the live tools run on. fs (default) is the "
+        "workspace directory. pg (U15) puts every live tool call on "
+        "PgS3ProjectStore against the compose Postgres + MinIO (`make "
+        "proto-up-store`; needs PROTO_PG_DSN, PROTO_S3_ENDPOINT, "
+        "PROTO_S3_ACCESS_KEY, PROTO_S3_SECRET_KEY): the invocation is "
+        "non-releasable and its log goes to eval/runlogs/unit-pg/<skill>/ "
+        "with `store: \"pg\"`.",
     )
     parser.add_argument(
         "--allow-missing-judge",
@@ -685,6 +699,25 @@ def main(argv: list[str] | None = None) -> int:
 
     tests_dir = args.tests_dir or (REPO_ROOT / "eval/tests/unit")
 
+    store = "pg" if args.store == "pg" else None
+    if store == "pg":
+        missing = [
+            v
+            for v in ("PROTO_PG_DSN", "PROTO_S3_ENDPOINT", "PROTO_S3_ACCESS_KEY", "PROTO_S3_SECRET_KEY")
+            if not os.environ.get(v)
+        ]
+        if missing:
+            print(
+                f"--store pg needs {', '.join(missing)} (start the stack with "
+                "`make proto-up-store`; `make eval-skill STORE=pg` sets them).",
+                file=sys.stderr,
+            )
+            return 2
+        # Read by mock_mcp._run_node_eval (adds the --import) and by every node
+        # subprocess's prelude (the per-run project-id nonce).
+        os.environ["PROTO_STORE"] = "pg"
+        os.environ["HARNESS_PG_RUN"] = uuid.uuid4().hex
+
     if args.list_skills:
         skills = _list_skills(tests_dir)
         if not skills:
@@ -839,6 +872,7 @@ def main(argv: list[str] | None = None) -> int:
         has_tag_filter=has_tag_filter,
         runs_per_test=resolved_runs_per_test,
         tool_search=args.tool_search,
+        store=store,
     )
     invocation_timestamp = now_utc_filename_timestamp()
     print(
@@ -848,6 +882,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     if not args.tool_search:
         print("tool search: OFF (scratch log)")
+    if store == "pg":
+        print(f"store: pg (run {os.environ['HARNESS_PG_RUN']}; logs to eval/runlogs/unit-pg/)")
     print(f"Running {len(specs)} test(s)...")
     print()
 
@@ -984,6 +1020,7 @@ def main(argv: list[str] | None = None) -> int:
                     snapshot=_snapshot_for(skill),
                     tests=entries,
                     tool_search=args.tool_search,
+                    store=store,
                 )
                 partial_paths[skill] = write_partial_runlog(
                     log,
@@ -1337,7 +1374,7 @@ def main(argv: list[str] | None = None) -> int:
     # --- Write one run log per skill --------------------------------------
     written_paths: list[Path] = []
     for skill, entries in per_skill_entries.items():
-        skill_runlog_dir = paths.runlogs_root / "unit" / skill
+        skill_runlog_dir = paths.runlogs_root / unit_dir_name(store) / skill
         filename, version = next_filename_for(
             skill_runlog_dir=skill_runlog_dir,
             releasable=releasable,
@@ -1368,6 +1405,7 @@ def main(argv: list[str] | None = None) -> int:
             tests=entries,
             review_sample=sample,
             tool_search=args.tool_search,
+            store=store,
         )
         path = write_run_log(
             log,

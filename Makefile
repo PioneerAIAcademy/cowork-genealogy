@@ -901,7 +901,7 @@ replay-collapse: $(ENGINE_BUILD) ## Replay each recorded research_query plan-log
 	cd eval/harness && uv run python -m e2e.replay_collapse $(if $(BASE),--base $(BASE),) $(if $(TEST),--test $(TEST),) $(if $(TRACKED_ONLY),--tracked-only,) $(if $(JSON),--json $(abspath $(JSON)),)
 
 .PHONY: eval-skill
-eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8]; SKILL="a b c" runs several in one pool
+eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: make eval-skill SKILL=tree-edit [CONCURRENCY=8] [STORE=pg]; SKILL="a b c" runs several in one pool
 	# $(ENGINE_BUILD) rebuilds packages/engine/mcp-server/build/ only when its
 	# source/deps changed, so the harness's "mcp-server build is stale" check
 	# (exit 2) passes. A bare --skill run is releasable: writes a v{N}_<ts>.json
@@ -926,8 +926,12 @@ eval-skill: $(ENGINE_BUILD) ## Run the skill eval harness, rebuilding first: mak
 	#
 	# TOOL_SEARCH=0 loads every tool schema up front (default on, as the corpus
 	# runs). Experiment-only: the run log is a scratch_<ts>.json, never a candidate.
+	#
+	# STORE=pg (U15) runs every live tool on PgS3ProjectStore against the compose
+	# Postgres + MinIO, started here: non-releasable, logged to eval/runlogs/unit-pg/.
 	@test -n "$(SKILL)" || { echo "ERROR: set SKILL, e.g. make eval-skill SKILL=tree-edit" >&2; exit 1; }
-	cd eval/harness && uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,)
+	$(if $(filter pg,$(STORE)),$(MAKE) proto-up-store,@true)
+	cd eval/harness && $(if $(filter pg,$(STORE)),env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY PROTO_PG_DSN=$(PROTO_PG_DSN) PROTO_S3_ENDPOINT=http://localhost:9000 PROTO_S3_BUCKET=projects PROTO_S3_ACCESS_KEY=proto PROTO_S3_SECRET_KEY=protoproto,) uv run python run_tests.py --skill $(SKILL) $(if $(CONCURRENCY),--concurrency $(CONCURRENCY),) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(filter pg,$(STORE)),--store pg,)
 
 .PHONY: gate-skill
 gate-skill: $(ENGINE_BUILD) ## Gate a candidate SKILL.md edit vs its step-4 run-log baseline on the mined test (advisory; writes no run-logs): make gate-skill SKILL=tree-edit TEST=ut_tree_edit_007 [DIMENSION="Correctness"]

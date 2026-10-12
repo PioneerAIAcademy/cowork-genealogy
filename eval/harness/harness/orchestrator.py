@@ -33,7 +33,7 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN
+from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN, seed_pg_workspace
 from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
@@ -1064,6 +1064,7 @@ async def _execute_skill_with_retry(
                         # conversion doc's acceptance check, made literal.
                         stage_skills=not spec.is_direct,
                     )
+                    seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
                         user_message=_prompt_for(spec),
