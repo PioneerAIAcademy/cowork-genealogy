@@ -1,0 +1,126 @@
+{
+  "run_log": "v18_2026-10-09_11-26-03.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_017`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task and routed the user to search-records, which is the appropriate skill for indexed census queries. No substantive output was produced by the research skill itself, which is the correct behavior for this negative test.\n\nJunior: (Pass - It properly recognizes that the skill's responsibility is to route an indexed census query to search-records and avoid any image- or volume-browsing workflow.)"
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_017`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill's correct action was to decline and route to search-records. This routing decision is complete and appropriate. The test does not require the research skill to produce output; the routing itself fulfills the requirement.\n\nJunior: (Pass - the required outcome was correct routing to search-records, and that outcome was fully achieved.)"
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_017`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the research skill itself. The skill correctly declined to invoke tools and instead routed to search-records, so this dimension is N/A.\n\nJunior: (Not Applicable, and the evaluation appropriately acknowledges that refraining from tool invocation was the correct behavior for this routing-only scenario.)"
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_018`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. The skill correctly declined to perform its own task (research) and instead routed the user to question-selection, which is the appropriate skill for answering 'What should I research next?' The routing decision is correct and the skill produced no substantive output of its own, which is the correct behavior for this scenario.\n\nJunior: (Pass - The skill satisfied the test by routing the user to question-selection and not attempting to conduct research or generate its own recommendation workflow)"
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_018`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> This is a negative test. Correct behavior is to decline and route, not to perform research's task. The skill did not attempt to exhaustively evaluate research options or write a research declaration—it correctly recognized that question-selection is the appropriate skill for this request and routed accordingly. No omissions apply to a correct decline.\n\nJunior: (Pass - The skill satisfied the test by correctly declining to perform research and routing the request to question-selection. No additional output was required, and therefore no completeness deficiencies apply.)"
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_018`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill under test. The skill invoked question-selection (agent), which is a routing decision, not a tool call. N/A per the base rule that Tool Arguments may be null only when zero MCP tool calls occurred.\n\nJunior: (The Tool Arguments dimension is Not Applicable because the skill performed a routing action only and made zero MCP tool calls.)"
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test where the correct behavior is for the research skill to decline and route to research-plan. Claude produced no output and made no tool calls, which is the correct behavior per the test specification. The skill correctly did not perform its own task (browsing strategy, tier list, or prioritized plan).\n\nJunior: (Pass - The skill complied with the negative-test requirements by not executing any browse operations, not writing results, and not generating the planning output itself.)"
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill correctly completed the required behavior for this negative test: it declined to perform research's task and routed the planning question to research-plan. No substantive output was produced, which is the correct and complete response to a planning question that should be handled by research-plan.\n\nJunior: (Pass - The skill fully met the requirements of the negative test by routing the planning request to research-plan and refraining from producing its own research-planning output.)"
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_016`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by the skill, so this dimension is N/A per the base rubric specification that Tool Arguments may be null only when no MCP tool calls happened.\n\nJunior: (Not Applicable because the skill made no MCP tool calls, making argument-level review unnecessary.)"
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_019`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that the project is in an empty state with only a stub person and no research questions registered. The routing decision to invoke question-selection is appropriate given the objective and project state. The factual claims about the objective (Patrick Flynn, b. ca. 1845 in Pennsylvania, d. 1908 in Schuylkill County, PA) match the tool response exactly. No fabricated material or unsupported claims are present.\n\nJunior: (Pass - The response accurately described the project state and objective, contained no factual errors or fabrication, and all substantive claims are supported by the tool output.)"
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_019`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request to find Patrick Flynn's parents by correctly routing to question-selection, which is the required first step in the research workflow for an empty project. The response explains why this routing is necessary (no questions registered yet) and outlines the subsequent workflow that will follow. The user's open-ended research request is appropriately handled by initiating the question-selection process.\n\nJunior: (Pass - The response fully satisfied the requirements by recognizing the empty project state, initiating the appropriate question-selection workflow, and providing enough explanation for why that step was required before research could proceed.)"
+    },
+    {
+      "test_id": "ut_research_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_019`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched the live fixture and returned successfully with ok: true. The tool was used appropriately to retrieve the current project state before making the routing decision. No argument mismatches or fixture_not_found errors occurred.\n\nJunior: (Pass - The skill used the appropriate MCP tool with the correct argument, successfully retrieved project context, and relied on that information when making its routing decision.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the two unregistered conflicts blocking progress (Elizabeth Barker's birthplace: England vs. Alabama; Sarah Martha Barker's birthplace: Alabama vs. Mississippi). The assertions cited (a_007, a_023, a_044, a_011, a_027) match the tool responses exactly. Claude accurately characterized the conflicts as unresolved disagreements requiring conflict-resolution before exhaustiveness or proof-conclusion. No fabricated material or unsupported claims. Claude did not weigh the conflicts itself or dismiss them as minor—it correctly deferred that judgment to conflict-resolution.\n\nJunior: (Pass - The response accurately identified the unresolved conflicts, preserved neutrality regarding their resolution, and appropriately deferred all evidentiary weighing to the conflict-resolution stage.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the user's request and the project state. It identified both unregistered conflicts blocking q_001's advancement, retrieved and examined all five relevant assertions (a_007, a_023, a_044, a_011, a_027), and correctly determined that conflict-resolution must precede exhaustiveness and proof-conclusion. Claude did not skip or omit any required step in the routing decision. The response includes a clear handoff statement and offers to continue once conflict-resolution completes.\n\nJunior: (Pass - The response fully addressed the project state, identified all known unresolved conflicts relevant to q_001, correctly determined that conflict-resolution is the required next step, and provided an appropriate handoff without omitting any necessary routing logic.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All six MCP tool calls passed correct arguments. The project_context call used the correct projectPath. The five research_query calls each specified the correct section ('assertions') and the correct assertionId (a_007, a_023, a_044, a_011, a_027 in sequence). All calls matched expected_args semantically and returned live responses with no fixture_not_found errors. Arguments were precise and appropriate for the task.\n\nJunior: (Pass - All six MCP tool calls used appropriate and precise arguments, successfully retrieved the intended records, and provided the necessary evidence for the skill's conflict-identification and routing decision.)"
+    }
+  ]
+}
