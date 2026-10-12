@@ -199,7 +199,7 @@ something you wait for — their answer arrives as the next message.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all** | `init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | **No `research.json` at all** | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
@@ -539,7 +539,9 @@ what it rests on.
   person-linking, person-linking precedes conflict detection, conflict
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
-  `research.json` does not exist, route to `init-project` first.
+  `research.json` does not exist, route to `@plugin:init-project` first,
+  passing the researcher's own words verbatim, plus `projectPath`, and
+  nothing else.
 
 ## Re-invocation behavior
 

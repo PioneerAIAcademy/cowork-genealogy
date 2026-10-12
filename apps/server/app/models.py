@@ -64,3 +64,18 @@ class Project(SQLModel, table=True):
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     updated: datetime = Field(default_factory=utcnow, sa_type=_TZ)
     last_active: datetime = Field(default_factory=utcnow, sa_type=_TZ)
+
+
+class TurnCost(SQLModel, table=True):
+    """One row per completed agent turn, reported by the sandbox (POST /api/turn-cost).
+    Sum by project_id for a session's cost, by user_id and day for a patron's. No foreign
+    keys: a deleted session's spend still happened, so its rows outlive the project."""
+    __tablename__ = "turn_costs"
+    id: int | None = Field(default=None, primary_key=True)
+    project_id: str = Field(index=True)
+    user_id: str = Field(index=True)
+    model: str | None = None
+    cost_usd: float
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)

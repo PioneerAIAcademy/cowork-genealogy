@@ -1889,3 +1889,67 @@ describe("research_log_append — a query may not claim a filter its search neve
     expect(errorsOf(r)).toBe("");
   });
 });
+
+describe("research_log_append — a mis-copied stagedResultsRef (resolveStagedRef)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "log-append-ref-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(baseResearch(), null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(minimalTree, null, 2));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
+  const stage = async (surname: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname }, results: [{ recordId: surname }] },
+    }))!.resultsRef;
+  // One character dropped from the UUID, the shape the corpus scan found most.
+  const slip = (ref: string) => ref.replace(/(-[0-9a-f]{4})([0-9a-f])/, "$1");
+
+  it("logs the one staged file a near-copy names, says so, and consumes it", async () => {
+    const good = await stage("Flynn");
+    const bad = slip(good);
+    expect(bad).not.toBe(good);
+    const result: any = await researchLogAppend({
+      projectPath: dir, tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: bad,
+    } as any);
+    expect(result.ok).toBe(true);
+    expect(result.validation.warnings.join(" ")).toContain(`stagedResultsRef '${bad}' matched no staged file; used '${good}'`);
+    expect(await exists(good)).toBe(false);
+    expect(await exists(result.resultsRef)).toBe(true);
+  });
+
+  it("corrects inside a batch, where 10 of the 11 corpus slips happened", async () => {
+    const a = await stage("Flynn");
+    const b = await stage("Kelly");
+    const bare = b.split("/").pop()!;
+    const result: any = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: a },
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: bare },
+      ],
+    } as any);
+    expect(result.ok).toBe(true);
+    expect(result.validation.warnings.join(" ")).toContain(`ops[1].stagedResultsRef '${bare}' matched no staged file; used '${b}'`);
+    expect(await exists(a)).toBe(false);
+    expect(await exists(b)).toBe(false);
+  });
+
+  it("still refuses two ops that resolve to the same staged file", async () => {
+    const good = await stage("Flynn");
+    const result: any = await researchLogAppend({
+      projectPath: dir,
+      ops: [
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: good },
+        { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: slip(good) },
+      ],
+    } as any);
+    expect(result.ok).toBe(false);
+    expect(await exists(good)).toBe(true);
+  });
+});
