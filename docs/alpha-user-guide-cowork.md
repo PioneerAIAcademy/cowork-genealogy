@@ -35,7 +35,8 @@ Repository**, choose **URL**, and paste:
 https://github.com/pioneeraiacademy/cowork-genealogy
 ```
 
-Pick a folder and click **Clone**. GitHub Desktop remembers the location —
+Set **Local path** to `C:\src\cowork-genealogy` — not Documents or Desktop, which sync to
+OneDrive and break the build — and click **Clone**. GitHub Desktop remembers the location —
 when we tell you there's an update to test, come back to this same window
 and click **Fetch origin** then **Pull origin** to pick it up, then repeat
 steps 3 and 4 below to rebuild and reinstall.
@@ -52,17 +53,31 @@ GitHub Desktop also has a macOS build if you'd rather use the GUI there too.
 
 ### 2. One-time dependency setup
 
-**Windows:** double-click **`eval\Setup.bat`** in the repo folder. It
-installs the tools the rest of these steps need (Node.js/pnpm and a couple
-of small dependencies) — one-time, and safe to re-run later if something
-looks broken.
+**First, on both:** install Node.js 22.9 or later from
+[nodejs.org](https://nodejs.org/) (pick the LTS installer) if you don't
+already have it. The build also needs npm 11.12, newer than the npm that comes
+with Node, so run this once — on Windows in Command Prompt (Start → type
+`cmd`), not PowerShell; on macOS, put `sudo` in front if it fails with a
+permissions error:
 
-**macOS/Linux:** install Node from [nodejs.org](https://nodejs.org/) (pick
-the LTS installer) if you don't already have it, then from the repo folder:
+```
+npm install -g npm@11.12.1
+```
+
+**Windows:** double-click **`eval\Setup.bat`** in the repo folder. It
+installs the rest of what these steps need (pnpm, uv and the build
+dependencies) — one-time, and safe to re-run later if something looks broken.
+Its two API-key prompts are for the test harness, not Cowork; you can leave
+them blank.
+
+**macOS/Linux:** from the repo folder:
 
 ```bash
 corepack enable
 ```
+
+**Then, on both: the OpenRouter key.** Reading page scans needs an OpenRouter
+API key. Get one at <https://openrouter.ai/keys>; you paste it in during step 4.
 
 That's it for one-time setup.
 
@@ -79,7 +94,8 @@ each one.
 node scripts/build-mcpb.mjs && node scripts/package-plugin.mjs
 ```
 
-Both build the two files, and both install what they need automatically.
+Both build the two files. If the build stops with `EBADENGINE`, npm is too
+old: redo the `npm install -g npm@11.12.1` line in step 2.
 
 **After every update, rebuild and reinstall both.** Each time you pull (GitHub
 Desktop's **Fetch origin** / **Pull origin**, or `git pull` from a terminal),
@@ -90,6 +106,9 @@ building without reinstalling, leaves Cowork running old code.
 
 1. **The MCP server** — Claude Desktop → Settings → Extensions → Advanced
    Settings → Install extension → select `releases\genealogy-mcp.mcpb`.
+   Paste your OpenRouter key into its **OpenRouter API key** field. (A key
+   already in `~/.familysearch-mcp/config.json` also works; leave the field
+   blank then.)
 2. **The Cowork plugin** — Claude Desktop → **Cowork tab** → Customize → Add
    → Upload Plugin → select `releases\genealogy-plugin.zip`. (Claude Code and
    Cowork keep separate plugin lists — make sure you're uploading from the
@@ -99,10 +118,6 @@ building without reinstalling, leaves Cowork running old code.
 If you rebuild a newer plugin later, remove the old one in Cowork →
 Customize first, then upload the new `.zip` — that's the reliable way to be
 sure you're running the new skills.
-
-Full step-by-step, including a Claude Code alternative if you ever need it,
-is in the main `README.md` under
-["Installation (for end users)"](../README.md#installation-for-end-users).
 
 ### 5. Launch the Research Viewer
 
@@ -308,8 +323,8 @@ Being straight with you, so you don't waste time:
 
 | What you see | What's happening |
 |---|---|
-| Build/launch step fails or can't find a tool (Windows) | Run `eval\Setup.bat` first — those scripts need Node/pnpm in place, and Setup installs them. |
-| Build/launch step fails or can't find a tool (macOS/Linux) | Confirm `node -v` shows 22 or higher and `corepack enable` succeeded (step 2) — that's the only prerequisite. |
+| Build/launch step fails or can't find a tool (Windows) | Install Node.js from nodejs.org and upgrade npm (step 2), then run `eval\Setup.bat`. |
+| Build/launch step fails or can't find a tool (macOS/Linux) | Confirm `node -v` shows 22.9 or higher and `npm -v` shows 11.12 or higher (step 2). |
 | Viewer fails with `Error: Electron uninstall` (macOS/Linux) | Run `pnpm --filter @genealogy/electron rebuild electron` from the repo folder, then retry. |
 | Plugin doesn't appear after uploading the `.zip` | Confirm you uploaded from the **Cowork** tab, not the Code tab — they keep separate plugin lists. Fully quit and reopen Claude Desktop after installing. |
 | The agent says it can't reach FamilySearch | Ask it to log in again ("log me in to FamilySearch") — tokens may have expired or never been created on this machine. |

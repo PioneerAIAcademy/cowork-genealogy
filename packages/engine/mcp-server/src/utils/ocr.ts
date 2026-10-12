@@ -190,13 +190,14 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
     }
   }
 
-  // Auth failures are LLM-actionable — the key needs replacing in config.json.
+  // Auth failures are LLM-actionable — the key needs replacing where it was set.
   // Transient failures (429/5xx) are not; they surface as retryable.
   if (response.status === 401) {
     throw new Error(
-      "The OpenRouter API key was rejected (401). Tell the user to update the " +
-        "\"openRouterApiKey\" field in ~/.familysearch-mcp/config.json with a " +
-        "current key from https://openrouter.ai/keys.",
+      "The OpenRouter API key was rejected (401). Tell the user to replace it " +
+        "with a current key from https://openrouter.ai/keys, wherever they set " +
+        "it: Claude Desktop under Settings → Extensions → Genealogy Research, or " +
+        "the \"openRouterApiKey\" field in ~/.familysearch-mcp/config.json.",
     );
   }
   if (response.status === 402) {
