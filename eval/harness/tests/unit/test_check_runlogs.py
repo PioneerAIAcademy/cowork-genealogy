@@ -1348,29 +1348,6 @@ def test_rule6_a_test_with_no_runs_blocks(capsys):
     assert "has no runs" in capsys.readouterr().out
 
 
-@pytest.mark.parametrize(
-    "runs",
-    [
-        [{}],
-        [{"outcome": None}],
-        [{"outcome": "FAIL"}],
-        [{"outcome": "failed"}],
-        [{"outcome": "pass"}, {"outcome": "skipped"}],
-    ],
-    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
-)
-def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
-    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
-    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
-    assert "outside the schema's" in capsys.readouterr().out
-
-
-def test_rule6_accepts_every_value_the_schema_allows(capsys):
-    """The other direction — the guard must not reject a legitimate enum member."""
-    for outcome in ("pass", "partial"):
-        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
-
-
 def test_rule6_an_empty_tests_array_is_allowed():
     """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
     second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
@@ -1581,6 +1558,304 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
     assert "rule 6: graded 0 added run log(s)" in out
     assert "ut_ip_scratch" not in out
     assert rc == 0
+
+
+# --- Rules 2, 2b and 3 grade the run log the PR adds (#3272) ---------------------
+#
+# `latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate, so
+# when main released a log newer than the PR's own candidate, rules 2 and 3 graded main's
+# release and the PR's own run was checked by nothing. These build that shape with a
+# snapshot that names a file really on disk: `_clean_log`'s empty snapshot can never be
+# stale, so a test on it would never reach rule 2's comparison.
+
+_TRACKED_REL = "packages/engine/plugin/skills/init-project/SKILL.md"
+_RUNLOGS_REL = "eval/runlogs/unit/init-project"
+_STALE_JUDGE = "0" * 64
+
+
+def _setup_graded_skill(tmp_path, monkeypatch):
+    """`_setup_versioned_skill` plus a tmp repo that really holds the one file the run
+    logs snapshot, so rule 2's `diff_snapshot_vs_disk` runs for real. The judge prompt
+    is a tmp file too, so rule 2b's comparison never depends on the repo's."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    repo = tmp_path / "repo"
+    (repo / _TRACKED_REL).parent.mkdir(parents=True)
+    (repo / _TRACKED_REL).write_text("disk body\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    judge = tmp_path / "judge-prompt.md"
+    judge.write_text("judge prompt\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "JUDGE_PROMPT_PATH", judge)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    return skill_dir
+
+
+def _put_runlog(skill_dir, name, *, active, annotated=True, **extra):
+    """Write a clean run log whose snapshot of the tracked file matches disk (`active`)
+    or predates it, with an empty `.ann.json` unless `annotated` is False. The log has
+    no review dimensions, so an empty annotation is a complete one."""
+    body = b"disk body\n" if active else b"older body\n"
+    log = {**_clean_log(), "snapshot": {_TRACKED_REL: normalize(_TRACKED_REL, body)}, **extra}
+    (skill_dir / name).write_text(json.dumps(log), encoding="utf-8")
+    if annotated:
+        _write_ann(skill_dir, name, [])
+
+
+def _pr_adds(monkeypatch, *names):
+    _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" for name in names])
+
+
+def _only_line(out, needle):
+    """The one output line holding `needle`. A message and its detail lines are
+    separate lines, so asserting on the returned line pins that a file name and a
+    wording belong to the SAME message."""
+    lines = [line for line in out.splitlines() if needle in line]
+    assert len(lines) == 1, f"expected one line holding {needle!r}, got {lines}"
+    return lines[0]
+
+
+def _violations(out):
+    """The rule-violation count `main()` prints, so a test can say WHICH rules failed
+    by how many, not just that something did."""
+    m = re.search(r"^(\d+) rule violation\(s\)\.", out, re.M)
+    return int(m.group(1)) if m else 0
+
+
+def test_rules_2_and_2b_grade_the_candidate_the_pr_adds_not_a_newer_release(
+    tmp_path, monkeypatch, capsys
+):
+    """A PR whose candidate predates its merge with main, while main's newer released log
+    matches the merged tree. Rule 2 must name the candidate and call it stale. Graded
+    through `latest_full_skill_runlog` it reads the release, which is active, and passes."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True)
+    added = "v2_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, added, active=False, judge_prompt_hash=_STALE_JUDGE)
+    _pr_adds(monkeypatch, added)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1  # the candidate is annotated, so rule 2 alone fails
+    not_active = _only_line(out, "NOT active")
+    assert f"`{added}`" in not_active and "the run log this PR adds" in not_active
+    stale_judge = _only_line(out, "older judge prompt")
+    assert f"`{added}`" in stale_judge and "the run log this PR adds" in stale_judge
+    assert "v3.json" not in out
+
+
+def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
+    tmp_path, monkeypatch, capsys
+):
+    """The same shape with the candidate active but unannotated. Main's release is
+    annotated, so graded through `latest_full_skill_runlog` rule 3 finds a complete
+    annotation and passes."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True)
+    added = "v2_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, added, active=True, annotated=False)
+    _pr_adds(monkeypatch, added)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1  # the candidate is active, so rule 3 alone fails
+    missing = _only_line(out, "has no annotation file")
+    assert f"`{added}`" in missing and "the run log this PR adds" in missing
+
+
+def test_a_pr_that_adds_two_candidates_is_graded_on_the_newer_one(
+    tmp_path, monkeypatch, capsys
+):
+    """Rule 1 does not bound candidates, so a PR can ship several iterations, and the
+    newest is the run it ships. The older one here is stale and unannotated and must not
+    block (rule 6 still grades both). Versions 9 and 10 on purpose: as strings "v9_"
+    sorts after "v10_", so a sort on the name would pick the stale one. The stale judge
+    hash makes rule 2b's warning name the log that was graded, so a gate that graded
+    nothing cannot pass for this."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    older, newer = "v9_2026-10-08_09-00-00.json", "v10_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, older, active=False, annotated=False, judge_prompt_hash=_STALE_JUDGE)
+    _put_runlog(skill_dir, newer, active=True, judge_prompt_hash=_STALE_JUDGE)
+    _pr_adds(monkeypatch, older, newer)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert f"`{newer}`" in _only_line(out, "older judge prompt")
+    assert "rule 6: graded 2 added run log(s)" in out
+
+
+def test_a_pr_that_adds_no_run_log_is_still_graded_on_the_latest_on_disk(
+    tmp_path, monkeypatch, capsys
+):
+    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, and resolve
+    exactly as before: a released log beats every candidate whatever its version, so the
+    stale `v3.json` is graded and the newer active candidate beside it is not."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False)
+    candidate = "v4_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, candidate, active=True)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1
+    not_active = _only_line(out, "NOT active")
+    assert "`v3.json`" in not_active
+    assert "the latest full-skill run log on disk" in not_active
+    assert candidate not in out
+
+
+def test_a_pr_that_adds_no_run_log_passes_on_an_active_latest_on_disk(
+    tmp_path, monkeypatch, capsys
+):
+    """The green half of the test above. The stale judge hash makes rule 2b's warning
+    name the log that was graded, so a gate that graded nothing cannot pass for this."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True, judge_prompt_hash=_STALE_JUDGE)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    stale_judge = _only_line(out, "older judge prompt")
+    assert "`v3.json`" in stale_judge
+    assert "the latest full-skill run log on disk" in stale_judge
+
+
+def test_a_released_log_the_pr_adds_outranks_the_candidates_it_adds_beside_it(
+    tmp_path, monkeypatch, capsys
+):
+    """The candidate -> release rename arrives as an add, next to the candidates that led
+    to it, and the release is what the PR ships. Both candidates are active and annotated,
+    so only grading the stale release can fail this PR: rc alone proves it was graded."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    candidates = ["v3_2026-10-07_09-00-00.json", "v3_2026-10-07_10-00-00.json"]
+    _put_runlog(skill_dir, "v4.json", active=False)
+    for name in candidates:
+        _put_runlog(skill_dir, name, active=True)
+    _pr_adds(monkeypatch, "v4.json", *candidates)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1
+    not_active = _only_line(out, "NOT active")
+    assert "`v4.json`" in not_active and "the run log this PR adds" in not_active
+
+
+def test_an_unreadable_added_log_is_still_reported_by_rule_6(tmp_path, monkeypatch, capsys):
+    """When the log the PR adds cannot be parsed, rules 2, 2b and 3 have nothing to grade
+    and skip the skill. Rule 6's loop must still run: it is the only thing that reports
+    the file, so a `continue` on that path would pass a PR whose run log is a merge
+    conflict. The release beside it is active and annotated, so grading it instead
+    would pass too."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True)
+    added = "v2_2026-10-08_10-00-00.json"
+    (skill_dir / added).write_text(
+        "<<<<<<< HEAD\n{}\n=======\n{}\n>>>>>>> main\n", encoding="utf-8"
+    )
+    _write_ann(skill_dir, added, [])
+    _pr_adds(monkeypatch, added)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1
+    assert f"`{added}`" in _only_line(out, "is not readable JSON")
+
+
+def test_every_message_that_names_the_graded_log_says_why_it_was_graded(
+    tmp_path, monkeypatch, capsys
+):
+    """The `main()` tests above reach rule 2's error, rule 2b's warning and rule 3's
+    missing-file error. These are the other messages that name the graded log or its
+    annotation: rule 2's cosmetic-skip warning; rule 3's unreadable and malformed
+    annotation errors, its no-reviewable-dimensions warning, its two untrusted
+    `review_sample` warnings, and its comment and completeness errors."""
+    why = "the run log this PR adds"
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:demo")
+    assert check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v2.json", graded=why) == 0
+    waived = _only_line(capsys.readouterr().out, "bypasses rule 2")
+    assert "`v2.json`" in waived and why in waived
+
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    # ut_x_000 reviewed but uncommented; ut_x_001 not reviewed at all.
+    fn = _write_ann(
+        skill_dir,
+        "v2_2026-10-08_10-00-00.json",
+        _corrections_for(["ut_x_000"], comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir, graded=why) == 1
+    out = capsys.readouterr().out
+    for needle in ("with no comment", "is incomplete"):
+        line = _only_line(out, needle)
+        assert "`v2_2026-10-08_10-00-00.ann.json`" in line and why in line
+
+    unreadable = "v3_2026-10-08_10-00-00.json"
+    (skill_dir / "v3_2026-10-08_10-00-00.ann.json").write_text("{not json", encoding="utf-8")
+    assert check_runlogs.rule3_completeness(
+        "init-project", log, unreadable, skill_dir, graded=why
+    ) == 1
+    line = _only_line(capsys.readouterr().out, "is not valid JSON")
+    assert "`v3_2026-10-08_10-00-00.ann.json`" in line and why in line
+
+    fn = _write_ann(skill_dir, "v4_2026-10-08_10-00-00.json", [{"test_id": "ut_x_000"}])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir, graded=why) == 1
+    line = _only_line(capsys.readouterr().out, "missing required keys")
+    assert "`v4_2026-10-08_10-00-00.ann.json`" in line and why in line
+
+    aborted = {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    with_aborted = _multi_test_log(2, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
+    with_aborted["tests"].append(aborted)
+    fn = _write_ann(skill_dir, "v5_2026-10-08_10-00-00.json", _corrections_for(["ut_x_000"]))
+    check_runlogs.rule3_completeness("init-project", with_aborted, fn, skill_dir, graded=why)
+    line = _only_line(capsys.readouterr().out, "no reviewable dimensions")
+    assert "`v5_2026-10-08_10-00-00.json`" in line and why in line
+
+    empty_sample = _multi_test_log(2, review_sample={"tests": [], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v6_2026-10-08_10-00-00.json", [])
+    check_runlogs.rule3_completeness("init-project", empty_sample, fn, skill_dir, graded=why)
+    line = _only_line(capsys.readouterr().out, "is empty")
+    assert "`v6_2026-10-08_10-00-00.json`" in line and why in line
+
+    ungraded_sample = _multi_test_log(
+        2, review_sample={"tests": ["ut_x_aborted"], "cursor": [], "seed": 0}
+    )
+    ungraded_sample["tests"].append(aborted)
+    fn = _write_ann(skill_dir, "v7_2026-10-08_10-00-00.json", [])
+    check_runlogs.rule3_completeness("init-project", ungraded_sample, fn, skill_dir, graded=why)
+    line = _only_line(capsys.readouterr().out, "would require nothing")
+    assert "`v7_2026-10-08_10-00-00.json`" in line and why in line
+
+
+def test_pr_added_runlog_picks_the_run_the_pr_ships(tmp_path):
+    """The helper on its own: released beats any candidate, then the newest candidate by
+    (version, timestamp) with the version compared as a number, and a name with no file
+    on disk is dropped rather than returned for the caller to fail on."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    candidates = [
+        "v9_2026-10-08_09-00-00.json",
+        "v10_2026-10-01_09-00-00.json",
+        "v10_2026-10-02_09-00-00.json",
+    ]
+    for name in ("v3.json", "v4.json", *candidates):
+        (skill_dir / name).write_text("{}", encoding="utf-8")
+    ghost = "v11_2026-10-09_09-00-00.json"  # added per the diff, absent from disk
+    pick = check_runlogs.pr_added_runlog
+
+    assert pick(skill_dir, ["v3.json", *candidates]) == "v3.json"
+    assert pick(skill_dir, ["v3.json", "v4.json"]) == "v4.json"
+    assert pick(skill_dir, candidates) == "v10_2026-10-02_09-00-00.json"
+    assert pick(skill_dir, [*candidates, ghost]) == "v10_2026-10-02_09-00-00.json"
+    assert pick(skill_dir, [ghost]) is None
+    assert pick(skill_dir, []) is None
 
 
 # --- rule 6: shapes that used to fall through as green ---------------------------

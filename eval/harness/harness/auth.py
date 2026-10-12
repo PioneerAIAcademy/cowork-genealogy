@@ -158,7 +158,7 @@ def verify_judge_key(api_key: str, judge_model: str) -> int | None:
     return None
 
 
-def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
+def env_for_sdk(auth: AuthConfig, *, tool_search: bool = True) -> dict[str, str]:
     """Env vars the Agent SDK subprocess should see.
 
     For api_key mode: explicitly inject the key (covers the case where it
@@ -172,22 +172,30 @@ def env_for_sdk(auth: AuthConfig) -> dict[str, str]:
 
     `ENABLE_TOOL_SEARCH` turns tool search ON, not off — the polarity is the
     opposite of what this comment claimed until issue #1110. Read off the
-    installed CLI (v2.1.220): a truthy value (`true|1|yes|on`) selects
-    deferred/tool-search mode, `auto`/`auto:N` is the adaptive variant, and
-    only a FALSY value (`false|0|no|off`) selects "standard" mode, where every
-    schema is loaded up front. Leaving it unset also lands on tool-search mode,
-    so deleting the variable eager-loads nothing. (It is additionally forced
-    off on a non-first-party `ANTHROPIC_BASE_URL`, on Vertex, and under
-    `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.)
+    installed CLI (v2.1.220, and re-checked on the harness's bundled 2.1.139):
+    a truthy value (`true|1|yes|on`) selects deferred/tool-search mode,
+    `auto`/`auto:N` is the adaptive variant, and only a FALSY value
+    (`false|0|no|off`) selects "standard" mode, where every schema is loaded up
+    front. Leaving it unset also lands on tool-search mode, so deleting the
+    variable eager-loads nothing. (It is additionally forced off on a
+    non-first-party `ANTHROPIC_BASE_URL`, on Vertex, and under
+    `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`.) A second, per-model gate sits
+    behind it: a model on the CLI's unsupported list (default `["haiku"]`,
+    server-overridable) defers nothing even with the variable truthy, while its
+    init `tools` list still offers ToolSearch — so that list proves "off" when
+    ToolSearch is absent, never "on" when it is present.
 
-    So the `"true"` below means the harness runs WITH tool search — schemas
-    deferred, discovered via ToolSearch. That matches the e2e orchestrator and
-    the hosted-web agent, and matches the measured tool mix (~11% of all tool
-    calls are ToolSearch). Whether to flip it to `"false"` is a separate,
-    tracked decision that requires re-measuring the mix; the value is left as
-    it has been running.
+    `tool_search=True` (the default) writes `"true"`: the harness runs WITH
+    tool search — schemas deferred, discovered via ToolSearch — matching the
+    hosted-web agent and the measured tool mix. `tool_search=False` writes
+    `"false"`. Both harnesses expose it as `--no-tool-search`, experiment-only:
+    an e2e run made with it is refused under the default run-log root and
+    rejected by CI if committed there, and a unit run made with it is a
+    scratch log. It also silences the #941 mid-run backstop
+    (`e2e.mcp_health.tool_search_miss_streak`), which counts no-match
+    ToolSearch replies and so never fires when there is no ToolSearch.
     """
-    env = {"ENABLE_TOOL_SEARCH": "true"}
+    env = {"ENABLE_TOOL_SEARCH": "true" if tool_search else "false"}
     if auth.skill_runner_mode == "api_key" and auth.api_key:
         env["ANTHROPIC_API_KEY"] = auth.api_key
     else:

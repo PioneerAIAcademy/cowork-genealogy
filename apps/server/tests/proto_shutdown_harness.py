@@ -2,7 +2,7 @@
 replaced: ``prepare`` (plugin agents), ``_verify_schema_once`` (the schema thread's
 check, which would otherwise make its own ``connect_timeout`` connect at start and
 print ``ev=harness_release`` before any shutdown), ``psycopg.connect`` (a fake that
-answers ``claim`` -- the web tier's row exists, U4 -- ``turn_completed``,
+answers ``claim`` -- the web tier's row exists, U4, at epoch 1, U6 -- ``turn_completed``,
 ``choose_sdk_session_id`` and a last-receive close;
 the shutdown release's connect -- the one passing ``RELEASE_CONNECT_TIMEOUT_S`` -- prints
 ``ev=harness_release``) and the attempt's body, which prints ``ev=harness_attempt`` and
@@ -41,13 +41,15 @@ class _Cursor:
         self.sql, self.params = sql, params
 
     def fetchone(self) -> tuple | None:
-        if "RETURNING turns.message" in self.sql:
+        if "RETURNING turns.message, turns.claim_epoch" in self.sql:  # the claim mints epoch 1 (U6)
             _, _, turn_id, session_id, project_id = self.params
-            return ({"turn_id": turn_id, "session_id": session_id, "project_id": project_id, "text": "hello"},)
+            return ({"turn_id": turn_id, "session_id": session_id, "project_id": project_id, "text": "hello"}, 1)
         if "RETURNING sdk_session_id" in self.sql:
             return ("11111111-1111-1111-1111-111111111111",)
         if "SELECT completed_at FROM turns" in self.sql:
             return (None,)
+        if "SELECT completed_at, claim_epoch FROM turns" in self.sql:  # the close's locked read
+            return (None, 1)
         if "next_session_seq" in self.sql:
             return (1,)
         return None
