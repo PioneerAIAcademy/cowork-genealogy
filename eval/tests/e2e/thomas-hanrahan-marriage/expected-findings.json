@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Thomas Hanrahan married Johanna Ryan on 1 February 1868 in the Catholic parish of Ballylooby, County Tipperary, Ireland.",
+      "details": {
+        "subject_person": "Thomas Hanrahan (KHGX-XWG)",
+        "fact_type": "Marriage",
+        "date": "1 February 1868",
+        "place": "Ballylooby, County Tipperary, Ireland"
+      },
+      "supporting_sources": [
+        "Ireland, Catholic Parish Registers, 1740-1900 — marriage entry for Thomam Hanrahan and Johan Ryan, 1 Feb 1868"
+      ],
+      "required": true
+    }
+  ]
+}

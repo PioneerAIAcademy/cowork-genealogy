@@ -1,0 +1,381 @@
+{
+  "persons": [
+    {
+      "id": "G549-JNM",
+      "ark": "ark:/61903/4:1:G549-JNM",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "aac8d042-d3d8-47df-90da-f7b8082616e5",
+          "preferred": true,
+          "given": "Mári",
+          "surname": "Nagy",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "52ed1b4b-44cd-4eeb-b026-c0149e5fa3db",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G549-KL1",
+      "ark": "ark:/61903/4:1:G549-KL1",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c7201dd1-0f99-4824-a32a-dbef68998979",
+          "preferred": true,
+          "given": "Julianna",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f9b19728-004c-42ce-b5e8-3129c3231b9e",
+          "type": "Birth",
+          "date": "1886",
+          "standard_date": "1886"
+        },
+        {
+          "id": "c95a789b-4ded-4520-a5a8-873a475846cf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G54S-MLT",
+      "ark": "ark:/61903/4:1:G54S-MLT",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "5756e5ac-4ca0-4405-9b1e-ba5fe4e0df4d",
+          "preferred": true,
+          "given": "János",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "28d604d0-a53a-465b-b342-706ecc478648",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G549-NBC",
+      "ark": "ark:/61903/4:1:G549-NBC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "9ae9d17a-ab16-4486-81dd-42d0df26a98f",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "022daf22-2759-4318-b026-b311c8f29b2d",
+          "type": "Birth",
+          "date": "1891",
+          "standard_date": "1891"
+        },
+        {
+          "id": "4126034c-f08a-4caf-9b70-2b8432dadaaf",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G549-2W7",
+      "ark": "ark:/61903/4:1:G549-2W7",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "6614d53f-fcab-4fb2-a2fc-8daba9aa5bac",
+          "preferred": true,
+          "given": "István",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ba786fdd-c7b4-4355-ad72-fcedf11dd263",
+          "type": "Birth",
+          "date": "1881",
+          "standard_date": "1881"
+        },
+        {
+          "id": "9b6b70da-8438-44ad-9bb8-c09212146600",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G54S-9HJ",
+      "ark": "ark:/61903/4:1:G54S-9HJ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "9387b1c6-3a62-42cd-aabb-319d1af3868b",
+          "preferred": true,
+          "given": "Ferenc",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c1dcd272-28d1-4700-bc0c-58ecdefb8945",
+          "type": "Birth",
+          "date": "1889",
+          "standard_date": "1889"
+        },
+        {
+          "id": "08610086-5029-4d5b-8da8-43e56de2c952",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G549-BM3",
+      "ark": "ark:/61903/4:1:G549-BM3",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c3344f21-9e56-44db-bdf1-8c85a600d6bf",
+          "preferred": true,
+          "given": "Szidonía",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "bbd0aca8-424b-4a5f-aab6-8e4c64322751",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G549-3PV",
+      "ark": "ark:/61903/4:1:G549-3PV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "24a28a6f-0ffe-4027-9aac-338cb3525923",
+          "preferred": true,
+          "given": "Terézia",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7951df58-007e-4221-b5c5-dd3c8e7a2431",
+          "type": "Birth",
+          "date": "1884",
+          "standard_date": "1884"
+        },
+        {
+          "id": "3ac4325f-ef2f-4c38-bf22-646c65c7ced1",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "G549-TCX",
+      "ark": "ark:/61903/4:1:G549-TCX",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "72735a19-4599-4f44-9746-d8bda76b1de0",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Szőke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c2d6f7aa-ade1-4577-bd65-4818a1e5fb63",
+          "type": "Death"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "G54S-MLT",
+      "person2": "G549-JNM"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G549-2W7"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G549-2W7"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G549-3PV"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G549-3PV"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G549-KL1"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G549-KL1"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G54S-9HJ"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G54S-9HJ"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G549-NBC"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G549-NBC"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G549-TCX"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G549-TCX"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "G54S-MLT",
+      "child": "G549-BM3"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "G549-JNM",
+      "child": "G549-BM3"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_G549-JNM",
+      "title": "Nagy Mári",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Nagy Mári (PID G549-JNM); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-JNM"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_G549-KL1",
+      "title": "Szőke Julianna",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke Julianna (PID G549-KL1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-KL1"
+    },
+    {
+      "id": "sd_person_G54S-MLT",
+      "title": "Szőke János",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke János (PID G54S-MLT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G54S-MLT"
+    },
+    {
+      "id": "sd_person_G549-NBC",
+      "title": "Szőke Anna",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke Anna (PID G549-NBC); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-NBC"
+    },
+    {
+      "id": "sd_person_G549-2W7",
+      "title": "Szőke István",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke István (PID G549-2W7); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-2W7"
+    },
+    {
+      "id": "sd_person_G54S-9HJ",
+      "title": "Szőke Ferenc",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke Ferenc (PID G54S-9HJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G54S-9HJ"
+    },
+    {
+      "id": "sd_person_G549-BM3",
+      "title": "Szőke Szidonía",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke Szidonía (PID G549-BM3); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-BM3"
+    },
+    {
+      "id": "sd_person_G549-3PV",
+      "title": "Szőke Terézia",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke Terézia (PID G549-3PV); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-3PV"
+    },
+    {
+      "id": "sd_person_G549-TCX",
+      "title": "Szőke Anna",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Szőke Anna (PID G549-TCX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G549-TCX"
+    }
+  ]
+}

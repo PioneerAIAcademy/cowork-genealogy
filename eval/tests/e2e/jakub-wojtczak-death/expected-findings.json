@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Jakub Wojtczak died on 19 March 1997 in Waterbury, New Haven County, Connecticut, according to the Connecticut death index, which indexes him as Frank J Wojtczak, a married retired pattern maker residing in Naugatuck, born 2 December 1917 in Connecticut, with a spouse named Helen.",
+      "details": {
+        "subject_person": "Jakub Wojtczak (PM7N-7HV)",
+        "fact_type": "Death",
+        "date": "19 March 1997",
+        "place": "Waterbury, New Haven, Connecticut, United States"
+      },
+      "supporting_sources": [
+        "Connecticut, Death Index, 1949-2001 — death index entry for Frank J Wojtczak, 19 Mar 1997"
+      ],
+      "required": true
+    }
+  ]
+}

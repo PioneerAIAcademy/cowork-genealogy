@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Konrad Grubenmann was buried on 17 March 1787 in Teufen, Appenzell Ausserrhoden, Switzerland; the burial entry indexes him as Conrad Grubenmann, born 1699, with Anna Reff as his wife.",
+      "details": {
+        "subject_person": "Konrad Grubenmann (KP47-72Q)",
+        "fact_type": "Burial",
+        "date": "17 March 1787",
+        "place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+      },
+      "supporting_sources": [
+        "Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996 — burial entry for Conrad Grubenmann and Anna Reff, 17 Mar 1787"
+      ],
+      "required": true
+    }
+  ]
+}
