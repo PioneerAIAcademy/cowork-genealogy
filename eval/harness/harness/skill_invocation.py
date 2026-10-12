@@ -1305,6 +1305,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # set is asserted equal to the shipped agent files. `ownership.json`
         # names `agent:search-full-text` on the `plan_items` and `log` rows.
         "search-full-text",
+        # Same shape as citation (issue #2122): a converted skill. The hook lanes
+        # it to `project`, `researcher_profile`, `known_holdings` and `sources` and routes
+        # nothing to it; `ownership.json` names `agent:init-project` on those
+        # rows, the `project` row, and the three tree rows `project_create` writes.
+        "init-project",
     }
 )
 
