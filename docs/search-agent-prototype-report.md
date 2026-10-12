@@ -34,7 +34,8 @@
   Postgres and S3, no shell, one shared tool server over HTTP.
 - **It did not exercise the deployment:** compose, Anthropic API direct, one worker, one patron,
   no sign-in, no per-project authorization. Nothing ran through FamilySearch's deployed gateway;
-  on AWS, only a hello-world Beanstalk worker and P3's Bedrock calls.
+  on AWS, then, only a hello-world Beanstalk worker and P3's Bedrock calls; research turns have
+  run there since (U13, 2026-10-07/08 and 2026-10-10, n=1 per case; Other gaps below).
 - **Real sqsd does not kill the worker when it cuts a POST;** the compose shim did, and every
   crossing so far relied on it; the passing run never crossed. A Beanstalk cut would run two CLIs
   on one session, so until the time limit lands sqsd is set to cut only a run past 10 h (U5).
@@ -89,7 +90,7 @@
 
 - Validated: **one queue message per patron turn**, now often a whole research run (PR #2870); the review proposes one model call. The time limit (handoff U26) changes the grain again: a run of at most 1,800 s, ended, not resumed.
 - **Visible queue depth is a poor scaling signal:** it reads zero while every worker is busy and rises only once patrons wait. Proposed instead (handoff U18, [capacity](./search-agent-capacity.md)): slot utilisation, visible plus in-flight messages over instances × `HttpConnections`, with scale-in protection the worker sets on itself.
-- **Packing and the review's ~$0.04 compute estimate,** re-derived at U26's grain (U18, estimates): 4 turns on a t3.large or 8 on a t3.xlarge while CPU is unmeasured; the review's figure is the worker slot alone, and the 1,800 s cap leaves slot-time per session unchanged.
+- **Packing and the review's ~$0.04 compute estimate,** re-derived at U26's grain (U18, estimates): 8 turns on a t3.xlarge, now measured for CPU, memory and Postgres (U18, 2026-10-10, n=1: 0.89 cores average against a 1.6-core credit baseline), and 4 on a t3.large, still an estimate; the review's figure is the worker slot alone, and the 1,800 s cap leaves slot-time per session unchanged.
 - **Until U26 lands, sqsd must cut only a run past 10 h:** `InactivityTimeout` at Beanstalk's 36,000 s maximum, so receives after the first come only from a crash, a deploy or SIGTERM, or a 500 (an API error, Postgres down at claim, a `ResumeFailure`); a crashed worker's message can take ~10 h to return (handoff U5, which builds these values: `VisibilityTimeout` 36,300, `MaxRetries` 5, `ErrorVisibilityTimeout` 300, handoff step 11).
 
 ## Six measurements
@@ -98,7 +99,7 @@
 |---|---|---|---|
 | 1 | Resume mid-delegation from an external store? | **Yes; the delegation re-runs.** | P1, 2026-09-10: 5 variants, n=1 each, probe driver, SDK 0.2.128 / CLI 2.1.220. Worker: D17, n=1, foreground only. |
 | 2 | Cache across resume and past the TTL? | Resume reads it (P3k). Via agentgateway the TTL is 5 min regardless (P3j). The review's 4.6× cost blocker rests on 1-hour writes, which the gateway never gives; at 5 minutes the corpus loses 2.2–2.3% of run cost (below). | P3j/P3k: 2026-09-25, local agentgateway v1.5.0, TAP's route |
-| 3 | Where to checkpoint? | **The patron turn.** No tool call exceeds 1,800 s; skill/agent segments p99 1,488 s, 4 over 1,800 s. | Corpus at `e18d99b10` (2026-09-07): 8,898 calls, 51 instrumented runs, 947 segments, autonomous only |
+| 3 | Where to checkpoint? | **The patron turn.** No tool call exceeds 1,800 s; skill/agent segments p99 1,488 s, 4 over 1,800 s. | Corpus at `e18d99b10` (2026-09-07): 8,898 calls, 51 instrumented runs, 947 segments, autonomous only; `apps/server/dev/review_figures_runlogs.py` |
 | 4 | Oversized result, no shell? | Spilled to a file; the agent `Read`s or `Grep`s it, never stranded. | P2, 2026-09-10, **current stack**, n=3. Prototype on Beanstalk: the spill file lives only for its attempt; killed between the spill and its read, the redelivery found the file gone, re-ran the call and answered correctly, then closed `no_progress` after two empty nudges, a recorded departure (U13, 2026-10-08, n=1, 1 try). |
 | 5 | Bedrock? | Direct: yes. TAP's route, local copy: yes, tool search off (broken before agentgateway v1.6.0-alpha.1; TAP pins v1.5.0). Off cost +18% on one turn (P3i), 2.2× on P3b's short arm. | P3 2026-09-10; P3b 2026-09-11 (passthrough proxy to the Anthropic API); P3f/P3i 2026-09-25; n=1 per arm. **Not the deployed gateway.** |
 | 6 | Commit-time ledger? | **Buys nothing.** After a commit, resume wrote nothing; before it, resume re-decided (17 of 20 ops identical, 3 rephrased). | P1, 2026-09-10, n=1 |
@@ -155,7 +156,7 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 
 - **Deployed gateway:** no research run; the worker ran two short turns on a local copy (P3k). Local copies add +0.35 s first byte per call, ~7–14 s a turn (P3g, 2026-09-25). TAP's auth, guardrails, capacity and deployed latency unmeasured. U14.
 - **Unmapped model id:** silently becomes a general-purpose stand-in that ignores the agent's `tools:`, and the turn reports success (P3h). U14.
-- **Prototype on AWS, research turns run:** the U13 rehearsal (2026-10-07, n=1) deployed the CI bundles to Beanstalk with RDS: every tier signs with its instance role, tools reaches S3 keylessly, the migrations runner ran against RDS under `verify-full`, and FamilySearch sign-in completed through the dev key's loopback callback. The acceptance turn (U13, 2026-10-08, n=1), `bagley-father-1884` autonomous, ran 13,565 s on receive 1 and completed at the $35 spend cap, with `completed_at` set, `research.json` in `documents` and every acceptance-3 query 0. Mid-turn the attempt's shared advisory lock was held on a dedicated direct connection, beside the turn's own connection named `turn:<id>`. The tree-read block was a prompt instruction only, a departure: the worker refuses `BLOCKED_TOOLS` without `DEV_PATHS`, which the Beanstalk templates refuse (U11); the six `person_*` tools it names were called 0 times each over 558 tool calls. On AWS since (U13, 2026-10-08, n=1 per case): a SIGKILL mid-delegation inside a tools commit hold came back after `ErrorVisibilityTimeout` (294 s), resumed and wrote the source exactly once; a SIGTERM outside a deploy was answered and redelivered after ~306 s, and receive 2 resumed; `MaxRetries` 1 plus a 500 closed the turn `retries_exhausted` and released the held message, the DLQ unchanged because the worker answers 200 on the last receive; a kill-resume with a grant refresh forced between attempts had 0 reauth hits and resumed; a message held mid-turn was released when the turn closed. The SIGTERM case's second run, the dead-letter case's released turn and the refresh case's resumed turn then closed `no_progress`, a recorded departure: the deployed web tier turns the nudge arm on for every message (`AUTONOMOUS_MAX_NUDGES` 60), and with nudges on (measured at caps 60 and 3) a project-less probe session gets two empty nudges and the continue policy closes it `no_progress` (still so with the cap at 3); compose's kill recipes run with nudges off (`AUTONOMOUS_MAX_NUDGES=0`); the mid-delegation turn was stopped to cap spend once the nudges drove it into locality research.
+- **Prototype on AWS, research turns run:** the U13 rehearsal (2026-10-07, n=1) deployed the CI bundles to Beanstalk with RDS: every tier signs with its instance role, tools reaches S3 keylessly, the migrations runner ran against RDS under `verify-full`, and FamilySearch sign-in completed through the dev key's loopback callback. The acceptance turn (U13, 2026-10-08, n=1), `bagley-father-1884` autonomous, ran 13,565 s on receive 1 and completed at the $35 spend cap, with `completed_at` set, `research.json` in `documents` and every acceptance-3 query 0. Mid-turn the attempt's shared advisory lock was held on a dedicated direct connection, beside the turn's own connection named `turn:<id>`. The tree-read block was a prompt instruction only, a departure: the worker refuses `BLOCKED_TOOLS` without `DEV_PATHS`, which the Beanstalk templates refuse (U11); the six `person_*` tools it names were called 0 times each over 558 tool calls. On AWS since (U13, 2026-10-08, n=1 per case): a SIGKILL mid-delegation inside a tools commit hold came back after `ErrorVisibilityTimeout` (294 s), resumed and wrote the source exactly once; a SIGTERM outside a deploy was answered and redelivered after ~306 s, and receive 2 resumed; `MaxRetries` 1 plus a 500 closed the turn `retries_exhausted` and released the held message, the DLQ unchanged because the worker answers 200 on the last receive; a kill-resume with a grant refresh forced between attempts had 0 reauth hits and resumed; a message held mid-turn was released when the turn closed. The SIGTERM case's second run, the dead-letter case's released turn and the refresh case's resumed turn then closed `no_progress`, a recorded departure: the deployed web tier turns the nudge arm on for every message (`AUTONOMOUS_MAX_NUDGES` 60), and with nudges on (measured at caps 60 and 3) a project-less probe session gets two empty nudges and the continue policy closes it `no_progress` (still so with the cap at 3); compose's kill recipes run with nudges off (`AUTONOMOUS_MAX_NUDGES=0`); the mid-delegation turn was stopped to cap spend once the nudges drove it into locality research. Since (2026-10-10, n=1 per case): https served without sign-in through an imported self-signed certificate (U13); U6's `claim_epoch` migrations applied on its first AWS deploy, with no superseded attempt logged; and 1, 4 and 8 concurrent turns on one t3.xlarge averaged 0.107, 0.448 and 0.89 cores, under its 1.6-core credit baseline, with no surplus credits charged (U18).
 - **One patron, no sign-in:** any bearer reaches any project; a refresh revokes the prior token at once, so two turns on one grant break each other; token custody (R7) assumed minute-long turns. U2–U4 (U2, U3 built; U4's worker half built, its tool-server half open).
 - **No time limit:** nothing ends a run by time; a cut attempt would keep running beside its redelivery, though since U6 (`claim_epoch`, 2026-10-09, n=1) its close, transcript and tool-server commits are no-ops and it halts at its next tool call; a dead-lettered turn holds the session; the cross-instance tool-server write lock is untested. U5, U26.
 - **Postgres backend (R14):** 4 of 41 store cases run in CI (2026-09-29); tool suites and evals use files. U15.
@@ -163,14 +164,14 @@ time in 3; the worker never does (removed from the harness by handoff U17, 2026-
 - **Re-logged duplicates:** PR #2850 refuses a re-extraction of the same record, person and fact type under the same log entry, even reworded: the measured resume shape (P1, D17). Under a new or missing log entry it gets through; never seen on a resume, and a corpus replay's 27 such misses (194 runs, 2026-09-29) left no duplicate. U16 counts them.
 - **Missing against the current stack:** uploads, images, logs, stored search results, two wiki skills, `evaluations/` gates, continuing a capped project. U20.
 - **Silent transcript loss:** a config-dir mismatch persists nothing; the turn now closes `transcript_lost`, answers 500, and `/healthz` answers 503 (U10). A partial loss (one dropped frame) is still silent.
-- **Stop, held messages, the $35 cap:** recorded live on compose 2026-10-05 (n=1 per case), main thread and mid-delegation (handoff U23); a Postgres error now fails the attempt closed (500, redelivered) instead of letting the call through. Live, both paths failed closed: a terminated connection in the receive loop, and a cancelled query inside the halt check; a 120 s freeze stalled the attempt without letting a call through (the stall itself is U19's). On Beanstalk with RDS and real SQS (U13, 2026-10-08, n=1 per case; handoff U23) 12 of 13 cases passed: Stop and the cap halted on the main thread and mid-delegation, held messages were released, and all four outage cases run failed closed (500 `AdminShutdown` or `StoreUnavailable`) and was redelivered; on the real meter a $1 cap halted a real turn at $1.07, the turn costing $1.29. The resume probe resumed, but its wait failed under the deployed nudge arm, a recorded departure.
+- **Stop, held messages, the $35 cap:** recorded live on compose 2026-10-05 (n=1 per case), main thread and mid-delegation (handoff U23); a Postgres error now fails the attempt closed (500, redelivered) instead of letting the call through. Live, both paths failed closed: a terminated connection in the receive loop, and a cancelled query inside the halt check; a 120 s freeze stalled the attempt without letting a call through (the stall itself is U19's). On Beanstalk with RDS and real SQS (U13, 2026-10-08, n=1 per case; handoff U23) 12 of 13 cases passed: Stop and the cap halted on the main thread and mid-delegation, held messages were released, and all four outage cases run failed closed (500 `AdminShutdown` or `StoreUnavailable`) and was redelivered; on the real meter a $1 cap halted a real turn at $1.07, the turn costing $1.29. The resume probe resumed, but its turn researched on until Stop at the deadline; re-run twice with the nudge arm off (U13, 2026-10-10, n=1 each; 2/4 and 2/3 as scored), it did the same, so the cause is not the nudge arm (measured) but, inferred, the probe text's open ending.
 - **Dev-only paths ship:** an unauthenticated crash stub, fixture tree-read block, debug holds. U11 (built, PR #3162: the stub arms and the tree-read block need `DEV_PATHS=true`, and a packaging test refuses dev variables in the Beanstalk templates).
 
 ## What the prototype deliberately did not test
 
 - **Deployment on FamilySearch infrastructure** (Beanstalk, Blueprint, P20, DTM).
 - **SSE through the edge** (CloudFront, Imperva, HAProxy, DTM under concurrency): a written exception, ranked among the plan's architecture-killing risks. `Last-Event-ID` resume with a 15 s ping passed locally against a seeded stand-in worker (`make proto-drive` 17/17, 2026-09-14).
-- **Load, concurrency, multiple workers:** also ranked among those risks.
+- **Load, concurrency, multiple workers:** also ranked among those risks. Since: up to 8 concurrent turns on one worker (U18, 2026-10-10, n=1 per count); still no load run and no second worker.
 - **Content-level deduplication:** no working design; the best key matched 0 of 86 assertions (`1871c733b`). Not required before go-live (handoff U21).
 - **Opaque session tokens, store-backed skill output:** known patterns.
 
@@ -181,15 +182,17 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 1. **"Removes the patron-token surface" is wrong:** it concentrates it in one tool server.
    Credit removing the on-disk token file and the shell.
 2. **Bedrock Guardrails cannot see the injection vectors:** Converse emits no `guardContent`,
-   and `guardrailIdentifier` is a placeholder in beta and prod. 20.6% of tool calls return
-   externally authored content (5,554 of 27,002, 163 runs, `d016032e5`).
+   and `guardrailIdentifier` is a placeholder in beta and prod. 19.4% of tool calls return
+   text a third party wrote (5,234 of 27,002, 163 runs, `d016032e5`; the tool set is in
+   `review_figures_runlogs.py`). The 5,554 first quoted came from a set never written down.
 3. **Server-side context management is off on Bedrock** and cannot pass Messages→Converse.
    Client-side `/compact` worked through a local v1.5.0 gateway (2026-09-25, n=1); autocompact
    was not forced.
 4. **The 14.7% "reads its own transcript" row** is the oversized-output spill: 739 reads, 11.8%
-   of 6,247 filesystem operations, 66 of 161 runs (`e18d99b10`).
-5. **"24 take a `projectPath`, 24 are pure HTTP"** was 21 and 27 at `e18d99b10`; there are 48
-   tools now. Recount.
+   of 6,247 filesystem operations, 66 of 161 runs (`e18d99b10`; `review_figures_runlogs.py`).
+5. **"24 take a `projectPath`, 24 are pure HTTP"** was 21 and 27 of 48 tools at `e18d99b10`,
+   and is 27 and 26 of 53 at `19ea6d089` (`packages/engine/mcp-server/dev/count-projectpath-tools.ts`). Several that
+   take none make no network call either.
 6. **State the grain** ([above](#the-validated-grain)).
 
 ## Open questions for FamilySearch
@@ -234,6 +237,7 @@ and the S3 objects. Our own decisions: handoff U21, all made 2026-09-29.
 - **Probes:** `apps/server/dev/p1/` (`probe_gateway_parity.py` checks TAP's integ route);
   `apps/server/proto/eb-worker-probe/`.
 - **In git:** `eval/runlogs/e2e/bagley-father-1884/run-2026-09-25_01-42-24.*` (with its
-  `.ann.json`) and `paerai-teupooihi-spouse/run-2026-09-21_16-47-07.*`.
-- **Local only:** prototype exports (D17 and D18 on Richard's machine), P1 and P2 evidence. The scripts behind measurement 3 and
-  corrections 2 and 4 never landed (U22).
+  `.ann.json`) and `paerai-teupooihi-spouse/run-2026-09-21_16-47-07.*`. The scripts behind
+  measurement 3 and corrections 2, 4 and 5 are `apps/server/dev/review_figures_runlogs.py` and
+  `packages/engine/mcp-server/dev/count-projectpath-tools.ts` (U22).
+- **Local only:** prototype exports (D17 and D18 on Richard's machine), P1 and P2 evidence.
