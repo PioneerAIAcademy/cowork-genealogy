@@ -531,6 +531,41 @@ def test_triage_closes_its_open_handoff(before_state, after_state, test):
     assert closing, "the triage logged no external_site entry with capture_received true"
 
 
+def test_base_url_is_the_plan_items_collection_url(before_state, tool_calls, test):
+    """Tag-gated (collection-url): a plan item that names its curated collection
+    (`collection_url`, a row of the stored `external-collections.json`) is searched
+    from that collection, and the stored list is not fetched again (#2995).
+
+    Fails iff the run built no URL, built one for a planned item with a different
+    `baseUrl`, or called `external_links_search` — the place is already stored.
+    """
+    if "collection-url" not in test.get("tags", []):
+        pytest.skip("not a collection-url test")
+    wanted = {
+        item_id: item.get("collection_url")
+        for item_id, item in _plan_items(before_state).items()
+        if isinstance(item, dict) and isinstance(item.get("collection_url"), str)
+    }
+    calls = [c for c in (tool_calls or []) if isinstance(c, dict)]
+    built = [c for c in calls if str(c.get("tool", "")).split("__")[-1] == "build_external_search_url"]
+    assert built, "no build_external_search_url call — the plan item's search was never built"
+    errors = []
+    for call in built:
+        args = _as_mapping(call.get("args")) or {}
+        url = wanted.get(args.get("planItemId"))
+        if url is not None and args.get("baseUrl") != url:
+            errors.append(
+                f"{args.get('planItemId')}: baseUrl {args.get('baseUrl')!r} is not the "
+                f"plan item's collection_url {url!r}"
+            )
+    if not any(_as_mapping(c.get("args")).get("planItemId") in wanted for c in built):
+        errors.append(f"no build_external_search_url call names a plan item with a collection_url ({sorted(wanted)})")
+    fetched = [c for c in calls if str(c.get("tool", "")).split("__")[-1] == "external_links_search"]
+    if fetched:
+        errors.append(f"external_links_search was called {len(fetched)}x although the place's list is stored")
+    assert not errors, "the plan item's collection was not used:\n  - " + "\n  - ".join(errors)
+
+
 def test_archion_browse_handoff(tool_calls, test):
     """Tag-gated (archion-browse): the parish page goes to the builder as
     `baseUrl`, with `projectPath`, so the hand-off is logged by the tool once."""

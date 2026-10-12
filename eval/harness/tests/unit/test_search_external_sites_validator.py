@@ -68,6 +68,7 @@ from test_search_external_sites import (  # noqa: E402
     test_the_url_logged_is_the_url_presented as check_v4,
     test_triage_closes_its_open_handoff as check_triage,
     test_archion_browse_handoff as check_archion,
+    test_base_url_is_the_plan_items_collection_url as check_collection_url,
     report_collection_scoped_url_with_no_backed_collection_id as check_2521,
     test_writes_only_to_log_and_plans as check_v7b,
 )
@@ -627,3 +628,51 @@ def test_archion_quiet_on_the_parish_page_with_projectpath():
 )
 def test_archion_fires(calls, match):
     expect_fires(lambda: check_archion(calls, ARCHION), match)
+
+
+# --- a plan item's collection_url is the baseUrl (#2995) -----------------
+
+COLL = {"type": "positive", "tags": ["collection-url"]}
+CURATED = "https://www.ancestry.com/search/collections/7163/"
+
+
+def _coll_before():
+    item = _item("pli_007")
+    item["collection_url"] = CURATED
+    return {"research_json": {"log": [], "plans": _plan([item])}}
+
+
+def _coll_build(base_url, plan_item="pli_007"):
+    return {"tool": "mcp__genealogy__build_external_search_url",
+            "args": {"site": "ancestry", "baseUrl": base_url, "planItemId": plan_item}}
+
+
+def test_collection_url_passes_when_the_base_url_is_the_collection():
+    expect_passes(lambda: check_collection_url(_coll_before(), [_coll_build(CURATED)], COLL))
+
+
+def test_collection_url_fires_on_a_different_base_url():
+    other = "https://www.ancestry.com/search/collections/1276/"
+    expect_fires(lambda: check_collection_url(_coll_before(), [_coll_build(other)], COLL), "is not the")
+
+
+def test_collection_url_fires_on_a_site_wide_search():
+    expect_fires(lambda: check_collection_url(_coll_before(), [_coll_build(None)], COLL), "is not the")
+
+
+def test_collection_url_fires_when_the_list_is_fetched_again():
+    calls = [{"tool": "mcp__genealogy__external_links_search", "args": {}}, _coll_build(CURATED)]
+    expect_fires(lambda: check_collection_url(_coll_before(), calls, COLL), "external_links_search")
+
+
+def test_collection_url_fires_when_no_url_is_built():
+    expect_fires(lambda: check_collection_url(_coll_before(), [], COLL), "no build_external_search_url")
+
+
+def test_collection_url_fires_when_no_call_names_the_item():
+    expect_fires(lambda: check_collection_url(_coll_before(), [_coll_build(CURATED, None)], COLL), "names a plan item")
+
+
+def test_collection_url_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_collection_url(_coll_before(), [], POSITIVE)

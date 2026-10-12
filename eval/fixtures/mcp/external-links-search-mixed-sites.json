@@ -46,5 +46,87 @@
         "linkText": "Pennsylvania Newspapers on Newspapers.com"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/collections/8800/",
+      "linkText": "Pennsylvania, U.S., Wills and Probate Records, 1683-1993",
+      "record_type": "Probate",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1683",
+      "endYear": "1993",
+      "place": "Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/8800/",
+      "linkText": "Pennsylvania Probate Records - Schuylkill County",
+      "record_type": "Probate",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/1276/",
+      "linkText": "1850 United States Federal Census - Schuylkill County",
+      "record_type": "Census",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1850",
+      "endYear": "1850",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.myheritage.com/research?action=query",
+      "linkText": "Pennsylvania Death Records on MyHeritage",
+      "record_type": "Death",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.findagrave.com/cemetery/browse?location=Schuylkill",
+      "linkText": "Schuylkill County Cemeteries on Find A Grave",
+      "record_type": "Cemeteries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.familysearch.org/en/wiki/Schuylkill_County,_Pennsylvania_Genealogy",
+      "linkText": "Schuylkill County Genealogy - FamilySearch Wiki",
+      "record_type": "Genealogy",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Schuylkill, Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.ancestry.com/search/collections/8800/",
+      "linkText": "Wills and Probates 1870-1890",
+      "record_type": "Probate",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1870",
+      "endYear": "1890",
+      "place": "Pennsylvania, United States"
+    },
+    {
+      "url": "https://www.newspapers.com/papers/?state=pennsylvania",
+      "linkText": "Pennsylvania Newspapers on Newspapers.com",
+      "record_type": "Newspapers",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Pennsylvania, United States"
+    }
+  ]
 }

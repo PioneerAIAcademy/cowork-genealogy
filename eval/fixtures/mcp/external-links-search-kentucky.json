@@ -24,5 +24,37 @@
         "linkText": "Find a Grave — Muhlenberg County cemeteries"
       }
     ]
-  }
+  },
+  "stored_rows": [
+    {
+      "url": "https://www.ancestry.com/search/collections/1222/",
+      "linkText": "Kentucky, U.S., Death Records, 1852-1965 (Ancestry)",
+      "record_type": "Death",
+      "cost": "paid",
+      "content_type": "index",
+      "startYear": "1852",
+      "endYear": "1965",
+      "place": "Muhlenberg, Kentucky, United States"
+    },
+    {
+      "url": "https://kdla.ky.gov/researchers/Pages/default.aspx",
+      "linkText": "Kentucky Department for Libraries and Archives — county court and probate originals",
+      "record_type": "Archives and Libraries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Muhlenberg, Kentucky, United States"
+    },
+    {
+      "url": "https://www.findagrave.com/cemetery/browse?location=Muhlenberg+County",
+      "linkText": "Find a Grave — Muhlenberg County cemeteries",
+      "record_type": "Cemeteries",
+      "cost": "free",
+      "content_type": "index",
+      "startYear": "",
+      "endYear": "",
+      "place": "Muhlenberg, Kentucky, United States"
+    }
+  ]
 }
