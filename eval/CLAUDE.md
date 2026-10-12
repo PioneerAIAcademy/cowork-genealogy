@@ -259,6 +259,7 @@ Normalization rules (shared with `eval/app/lib/snapshot.ts`):
 | `run_tests.py --skill <name> --tag <t>` | no | `scratch_<ts>.json` |
 | `run_tests.py --test ut_xxx` | no | `scratch_<ts>.json` |
 | `run_tests.py --tag <t>` (no `--skill`) | no | `scratch_<ts>.json` per skill |
+| `run_tests.py ... --store pg` (U15) | no | `scratch_<ts>.json` under `eval/runlogs/unit-pg/<skill>/` — committed, judged by `make unit-pg-parity` |
 
 Scratch runs are gitignored via `.gitignore` patterns on `eval/runlogs/unit/*/scratch_*.json` and the matching `.ann.json`. They never enter version control, never participate in active-state, comparison, or trend, and can't be released.
 

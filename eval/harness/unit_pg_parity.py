@@ -118,6 +118,9 @@ def compare(skill: str, pg_root: Path, fs_root: Path) -> tuple[list[str], bool]:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--skill", help="one skill (default: every skill with a --store pg log)")
     parser.add_argument("--pg-root", type=Path, default=UNIT_PG_RUNLOGS)
