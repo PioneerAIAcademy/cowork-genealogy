@@ -77,6 +77,7 @@ import contextlib
 import html
 import json
 import logging
+from functools import lru_cache
 import os
 import re
 import secrets
@@ -295,13 +296,37 @@ class Queue(Protocol):
 S3_ENDPOINT = os.environ.get("GENEALOGY_S3_ENDPOINT", "")
 S3_BUCKET = os.environ.get("GENEALOGY_S3_BUCKET", "projects")
 
+@lru_cache(maxsize=1)
 def _s3_client():
     """A blob-store client, or None where none is configured.
 
     None rather than raising: a deployment with no blob store should serve every
     other route, and its sidecars are legitimately absent.
+
+    The body was lost in the 2026-10-12 main merge, leaving `return None` as the only
+    path -- so every sidecar on a deployed tier answered "no blob store configured",
+    the viewer read that as "this log has no sidecar", and nothing went red. The route
+    tests all stub the lookup, so they cannot see this class of break; the unit test on
+    this function is what can.
     """
     if not S3_ENDPOINT:
+        return None
+    try:
+        # botocore, not boto3. Both are in `proto-web`, but only botocore is in the
+        # venv the tests run in -- so a guard written against boto3 cannot execute in
+        # CI, which is the whole reason this function went unprotected long enough to
+        # lose its body. `fetch_sidecar` asks this client for `get_object` and nothing
+        # else, and botocore's own client provides it.
+        import botocore.session  # noqa: PLC0415 - optional, absent in a no-blob deployment
+
+        return botocore.session.get_session().create_client(
+            "s3",
+            endpoint_url=S3_ENDPOINT,
+            region_name=os.environ.get("GENEALOGY_S3_REGION", "us-east-1"),
+            aws_access_key_id=os.environ.get("GENEALOGY_S3_ACCESS_KEY", ""),
+            aws_secret_access_key=os.environ.get("GENEALOGY_S3_SECRET_KEY", ""),
+        )
+    except Exception:  # noqa: BLE001 - a client we cannot build is a client we do not have
         return None
 
 
