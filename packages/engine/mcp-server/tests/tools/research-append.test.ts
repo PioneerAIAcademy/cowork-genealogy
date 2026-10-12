@@ -4679,7 +4679,16 @@ describe("research_append (batch ops)", () => {
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "skipped" }, planId: "pl_001" },
+        // `skip_category` is required on a new skip (#1830); this test is about
+        // the terminal-plan gate, so it sends a valid skip rather than asserting
+        // the absence of an unrelated rule.
+        {
+          section: "plan_items",
+          op: "update",
+          entryId: "pli_001",
+          fields: { status: "skipped", skip_category: "answered" },
+          planId: "pl_001",
+        },
       ],
     });
 
@@ -5173,12 +5182,18 @@ describe("research_append (batch ops)", () => {
   });
 
   it("(d4-logattr) NEVER refuses an in_progress or a skipped move", async () => {
+    // This rule is about `completed` only. A `skipped` move separately needs a
+    // `skip_category` (#1830), enforced by its own suite, so the skip arm sends
+    // one. Without it this test asserts the ABSENCE of a rule it was never
+    // about, and reds whenever an unrelated plan-item precondition lands.
     for (const status of ["in_progress", "skipped"]) {
       await writeProject(attrResearch("planned", []));
+      const fields: Record<string, unknown> =
+        status === "skipped" ? { status, skip_category: "answered" } : { status };
       const r = await researchAppend({
         projectPath: dir,
         ops: [
-          { section: "plan_items", op: "update", entryId: "pli_001", fields: { status }, planId: "pl_001" },
+          { section: "plan_items", op: "update", entryId: "pli_001", fields, planId: "pl_001" },
         ],
       } as any);
       expect(errorsOf(r) ?? [], `status ${status}`).toEqual([]);
@@ -9542,7 +9557,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       projectPath: dir,
       ops: [
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
-        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped" } },
+        // `skip_category` is required on a new skip (#1830). Without it that
+        // refusal pre-empts the G2 one and this test stops exercising the
+        // snapshot-read vector it exists for.
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped", skip_category: "answered" } },
         { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
       ],
     } as any);
@@ -9567,19 +9585,43 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     expect(singleOk(r).ok).toBe(true);
   });
 
-  it("allows a declaration while items are still `planned` — the licensed early consultation", async () => {
-    // research/SKILL.md routes here deliberately before the plan is drained.
-    // 122 corpus items sit at `planned` across 31 correct declarations; a gate
-    // built from the skill body's stricter opening sentence refuses all 31.
+  it("refuses a declaration while items are still `planned`, naming every one (#1830)", async () => {
+    // Reversed 2026-10-05: this test licensed the old behaviour, where a
+    // leftover `planned` item did not block. The measurement that decided it is
+    // in planCompleteInvariants' docstring — 38 leftovers across the e2e corpus
+    // and not one recorded reason, under prose that already asked for one.
     await writeProject(exhResearch(["completed", "planned", "planned"]));
-    const r = await researchAppend({
+    const errs = failure(await researchAppend({
       projectPath: dir,
       section: "questions",
       op: "update",
       entryId: "q_001",
       fields: { exhaustive_declaration: DECLARATION },
-    });
-    expect(singleOk(r).ok).toBe(true);
+    })).errors.join(" ");
+    expect(errs).toMatch(/cannot be declared exhaustive/);
+    // BOTH ids, not just the first: a refusal naming one of two sends the
+    // planner back for a second round it could have finished in one.
+    expect(errs).toMatch(/pli_002/);
+    expect(errs).toMatch(/pli_003/);
+    expect(errs).toMatch(/'planned'/);
+    // The completed item is not a blocker and must not be named as one.
+    expect(errs).not.toMatch(/pli_001/);
+  });
+
+  it("names the in_progress and the planned items separately when both are present", async () => {
+    // The two arms carry different remedies — one waits for a search to finish,
+    // the other needs disposal — so a reader has to be able to tell which item
+    // is which. A single merged list reads as one problem with four causes.
+    await writeProject(exhResearch(["in_progress", "planned"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).errors.join(" ");
+    expect(errs).toMatch(/pli_001[^.]*'in_progress'/);
+    expect(errs).toMatch(/pli_002[^.]*'planned'/);
   });
 
   it("ignores an in_progress item on a plan belonging to a DIFFERENT question", async () => {

@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Jantje Willems was baptized on 10 November 1748 in the city of Groningen, Netherlands, the daughter of Willem Jans and Ikjen Jans.",
+      "details": {
+        "subject_person": "Jantje Willems (K8C9-ZZC)",
+        "fact_type": "Christening",
+        "date": "10 November 1748",
+        "place": "Groningen, Groningen, Netherlands"
+      },
+      "supporting_sources": [
+        "Netherlands, Births and Baptisms, 1564-1910 — baptism entry for Jantjen Willemsen, 10 Nov 1748"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Jantje Willems's parents were Willem Jans and Ikjen Jans.",
+      "details": {
+        "subject_person": "Jantje Willems (K8C9-ZZC)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Willem Jans and Ikjen Jans"
+        }
+      },
+      "supporting_sources": [
+        "Netherlands, Births and Baptisms, 1564-1910 — baptism entry for Jantjen Willemsen, 10 Nov 1748, naming Willem Jans and Ikjen Jans"
+      ],
+      "required": true
+    }
+  ]
+}

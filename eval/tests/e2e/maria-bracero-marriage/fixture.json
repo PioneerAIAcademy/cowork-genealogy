@@ -1,0 +1,19 @@
+{
+  "id": "maria-bracero-marriage",
+  "name": "Maria Bracero — marriage in June 1907, Mayagüez, Puerto Rico",
+  "genre": "record-hint",
+  "source_pid": "LL4N-82C",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Maria Bracero, born about 1880 in Puerto Rico and living in Hormigueros in 1910 and 1920, marry Gregorio Morales, and who were her parents?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1900s",
+    "geography": "PR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 21, hint-samples.csv row 743, flags adds_father/adds_mother/adds_marriage, confidence 3). Draft transcribed from a 1907 Mayagüez civil marriage registration; unverified."
+}

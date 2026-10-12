@@ -1,0 +1,19 @@
+{
+  "id": "joao-sousa-death",
+  "name": "João Gomes de Sousa — death in December 1919, Câmara de Lobos, Madeira, Portugal",
+  "genre": "record-hint",
+  "source_pid": "GLRZ-VRK",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did João Gomes de Sousa, born 13 October 1851 in Câmara de Lobos, Madeira, son of João Gomes de Sousa and Maria Corrêa Henriques, die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1910s",
+    "geography": "PT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 20, hint-samples.csv row 698, flags adds_death/adds_burial, confidence 3). Draft transcribed from a 1919 Câmara de Lobos civil death registration; unverified."
+}

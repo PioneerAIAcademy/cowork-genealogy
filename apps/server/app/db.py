@@ -8,10 +8,11 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
+from sqlalchemy import inspect, text
 from sqlmodel import Session, SQLModel, create_engine, select
 
 from .config import get_settings
-from .models import AllowedEmail
+from .models import AllowedEmail, TurnCost
 
 _settings = get_settings()
 if _settings.is_sqlite:
@@ -30,9 +31,28 @@ else:
     )
 
 
+def add_missing_columns(engine, model) -> list[str]:
+    """Add ``model``'s columns that its live table lacks, and return their names.
+
+    ``create_all`` creates a missing table but never alters one that exists, so a column
+    added to a deployed table's model would otherwise be absent and every insert naming it
+    would fail. Nullable columns only: adding a NOT NULL column to a table with rows fails.
+    """
+    table = model.__table__
+    have = {c["name"] for c in inspect(engine).get_columns(table.name)}
+    missing = [c for c in table.columns if c.name not in have]
+    with engine.begin() as conn:
+        for col in missing:
+            conn.execute(text(
+                f"ALTER TABLE {table.name} ADD COLUMN {col.name} {col.type.compile(engine.dialect)}"
+            ))
+    return [c.name for c in missing]
+
+
 def init_db() -> None:
     """Bootstrap schema + sync allowlist."""
     SQLModel.metadata.create_all(_engine)
+    add_missing_columns(_engine, TurnCost)
     if not _settings.allowlist:
         return
     with Session(_engine) as session:
