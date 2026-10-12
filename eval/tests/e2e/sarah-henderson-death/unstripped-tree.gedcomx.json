@@ -1,0 +1,435 @@
+{
+  "persons": [
+    {
+      "id": "GF6Z-JC8",
+      "ark": "ark:/61903/4:1:GF6Z-JC8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "b8bc63b8-4a48-4c35-a3a0-078af77a25f4",
+          "preferred": true,
+          "given": "Sarah Maud",
+          "surname": "Henderson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "70d9f78c-0bb9-4261-921a-6a403773d412",
+          "type": "Birth",
+          "date": "1885",
+          "standard_date": "1885",
+          "place": "Ontario",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "39bfb649-7889-4946-ae9e-29bd4d7bece2",
+          "type": "Death"
+        },
+        {
+          "id": "ad30118b-5ea8-4001-9dd5-8f2473c95327",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7J7M-S2F"
+        },
+        {
+          "ref": "7J7M-9Q3"
+        },
+        {
+          "ref": "QMWG-SXM"
+        },
+        {
+          "ref": "3RKW-6H4"
+        }
+      ]
+    },
+    {
+      "id": "PS7L-R4R",
+      "ark": "ark:/61903/4:1:PS7L-R4R",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "829f32c1-7395-40d7-ac65-3f7df1cdf964",
+          "preferred": true,
+          "given": "William",
+          "surname": "Coleman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c8abe31b-e8d3-489c-9f0a-7f085b24dac4",
+          "type": "Birth",
+          "date": "Dec 1907",
+          "standard_date": "Dec 1907",
+          "place": "Ontario",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "8f74f66c-4470-4530-9516-394b35d95b5e",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "b4d55f02-8d10-4727-9762-bc4f1bb607e2",
+          "type": "Residence",
+          "date": "June 1, 1931",
+          "standard_date": "1 Jun 1931",
+          "place": "York, Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, York, Ontario, Canada"
+        },
+        {
+          "id": "5916103a-b719-4f6d-864d-1487f3497905",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7J7M-7CP"
+        },
+        {
+          "ref": "7J7M-3FR"
+        }
+      ]
+    },
+    {
+      "id": "LJVZ-3ZL",
+      "ark": "ark:/61903/4:1:LJVZ-3ZL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "George",
+          "surname": "Coleman",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "George",
+          "surname": "Coleman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1882",
+          "standard_date": "1882",
+          "place": "England",
+          "standard_place": "England, United Kingdom"
+        },
+        {
+          "id": "9ae1de57-cee2-4ae8-98a0-a24a36d8de12",
+          "type": "Immigration",
+          "date": "1887",
+          "standard_date": "1887",
+          "place": "Canada",
+          "standard_place": "Canada"
+        },
+        {
+          "id": "d64ee7b3-0a7a-4388-833e-a5f487422c9d",
+          "type": "Immigration",
+          "date": "1888",
+          "standard_date": "1888",
+          "place": "Canada",
+          "standard_place": "Canada"
+        },
+        {
+          "id": "2c0e90c0-04a0-4d00-8d01-cd4741bc6340",
+          "type": "Residence",
+          "date": "31 Mar 1901",
+          "standard_date": "31 Mar 1901",
+          "place": "Hastings (west/ouest), Ontario, Canada",
+          "standard_place": "Hastings, Ontario, Canada"
+        },
+        {
+          "id": "f1069f13-e3e0-4bdf-a8fd-cd7d32f2f2d8",
+          "type": "Immigration",
+          "date": "1907",
+          "standard_date": "1907",
+          "place": "Canada",
+          "standard_place": "Canada"
+        },
+        {
+          "id": "d89c7c1b-8293-4c17-a52d-86db5792353e",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "c8498b38-4882-46dd-8955-d50edff32d38",
+          "type": "Residence",
+          "date": "June 1, 1931",
+          "standard_date": "1 Jun 1931",
+          "place": "York, Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, York, Ontario, Canada"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7J7M-77W"
+        },
+        {
+          "ref": "7J7M-3MF"
+        },
+        {
+          "ref": "7J7M-9MH"
+        },
+        {
+          "ref": "QMWG-SDX"
+        },
+        {
+          "ref": "3RKW-D1P"
+        },
+        {
+          "ref": "37GK-KNC"
+        }
+      ]
+    },
+    {
+      "id": "PS7L-8MY",
+      "ark": "ark:/61903/4:1:PS7L-8MY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "898a868a-4a4a-440a-ae34-7f5189e3aded",
+          "preferred": true,
+          "given": "Margaret Maud",
+          "surname": "Coleman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "50b2e4ac-74a2-4746-98ff-5e1f910dd206",
+          "type": "Birth",
+          "date": "30 Sep 1909",
+          "standard_date": "30 Sep 1909",
+          "place": ", , Ontario, Canada",
+          "standard_place": "Ontario, Canada"
+        },
+        {
+          "id": "0162e88c-2f83-47b5-8e8f-e51d5126599e",
+          "type": "Residence",
+          "date": "1911",
+          "standard_date": "1911",
+          "place": "Toronto West Sub-Districts 27-103, Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        },
+        {
+          "id": "af054422-98af-4d04-931f-e0e087ef02aa",
+          "type": "Residence",
+          "date": "June 1, 1931",
+          "standard_date": "1 Jun 1931",
+          "place": "York, Toronto, York, Ontario, Canada",
+          "standard_place": "Toronto, York, Ontario, Canada"
+        },
+        {
+          "id": "f201050a-7a4a-4cd8-a40d-6c1ab4090fc8",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7J7M-Q5B"
+        },
+        {
+          "ref": "7J7M-SXT"
+        },
+        {
+          "ref": "7J7M-9PN"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "LJVZ-3ZL",
+      "person2": "GF6Z-JC8",
+      "facts": [
+        {
+          "id": "0690272c-0000-4291-a681-e8c1382cbcd3",
+          "type": "Marriage",
+          "date": "11 October 1906",
+          "standard_date": "11 Oct 1906",
+          "place": "Toronto, , Ontario, Canada",
+          "standard_place": "Toronto, Ontario, Canada"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "LJVZ-3ZL",
+      "child": "PS7L-R4R"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GF6Z-JC8",
+      "child": "PS7L-R4R"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "LJVZ-3ZL",
+      "child": "PS7L-8MY"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GF6Z-JC8",
+      "child": "PS7L-8MY"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GF6Z-JC8",
+      "title": "Sarah Maud Henderson",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Sarah Maud Henderson (PID GF6Z-JC8); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GF6Z-JC8"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_PS7L-R4R",
+      "title": "William Coleman",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for William Coleman (PID PS7L-R4R); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PS7L-R4R"
+    },
+    {
+      "id": "sd_person_LJVZ-3ZL",
+      "title": "George Coleman",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for George Coleman (PID LJVZ-3ZL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LJVZ-3ZL"
+    },
+    {
+      "id": "sd_person_PS7L-8MY",
+      "title": "Margaret Maud Coleman",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Margaret Maud Coleman (PID PS7L-8MY); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PS7L-8MY"
+    },
+    {
+      "id": "7J7M-9Q3",
+      "title": "Sarah Maud Henderson, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9H-V9GW : Fri Jul 05 16:48:38 UTC 2024), Entry for Margaret Maud Coleman and George Alfred Coleman, 30 Sep 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9H-V9GH"
+    },
+    {
+      "id": "3RKW-6H4",
+      "title": "Sarah Maud Henderson, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZ17-BGL : Mon Jan 20 11:56:46 UTC 2025), Entry for George Alfred Coleman and C W Coleman, 11 Oct 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZ17-BG5"
+    },
+    {
+      "id": "QMWG-SXM",
+      "title": "Maude Henderson, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9H-D6W4 : Tue Jan 14 21:59:35 UTC 2025), Entry for William Alex Coleman and George Coleman, 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9H-D6WC"
+    },
+    {
+      "id": "7J7M-S2F",
+      "title": "Maud Coleman, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9P-HM39 : Fri Jul 19 04:19:35 UTC 2024), Entry for George Coleman and Maud Coleman, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9P-HM3S"
+    },
+    {
+      "id": "7J7M-7CP",
+      "title": "<Unknown>, \"Canada, Census, 1931\"",
+      "citation": "\"Canada, Census, 1931\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6RS5-BZYD : Fri Oct 02 21:01:56 UTC 2026), Entry for <Unknown> and <Unknown>, June 1, 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RS5-BZYN"
+    },
+    {
+      "id": "7J7M-3FR",
+      "title": "William Coleman, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9P-HM39 : Fri Jul 19 04:19:35 UTC 2024), Entry for George Coleman and Maud Coleman, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9P-HM33"
+    },
+    {
+      "id": "7J7M-77W",
+      "title": "<Unknown>, \"Canada, Census, 1931\"",
+      "citation": "\"Canada, Census, 1931\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6RS5-BZYD : Fri Oct 02 21:01:56 UTC 2026), Entry for <Unknown> and <Unknown>, June 1, 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RS5-BZYD"
+    },
+    {
+      "id": "7J7M-3MF",
+      "title": "George Coleman, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9P-HM39 : Fri Jul 19 04:19:35 UTC 2024), Entry for George Coleman and Maud Coleman, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9P-HM39"
+    },
+    {
+      "id": "7J7M-9MH",
+      "title": "George Alfred Coleman, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9H-V9GW : Fri Jul 05 16:48:38 UTC 2024), Entry for Margaret Maud Coleman and George Alfred Coleman, 30 Sep 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9H-V9G4"
+    },
+    {
+      "id": "QMWG-SDX",
+      "title": "George Coleman, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9H-D6W4 : Tue Jan 14 21:59:35 UTC 2025), Entry for William Alex Coleman and George Coleman, 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9H-D6WH"
+    },
+    {
+      "id": "3RKW-D1P",
+      "title": "George Alfred Coleman, \"Canada, Ontario, Marriages, 1869-1927\"",
+      "citation": "\"Canada, Ontario, Marriages, 1869-1927\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZ17-BGL : Mon Jan 20 11:56:46 UTC 2025), Entry for George Alfred Coleman and C W Coleman, 11 Oct 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZ17-BGL"
+    },
+    {
+      "id": "37GK-KNC",
+      "title": "George Coleman, \"Canada, Census, 1901\"",
+      "citation": "\"Canada, Census, 1901\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KHL3-QM9 : Fri Jan 17 19:36:10 UTC 2025), Entry for Charles Coleman and Caroley Coleman, 31 Mar 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KHL3-QMQ"
+    },
+    {
+      "id": "7J7M-Q5B",
+      "title": "<Unknown>, \"Canada, Census, 1931\"",
+      "citation": "\"Canada, Census, 1931\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6RS5-BZYD : Fri Oct 02 21:01:56 UTC 2026), Entry for <Unknown> and <Unknown>, June 1, 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RS5-Y9K9"
+    },
+    {
+      "id": "7J7M-SXT",
+      "title": "Margret Coleman, \"Recensement du Canada de 1911\"",
+      "citation": "\"Recensement du Canada de 1911\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9P-HM39 : Fri Jul 19 04:19:35 UTC 2024), Entry for George Coleman and Maud Coleman, 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9P-HM3Q"
+    },
+    {
+      "id": "7J7M-9PN",
+      "title": "Margaret Maud Coleman, \"Canada, Ontario, Births, 1869-1912\"",
+      "citation": "\"Canada, Ontario, Births, 1869-1912\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV9H-V9GW : Fri Jul 05 16:48:38 UTC 2024), Entry for Margaret Maud Coleman and George Alfred Coleman, 30 Sep 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV9H-V9GW"
+    }
+  ]
+}

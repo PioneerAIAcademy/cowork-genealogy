@@ -625,9 +625,16 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   as a dead nullable, because `create_all` never drops a column.
 > - **`sessions`** — **not built**; the signed cookie is self-contained, which is
 >   the "or stateless JWT" branch this bullet allowed for.
-> - **`usage`** — **not built.** Per-turn cost/tokens are streamed to an
->   alpha-gated meter in the web client and are never persisted, so there is no
->   basis for the budgets §13 calls for.
+> - **`usage`** — built as **`turn_costs`** (project_id, user_id, model, cost_usd,
+>   input_tokens, output_tokens, build, continuations, created), one row per completed
+>   turn. The sandbox POSTs each turn's cost to `/api/turn-cost`, authenticated by its
+>   Anthropic proxy token; no foreign keys, so a deleted session's spend stays. Only
+>   production (proxy active) reports. `build` is the sandbox image's own commit, so a
+>   sandbox that outlives a deploy is billed to the code it runs; `continuations` counts
+>   the stops the Stop hook overrode that turn. `create_all` never alters a live table, so
+>   `init_db` adds any nullable column the model has and the table lacks
+>   (`db.add_missing_columns`). `make alpha-costs` prints cost per day, per build and the
+>   top sessions. No budget reads it yet.
 
 ### 6.4 Durable project storage (object store)
 - One prefix per project (`projects/<project_id>/`) holding `research.json`,
@@ -998,9 +1005,9 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 > - **Cost controls — idle suspension shipped, budgets did not.** `SandboxSpec`
 >   defaults to `auto_suspend_seconds: 900` and `E2BProvider` creates with
 >   `lifecycle={"on_timeout":"pause","auto_resume":True}`. There are **no** token
->   or sandbox-second budgets, no rate limits, and no auto-archive — there is no
->   `usage` table to enforce them against (§6.3). Per-turn cost is displayed to
->   the user and discarded. The allowlist remains the only real cap.
+>   or sandbox-second budgets, no rate limits, and no auto-archive. Per-turn cost is
+>   recorded in `turn_costs` (§6.3), but nothing enforces against it. The allowlist
+>   remains the only real cap.
 
 ---
 

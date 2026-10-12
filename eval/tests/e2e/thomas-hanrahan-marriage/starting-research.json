@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_thomas_hanrahan_marriage",
+    "objective": "When and where did Thomas Hanrahan, born about 1840 in Ireland and living in Saratoga, New York, in 1880, marry Johanna Ryan?",
+    "subject_person_ids": [
+      "KHGX-XWG"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

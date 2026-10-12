@@ -1,0 +1,270 @@
+{
+  "run_log": "v1_2026-10-02_06-43-49.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that q_001 already has exhaustive_declaration.declared set to true and reported the existing declaration without re-writing it. The summary accurately reflects the stored stop_criteria assessments (goal alignment, repository breadth, original substitution, independent verification, evidence class, conflict resolution, overturn risk). The proof summary tier 'proved' is correctly cited. No fabricated material or unsupported claims; all assertions are grounded in the project state returned by project_context tool calls.\n\nJunior ( Pass - It meets the requirements of reporting only, without re writing or altering the declaration.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request to check q_001's exhaustive declaration status. The response confirmed the declaration exists, summarized its key findings in a table format, noted the proof summary tier, and appropriately declined to recommend re-running proof-conclusion (which would redo finished work). All required elements from the per-test context were covered: recognition of existing declaration, summary of stop_criteria, plain statement that no further work is owed, and no re-write of the declaration.\n\nJunior (Pass - is complete, accurate, and aligned with the scenario requirements.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_006`** — `rubric` / `Gate reasoning`\nLLM: 3 → Junior: 3\n\n> Claude correctly applied the gate reasoning by recognizing that q_001 already has a completed exhaustive declaration with declared: true. The response reports the existing declaration's stop_criteria assessments in order (goal alignment, repository breadth, original substitution, independent verification, evidence class, conflict resolution, overturn risk), grounding each in the project state. The skill appropriately declined to re-evaluate, as the declaration was already on record and complete.\n\nJunior(Pass — it recognized the declaration was already complete, reported the stored criteria faithfully, and declined unnecessary re evaluation. )"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_006`** — `rubric` / `Stop criteria coverage`\nLLM: 3 → Junior: 3\n\n> All seven stop criteria are presented with substantive assessments tied to project state: goal alignment names three independent sources; repository breadth lists specific repositories searched; original substitution cites FamilySearch images; independent verification names the three sources; evidence class describes original records with indirect/direct evidence; conflict resolution references c_001 and source independence; overturn risk notes the three converging lines and negative probate result. Each criterion carries 1–2 sentence assessments grounded in actual project facts, not generic boilerplate.\n\nJunior: (Pass - all seven criteria are addressed with substantive, project grounded assessments.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_006`** — `rubric` / `Declaration honesty`\nLLM: 3 → Junior: 3\n\n> Claude honestly reported the existing declaration as true without inflating or hedging it. The response plainly states 'declared: true' and notes that all work on exhaustiveness is complete. The negative probate result is acknowledged ('negative probate does not contradict') rather than buried or minimized. No workarounds or optimistic language; the declaration stands as recorded in the project state.\n\nJunior: ( Pass  — it neither inflates nor minimizes, but reflects the declaration exactly as it stands in the project record.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_006`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two calls to mcp__genealogy__project_context with correct projectPath argument. Both calls matched the live fixture and returned valid responses. The tool calls were appropriate for retrieving the project state needed to verify the exhaustive declaration status. No critical argument errors; the calls successfully retrieved the necessary information.\n\nJunior: (Pass — the calls were correctly structured and achieved the intended verification without error.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly evaluated all seven stop criteria against the project state and declared exhaustive_declaration.declared = true with all required fields populated. The assessment is grounded in actual log entries (log_001, log_004, log_005, log_006, log_007) and project assertions. The baptismal register search (log_007) is correctly treated as a searched negative, not an unsearched gap. The Pennsylvania vital records wiki fetch confirms statewide registration began January 1906, making a birth certificate for ~1845 birth correctly identified as non-existent and not a gap. The conflict c_001 is correctly noted as resolved. All three independent sources (1850 census, 1860 census, death certificate) are accurately cited. The response correctly limits scope to the father question, not the mother. The research_append call persisted the declaration with valid schema.\n\nJunior: ( Pass - It demonstrates proper handling of searched negatives, conflict resolution, and schema persistence.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: (1) evaluated q_001 against the seven stop criteria; (2) declared exhaustive_declaration.declared = true; (3) set status to 'exhaustive_declared'; (4) populated all seven stop_criteria keys with substantive assessments; (5) included log_entry_ids referencing the supporting searches; (6) persisted the update via research_append with schema validation. The user's request was fully satisfied. No required action was omitted.\n\nJunior: ( Pass - The tool response is complete, thorough, and aligned with the scenario requirements — every required element was delivered without omission.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_003`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed correct arguments. The research_append call correctly targeted section 'questions', op 'update', entryId 'q_001', and included all required fields (status, exhaustive_declaration with declared, justification, log_entry_ids, and all seven stop_criteria keys). The wiki_read call correctly fetched Pennsylvania_Vital_Records to verify registration dates. All project_context and research_query calls used correct projectPath and section/questionId parameters. No fixture_not_found errors occurred. Arguments matched expected patterns semantically.\n\nJunior: ( Pass - Tool arguments are accurate, valid, and complete — the calls were properly constructed, semantically correct, and achieved the intended persistence and verification without error.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_003`** — `rubric` / `Gate reasoning`\nLLM: 3 → Junior: 3\n\n> The skill correctly applied the seven-point stop criteria as a gate, evaluating each in order and declaring only when all were met. Each criterion was assessed against actual project state: goal_alignment (three converging sources named), repository_breadth (FamilySearch and Ancestry searched, later censuses and naturalization rationally skipped), original_substitution (all three sources are originals), independent_verification (two independent units identified), evidence_class (baptismal register searched and negative, proof summary correctly at 'probable' tier), conflict_resolution (c_001 resolved), overturn_risk (low, no unsearched record type could plausibly name a different father). The reasoning is grounded in log entries and assertions, not generic claims. The skill did not declare prematurely or without applying the gate.\n\nJunior: (Pass - The tool response demonstrates correct gate reasoning — all seven criteria were applied in order, grounded in project state, and the declaration was made only after the gate was fully satisfied.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_003`** — `rubric` / `Declaration honesty`\nLLM: 3 → Junior: 3\n\n> The skill declared exhaustive_declaration.declared = true while honestly acknowledging the limitation: the baptismal register (the one record type that would supply primary information) was searched and is absent, which is why the proof summary sits at 'probable' rather than 'proved'. The justification explicitly states 'The one record type capable of supplying primary information on parentage (baptism) was actively searched and is absent from the surviving register — a searched negative, not a gap.' This is an honest assessment, not an inflated claim. The response resists declaring 'proved' and correctly reflects the evidence class limitation in the stop_criteria.evidence_class assessment.\n\nJunior: (Pass - The tool response demonstrates declaration honesty — it neither inflates nor minimizes, but accurately reflects the project state and the limitations of the evidence.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_003`** — `rubric` / `Stop criteria coverage`\nLLM: 3 → Junior: 3\n\n> All seven stop criteria carry substantive, specific assessments tied to project state. goal_alignment: names the three converging sources (1850 census, 1860 census, death certificate). repository_breadth: names FamilySearch and Ancestry, explains why later censuses and naturalization were skipped. original_substitution: states all three are originals, cross-checked via independent indexes. independent_verification: identifies two independent units (census co-enumerations + death certificate). evidence_class: explicitly addresses the baptismal register search (log_007) as a searched negative on a continuous register, explains why proof summary is 'probable'. conflict_resolution: names c_001 (Ireland vs. Pennsylvania birthplace), states it is resolved. overturn_risk: explains why later censuses could not contradict, cites Pennsylvania vital records wiki (statewide registration began 1906), confirms no unsearched record type is realistically likely to name a different father. Each assessment is grounded in specific log entries or assertions, not generic boilerplate.\n\nJunior: (Pass - The tool response fully meets the requirement for stop criteria coverage — all seven criteria are addressed with substantive, project grounded assessments.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified q_001 as the parentage question and accurately assessed that research is not yet exhaustive. The two blocking criteria (repository_breadth and overturn_risk) are correctly identified and grounded in project state: only 1850, 1860 censuses and 1908 death certificate were searched; the 1870, 1880, 1900 censuses and probate records remain unsearched. The assessment that the mother is entirely unnamed across all sources is factually correct. The skill did not declare exhaustive (declared: false), which is the correct outcome per the per-test requirement. All claims are supported by the tool responses and project state.\n\nJunior: (Pass - The tool response is correct, precise, and compliant with the scenario requirements — it declined to declare exhaustive, identified specific unsearched sources, and grounded its reasoning in the project state.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed everything required: it identified the question, evaluated the stop criteria, declined to declare exhaustive, named specific unsearched record types (1870/1880/1900 censuses, probate records), and grounded the decision in project state. The response named at least one specific unsearched record type as required by the per-test context. The skill did not conflate q_001 with q_002, treating them as scoped differently. All required elements of the exhaustiveness evaluation are present.\n\nJunior: (Pass - The tool response is complete, thorough, and aligned with the scenario requirements — every required element was delivered without omission.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All five MCP tool calls matched their fixtures correctly. The two project_context calls retrieved the project state as expected. The research_query call with section='assertions' and questionId='q_001' correctly retrieved the 7 assertions for the question. The wiki_read call to Pennsylvania_Vital_Records matched the predicate fixture (url contains 'Pennsylvania_Vital_Records'). The research_append call correctly updated q_001 with the exhaustive_declaration structure. No fixture_not_found errors occurred. Arguments were semantically correct throughout.\n\nJunior: (Pass - Tool arguments are accurate, valid, and complete — the calls were properly constructed, semantically correct, and achieved the intended persistence and verification without error.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_001`** — `rubric` / `Gate reasoning`\nLLM: 3 → Junior: 3\n\n> The skill correctly applied the 7-point stop criteria as a gate, evaluating each in order and stopping at the first failures (repository_breadth and overturn_risk). The reasoning is grounded in actual project state: repository_breadth fails because only 2 record types were searched under q_001 (1860 census, 1908 death certificate) while 1870, 1880, 1900 censuses and probate records remain unsearched. Overturn_risk fails because the 1880 census could directly confirm or refute the father-son relationship via explicit relationship column, and multiple unsearched sources could change the conclusion. The skill named the specific blocking criteria and the gaps under each.\n\nJunior: (Pass - The tool response demonstrates correct gate reasoning — it applied the stop criteria in order, identified failures with specificity, and declined to declare exhaustive until the gaps are addressed.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_001`** — `rubric` / `Declaration honesty`\nLLM: 3 → Junior: 3\n\n> The skill correctly kept declared: false and listed genuine gaps without inflating the exhaustiveness claim. The response acknowledges that the proof summary is at 'probable' tier, not 'proved,' and that the mother is entirely unaddressed. The justification is honest about what remains unsearched and why it matters. The skill resisted declaring exhaustive despite having three sources; it recognized that accessible record types remain and that overturn risk is elevated. No workaround was used to flip the flag to true.\n\nJunior: (Pass - The tool response demonstrates declaration honesty — it resisted inflation, acknowledged genuine gaps, and faithfully reported the project state without workaround claims.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_001`** — `rubric` / `Stop criteria coverage`\nLLM: 3 → Junior: 3\n\n> All seven stop criteria are assessed with substance, each tied to specific project state. goal_alignment: notes Thomas Flynn probably identified as father but mother entirely unnamed and tier is only probable. repository_breadth: explicitly names the 2 searched records and lists 4 unsearched types (1870, 1880, 1900 censuses, probate). original_substitution: confirms all three sources are originals. independent_verification: notes likely single informant chain for censuses plus independent death certificate informant, but no verification for mother. evidence_class: notes all parentage assertions are indeterminate or secondary, no primary original record exists, and baptismal records unsearched. conflict_resolution: confirms c_001 is resolved and no open conflicts remain. overturn_risk: details how 1880 census could confirm or refute conclusion and multiple sources could change it. Each assessment is grounded in log entries and project state, not generic boilerplate.\n\nJunior: (Pass - The tool response fully meets the requirement for stop criteria coverage — all seven criteria are addressed with substantive, project grounded assessments.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> This is a negative test where the correct behavior is for research-exhaustiveness to decline and route to question-selection. Claude produced no output and invoked question-selection, which is the correct routing decision. The skill correctly recognized that the user's request ('What should I research next?') is a question-selection task, not an exhaustiveness evaluation.\n\nJunior: (Pass - The tool response is correct — it respected boundaries, avoided mis execution, and routed properly to question selection.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill completed the correct task for this negative test: declining to perform research-exhaustiveness and routing to question-selection. No substantive output was produced, which is the correct outcome. The routing decision itself is complete and accurate.\n\nJunior: (Pass - The tool response is complete — it performed the correct decline and routing action without omission.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_exhaustiveness_002`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by research-exhaustiveness itself. The skill correctly declined and routed to question-selection, which is the appropriate behavior for this negative test. N/A because the skill under test made zero tool calls.\n\nJunior: (Pass - Tool arguments are correct and appropriate — the skill made zero calls, which is the expected outcome for this negative test.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the blocking precondition: pli_005 (death certificate search) is in_progress with no log entry. The refusal to declare exhaustiveness is factually correct given the project state. No file changes were made, which is appropriate for a conversational refusal. The recommendation to complete pli_005 before re-invoking research-exhaustiveness is sound and grounded in the actual plan item status.\n\nJunior: (Pass - The tool response is correct, precise, and compliant — it identified the blocking plan item, refused to declare exhaustiveness, and gave a grounded recommendation for next steps.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's question fully: confirmed q_001 identity, identified the blocking precondition (pli_005 in_progress), explained why it matters (precondition gate + high-value source), and recommended the next step (complete or skip pli_005). The response covered everything the input state required for a proper refusal.\n\nJunior: (Pass - The tool response is complete and thorough — it addressed all required elements for a refusal based on an in progress plan item.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls matched their fixtures with correct arguments. project_context calls used the correct projectPath. research_query calls used correct section and questionId/planItemId parameters. No fixture_not_found errors occurred. All calls were semantically appropriate for gathering the project state needed to evaluate the precondition.\n\nJunior: (Pass - Tool arguments are accurate, valid, and complete — all calls were properly constructed, semantically correct, and achieved the intended retrieval of project state for evaluating the precondition.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_005`** — `rubric` / `Gate reasoning`\nLLM: 3 → Junior: 3\n\n> Claude correctly applied the precondition gate before the 7-point stop criteria. It identified pli_005 as the blocking item, explained that active plan items must be completed or skipped before declaration assessment, and grounded the decision in actual project state (status: in_progress, no log entry). The reasoning stopped at the first blocking condition as required.\n\nJunior: (Pass - The tool response demonstrates correct gate reasoning — it stopped at the precondition gate, identified the blocking plan item, and grounded its refusal in project state.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_005`** — `rubric` / `Declaration honesty`\nLLM: 3 → Junior: 3\n\n> Claude resisted declaring exhaustive despite the user's suggestion that two census records are sufficient. It kept declared: false (implicitly, by refusing to write a declaration) and honestly identified the gap: an unfinished plan item for a high-value source (death certificate). No workaround or optimistic framing was used.\n\nJunior: (Pass - The tool response demonstrates declaration honesty — it resisted user pressure, acknowledged the unfinished plan item, and refused to declare exhaustive without workaround claims.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_exhaustiveness_005`** — `rubric` / `Stop criteria coverage`\nLLM: N/A → Junior: N/A\n\n> This run stops at the plan-item precondition before the 7-point stop criteria are evaluated at all. Per the per-test context, no stop_criteria assessment is owed in either object or prose form. The situation this dimension grades never arose.\n\nJunior: (N/A - Stop criteria coverage is N/A — the evaluation halted at the precondition gate, so no criteria assessment was required or performed.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_012`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that Patrick Flynn died in 1908, after Pennsylvania's statewide death registration began in January 1906. The skill accurately determined that the 1908 death certificate is held at the Pennsylvania State Archives (not destroyed by the 1920 courthouse fire, which affected only pre-1906 county records). The assessment that this is a named decisive record type for a parentage question and has not been searched is factually sound. The declaration of `declared: false` with the specific blocking criterion (overturn_risk) is correct given the project state. All claims are grounded in the tool responses and the scenario context.\n\nJunior: (Pass - The tool response is correct, precise, and compliant — it identified the decisive unsearched record, applied the overturn risk criterion properly, and refused to declare exhaustive.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_012`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request fully: evaluated whether the parentage question can be declared exhaustive, applied the research-exhaustiveness skill to the project state, identified the specific blocking issue (the skipped death certificate search based on an incorrect rationale), and provided a clear verdict with a recommended next step. The skill queried all relevant sections (questions, plans, assertions, person_evidence, conflicts, log entries, proof summaries) and wrote the exhaustive_declaration to research.json as required.\n\nJunior: (Pass - The tool response is complete and thorough — it addressed the user’s request fully, applied the skill rigorously, and provided a justified refusal with actionable guidance.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_012`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 3\n\n> Most tool calls were correct: project_context, research_query calls for questions/plans/assertions/person_evidence/conflicts/log/proof_summaries, and research_append all matched expected arguments. However, one wiki_read call to 'Pennsylvania_Death_Records' returned `fixture_not_found` (matched.kind == 'none'). Per the rubric override for wiki_read, a sibling-page miss for a plausible related record type does not constitute a Tool Arguments defect when the instructed call (Pennsylvania_Vital_Records) succeeded with correct arguments. The Pennsylvania_Vital_Records call was correct and provided the necessary information (statewide registration began January 1906). The Death_Records sibling miss is a fixture gap, not incorrect tool usage.\n\nJunior: (Pass - \"a sibling-page miss for a plausible related record type does not constitute a Tool Arguments defect when the instructed call (Pennsylvania_Vital_Records) succeeded\" and \"The Death_Records sibling miss is a fixture gap, not incorrect tool usage.\"\nIt applied the rubric override in prose and then didn't apply it to the number. The skill called Pennsylvania_Vital_Records correctly and got what it needed (statewide registration began January 1906); the extra Pennsylvania_Death_Records call missed because no fixture covers that page.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_012`** — `rubric` / `Gate reasoning`\nLLM: 3 → Junior: 3\n\n> Claude evaluated all seven stop criteria in order and correctly identified the first that fails: overturn_risk. The skill grounded its reasoning in actual project state: the will provides primary direct evidence (goal_alignment partially met), three independent sources were searched (repository_breadth substantially met), original records were used (original_substitution met), two independent units of evidence exist (independent_verification met), the will is primary evidence (evidence_class met), no conflicts exist (conflict_resolution met), but the unsearched 1908 death certificate—a named decisive record type for parentage—blocks overturn_risk assessment. The reasoning is specific and tied to log entries and the scenario context.\n\nJunior: (Pass - The tool response demonstrates correct gate reasoning — it applied the stop criteria in order, identified the failing criterion with specificity, and grounded its refusal in the actual project state.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_012`** — `rubric` / `Declaration honesty`\nLLM: 3 → Junior: 3\n\n> Claude resisted declaring exhaustive despite having three independent sources and a strong will. The skill kept `declared: false` and explicitly named the gap: the 1908 Pennsylvania state death certificate, which is accessible but has not been searched due to an incorrect rationale in the plan item. The justification is honest about what blocks declaration and does not use workarounds or optimistic language to flip the flag. The skill correctly distinguished between a confirmed non-existence (the 1920 courthouse fire affecting pre-1906 records) and an unsearched record that is actually available.\n\nJunior: (Pass - The tool response demonstrates declaration honesty — it resisted premature declaration, identified the decisive gap, and refused to flip the flag without workaround claims.)"
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_exhaustiveness_012`** — `rubric` / `Stop criteria coverage`\nLLM: 3 → Junior: 3\n\n> All seven stop criteria are assessed with substance, each tied to specific project state. goal_alignment: will names Patrick as son (primary direct evidence). repository_breadth: FamilySearch and Ancestry for censuses, FamilySearch for probate and baptismal register, but Pennsylvania State Archives not yet covered for death certificate. original_substitution: original images and will accessed. independent_verification: three distinct institutional sources (1850 census, 1860 census, will) with two independent evidentiary units. evidence_class: will is original with primary information. conflict_resolution: no conflicts recorded, later censuses add no contradictions. overturn_risk: FAILS because the 1908 death certificate (accessible via Pennsylvania State Archives, not destroyed by 1920 fire) has not been searched. Each assessment references specific log entries, sources, or assertions from the project state.\n\nJunior: (Pas -The tool response fully meets the requirement for stop criteria coverage — all seven criteria are addressed with substantive, project grounded assessments. )"
+    }
+  ]
+}

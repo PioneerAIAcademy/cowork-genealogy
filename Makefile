@@ -1081,6 +1081,15 @@ judge-report: ## Non-discrimination scan of the UNIT judge over committed run lo
 	# time by LLM judgment; this is the mechanical corpus-wide half.
 	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: judge-regrade
+judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1
+	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
+	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
+	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
+	# `make harness-test` to prove the renderer reads from disk on every call.
+	# A log that is already skill-side stale (rule 2) is REFUSED, not regraded.
+	cd eval/harness && uv run python -m judge_regrade $(if $(SKILL),--skill $(SKILL),) $(if $(DRY),--dry-run,)
+
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
@@ -1640,3 +1649,9 @@ DEPLOY_URL := https://genealogy-workbench.fly.dev
 .PHONY: deploy-status
 deploy-status: ## Health-check the deployed control plane (expect "db":"postgres")
 	curl -s $(DEPLOY_URL)/api/health | jq
+
+# Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
+# here. Reads turn_costs (apps/server/app/cost_report.py).
+.PHONY: alpha-costs
+alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

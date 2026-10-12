@@ -10,8 +10,12 @@ docs/plan/eval-runlog-versioning.md §C6:
              PR adds (a released v{N}.json it adds, else its newest
              candidate), or, for a PR that adds none, the latest full-skill
              run log on disk.
-    Rule 2b  (warn-only) the same run log's judge_prompt_hash matches
-             eval/harness/judge/prompt.md.
+    Rule 2b  BLOCKS on a PR that touches eval/harness/judge/prompt.md:
+             every suite's latest run log must carry the current
+             judge_prompt_hash; satisfy with `make judge-regrade`.
+             Downgrades to a warning on a run log rule 2 already
+             reports skill-side stale (a regrade cannot satisfy a log
+             that owes a paid `make eval-skill` run).
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale
@@ -564,19 +568,65 @@ def rule2_fixture_touched(
 
 
 def rule2b_judge_prompt(
-    skill: str, log: dict, filename: str, *, graded: str = GRADED_DEFAULT
-) -> None:
-    """Rule 2b (warn-only): judge_prompt_hash matches current judge prompt.
-    `graded` is as for `rule2_active`."""
+    skill: str,
+    log: dict,
+    filename: str,
+    *,
+    graded: str = GRADED_DEFAULT,
+    judge_prompt_edited: bool = False,
+) -> int:
+    """Rule 2b: judge_prompt_hash matches current judge prompt.
+
+    BLOCKS on a PR that touches `eval/harness/judge/prompt.md`
+    (`judge_prompt_edited=True`): every suite's latest run log must carry the
+    current hash; satisfy with `make judge-regrade`. On any other PR a
+    mismatch stays warn-only — a mixed-era corpus is expected across
+    judge-prompt cadences, and the cheap satisfaction path only exists when
+    the PR itself is the thing moving the hash.
+
+    **Exception.** On a run log whose snapshot is already stale against the
+    working tree (skill-side; rule 2 blocks for its own reason), rule 2b
+    downgrades to a warning: a regrade cannot be taken on that log, so
+    blocking it would owe a paid `make eval-skill` run that this PR is not
+    asking for.
+
+    `graded` is as for `rule2_active`. Returns 1 on block, 0 otherwise.
+    """
     expected = log.get("judge_prompt_hash") or ""
     actual = hash_file("eval/harness/judge/prompt.md", JUDGE_PROMPT_PATH)
-    if expected and actual and expected != actual:
+    if not (expected and actual and expected != actual):
+        return 0
+    # Skill-side stale? Downgrade to warn.
+    snap = log.get("snapshot") or {}
+    skill_side_stale = len(diff_snapshot_vs_disk(snap, REPO_ROOT)) > 0
+    header = (
+        f"skill `{skill}`: `{filename}`, {graded}, was scored against an "
+        f"older judge prompt (hash {expected[:12]}…). Current judge prompt "
+        f"hash is {actual[:12]}…."
+    )
+    if skill_side_stale:
         gh_warning(
-            f"skill `{skill}`: `{filename}`, {graded}, was scored against an "
-            f"older judge prompt (hash {expected[:12]}…). Current judge prompt "
-            f"hash is {actual[:12]}…. Re-running would likely produce different "
-            f"scores — interpret the corrected mean cautiously.",
+            f"{header} Rule 2 already reports this log as skill-side stale, "
+            f"so rule 2b warns rather than blocks — a `make judge-regrade` "
+            f"cannot satisfy a log that owes a paid `make eval-skill` run.",
         )
+        return 0
+    if not judge_prompt_edited:
+        # PR did not touch eval/harness/judge/prompt.md, so a hash mismatch
+        # is expected (a mixed-era corpus across judge-prompt cadences).
+        # Warn so the reviewer can note it, but do not block.
+        gh_warning(
+            f"{header} Re-running would likely produce different scores — "
+            f"interpret the corrected mean cautiously.",
+        )
+        return 0
+    gh_error(
+        f"{header} Satisfy by running `make judge-regrade` and committing the "
+        f"refreshed run log in this PR. (A regrade stamps the new hash + judge "
+        f"model and costs ~$0.25/skill of judge-only spend; it leaves the "
+        f"skill output and the `.ann.json` alone.)",
+    )
+    return 1
 
 
 def _is_confirmed_non_failing(correction: dict) -> bool:
@@ -1539,6 +1589,20 @@ def main() -> int:
     fixture_touched_skills -= touched_skills
     touched_skills -= exempt_suiteless
 
+    # Judge-prompt arm (issue #2479 PR 1): if the PR touches
+    # `eval/harness/judge/prompt.md`, every suite in the corpus — minus the
+    # suiteless exemptions — joins `judge_prompt_touched_skills` and faces
+    # rule 2b. Does NOT join `touched_skills` (that would make rules 2 and 3
+    # fire on 23+ unrelated suites for a prose-only prompt edit); fires rule 2b
+    # alone. Blocking satisfaction is `make judge-regrade`.
+    judge_prompt_touched_skills: set[str] = set()
+    if "eval/harness/judge/prompt.md" in touched_paths:
+        if RUNLOGS_DIR.is_dir():
+            judge_prompt_touched_skills = {
+                p.name for p in RUNLOGS_DIR.iterdir() if p.is_dir()
+            }
+        judge_prompt_touched_skills -= exempt_suiteless
+
     # Drop DELETED skills: when a PR removes a skill entirely — its skill dir
     # AND its unit-test dir are both absent from the working tree — there is
     # nothing left to re-run, so rules 2 + 3 have no gate target. Historical
@@ -1593,6 +1657,12 @@ def main() -> int:
 
     graded_logs = graded_tests = 0
 
+    # Rule 2b blocks when the PR itself edits the judge prompt (issue #2479 PR 1):
+    # that is the only case where `make judge-regrade` is the satisfaction path.
+    # On every other PR a hash mismatch stays warn-only. Flag resolved once so
+    # the main loop and the secondary suite loop below see the same value.
+    judge_prompt_edited = "eval/harness/judge/prompt.md" in touched_paths
+
     for skill in sorted(touched_skills):
         fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
         skill_dir = RUNLOGS_DIR / skill
@@ -1641,7 +1711,13 @@ def main() -> int:
         if target is not None:
             filename, log = target
             fails += rule2_active(skill, log, filename, graded=graded)
-            rule2b_judge_prompt(skill, log, filename, graded=graded)
+            fails += rule2b_judge_prompt(
+                skill,
+                log,
+                filename,
+                graded=graded,
+                judge_prompt_edited=judge_prompt_edited,
+            )
             fails += rule3_completeness(
                 skill, log, filename, skill_dir, graded=graded
             )
@@ -1694,6 +1770,25 @@ def main() -> int:
             continue
         filename, log = latest
         rule2_fixture_touched(skill, log, filename, touched_fixture_paths)
+
+    # Judge-prompt arm (issue #2479 PR 1): fires rule 2b on every suite in
+    # `judge_prompt_touched_skills`. Empty set on a non-prompt PR → no-op. On a
+    # judge-prompt-only PR this is the gate `make judge-regrade` satisfies.
+    # Skills already in `touched_skills` ran rule 2b in the main loop above with
+    # the same `judge_prompt_edited=True` flag; skip them here to avoid a
+    # duplicate annotation (the main loop's `graded` value is the honest one).
+    for skill in sorted(judge_prompt_touched_skills - touched_skills):
+        skill_dir = RUNLOGS_DIR / skill
+        status, latest = resolve_latest_runlog(skill_dir)
+        if status in ("no_dir", "no_runlog"):
+            # No baseline to check — rule 2b has nothing to say. A skill with no
+            # committed full-skill log is already surfaced by rule 2 if the PR
+            # touches it directly; otherwise silence is correct here.
+            continue
+        filename, log = latest
+        fails += rule2b_judge_prompt(
+            skill, log, filename, judge_prompt_edited=True
+        )
 
     # Every way rule 6 can end up inert also prints a clean pass, so it reports its
     # denominator -- the same standard eval/CLAUDE.md sets for conflict_verdict_report.
