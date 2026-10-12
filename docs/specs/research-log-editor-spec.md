@@ -495,6 +495,18 @@ Scope, and why it is this narrow:
   own. A role labelling a named person — `Amos (head), Nancy (wife)` — counts on
   the kinship side.
 
+  **A household phrase followed by a roster is a claim too**, because it places
+  people in the household exactly as `household includes ⟨X⟩` does: `Household
+  shows George, Henry, and Margaret Ackerman`, `household members George, Henry
+  Ackerman, and Margaret`, `Household per sidecar: George, Henry, Margaret`. All
+  three are real `ut_search_records_027` notes that passed this gate unhedged and
+  failed the eval validator. A pasted transcription with no household phrase in
+  front of it is not affected, so the transcription paragraph below still holds.
+  The roster arm reads case under the compound arm's terms — one of three
+  conditions: the household phrase, two or more capitalised runs joined by a
+  comma or `and`, and at least two of them naming no place (`Household shows
+  Bucks Co., PA …` is not a roster). A roster written in lower case is missed.
+
   **Capitalisation is never the test.** The first version asked whether a
   capital sat within 24 characters of the noun, which is not a test for a name
   and failed in both directions at once: it missed `amos whitfield in household
@@ -510,7 +522,7 @@ Scope, and why it is this narrow:
 
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
-  than trusting this sentence: it takes each of the eighteen out in turn and
+  than trusting this sentence: it takes each of the twenty-six out in turn and
   exits non-zero on any the suite does not notice. Two rounds of this card
   shipped a mechanism no test exercised, each time because a note written for
   one clause incidentally satisfied a neighbour, so reading the tests does not
@@ -550,6 +562,12 @@ Scope, and why it is this narrow:
   it "relationship-to-head column"; the hedge patterns accepted only spaces, so
   a caller who hedged in the exact words they were handed was refused a second
   time with no wording in the message that would clear it.
+- **"No relationships stated" and "does not record … relationship" are hedges**,
+  as they are in the eval validator's marker list. The gate must not refuse a
+  note the grader passes: a `ut_search_records_027` note saying both was graded
+  compliant on every dimension.
+- **"pre-1880 census" binds as a census before 1880.** Read as 1880, which has
+  the column, it skipped the whole note whatever else the note asserted.
 
 Measured over the 4,322 distinct `notes` arguments in the committed run logs
 (2026-10-04; re-derive with

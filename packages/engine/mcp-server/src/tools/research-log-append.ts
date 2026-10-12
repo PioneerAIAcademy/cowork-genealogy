@@ -371,16 +371,20 @@ function relationshipColumnFrom(qualifier: string): number | null {
 
 export function censusMentions(notes: string): CensusMention[] {
   const out: CensusMention[] = [];
-  const push = (years: string, qualifier: string, post: string) => {
+  const push = (years: string, qualifier: string, post: string, before = false) => {
     const from = relationshipColumnFrom(`${qualifier} ${post}`);
     if (from === null || Number.isNaN(from)) return;
     for (const y of years.match(new RegExp(CENSUS_YEAR, "g")) ?? []) {
-      out.push({ year: Number(y), columnFrom: from });
+      out.push({ year: Number(y) - (before ? 1 : 0), columnFrom: from });
     }
   };
   for (const m of notes.matchAll(CENSUS_BEFORE)) {
     const post = notes.slice(m.index + m[0].length, m.index + m[0].length + 24);
-    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "");
+    // "pre-1880 census" names a census BEFORE 1880, so it binds as 1879. Read as
+    // 1880 it skipped the whole note: a ut_search_records_027 roster saying
+    // "(pre-1880 census)" passed whatever else it asserted.
+    const before = /\b(?:pre[-\s]?|before\s+)$/i.test(notes.slice(Math.max(0, m.index - 7), m.index));
+    push(m[1], m[2] ?? "", /^\s*(?:of|for)\s+([A-Za-z&\s]{0,20})/.exec(post)?.[1] ?? "", before);
   }
   for (const m of notes.matchAll(CENSUS_AFTER)) push(m[2], m[1] ?? "", "");
   return out;
@@ -613,6 +617,43 @@ function hasHouseholdCompound(notes: string): boolean {
 }
 
 /**
+ * The ROSTER shape: a household phrase followed directly by a list of people --
+ * "Household shows George, Henry, and Margaret Ackerman only", "record read
+ * shows household members George, Henry Ackerman, and Margaret", "Household per
+ * sidecar: George, Henry, Margaret Ackerman". Real `ut_search_records_027` notes
+ * (2026-10-08) that this gate let through and the eval validator failed. They
+ * place people in the household exactly as "Household lists George, Henry"
+ * does, which `HOUSEHOLD_CLAIM` already refuses; only the wording differs
+ * (`shows`, `members`, `per ⟨source⟩:`). A pasted transcription with no
+ * household phrase before it is untouched, as the spec's §8.2 transcription
+ * paragraph requires.
+ *
+ * Like the compound arm this one reads case, and as there it is ONE of three
+ * conditions, never the whole test: the household phrase, a list of at least
+ * two capitalised runs joined by a comma or "and", and at least two of those
+ * runs naming no place -- so "Household shows Bucks Co., PA as residence" is
+ * not a roster. "view household members and marriage indicator" (a plan the
+ * bare noun once refused) and "PA household: no Whitfield found" (a nil) have
+ * no list after the phrase. A roster written in lower case is missed, the
+ * same limit the compound arm accepts.
+ */
+const ROSTER_NAME = String.raw`[A-Z][\w.'’-]*(?:[ ][A-Z][\w.'’-]*){0,2}`;
+const HOUSEHOLD_ROSTER_G = new RegExp(
+  String.raw`\b[Hh]ousehold\b(?:[ ]members?)?(?:[ ](?:shows?|showing|lists?|listing|includes?|including|contains?|per[ ][\w.-]+))?[ ]?:?[ ]+(${ROSTER_NAME}(?:(?:[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+)${ROSTER_NAME})+)`,
+  "g",
+);
+
+function hasHouseholdRoster(sentence: string): boolean {
+  for (const m of sentence.matchAll(HOUSEHOLD_ROSTER_G)) {
+    const people = m[1]
+      .split(/[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+/)
+      .filter((run) => run.split(" ").every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\.$/, ""))));
+    if (people.length >= 2) return true;
+  }
+  return false;
+}
+
+/**
  * A role LABELLING a named person is a structural claim whatever else the
  * note does: "Amos (head), Nancy (wife), Thomas (son); dwelling 112" states a
  * family in full and names no relation in prose, so neither the household arm
@@ -715,7 +756,7 @@ function assertsHousehold(notes: string): boolean {
   if (CORESIDENCE_CLAIM.test(notes)) return true;
   return notes
     .split(/[.;]\s/)
-    .some((sentence) => HOUSEHOLD_CLAIM.test(sentence) || hasHouseholdCompound(sentence));
+    .some((sentence) => HOUSEHOLD_CLAIM.test(sentence) || hasHouseholdCompound(sentence) || hasHouseholdRoster(sentence));
 }
 
 export function requirePre1880CensusHedge(
@@ -824,6 +865,11 @@ export function requirePre1880CensusHedge(
     /\bpresum\w*/.test(text) ||
     NO_RELATIONSHIP_COLUMN.test(text) ||
     RELATIONSHIP_COLUMN_DENIED.test(text) ||
+    // The eval validator's `_INFERENCE_MARKERS` accepts these two (a compliant
+    // ut_search_records_027 note used both); the gate must not refuse what the
+    // grader passes, or the re-sent note is graded on wording the gate forced.
+    /\bno\s+relationships?\s+(?:is\s+|are\s+|was\s+|were\s+)?(?:stated|given|recorded|listed)\b/.test(text) ||
+    /\b(?:does|did)(?:\s+not|n['’]t)\s+record\b[^.]{0,60}\brelationship/.test(text) ||
     INDEXED_ROLE_HEDGES.some((re) => re.test(text));
   if (hedged) return;
 

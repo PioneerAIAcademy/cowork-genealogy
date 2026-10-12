@@ -23,6 +23,8 @@
   "mcp_fixtures": [
     "wiki-read-united-states-census",
     "record-search-ackerman-1860-spouse-absent",
+    "record-search-ackerman-1860-catherine-principal-nil",
+    "record-search-ackerman-1860-catch-all",
     "rank-search-matches-ackerman-1860-spouse-absent",
     "record-read-ackerman-1860-m7qz-8kd",
     "catalog-search-empty",

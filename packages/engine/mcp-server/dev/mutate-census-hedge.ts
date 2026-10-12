@@ -76,6 +76,14 @@ const MUTATIONS: readonly (readonly [string, string, string])[] = [
   ["kinship: report verb", "(?:(?:is|was|are|were)\\s+(?:listed|recorded|shown|given|named)\\s+as\\s+)?", ""],
   ["kinship: possessive carve-out", "(?<!\\b(?:his|her|their)\\s)", ""],
   ["hyphen in the hedge", "relationship[\\s-]+(?:to[\\s-]+head[\\s-]+)?column", "relationship\\s+(?:to\\s+head\\s+)?column"],
+  ["roster arm", " || hasHouseholdRoster(sentence)", ""],
+  ["roster place guard", '.filter((run) => run.split(" ").every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\\.$/, ""))));', ";"],
+  ["roster: members", "\\b[Hh]ousehold\\b(?:[ ]members?)?", "\\b[Hh]ousehold\\b"],
+  ["roster: shows", "(?:shows?|showing|lists?|", "(?:lists?|"],
+  ["roster: per source", "|per[ ][\\w.-]+))?[ ]?:?", "))?[ ]?:?"],
+  ["hedge: no relationships stated", "/\\bno\\s+relationships?\\s+(?:is\\s+|are\\s+|was\\s+|were\\s+)?(?:stated|given|recorded|listed)\\b/.test(text) ||", ""],
+  ["hedge: does not record a relationship", "/\\b(?:does|did)(?:\\s+not|n['’]t)\\s+record\\b[^.]{0,60}\\brelationship/.test(text) ||", ""],
+  ["pre- binding", "Number(y) - (before ? 1 : 0)", "Number(y)"],
 ];
 
 /** `{ passed, failed }` from one vitest run, or null if none was parsed. */
