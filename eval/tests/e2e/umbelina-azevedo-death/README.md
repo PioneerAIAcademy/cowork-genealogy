@@ -28,17 +28,18 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 4, `hint-samples.csv` row 104,
-flags `adds_birth,adds_death`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Brasil, Rio de Janeiro, Registro Civil, 1804-2013", a death entry for Umbelina Azevedo Da Silva (born 1879) who died 14 November 1910, registered in the city of Rio de Janeiro; the register image is a 1910–1911 Rio de Janeiro death book.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the November 1910 death, plus a `required` finding that the report documents
-the rejection.
+**Resolved: false match, no substitute found.** The hint — "Brasil, Rio de Janeiro, Registro Civil, 1804-2013", death entry for Umbelina Azevedo Da Silva, 14 November 1910, city of Rio de Janeiro (`ark:/61903/1:1:7975-85ZM`) — is a different woman. `expected-findings.json` is now a `"polarity": "avoid"` guard against that death (f1) plus a required finding that the report documents the rejection and the unanswered question (f2).
 
-A weak candidate that the tree itself contradicts. The only overlap is the given name and one surname: the index gives just "Umbelina Azevedo Da Silva", a computed birth year and the date, with no spouse or parents. Against it, the tree has three of her children born after November 1910 — Maria Glória in 1912 and Florita Umbelina in 1915, both in Espírito Santo, and Maura Umbelina in 1918 — so a mother dead in 1910 is impossible unless all three years are wrong. Those years most likely come from ages on the children's own 1978–1982 death entries, which can be off by a year or two, but not by five to eight. The tree also puts the children born 1909–1915 in Espírito Santo, not the city of Rio. The children's death entries the tree cites name her as Umbelina Maria de Azevedo or Umbelina Maria Pariz de Azevedo (e.g. `ark:/61903/1:1:79FM-TFN2`), never with "da Silva"; none of them is a re-index of this entry.
+The indexes alone decide it. The hint's index gives only the name, a birth year of 1879 computed from an age, and the date; it names no spouse or parents. Against it, the indexed death entries of three of Umbelina Maria Azevedo's children each name her as their mother and give birth years after November 1910:
 
-The `adds_birth` flag is the index's 1879, a year computed from an age at death; it is no evidence on its own. The check that would settle it is the death act on the register image: a Rio civil death act of 1910 normally names the deceased's spouse and parents. A husband named Francisco Antônio Pariz would make this her and the children's birth years wrong; any other husband or a single woman would make this a different Umbelina.
+- Maria Glória Ferreira, d. 17 May 1982, Rio de Janeiro, born 1912; parents Francisco Antonio Paris and Umbelina Maria de Azevedo (`ark:/61903/1:1:794X-QD3Z`).
+- Florita Umbelina dos Santos, d. 2 July 1980, Rio de Janeiro, born 1915; parents Antonio Francisco Pariz and Umbelina Maria Pariz de Azevedo (`ark:/61903/1:1:79FM-TFZM`).
+- Maura Umbelina Ferreira, death registered 19 December 1978, Duque de Caxias, born 1918; parents Francisco Antonio Parez and Umbelina Maria de Azevedo (`ark:/61903/1:1:77F3-D8T2`).
+
+Those birth years come from ages at death and can be off by a year or two, but three independent entries off by two to eight years each, all in the same direction, is not credible. None of the children's entries names her "da Silva". The hint is attached to no tree person (`source_attachments` returns it unattached), and its `1:1:` id is not among the tree's cited sources, so it is not a re-index of anything the person already has.
+
+**The register image did not decide it, and nothing from it is relied on.** An AI transcription (`dev/try-image-transcribe.ts`) of the page (`ark:/61903/3:1:S3HY-67B9-75X`) was attempted. The calibration check could not be run: record searches of collection 1582573 found no index entry for either of the page's two other acts (a Paulina Souza and an infant Vito, both 1910), so the page has fewer than two other indexed entries we could find and the reading is **unlicensed**. `image_basis` is off.
+
+**Searched and empty for a real substitute:** "Brasil, Rio de Janeiro, Registro Civil, 1804-2013" (collection 1582573) for Umbelina Azevedo / Pariz / Pariz de Azevedo, 1911-1990, and by spouse Francisco Pariz — only the children's entries came back; "Brazil, Espirito Santo, Registro Civil, 1850-2020" (collection 4473668) for Umbelina Azevedo, Umbelina Pariz and every Pariz entry — nothing for her. When and where she died remains unanswered.
+
+Retrieval was tool-assisted (`packages/engine/mcp-server/dev/try-record-read.ts`, `try-record-search.ts`, `try-source-attachments.ts`, `try-image-transcribe.ts` against live FamilySearch); the identity judgement was the genealogist's.
