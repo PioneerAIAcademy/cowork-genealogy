@@ -1,5 +1,8 @@
 # Genealogy Research
 
+> **Alpha.** This project is in alpha testing. Expect bugs and rough edges, and
+> expect it to change often.
+
 Family history research with Claude, using records that are online.
 
 It is for anyone from a first-time family historian to a certified
