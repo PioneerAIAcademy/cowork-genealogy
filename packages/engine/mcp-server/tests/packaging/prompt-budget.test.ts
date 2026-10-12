@@ -1,28 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdtempSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { tmpdir } from "node:os";
-import { allToolSchemas } from "../../src/tool-schemas.js";
 
 // Prompt-budget lint. Reports the size delta a PR introduces to every SKILL.md,
-// plugin-agent body, CLAUDE.md, and MCP tool description — the four prompt
-// shapes billed on every run of the thing that loads them — so reviewers see
-// growth at review time.
+// plugin-agent body and CLAUDE.md — the prompt shapes billed on every run of
+// the thing that loads them — so reviewers see growth at review time.
 //
-// Settled by the lead 2026-07-31, amended 2026-09-24 (issue #976, #2879):
-//   - The report is warn-only; the baseline file must be current (issue #2879).
-//   - Delta-only. No absolute ceiling per file (lead, 2026-09-27).
-//   - Prose bytes for prompt files, characters for tool descriptions.
-//
-// A committed prompt-sizes.json records the current sizes at HEAD. A staleness
-// test fails when the file disagrees. Regenerate with:
-//   UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts
-//
-// Delta comparison requires the base branch to be fetched. In CI,
-// engine-tests.yml fetches origin/<base-ref> before running vitest. Locally,
-// `origin/main` may or may not be available — the test degrades gracefully to
-// reporting absolute sizes only, no deltas.
+// Warn-only and delta-only: no ceiling, no threshold (issue #976). The "before"
+// side is read from the base branch with `git ls-tree`, so nothing is committed
+// and nothing goes stale. In CI, engine-tests.yml fetches origin/<base-ref>
+// before vitest runs. Locally, without `origin/main`, the report falls back to
+// absolute sizes.
 
 const SKILLS_PATH = "packages/engine/plugin/skills";
 const AGENTS_PATH = "packages/engine/plugin/agents";
@@ -37,11 +26,6 @@ const ROOT_PROMPT_PATH = "CLAUDE.md";
  * (e.g. `eval/CLAUDE.md`, which no session loads wholesale) stays out.
  */
 const TRACKED = /(^|\/)(skills\/[^/]+\/SKILL\.md|agents\/[^/]+\.md)$|^CLAUDE\.md$/;
-
-const REGENERATE_CMD =
-  "UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts";
-
-const BASELINE_URL = new URL("./prompt-sizes.json", import.meta.url);
 
 // ---------------------------------------------------------------------------
 // Reading prompt-file sizes out of git
@@ -107,8 +91,8 @@ export function parseLsTree(stdout: string): Map<string, number> {
 }
 
 /**
- * Working-tree prompt sizes, so regenerating the baseline sees an edit before
- * it is committed. CRLF is counted as LF, which equals git's blob length under
+ * Working-tree prompt sizes, so a local run sees an edit before it is
+ * committed. CRLF is counted as LF, which equals git's blob length under
  * `* text=auto eol=lf` — the same number `lsTree` would report once committed.
  */
 function workingTreeSizes(): Map<string, number> | null {
@@ -134,122 +118,8 @@ function workingTreeSizes(): Map<string, number> | null {
 }
 
 // ---------------------------------------------------------------------------
-// Tool-description sizes
+// Base branch
 // ---------------------------------------------------------------------------
-
-/**
- * The prompt cost of one MCP tool entry: tool-level description plus the
- * serialized inputSchema. Characters, not bytes — the schema is an in-memory
- * object that never hits disk in isolation.
- */
-export function computeToolSize(schema: {
-  description?: string;
-  inputSchema?: unknown;
-}): number {
-  return (
-    (schema.description ?? "").length +
-    JSON.stringify(schema.inputSchema ?? {}).length
-  );
-}
-
-function computeToolSizes(): Map<string, number> {
-  const sizes = new Map<string, number>();
-  for (const schema of allToolSchemas) {
-    sizes.set(`tool:${schema.name}`, computeToolSize(schema));
-  }
-  return sizes;
-}
-
-// ---------------------------------------------------------------------------
-// Baseline I/O
-// ---------------------------------------------------------------------------
-
-interface Baseline {
-  meta: { prompt_unit: string; tool_unit: string; regenerate: string };
-  prompts: Record<string, number>;
-  tools: Record<string, number>;
-}
-
-/**
- * Read a prompt-sizes.json baseline. Returns null on missing or corrupt file.
- */
-export function readBaseline(path: string | URL): Baseline | null {
-  try {
-    const raw = readFileSync(path, "utf8");
-    const parsed = JSON.parse(raw);
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      typeof parsed.prompts !== "object" ||
-      typeof parsed.tools !== "object"
-    ) {
-      return null;
-    }
-    return parsed as Baseline;
-  } catch {
-    return null;
-  }
-}
-
-function buildBaseline(
-  promptSizes: Map<string, number>,
-  toolSizes: Map<string, number>,
-): Baseline {
-  const prompts: Record<string, number> = {};
-  for (const [k, v] of [...promptSizes.entries()].sort(([a], [b]) =>
-    a.localeCompare(b),
-  )) {
-    prompts[k] = v;
-  }
-  const tools: Record<string, number> = {};
-  for (const [k, v] of [...toolSizes.entries()].sort(([a], [b]) =>
-    a.localeCompare(b),
-  )) {
-    tools[k] = v;
-  }
-  return {
-    meta: {
-      prompt_unit: "bytes",
-      tool_unit: "chars",
-      regenerate: REGENERATE_CMD,
-    },
-    prompts,
-    tools,
-  };
-}
-
-function serializeBaseline(b: Baseline): string {
-  return JSON.stringify(b, null, 2) + "\n";
-}
-
-/**
- * Read the baseline from the base branch via `git show`. Returns null when
- * the base branch is unavailable or the file doesn't exist on that branch.
- */
-function readBaseBaseline(baseRef: string): Baseline | null {
-  try {
-    const raw = execFileSync(
-      "git",
-      [
-        "show",
-        `origin/${baseRef}:packages/engine/mcp-server/tests/packaging/prompt-sizes.json`,
-      ],
-      { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] },
-    );
-    const parsed = JSON.parse(raw);
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      typeof parsed.prompts !== "object" ||
-      typeof parsed.tools !== "object"
-    ) {
-      return null;
-    }
-    return parsed as Baseline;
-  } catch {
-    return null;
-  }
-}
 
 /** GITHUB_BASE_REF is set by GitHub Actions for pull_request events. */
 const REQUESTED_BASE_REF = process.env.GITHUB_BASE_REF || "main";
@@ -272,7 +142,6 @@ function baseRefAvailable(): string | null {
 
 /** Display path: `packages/engine/plugin/skills/x/SKILL.md` → `skills/x/SKILL.md`. */
 function short(repoRelPath: string): string {
-  if (repoRelPath.startsWith("tool:")) return repoRelPath;
   return repoRelPath.replace("packages/engine/plugin/", "");
 }
 
@@ -292,15 +161,6 @@ export function formatDelta(bytes: number): string {
   const sign = bytes < 0 ? "-" : "+";
   const abs = Math.abs(bytes);
   return abs < 1024 ? `${sign}${abs} B` : `${sign}${formatKB(abs)}`;
-}
-
-function formatChars(n: number): string {
-  return `${n} chars`;
-}
-
-function formatCharDelta(n: number): string {
-  const sign = n < 0 ? "-" : "+";
-  return `${sign}${Math.abs(n)} chars`;
 }
 
 // ---------------------------------------------------------------------------
@@ -345,59 +205,22 @@ function promptLabel(d: Delta): string {
   return `${name}: ${formatKB(d.before)} → ${formatKB(d.after)} (${formatDelta(d.delta)})`;
 }
 
-function toolLabel(d: Delta): string {
-  const name = short(d.path);
-  if (d.before === null) return `${name}: ${formatChars(d.after!)} (new tool)`;
-  if (d.after === null) {
-    return `${name}: ${formatChars(d.before)} → deleted (${formatCharDelta(d.delta)})`;
-  }
-  return `${name}: ${formatChars(d.before)} → ${formatChars(d.after)} (${formatCharDelta(d.delta)})`;
-}
-
 // ---------------------------------------------------------------------------
 // Build the report
 // ---------------------------------------------------------------------------
 
 const headSizes = workingTreeSizes() ?? new Map<string, number>();
-const headToolSizes = computeToolSizes();
 
 const baseRef = baseRefAvailable();
 
-// Base-branch baseline (via git show) — the primary source for the "before"
-// side of delta reporting for all four shapes.
-const baseBaseline = baseRef === null ? null : readBaseBaseline(baseRef);
-
-// Prompt deltas: prefer the baseline file; fall back to git ls-tree on the
-// base branch so prompt deltas still report on the first PR before
-// prompt-sizes.json exists on main.
 const basePromptSizes: Map<string, number> | null = (() => {
-  if (baseBaseline !== null)
-    return new Map(Object.entries(baseBaseline.prompts));
   if (baseRef === null) return null;
   const tree = lsTree(`origin/${baseRef}`);
   return tree === null ? null : parseLsTree(tree);
 })();
 
-// Tool deltas: only available when the baseline exists on the base branch.
-const baseToolSizes: Map<string, number> | null =
-  baseBaseline === null ? null : new Map(Object.entries(baseBaseline.tools));
-
 const promptDeltas =
   basePromptSizes === null ? [] : computeDeltas(basePromptSizes, headSizes);
-const toolDeltas =
-  baseToolSizes === null ? [] : computeDeltas(baseToolSizes, headToolSizes);
-
-// ---------------------------------------------------------------------------
-// Regeneration
-// ---------------------------------------------------------------------------
-
-if (process.env.UPDATE_PROMPT_SIZES) {
-  const baseline = buildBaseline(headSizes, headToolSizes);
-  writeFileSync(BASELINE_URL, serializeBaseline(baseline));
-  process.stdout.write(
-    `\nprompt-sizes.json regenerated (${headSizes.size} prompts, ${headToolSizes.size} tools)\n\n`,
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Report
@@ -416,7 +239,7 @@ if (process.env.UPDATE_PROMPT_SIZES) {
  */
 function emitReport(): void {
   const out: string[] = [];
-  if (basePromptSizes === null && baseToolSizes === null) {
+  if (basePromptSizes === null) {
     // A silent degradation to absolute-only would hide a broken fetch step.
     // Workflow commands are parsed only at the start of a line.
     if (process.env.CI) {
@@ -428,19 +251,10 @@ function emitReport(): void {
     }
     for (const [path, size] of headSizes)
       out.push(`  ${short(path)}: ${formatKB(size)}`);
-    for (const [name, size] of headToolSizes)
-      out.push(`  ${name}: ${formatChars(size)}`);
-  } else if (promptDeltas.length === 0 && toolDeltas.length === 0) {
+  } else if (promptDeltas.length === 0) {
     out.push("  no prompt-size changes in this changeset");
   } else {
-    if (promptDeltas.length > 0) {
-      out.push("  Prompt files:");
-      for (const d of promptDeltas) out.push(`    ${promptLabel(d)}`);
-    }
-    if (toolDeltas.length > 0) {
-      out.push("  Tool descriptions:");
-      for (const d of toolDeltas) out.push(`    ${toolLabel(d)}`);
-    }
+    for (const d of promptDeltas) out.push(`  ${promptLabel(d)}`);
   }
   process.stdout.write(`\nprompt-budget (warn-only)\n${out.join("\n")}\n\n`);
 }
@@ -462,11 +276,7 @@ describe("prompt-budget (warn-only)", () => {
     if (basePromptSizes !== null) expect(basePromptSizes.size).toBeGreaterThan(0);
   });
 
-  it("discovers tools to track", () => {
-    expect(headToolSizes.size).toBeGreaterThan(0);
-  });
-
-  if (basePromptSizes === null && baseToolSizes === null) {
+  if (basePromptSizes === null) {
     // Local dev without origin/main fetched, or a CI run whose fetch step
     // failed. Report absolute sizes as a fallback — still useful for
     // orientation.
@@ -475,12 +285,7 @@ describe("prompt-budget (warn-only)", () => {
         // Informational only — always passes.
       });
     }
-    for (const [name, size] of headToolSizes) {
-      it(`${name}: ${formatChars(size)}`, () => {
-        // Informational only — always passes.
-      });
-    }
-  } else if (promptDeltas.length === 0 && toolDeltas.length === 0) {
+  } else if (promptDeltas.length === 0) {
     it("no prompt-size changes in this changeset", () => {
       // Nothing grew or shrank — nothing to report.
     });
@@ -490,65 +295,11 @@ describe("prompt-budget (warn-only)", () => {
         // Warn-only: the name carries the signal; the test always passes.
       });
     }
-    for (const d of toolDeltas) {
-      it(toolLabel(d), () => {
-        // Warn-only: the name carries the signal; the test always passes.
-      });
-    }
   }
 });
 
 // ---------------------------------------------------------------------------
-// Staleness — this block DOES assert. prompt-sizes.json must match HEAD.
-// ---------------------------------------------------------------------------
-
-describe("prompt-sizes.json is current", () => {
-  it("matches the sizes computed at HEAD", () => {
-    const expected = buildBaseline(headSizes, headToolSizes);
-    const actual = readBaseline(BASELINE_URL);
-
-    if (actual === null) {
-      expect.fail(
-        `prompt-sizes.json does not exist or is corrupt. Regenerate with:\n  ${REGENERATE_CMD}`,
-      );
-      return;
-    }
-
-    const diffs: string[] = [];
-    for (const key of new Set([
-      ...Object.keys(expected.prompts),
-      ...Object.keys(actual.prompts),
-    ])) {
-      if (expected.prompts[key] !== actual.prompts[key]) {
-        diffs.push(
-          `  ${short(key)}: baseline ${actual.prompts[key] ?? "missing"} → HEAD ${expected.prompts[key] ?? "deleted"}`,
-        );
-      }
-    }
-    for (const key of new Set([
-      ...Object.keys(expected.tools),
-      ...Object.keys(actual.tools),
-    ])) {
-      if (expected.tools[key] !== actual.tools[key]) {
-        diffs.push(
-          `  ${key}: baseline ${actual.tools[key] ?? "missing"} → HEAD ${expected.tools[key] ?? "deleted"}`,
-        );
-      }
-    }
-
-    if (diffs.length > 0) {
-      expect.fail(
-        `prompt-sizes.json is stale.\n${diffs.join("\n")}\n` +
-          `Regenerate with:\n  ${REGENERATE_CMD}`,
-      );
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Unit tests — these DO assert, and are the only part of this file that can
-// fail besides the staleness test above. They cover the arithmetic, formatting,
-// and baseline I/O.
+// Unit tests — these DO assert. They cover the arithmetic and formatting.
 // ---------------------------------------------------------------------------
 
 describe("prompt-budget (unit)", () => {
@@ -614,65 +365,5 @@ describe("prompt-budget (unit)", () => {
       "grew/SKILL.md",
       "shrank/SKILL.md",
     ]);
-  });
-
-  it("computeToolSize sums description length and stringified inputSchema length", () => {
-    const schema = {
-      description: "Search for a person",
-      inputSchema: {
-        type: "object",
-        properties: { name: { type: "string" } },
-        required: ["name"],
-      },
-    };
-    const expected =
-      "Search for a person".length +
-      JSON.stringify(schema.inputSchema).length;
-    expect(computeToolSize(schema)).toBe(expected);
-  });
-
-  it("computeToolSize handles missing description and inputSchema", () => {
-    expect(computeToolSize({})).toBe(JSON.stringify({}).length);
-    expect(computeToolSize({ description: "hello" })).toBe(
-      5 + JSON.stringify({}).length,
-    );
-  });
-
-  it("readBaseline returns null for a missing file", () => {
-    expect(readBaseline("/nonexistent/prompt-sizes.json")).toBeNull();
-  });
-
-  it("readBaseline returns null for corrupt JSON", () => {
-    const dir = mkdtempSync(join(tmpdir(), "prompt-budget-"));
-    try {
-      writeFileSync(join(dir, "bad.json"), "{ not json");
-      expect(readBaseline(join(dir, "bad.json"))).toBeNull();
-
-      writeFileSync(
-        join(dir, "wrong.json"),
-        JSON.stringify({ prompts: "not-an-object", tools: {} }),
-      );
-      expect(readBaseline(join(dir, "wrong.json"))).toBeNull();
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
-  it("computeDeltas reports added and removed tools", () => {
-    const before = new Map([["tool:old_tool", 200]]);
-    const after = new Map([["tool:new_tool", 150]]);
-    const got = computeDeltas(before, after);
-    expect(got).toContainEqual({
-      path: "tool:new_tool",
-      before: null,
-      after: 150,
-      delta: 150,
-    });
-    expect(got).toContainEqual({
-      path: "tool:old_tool",
-      before: 200,
-      after: null,
-      delta: -200,
-    });
   });
 });

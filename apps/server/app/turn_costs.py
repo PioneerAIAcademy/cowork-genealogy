@@ -22,6 +22,8 @@ class TurnCostIn(BaseModel):
     model: str | None = Field(default=None, max_length=100)
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
+    build: str | None = Field(default=None, max_length=64)
+    continuations: int | None = Field(default=None, ge=0)
 
 
 @router.post("/api/turn-cost")

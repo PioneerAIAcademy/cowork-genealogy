@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Inocente Lopez died on 13 January 1906; his death was registered in the civil register of Suchitoto, Cuscatlán, El Salvador, which names his mother as Santos Lopez.",
+      "details": {
+        "subject_person": "Inocente Lopez (L8GW-R6Y)",
+        "fact_type": "Death",
+        "date": "13 January 1906",
+        "place": "Suchitoto, Cuscatlán, El Salvador"
+      },
+      "supporting_sources": [
+        "El Salvador, Civil Registration, 1704-2001 — death entry for Inocente Lopez and Santos Lopez, 13 Jan 1906"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "The mother of Inocente Lopez was Santos Lopez, named on his 1906 Suchitoto death registration.",
+      "details": {
+        "subject_person": "Inocente Lopez (L8GW-R6Y)",
+        "relation": "mother",
+        "target_person": {
+          "name": "Santos Lopez"
+        }
+      },
+      "supporting_sources": [
+        "El Salvador, Civil Registration, 1704-2001 — death entry for Inocente Lopez and Santos Lopez, 13 Jan 1906"
+      ],
+      "required": true
+    }
+  ]
+}

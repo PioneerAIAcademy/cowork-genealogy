@@ -279,9 +279,7 @@ new tests make wrong.
   fails `test_calibrate_judge_does_not_import_agent_sdk` with "No module named 'e2e'"
   (its subprocess inherits the cwd), an artifact that reads exactly like a regression.
   An earlier draft stated this backwards.
-- `npx vitest run tests/packaging` in `packages/engine/mcp-server` — `prompt-budget` will
-  red until `prompt-sizes.json` is regenerated, because SKILL.md's byte count changes.
-  **Regenerate with `UPDATE_PROMPT_SIZES=1`, never by hand.**
+- `npx vitest run tests/packaging` in `packages/engine/mcp-server`.
 - `~/.claude/projects/-home-praise-cowork-genealogy/mutation-check.sh` with the suite that
   GUARDS these files (the harness suite, not the engine one). **It lives outside the repo**,
   so a `git grep` for it returns nothing — review flagged it as non-existent on exactly that
