@@ -83,5 +83,5 @@ overhead in front of it.
 After the user applies edits, the next step is
 `make gate-skill SKILL=$ARGUMENTS TEST=<the mined test's id>` — and then a
 full `make eval-skill SKILL=$ARGUMENTS` plus a grading pass, because the
-`check-runlogs` CI gate requires the latest run log to be *active* against
-the edited `SKILL.md` and fully annotated.
+`check-runlogs` CI gate requires the run log the PR adds to be *active*
+against the edited `SKILL.md` and fully annotated.

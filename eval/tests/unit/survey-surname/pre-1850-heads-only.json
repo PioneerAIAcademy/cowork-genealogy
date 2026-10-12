@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_survey_surname_d2",
+    "skill": "survey-surname",
+    "name": "Single pre-1850 year where only heads of household are named",
+    "type": "positive",
+    "description": "A single-year survey of the 1820 Virginia census. Pre-1850 censuses name only the head of household, so each stub is its own household. The agent should handle this correctly and not try to find other household members.",
+    "tags": ["survey", "pre-1850", "single-year", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Find all Dixon families in the Virginia 1820 census.\n\nsurname: Dixon\nplace: Virginia\nyearSpan: 1820-1820\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-virginia",
+    "record-search-dixon-virginia-1820-census"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged.",
+    "Should call place_search for Virginia, then record_search for 1820 only.",
+    "totalMatches is 3 (under 600 threshold), so the agent should fetch all results on one page.",
+    "Pre-1850 censuses name only the head of household. Each result stub is one household. The agent should NOT try to find other household members or claim information about them that is not in the stubs.",
+    "Should log the search with research_log_append and write a markdown table with Write.",
+    "The table should have one section for 1820 with 3 households (William Dixon in Rockingham, James Dixon in Augusta, Thomas Dixon in Fairfax).",
+    "The fixture returns hasMore: false, so all results are on that single page.",
+    "The agent's return should end with the summary_for_user block."
+  ]
+}

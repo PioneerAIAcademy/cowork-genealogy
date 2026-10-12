@@ -6,12 +6,23 @@
 //   Authorization: Bearer <token>   → the principal (http-server.ts, never LOCAL)
 //   X-Genealogy-Project-Id: <id>    → a PgS3ProjectStore for that project, bound
 //                                     for the request through runWithProjectStore
+// plus an optional claim-fence pair (U6), both or neither (400 otherwise):
+//   X-Genealogy-Turn-Id: <turn>     → that store commits a write only while
+//   X-Genealogy-Claim-Epoch: <n>      `turns.claim_epoch` is still n, so an
+//                                     attempt a newer claim superseded writes nothing
 // The process store is an `unboundProjectStore`, so a code path that runs
 // outside a request binding fails instead of reaching the file backend. The
 // Pg/S3 configuration is the one process-wide thing, read from the
 // GENEALOGY_* environment (store/pg-s3-env.ts; the project id is the header,
-// never a variable); a missing variable is one stderr line and exit 2 before
-// listen.
+// never a variable); a missing variable, a half-set S3 key pair or an invalid
+// GENEALOGY_S3_FORCE_PATH_STYLE is one stderr line and exit 2 before listen.
+// With neither S3 key set the AWS SDK default chain supplies credentials
+// (environment, ~/.aws shared config/SSO, web identity, then instance
+// metadata); one stderr line names the mode, never a key. A set debug hold
+// (debug-holds.ts) is one more stderr line, so a forgotten one shows in the
+// logs; with neither set, nothing is printed. Nothing connects
+// before listen: `GET /healthz` probes Postgres (schema included) and S3 per
+// request and answers 503 while either is unreachable, never exiting.
 import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
@@ -20,6 +31,7 @@ import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { configFromEnv } from "./hosted-config-env.js";
+import { debugHoldStartupLine } from "./debug-holds.js";
 
 const { values } = parseArgs({
   options: {
@@ -39,6 +51,19 @@ if (storeEnv.missing.length > 0) {
   process.stderr.write(`http: required environment not set: ${storeEnv.missing.join(", ")}\n`);
   process.exit(2);
 }
+if (storeEnv.invalid.length > 0) {
+  process.stderr.write(
+    `http: environment set to an invalid value (expected true or false): ${storeEnv.invalid.join(", ")}\n`,
+  );
+  process.exit(2);
+}
+const s3Options = storeEnv.backendOptions.s3;
+process.stderr.write(
+  `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
+    `region ${s3Options.region}; endpoint ${s3Options.endpoint ?? "AWS default"}\n`,
+);
+const holdLine = debugHoldStartupLine(process.env);
+if (holdLine) process.stderr.write(holdLine);
 
 // One pool and one S3 client for the process; a store per request over them.
 const backend = createPgS3Backend(storeEnv.backendOptions);
@@ -58,8 +83,9 @@ const server = await startHttpServer({
   host: values.host as string,
   port,
   baseConfig,
-  bindStore: (projectId, signal) =>
-    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal }),
+  bindStore: (projectId, signal, fence) =>
+    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal, fence }),
+  checkReady: () => backend.checkReady(),
 });
 
 const address = server.address();

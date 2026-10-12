@@ -253,6 +253,36 @@ def test_main_thread_extraction_append_is_denied_and_recorded(tmp_path, monkeypa
     assert sink["sub"] == {}
 
 
+def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
+    """The credential-read arm fires unconditionally — not behind --deny-shell or
+    --deny-project-reads — because the PR #2990 leak was a default run. Deleting
+    the `credential_read_denied(...)` call in pretool_hook must red this test."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    sink: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            ("cred", {"tool_name": "Read", "tool_input": {"file_path": "/home/user/.familysearch-mcp/tokens.json"}}),
+            ("plain", {"tool_name": "Read", "tool_input": {"file_path": str(tmp_path / "research.json")}}),
+        ]
+        return _HookDrivingAgent(
+            hook, inputs, [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()], sink
+        )
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy")))
+    assert sink["cred"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "credentials directory" in sink["cred"]["hookSpecificOutput"]["permissionDecisionReason"]
+    assert sink["plain"] == {}
+
+
 def _result(session="S1"):
     return ResultMessage(
         subtype="result",
@@ -721,3 +751,62 @@ def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monk
     assert "status" in text, text
     assert "proof-conclusion" in text, text
     assert "outside this agent's lane" not in text, text
+
+
+# ── the SDK's per-model ledger (T1.11) ──
+
+
+def _usage_after(tmp_path, monkeypatch, result_message):
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        messages = [SystemMessage(subtype="init", data={"session_id": "S1"}), result_message]
+        return _HookDrivingAgent(hook, [], messages, {})
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    result = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )
+    return result[2]
+
+
+def test_the_sdks_per_model_ledger_is_kept_on_the_result_path(tmp_path, monkeypatch):
+    ledger = {"claude-sonnet-4-6": {"inputTokens": 5, "costUSD": 1.0},
+              "claude-haiku-4-5-20251001": {"inputTokens": 2, "costUSD": 0.01}}
+    message = _result()
+    message.model_usage = ledger
+    assert _usage_after(tmp_path, monkeypatch, message)["model_usage"] == ledger
+
+
+def test_no_ledger_means_the_key_is_absent_not_null(tmp_path, monkeypatch):
+    assert "model_usage" not in _usage_after(tmp_path, monkeypatch, _result())
+
+
+def test_a_run_with_no_result_message_carries_no_ledger(tmp_path, monkeypatch):
+    """The abort path (`_fallback_usage`): no ResultMessage ever arrived, so
+    there is no ledger to keep — the key is absent, never null or {}."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingAgent(hook, [], [SystemMessage(subtype="init", data={"session_id": "S1"})], {})
+
+    monkeypatch.setattr(orchestrator, "query", fake_query)
+    usage = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )[2]
+    assert usage is not None and usage.get("total_cost_usd") is None  # the fallback block
+    assert "model_usage" not in usage

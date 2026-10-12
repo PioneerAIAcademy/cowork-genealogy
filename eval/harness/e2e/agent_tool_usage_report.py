@@ -219,7 +219,7 @@ class UsageScan(NamedTuple):
     pair_runs: dict[tuple[str, str], set[str]]  # same key -> `<slug>/<run stem>` ids
 
 
-def _tools_from_capture(sub: dict[str, Any]) -> Counter:
+def tools_from_capture(sub: dict[str, Any]) -> Counter:
     """Bare tool names a single `subagents[]` capture called, WITH multiplicity.
 
     A Counter rather than a set so a caller that needs invocation counts has
@@ -271,7 +271,7 @@ def scan(paths: list[Path]) -> UsageScan:
                 if not agent:
                     continue  # a capture with no agent_type can't be attributed
                 file_captures[agent] += 1
-                called = _tools_from_capture(sub)
+                called = tools_from_capture(sub)
                 file_used.setdefault(agent, set()).update(called)
                 for tool, n in called.items():
                     file_pair_calls[(agent, tool)] += n

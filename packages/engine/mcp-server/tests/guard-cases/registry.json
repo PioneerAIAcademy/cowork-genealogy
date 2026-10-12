@@ -1,0 +1,70 @@
+{
+  "about": "Every guard in the harness guard module (harness/skill_invocation.py: each find_* detector and each *_KIND shadow constant) is accounted for here, and eval/harness/tests/unit/test_guard_case_files.py fails on one that is not. ADR-0011, 'The bar is inspection, not a rate': a guard may neither enforce nor sit in shadow indefinitely without a labelled case set, and a guard on two planes keeps one JSON case file that both planes replay.",
+  "guards": [
+    {
+      "name": "unpersisted-conflict-resolution",
+      "status": "enforcing",
+      "case_file": "unpersisted-conflict-resolution.json",
+      "harness_detector": "find_unpersisted_conflict_resolutions",
+      "kind": "CONFLICT_UNPERSISTED_KIND",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "unpersistedConflictResolutionInvariants"
+      }
+    }
+  ],
+  "owes_case_file": [
+    {
+      "detector": "find_citation_nulling_in_conclusions",
+      "kind": "CITATION_NULLING_KIND",
+      "reason": "shadow since 2026-08-06, before the case-file rule; its labelled cases are pytest functions in test_skill_invocation.py"
+    },
+    {
+      "detector": "find_citation_nulling_in_tree_sources",
+      "kind": "TREE_CITATION_NULLING_KIND",
+      "reason": "shadow since 2026-08-25, before the case-file rule; deliberately not graduated"
+    },
+    {
+      "detector": "find_relationship_writes_without_warnings_check",
+      "kind": "WARNINGS_UNCHECKED_KIND",
+      "reason": "shadow since 2026-08-10, before the case-file rule; considered for graduation and declined 2026-08-23"
+    },
+    {
+      "detector": "find_conclusions_without_tree_encoding",
+      "kind": "TREE_ENCODING_KIND",
+      "reason": "shadow, before the case-file rule; deliberately never a gate"
+    },
+    {
+      "detector": "find_tree_facts_disagreeing_with_assertions",
+      "kind": "TREE_FACT_ASSERTION_KIND",
+      "reason": "enforcing on unit and reporting on e2e since 2026-09-21, before the case-file rule"
+    },
+    {
+      "detector": "find_protected_writes_by_unnamed_delegate",
+      "kind": null,
+      "reason": "shadow (section 11), before the case-file rule; revisit only if a second attributed run flags"
+    },
+    {
+      "detector": "find_person_evidence_missing_same_person",
+      "kind": "PERSON_EVIDENCE_DENY_KIND",
+      "reason": "the section 8 provenance check: post-run hard detector, a live pre-write shadow hook, and since 2026-09-24 a research_append refusal — two planes before the case-file rule, cases still per-plane"
+    },
+    {
+      "detector": "find_effects_without_invocation",
+      "kind": null,
+      "reason": "section 8 post-run compliance detector, enforcing (fails the run) before the case-file rule"
+    },
+    {
+      "detector": "find_missing_mentor_verdicts",
+      "kind": null,
+      "reason": "the mentor-verdict completion check, also a research_append completion gate, before the case-file rule"
+    }
+  ],
+  "not_a_candidate": [
+    {
+      "detector": "find_unguarded_protected_writes",
+      "kind": null,
+      "reason": "section 7 caller-attributed recency: retired permanently, never graduates (guardrail-enforcement-spec.md section 7)"
+    }
+  ]
+}

@@ -620,7 +620,6 @@ Run `dev/try-person-ancestors.ts` for the smoke layer; OAuth setup per
 - `docs/specs/person-search-tool-spec.md` — sibling; dangling-source-strip
   rationale and the find→read→walk chain.
 
-Evidence trail: `packages/engine/mcp-server/dev/probe-ancestry.ts`,
-`probe-ancestry-numbering.ts`, `probe-ancestry-rels-sources.ts`
-(run 2026-06-02); `probe-current-user.ts`, `probe-self-ancestry.ts`
-(self-default, run 2026-06-04).
+Evidence trail: probe scripts run 2026-06-02 (ancestry numbering, relationships
+and sources) and 2026-06-04 (the self default). They were never committed; the
+findings above are their record.

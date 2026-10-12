@@ -9,11 +9,12 @@
       "Alabama",
       "pre-statehood",
       "volume-search",
-      "coverage-gap"
+      "coverage-gap",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period — and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.",
+    "delegation": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period - and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -24,6 +25,7 @@
     "place-search-alabama",
     "place-search-mississippi-territory",
     "place-search-mississippi",
+    "place-search-any",
     "collections-search-alabama",
     "wikipedia-search-alabama",
     "wikipedia-search-mississippi-territory",

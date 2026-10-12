@@ -500,3 +500,30 @@ def test_every_suppression_has_a_nonempty_quote() -> None:
                 f'SUPPRESSIONS entry ({entry["file"]}, {entry["tool"]}) has a '
                 f"quote too short to identify a sentence: {quote!r}"
             )
+
+
+def test_agent_keyed_suites_are_scanned_once(monkeypatch) -> None:
+    """A skill folded into an agent and deleted still has a suite to scan, once.
+
+    Walking SKILLS_DIR alone skipped `citation`'s rubric and judge_context from
+    the day its skill was deleted, with no signal. Two fixes for that landed
+    independently (issues #2115 and #2822) and briefly coexisted after a merge,
+    which scans every agent-keyed suite twice and doubles its hit count. Both
+    directions are pinned: agent-keyed suites produce hits, and no (file, tool)
+    pair is warned about more than once.
+    """
+    monkeypatch.setattr(check_rubric_tool_drift, "SUPPRESSIONS", [])
+    check_rubric_tool_drift.main()
+    emitted = []
+    for f, m in _recorded():
+        match = re.search(r"mention(?:s|ing) `(\w+)`", m)
+        if f is not None and match:
+            emitted.append((f, match.group(1)))
+    _reset()
+    agent_suite_files = {
+        f for f, _ in emitted
+        if f.startswith(("eval/tests/unit/citation/", "eval/tests/unit/question-selection/"))
+    }
+    assert agent_suite_files, "no agent-keyed suite produced a hit: the scan skips them"
+    duplicates = sorted({p for p in emitted if emitted.count(p) > 1})
+    assert duplicates == [], duplicates

@@ -25,6 +25,7 @@
 import type {
   SimplifiedFact,
   SimplifiedPerson,
+  SimplifiedRelationship,
 } from "../types/gedcomx.js";
 import type { WarningFact } from "../types/person-warnings.js";
 import {
@@ -96,10 +97,12 @@ function collectFactDayRanges(
  * no exclusion. Skips facts with no `id`, preserves source order, and drops
  * duplicate ids. Pure; used by the warning emitters to attach the specific
  * facts a check examined (`PersonWarning.facts`). Works for the anchor
- * (`mob.getPerson()`) or any relative/child `SimplifiedPerson`.
+ * (`mob.getPerson()`), any relative/child `SimplifiedPerson`, or a
+ * `SimplifiedRelationship` whose facts a check reads (a Couple's
+ * `CoupleNeverHadChildren`). Only `facts` is read.
  */
 export function warningFactsOfPerson(
-  person: SimplifiedPerson,
+  person: SimplifiedPerson | SimplifiedRelationship,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
 ): WarningFact[] {
@@ -207,19 +210,32 @@ export function latestYearOfSelfFacts(
  * Earliest possible year across all matching facts on every CHILD of the
  * anchor. Equivalent to Java's
  *   getEarliest(getChildEventYears(mob, factTypes))
+ *
+ * `bound` selects which end of each fact's date range is read before taking
+ * the minimum across children. `"earliest"` (the default, and Java's
+ * behaviour) answers "how early COULD the first child have been born"; with
+ * `"latest"` it answers "by what year was the first child CERTAINLY born".
+ *
+ * The distinction only matters for an imprecise date, where the two bounds
+ * differ — `Bef 1880` spans 1870..1880 — and it is the difference between a
+ * check that fires on a possibility and one that fires on a certainty. A
+ * caller whose check REFUSES work on the result wants `"latest"`; see
+ * `earliestChildBirthToBirth`.
  */
 export function earliestYearOfChildFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  bound: "earliest" | "latest" = "earliest",
 ): number | null {
+  const yearOf = bound === "latest" ? latestYear : earliestYear;
   let earliest: number | null = null;
   for (const child of mob.getChildren()) {
     for (const f of child.facts ?? []) {
       if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
       const std = getStandardDate(f);
       if (std === null) continue;
-      const y = earliestYear(std);
+      const y = yearOf(std);
       if (y === null) continue;
       if (earliest === null || y < earliest) earliest = y;
     }
@@ -286,13 +302,15 @@ export function earliestYearOfPersonFacts(
   person: SimplifiedPerson,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
+  bound: "earliest" | "latest" = "earliest",
 ): number | null {
+  const yearOf = bound === "latest" ? latestYear : earliestYear;
   let earliest: number | null = null;
   for (const f of person.facts ?? []) {
     if (!matchesFactSelection(f, factTypes, antiFactTypes)) continue;
     const std = getStandardDate(f);
     if (std === null) continue;
-    const y = earliestYear(std);
+    const y = yearOf(std);
     if (y === null) continue;
     if (earliest === null || y < earliest) earliest = y;
   }
@@ -432,7 +450,9 @@ export function factDaysDiffEarliestLatest(
  * possible, so a warning built on it fires only when the violation holds under
  * every reading the recorded dates permit. `factDaysDiffEarliestLatest` is the
  * opposite pairing and is what the Java ports use. See
- * `hasBurialAfterDeath` for why one check needed the conservative form.
+ * `hasBurialAfterDeath` for why the conservative form exists;
+ * `hasDelayedBurial` and `hasStillbirthConflict`'s age branch use it for the
+ * same reason.
  */
 export function factDaysDiffLatestEarliest(
   mob: Mob,

@@ -160,6 +160,47 @@ def test_run_with_tree_missing_ann_is_violation(tmp_path, monkeypatch):
     assert f"run-{TS}.ann.json" in violations[0]
 
 
+def _set_stop_reason(repo: Path, rel: Path, stop_reason: str) -> None:
+    """Rewrite an already-created run log so it carries `stop_reason`.
+
+    `_make_e2e_run` writes a bare `{"verdict": "pass"}`; the grading gate's
+    host_slept exemption keys on `stop_reason` read from the HEAD tree, so a test
+    of it has to put the field in the committed blob."""
+    (repo / rel).write_text(
+        json.dumps({"verdict": "skipped", "stop_reason": stop_reason}),
+        encoding="utf-8",
+    )
+
+
+def test_host_slept_run_with_tree_missing_ann_is_exempt(tmp_path, monkeypatch):
+    """#2974: a host_slept run HAS a tree but is ungraded by design — the judge
+    was skipped past the inactivity cap — so it owes no annotation and must not
+    red the blocking grading gate. This is the one case treelessness does not
+    cover, and the whole point is that the gate treats it differently from every
+    other committed-with-tree run."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    _set_stop_reason(repo, rel, "host_slept")
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)  # no ann committed, deliberately
+    assert check_e2e_fixtures.check_added_runlogs_graded([rel], head) == []
+
+
+def test_non_host_slept_stop_reason_with_tree_still_demands_ann(tmp_path, monkeypatch):
+    """The other direction: the exemption is keyed on host_slept specifically,
+    NOT on "the log carries a stop_reason". An ordinary graded run that stopped
+    for any other reason (here `timeout`) still owes its annotation — otherwise
+    the guard would silently waive the whole corpus."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    rel = _make_e2e_run(repo, "smith", TS, tree=True, ann=False)
+    _set_stop_reason(repo, rel, "timeout")
+    tree, _ann = _siblings(rel)
+    head = commit(rel.as_posix(), tree)
+    violations = check_e2e_fixtures.check_added_runlogs_graded([rel], head)
+    assert len(violations) == 1
+    assert f"run-{TS}.ann.json" in violations[0]
+
+
 def test_treeless_run_is_exempt(tmp_path, monkeypatch):
     """A crashed/skipped run with no final tree owes no annotation."""
     repo, commit = _git_repo(tmp_path, monkeypatch)
@@ -522,6 +563,126 @@ def test_main_OK_line_reports_both_denominators(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert re.search(r"1 added-or-renamed run log\(s\) checked; 0 of them newly added", out), out
 
+
+# --- Tool-search-off gate (blocking, T1.6) ---------------------------------
+
+
+def test_tool_search_off_run_added_to_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    """Only the FLAT `usage.tool_search` is set, as `--no-tool-search` writes it
+    on a run whose init carried no `tools` list. Reading the nested SDK block
+    (`usage.usage`) finds nothing and greens this row."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"tool_search": False})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head)
+    assert len(v) == 1, v
+    assert f"run-{TS}.json" in v[0] and "usage.tool_search = false" in v[0]
+    assert "outside eval/runlogs/e2e/" in v[0], v[0]
+
+
+def test_tool_search_off_run_RENAMED_into_the_corpus_is_a_violation(tmp_path, monkeypatch):
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    src = _write_log(
+        repo, f"{QDIR}/smith/run-{TS}.json",
+        {"tool_search": False, "tool_search_offered": False},
+    )
+    commit(src.as_posix())
+    dst = f"eval/runlogs/e2e/smith/run-{TS}.json"
+    (repo / dst).parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(repo / src), str(repo / dst))
+    sel, head = _ar(repo, commit, monkeypatch, src.as_posix(), dst)
+    assert [p.as_posix() for p in sel] == [dst], sel
+    assert len(check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head)) == 1
+
+
+def test_requested_on_but_offered_off_is_a_violation(tmp_path, monkeypatch):
+    """An "on" run turned off underneath it (an inherited
+    CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS): what was asked says on, the init
+    list says off. A gate that read only `tool_search` greens this row."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json",
+        {"tool_search": True, "tool_search_offered": False},
+    )
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    v = check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head)
+    assert len(v) == 1 and "usage.tool_search_offered = false" in v[0], v
+
+
+@pytest.mark.parametrize("usage", [
+    _ABSENT,                                              # every run committed before T1.6
+    {},                                                   # usage present, both keys absent
+    {"betas": []},                                        # the shape the corpus carries today
+    {"tool_search": True},
+    {"tool_search": True, "tool_search_offered": True},
+    {"tool_search": True, "tool_search_offered": None},   # init carried no `tools` list
+    {"tool_search": None},
+    {"tool_search": 0, "tool_search_offered": ""},        # falsy, but not False
+    {"usage": {"tool_search": False}},                    # the NESTED SDK block is not the field
+    None,
+    [],
+])
+def test_shapes_that_are_not_a_tool_search_off_run_pass(tmp_path, monkeypatch, usage):
+    """Strict `is False`. A truthiness test (`not usage.get(...)`) reds the
+    absent rows — the whole committed corpus."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", usage)
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head) == []
+
+
+def test_a_tool_search_off_log_left_outside_the_corpus_is_not_selected(tmp_path, monkeypatch):
+    """The sanctioned home: the same log in a sibling directory is not read."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT); commit("seed.txt")
+    rel = _write_log(repo, f"{QDIR}/smith/run-{TS}.json", {"tool_search": False})
+    sel, head = _ar(repo, commit, monkeypatch, rel.as_posix())
+    assert sel == []
+    assert check_e2e_fixtures.check_added_runlogs_tool_search_on(sel, head) == []
+
+
+def test_main_fails_on_a_tool_search_off_run_and_does_not_claim_OK(tmp_path, monkeypatch, capsys):
+    """Graded, not 1M, no credential — so ONLY this gate can fire. Dropping its
+    wiring in main() greens the exit code."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json",
+        {"betas": [], "tool_search": False, "tool_search_offered": False},
+    )
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text("{}", encoding="utf-8")
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "tool search off" in out, out
+    assert "E2E gates OK" not in out, "claimed OK on a run it failed"
+
+
+def test_main_passes_a_tool_search_on_run(tmp_path, monkeypatch, capsys):
+    """The other direction through main(): a graded run that recorded both
+    fields True is accepted."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    _write_log(repo, "seed.txt", _ABSENT)
+    base = commit("seed.txt")
+    rel = _write_log(
+        repo, f"eval/runlogs/e2e/smith/run-{TS}.json",
+        {"betas": [], "tool_search": True, "tool_search_offered": True},
+    )
+    tree, ann = _siblings(rel)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    # The inert annotation `_make_e2e_run` writes, so validation skips it.
+    (repo / ann).write_text(json.dumps({"per_finding": {"f1": None}}), encoding="utf-8")
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", commit(rel.as_posix(), tree, ann))
+    assert check_e2e_fixtures.main() == 0
+    assert "E2E gates OK" in capsys.readouterr().out
 
 
 

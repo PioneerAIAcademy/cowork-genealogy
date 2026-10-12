@@ -5,7 +5,9 @@
 // in its own module means the test can read the list without importing
 // index.ts, which connects the stdio transport as a side effect.
 import { volumeBisectSchema } from "./tools/volume-bisect.js";
+import { catalogSearchSchema } from "./tools/catalog-search.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
+import { researchDeliveredSchema } from "./tools/research-delivered.js";
 import {
   placeSearchToolSchema,
   placeSearchAllToolSchema,
@@ -23,6 +25,7 @@ import { imageTranscribeToolSchema } from "./tools/image-transcribe.js";
 import { recordSearchToolSchema } from "./tools/record-search.js";
 import { personSearchToolSchema } from "./tools/person-search.js";
 import { personAncestorsToolSchema } from "./tools/person-ancestors.js";
+import { treeGapsToolSchema } from "./tools/tree-gaps.js";
 import { samePersonSchema } from "./tools/same-person.js";
 import {
   personRecordMatchesSchema,
@@ -66,10 +69,11 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "project_context", // loaded beside research_query in that same first ToolSearch
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
-  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 18.5 KB
+  "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
 ]);
 
 export const allToolSchemas = [
+  catalogSearchSchema,
   volumeBisectSchema,
   wikipediaSearchSchema,
   placeSearchToolSchema,
@@ -87,6 +91,7 @@ export const allToolSchemas = [
   recordSearchToolSchema,
   personSearchToolSchema,
   personAncestorsToolSchema,
+  treeGapsToolSchema,
   samePersonSchema,
   personRecordMatchesSchema,
   recordPersonMatchesSchema,
@@ -120,6 +125,7 @@ export const allToolSchemas = [
   buildExternalSearchUrlSchema,
   sidecarReadSchema,
   getNameVariantsSchema,
+  researchDeliveredSchema,
 ];
 
 // Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.

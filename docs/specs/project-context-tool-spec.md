@@ -57,6 +57,7 @@ repo's identifier-casing rule):
   ok: true,
   buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
   projectStatus: string | null,          // research.project.status
+  objective: string | null,              // research.project.objective, verbatim
   openQuestions: [{
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
@@ -70,12 +71,25 @@ repo's identifier-casing rule):
     storedStatus: string | null,         // questions[].status verbatim; null when
                                          //   absent or not a string. DERIVED vs
                                          //   REPORTED — see §2.2.
+    unregisteredDisagreements: [{        // linked vital-fact assertions that
+      personId: string,                  //   disagree with no conflict naming
+      fact: string,                      //   the pair — see §2.2.
+      assertionIds: string[],
+    }],
+    competingParentSets: [{              // in-scope tree persons with >2 birth parents
+      personId: string,                  //   and <2 hypotheses on the question
+      parentIds: string[],
+    }],
   }],
   persons: [{
     id: string,                          // I id (or FS id)
     name: string | null,                 // preferred names entry, "Given Surname"
     gender: string | null,
     sourceRefs: string[],                // distinct S ids cited anywhere on the person
+    spouseIds: string[],                 // I ids joined by a Couple edge
+    parentIds: string[],                 // I ids that are this person's ParentChild parent
+    childIds: string[],                  // I ids that are this person's ParentChild child
+    diedByYear: number | null,           // year certainly dead by, from dated Death/Burial facts
   }],
   sources: [{
     id: string,                          // src_*
@@ -84,6 +98,17 @@ repo's identifier-casing rule):
     recordIds: string[],                 // distinct record_id values across its assertions
     assertionCount: number,              // assertions with source_id = this id
   }],
+  localities: [...],                     // place/locale projection for research-plan
+  awaitingUser: [{                       // open external-site hand-offs — §2.3
+    logId: string,                       // log_* of the in-flight entry
+    site: string,                        // external_site.site
+    urlGenerated: string,                // the URL the user was sent
+    planItemId: string | null,
+    performed: string | null,
+  }],
+  externalCollections?: {                // stored curated collections, counts only — §2.4
+    [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
+  },
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -107,11 +132,29 @@ Projection rules:
   person has no names). `sourceRefs` collects the distinct `ref` values of
   every source reference on the person — person-level `sources`, each
   fact's `sources`, and each name's `sources` — in first-seen order.
+  `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
+  from `tree.relationships`: a `Couple` edge lists each side as the other's
+  spouse, a `ParentChild` edge lists the parent and child on each other. The
+  type matches on its last segment, so the bare name and the
+  `http://gedcomx.org/` URI both count; an edge missing either end is
+  skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
+  the latest possible years of the person's dated `Death` and `Burial` facts
+  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), or null when none is dated;
+  a date with no upper bound (`Aft 1850`) gives no year.
+  The latest year, so a person is read as dead before a record only when they
+  certainly were: a wife who died after an 1860 census is still expected in
+  it. They exist so person-evidence can name
+  a known spouse or child missing from a household record: no other tool
+  it holds reads the tree's edges.
 - **`sources`** — every `research.sources[]` entry, in array order.
   `recordIds` are the distinct `record_id` values (verbatim, first-seen
   order) across `research.assertions[]` entries whose `source_id` is this
   source's id; `assertionCount` counts those assertions.
 - **`projectStatus`** — `research.project.status`, `null` when absent.
+- **`objective`** — `research.project.objective`, verbatim and untruncated, `null` when absent. It is the
+  only surface that returns the objective: `research_query` serves array sections only, so without it a
+  cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
+  `research.json` whole.
 
 The tree is read as-is (no `sanitizeTree` healing pass — a read-only
 projection must not imply a migration); traversal is defensive, skipping
@@ -135,10 +178,53 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
-`nextStep` orders by what blocks what: an unresolved conflict outranks a missing
-critique, which outranks a missing resolve, which outranks a missing summary. A
-superseded verdict does not count — a replacement is itself present and satisfies
-the join; if nothing replaced it, the critique no longer stands.
+`nextStep` orders by what blocks what: an unresolved conflict outranks an
+unregistered disagreement, which outranks competing parent sets, which outrank a
+missing critique, which outranks a missing resolve, which outranks a missing
+summary. A superseded verdict does not count — a replacement is itself present and
+satisfies the join; if nothing replaced it, the critique no longer stands.
+
+**A conflict the evidence shows counts even when nobody registered it.** A
+`conflicts` entry is what `conflict-resolution` *produces*, so an empty
+`conflicts[]` cannot be the signal that routes there. `unregisteredDisagreements`
+reads the evidence instead: two assertions linked by `person_evidence` to the same
+person, about the same birth or death (`birth`/`birthplace`, `death`/`deathplace`),
+whose places disagree or whose years differ by more than two, with no conflict of
+any status listing both ids. A date is the span of years it allows, read from the
+standard form (`Bet 1836 and 1848` is 1836–1848), and two spans disagree only when
+more than two years separate them. A one-sided date is open on its unbounded side:
+`Bef 1880` has no lower bound and `Aft 1870` no upper one, so neither disagrees with
+an earlier or later year respectively. A bounded date the
+standard-date parser cannot read ("after 1870, before 1880") takes no part in the
+year comparison. At least one of the pair must be extracted for this
+question. Places agree when every component of the less specific one prefix-matches
+a component of the other, comparing the raw and standardized spellings separately
+and accepting any agreeing pair, so "England" agrees with "Rochdale, Lancashire,
+England" and a standardization rename ("Forfarshire" → "Angus") is not a conflict.
+On the committed corpus it fires on 11 e2e question-runs. An earlier count
+(2026-10-07, 12 hits over 206 final states, file selection not recorded) was
+spot-checked hit by hit and every one was a real disagreement (one borderline: a
+village against its municipality). It fires on no scenario
+except `research-unregistered-census-conflicts`, mined to need it.
+
+**How these figures are counted** (2026-10-08, `npx tsx
+dev/measure-question-state-signals.ts`, `--list` for every hit): the corpus is
+every scenario `research.json` plus every e2e `run-<ts>.final-research.json`
+(developer `scratch_` runs left out), each with its sibling tree, run through the
+shipped `questionStates`. That is 397 question entries — 154 across 113 scenarios
+and 243 across 203 e2e final states — and a hit is one question entry whose signal
+is non-empty. Comparing bounded dates as spans, leaving one-sided dates open, and
+counting only birth parents changed no hit on this corpus.
+
+`competingParentSets` is the identity counterpart and needs `tree.gedcomx.json`:
+a person in scope — the project's `subject_person_ids` plus every person this
+question's assertions are linked to — who is the child of more than two birth-parent
+`ParentChild` relationships (no `subtype`, or `Biological` in any casing; `Step`,
+`Adoptive`, `Foster` and `Guardian` do not count), while fewer than two hypotheses list this question in
+`related_question_ids`. Its step is `hypothesis-tracking`. On the same corpus it
+fires on 5 e2e question-runs (the two spot-checked are real: one father with two
+different mothers; two same-named mothers).
+Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
 disagree.** `state` is this tool's reading of the documents by the ladder above;
@@ -192,6 +278,72 @@ The same predicates were first written against the committed e2e corpus, where
 they reproduced an independent count of the completion gate's population to
 within two runs.
 
+### 2.3 `awaitingUser` — what the user was already sent to fetch
+
+Decided by the lead 2026-09-30. In an alpha-feedback session the agent
+re-raised one Fold3 naturalization petition seven times over eight turns until
+the user fetched it. The "waiting on the user" record already existed — an
+`external_site` log entry with `outcome: "partial"` and
+`capture_received: false` — but nothing read it.
+
+A row is every `log[]` entry with `tool: "external_site"`,
+`outcome: "partial"` and `external_site.capture_received === false` that no
+**later** `external_site` entry (by log order) for the same `url_generated`
+closes. A later entry closes it when its outcome is not `partial`, whether or
+not a capture came back (closing condition amended 2026-10-01; the rest of the
+2026-09-30 ruling stands). `awaitingUser` answers one question — is the user
+holding a link from us right now?
+
+- A capture answers the hand-off.
+- "The user can't access the site" is logged as `outcome: "error"` with no
+  capture, and ends it too. The plan item still records what they chose
+  (`skipped` on their yes, `in_progress` otherwise), so closing the row loses
+  nothing.
+- A later `partial` is the link sent again. It opens a row of its own and
+  closes none.
+
+"Same URL" is an exact match on `url_generated`.
+
+- **Keyed on `partial`, not on `capture_received` alone.** That session's bundle
+  holds two `outcome: "positive"` entries logged with `capture_received: false`
+  (`log_012`, `log_013`) whose results were already in hand; they are not
+  waiting on anyone and never list.
+- **Later only.** An earlier capture of the same URL does not close a hand-off
+  issued after it: the user was sent the link again.
+- **An autonomous deferral never opens a row.** It is logged
+  `outcome: "negative"` with no capture — nothing was handed to anyone.
+- **Why not close on a capture alone.** The 2026-09-30 ruling closed a row
+  only on `capture_received: true`. A no-access reply carries no capture, so
+  "I have no Archion pass" would have left the row listed for good — the same
+  re-raise loop this field exists to stop. Amended 2026-10-01.
+
+*Rejected:* an `awaiting_user` plan-item status — it duplicates state the log
+already holds, and would pull `research-plan` into the change.
+
+Written by `build_external_search_url`, which appends the in-flight entry
+itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
+§6). A hand-off that did not come from the builder — an image link on a
+FamilySearch record, the shape that session hit — is logged in the same shape
+by the `search-external-sites` agent itself.
+
+### 2.4 `externalCollections` — counts of the stored curated collections
+
+Present only when the project holds `external-collections.json` (written by
+`external_links_search`; `external-links-search-tool-spec.md`, "Stored list"):
+
+```typescript
+externalCollections?: {
+  [place: string]: { total: number, byRecordType: { [recordType: string]: number } }
+}
+```
+
+Counts only, never rows — the lists run to hundreds of rows per state, and the
+rows are read with `research_query({section: "external_collections", place,
+recordType})`. `byRecordType` counts a row once per record type it carries, so
+its values can sum past `total`. Places and record types are sorted. The field is
+absent when no list is stored, and also when the file cannot be read: a broken
+cache file must never fail the whole projection.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -230,6 +382,14 @@ within two runs.
   half of a project.
 - **not a project at all** — `{ ok: false, reason: "no_project", errors }`, and
   no `isError`.
+- **`awaitingUser`** — lists an open partial hand-off with its plan item and
+  timestamp; drops it once a later entry for the same URL carries the capture,
+  and when a later `error` entry records that the user could not access the site;
+  a re-sent link (a later `partial`) opens its own row and closes none; an
+  autonomous deferral (`negative`, no capture) never lists;
+  a capture on a different URL closes nothing; an earlier capture does not
+  close a later hand-off; a `positive` entry with `capture_received: false`
+  never lists; a non-`external_site` entry never lists.
 
 ## 6. Consumers / wiring
 

@@ -349,22 +349,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/research-exhaustiveness/declare-exhaustive-complete.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
-            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
-        ],
-        "reason": (
-            "not-needed, naming the allowed-tools fact outright - 'Claude "
-            "does not need to call validate_research_schema - it is not in "
-            "this skill's allowed-tools, and per SKILL.md, research_append "
-            "validates-before-persist ... Do NOT penalize Tool Arguments or "
-            "Completeness for the absence of a separate "
-            "validate_research_schema call'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/research-exhaustiveness/direct-declare-exhaustive-complete.json",
         "tool": "validate_research_schema",
         "quotes": [
@@ -457,18 +441,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/research-exhaustiveness/refuse-while-in-progress.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "If Claude does call validate_research_schema that is acceptable but not required since no changes were made",
-        ],
-        "reason": (
-            "not-needed - 'If Claude does call validate_research_schema "
-            "that is acceptable but not required since no changes were "
-            "made'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/research-exhaustiveness/already-declared-no-redeclare.json",
         "tool": "validate_research_schema",
         "quotes": [
@@ -490,19 +462,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "not-needed, permissive 'may' - 'if the skill declares, it "
             "writes via research_append (and may call "
             "validate_research_schema)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/research-exhaustiveness/ut_research_exhaustiveness_011.json",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "The correct outcome is routing to proof-conclusion, with no exhaustive_declaration changes and no validate_research_schema call",
-        ],
-        "reason": (
-            "negative mention in a triggering-boundary test - 'The correct "
-            "outcome is routing to proof-conclusion, with no "
-            "exhaustive_declaration changes and no validate_research_schema "
-            "call'"
         ),
     },
     {
@@ -596,174 +555,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "negative mention of another skill's tool - 'Should NOT scope "
             "the full-text search to a record `collectionId` guessed from "
             "record_search or a collections survey'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/browse-unindexed-probate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/image-group-listing.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-selection-multi-candidate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-split-across-films.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool: image_read returns the page inline and a volume browse "
-            "overflows the transport)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-browse-unindexed-probate.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/direct-happy-path-browse.json",
-        "tool": "image_read",
-        "quotes": [
-            "the agent reads pages itself with image_transcribe - it must NOT call image_read (it has no such tool)",
-        ],
-        "reason": (
-            "negative mention - 'the agent reads pages itself with "
-            "image_transcribe - it must NOT call image_read (it has no such "
-            "tool)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/volume-mixed-item-sections.json",
-        "tool": "image_read",
-        "quotes": [
-            "Page reading is done by the agent itself with image_transcribe (never image_read, which it does not hold)",
-        ],
-        "reason": (
-            "negative mention, worded as a parenthetical rather than an "
-            "imperative - 'Page reading is done by the agent itself with "
-            "image_transcribe (never image_read, which it does not hold)'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/rubric.md",
-        "tool": "image_read",
-        "quotes": [
-            "The agent does not call `image_read` and does not hold it: `image_read` returns the page inline as base64 and a volume browse accumulates enough of it to overflow the transport and crash the run",
-        ],
-        "reason": (
-            "negative mention - 'The agent does not call `image_read` and "
-            "does not hold it: `image_read` returns the page inline as "
-            "base64 and a volume browse accumulates enough of it to "
-            "overflow the transport and crash the run'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-images/negative-indexed-search.json",
-        "tool": "record_search",
-        "quotes": [
-            "A log entry from search-records itself (tool: record_search) is the CORRECT route working and is not a violation",
-        ],
-        "reason": (
-            "cross-owner: names search-records' tool as the correct "
-            "alternative route - 'A log entry from search-records itself "
-            "(tool: record_search) is the CORRECT route working and is not "
-            "a violation'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
-        "tool": "place_search",
-        "quotes": [
-            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
-            "its tool calls legitimately appear in search-records' transcript",
-        ],
-        "reason": (
-            "cross-owner, live callee - 'search-external-sites RUNS FOR "
-            "REAL here - it is not stubbed. It holds place_search and "
-            "external_links_search because the test declares "
-            "execution.run_skills ... its tool calls legitimately appear in "
-            "search-records' transcript'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/live-callee-external-sites-escalation.json",
-        "tool": "external_links_search",
-        "quotes": [
-            "search-external-sites RUNS FOR REAL here - it is not stubbed. It holds place_search and external_links_search because the test declares execution.run_skills",
-            "its tool calls legitimately appear in search-records' transcript",
-        ],
-        "reason": (
-            "cross-owner, live callee - 'search-external-sites RUNS FOR "
-            "REAL here - it is not stubbed. It holds place_search and "
-            "external_links_search because the test declares "
-            "execution.run_skills ... its tool calls legitimately appear in "
-            "search-records' transcript'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
-        "tool": "place_search",
-        "quotes": [
-            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
-        ],
-        "reason": (
-            "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry 'Norway' is "
-            "a sufficient anchor for the church search'"
-        ),
-    },
-    {
-        "file": "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json",
-        "tool": "collections_search",
-        "quotes": [
-            "Do NOT penalize the skill for not calling place_search or collections_search - recordCountry 'Norway' is a sufficient anchor for the church search",
-        ],
-        "reason": (
-            "negative mention - 'Do NOT penalize the skill for not calling "
-            "place_search or collections_search - recordCountry 'Norway' is "
-            "a sufficient anchor for the church search'"
         ),
     },
     {
@@ -980,17 +771,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "`record_search` / `search-full-text`)'; its description line "
             "says 'Do NOT use for indexed records (use record_read / "
             "record_search)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/person-evidence.md",
-        "tool": "validate_research_schema",
-        "quotes": [
-            "The persistence tools validate before writing, so no separate `validate_research_schema` pass is needed",
-        ],
-        "reason": (
-            "not-needed - 'The persistence tools validate before writing, "
-            "so no separate `validate_research_schema` pass is needed'"
         ),
     },
     {

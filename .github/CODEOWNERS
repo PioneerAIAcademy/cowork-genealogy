@@ -70,6 +70,20 @@ Makefile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogis
 Dockerfile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 e2b.Dockerfile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 
+# The prototype's Elastic Beanstalk tier templates (U12): Procfile, .ebextensions
+# *.config and .platform nginx .conf files that no extension rule above matches,
+# yet each one is a deploy definition. Three literal directories, not
+# `/apps/server/proto/eb-*/`: senior-queue.yml's parser reads any `/.../`
+# pattern as a literal prefix, so the glob would match nothing in its queue
+# while GitHub still required the senior approval.
+/apps/server/proto/eb-web/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+/apps/server/proto/eb-worker/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+/apps/server/proto/eb-tools/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+
+# The proto web and worker pins, exported from uv.lock with hashes and installed
+# --require-hashes by both images and both bundles: an edit changes what ships.
+requirements.txt @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+
 # Python lockfiles. Both are installed `--frozen` by CI (server-tests.yml,
 # eval-harness-tests.yml), so an edit here changes what every job resolves —
 # the same reasoning that already guards the npm/pnpm lockfiles as *.json/*.yaml.

@@ -79,15 +79,22 @@ def test_male_specific_lower_bound_with_no_note_fails():
     assert "R1" in str(e.value)
 
 
-def test_known_gap_female_age_14_is_not_caught():
-    """Documents, rather than hides, a real limitation: person-warnings.ts
-    has no female-specific LOWER bound (only general <=12, male-specific
-    <=14), so a MOTHER aged 14 at the child's birth -- the exact age in
-    issue #1642 Finding 2's motivating bug (jimmie-jewel-neal, the Wood-family
-    adoption) -- is NOT caught by this validator today. This test pins that
-    gap so it is a measured, visible fact rather than an unstated assumption;
-    closing it is a person-warnings.ts decision (adding a female-specific
-    lower bound), not something to paper over here."""
+def test_female_age_14_is_not_mirrored_from_the_tool():
+    """The validator deliberately does not mirror the tool's female lower bound.
+
+    This used to document a gap in person-warnings.ts: it had no female-specific
+    LOWER bound, so a MOTHER aged 14 at the child's birth -- the exact age in
+    issue #1642 Finding 2's motivating bug (jimmie-jewel-neal/
+    run-2026-07-31_13-02-13, the Wood-family adoption) -- cleared every floor.
+    Issue #2007 closed that: the tool now emits
+    `earliestChildBirthToBirthFemale14`.
+
+    The behaviour asserted below is unchanged, but the reason is now a choice
+    rather than a gap. Mirroring the bound here would change which runs are
+    flagged, and so change grading, which is a measured change rather than a
+    side effect of a tool PR. `_PARENT_AGE_UPPER_FEMALE` sits the same way --
+    documented in `test_universal.py` and likewise not enforced.
+    """
     before = tree([], [])
     persons = [person("P1", "Female", 1841), person("P2", "Female", 1855)]
     rels = [rel("R1", "P1", "P2")]

@@ -58,6 +58,20 @@ export interface JsonWrite {
   data: unknown;
 }
 
+/**
+ * One worker attempt's claim of one hosted turn (U6): the `turns` row and the
+ * `claim_epoch` the attempt's claim minted. A store bound with one commits a
+ * write only while that epoch is still the turn's current one, so an attempt a
+ * newer claim superseded writes nothing. `claimEpoch` is the decimal string the
+ * header carried, cast `::bigint` in SQL, so JS never handles a bigint. Lives
+ * here, free of `pg`, for the HTTP entrypoint to parse a header without loading
+ * a backend.
+ */
+export interface ClaimFence {
+  turnId: string;
+  claimEpoch: string;
+}
+
 export interface WriteJsonBothOptions {
   /**
    * Test-only seam, honoured by the file backend: invoked after the first
@@ -81,6 +95,14 @@ export interface ProjectStore {
    * `projectPath` — see `truncatedImageKey` in `utils/image-store.ts`.
    */
   readonly projectId?: string;
+
+  /**
+   * The one `projectPath` this store answers to, when the backend is bound to a
+   * single project (`PgS3ProjectStore`, and the http test double). `undefined` on
+   * the file backend. Lets a call that passed no `projectPath` still be counted
+   * against the bound project — the image cap (`utils/browse-budget.ts`).
+   */
+  readonly anchorPath?: string;
 
   /**
    * Run `fn` serialized against every other writer for the same project. Wrap

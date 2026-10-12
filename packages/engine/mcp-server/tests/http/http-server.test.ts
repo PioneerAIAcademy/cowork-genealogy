@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
-import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -33,10 +33,18 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { startHttpServer } from "../../src/http-server.js";
+import {
+  CLAIM_EPOCH_HEADER,
+  claimFenceFromHeaders,
+  HEALTHZ_TIMEOUT_MS,
+  PROJECT_ID_HEADER,
+  startHttpServer,
+  TURN_ID_HEADER,
+  type ReadyReport,
+} from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
-import type { ProjectStore } from "../../src/store/project-store.js";
+import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
@@ -48,7 +56,8 @@ let base: string;
 let root: string;
 // Every id the server bound a store for, in order — the store half's oracle.
 const bindStore = vi.fn(
-  (projectId: string, _signal: AbortSignal): ProjectStore => new ScopedFsStore(root, projectId),
+  (projectId: string, _signal: AbortSignal, _fence?: ClaimFence): ProjectStore =>
+    new ScopedFsStore(root, projectId),
 );
 const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
@@ -226,6 +235,114 @@ describe("tool server over Streamable HTTP", () => {
     expect(bindStore).not.toHaveBeenCalled();
   });
 
+  describe("2d. the claim fence (U6): X-Genealogy-Turn-Id + X-Genealogy-Claim-Epoch, both or neither", () => {
+    const TURN = "X-Genealogy-Turn-Id";
+    const EPOCH = "X-Genealogy-Claim-Epoch";
+    const INVALID_CLAIM_FENCE = {
+      jsonrpc: "2.0",
+      error: {
+        code: -32600,
+        message:
+          "Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, " +
+          "once each, with X-Genealogy-Project-Id.",
+      },
+      id: null,
+    };
+
+    /** One tools/call over raw fetch, so a header can be sent malformed or twice. */
+    const post = (headers: Array<[string, string]>) =>
+      fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: [
+          ["Content-Type", "application/json"],
+          ["Accept", "application/json, text/event-stream"],
+          ...headers,
+        ],
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } },
+        }),
+      });
+
+    it("both headers valid: bindStore's third argument is the fence; neither: undefined", async () => {
+      const turnId = randomUUID();
+      bindStore.mockClear();
+      const fenced = await post([
+        [PROJECT_HEADER, `fence-${randomUUID()}`],
+        [TURN, turnId],
+        [EPOCH, "7"],
+      ]);
+      expect(fenced.status).toBe(200);
+      await fenced.text();
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      expect(bindStore.mock.calls[0][2]).toEqual({ turnId, claimEpoch: "7" });
+
+      bindStore.mockClear();
+      const unfenced = await post([[PROJECT_HEADER, `fence-${randomUUID()}`]]);
+      expect(unfenced.status).toBe(200);
+      await unfenced.text();
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      expect(bindStore.mock.calls[0][2]).toBeUndefined();
+    });
+
+    it.each<[string, Array<[string, string]>]>([
+      ["only the turn header", [[TURN, "t1"]]],
+      ["only the epoch header", [[EPOCH, "1"]]],
+      ["epoch 0", [[TURN, "t1"], [EPOCH, "0"]]],
+      ["epoch -1", [[TURN, "t1"], [EPOCH, "-1"]]],
+      ["epoch abc", [[TURN, "t1"], [EPOCH, "abc"]]],
+      ["epoch 07", [[TURN, "t1"], [EPOCH, "07"]]],
+      ["epoch 1.5", [[TURN, "t1"], [EPOCH, "1.5"]]],
+      ["an empty epoch", [[TURN, "t1"], [EPOCH, ""]]],
+      ["a 19-digit epoch", [[TURN, "t1"], [EPOCH, "1000000000000000000"]]],
+      ["a duplicated epoch", [[TURN, "t1"], [EPOCH, "1"], [EPOCH, "2"]]],
+      ["a joined epoch '1, 2'", [[TURN, "t1"], [EPOCH, "1, 2"]]],
+      ["a turn id with '/'", [[TURN, "t/1"], [EPOCH, "1"]]],
+    ])("%s is a 400 before any tool runs", async (_name, fence) => {
+      bindStore.mockClear();
+      const res = await post([[PROJECT_HEADER, `fence-${randomUUID()}`], ...fence]);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual(INVALID_CLAIM_FENCE);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it("a fence with no project header is a 400, not an unbound store", async () => {
+      bindStore.mockClear();
+      const res = await post([
+        [TURN, "t1"],
+        [EPOCH, "1"],
+      ]);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual(INVALID_CLAIM_FENCE);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it.each<[string, Array<[string, string]>, { turnId: string; claimEpoch: string }]>([
+      ["mixed-case header names", [["x-GENEALOGY-turn-ID", "t1"], ["X-genealogy-CLAIM-epoch", "3"]], { turnId: "t1", claimEpoch: "3" }],
+      ["whitespace-padded values", [[TURN, " t1 "], [EPOCH, " 2 "]], { turnId: "t1", claimEpoch: "2" }],
+      ["an 18-digit epoch", [[TURN, "t1"], [EPOCH, "999999999999999999"]], { turnId: "t1", claimEpoch: "999999999999999999" }],
+    ])("accepts %s", async (_name, fence, expected) => {
+      bindStore.mockClear();
+      const res = await post([[PROJECT_HEADER, `fence-${randomUUID()}`], ...fence]);
+      expect(res.status).toBe(200);
+      await res.text();
+      expect(bindStore.mock.calls[0][2]).toEqual(expected);
+    });
+
+    it("claimFenceFromHeaders refuses an array value (a header node:http does not join)", () => {
+      expect(
+        claimFenceFromHeaders({
+          [PROJECT_ID_HEADER]: "p",
+          [TURN_ID_HEADER]: ["t1", "t2"] as unknown as string,
+          [CLAIM_EPOCH_HEADER]: "1",
+        }),
+      ).toEqual({ kind: "malformed" });
+      expect(claimFenceFromHeaders({ [PROJECT_ID_HEADER]: "p" })).toEqual({ kind: "absent" });
+    });
+  });
+
   it("3. a FamilySearch tool with no Authorization header gets the hosted reauth text, never the desktop one", async () => {
     const client = await connect();
     const result = await client.callTool({
@@ -262,10 +379,50 @@ describe("tool server over Streamable HTTP", () => {
     }
   });
 
+  it("4b. the image cap is counted per project: A's 21st image refuses without fetching, B's is fetched (#3010)", async () => {
+    const idA = `capa-${randomUUID()}`;
+    const idB = `capb-${randomUUID()}`;
+    const [a, b] = await Promise.all([
+      connect({ [PROJECT_HEADER]: idA, Authorization: "Bearer tok-A" }),
+      connect({ [PROJECT_HEADER]: idB, Authorization: "Bearer tok-B" }),
+    ]);
+    for (const [client, given] of [[a, "Alpha"], [b, "Beta"]] as const) {
+      const created = await client.callTool({ name: "project_create", arguments: createArgs(given) });
+      expect(created.isError, textOf(created)).not.toBe(true);
+    }
+    // A has already read 20 distinct images from the group, in its own log.
+    const group = "004261111";
+    const lines = Array.from({ length: 20 }, (_, i) =>
+      JSON.stringify({ image_group: group, image_id: `${group}_${String(i + 1).padStart(5, "0")}`, tool: "image_read", at: "2026-10-01T00:00:00Z" }),
+    );
+    await mkdir(join(root, idA, "results"), { recursive: true });
+    await writeFile(join(root, idA, "results", "image-browse.jsonl"), lines.join("\n") + "\n");
+
+    upstream.calls.length = 0;
+    const next = `${group}_00021`;
+    const refusedA = await a.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
+    expect(refusedA.isError).toBe(true);
+    expect(textOf(refusedA)).toMatch(/Image cap reached/);
+    // No projectPath: still counted against A's bound project, through its anchorPath.
+    const refusedBare = await a.callTool({ name: "image_read", arguments: { imageId: next } });
+    expect(textOf(refusedBare)).toMatch(/Image cap reached/);
+    expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-A")).toHaveLength(0);
+
+    const fetchedB = await b.callTool({ name: "image_read", arguments: { imageId: next, projectPath: SCOPED_ANCHOR } });
+    expect(textOf(fetchedB)).not.toMatch(/Image cap reached/);
+    expect(upstream.calls.filter((c) => c.authorization === "Bearer tok-B").length).toBeGreaterThan(0);
+    // B's bare call on a new image: counted against B's own project, never A's full group.
+    const bareB = await b.callTool({ name: "image_read", arguments: { imageId: `${group}_00022` } });
+    expect(textOf(bareB)).not.toMatch(/Image cap reached/);
+  });
+
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
     const health = await fetch(`${base}/healthz`);
     expect(health.status).toBe(200);
-    expect(await health.json()).toEqual({ ok: true, tools: allToolSchemas.length });
+    const healthBody = await health.json();
+    expect(healthBody).toMatchObject({ ok: true, tools: allToolSchemas.length });
+    // No checkReady option: nothing was probed, so nothing is reported.
+    expect(healthBody).not.toHaveProperty("checks");
 
     // A bare GET would get the SDK transport's 406 and prove nothing about the
     // entrypoint's guard; with the SSE accept header the transport would hold
@@ -286,6 +443,69 @@ describe("tool server over Streamable HTTP", () => {
     const missing = await fetch(`${base}/nope`);
     expect(missing.status).toBe(404);
   });
+
+  it("5b. with checkReady, /healthz answers 200 or 503 from the report, and 503 (never 500) on a probe that rejects or never settles", async () => {
+    let probe: () => Promise<ReadyReport> = async () => ({ ok: true, checks: {} });
+    const ready = await startHttpServer({
+      host: "127.0.0.1",
+      port: 0,
+      baseConfig: {},
+      bindStore,
+      checkReady: () => probe(),
+    });
+    const address = ready.address();
+    if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+    const url = `http://127.0.0.1:${address.port}`;
+    const healthz = async (): Promise<{ status: number; body: Record<string, unknown> }> => {
+      const res = await fetch(`${url}/healthz`);
+      return { status: res.status, body: (await res.json()) as Record<string, unknown> };
+    };
+    const up = { ok: true };
+    const down = { ok: false, error: "ECONNREFUSED" };
+    try {
+      probe = async () => ({ ok: true, checks: { postgres: up, s3: up } });
+      expect(await healthz()).toEqual({
+        status: 200,
+        body: { ok: true, tools: allToolSchemas.length, checks: { postgres: up, s3: up } },
+      });
+
+      // A slow probe inside the deadline is still a 200.
+      probe = () =>
+        new Promise((resolve) => setTimeout(() => resolve({ ok: true, checks: { postgres: up, s3: up } }), 300));
+      expect((await healthz()).status).toBe(200);
+
+      for (const failing of ["postgres", "s3"] as const) {
+        const checks = { postgres: up, s3: up, [failing]: down };
+        probe = async () => ({ ok: false, checks });
+        const r = await healthz();
+        expect(r.status, failing).toBe(503);
+        expect(r.body, failing).toEqual({ ok: false, tools: allToolSchemas.length, checks });
+      }
+
+      // fail → ok: the next probe's answer, not a cached one.
+      probe = async () => ({ ok: true, checks: { postgres: up, s3: up } });
+      expect((await healthz()).status).toBe(200);
+
+      probe = async () => {
+        throw new Error("postgresql://u:p@db.internal/x exploded");
+      };
+      const rejected = await healthz();
+      expect(rejected.status).toBe(503);
+      expect(rejected.body).toEqual({ ok: false, tools: allToolSchemas.length });
+
+      probe = () => new Promise<ReadyReport>(() => {});
+      const t0 = Date.now();
+      const [hung, other] = await Promise.all([healthz(), fetch(`${url}/nope`)]);
+      expect(Date.now() - t0).toBeLessThan(HEALTHZ_TIMEOUT_MS + 500);
+      expect(hung.status).toBe(503);
+      expect(hung.body).toEqual({ ok: false, tools: allToolSchemas.length });
+      // The other routes are not held behind the probe.
+      expect(other.status).toBe(404);
+    } finally {
+      ready.closeAllConnections();
+      await new Promise<void>((resolve) => ready.close(() => resolve()));
+    }
+  }, 10_000);
 
   it("6. a client that disconnects mid-call aborts its store's signal; one that reads its response does not", async () => {
     // The store's first call blocks on `gate`, holding the tool mid-flight the

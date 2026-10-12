@@ -835,16 +835,20 @@ const RECORD_WITH_IMAGE_SOURCE: GedcomX = {
 
 describe("recordReadTool — imageArk field", () => {
 
-  it("surfaces imageArk when the record has a DigitalArtifact source", async () => {
+  it("surfaces imageArk and viewerUrl when the record has a DigitalArtifact source", async () => {
     mockOk(RECORD_WITH_IMAGE_SOURCE);
     const result = await recordReadTool({ recordId: "P1" }, LOCAL);
     expect(result.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+    expect(result.viewerUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP"
+    );
   });
 
-  it("omits imageArk when no DigitalArtifact source is present", async () => {
+  it("omits imageArk and viewerUrl when no DigitalArtifact source is present", async () => {
     mockOk(MINIMAL_RECORD);
     const result = await recordReadTool({ recordId: "QVS9-DHDB" }, LOCAL);
     expect(result.imageArk).toBeUndefined();
+    expect(result.viewerUrl).toBeUndefined();
   });
 });
 
@@ -915,11 +919,15 @@ describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
     );
     expect(envelope.payload.results[0].gedcomx.imageArk).toBeUndefined();
 
-    // ...and the sidecar read re-derives it from the staged document.
+    // ...and the sidecar read re-derives both imageArk and viewerUrl from the
+    // staged document (issue #2854 — the sidecar path must also return viewerUrl).
     const again = await recordReadTool(
       { recordId: "P1", resultsRef: live.staged!.resultsRef, projectPath: dir },
       LOCAL,
     );
     expect(again.imageArk).toBe("ark:/61903/3:1:9Q97-YSRZ-GWP");
+    expect(again.viewerUrl).toBe(
+      "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP"
+    );
   });
 });

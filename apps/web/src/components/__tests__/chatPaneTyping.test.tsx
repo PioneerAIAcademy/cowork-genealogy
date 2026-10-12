@@ -199,6 +199,7 @@ describe('1c: Stop', () => {
       [{ kind: 'turn_done', outcome: 'no_progress' }, TURN_OUTCOME_LABELS.no_progress],
       [{ kind: 'turn_done', outcome: 'budget' }, TURN_OUTCOME_LABELS.budget],
       [{ kind: 'turn_done', outcome: 'mcp_unavailable' }, TURN_OUTCOME_LABELS.mcp_unavailable],
+      [{ kind: 'turn_done', outcome: 'delivered' }, TURN_OUTCOME_LABELS.delivered],
       [{ kind: 'turn_done', outcome: 'budget', limit: 'spend' }, SPEND_CAP_LABEL]
     ]
     const seen = new Set<string>()

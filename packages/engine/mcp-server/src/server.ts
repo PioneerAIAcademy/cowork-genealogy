@@ -6,6 +6,8 @@
 // src/http-server.ts). A new tool's dispatch arm goes
 // here, in the chain below, never in an entrypoint.
 
+import { catalogSearchTool } from "./tools/catalog-search.js";
+import type { CatalogSearchInput } from "./types/catalog-search.js";
 import type { Principal } from "./auth/principal.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
@@ -13,6 +15,7 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
+import { researchDelivered, type ResearchDeliveredInput } from "./tools/research-delivered.js";
 import {
   placeSearchTool,
   placeSearchAllTool,
@@ -27,6 +30,7 @@ import { wikiSearch, type WikiSearchInput } from "./tools/wiki-search.js";
 import { placeDistanceTool, type PlaceDistanceInput } from "./tools/distance.js";
 import { populationTool, type PopulationToolInput } from "./tools/place-population.js";
 import { externalLinksSearchTool, type ExternalLinksSearchInput } from "./tools/external-links-search.js";
+import type { ExternalLinksSearchResult } from "./types/external-links-search.js";
 import { imageReadTool, type ImageReadInput } from "./tools/image-read.js";
 import { imageTranscribeTool } from "./tools/image-transcribe.js";
 import { volumeBisectTool } from "./tools/volume-bisect.js";
@@ -42,6 +46,8 @@ import {
   personAncestorsTool,
   type PersonAncestorsInput,
 } from "./tools/person-ancestors.js";
+import { treeGapsTool } from "./tools/tree-gaps.js";
+import type { TreeGapsInput } from "./types/tree-gaps.js";
 import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
@@ -86,8 +92,8 @@ import {
   type ConvertCalendarInput,
 } from "./tools/convert-calendar.js";
 import {
-  buildExternalSearchUrl,
-  type BuildExternalSearchUrlInput,
+  buildExternalSearchUrlTool,
+  type BuildExternalSearchUrlToolInput,
 } from "./tools/build-external-search-url.js";
 import { treeEdit, type TreeEditInput } from "./tools/tree-edit.js";
 import { treeCorrect, type TreeCorrectInput } from "./tools/tree-correct.js";
@@ -118,7 +124,7 @@ import { getNameVariants, type GetNameVariantsInput } from "./tools/name-variant
 import { allToolSchemas } from "./tool-schemas.js";
 // Tools that report failure by RETURNING `{ ok: false }` rather than throwing
 // need `isError` set explicitly — the catch arms below cannot see them.
-import { writerToolResult } from "./tool-result.js";
+import { writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
 
 export function createServer(principal: Principal): Server {
@@ -144,10 +150,48 @@ export function createServer(principal: Principal): Server {
   // Nothing downstream parses the formatting; a human debugging a transcript can
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    if (request.params.name === "research_delivered") {
+      // A pure signal: no network, no auth, no project write. On BOTH hosted planes a
+      // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
+      // arm runs only where no such hook binds (Cowork, the e2e harness).
+      //
+      // The try/catch is not decoration: the server does NOT validate `inputSchema`, so
+      // a non-string `summary` reaches the body and `.trim()` throws. Every other arm
+      // here returns `isError` with a readable message; without this one, that throw
+      // escapes as a protocol-level MCP error instead.
+      try {
+        const args = request.params.arguments as unknown as ResearchDeliveredInput;
+        return {
+          content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+
     if (request.params.name === "wikipedia_search") {
       try {
         const args = request.params.arguments as unknown as WikipediaSearchInput;
         const result = await wikipediaSearch(args);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "catalog_search") {
+      try {
+        const args = request.params.arguments as unknown as CatalogSearchInput;
+        const result = await catalogSearchTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };
@@ -297,10 +341,10 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "external_links_search") {
       try {
         const args = request.params.arguments as unknown as ExternalLinksSearchInput;
-        const result = await externalLinksSearchTool(args);
-        return {
-          content: [{ type: "text", text: JSON.stringify(result) }]
-        };
+        // It reports failure by throwing (below), never with `ok: false`, so the
+        // envelope is the plain one; the wrapper keeps it on the writer path.
+        const result: ExternalLinksSearchResult & OkFalseResult = await externalLinksSearchTool(args);
+        return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
         return {
@@ -491,6 +535,21 @@ export function createServer(principal: Principal): Server {
         };
       }
     }
+    if (request.params.name === "tree_gaps") {
+      try {
+        const args = request.params.arguments as unknown as TreeGapsInput;
+        const result = await treeGapsTool(args ?? {}, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
     if (request.params.name === "record_read") {
       try {
         const args = request.params.arguments as unknown as RecordReadInput;
@@ -658,8 +717,8 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "build_external_search_url") {
       try {
-        const args = request.params.arguments as unknown as BuildExternalSearchUrlInput;
-        const result = buildExternalSearchUrl(args);
+        const args = request.params.arguments as unknown as BuildExternalSearchUrlToolInput;
+        const result = await buildExternalSearchUrlTool(args);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

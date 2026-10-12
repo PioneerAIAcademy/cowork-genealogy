@@ -12,6 +12,7 @@ import type {
   GedcomXFact,
   GedcomXPerson,
   GedcomXSourceDescription,
+  GedcomXSourceReference,
 } from "./gedcomx.js";
 
 // ─── Tool I/O ─────────────────────────────────────────────────────────────
@@ -84,6 +85,11 @@ export interface TreeRelationship {
   person1?: string;
   person2?: string;
   facts?: TreeFact[];
+  /** The sources FamilySearch attached to this relationship, as refs into the
+   *  result's `sources[]`. Only refs that resolve there are kept; absent when
+   *  none do. One child-and-parents relationship is two ParentChild edges, and
+   *  both carry its refs. */
+  sources?: TreeSourceRef[];
 }
 
 export interface TreeSource {
@@ -94,10 +100,10 @@ export interface TreeSource {
   /**
    * The memory artifact's own URL, when this source is a memory.
    *
-   * `url` is the human `/memories/<id>` page and is NOT accepted by
-   * `image_transcribe`/`image_read`, so a budget-skipped memory whose note says
-   * to retry with `memoryArtifactUrl` needs the artifact URL to be somewhere in
-   * the response. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
+   * `url` is the human `/memories/<id>` page. `image_transcribe` now accepts it
+   * as `memoryArtifactUrl` and resolves it; `image_read` still does not. The
+   * artifact URL is kept in the response anyway, because it saves the lookup
+   * and is what a budget-skipped memory's retry note names. MUST NEVER REACH `tree.gedcomx.json` -- it is absent from
    * `TREE_SOURCE_FIELDS`, which is what strips it on the write.
    */
   artifact_url?: string;
@@ -113,7 +119,8 @@ export interface TreeSource {
    * `{id, title, citation, author, url}` and `project_create` validates with
    * `validateParsed` WITHOUT sanitizing, so one stray key aborts the whole
    * project write -- the `notes` defect PR #1800 fixed (finding F7, validator
-   * V6). `init-project`'s SKILL.md carries the matching exclusion.
+   * V6). `project_create`'s host build drops it (`utils/person-read-tree.ts`
+   * keeps only `TREE_SOURCE_FIELDS`).
    */
   text?: string;
   /**
@@ -170,6 +177,8 @@ export interface FSChildAndParentsRelationship {
   child?: FSResourceRef;
   parent1Facts?: FSFact[];
   parent2Facts?: FSFact[];
+  /** Sent only in a read of a person this relationship names (issue #3229). */
+  sources?: GedcomXSourceReference[];
 }
 
 // FS relationship entries in `relationships[]` (couples, bare
@@ -182,6 +191,8 @@ export interface FSRelationship {
   person1?: FSResourceRef;
   person2?: FSResourceRef;
   facts?: FSFact[];
+  /** Sent only in a read of a person this relationship names (issue #3229). */
+  sources?: GedcomXSourceReference[];
 }
 
 export interface FSSourceDescription extends GedcomXSourceDescription {

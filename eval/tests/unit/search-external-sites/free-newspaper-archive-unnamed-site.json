@@ -12,11 +12,12 @@
       "chronicling-america",
       "url-generation",
       "log-site-chronicling-america",
-      "feedback-1949"
+      "feedback-1949",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Look for newspaper articles about Patrick Flynn's death in Schuylkill County, around 1908.",
+    "delegation": "Look for newspaper articles about Patrick Flynn's death in Schuylkill County, around 1908.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-ancestry-sub"
   },
   "mcp_fixtures": [

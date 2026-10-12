@@ -50,7 +50,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # Aliased away from the `test_` prefix on purpose: pytest would otherwise
 # collect the imported validator as a test of this module and error on its
 # harness-supplied fixtures. Same pattern as the sibling validator tests.
-from test_search_images import (  # noqa: E402
+from test_research import (  # noqa: E402
     test_no_browse_or_writes_on_planning_request as check_no_browse,
 )
 
@@ -58,7 +58,7 @@ from harness.mock_mcp import create_mock_server  # noqa: E402
 
 _EVAL_DIR = Path(__file__).resolve().parents[3]
 _FIXTURES_DIR = _EVAL_DIR / "fixtures" / "mcp"
-_NINE = _EVAL_DIR / "tests" / "unit" / "search-images" / "negative-research-plan.json"
+_NINE = _EVAL_DIR / "tests" / "unit" / "research" / "negative-research-plan.json"
 
 
 def _nine_fixtures():
@@ -137,11 +137,11 @@ def test_browse_tools_are_registered_by_the_declared_fixtures():
 # on legitimate work, which here is the whole reason this is not a copy of
 # check_no_browse — search-records logs every search it runs.
 
-from test_search_images import (  # noqa: E402
+from test_research import (  # noqa: E402
     test_no_browse_executed_on_indexed_search as check_no_browse_indexed,
 )
 
-_FIVE = _EVAL_DIR / "tests" / "unit" / "search-images" / "negative-indexed-search.json"
+_FIVE = _EVAL_DIR / "tests" / "unit" / "research" / "negative-indexed-search.json"
 _INDEXED_TAGS = {"type": "negative", "tags": ["no-browse-on-indexed"]}
 
 

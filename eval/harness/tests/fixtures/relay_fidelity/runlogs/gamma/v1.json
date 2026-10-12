@@ -1,0 +1,25 @@
+{
+  "skill": "alpha",
+  "snapshot": {
+    "packages/engine/plugin/agents/good.md": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "tests": [
+    {
+      "test_id": "ut_fx_stale",
+      "outcome": "pass",
+      "runs": [
+        {
+          "output": {
+            "agent_returns": [
+              {
+                "subagent_type": "good",
+                "text": "pre\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+              }
+            ],
+            "text_response": "y\n\n---\n\nSUMMARY LINE ONE\nSUMMARY LINE TWO"
+          }
+        }
+      ]
+    }
+  ]
+}

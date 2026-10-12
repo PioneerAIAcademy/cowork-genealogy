@@ -5,10 +5,17 @@
     "name": "On an empty folder, recognize no project and redirect to init-project",
     "type": "positive",
     "description": "The user opens an empty folder (no research.json, no tree.gedcomx.json) and asks 'where are we?'. That phrasing matches project-status's trigger words, so project-status fires — and the correct behavior is for it to recognize there is no project to summarize and redirect the user to init-project, WITHOUT fabricating a status report. Framed positive (not negative) because description-routing cannot see that the folder is empty: 'where are we?' legitimately activates project-status, and the valuable contract is its graceful self-detection and hand-off, not non-activation. See the empty-folder exception in rubric.md.",
-    "tags": ["status", "empty-folder", "redirect", "init-project", "boundary"]
+    "tags": [
+      "status",
+      "empty-folder",
+      "redirect",
+      "init-project",
+      "boundary",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "Where are we on this research?",
+    "delegation": "Report where this research project stands: the user-friendly summary first, then the detailed GPS-state summary, with any integrity warnings surfaced above both, and the recommended next step.\n\nprojectPath: <workspace>",
     "scenario": "empty-folder-no-project"
   },
   "judge_context": [

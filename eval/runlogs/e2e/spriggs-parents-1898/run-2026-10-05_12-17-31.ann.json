@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "Father identity and parent-child relationship recovered, but several expected biographical details and the 1920 census source are absent.",
+    "f2": "Mother identity, maiden name, and parent-child relationship recovered, but exact birth details, immigration fact, and the 1920 census source are absent."
+  },
+  "annotator": "solomonbaidoo54@gmail.com",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "1b12c724d19b44999876a0bc1d5f0ad1d4967e256a409aeeaa1a55127d494b67"
+}

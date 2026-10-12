@@ -1,5 +1,3 @@
-import type { BrowseBudgetAdvisory } from "../utils/browse-budget.js";
-
 /** One probe already taken. `year: null` means "probed, no year found" — see the
  *  spec §3 for why that case must be representable. */
 export interface VolumeBisectReading {
@@ -39,7 +37,6 @@ export interface VolumeBisectResult {
   nextImageId?: string;
   /** The probe this call took, for the caller to echo back in `readings`. */
   reading?: VolumeBisectReading;
-  browseBudget?: BrowseBudgetAdvisory;
   /** Present with a reason when the tool declines to continue. */
   stopped?: string;
 }

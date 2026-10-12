@@ -1,0 +1,126 @@
+{
+  "run_log": "v15_2026-10-08_17-37-55.json",
+  "annotator": "ikeboateng2018@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Facts check out against mid-research-flynn (13 assertions, 9 sources, src_005-src_009 empty, log_001-005, pli_006 in_progress, informant James Brown son-in-law). But it narrates state the stubs never wrote: 'pli_006 is now recorded as executed' in the same sentence as 'no state changed', and 'Extended the research plan to add mother-targeted searches' listing items research-plan never produced (its stub changed no state)."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Score kept, judge's reason replaced: the mentor gate WAS invoked (Agent:gps-mentor spawned), so that criticism is wrong. Actual defects: says 'Now I'll invoke question-selection' and never does (no question-selection call), then presents a full plan as 'A new research line has been queued' for a question never registered; calls Griffith's Valuation and the Tithe Applotment Books 'Irish emigration indexes' (they are land/tax records); asserts Schuylkill's Irish came 'largely from County Cork and County Mayo', which nothing in the scenario supports."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Score kept: the user asked to investigate origins and immigration; it stops to ask 'Would you like me to proceed?' after routing to research-plan, without registering the question or reaching search-records."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked: the table matches the image-reader stub response line for line."
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked: project state matches the project_context response (I1 only, no questions); routing to question-selection is correct."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Honest about the hand-off ('has been handed off... Once that returns'), and the 1846 birth and 1845 Smith County census check out. But 'every assertion is identity-linked to a tree person' is false: a_046 and a_047 (Mary and Edward Delaney, 1880 household) have no person_evidence link. Minor, so borderline."
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

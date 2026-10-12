@@ -59,13 +59,15 @@ def _fixture(tmp_path: Path):
     return load_fixture(fixture_dir)
 
 
-def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None):
+def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None, aborted=None):
     """Run `run_e2e_test` with everything but the judge branch stubbed out.
 
     `judge` is installed as `judge_module.run_judge` — pass a callable that
     raises to exercise the failure branch. `final_tree` of None is the treeless
     (agent-crashed) case the `skipped` verdict exists for. `usage` is what the
-    fake `_run_agent` returns as its usage dict (default empty).
+    fake `_run_agent` returns as its usage dict (default empty). `aborted` is the
+    SDK abort reason it returns (default None); pass `"host_slept"` to exercise
+    the slept-run judge-skip + commit path (issue #2974).
     """
     fixture = _fixture(tmp_path)
     workspace = tmp_path / "ws"
@@ -77,7 +79,7 @@ def _drive(tmp_path, monkeypatch, *, judge, final_tree, usage=None):
         # (tool_calls, narration, usage, aborted, error, blocked_tree_reads,
         #  blocked_context_calls, guardrail_shadow_violations,
         #  unnamed_delegate_violations)
-        return ([], [], dict(usage or {}), None, None, [], [], [], [])
+        return ([], [], dict(usage or {}), aborted, None, [], [], [], [])
 
     monkeypatch.setattr(orchestrator, "load_fixture", lambda _dir: fixture)
     monkeypatch.setattr(orchestrator, "build_workspace", lambda *a, **k: workspace)
@@ -140,3 +142,19 @@ def test_no_final_tree_stays_skipped_and_scratch(tmp_path, monkeypatch):
 
     assert result.verdict == "skipped"
     assert paths["result"].name.startswith("scratch_")
+
+
+def test_every_run_leaves_a_readable_report_with_the_grade_hidden(tmp_path, monkeypatch):
+    """The orchestrator writes `<runlog dir>/reports/<stem>.txt` right after the
+    run log — and, ungraded, it must not carry the judge's verdict (§7.4)."""
+
+    def judged(**kwargs):
+        return {"verdict": "pass", "recall_required": 1.0, "recall_total": 1.0,
+                "per_finding": [{"finding_id": "f1", "matched": "true"}]}
+
+    _result, paths = _drive(tmp_path, monkeypatch, judge=judged, final_tree={"persons": []})
+    report = paths["result"].parent / "reports" / f"{paths['result'].stem}.txt"
+    assert report.exists()
+    text = report.read_text(encoding="utf-8")
+    assert "grade hidden until this run is graded" in text
+    assert "verdict" not in text and "recall" not in text

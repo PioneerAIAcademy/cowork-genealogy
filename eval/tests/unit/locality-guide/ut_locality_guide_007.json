@@ -13,11 +13,12 @@
       "census",
       "repositories",
       " jurisdiction-awareness",
-      "volume-search"
+      "volume-search",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I\u2019m researching ancestors in California during the 1850s Gold Rush. What records or repositories would help trace people who migrated there for mining or settlement?",
+    "delegation": "I'm researching ancestors in California during the 1850s Gold Rush. What records or repositories would help trace people who migrated there for mining or settlement?\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -26,6 +27,7 @@
   },
   "mcp_fixtures": [
     "place-search-california",
+    "place-search-any",
     "collections-search-california",
     "wikipedia-search-california-gold-rush",
     "wiki-search-california-gold-rush",

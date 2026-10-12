@@ -8,11 +8,12 @@
     "tags": [
       "evidence-linkage",
       "supporting-evidence",
-      "no-status-change"
+      "no-status-change",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I noticed h_001 has three assertions linked as supporting evidence, but there are other assertions in research.json that seem relevant to the Thomas Flynn parentage claim — like a_005 which identifies Thomas Flynn by name in the 1850 census. Can you review the unlinked assertions and add any that also support the hypothesis?",
+    "delegation": "I noticed h_001 has three assertions linked as supporting evidence, but there are other assertions in research.json that seem relevant to the Thomas Flynn parentage claim — like a_005 which identifies Thomas Flynn by name in the 1850 census. Can you review the unlinked assertions and add any that also support the hypothesis?\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn",
     "scenario_notes": null
   },

@@ -73,6 +73,10 @@
     "localities": {
       "type": "array",
       "items": { "$ref": "#/$defs/locality" }
+    },
+    "warning_justifications": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/warning_justification" }
     }
   },
   "$defs": {
@@ -472,6 +476,9 @@
         "core_identifier_conflict": {
           "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
         },
+        "move_bridge": {
+          "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
         "match_score": {
           "anyOf": [
             { "type": "number", "minimum": 0, "maximum": 1 },
@@ -801,6 +808,21 @@
         "source": { "type": "string" },
         "created": { "$ref": "enums.schema.json#/$defs/iso_date" },
         "updated": { "$ref": "enums.schema.json#/$defs/iso_date" }
+      }
+    },
+    "warning_justification": {
+      "type": "object",
+      "required": ["warning_id", "justification", "person_ids", "tool", "recorded_at"],
+      "additionalProperties": false,
+      "properties": {
+        "warning_id": { "type": "string" },
+        "justification": { "type": "string" },
+        "person_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tool": { "type": "string" },
+        "recorded_at": { "$ref": "enums.schema.json#/$defs/iso_date" }
       }
     }
   }

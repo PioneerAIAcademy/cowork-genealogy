@@ -1,0 +1,42 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Patrick", "surname": "Flynn", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1845", "place": "Ireland" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "Thomas", "surname": "Flynn", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F2", "type": "Birth", "date": "~1818", "place": "Ireland" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Mary", "surname": "Flynn", "type": "BirthName" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "RT1", "type": "ParentChild", "parent": "I2", "child": "I1" },
+    { "id": "RT2", "type": "ParentChild", "parent": "I3", "child": "I1" },
+    { "id": "RT3", "type": "Couple", "person1": "I2", "person2": "I3" }
+  ],
+  "sources": [
+    { "id": "S1", "title": "1850 U.S. Census, Schuylkill County, Pennsylvania — Thomas Flynn household" },
+    { "id": "S2", "title": "Pennsylvania church and town records — Patrick Flynn baptism" },
+    { "id": "S3", "title": "1850 U.S. Census, Schuylkill County, Pennsylvania — Thomas Flinn household" },
+    { "id": "S4", "title": "Schuylkill County, Pennsylvania probate records" }
+  ]
+}

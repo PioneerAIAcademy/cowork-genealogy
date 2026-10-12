@@ -307,3 +307,43 @@ def test_a_batch_reports_once_per_qualifying_op():
                  starting_research={"assertions": [{"id": "a_011"}, {"id": "a_012"}],
                                     "questions": [{"id": "q_001"}]})
     assert r.unmodelled == {"tree:research_append:fact-rewrite": 2}
+
+
+_HAND_OFF_URL = "https://www.findagrave.com/memorial/search?lastname=Flynn"
+OK_HAND_OFF = (
+    '[{"type": "text", "text": "{\n  \\"ok\\": true,\n  \\"url\\": \\"' + _HAND_OFF_URL + '\\",'
+    '\n  \\"access\\": \\"free\\",\n  \\"logId\\": \\"log_001\\"\n}"}]'
+)
+OK_NO_LOG = (
+    '[{"type": "text", "text": "{\n  \\"ok\\": true,\n  \\"url\\": \\"' + _HAND_OFF_URL + '\\",'
+    '\n  \\"access\\": \\"free\\"\n}"}]'
+)
+
+
+def test_a_builder_hand_off_replays_as_its_log_entry():
+    """The builder writes the in-flight external_site entry when given projectPath."""
+    args = {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p", "planItemId": "pli_002"}
+    r = replay([_call("build_external_search_url", args, OK_HAND_OFF)])
+    (entry,) = r.research["log"]
+    assert entry["id"] == "log_001"
+    assert entry["plan_item_id"] == "pli_002"
+    assert entry["outcome"] == "partial"
+    assert entry["query"] == {"surname": "Flynn"}
+    assert entry["external_site"] == {"site": "findagrave", "url_generated": _HAND_OFF_URL, "capture_received": False}
+    assert r.synthesised_ids == 0
+    assert not r.unmodelled
+
+
+def test_a_builder_call_without_projectpath_replays_as_nothing():
+    """No projectPath, no write — and no invented id, which the generic path would mint."""
+    r = replay([_call("build_external_search_url", {"site": "findagrave", "attributes": {"surname": "Flynn"}}, OK_NO_LOG)])
+    assert r.research.get("log", []) == []
+    assert r.synthesised_ids == 0
+    assert not r.unmodelled
+
+
+def test_a_builder_call_whose_ledger_lost_the_logid_is_not_invented():
+    args = {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/p"}
+    r = replay([_call("build_external_search_url", args, OK_NO_LOG)])
+    assert r.research.get("log", []) == []
+    assert r.synthesised_ids == 0

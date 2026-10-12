@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_project_status_010",
+    "skill": "project-status",
+    "name": "Both summaries survive a delegation that does not name them",
+    "type": "positive",
+    "description": "The dual-output invariant under a delegation the agent does not author. ut_project_status_008 grades the same contract, but its delegation spells the contract out ('the user-friendly summary first, then the detailed GPS-state summary'), so a pass there cannot distinguish an agent that holds the contract from one that is reading it off the prompt. This delegation is the wording a live Cowork orchestrator actually produced (measured 2026-10-02): a bare restatement of the user's ask, naming neither summary. The direct arm has no router between the agent and the grader, so a miss here is the agent's, not the relay's.",
+    "tags": [
+      "status",
+      "dual-output",
+      "both-summaries",
+      "invariant",
+      "terse-delegation",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Summarize Flynn project status\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "The run must produce BOTH summaries in a single response: (1) a plain-language user-friendly narrative AND (2) a detailed GPS-state summary. Producing only one of the two is a fail of the dual-output invariant",
+    "The delegation deliberately does not ask for either summary by name. That is the point of this test: the agent's own body requires both, so both are required here. Do not treat the terse delegation as licence to produce a single summary, and do not penalize the agent for producing more than the delegation literally asked for",
+    "The detailed summary should show GPS-structured state: question status, GPS-element progress, plan/log statistics, evidence counts, conflicts, hypotheses, exhaustiveness level, conclusion readiness, and proof tier",
+    "The user-friendly summary should tell the story in plain language and AVOID GPS jargon (e.g. not 'primary source', 'indirect evidence', 'information quality') — explaining reliability conversationally instead",
+    "Both summaries should be internally consistent with each other and with research.json (same counts, same recommended next step)"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

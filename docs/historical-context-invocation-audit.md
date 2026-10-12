@@ -112,24 +112,24 @@ county note was incidental to a locality guide.
 tools (`wiki_search`, `wiki_read`, `wikipedia_search`, `place_search`,
 `place_search_all`, `place_population`), and the body says so twice:
 
-- `SKILL.md:169` — "It does not modify project files."
-- `SKILL.md:224` — "Writes nothing; safe to call repeatedly."
+- `packages/engine/plugin/skills/historical-context/SKILL.md` §"Important rules" at `3cccc28d` — "It does not modify project files."
+- `packages/engine/plugin/skills/historical-context/SKILL.md` §"Re-invocation behavior" at `3cccc28d` — "Writes nothing; safe to call repeatedly."
 
 **The general form of this argument is wrong, and the counterexamples are in
 this document.** "Read-only, therefore it cannot affect a graded outcome" is
 false: `research-exhaustiveness` declares only `project_context`, persists
-nothing, and runs **116** times, because `SKILL.md:48` sends the orchestrator
+nothing, and runs **116** times, because `packages/engine/plugin/skills/research-exhaustiveness/SKILL.md` §"3. Relay" at `3cccc28d` sends the orchestrator
 onward — "declared exhaustive → proof-conclusion; not declared because a gap
 remains → research-plan" — which changes what gets written downstream.
 `proof-conclusion` declares only `project_context` and runs **97** times, moving
-outcomes through a delegate that does persist (`SKILL.md:52`: "**Writes:**
+outcomes through a delegate that does persist (`packages/engine/plugin/skills/proof-conclusion/SKILL.md` §"Re-invocation behavior" at `3cccc28d`: "**Writes:**
 nothing directly. Every write is made by the `proof-conclusion` agent this skill
 delegates to"). Raised by @florencemashipei and @EdmondOware, and correct: the
 limb reused a mechanism this write-up had just discarded two sections earlier.
 
 **The narrower claim is what holds.** `historical-context` has neither of those
 two routes. It declares no agent delegation, so nothing persists on its behalf;
-and unlike `research-exhaustiveness:48` it ends with no next-step
+and unlike `packages/engine/plugin/skills/research-exhaustiveness/SKILL.md` §"3. Relay" at `3cccc28d` it ends with no next-step
 recommendation, so it never advances the orchestrator's loop. Its one
 control-flow action is a hand-off that terminates its own turn — routing-check
 row 1 invokes `locality-guide` and stops. So in an autonomous run it produces
@@ -164,9 +164,9 @@ Dropping the phrase would have put a passing test at risk for no measured gain.
 
 `locality-guide` (73 invocations) names `historical-context` three times, and
 all three are boundary markers rather than imperative delegations —
-`SKILL.md:17` ("use historical-context"), `:65` ("belongs in"), `:182`
+the frontmatter `description` of `packages/engine/plugin/skills/locality-guide/SKILL.md` at `3cccc28d` ("use historical-context"), §"2. Establish jurisdictional context" ("belongs in"), §"Decision rules"
 ("Redirect to"). The contrasting shape that does produce invocations is
-`person-evidence:643`, "invoke `check-warnings` on the affected persons",
+`packages/engine/plugin/skills/person-evidence/SKILL.md` §"8. Check warnings and present" at `3cccc28d`, "invoke `check-warnings` on the affected persons",
 behind 40 calls.
 
 Converting them was not done, because the remit such a delegation would serve
@@ -183,7 +183,7 @@ Boundary reasoning is present but brief, and sits almost entirely inside
 `locality-guide`'s own guide document — 46 occurrences inside a
 `guide_markdown` against 9 anywhere else. That count is looser than the 29 in
 the table above (no seed filter, no length bound), so read it as a ratio. It is
-the brief treatment `locality-guide/SKILL.md:65` mandates.
+the brief treatment `packages/engine/plugin/skills/locality-guide/SKILL.md` §"2. Establish jurisdictional context" at `3cccc28d` mandates.
 
 What is genuinely unserved is migration patterns and naming-**system**
 explanation. The 93 naming hits are mostly evidence matching — "a standard

@@ -13,15 +13,18 @@ const captured = vi.hoisted(() => ({
   storeAtListen: undefined as unknown,
   startCalls: 0,
   baseConfig: undefined as unknown,
+  checkReadyOption: undefined as undefined | (() => Promise<unknown>),
+  backendCheckReady: vi.fn(async () => ({ ok: true, checks: {} })),
 }));
 
 vi.mock("../../src/http-server.js", async () => {
   const { getProjectStore: read } = await import("../../src/store/project-store.js");
   return {
     MCP_PATH: "/mcp",
-    startHttpServer: async (opts: { baseConfig: unknown }) => {
+    startHttpServer: async (opts: { baseConfig: unknown; checkReady?: () => Promise<unknown> }) => {
       captured.startCalls += 1;
       captured.baseConfig = opts.baseConfig;
+      captured.checkReadyOption = opts.checkReady;
       // The store as it stands when the server starts accepting requests.
       captured.storeAtListen = read();
       return {
@@ -38,7 +41,7 @@ vi.mock("../../src/auth/config.js", () => ({
 }));
 
 vi.mock("../../src/store/pg-s3-project-store.js", () => ({
-  createPgS3Backend: () => ({ close: async () => {} }),
+  createPgS3Backend: () => ({ close: async () => {}, checkReady: captured.backendCheckReady }),
   PgS3ProjectStore: class {},
 }));
 
@@ -71,7 +74,12 @@ beforeAll(async () => {
     delete process.env[name];
   }
   vi.spyOn(console, "error").mockImplementation(() => {});
-  await import("../../src/http.js");
+  const stderrWrite = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+  try {
+    await import("../../src/http.js");
+  } finally {
+    stderrWrite.mockRestore();
+  }
 });
 
 afterAll(() => {
@@ -96,6 +104,15 @@ describe("the HTTP entrypoint's process store", () => {
     const store = getProjectStore();
     expect(store).not.toBeInstanceOf(FsProjectStore);
     await expect(store.readText("/project", "research.json")).rejects.toThrow();
+  });
+});
+
+describe("the HTTP entrypoint's readiness", () => {
+  it("hands startHttpServer a checkReady that probes the backend", async () => {
+    expect(captured.checkReadyOption).toBeTypeOf("function");
+    expect(captured.backendCheckReady).not.toHaveBeenCalled();
+    await expect(captured.checkReadyOption!()).resolves.toEqual({ ok: true, checks: {} });
+    expect(captured.backendCheckReady).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,7 +1,6 @@
 -- PR #2870 item 0a: bound the retry on a resumed attempt that does no work.
--- Additive and idempotent like 001-004 -- applied by initdb on an empty volume AND by the
--- worker at start (proto/worker/worker.py), so a volume that predates this file gets the
--- column without a `make proto-down`.
+-- Additive and idempotent like 001-004 -- applied once by `migrate.py`, so a volume that
+-- predates this file gets the column without a `make proto-down`.
 --
 -- turns.zero_progress_attempts: how many CONSECUTIVE redelivered attempts of this turn
 -- ran no model turn and recorded no tool call. The worker bumps it on such an attempt and

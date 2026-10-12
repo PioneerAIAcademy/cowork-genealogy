@@ -974,6 +974,28 @@ def test_live_writer_handler_uses_long_node_timeout(tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(
+    not (BUILD_TOOLS / "person-warnings.js").exists(),
+    reason="engine build required for the live person_warnings handler",
+)
+def test_person_warnings_runs_with_place_lookups_disabled(tmp_path, monkeypatch):
+    """The live person_warnings call passes a resolver that resolves nothing, so
+    its birthplace-distance check never reaches the Places API (issue #1962)."""
+    scripts: list[str] = []
+    spy = _NodeEvalSpy(stdout='{"warnings": []}')
+
+    def _recording(script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT):
+        scripts.append(script)
+        return spy(script, input_str, timeout)
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _recording)
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    scripts.clear()
+    _invoke(tools_by_name, "person_warnings", {"projectPath": str(tmp_path), "personId": "I1"})
+    assert len(scripts) == 1
+    assert "personWarningsTool(input, { placeCoords: async () => null })" in scripts[0]
+
+
+@pytest.mark.skipif(
     not BUILD_SCHEMAS_JS.exists(),
     reason="engine build required for the catalog probe",
 )
@@ -1376,8 +1398,79 @@ def test_person_read_staging_degrades_on_node_failure(tmp_path, monkeypatch, fai
 
     monkeypatch.setattr(mock_mcp, "_run_node_eval", _counted)
     response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
-    out = mock_mcp._stage_person_read(
-        tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
-    )
+    # A harness failure must say so: init-project stops when there is no ref.
+    with pytest.warns(UserWarning, match="could not be staged"):
+        out = mock_mcp._stage_person_read(
+            tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
+        )
     assert calls, "the node call was never reached"
     assert out == response
+
+
+def test_person_read_staging_warns_when_the_engine_build_is_missing(tmp_path, monkeypatch):
+    """The commonest harness cause, and the one that used to be silent."""
+    from harness import mock_mcp
+
+    monkeypatch.setattr(mock_mcp, "_MCP_BUILD", tmp_path / "no-build")
+    response = {"persons": [{"id": "LZNY-BRF"}], "relationships": [], "sources": []}
+    with pytest.warns(UserWarning, match="no engine build"):
+        out = mock_mcp._stage_person_read(
+            tmp_path, {**_PERSON_READ_ARGS, "projectPath": str(tmp_path)}, response
+        )
+    assert out == response
+
+
+def _hand_off_workspace(tmp_path):
+    """A project whose log a builder hand-off can append to."""
+    research = {
+        "project": {"id": "rp_001", "objective": "T", "status": "active", "created": "2026-01-01", "updated": "2026-01-01"},
+        "questions": [], "plans": [], "log": [], "sources": [], "assertions": [],
+        "person_evidence": [], "conflicts": [], "hypotheses": [], "timelines": [],
+        "proof_summaries": [], "evaluations": [],
+    }
+    (tmp_path / "research.json").write_text(json.dumps(research), encoding="utf-8")
+    (tmp_path / "tree.gedcomx.json").write_text(
+        json.dumps({"persons": [], "relationships": [], "sources": []}), encoding="utf-8"
+    )
+    return tmp_path
+
+
+def _logged(ws):
+    return json.loads((ws / "research.json").read_text(encoding="utf-8"))["log"]
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_without_projectpath_writes_nothing(tmp_path):
+    """The harness must not hand the builder a projectPath the agent never sent.
+
+    Given one, the builder logs the hand-off itself; production never supplies
+    it on the model's behalf, so injecting it would make every run of today's
+    skill log each URL twice (its own step-4 entry plus the builder's).
+    """
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(tools, "build_external_search_url", {"site": "findagrave", "attributes": {"surname": "Flynn"}})
+    )
+    assert out["ok"] is True
+    assert "logId" not in out
+    assert _logged(ws) == []
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
+    """A projectPath the agent sent is rebased onto the workspace and honoured."""
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(
+            tools,
+            "build_external_search_url",
+            {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/somewhere/else"},
+        )
+    )
+    assert out["ok"] is True
+    log = _logged(ws)
+    assert [e["id"] for e in log] == [out["logId"]]
+    assert log[0]["outcome"] == "partial"
+    assert log[0]["external_site"]["url_generated"] == out["url"]

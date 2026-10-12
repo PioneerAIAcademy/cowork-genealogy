@@ -9,11 +9,12 @@
       "wiki-place-page",
       "server-migration",
       "uses-tool-response",
-      "vermont"
+      "vermont",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "I'm researching ancestors who lived in Vermont in the late 1700s, before statehood. Build me a locality research guide for Vermont covering that pre-statehood period. Pull the Vermont FamilySearch wiki place page so the guide reflects what FamilySearch documents about Vermont's records, not just what you already know.",
+    "delegation": "I'm researching ancestors who lived in Vermont in the late 1700s, before statehood. Build me a locality research guide for Vermont covering that pre-statehood period. Pull the Vermont FamilySearch wiki place page so the guide reflects what FamilySearch documents about Vermont's records, not just what you already know.\n\nprojectPath: <workspace>",
     "scenario": "empty-project-just-created",
     "scenario_notes": null
   },
@@ -24,6 +25,7 @@
     "wiki-place-page-via-server-signature",
     "wiki-place-page-any",
     "place-search-vermont",
+    "place-search-any",
     "place-search-all-any",
     "place-population-any",
     "external-links-search-any",

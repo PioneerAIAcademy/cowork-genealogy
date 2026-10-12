@@ -37,7 +37,8 @@ name: JS workspace tests
 # resolve picks up that morning.
 #
 # Node 22, matching .nvmrc, the root package.json `engines` floor, and every
-# other workflow in this repo.
+# other workflow in this repo but eb-bundles.yml, which builds the Beanstalk
+# bundles on Node 24 (the platform branch U12 targets).
 
 #
 # Runs on EVERY pull request — no `paths:` filter — so these checks always

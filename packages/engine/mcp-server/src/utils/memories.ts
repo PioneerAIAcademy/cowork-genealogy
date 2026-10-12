@@ -12,11 +12,18 @@ import { fetchWithRetry } from "./http.js";
 import { isMemoryArtifactUrl } from "./fs-image-fetch.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
+/** Single-memory lookup. Distinct from API_BASE, which is the *tree persons*
+ *  base — a memory is addressed by its own id, not through a person. */
+const MEMORIES_API_BASE = "https://api.familysearch.org/platform/memories/memories";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
 
 /** Cap on pages walked. The largest person sampled carried 116 memories (5
  *  pages at 25); 40 is headroom, not a expected limit. */
 const MAX_PAGES = 40;
+
+/** Both page shapes, anchored. See isMemoryPageUrl for why `^` is load-bearing. */
+const MEMORY_PAGE_PATTERN =
+  /^https:\/\/(?:www\.)?familysearch\.org\/(?:photos\/artifacts|memories)\/(\d+)(?:[/?#]|$)/;
 
 export interface Memory {
   id: string;
@@ -315,4 +322,90 @@ export function isTranscribable(m: Memory): boolean {
 /** A story carries its own words; it is fetched, not OCR'd. */
 export function isStoryText(m: Memory): boolean {
   return m.mediaType.toLowerCase() === "text/plain";
+}
+
+
+/**
+ * The memory id in a FamilySearch Memories *page* URL, or null.
+ *
+ * Test and extract in one call: a separate predicate meant every caller matched
+ * the same regex twice and left the "not a page URL" throw unreachable from
+ * production, which made an error the spec documents look live when it was not.
+ *
+ * `photos/artifacts/<id>` is what a tree source's URL carries; `memories/<id>`
+ * is what `person_read` puts on every memory source as `url`. Both address the
+ * SAME memory — the digits are the id MEMORIES_API_BASE takes — so reading one
+ * and refusing the other would dead-end the agent on whichever it was given.
+ *
+ * **Anchored at `^` deliberately.** Unanchored, a URL that merely CONTAINS a
+ * FamilySearch page URL matches —
+ * `https://evil.example.com/r?u=https://www.familysearch.org/photos/artifacts/1`
+ * — and we would look up an id on behalf of a host never validated. A URL that
+ * merely starts with a different host is refused by the host literal instead,
+ * with or without the anchor.
+ */
+export function memoryPageId(url: string): string | null {
+  return MEMORY_PAGE_PATTERN.exec(url)?.[1] ?? null;
+}
+
+/**
+ * Resolve a memory id to its artifact's direct bytes URL.
+ *
+ * Returns `sourceDescriptions[0].about` — the same field the memories fetch
+ * above reads. NOT `links.image.href`, which carries the same value but sits
+ * beside `image-thumbnail`, `image-icon` and `image-deep-zoom-lite`; those are
+ * other sizes, and reaching one index over would silently transcribe a
+ * thumbnail.
+ *
+ * **Unauthenticated first.** Measured 2026-09-30 over 5 artifacts
+ * (`dev/probe-memory-page.ts`): byte-identical with and without a bearer.
+ * Going through `fsFetch` unconditionally would call `getValidToken` first and
+ * throw "User is not logged in" before any network call, refusing a logged-out
+ * caller a PUBLIC artifact — the trap `fetchFsImageBytes` documents for the
+ * artifact fetch itself. The 401/403 retry covers a restricted artifact, which
+ * the probe could not sample: every one reachable was `ctx=ArtCtxPublic`.
+ *
+ * Status AND emptiness are both checked before parsing, for the same reason
+ * the pager above says so: a 200 with an empty body or an HTML interstitial
+ * makes an unguarded `.json()` throw a raw SyntaxError at the agent instead of
+ * any of the actionable messages below.
+ */
+export async function resolveMemoryArtifactUrl(
+  pageId: string,
+  principal: Principal,
+): Promise<string> {
+  const lookup = `${MEMORIES_API_BASE}/${pageId}`;
+
+  let res = await fetchWithRetry(lookup, { headers: FS_HEADERS });
+  if (res.status === 401 || res.status === 403) {
+    // Only here does a credential enter: a restricted artifact. The bearer goes
+    // to api.familysearch.org and never to the URL this returns.
+    res = await fsFetch(principal, lookup, { headers: FS_HEADERS });
+  }
+
+  const raw = res.status === 200 ? (await res.text()).trim() : "";
+  if (res.status !== 200 || raw.length === 0) {
+    throw new Error(
+      `FamilySearch Memories lookup failed (${res.status}) for artifact ${pageId}. ` +
+        "Open the page URL in a browser to confirm the memory exists and is " +
+        "visible to you; if it is restricted, call the login tool and retry. " +
+        "Otherwise transcribe the page's image by another route.",
+    );
+  }
+
+  let about: unknown;
+  try {
+    about = (JSON.parse(raw) as { sourceDescriptions?: { about?: unknown }[] })
+      .sourceDescriptions?.[0]?.about;
+  } catch {
+    about = undefined;
+  }
+  if (typeof about !== "string" || !isMemoryArtifactUrl(about)) {
+    throw new Error(
+      `FamilySearch returned no readable artifact for memory ${pageId}. It may be a ` +
+        "story with no attached file, or an audio memory. Read the memory's text " +
+        "from person_read's source instead of transcribing it.",
+    );
+  }
+  return about;
 }

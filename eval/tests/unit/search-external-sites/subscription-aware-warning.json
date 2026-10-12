@@ -10,11 +10,12 @@
       "external-site",
       "subscription-awareness",
       "url-generation",
-      "log-site-myheritage"
+      "log-site-myheritage",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.",
+    "delegation": "Search MyHeritage for Patrick Flynn's marriage record in Pennsylvania, around 1865 to 1875.\n\nuserPresent: yes\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn-ancestry-sub"
   },
   "mcp_fixtures": [

@@ -109,8 +109,9 @@ whatever their id looks like.
 
 Which kind a given document uses is the writer's call, made once per
 document: `person_read` snapshots (e.g. e2e fixture trees) preserve FS PIDs;
-project trees built by `init-project` deliberately synthesize `I` ids for
-**all** persons, FS-seeded ones included (see `init-project/SKILL.md`). Both
+project trees deliberately synthesize `I` ids for **all** persons, FS-seeded
+ones included; `project_create` assigns them when it builds the starting tree
+from a staged `person_read` (`project-create-tool-spec.md` §4). Both
 are valid documents under this spec.
 
 ---
@@ -246,10 +247,11 @@ Source references appear on persons, names, facts, and relationships, and link
 the holder to a source description with a locator.
 
 **On a person, a ref says only that the source is attached to that person.**
-FamilySearch attributes sources at the person level and essentially nowhere
-else (lead probe, 2026-09-20: 25 of 25 persons carry them, 0 of 157 facts and
-0 of 31 names), so `person_read` carries them here rather than discarding the
-only attribution it has. FamilySearch's `tags` on these refs are not carried: a
+FamilySearch attributes sources at the person level, on relationships, and
+essentially nowhere else (lead probe, 2026-09-20: 25 of 25 persons carry them,
+0 of 157 facts and 0 of 31 names), so `person_read` carries a person's here,
+and a relationship's on its edges (`person-read-tool-spec.md`, "5.
+Relationships"), rather than discard either. FamilySearch's `tags` on these refs are not carried: a
 `Name` tag says the record carries *a* name for the person, not *this* name,
 so it cannot attest a value, and 86% of refs carry none. Which source supports
 which name or fact is not decided here; that is source evaluation's job. The
@@ -267,7 +269,7 @@ merge tools carry person-level refs and fold them on a collapse
 Each fact carries two date fields:
 
 - **`date`** — the date string as it was originally written. Whatever a contributor typed in the raw GedcomX (`fact.date.original`) is preserved here verbatim. LLM-authored stub facts populate `date` directly with a human-readable string.
-- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input.
+- **`standard_date`** — a canonical GEDCOM-form sidecar produced by the converter (e.g. `12 Mar 1908`, `Abt 1850`, `Bef Oct 1855`, `Bet 1917 and 1918`). Downstream tools that need to compare or order dates should read `standard_date` rather than re-parsing `date` each time. Omitted when the standardizer cannot parse the input. **It never emits a partial:** if any word of `date` is unrecognized, `standard_date` is omitted rather than built from the words it did read, and it never carries a day without a month. So `13 ene 1752` gives `13 Jan 1752` and `1872 AGE 3 YRS` gives no sidecar, never `3 1872`. Connector words the date vocabulary knows, such as English `of` and `on` and Spanish and Portuguese `de` in `22 de abril de 1838`, count as read, and the legal idioms `on or about`, `on or before` and `on or after` read as `Abt`, `Bef` and `Aft`. A trailing parenthetical is an annotation, not part of the date, and is carried through verbatim (`~1845 (?)` gives `Abt 1845 (?)`).
 
 The standardizer recognizes the patterns below (and many freeform variants). LLM-authored skills should prefer these patterns in `date`; the converter will produce a matching `standard_date` when it can:
 
@@ -280,7 +282,7 @@ The standardizer recognizes the patterns below (and many freeform variants). LLM
 | `before YYYY` | `before 1850` | `/+1850` | Before a date |
 | `after YYYY` | `after 1840` | `+1840/` | After a date |
 | `YYYY-YYYY` | `1840-1850` | `+1840/+1850` | Date range |
-| Free text | `about Spring 1845` | (best-effort) | Unstructured — conversion function attempts to extract year and qualifier |
+| Free text | `about Spring 1845` | (none) | Unstructured. Any word the standardizer does not recognize (here `Spring`) omits `standard_date`; `date` still keeps the text verbatim |
 
 Reverse conversion (simplified → raw): only `date` is restored into `fact.date.original`. `standard_date` is dropped — it is a simplified-format-only sidecar.
 
@@ -392,6 +394,9 @@ catches is otherwise invisible: a lowercase `birth` copied across from
 `research.json` looks like a plausible value, passes every enum check that
 treats the list as open, and then hard-fails `tree_edit` mid-run. Name types
 carry no such constraint, but should follow the same PascalCase convention.
+A FamilySearch custom fact type is a label a user typed, so it can start with a
+lowercase letter, a quote or a digit; the converter tidies it to meet this rule
+before any tree is built from it (gedcomx-convert-spec.md §5.5).
 
 ---
 

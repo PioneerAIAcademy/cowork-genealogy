@@ -1,9 +1,12 @@
 import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
+import { memoryPageId, resolveMemoryArtifactUrl } from "../utils/memories.js";
 import {
   resolveFsImageInput,
   fetchFsImageBytes,
+  extractImageContextQuery,
 } from "../utils/fs-image-fetch.js";
+import { imageViewerUrl } from "../utils/ark.js";
 import {
   saveSourceImage,
   recordImageReadCap,
@@ -18,10 +21,7 @@ import {
   OCR_MAX_TOKENS,
   MAX_OCR_INPUT_BYTES,
 } from "../utils/ocr.js";
-import {
-  recordBrowseAndCheckBudget,
-  __clearBrowseBudgetForTests,
-} from "../utils/browse-budget.js";
+import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import { getProjectStore } from "../store/project-store.js";
 import {
   classifyProjectPath,
@@ -40,7 +40,7 @@ import type {
 
 // Re-exported so existing importers (tests, dev/probe-ocr-finish-reason.ts) keep
 // their import path after the extraction to src/utils/ (issue #2183).
-export { __clearBrowseBudgetForTests, OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
+export { OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
 
 // The digest's bounded excerpt (issue #2489): enough for a caller to triage a
 // staged transcription without asking for the full text.
@@ -140,6 +140,8 @@ export async function imageTranscribeTool(
   let contentType: string;
   let sizeBytes: number;
   let label: string;
+  let pageId: string | null = null;
+  let resolvedMemoryUrl = "";
   let apiKey: string;
   let model: string;
 
@@ -188,12 +190,40 @@ export async function imageTranscribeTool(
     sizeBytes = bytes.length;
     label = input.file;
   } else {
-    const resolved = resolveFsImageInput(input, "image_transcribe");
+    // A Memories *page* URL carries no path to the bytes, so it is resolved to
+    // the direct artifact URL first. resolveFsImageInput stays synchronous, and
+    // its MEMORY_ARTIFACT_PATTERN check then runs on the RESOLVED url — that is
+    // the host check, unchanged.
+    //
+    // This resolution lives HERE, not in resolveFsImageInput, on purpose.
+    // `ImageReadInput extends FsImageInput`, so image_read already accepts
+    // memoryArtifactUrl without advertising it — lifting the resolve into the
+    // shared resolver would quietly give image_read page-URL support, against
+    // the image_transcribe-only ruling (lead, 2026-09-29; placement confirmed
+    // 2026-09-30). image_read would also mostly pay the lookup and then refuse
+    // the bytes on its 700 KB inline cap. One caller, so it stays in the tool
+    // until there is a second.
+    pageId = input.memoryArtifactUrl !== undefined ? memoryPageId(input.memoryArtifactUrl) : null;
+    if (pageId !== null) resolvedMemoryUrl = await resolveMemoryArtifactUrl(pageId, principal);
+    const forFetch =
+      pageId !== null ? { ...input, memoryArtifactUrl: resolvedMemoryUrl } : input;
+
+    const resolved = resolveFsImageInput(forFetch, "image_transcribe");
+    // Deliberately the RESOLVED url: it feeds imageKey and the staged element's
+    // id, so a page-URL read and a direct-URL read of one artifact land on the
+    // same images/<key>.jpg instead of retaining the scan twice. The staged
+    // `source` below keeps the url the agent actually passed.
     label = resolved.label;
 
-    // Resolve credentials/config BEFORE fetching the image: a missing key
-    // should fail fast (and never leave a fetched scan unused). getOpenRouterApiKey
-    // throws an LLM-actionable error naming config.json when absent.
+    // The hard image cap (§5.8): refuse before the fetch and the OCR.
+    const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe");
+
+    // Resolve credentials/config before FETCHING the image: a missing key should
+    // fail fast and never leave a fetched scan unused. It sits below the input
+    // resolve on purpose — hoisting it above made a malformed ark report a
+    // missing OpenRouter key instead of its own shape error. The Memories lookup
+    // above is the one call a keyless page-URL request can still waste, and it
+    // is small; the image fetch, which is not, is still behind this.
     apiKey = await getOpenRouterApiKey(principal);
     model = await getOpenRouterModel(principal);
 
@@ -203,6 +233,7 @@ export async function imageTranscribeTool(
       principal,
       resolved.memoryShape,
     );
+    await recordImageBrowse(browse);
     bytes = fetched.bytes;
     contentType = fetched.contentType;
     sizeBytes = fetched.sizeBytes;
@@ -254,10 +285,12 @@ export async function imageTranscribeTool(
       if (!contentType.toLowerCase().startsWith("image/")) throw new Error("not an image");
       imageRef = await saveSourceImage({
         projectPath: input.projectPath,
-        // `label` is the caller's input verbatim, which for a memory artifact
-        // is a whole URL -- it sanitizes to a ~70-character filename carrying
-        // the host and the ctx param. person_read passes the memory id
-        // instead, so the scan lands at images/<memory id>.jpg.
+        // `label` is the caller's input verbatim EXCEPT on a Memories page url,
+        // which resolves to the artifact url first — so both routes to one
+        // artifact share a key instead of retaining the scan twice. For a
+        // memory artifact it is a whole URL: it sanitizes to a ~70-character
+        // filename carrying the host and the ctx param. person_read passes the
+        // memory id instead, so the scan lands at images/<memory id>.jpg.
         imageKey: opts.imageKey ?? label,
         bytes,
       });
@@ -271,11 +304,6 @@ export async function imageTranscribeTool(
     // image_filename joins on.
     if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
-
-  const browseBudget = recordBrowseAndCheckBudget(
-    input.imageId,
-    input.projectPath,
-  );
 
   // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
   // line the model never reached, and a target may sit below the cut — a
@@ -330,15 +358,20 @@ export async function imageTranscribeTool(
     };
   }
 
+  const viewerUrl = imageViewerUrl(
+    { imageId: input.imageId, ark: input.ark },
+    extractImageContextQuery,
+  );
+
   return {
     transcription,
+    ...(viewerUrl ? { viewerUrl } : {}),
     ...(truncated ? { truncated: true as const, truncationNotice } : {}),
     ...(found ? { found } : {}),
     ...(imageRef ? { imageRef } : {}),
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
     ...(digest !== undefined ? { digest } : {}),
-    ...(browseBudget ? { browseBudget } : {}),
     ...(lookingForExpansion && input.lookingFor
       ? {
           nameExpansion: {
@@ -352,6 +385,11 @@ export async function imageTranscribeTool(
       ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
       ...(input.ark !== undefined ? { ark: input.ark } : {}),
       ...(input.file !== undefined ? { file: input.file } : {}),
+      // The artifact url a Memories PAGE url resolved to. Returned so the caller
+      // can pass it directly next time: person_read's spec tells readers
+      // artifact_url "saves the lookup", and without this the one caller that
+      // just performed the lookup is the only one that cannot benefit from it.
+      ...(pageId !== null ? { memoryArtifactUrl: resolvedMemoryUrl } : {}),
       contentType,
       model,
       sizeBytes,
@@ -366,7 +404,9 @@ export const imageTranscribeToolSchema = {
     "this for large scans that image_read refuses (over its inline size cap): " +
     "the image is OCR'd host-side and never enters the conversation, so there " +
     "is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
-    "(memoryArtifactUrl), including a PDF, and an UPLOADED image or PDF already " +
+    "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
+    "(familysearch.org/photos/artifacts/<id> or /memories/<id>) — " +
+    "including a PDF, and an UPLOADED image or PDF already " +
     "inside the project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
     "Provide exactly one of imageId, ark, memoryArtifactUrl, or file. Requires " +
     "FamilySearch auth (call login) for imageId/ark only; memoryArtifactUrl and " +
@@ -401,11 +441,13 @@ export const imageTranscribeToolSchema = {
       memoryArtifactUrl: {
         type: "string",
         description:
-          "A FamilySearch memory artifact URL, as carried by a person_read " +
-          "source that came from a person's memories (a scanned will, " +
-          "certificate, obituary clipping or compiled history uploaded by a " +
-          "relative). PDFs are supported here as well as images. Needs no " +
-          "FamilySearch login.",
+          "A FamilySearch memory: a scanned will, certificate, obituary " +
+          "clipping or compiled history uploaded by a relative. Either form " +
+          "works — the direct artifact URL (a person_read source's " +
+          "artifact_url) or the page URL a person sees " +
+          "(familysearch.org/photos/artifacts/<id>, or /memories/<id>, which " +
+          "is that source's url); a page URL is resolved first. PDFs are " +
+          "supported as well as images. Needs no FamilySearch login.",
       },
       file: {
         type: "string",

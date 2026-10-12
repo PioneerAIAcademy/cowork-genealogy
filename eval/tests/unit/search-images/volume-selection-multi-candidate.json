@@ -5,10 +5,10 @@
     "name": "Select the right volume among multiple browse-only candidates",
     "type": "positive",
     "description": "volume_search returns four digitized volumes that are ALL browse-eligible (recordSearchablePercent 0, fulltextSearchable false), so searchability cannot pick a winner — the skill must select by matching place AND record type AND era. The target is a Schuylkill County will, so the correct choice is the Schuylkill Probate volume (007936749), NOT the Berks probate volume (right type, wrong county) and NOT the Schuylkill church/tax volumes (right place, wrong type). No other test exercises selection among multiple browse-eligible candidates — boundary-indexed-volume tests the searchability judgment with a single indexed volume; this tests the scoping judgment the Volume selection rubric dimension is meant to grade. (Page reads are delegated to the image-reader subagent, which returns no content in the harness, so the gradeable browse is: pick the right volume, list its images, log the browse.)",
-    "tags": ["browse", "volume-selection", "multi-candidate", "scoping"]
+    "tags": ["browse", "volume-selection", "multi-candidate", "scoping", "direct-arm"]
   },
   "input": {
-    "user_message": "Several Schuylkill County, Pennsylvania record sets are digitized but not indexed. Find the right unindexed volume to browse for Thomas Flynn's will and list its images so I can see what's covered.",
+    "delegation": "Browse the digitized Schuylkill County unindexed probate volumes for Thomas Flynn's will and list the images so the user can see what's covered.\n\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Thomas Flynn's will\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": ["volume-search-schuylkill-multi-browse", "image-search-schuylkill-probate", "image-transcribe-schuylkill-probate-flynn-will", "image-transcribe-any"],

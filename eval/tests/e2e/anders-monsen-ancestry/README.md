@@ -24,7 +24,7 @@ Extended relatives not relevant to the marriage question (Mons's other marriages
 
 ## Expected difficulty
 
-Moderate, and harder than originally scoped — the marriage record is real and readable directly by ark (`record_read ark:/61903/1:1:NW44-PM2`, collection 1468080), and this premise held when the fixture was authored: run 1 (2026-07-09) recovered it via `record_search` itself, ranked #2 of 58, `attachedToSubject: true`. As of 2026-09-16/17 the record is confirmed **not** retrievable through `record_search` under either persona's own indexed name, by any query tried across two independent checks a week apart (see "What the live runs revealed" below). Consistent with the run-8 probe's own finding, this is the search index drifting, not the original premise having been wrong — and per that same probe, the record "may revert." Until it does, Digitalarkivet or another Norwegian-only archive may be the only current route to `f2`. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) also makes both names extremely common, so disambiguation would rest on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography if the record re-enters the search index.
+Moderate, and harder than originally scoped — the marriage record is real and readable directly by ark (`record_read ark:/61903/1:1:NW44-PM2`, collection 1468080), and this premise held when the fixture was authored: run 1 (2026-07-09) recovered it via `record_search` itself, ranked #2 of 58, `attachedToSubject: true`. The record went missing from the `record_search` index around 2026-09-16/17 — confirmed by two independent checks a week apart, and by runs 8, 9 and 10 finding nothing under any query shape. The run-8 probe read that as the search index drifting rather than the premise being wrong, and said it might revert. **It did: collection 1468080 was reloaded on 2026-09-30 and the record returned.** Verified that day at rank 1 of 3, confidence 5, on `surname=Monsen givenName=Anders isPrincipal=true spouseGivenName=Urna spouseSurname=Halsteinsdr collectionId=1468080`. The Digitalarkivet route is therefore no longer the only path to `f2`. What remains hard is the spelling: the bride is indexed **Urna Halsteinsdr**, `Unna` and the expanded `Halsteinsdatter` do not find the record, and she is not indexed as a principal at all. Norwegian patronymic naming (Anders Monsen = son of Mons; Unna Halsteinsdatter = daughter of Halstein) also makes both names extremely common, so disambiguation rests on combining both spouses' names with the approximate 1786 date and Hordaland/Meland-area geography.
 
 ## Notes for reviewers
 
@@ -155,13 +155,28 @@ Two required findings: (f1) the marriage fact — Anders Monsen married Unna Hal
   collection 1468080 with no year filter and no `isPrincipal` — so the record's
   personas are not in that collection's search index today, which is a stronger
   and simpler explanation than year-range semantics.
-  **How to read an `f2` miss:** as a search result about a drifting index, not
-  as proof of an expected-findings defect and not as an agent regression. The
-  record was reachable on 2026-07-09 and is not reachable by any probed query on
-  2026-09-09; it may revert. Before attributing a future `f2` miss to the agent,
-  re-run run 1's `tool_calls[29]` query and the `Urna Halsteinsdr` probe above —
-  if they still return 10 and 0, the record is out of the search index and no
-  search strategy will find it.
+  **How to read an `f2` miss — superseded 2026-09-30, the index is back.** This
+  block used to say an `f2` miss was a fact about a drifting index rather than
+  about the agent. That held while the record was out of the index, 2026-09-16
+  to 2026-09-29. Collection 1468080 was reloaded on 2026-09-30 and the record
+  returned: it ranks 1 of 3, confidence 5, on `surname=Monsen givenName=Anders
+  isPrincipal=true spouseGivenName=Urna spouseSurname=Halsteinsdr
+  collectionId=1468080`. **So an `f2` miss from 2026-09-30 onward is about the
+  agent.** Confirm the index first — if that query still returns the record, the
+  miss is the run's. What makes it hard is the spelling: the bride is indexed
+  `Urna Halsteinsdr`, `Unna` and the expanded `Halsteinsdatter` do not return
+  the record, and she is not indexed as a principal at all, so searching her as
+  one returns zero. **No run since the reload has used `Urna`** — the
+  2026-09-30 re-run made twelve searches in the collection without it. Earlier
+  runs did use it: run 3 (2026-07-13) tried it extensively with the full
+  surname, and the 2026-09-29 run used it in 13 of its 59 `record_search`
+  calls, 7 of them in 1468080. **At `tool_calls[65]` that run issued exactly the query
+  above and got `totalMatches: 0`** — because the record was out of the index
+  that day. The same query returning nothing on 29 September and the record at
+  rank 1 on 30 September is this fixture's strongest evidence that the reload
+  is what changed, stronger than the verification on its own. Run 1, the only
+  success, dropped the spouse filter and spotted the record among 58
+  unfiltered candidates.
 - **Run 9 (2026-09-16 10:16) confirms the drift has not reverted, and sharpens the diagnosis.**
   `f1` false, `f2` false, `stop_reason: tool_cap`, proof quality 3 — the tree's
   `Couple` relationship carries no marriage fact at all this time (worse than

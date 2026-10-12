@@ -9,11 +9,12 @@
       "status",
       "summary",
       "mid-project",
-      "complete-coverage"
+      "complete-coverage",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "What's the current status of this research project?",
+    "delegation": "Report where this research project stands: the user-friendly summary first, then the detailed GPS-state summary, with any integrity warnings surfaced above both, and the recommended next step.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "judge_context": [

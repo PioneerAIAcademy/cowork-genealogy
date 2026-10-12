@@ -21,6 +21,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { validateProject } from "../../src/validation/validator.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -391,6 +392,22 @@ describe("tree_edit", () => {
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(JSON.stringify(r)).toMatch(/`assertion_id` is not settable/);
+    });
+  });
+
+  it("add_fact: resolves a bare place against the places of the holder's other facts", async () => {
+    await writeProject(onePersonSourced());
+    const add = (place: string) =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_fact",
+        personId: "I1",
+        fact: { type: "Residence", place, sources: [{ ref: "S1" }] },
+      });
+    expect((await add("Borough of Shenandoah, County of Schuylkill")).ok).toBe(true);
+    expect((await add("Shenandoah")).ok).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: expect.arrayContaining(["Borough of Shenandoah, County of Schuylkill"]),
     });
   });
 
@@ -1646,5 +1663,275 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
     expect(r.results[0].assignedIds?.relationship).toBe("R1");
     const rel = (await readTree()).relationships[0];
     expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
+  });
+});
+
+describe("tree_edit — warning gate integration (issue #2840)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "tree-edit-wg-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeProject(tree: any, research: any = minimalResearch) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+  }
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+
+  // Person born 1800 with a death 1950 — a >120-year lifespan triggers
+  // hasAgeRangeGreaterThan120, which is NOT in GATE_EXEMPT_TYPES.
+  const longLifeTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1800", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  // A child with one father, and a second father to add. Both men and the child
+  // are individually plausible; the impossibility is purely relational, which is
+  // why only a gate that SEES the parentage edge can catch it.
+  const twoFathersTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Male",
+        names: [{ id: "N1", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "Peter", surname: "Brown", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1902", primary: true }],
+      },
+      {
+        id: "I3",
+        gender: "Female",
+        names: [{ id: "N3", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F3", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [{ id: "R1", type: "ParentChild", parent: "I1", child: "I3" }],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a second biological father on a child (the parentage edge the gate used to miss)", async () => {
+    // Returned ok: true on main. `computeTouchedPersonIds` read relationship
+    // endpoints from `person1`/`person2` only -- the Couple pair -- so adding a
+    // ParentChild edge, which carries `parent`/`child`, marked NOBODY as
+    // touched and the gate computed warnings for no one. Over the committed e2e
+    // final trees every ParentChild edge uses parent/child and none uses
+    // person1/person2 (re-derive with dev/measure-parentage-gate-rate.ts).
+    await writeProject(twoFathersTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I3",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(/tooManyFathers2/);
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("lands the same second father when every introduced warning is justified", async () => {
+    // The accept direction: the gate narrows, it does not forbid. A genuine
+    // second father -- an adoption, or a correction -- goes through on a
+    // justified re-call.
+    await writeProject(twoFathersTree());
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+    } as any);
+    expect(refused.ok).toBe(false);
+
+    const ok = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I2", child: "I3", sources: [{ ref: "S1" }] },
+      warningJustifications: (refused as any).warnings.map((w: any) => ({
+        warningId: w.warningId,
+        justification: "Adoptive father, recorded on the 1940 decree.",
+      })),
+    } as any);
+    expect(ok.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter((r: any) => r.type === "ParentChild");
+    expect(rels).toHaveLength(2);
+  });
+
+  // A parent born 30 years AFTER their child. `earliestChildBirthToBirth12` is
+  // the only check that fires on this, and it was on the exempt list, so every
+  // gated writer accepted it. Exempting it was reading the tag as a
+  // child-bearing-age prior like its cutoff-14 gendered siblings; at cutoff 12
+  // it is also the sole guard against an outright impossibility.
+  const invertedGenerationsTree = () => ({
+    persons: [
+      {
+        id: "I1",
+        gender: "Female",
+        names: [{ id: "N1", given: "Mary", surname: "Smith", preferred: true }],
+        facts: [{ id: "F1", type: "Birth", date: "1900", primary: true }],
+      },
+      {
+        id: "I2",
+        gender: "Male",
+        names: [{ id: "N2", given: "John", surname: "Smith", preferred: true }],
+        facts: [{ id: "F2", type: "Birth", date: "1930", primary: true }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", title: "Parish Register" }],
+  });
+
+  it("refuses a parent born after their own child", async () => {
+    await writeProject(invertedGenerationsTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect(JSON.stringify((r as any).warnings)).toMatch(
+      /earliestChildBirthToBirth12/,
+    );
+    expect(await readTree()).toEqual(treeBefore);
+  });
+
+  it("accepts an ordinary parentage edge — un-exempting the tag did not refuse every parent", async () => {
+    // The other direction. Same two people, same operation, generations the
+    // right way round: a guard that refuses this is worse than no guard.
+    const tree = invertedGenerationsTree();
+    tree.persons[1].facts[0].date = "1870";
+    await writeProject(tree);
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "ParentChild",
+        parent: "I2",
+        child: "I1",
+        sources: [{ ref: "S1" }],
+      },
+    } as any);
+
+    expect(r.ok).toBe(true);
+    const rels = (await readTree()).relationships.filter(
+      (x: any) => x.type === "ParentChild",
+    );
+    expect(rels).toHaveLength(1);
+  });
+
+  it("refuses a write that introduces a >120-year-lifespan warning, tree unchanged", async () => {
+    await writeProject(longLifeTree());
+    const treeBefore = await readTree();
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+
+    expect(r.ok).toBe(false);
+    expect((r as any).reason).toBe("unjustified_warnings");
+    expect((r as any).warnings.length).toBeGreaterThan(0);
+    const treeAfter = await readTree();
+    expect(treeAfter).toEqual(treeBefore);
+  });
+
+  it("re-call with the returned warningId lands, persists justifications, and validates", async () => {
+    await writeProject(longLifeTree());
+
+    // First call: refused
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+    expect(refused.ok).toBe(false);
+    const warnId = (refused as any).warnings[0].warningId;
+    expect(warnId).toBeTruthy();
+
+    // Re-call with justification
+    const justified = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+      warningJustifications: [
+        { warningId: warnId, justification: "Death date confirmed in probate record" },
+      ],
+    });
+
+    expect(justified.ok).toBe(true);
+    if (!justified.ok) return;
+    expect(justified.filesWritten).toContain("research.json");
+
+    // Persisted justification
+    const research = await readResearch();
+    expect(research.warning_justifications).toHaveLength(1);
+    expect(research.warning_justifications[0].warning_id).toBe(warnId);
+    expect(research.warning_justifications[0].justification).toBe(
+      "Death date confirmed in probate record",
+    );
+    expect(research.warning_justifications[0].recorded_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    // Project validates
+    const validation = await validateProject(dir);
+    expect(validation.valid).toBe(true);
+  });
+
+  it("re-call with blank justification is refused", async () => {
+    await writeProject(longLifeTree());
+
+    const refused = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+    });
+    expect(refused.ok).toBe(false);
+    const warnId = (refused as any).warnings[0].warningId;
+
+    const blank = await treeEdit({
+      projectPath: dir,
+      operation: "add_fact",
+      personId: "I1",
+      fact: { type: "Death", date: "1950", sources: [{ ref: "S1" }] },
+      warningJustifications: [{ warningId: warnId, justification: "" }],
+    });
+
+    expect(blank.ok).toBe(false);
+    expect((blank as any).reason).toBe("unjustified_warnings");
   });
 });

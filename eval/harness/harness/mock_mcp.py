@@ -10,9 +10,12 @@ contract for tool results.
 
 ## Live tools
 
-Some MCP tools are deterministic functions of local workspace state — they
-require no network and their return value depends on what the skill just
-wrote. Canning their response as a fixture would be dishonest: a fixture
+Some MCP tools are deterministic functions of local workspace state — their
+return value depends on what the skill just wrote. One exception reaches the
+network: `project_create` with `personReadRef` retries, through the anonymous
+Places API, any place the staged read left without a `standard_place`. No
+committed `person-read-*` fixture has such a fact, so unit runs make no call;
+a fixture that adds one makes the run network-dependent. Canning their response as a fixture would be dishonest: a fixture
 can't reflect the actual file content the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
@@ -99,9 +102,12 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
-    # Local-only: reads tree.gedcomx.json from the workspace. The compiled-tool
-    # handler computes every tag deterministically from the workspace tree, so a
-    # live handler is more faithful than a canned answer. Live since 2026-09-03
+    # Reads tree.gedcomx.json from the workspace. The compiled-tool handler
+    # computes every tag from the workspace tree, so a live handler is more
+    # faithful than a canned answer. Its one networked check
+    # (hasBirthFarFromParentsResidence) is switched off through
+    # `_COMPILED_TOOL_EXTRA_ARGS`: a unit run must not reach the Places API, and
+    # the tool skips that check when a lookup returns nothing. Live since 2026-09-03
     # (lead ruling on PR #2151). `person_quality` is NOT here and must not be:
     # it calls FamilySearch.
     "person_warnings",
@@ -145,9 +151,11 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
-    # Same rationale as convert_calendar: pure URL-templating, no workspace or
-    # network dependency, so a canned fixture would supply the exact URL string
-    # search-external-sites' eval exists to measure.
+    # Same rationale as convert_calendar: URL-templating with no network
+    # dependency, so a canned fixture would supply the exact URL string
+    # search-external-sites' eval exists to measure. Its one workspace write
+    # (the hand-off log entry, only when the agent passes projectPath) runs
+    # against the harness workspace — see _OPTIONAL_PROJECT_PATH_TOOLS.
     "build_external_search_url",
     # Same rationale as convert_calendar: a pure table lookup with no workspace
     # or network dependency. Nothing calls it until issue #1828; kept live so
@@ -168,9 +176,9 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the two that are not live here (`merge_tree_persons`,
-# `tree_forget`) have no handler to mirror. The drift lint in
-# tests/unit/test_mock_mcp.py pins that intersection, so a fifteenth tool added
+# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
+# `tree_forget`, `external_links_search`) have no handler to mirror. The drift lint in
+# tests/unit/test_mock_mcp.py pins that intersection, so a sixteenth tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
 # `merge_warnings` is deliberately absent: its `ok: false` is a dry-run verdict
@@ -743,6 +751,7 @@ def _stage_person_read(
     """
     person_read_js = _MCP_BUILD / "tools" / "person-read.js"
     if not person_read_js.exists():
+        _warn_unstaged(f"no engine build at {person_read_js}")
         return response
 
     posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
@@ -768,13 +777,27 @@ def _stage_person_read(
         )
         out = proc.stdout.strip()
         if proc.returncode != 0 or not out:
+            _warn_unstaged(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
             return response
         parsed = json.loads(out)
         if not isinstance(parsed, dict) or "staged" not in parsed:
+            _warn_unstaged("the stager returned no `staged` key")
             return response
         return {**response, **parsed}
-    except Exception:
+    except Exception as e:
+        _warn_unstaged(f"{type(e).__name__}: {e}")
         return response
+
+
+def _warn_unstaged(why: str) -> None:
+    """A canned person_read the mock could not stage. init-project now passes
+    the staged ref to project_create and stops when there is none, so this reads
+    as the skill stopping. Say it was the harness (#2944 Stage B)."""
+    warnings.warn(
+        f"mock person_read could not be staged ({why}); the response goes back with no "
+        "`staged`, so a skill that needs the ref will stop for a harness reason",
+        stacklevel=2,
+    )
 
 
 def create_mock_server(
@@ -1128,7 +1151,8 @@ def create_mock_server(
 #: Tools served by `_make_compiled_tool_handler`: tool name -> (compiled file
 #: under build/tools/, exported function). The generic handler injects the
 #: workspace as `projectPath`; a tool that reads no projectPath
-#: (convert_calendar, build_external_search_url) ignores the inert extra key.
+#: (convert_calendar) ignores the inert extra key. A tool whose projectPath is
+#: OPTIONAL is in `_OPTIONAL_PROJECT_PATH_TOOLS` instead and is only rebased.
 #: extraction_append's lane restriction (issue #695) lives inside its export,
 #: so calling it directly here — bypassing index.ts — still enforces the lane.
 _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
@@ -1142,10 +1166,18 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
-    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrl"),
+    "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
 }
+
+#: Compiled tools whose `projectPath` is optional and changes what the call
+#: does: given one, `build_external_search_url` also writes the in-flight
+#: hand-off log entry. Production never supplies it on the model's behalf, so
+#: injecting it here would make every run write an entry the agent never asked
+#: for. These get the `person_quality` treatment: a projectPath the agent sent
+#: is rebased onto the workspace, and none is added.
+_OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search_url"})
 
 #: Compiled tools whose exported function takes a `Principal` as its last
 #: argument. CLAUDE.md requires every credential read to take one explicitly, so
@@ -1154,6 +1186,14 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
 _COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
+
+#: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
+#: `person_warnings` gets a place resolver that resolves nothing, so its
+#: birthplace-distance check never makes a network call and never fires here
+#: (lead ruling on issue #1962, 2026-09-27).
+_COMPILED_TOOL_EXTRA_ARGS: dict[str, str] = {
+    "person_warnings": "{ placeCoords: async () => null }",
+}
 
 
 def _make_live_handler(
@@ -1474,8 +1514,10 @@ def _make_compiled_tool_handler(
     share this builder (one exported async function taking the input object).
 
     Calls the compiled TS tool via `node --input-type=module` against the
-    workspace path. The skill passes its own projectPath arg, but we always
-    override it with workspace (the harness tempdir) to avoid path drift.
+    workspace path. The skill passes its own projectPath arg, but we override
+    it with workspace (the harness tempdir) to avoid path drift — always,
+    except for `_OPTIONAL_PROJECT_PATH_TOOLS`, where only a projectPath the
+    agent actually sent is rebased.
 
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
@@ -1495,8 +1537,10 @@ def _make_compiled_tool_handler(
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
+            # An optional projectPath is rebased only when the agent sent one.
             input_obj = dict(args)
-            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            if tool_name not in _OPTIONAL_PROJECT_PATH_TOOLS or "projectPath" in args:
+                input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             # Tools whose entry point takes a Principal as its last argument. The
             # harness is one user per process, so LOCAL is the right one — the same
@@ -1511,6 +1555,8 @@ def _make_compiled_tool_handler(
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
             )
             call_args = "input, LOCAL" if takes_principal else "input"
+            if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
+                call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
             script = (
                 f"import {{ {export_symbol} }} from '{tool_url}';"

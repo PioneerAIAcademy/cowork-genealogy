@@ -17,6 +17,14 @@ import type {
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+// A 500 the retry layer can read: fetchWithRetry checks Retry-After on it.
+const serverError = () => ({
+  ok: false,
+  status: 500,
+  statusText: "Internal Server Error",
+  headers: new Headers(),
+});
+
 beforeEach(() => {
   mockFetch.mockReset();
   __clearPlaceSearchCacheForTests();
@@ -352,15 +360,18 @@ describe("searchPlace", () => {
     expect(await searchPlace("NonexistentPlace12345")).toEqual([]);
   });
 
-  it("throws an error on network failure", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    });
+  it("retries a server error, then throws once the retries are spent", async () => {
+    mockFetch.mockResolvedValue(serverError());
     await expect(searchPlace("England")).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
+    expect(mockFetch.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it("does not retry a 400", async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 400, statusText: "Bad Request", headers: new Headers() });
+    await expect(searchPlace("England")).rejects.toThrow("FamilySearch API error: 400 Bad Request");
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -401,15 +412,12 @@ describe("getPlaceById", () => {
     expect(await getPlaceById("invalid-id")).toBeNull();
   });
 
-  it("throws an error on server error", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    });
+  it("retries a server error, then throws once the retries are spent", async () => {
+    mockFetch.mockResolvedValue(serverError());
     await expect(getPlaceById("267")).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
+    expect(mockFetch.mock.calls.length).toBeGreaterThan(1);
   });
 });
 
@@ -489,15 +497,12 @@ describe("getPlaceRepIds", () => {
     expect(await getPlaceRepIds("0000")).toEqual([]);
   });
 
-  it("throws on other non-OK status", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    });
+  it("retries a server error, then throws once the retries are spent", async () => {
+    mockFetch.mockResolvedValue(serverError());
     await expect(getPlaceRepIds("9001")).rejects.toThrow(
       "FamilySearch API error: 500 Internal Server Error"
     );
+    expect(mockFetch.mock.calls.length).toBeGreaterThan(1);
   });
 });
 

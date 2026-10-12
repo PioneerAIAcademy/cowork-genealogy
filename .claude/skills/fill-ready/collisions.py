@@ -16,6 +16,9 @@ Three guards keep the output from becoming a constant. Each is here because the
 version without it fired on nearly every candidate; see the table in SKILL.md.
 Do not relax one without re-measuring the pair count on a real board.
 
+It also lists Touches paths deleted on origin/main (absent there, with history),
+so a card still naming a converted skill's directory gets its line fixed.
+
 Guard 2 (a bare directory pairs only when it names a unit) and the `**Touches:**`
 parsing itself live in ../lib/touches.py, shared with /merge-issues' slots.py so
 the two passes cannot disagree about which paths an issue names.
@@ -28,6 +31,9 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 
 from touches import (  # noqa: E402
+    deleted_on_ref,
+    deletion_check_skipped,
+    globs_from_touches,
     in_snapshot,
     paths_from_touches,
     pairable,
@@ -76,7 +82,7 @@ def main(board_path, open_path, prs_path, statuses):
     prs = json.load(open(prs_path, encoding="utf-8"))
     status = {(it.get("content") or {}).get("number"): it.get("status") for it in board}
 
-    cand, broad = {}, {}
+    cand, broad, globs = {}, {}, {}
     for n, issue in issues.items():
         if status.get(n) not in statuses:
             continue
@@ -84,6 +90,7 @@ def main(board_path, open_path, prs_path, statuses):
         if not entries:
             continue
         cand[n] = entries
+        globs[n] = globs_from_touches(issue.get("body") or "")
         # sorted() because `entries` is a set -- without it the row order of the
         # "too broad to pair" list changes between runs on identical input.
         wide = sorted(p for k, p in entries if k == "prefix" and not pairable(k, p))
@@ -150,9 +157,24 @@ def main(board_path, open_path, prs_path, statuses):
             desc = ", ".join(f"{p} ({tracked_count(p)} files)" for p in wide)
             print(f"  issue #{n}: {desc}")
 
+    print("\n=== Touches paths deleted on origin/main ===")
+    n_del = 0
+    skipped = deletion_check_skipped()
+    if skipped:
+        print(f"  skipped: {skipped}")
+    else:
+        heads = {h for g in globs.values() for h in g}
+        deleted = deleted_on_ref({e for entries in cand.values() for e in entries}, globs=heads)
+        for n, entries in sorted(cand.items()):
+            for p in sorted(p for _k, p in entries if p in deleted):
+                n_del += 1
+                print(f"  issue #{n}: {globs[n].get(p, p)} (deleted in {deleted[p]})")
+        if not n_del:
+            print("  (none)")
+
     print(
         f"\nsummary: {n_ii} issue-issue, {n_ip} issue-PR, "
-        f"{len(hubs)} hubs, {len(broad)} broad"
+        f"{len(hubs)} hubs, {len(broad)} broad, {n_del} deleted"
     )
 
 

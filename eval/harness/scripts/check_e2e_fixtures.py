@@ -8,7 +8,9 @@ final tree must ship its ``run-<ts>.ann.json`` in the same PR — grading is
 same-PR (the developer +
 genealogist teams grade every run they commit; docs/e2e-testing-guide.md
 "Grading a run"). A treeless run (crashed or skipped before a final tree) is
-exempt: there is nothing to grade. Scoped to run logs ADDED OR RENAMED into
+exempt: there is nothing to grade. A ``host_slept`` run is the second exemption
+(issue #2974): it HAS a tree but the judge is skipped by design, so no
+annotation is owed — see ``check_added_runlogs_graded``. Scoped to run logs ADDED OR RENAMED into
 the corpus via ``git diff --diff-filter=AR`` (BASE_SHA / HEAD_SHA), so a run
 promoted out of quarantine is caught; skipped when run outside a PR (env
 unset), so local runs still work.
@@ -31,6 +33,15 @@ count and the cache-gap structure — what ``make e2e-compaction`` and
 with no exclusion, so such a run lands at maximum weight. Keep it in a sibling
 directory outside ``eval/runlogs/e2e/``. Same AR scoping and same HEAD_SHA-tree
 read as the grading gate above.
+
+## Tool-search-off gate (BLOCKING)
+
+A run log added or renamed into ``eval/runlogs/e2e/`` whose flat
+``usage.tool_search`` or ``usage.tool_search_offered`` is ``False`` ran with
+every tool schema loaded up front (``--no-tool-search``, or an inherited
+``CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`` that turned an "on" run off). Its
+context size, cache figures and ToolSearch count are not the corpus's. Same AR
+scoping and HEAD_SHA-tree read as the two gates above.
 
 ## Unresolved-draft check (WARN only)
 
@@ -390,6 +401,51 @@ def check_added_runlogs_not_1m(added: list[Path], head: str) -> list[str]:
     return violations
 
 
+def check_added_runlogs_tool_search_on(added: list[Path], head: str) -> list[str]:
+    """Blocking: a PR-added-or-renamed run log made with tool search off.
+
+    `--no-tool-search` writes `usage.tool_search: false`; the init `tools` list
+    without ToolSearch writes `usage.tool_search_offered: false`. Either one
+    means every schema was loaded up front, so the run's prefix, cache reads and
+    ToolSearch count are not the corpus's. The second catches a run that asked
+    for tool search and was turned off underneath it (an inherited
+    `CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS`).
+
+    FLAT keys, beside `betas`: NOT `usage.usage.*`, the nested SDK token block.
+
+    Strict `is False`. Absent (every run committed before the fields existed)
+    and `None` (an init with no `tools` list) pass — a truthiness test would
+    reject the whole corpus.
+
+    Cannot catch a run the CLI's per-model gate turned off: that run's init
+    list still offers ToolSearch, so both fields read True. Only the first main
+    call's context size shows it.
+    """
+    violations: list[str] = []
+    for rel in added:
+        log = _read_at_head(head, rel)
+        if not isinstance(log, dict):
+            continue
+        usage = log.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        off = [
+            key for key in ("tool_search", "tool_search_offered")
+            if usage.get(key) is False
+        ]
+        if not off:
+            continue
+        violations.append(
+            f"run log '{rel}' was made with tool search off "
+            f"({', '.join(f'usage.{k} = false' for k in off)}) and must not be "
+            "committed under eval/runlogs/e2e/. With every tool schema loaded up "
+            "front its context size, cache figures and ToolSearch count are not "
+            "comparable to the corpus. Keep it in "
+            f"{QUARANTINE_HINT}."
+        )
+    return violations
+
+
 def _show_at_head_raw(head: str, rel: Path) -> str:
     """Raw decoded ``git show`` stdout for ``rel`` at ``head`` — the whole file
     text, not parsed JSON.
@@ -469,6 +525,15 @@ def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
     Detected by the absence of the ``run-<ts>.final-tree.gedcomx.json`` sibling,
     which is exactly the file the grade loader requires.
 
+    A ``host_slept`` run is the second exemption (issue #2974): unlike every
+    other committed run it HAS a tree yet is ungraded by design — the host slept
+    past the inactivity cap, so the judge was skipped and no annotation is owed.
+    It is the first committed-and-ungraded stop reason (``mcp_unavailable`` raises
+    before a result is built), so it is the one case treelessness does not cover;
+    keyed on ``stop_reason`` read from the head tree, and fails safe — an
+    unreadable/unparseable log reads as not-host_slept and still owes its
+    annotation.
+
     Both siblings resolve from the ``head`` tree, not the working directory: the
     run logs were selected from that tree too, and a sibling present on disk but
     uncommitted must not change the verdict (issue #2469). The two warn-only
@@ -483,6 +548,8 @@ def check_added_runlogs_graded(added: list[Path], head: str) -> list[str]:
         ann = slug_dir / f"{stem}.ann.json"
         if not _in_head_tree(head, tree):
             continue  # treeless run — nothing to grade
+        if (_read_at_head(head, rel) or {}).get("stop_reason") == "host_slept":
+            continue  # host slept past the cap: the judge is skipped by design (#2974)
         if not _in_head_tree(head, ann):
             violations.append(
                 f"run log '{rel}' produced a final tree but no committed "
@@ -912,6 +979,7 @@ def main() -> int:
     try:
         grade_violations = check_added_runlogs_graded(ar_runlogs, head)
         beta_violations = check_added_runlogs_not_1m(ar_runlogs, head)
+        tool_search_violations = check_added_runlogs_tool_search_on(ar_runlogs, head)
         credential_violations = check_added_runlogs_no_credentials(arm_runlogs, head)
     except GateUnavailable as exc:
         print(f"::error::{exc}")
@@ -939,6 +1007,14 @@ def main() -> int:
         for v in beta_violations:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
+    if tool_search_violations:
+        print(
+            "E2E tool-search gate — run logs made with tool search off:",
+            file=sys.stderr,
+        )
+        for v in tool_search_violations:
+            print(f"::error::{v}")
+            print(f"  - {v}", file=sys.stderr)
     if credential_violations:
         print(
             "E2E credential gate — run logs carrying a live secret:",
@@ -947,7 +1023,12 @@ def main() -> int:
         for v in credential_violations:
             print(f"::error::{v}")
             print(f"  - {v}", file=sys.stderr)
-    if grade_violations or beta_violations or credential_violations:
+    if (
+        grade_violations
+        or beta_violations
+        or tool_search_violations
+        or credential_violations
+    ):
         return 1
 
     # --- Annotation structural validation (blocking on PR-added/modified, warn corpus) —

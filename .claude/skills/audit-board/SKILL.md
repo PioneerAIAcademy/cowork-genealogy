@@ -293,9 +293,9 @@ it every audit re-derives the same groups from prose, which is the single most
 expensive part of this pass, and nothing between runs can see a cluster at all.
 
 ```sh
-gh label create "cluster:guardrail" --repo PioneerAIAcademy/cowork-genealogy \
-  --color C5DEF5 --description "Guardrail compliance detectors — sequenced together" || true
-gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label "cluster:guardrail"
+gh label create "cluster:<name>" --repo PioneerAIAcademy/cowork-genealogy \
+  --color C5DEF5 --description "<what binds the cluster>" || true
+gh issue edit <N> --repo PioneerAIAcademy/cowork-genealogy --add-label "cluster:<name>"
 ```
 
 Keep the set small — four or five live clusters, named for what binds them. A
@@ -398,10 +398,11 @@ the live example — the matchers can only pin values once the mechanism exists.
 
 ### Why it cannot be fixed by scheduling alone
 
-Rule 2 requires the skill's latest run log to be active **against the PR branch's
-state**, and the snapshot covers every file under the skill dir — "including a
-`references/` doc or even a comment" (`eval/CLAUDE.md`, the snapshot model). So the
-run log goes stale the moment the *next* edit lands. Six issues landing as six
+Rule 2 requires the run log the PR adds (or, if it adds none, the skill's latest) to
+be active **against the PR branch's state**, and the snapshot covers every file
+under the skill dir — "including a `references/` doc or even a comment"
+(`eval/CLAUDE.md`, the snapshot model). So the run log goes stale the moment the
+*next* edit lands. Six issues landing as six
 sequential PRs is six runs, however carefully they are ordered.
 
 Re-annotation is cheap (lead, 2026-09-20), so the run itself is the cost: six

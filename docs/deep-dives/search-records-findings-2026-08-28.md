@@ -266,8 +266,15 @@ stricter (45, not 55) and, more importantly, **there is no female-specific
 lower bound distinct from the general 12** — a mother at exactly the age the
 Martha scenario describes (14) sits above every bound in the code and is not
 flagged by this validator either. Documented rather than hidden: a direct
-proof test, `test_known_gap_female_age_14_is_not_caught`, asserts the gap
-exists (does not raise) rather than papering over it.
+proof test asserts the gap exists (does not raise) rather than papering over it.
+
+> **Closed in the tool (issue #2007, via issue #1962).**
+> `person-warnings.ts` now emits `earliestChildBirthToBirthFemale14`, so the
+> age-14 mother this finding describes is flagged. The validator still does not
+> mirror the bound — that stayed a deliberate choice rather than a gap, and the
+> proof test is now `test_female_age_14_is_not_mirrored_from_the_tool`, and the
+> paragraph above was edited only to drop its old name. The finding itself is
+> left as it read on 2026-08-28.
 
 ### Both of issue #1817's folded-in reference gaps (promise-emmanuel review)
 

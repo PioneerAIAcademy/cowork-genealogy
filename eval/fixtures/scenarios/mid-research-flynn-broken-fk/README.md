@@ -7,7 +7,7 @@ broken-foreign-key detection (test `ut_project_status_005`).
   changed from `I2` to `I9`. `I9` does not exist in `tree.gedcomx.json`
   (which contains only `I1` Patrick and `I2` Thomas).
 - **Why this shape:** matches the exact example in
-  `project-status/SKILL.md` Step 2 ("person_evidence entry pe_003
+  `agents/project-status.md` Step 2 ("person_evidence entry pe_003
   references person 'I9' which no longer exists in tree.gedcomx.json").
   Simulates a dangling reference left behind by a manual edit or merge.
 - **Expected skill behavior:** surface a broken-foreign-key warning,

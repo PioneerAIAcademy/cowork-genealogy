@@ -6,9 +6,18 @@ pool, and acts on every outcome through ``decide.py``:
 
   2xx                         -> DeleteMessage
   connection-level failure    -> [read timeout only: kill + start WORKER_CONTAINER]
-                                 then ChangeMessageVisibility(0)
+                                 then ChangeMessageVisibility(0), or any error but the
+                                 read timeout waits ERROR_VISIBILITY_S when set
   any other non-2xx           -> ChangeMessageVisibility(backoff), doubling per
-                                 receive count from BACKOFF_BASE_S to BACKOFF_MAX_S
+                                 receive count from BACKOFF_BASE_S to BACKOFF_MAX_S,
+                                 or ERROR_VISIBILITY_S when set
+
+docker-compose.sqsd.yml makes it behave like measured sqsd: KILL_ON_READ_TIMEOUT=false
+abandons a read timeout (no kill, no requeue), VISIBILITY_TIMEOUT_S goes on every
+ReceiveMessage, ERROR_VISIBILITY_S follows a non-2xx and a refused or reset connection
+alike, and a receive past SQSD_MAX_RETRIES is sent to DLQ_URL and deleted from the queue
+before any POST. With SQSD_MAX_RETRIES above 0 the shim checks DLQ_URL at start and
+exits 2 (ev=config_error) when the queue is not there.
 
 Every decision is one JSON line on stdout; read them with
 ``docker compose logs shim``. Runs as its own compose service with the docker
@@ -42,7 +51,7 @@ import docker
 import docker.errors
 import requests
 
-from decide import READ_TIMEOUT, decide
+from decide import READ_TIMEOUT, decide, should_dead_letter
 
 def _env_num(name: str, default, cast):
     """A number from the environment that cannot crash-loop the shim.
@@ -67,6 +76,13 @@ def _env_num(name: str, default, cast):
     return value if value >= 0 else default
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = (os.environ.get(name) or "").strip().lower()
+    if not raw:
+        return default
+    return raw not in ("0", "false", "no", "off")
+
+
 QUEUE_URL = os.environ["QUEUE_URL"]
 WORKER_URL = os.environ.get("WORKER_URL", "http://worker:8080/turn")
 WORKER_CONTAINER = os.environ.get("WORKER_CONTAINER", "proto-worker")
@@ -83,6 +99,13 @@ WAIT_TIME_S = 20  # SQS long-poll maximum
 # must be at least this, and it must exceed WAIT_TIME_S so the poll can return.
 STOP_GRACE_S = _env_num("STOP_GRACE_S", 30.0, float)
 STOP_MARGIN_S = 2.0  # exit this long before compose would SIGKILL
+# sqsd emulation (docker-compose.sqsd.yml). The defaults are today's shim: kill at the
+# ceiling, the queue's own visibility, doubling backoff, unlimited retries.
+KILL_ON_READ_TIMEOUT = _env_bool("KILL_ON_READ_TIMEOUT", True)
+VISIBILITY_TIMEOUT_S = _env_num("VISIBILITY_TIMEOUT_S", None, int)
+ERROR_VISIBILITY_S = _env_num("ERROR_VISIBILITY_S", None, int)
+SQSD_MAX_RETRIES = _env_num("SQSD_MAX_RETRIES", 0, int)
+DLQ_URL = (os.environ.get("DLQ_URL") or "").strip()
 
 _parsed = urlparse(QUEUE_URL)
 SQS_ENDPOINT_URL = os.environ.get("SQS_ENDPOINT_URL") or f"{_parsed.scheme}://{_parsed.netloc}"
@@ -182,6 +205,14 @@ def handle(sqs, msg: dict) -> None:
         "X-Aws-Sqsd-Path": urlparse(WORKER_URL).path or "/",
     }
 
+    if should_dead_letter(receive_count, SQSD_MAX_RETRIES):
+        # Send before delete: a failure between the two leaves a duplicate in the DLQ,
+        # never a lost message.
+        sqs.send_message(QueueUrl=DLQ_URL, MessageBody=body)
+        sqs.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=receipt)
+        log(ev="dead_letter", msgid=msgid, turn_id=turn_id_of(body), receive_count=receive_count)
+        return
+
     status: int | None = None
     error: str | None = None
     t0 = time.monotonic()
@@ -204,7 +235,13 @@ def handle(sqs, msg: dict) -> None:
     elapsed_ms = int((time.monotonic() - t0) * 1000)
 
     decision = decide(
-        status, error, receive_count, backoff_base_s=BACKOFF_BASE_S, backoff_max_s=BACKOFF_MAX_S
+        status,
+        error,
+        receive_count,
+        backoff_base_s=BACKOFF_BASE_S,
+        backoff_max_s=BACKOFF_MAX_S,
+        kill_on_read_timeout=KILL_ON_READ_TIMEOUT,
+        error_visibility_s=ERROR_VISIBILITY_S,
     )
     killed = False
     if decision.action == "delete":
@@ -214,7 +251,7 @@ def handle(sqs, msg: dict) -> None:
             killed = kill_worker()
         time.sleep(REQUEUE_PAUSE_S)
         sqs.change_message_visibility(QueueUrl=QUEUE_URL, ReceiptHandle=receipt, VisibilityTimeout=0)
-    else:
+    elif decision.action == "requeue_backoff":
         sqs.change_message_visibility(
             QueueUrl=QUEUE_URL, ReceiptHandle=receipt, VisibilityTimeout=decision.backoff_s
         )
@@ -247,7 +284,9 @@ def handle_safely(sqs, msg: dict) -> None:
         # message invisible for the whole visibility timeout — the same stranding
         # the SIGTERM drain exists to prevent, and worse when the turn actually
         # completed and only the delete failed: it re-runs 35 minutes later.
-        # Hand it straight back instead; the redelivery is the retry.
+        # Hand it straight back instead; the redelivery is the retry. The pause keeps a
+        # handler that raises on every delivery from spinning against the queue.
+        time.sleep(REQUEUE_PAUSE_S)
         requeue_on_stop(sqs, msg, reason="error")
 
 
@@ -285,7 +324,19 @@ def main() -> None:
     signal.signal(signal.SIGTERM, _on_signal)
     signal.signal(signal.SIGINT, _on_signal)
 
+    if SQSD_MAX_RETRIES > 0 and not DLQ_URL:
+        log(ev="config_error", error="SQSD_MAX_RETRIES > 0 needs DLQ_URL")
+        sys.exit(2)
+
     sqs = sqs_client()
+    if SQSD_MAX_RETRIES > 0:
+        # A dead letter to a missing queue raises on every delivery past the limit, so
+        # check it now: an elasticmq started before turns-dlq existed keeps its old conf.
+        try:
+            sqs.get_queue_attributes(QueueUrl=DLQ_URL, AttributeNames=["QueueArn"])
+        except Exception as exc:
+            log(ev="config_error", error=f"DLQ_URL {DLQ_URL} unreachable: {type(exc).__name__}: {exc}")
+            sys.exit(2)
     log(
         ev="start",
         queue_url=QUEUE_URL,
@@ -296,6 +347,11 @@ def main() -> None:
         backoff_base_s=BACKOFF_BASE_S,
         backoff_max_s=BACKOFF_MAX_S,
         stop_grace_s=STOP_GRACE_S,
+        kill_on_read_timeout=KILL_ON_READ_TIMEOUT,
+        visibility_timeout_s=VISIBILITY_TIMEOUT_S,
+        error_visibility_s=ERROR_VISIBILITY_S,
+        sqsd_max_retries=SQSD_MAX_RETRIES,
+        dlq_url=DLQ_URL or None,
         docker=docker_status(),
     )
 
@@ -308,12 +364,16 @@ def main() -> None:
         if free <= 0:
             wait(in_flight, timeout=5, return_when=FIRST_COMPLETED)
             continue
+        receive_args: dict[str, object] = {}
+        if VISIBILITY_TIMEOUT_S:
+            receive_args["VisibilityTimeout"] = VISIBILITY_TIMEOUT_S
         try:
             resp = sqs.receive_message(
                 QueueUrl=QUEUE_URL,
                 MaxNumberOfMessages=free,
                 WaitTimeSeconds=WAIT_TIME_S,
                 AttributeNames=["All"],
+                **receive_args,
             )
         except Exception as exc:
             log(ev="receive_error", error=f"{type(exc).__name__}: {exc}")

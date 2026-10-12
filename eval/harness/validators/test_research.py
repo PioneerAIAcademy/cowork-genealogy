@@ -16,6 +16,9 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import new_log_entries as _new_log_entries
+from validators_lib import check_no_exhaustive_declaration
+
 _ROUTES_TO_PREFIX = "routes-to:"
 
 
@@ -38,7 +41,8 @@ def test_routes_to_expected_skill(skills_invoked, builtin_tool_calls, test):
     order by ``handoffs``: a callee converted from a skill to an agent is
     reached by spawn and never appears in ``skills_invoked`` (issue #2825).
     The skill under test appears in the list when the model reached it
-    through a ``Skill`` call and not when it was entered as a slash command.
+    through a ``Skill`` call, and -- since issue #3116 -- also when it was
+    entered as a slash command, where it is recorded first.
     Both shapes are filtered the same way below.  Whether the skill under
     test ran at all is gated by the harness (``orchestrator.py``), not here.
 
@@ -131,16 +135,18 @@ def _paired_names() -> set[str]:
 
 
 def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
-    """On a ``no-shortcut`` test, no paired row may be reached at all.
+    """On a ``no-shortcut`` test, no paired row but the expected one may be reached.
 
-    ``test_routes_to_expected_skill`` asserts only the FIRST delegation, and it
-    reads ``skills_invoked``, which ``skill_runner.py:654`` gates on
-    ``tool_name == "Skill"``. So a router that spawns
-    ``Agent(@plugin:proof-conclusion)`` and then calls
-    ``Skill(question-selection)`` satisfies it — ``delegations[0]`` is the
-    expected name — while doing the exact thing ut_research_015 exists to
-    forbid. Both call mechanisms are checked here because the routing table
-    reaches its ``@plugin:`` rows by spawn and the rest by ``Skill``.
+    Such a test must set ``execution.stop_at_stub`` (the runnability gate
+    requires it), so the harness ends the run once the turn of the router's
+    first stubbed hand-off is over (#3119), and ``test_routes_to_expected_skill``
+    asserts, in call order, that the hand-off is the expected one. So a paired
+    row other than the expected one is either that first hand-off itself, which
+    the routing check also fails, or one made later in that turn, which the stop
+    denies but records, and which only this check sees. A shortcut in a later
+    turn is cut off by the stop and never reaches the record. Both call mechanisms
+    are checked because the routing table reaches its ``@plugin:`` rows by spawn
+    and the rest by ``Skill``.
     """
     from harness.skill_runner import spawned_agents
 
@@ -172,4 +178,304 @@ def test_no_paired_skill_shortcut(test, skills_invoked, builtin_tool_calls):
         f"the top. Expected route: {allowed!r}. "
         f"spawned_agents={spawned_agents(builtin_tool_calls)} "
         f"skills_invoked={list(skills_invoked)}"
+    )
+
+
+# ── Moved from test_search_images.py (issue #2268) ───────────────────────
+
+
+def _new_result_sidecars(before_state, after_state) -> list[str]:
+    """results/*.json paths present in after_state but not before."""
+    before_files = (before_state or {}).get("files", {}) or {}
+    after_files = (after_state or {}).get("files", {}) or {}
+    return sorted(
+        path for path in after_files
+        if path.startswith("results/")
+        and path.endswith(".json")
+        and path not in before_files
+    )
+
+
+def test_no_browse_or_writes_on_planning_request(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-browse-no-write): the search-images no-harm invariant
+    for a planning/strategy request that should route to research-plan.
+
+    search-images executes a browse and logs it; a pure planning question
+    ("which unindexed record sets should I browse next?") must not cause a
+    browse to be EXECUTED or anything to be persisted. This is the
+    deterministic gate for the grade_on_invariant negative
+    ut_research_016: which skill wins the route is a known-unstable
+    model prior (the router picks research-plan directly on some runs,
+    search-images on others, project-status on others), but the state-harm
+    invariant holds under every one of those routes and is what we assert.
+
+    Since the pair conversion (issue #2121) the redirect lives in
+    agents/search-images.md's ROUTING section, not in SKILL.md: the routing
+    skill delegates first and the AGENT holds volume_search and image_search,
+    so the redirect must fire before the agent's first tool call or this
+    invariant fails. That is the intended reading of a red here — a gate that
+    moved into the agent but did not stay ahead of the tools.
+    See docs/specs/unit-test-spec.md.
+
+    Fails iff the run:
+      - made a `volume_search` or `image_search` MCP call (a browse was
+        executed), or
+      - appended a new `log` entry (search-images logs every browse it
+        runs; research-plan — the acceptable route — never writes `log`,
+        so any new log entry means a search/browse skill actually ran), or
+      - wrote a new `results/` sidecar file.
+
+    Deliberately does NOT flag other research.json writes: routing to
+    research-plan legitimately writes `plans`/`questions`, which is
+    correct behavior, not harm.
+    """
+    if "no-browse-no-write" not in test.get("tags", []):
+        pytest.skip("not a no-browse-no-write scenario")
+
+    # 1. No browse executed.
+    browsed = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] in ("volume_search", "image_search")
+    ]
+    assert not browsed, (
+        "planning request must not execute a browse; got "
+        f"{[(c.get('tool', '').split('__')[-1], c.get('args')) for c in browsed]}"
+    )
+
+    # 2. No new browse log entry (research-plan never writes `log`).
+    new_entries = _new_log_entries(before_state, after_state)
+    assert not new_entries, (
+        "planning request must not append a browse log entry; new log "
+        f"ids: {[e.get('id') for e in new_entries]}"
+    )
+
+    # 3. No new results/ sidecar file.
+    sidecars = _new_result_sidecars(before_state, after_state)
+    assert not sidecars, (
+        f"planning request must not write a results/ sidecar; got: {sidecars}"
+    )
+
+
+def test_no_browse_executed_on_indexed_search(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (no-browse-on-indexed): the search-images no-harm invariant
+    for an INDEXED name/date/place search that should route to search-records.
+
+    A sibling of test_no_browse_or_writes_on_planning_request, not a copy, and
+    the difference is the point. That one forbids ANY new `log` entry because
+    its acceptable route (research-plan) never writes `log`. Here the
+    acceptable route is search-records, which logs every search it runs — so a
+    blanket no-log assertion would fail the correct behaviour, which is the
+    second direction CLAUDE.md requires a guard be proven against. This asserts
+    only what cannot be legitimate: that no browse was EXECUTED, and that
+    nothing claimed one in the audit trail.
+
+    The gate this backstops moved into agents/search-images.md's ROUTING
+    section with the pair conversion (issue #2121). Measured on run
+    v1_2026-09-22_01-41-09: the agent treated an indexed 1850-census request as
+    a browse, and when the browse tools were not available appended a `log`
+    entry with `tool: image_search` and told the user the browse "could not be
+    conducted" because the tools were "unavailable in this session" — blaming
+    the environment for a request it should have redirected. The judge scored
+    that a fail on one run and a pass on five others; this makes it a one-line
+    deterministic verdict instead of an opinion that moves between runs.
+
+    Fails iff the run:
+      - made a `volume_search` or `image_search` MCP call (a browse was
+        executed), or
+      - appended a new `log` entry whose `tool` names one of those (a browse
+        was claimed in the audit trail, whether or not one ran).
+
+    Deliberately does NOT flag a new `log` entry from search-records itself
+    (`tool: record_search`), nor a `results/` sidecar: both are what the
+    correct route legitimately produces.
+    """
+    if "no-browse-on-indexed" not in test.get("tags", []):
+        pytest.skip("not a no-browse-on-indexed scenario")
+
+    browsed = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] in ("volume_search", "image_search")
+    ]
+    assert not browsed, (
+        "an indexed search must not execute a browse; got "
+        f"{[(c.get('tool', '').split('__')[-1], c.get('args')) for c in browsed]}"
+    )
+
+    claimed = [
+        e for e in _new_log_entries(before_state, after_state)
+        if ("image_search" in (e.get("tool") or ""))
+        or ("volume_search" in (e.get("tool") or ""))
+    ]
+    assert not claimed, (
+        "an indexed search must not append a browse log entry; got "
+        f"{[(e.get('id'), e.get('tool')) for e in claimed]}"
+    )
+
+
+def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_tool_calls, tool_calls, test):
+    """After a hint triage the router relays it and stops: whether to accept a
+    hint is the researcher's call (research/SKILL.md, "Hint review"). Spawning
+    search-hints a second time in the same run can only carry verdicts the
+    researcher never stated, and logging the hints itself skips the agent.
+
+    Tag-gated on ``stops-for-verdicts``. The test's search-hints stub returns a
+    realistic triage ending in "Awaiting verdicts", so the pull toward a second
+    spawn is real (issue #2029).
+    """
+    from harness.skill_runner import handoffs
+
+    if "stops-for-verdicts" not in test.get("tags", []):
+        pytest.skip("not a hint-review stop test")
+    spawns = [h for h in handoffs(skills_invoked, builtin_tool_calls) if h == "search-hints"]
+    assert len(spawns) == 1, (
+        f"search-hints was handed off {len(spawns)} time(s); the router spawns it once for "
+        "triage and then stops for the researcher's verdicts"
+    )
+    logs = [c for c in (tool_calls or []) if str(c.get("tool", "")).endswith("__research_log_append")]
+    assert not logs, (
+        f"the router logged {len(logs)} entry/entries itself after a hint triage; verdicts are "
+        "the researcher's, and recording them is search-hints' second spawn"
+    )
+
+
+# The search steps a bounded request must not reach when the answer is already
+# attached. MCP side and delegation side are listed separately because the rule
+# is defeated by either: an inline `record_search` and a hand-off to
+# `search-records` both spend a paid call to re-find what the project holds.
+_SEARCH_MCP_TOOLS = frozenset({
+    "record_search", "person_search", "fulltext_search", "collections_search",
+    "volume_search", "image_search", "external_links_search", "catalog_search",
+})
+# Derived from the skills tree, not recalled: an omission here is silent, because a
+# hand-off to a step missing from this set passes the assertion below.
+_SEARCH_STEPS = frozenset({
+    "search-records", "search-images", "search-familysearch-wiki",
+    "search-full-text", "search-external-sites", "search-wikipedia",
+    # Not reachable from the router's table today, but it searches: it tabulates
+    # households across a place's censuses. Listed because reachability changes and
+    # the comment above is right that an omission here is silent.
+    "survey-surname",
+})
+
+
+def test_reads_attachments_before_searching(
+    test, tool_calls, attempted_mcp_calls, skills_invoked, builtin_tool_calls
+):
+    """Tag-gated (``attached-first``). Issue #2813 item 4.
+
+    "Before any search, read the person's attached sources and relatives. Never
+    search for a record that is already attached."
+
+    Graded on the MCP call log and the hand-off list rather than on the reply,
+    for the reason the routing validator gives: a turn that only NARRATES having
+    checked ("I'll first look at what's already attached") cannot satisfy it.
+
+    This is the assertion the unit suite could not previously make. Neither
+    ``person_read`` nor ``source_attachments`` is in ``mock_mcp.LIVE_TOOLS``, so
+    the mock registers them only for a test that declares fixtures; a body that
+    skipped the rule entirely passed every unit test in the suite.
+    """
+    from harness.skill_runner import handoffs
+
+    if "attached-first" not in test.get("tags", []):
+        pytest.skip("not an attached-first test")
+
+    bare = lambda c: (c.get("tool") or "").rsplit("__", 1)[-1]
+    called = [bare(c) for c in (tool_calls or []) if isinstance(c, dict)]
+    # ATTEMPTED calls count too. `tool_calls` records only successful dispatches
+    # (conftest.py), so a search whose args miss every fixture predicate lands in
+    # `attempted_mcp_calls` instead -- and reading only the first list would let
+    # the exact behaviour this test forbids pass silently.
+    attempted = [bare(c) for c in (attempted_mcp_calls or []) if isinstance(c, dict)]
+    read_first = {"person_read", "source_attachments"} & set(called)
+    assert read_first, (
+        "The router must read what is already attached before routing a request "
+        "anywhere. Neither person_read nor source_attachments was called. "
+        f"MCP calls={called}"
+    )
+
+    searched = [t for t in called + attempted if t in _SEARCH_MCP_TOOLS]
+    assert not searched, (
+        "The requested record is already attached, so searching for it spends a paid "
+        f"call to re-find what the project holds. Search tools called: {searched}"
+    )
+
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    search_steps = [s for s in handed if s in _SEARCH_STEPS]
+    assert not search_steps, (
+        "Handing off to a search step re-finds an already-attached record just as an "
+        f"inline search call would. Hand-offs: {handed}"
+    )
+
+
+# ── Moved from test_research_exhaustiveness.py (issue #2738) ───────────
+
+
+def test_no_exhaustive_declaration(before_state, after_state, test):
+    """Tag-gated: when the test expects the router to decline an
+    exhaustiveness request (near-miss negative), no question should
+    transition to `exhaustive_declared` or flip `declared` to true."""
+    if "no-exhaustive-declaration" not in test.get("tags", []):
+        pytest.skip("not a no-exhaustive-declaration scenario")
+    if before_state.get("research_json") is None or after_state.get("research_json") is None:
+        pytest.skip("missing research.json for diff")
+    bad = check_no_exhaustive_declaration(before_state, after_state)
+    assert not bad, "Unexpected declaration:\n  - " + "\n  - ".join(bad)
+
+
+_DELIVERS_PREFIX = "delivers:"
+
+
+def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_calls, test):
+    """Tag-gated (``delivers:<skill>``, one per deliverable). Issue #2813 item 1.
+
+    ``routes-to:`` asserts the FIRST hand-off and permits only one tag, so on a
+    COMPOUND bounded ask it grades nothing about the second deliverable: a turn
+    that delivers the first and silently drops the second passes it. That is the
+    exact pre-change behaviour this rule exists to remove, which is why a separate
+    assertion is needed rather than a second ``routes-to:``.
+
+    Order-independent among the deliverables, because the body imposes none ("two
+    hand-offs, each to the step that owns it ... ends when the last one is met").
+    What it does forbid is the FIRST hand-off being something off the list, which is
+    how the job path shows up. WHICH step that is depends on the project: with no
+    questions it is ``question-selection``; with a question and no localities entry
+    it is ``locality-guide``; with a localities entry it is ``research-plan``. A
+    scenario whose job-path head is itself a ``delivers:`` target cannot
+    discriminate, so pick one where it is not.
+    """
+    from harness.skill_runner import handoffs
+
+    expected = [t[len(_DELIVERS_PREFIX):] for t in (test.get("tags") or [])
+                if t.startswith(_DELIVERS_PREFIX)]
+    if not expected:
+        pytest.skip("not a delivers: test")
+    assert all(expected), f"empty {_DELIVERS_PREFIX} tag value — name the skill or remove the tag"
+
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    # Strip the skill under test the way test_routes_to_expected_skill does: it is
+    # recorded first when entered as a slash command (issue #3116), so a raw
+    # handed[0] is "research" and the first-hand-off assertion below would fail on
+    # every real run. A claim audit caught this before a paid run did.
+    # The skill under test is recorded first when entered as a slash command
+    # (issue #3116), so a raw handed[0] is "research" and the assert below would
+    # fail on every real run. Filtering is enough; test_routes_to_expected_skill's
+    # extra slice is redundant beside it.
+    skill_under_test = test.get("skill")
+    delegations = [s for s in handed if s != skill_under_test]
+
+    missing = [e for e in expected if e not in delegations]
+    assert not missing, (
+        "a compound bounded ask must hand off for EVERY deliverable it names. "
+        f"Never handed off: {missing}. Hand-offs seen: {delegations}. Delivering one and "
+        "dropping the rest is the behaviour the one-or-more rule replaced."
+    )
+    assert delegations and delegations[0] in expected, (
+        f"the first hand-off must be one of the deliverables {expected}, got "
+        f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
+        "path, which a bounded request must not enter."
     )

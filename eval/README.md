@@ -229,7 +229,7 @@ See [`docs/plan/eval-runlog-versioning.md`](../docs/plan/eval-runlog-versioning.
 2. Junior runs `make eval-skill SKILL=<skill>` (or `cd eval/harness && uv run python run_tests.py --skill <skill>`) → harness writes a `v{N}_<ts>.json` candidate. The harness also **prunes that skill down to its 5 newest candidates**, deleting older ones with their annotations — so `git status` will show deletions you did not make. Commit them; they are the retention rule doing its job (GitHub issue #985). Released `v{N}.json` and the newest candidate are never pruned.
 3. Junior opens the CRUD UI and reviews the **sampled** tests on the latest candidate — marked in the sidebar; the rest read `not sampled`. The sample is five chosen tests plus **every test that failed, scored a 1 or 2 on any dimension, or carries a `coerced_routing_negative_to_na` warning**, so a run with a low score anywhere is more than 5 (measured 2026-09-11 over the 117 committed logs carrying a sample: median 5, at most 13 as committed; median 6, at most 15 recomputed with no prior cursor). Every dimension of a sampled test needs an entry, and every one that is not a confirmed pass (judge 3, you agree 3) needs a written comment.
 4. Junior commits the candidate + annotation + any pruned deletions, pushes the PR.
-5. GH Action enforces (blocking): ≤1 added released file; latest full-skill run log is active on skill-side files (snapshot matches working tree); its `.ann.json` is complete; no two test files share a `test.id`; every committed `.ann.json` parses; and no unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted` (rule 6 — zero reds, no carry list, no exemption). Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
+5. GH Action enforces (blocking): ≤1 added released file; the run log this PR adds (else the latest full-skill run log) is active on skill-side files (snapshot matches working tree); its `.ann.json` is complete; no two test files share a `test.id`; every committed `.ann.json` parses; and no unsuppressed test in a run log **this PR adds** resolves to `fail` or `aborted` (rule 6 — zero reds, no carry list, no exemption). Four warn-only checks also run and do not block merge: tool-coverage drift (`check_tool_coverage.py` — a skill declaring a tool with no fixture), the inverse direction (`check_rubric_tool_drift.py` — a rubric or `judge_context` naming a tool the skill can't call), negative-routing reciprocity (`check_negative_reciprocity.py` — a negative test pinning one direction of a routing pair with nothing backing the other), and a judge-prompt-hash match (rule 2b).
 6. Senior reviews via GitHub diff + the CRUD UI compare page. Disagreements go to PR comments via the 📋 button.
 7. Senior clicks **Release** on the active candidate → `v{N}_<ts>.json` → `v{N}.json` rename. Commits, pushes, approves.
 8. Project owner merges.
@@ -340,8 +340,9 @@ Separate from the unit-test framework documented above. E2e tests
 exercise the full GPS research flow autonomously against live
 FamilySearch APIs via the `/research --autonomous` skill. They're a
 stakeholder-facing benchmark, not a regression suite — much more
-expensive per run than unit tests (20–60 min, $3–10 each), so they
-run on demand.
+expensive per run than unit tests (about an hour and single-digit dollars
+each, with a long tail; the guide's overview table, row 5, has the measured
+median), so they run on demand.
 
 - **How-to:** [`../docs/e2e-testing-guide.md`](../docs/e2e-testing-guide.md) — creating fixtures, running tests, reading results, investigating failures.
 - **Spec:** [`../docs/specs/e2e-test-spec.md`](../docs/specs/e2e-test-spec.md) — fixture format, judge contract, result schema.
@@ -381,14 +382,18 @@ equivalent in parentheses:
 6. `eval\ValidateFixture.bat` → enter the slug (`make e2e-validate
    TEST=<slug>`) → resolve any `WARN`.
 7. `eval\RunE2E.bat` → enter the slug (`make e2e-run TEST=<slug>`) →
-   live run (20–60 min, $3–10).
-8. `/interpret-e2e-result` → read the verdict.
-9. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
+   live run (about an hour and single-digit dollars; the guide's overview
+   table, row 5, has the measured median).
+8. `/grade-e2e-run` → label each expected finding, blind. It writes
+   `run-<ts>.ann.json`.
+9. `/interpret-e2e-result` → see what it recovered and why it stopped. Run it
+   after step 8: reading it first anchors your grade.
+10. `eval\ViewE2E.bat` → enter the slug (`make e2e-view TEST=<slug>`) → launch
    the Research Viewer with `eval\Viewer.bat` (`make electron`) and open
    `eval\e2e-view` in it (its **Open Project** button) to inspect the agent's
    final tree, research log, and each finding's direct/indirect badge. Keep the
    viewer open — re-running `ViewE2E.bat` refreshes it live.
-10. If it passes, commit the fixture (and optionally its run log), and
+11. If it passes, commit the fixture (and optionally its run log), and
    open a PR.
 
 ### Debug a fixture interactively (Cowork + the viewer)
@@ -397,7 +402,8 @@ Before — or instead of — a headless `RunE2E.bat`, run the fixture **live in
 Claude Cowork** and watch it unfold. This is the recommended starting point
 for debugging *why* the agent did or didn't do something, and it keeps the
 test-improve loop fast: you watch the fix work in minutes instead of waiting
-20–60 min for a headless verdict.
+about an hour for a headless verdict (the guide's overview table, row 5, has
+the measured median).
 
 **First time (and after any skill or MCP-server change):** run
 `eval\CoworkInstall.bat` (`make cowork-install`). It builds **both** artifacts
@@ -430,16 +436,20 @@ headless run. Re-seed a fresh project (wiping any work) with `FORCE=1`.
 
 ### Keep the machine awake during a run
 
-A run is long (20–60 min) and the machine must **not sleep** partway through.
+A run is long (about an hour; the guide's overview table, row 5, has the measured
+median) and the machine must **not sleep** partway through.
 If it does, the work pauses until the machine wakes, and the run takes much
 longer in real time. The harness detects a sleep, leaves it out of the reported
 wall-clock time, and prints a `machine slept ~N min` note. Treat that note as
 your cue to set one of these up. On macOS and Linux a sleep does not count
 against the run's time caps. **On Windows it does:** Modern Standby still uses
-up the wall-clock and inactivity caps, so a long sleep can end the run as a
-`timeout` or `inactivity` that says nothing about the agent (issue #2974). A
-sleep during setup or the judge call, after the agent finishes, is not
-detected at all.
+up the wall-clock and inactivity caps. A long sleep (`>= caps.inactivity_seconds`
+of counted sleep) no longer books that as an agent `timeout`/`inactivity`,
+though — the run stops as `host_slept`: committed so you can see it, but not
+graded and excluded from the outcome rates (issue #2974). You still want the
+machine awake — a slept run is a wasted run — but it can no longer masquerade as
+a capability failure. A sleep during setup or the judge call, after the agent
+finishes, is not detected at all.
 
 - **Windows:** there's no per-command keep-awake tool, so set the power plan
   once — `powercfg /change standby-timeout-ac 0` (add `powercfg /change

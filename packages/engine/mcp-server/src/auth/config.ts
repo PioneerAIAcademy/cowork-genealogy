@@ -54,10 +54,9 @@ export const DEFAULT_OPENROUTER_MODEL = "google/gemini-3.7-flash";
 // only path that actually re-authenticates them, so the error must say that and
 // must NOT mention the login tool.
 export const HOSTED_REAUTH_INSTRUCTION =
-  "Your FamilySearch session has expired — FamilySearch sign-ins last at most " +
-  "24 hours. Click \"Reconnect FamilySearch\" at the top of the app to sign in " +
-  "again, then ask me to continue. (Do not call the login tool: it cannot open " +
-  "a sign-in page from here.)";
+  "FamilySearch is not accepting this session. Click \"Reconnect FamilySearch\" " +
+  "at the top of the app to sign in again, then ask me to continue. (Do not call " +
+  "the login tool: it cannot open a sign-in page from here.)";
 
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Tell the user to add their " +

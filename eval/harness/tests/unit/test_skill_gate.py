@@ -6,6 +6,7 @@ no live run, no Anthropic API — runs in `make harness-test`.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -18,9 +19,11 @@ import skill_gate  # noqa: E402
 from skill_gate import (  # noqa: E402
     compare,
     compute_signal,
+    drift_signal,
     find_test_path_by_id,
     incumbent_baseline,
     scores_of,
+    stale_snapshot_paths,
 )
 
 
@@ -195,3 +198,92 @@ def test_incumbent_baseline_overlays_human_corrections(tmp_path):
 
 def test_incumbent_baseline_none_when_no_runlog(tmp_path):
     assert incumbent_baseline("citation", tmp_path) is None
+
+
+# ---- snapshot drift detection -------------------------------------------
+
+
+def test_incumbent_baseline_populates_snapshot(tmp_path):
+    """The Baseline must carry the snapshot from the run-log envelope."""
+    skill = "citation"
+    d = tmp_path / "unit" / skill
+    d.mkdir(parents=True)
+    snap = {"packages/engine/plugin/skills/citation/SKILL.md": "abc123"}
+    (d / "v1_2026-07-16_10-00-00.json").write_text(json.dumps({
+        "timestamp": "2026-07-16_10-00-00",
+        "snapshot": snap,
+        "tests": [{
+            "test_id": "ut_citation_002",
+            "outcome_summary": {"aggregated_dimensions": [
+                {"source": "base", "name": "Correctness", "score": 3, "rationale": "r"},
+            ]},
+        }],
+    }), encoding="utf-8")
+
+    b = incumbent_baseline(skill, tmp_path)
+    assert b is not None
+    assert b.snapshot == snap
+
+
+def test_snapshot_drift_detected_on_non_skill_path(tmp_path):
+    """When a non-skill path in the baseline snapshot differs from disk,
+    stale_snapshot_paths returns it — this is the case that fires NEEDS YOUR EYES."""
+    skill = "citation"
+    fixture_rel = "eval/tests/unit/citation/rubric.md"
+
+    # Write the fixture file on disk with known content.
+    fixture_abs = tmp_path / fixture_rel.replace("/", os.sep)
+    fixture_abs.parent.mkdir(parents=True, exist_ok=True)
+    fixture_abs.write_text("# rubric v2\n", encoding="utf-8")
+
+    # Snapshot recorded a DIFFERENT sha256 hash for the fixture.
+    # Use a real 64-char hex digest so is_hashed_snapshot() returns True
+    # and the test exercises the v3 sha256-comparison path, not the legacy
+    # content-comparison branch.
+    skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    snapshot = {
+        skill_md_rel: "a" * 64,
+        fixture_rel: "b" * 64,
+    }
+
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
+    assert drifted, "expected the fixture to show as drifted"
+    assert fixture_rel in drifted
+
+
+def test_snapshot_drift_excludes_gated_skill_md(tmp_path):
+    """The gated skill's own SKILL.md always differs (it IS the edit being
+    gated). stale_snapshot_paths must not include it."""
+    skill = "citation"
+    skill_md_rel = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+
+    # Write the skill file on disk with content that differs from snapshot.
+    skill_md_abs = tmp_path / skill_md_rel.replace("/", os.sep)
+    skill_md_abs.parent.mkdir(parents=True, exist_ok=True)
+    skill_md_abs.write_text("edited body\n", encoding="utf-8")
+
+    snapshot = {skill_md_rel: "c" * 64}
+
+    drifted = stale_snapshot_paths(snapshot, skill, tmp_path)
+    assert not drifted, "the gated skill's own SKILL.md must be excluded from drift"
+
+
+# ---- drift_signal ----------------------------------------------------------
+
+
+def test_drift_signal_forces_needs_your_eyes():
+    """A non-empty drift list must force NEEDS YOUR EYES regardless of the
+    original signal, and prepend the drift reason."""
+    original = skill_gate.GateSignal("LOOKS GOOD", ["named fix landed"])
+    result = drift_signal(original, ["eval/tests/unit/citation/rubric.md"])
+    assert result.verdict == "NEEDS YOUR EYES"
+    assert any("drifted" in r for r in result.reasons)
+    # The original reasons are preserved after the drift reason.
+    assert "named fix landed" in result.reasons
+
+
+def test_drift_signal_passes_through_on_empty_list():
+    """An empty drift list must return the signal unchanged."""
+    original = skill_gate.GateSignal("LOOKS GOOD", ["named fix landed"])
+    result = drift_signal(original, [])
+    assert result is original

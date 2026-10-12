@@ -21,6 +21,16 @@
 // throw rolls back every index write the body made — and so does the store's
 // `signal` aborting before COMMIT (the HTTP server's client went away).
 //
+// A store built with a claim `fence` (U6: the worker attempt's turn and
+// `claim_epoch`) writes only through a transaction — `writeJson`, `writeBytes`
+// and `remove` get one of their own instead of autocommitting — and that
+// transaction checks the epoch after BEGIN and again, share-locked on the
+// `turns` row, right before COMMIT. A lone blob or staged write outside a
+// transaction pre-checks on the pool and PUTs its object BEFORE that
+// transaction begins, so no pool client sits idle in a transaction across S3. An attempt a newer claim superseded rolls
+// back with `StaleClaimError`, so its writes are no-ops. An unfenced store (a
+// request with no fence headers, the test suites) autocommits as it always did.
+//
 // S3 objects are immutable per write. Every write puts a NEW object under
 // `<projectId>/<ref>/<uuid>` and points the index row at it; the object the row
 // pointed at before is deleted only once the row change is durable — after
@@ -41,6 +51,14 @@
 // Neither client waits on a stalled host forever: `CONNECT_TIMEOUT_MS` bounds a
 // Postgres connection (and a wait for a free pool slot) and an S3 TCP connect;
 // `S3_REQUEST_TIMEOUT_MS` bounds one S3 request end to end, body included.
+//
+// Readiness (`PgS3Backend.checkReady`, the hosted `/healthz`) probes both stores
+// under one `READY_TIMEOUT_MS` deadline, on clients of its own: a short-lived
+// `pg.Client` rather than the pool (a busy pool would read as a down database)
+// and a one-attempt S3 client with its own socket pool, sharing the process
+// client's credentials (a failing probe on the process client would drain its
+// retry quota, and its sockets can all be held by long transfers). It never
+// throws; its report carries short labels only, never an error message.
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, randomUUID } from "node:crypto";
@@ -49,14 +67,17 @@ import type { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadBucketCommand,
   PutObjectCommand,
   S3Client,
+  type S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { AsyncMutex } from "./async-mutex.js";
 import { assertRelativeRef } from "./paths.js";
 import { PROJECT_ID_RE } from "./project-id.js";
 import type {
+  ClaimFence,
   JsonWrite,
   ProjectDirState,
   ProjectEntry,
@@ -71,6 +92,85 @@ export const CONNECT_TIMEOUT_MS = 10_000;
 /** How long one S3 request (headers and body, a multi-MB scan included) may
  *  take end to end. */
 export const S3_REQUEST_TIMEOUT_MS = 90_000;
+/** The whole readiness probe's deadline: under the image HEALTHCHECK's 3 s and
+ *  `make engine-smoke-http`'s final 2 s curl. */
+export const READY_TIMEOUT_MS = 1_500;
+/** The tables every store method queries; a missing one fails readiness.
+ *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
+export const STORE_TABLES = ["documents", "blobs", "staging", "projects", "turns"] as const;
+
+/** Whether a fenced store's claim is still the turn's current one. Run right
+ *  after BEGIN, unlocked: a stale attempt fails fast, before its tool body runs
+ *  or puts an object. */
+export const CLAIM_PRECHECK_SQL =
+  "SELECT 1 FROM turns WHERE turn_id = $1 AND project_id = $2 AND claim_epoch = $3::bigint";
+/** The same check immediately before COMMIT, under a share lock. A worker's
+ *  claim UPDATE takes FOR NO KEY UPDATE on the row, which conflicts with FOR
+ *  SHARE (FOR KEY SHARE would not): a commit racing an in-flight claim waits for
+ *  it and re-reads the epoch, and once the claim has committed no stale commit
+ *  can pass. At commit rather than BEGIN so the lock holds for milliseconds, not
+ *  across a long locked tool body. */
+export const CLAIM_FENCE_SQL = `${CLAIM_PRECHECK_SQL} FOR SHARE`;
+
+/** A fenced store's write refused because a newer claim of its turn exists.
+ *  The message is what the model reads through the dispatcher's `isError`. */
+export class StaleClaimError extends Error {
+  constructor(fence: ClaimFence) {
+    super(
+      `This turn was taken over by a newer attempt (turn ${fence.turnId}: claim epoch ` +
+        `${fence.claimEpoch} is no longer current), so this write was rolled back and nothing ` +
+        `was saved. Stop working on this turn.`,
+    );
+    this.name = "StaleClaimError";
+  }
+}
+
+/** One store check's outcome. `error` is a short label (an error code or name),
+ *  never a message: `/healthz` is unauthenticated and messages can carry the
+ *  host, the user name or the bucket. */
+export interface ReadyCheck {
+  ok: boolean;
+  error?: string;
+}
+
+export interface PgS3ReadyReport {
+  ok: boolean;
+  checks: { postgres: ReadyCheck; s3: ReadyCheck };
+}
+
+/** A readiness failure whose label is not an error code or name. */
+class ReadyCheckError extends Error {
+  constructor(
+    readonly label: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** The label a failed check reports: never `message`. */
+function readyLabel(e: unknown): string {
+  if (e instanceof ReadyCheckError) return e.label;
+  const err = e as { code?: unknown; name?: unknown };
+  if (typeof err?.code === "string" && err.code) return err.code;
+  if (typeof err?.name === "string" && err.name) return err.name;
+  return "Error";
+}
+
+/** `work` raced against one timer: a `TimeoutError` when the timer wins. The
+ *  loser is left to settle in the background, its rejection swallowed. */
+function withDeadline(work: Promise<void>, ms: number, what: string): Promise<void> {
+  work.catch(() => {});
+  let timer: NodeJS.Timeout | undefined;
+  const deadline = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      const e = new Error(`${what} did not answer within ${ms} ms`);
+      e.name = "TimeoutError";
+      reject(e);
+    }, ms);
+  });
+  return Promise.race([work, deadline]).finally(() => clearTimeout(timer));
+}
 
 // ─── Backend: the shared connections ─────────────────────────────────────────
 
@@ -78,13 +178,21 @@ export interface PgS3BackendOptions {
   /** Postgres connection string, e.g. `postgresql://postgres:proto@localhost:5434/proto`. */
   dsn: string;
   s3: {
-    endpoint: string;
+    /** An S3-compatible endpoint such as MinIO. Absent (or empty): the SDK's
+     *  regional AWS endpoint for `region`. */
+    endpoint?: string;
     bucket: string;
-    accessKeyId: string;
-    secretAccessKey: string;
-    /** The SDK insists on one even for MinIO; defaults to `us-east-1`. */
+    /** Static credentials, as a pair: both or neither. Neither (or empty):
+     *  the client gets no `credentials`, so the AWS SDK default chain (the
+     *  environment, `~/.aws` shared config/SSO, web identity, then ECS/EC2
+     *  instance metadata) supplies them. */
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    /** The SDK insists on one even for MinIO; defaults to `us-east-1`. With no
+     *  endpoint it also picks the AWS host. */
     region?: string;
-    /** `true` for MinIO and every other endpoint that is not AWS's own. */
+    /** `true` for MinIO without virtual-hosted DNS; `false` for AWS's own
+     *  virtual-hosted style. */
     forcePathStyle: boolean;
   };
   /** Override the module's timeout constants (tests point them at a silent
@@ -129,10 +237,19 @@ export class PgS3Backend {
   // lock, which is what stops N queued writers from draining N connections.
   private readonly queues = new Map<string, AsyncMutex>();
 
+  // The one in-flight readiness probe, shared by concurrent callers and
+  // cleared once its raced report settles; each check's last outcome, for the
+  // transition log.
+  private readyFlight: Promise<PgS3ReadyReport> | undefined;
+  private readonly lastReady = new Map<"postgres" | "s3", boolean>();
+
   constructor(
     readonly pool: Pool,
     readonly s3: S3Client,
     readonly bucket: string,
+    /** What readiness needs beyond the shared clients: the DSN its own
+     *  `pg.Client` connects with, and a one-attempt S3 client. */
+    private readonly probe: { dsn: string; s3: S3Client },
   ) {}
 
   queue(projectId: string): AsyncMutex {
@@ -152,40 +269,143 @@ export class PgS3Backend {
     }
   }
 
-  /** Drain the pool and drop the S3 client. Call once, when the process is done. */
+  /**
+   * Whether both stores can serve a tool call: a fresh Postgres connection that
+   * sees every store table, and `HeadBucket` on the bucket, raced against one
+   * `timeoutMs` deadline. Concurrent calls share one probe. Never throws; logs
+   * one stderr line per check when its outcome changes (and on the first probe).
+   */
+  checkReady(timeoutMs: number = READY_TIMEOUT_MS): Promise<PgS3ReadyReport> {
+    if (!this.readyFlight) {
+      this.readyFlight = this.probeReady(timeoutMs).finally(() => {
+        this.readyFlight = undefined;
+      });
+    }
+    return this.readyFlight;
+  }
+
+  private async probeReady(timeoutMs: number): Promise<PgS3ReadyReport> {
+    const [postgres, s3] = await Promise.all([
+      this.settleCheck("postgres", withDeadline(this.checkPostgres(timeoutMs), timeoutMs, "postgres")),
+      this.settleCheck(
+        "s3",
+        withDeadline(
+          (async () => {
+            await this.probe.s3.send(new HeadBucketCommand({ Bucket: this.bucket }), {
+              abortSignal: AbortSignal.timeout(timeoutMs),
+            });
+          })(),
+          timeoutMs,
+          "s3",
+        ),
+      ),
+    ]);
+    return { ok: postgres.ok && s3.ok, checks: { postgres, s3 } };
+  }
+
+  private async settleCheck(name: "postgres" | "s3", check: Promise<void>): Promise<ReadyCheck> {
+    let result: ReadyCheck;
+    let detail = "";
+    try {
+      await check;
+      result = { ok: true };
+    } catch (e) {
+      result = { ok: false, error: readyLabel(e) };
+      detail = e instanceof Error ? e.message : String(e);
+    }
+    if (this.lastReady.get(name) !== result.ok) {
+      this.lastReady.set(name, result.ok);
+      process.stderr.write(
+        result.ok ? `readiness: ${name} ok\n` : `readiness: ${name} failing (${result.error}): ${detail}\n`,
+      );
+    }
+    return result;
+  }
+
+  private async checkPostgres(timeoutMs: number): Promise<void> {
+    const client = new pg.Client({
+      connectionString: this.probe.dsn,
+      connectionTimeoutMillis: timeoutMs,
+      query_timeout: timeoutMs,
+    });
+    // A socket that dies after connect emits 'error' as well as rejecting the
+    // query; unheard, that emit is an uncaught exception.
+    client.on("error", () => {});
+    try {
+      await client.connect();
+      const missing = await client.query<{ t: string }>(
+        "SELECT t FROM unnest($1::text[]) t WHERE to_regclass(t) IS NULL",
+        [STORE_TABLES],
+      );
+      if (missing.rows.length > 0) {
+        const names = missing.rows.map((r) => r.t).join(",");
+        throw new ReadyCheckError(`schema: missing ${names}`, `store tables missing: ${names}`);
+      }
+    } finally {
+      // end() waits on a goodbye a silent host never acknowledges.
+      await Promise.race([client.end().catch(() => {}), new Promise((r) => setTimeout(r, 200).unref())]);
+      (client as unknown as { connection?: { stream?: { destroy?: () => void } } }).connection?.stream?.destroy?.();
+    }
+  }
+
+  /** Drain the pool and drop the S3 clients. Call once, when the process is done. */
   async close(): Promise<void> {
     await this.pool.end();
     this.s3.destroy();
+    this.probe.s3.destroy();
   }
 }
 
-/** Build a backend from connection options. Neither client connects until first use. */
+/** Build a backend from connection options. Neither client connects until
+ *  first use, and keyless credentials resolve on the first S3 call. Throws on
+ *  exactly one of the two keys. */
 export function createPgS3Backend(options: PgS3BackendOptions): PgS3Backend {
   const connectMs = options.timeouts?.connectMs ?? CONNECT_TIMEOUT_MS;
   const s3RequestMs = options.timeouts?.s3RequestMs ?? S3_REQUEST_TIMEOUT_MS;
+  const { endpoint, accessKeyId, secretAccessKey } = options.s3;
+  // `""` counts as absent: the SDK signs with empty keys rather than falling
+  // through to the default chain, and resolves an empty endpoint to real AWS.
+  if (!accessKeyId !== !secretAccessKey) {
+    throw new Error("createPgS3Backend: accessKeyId and secretAccessKey must be set together or not at all");
+  }
   const pool = new pg.Pool({ connectionString: options.dsn, connectionTimeoutMillis: connectMs });
-  const s3 = new S3Client({
-    endpoint: options.s3.endpoint,
+  // pg discards a pooled client whose idle connection dies and emits 'error' on
+  // the pool; unheard, that emit would take the process down with the database.
+  pool.on("error", (e) => {
+    process.stderr.write(`pg pool: idle client error: ${readyLabel(e)}\n`);
+  });
+  // `requestTimeout` on its own only logs a warning when it fires; the flag
+  // is what turns it into a rejection. A factory, not one instance: each
+  // client gets its own socket pool, so a probe never queues behind the
+  // process client's in-flight transfers.
+  const requestHandler = () =>
+    new NodeHttpHandler({
+      connectionTimeout: connectMs,
+      requestTimeout: s3RequestMs,
+      throwOnRequestTimeout: true,
+    });
+  const s3Config: S3ClientConfig = {
+    ...(endpoint ? { endpoint } : {}),
     region: options.s3.region ?? "us-east-1",
-    credentials: {
-      accessKeyId: options.s3.accessKeyId,
-      secretAccessKey: options.s3.secretAccessKey,
-    },
+    ...(accessKeyId && secretAccessKey ? { credentials: { accessKeyId, secretAccessKey } } : {}),
     forcePathStyle: options.s3.forcePathStyle,
     // Only the checksums the S3 API itself mandates: the SDK's default
     // opportunistic CRC trailers are an AWS-only feature that S3-compatible
     // stores reject or ignore.
     requestChecksumCalculation: "WHEN_REQUIRED",
     responseChecksumValidation: "WHEN_REQUIRED",
-    // `requestTimeout` on its own only logs a warning when it fires; the flag
-    // is what turns it into a rejection.
-    requestHandler: new NodeHttpHandler({
-      connectionTimeout: connectMs,
-      requestTimeout: s3RequestMs,
-      throwOnRequestTimeout: true,
-    }),
+  };
+  const s3 = new S3Client({ ...s3Config, requestHandler: requestHandler() });
+  // One attempt, so a failing probe every few seconds spends nothing from the
+  // process client's retry quota; the same credential provider, so keyless
+  // credentials resolve (and cache) once for both.
+  const probeS3 = new S3Client({
+    ...s3Config,
+    requestHandler: requestHandler(),
+    maxAttempts: 1,
+    credentials: s3.config.credentials,
   });
-  return new PgS3Backend(pool, s3, options.s3.bucket);
+  return new PgS3Backend(pool, s3, options.s3.bucket, { dsn: options.dsn, s3: probeS3 });
 }
 
 // ─── Ref routing ─────────────────────────────────────────────────────────────
@@ -266,12 +486,19 @@ export interface PgS3ProjectStoreOptions {
    *  client disconnected). A transaction still open then ROLLS BACK instead of
    *  committing, so a write whose result nobody can receive never lands. */
   signal?: AbortSignal;
+  /** The worker attempt this store writes for (U6). Set, every write runs in a
+   *  transaction that commits only while the fence's epoch is the turn's
+   *  current one (`CLAIM_PRECHECK_SQL` after BEGIN, `CLAIM_FENCE_SQL` before
+   *  COMMIT), else rolls back with `StaleClaimError`. Absent, writes autocommit
+   *  exactly as before. Reads are never fenced. */
+  fence?: ClaimFence;
 }
 
 export class PgS3ProjectStore implements ProjectStore {
   readonly projectId: string;
   readonly anchorPath: string;
   private readonly signal: AbortSignal | undefined;
+  private readonly fence: ClaimFence | undefined;
 
   constructor(
     private readonly backend: PgS3Backend,
@@ -286,6 +513,7 @@ export class PgS3ProjectStore implements ProjectStore {
     this.projectId = options.projectId;
     this.anchorPath = options.anchorPath;
     this.signal = options.signal;
+    this.fence = options.fence;
   }
 
   // ── scope and connection ─────────────────────────────────────────────────
@@ -319,14 +547,23 @@ export class PgS3ProjectStore implements ProjectStore {
     return `${this.projectId}/${ref}/${randomUUID()}`;
   }
 
+  /** Throw `StaleClaimError` unless the fence's epoch is the turn's current one. */
+  private async checkClaim(client: Queryable, fence: ClaimFence, sql: string): Promise<void> {
+    const r = await client.query(sql, [fence.turnId, this.projectId, fence.claimEpoch]);
+    if (r.rowCount === 0) throw new StaleClaimError(fence);
+  }
+
   /**
    * BEGIN, run `fn` with this project's transaction bound for every store
    * method it calls, COMMIT — or ROLLBACK when `fn` or COMMIT throws, or when
-   * the store's `signal` aborted while `fn` ran. Then the
+   * the store's `signal` aborted while `fn` ran. A fenced store checks its
+   * claim after BEGIN (so a stale `fn` never runs; `precheck: false` skips this
+   * for a caller that already ran it) and again, share-locked, right before
+   * COMMIT. Then the
    * S3 side: after a commit the objects the rows stopped pointing at go, after
    * a rollback the objects this transaction wrote go.
    */
-  private async runTransaction<T>(fn: () => Promise<T>, lock: boolean): Promise<T> {
+  private async runTransaction<T>(fn: () => Promise<T>, lock: boolean, precheck = true): Promise<T> {
     const held = this.backend.transactions.getStore();
     const client = await this.backend.pool.connect();
     const ctx: TxContext = { client, deleteOnCommit: [], deleteOnRollback: [] };
@@ -335,6 +572,7 @@ export class PgS3ProjectStore implements ProjectStore {
     try {
       await client.query("BEGIN");
       if (lock) await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [this.projectId]);
+      if (this.fence && precheck) await this.checkClaim(client, this.fence, CLAIM_PRECHECK_SQL);
       const next = new Map(held);
       next.set(this.projectId, ctx);
       const result = await this.backend.transactions.run(next, fn);
@@ -344,6 +582,7 @@ export class PgS3ProjectStore implements ProjectStore {
             `so it was rolled back`,
         );
       }
+      if (this.fence) await this.checkClaim(client, this.fence, CLAIM_FENCE_SQL);
       await client.query("COMMIT");
       committed = true;
       return result;
@@ -360,6 +599,15 @@ export class PgS3ProjectStore implements ProjectStore {
       client.release(broken);
       await this.backend.deleteObjects(committed ? ctx.deleteOnCommit : ctx.deleteOnRollback);
     }
+  }
+
+  /** A write that would autocommit on the pool: on a fenced store outside a
+   *  transaction it runs in one of its own, so the claim check guards its
+   *  commit; otherwise (unfenced, or already inside one) it runs as is. Only
+   *  for bodies that put no S3 object — a fenced object write goes through
+   *  `putObjectFenced`, which holds no client across the PUT. */
+  private fenced<T>(fn: () => Promise<T>): Promise<T> {
+    return this.fence && !this.tx() ? this.runTransaction(fn, false) : fn();
   }
 
   // ── ProjectStore ─────────────────────────────────────────────────────────
@@ -469,8 +717,15 @@ export class PgS3ProjectStore implements ProjectStore {
     this.assertAnchor(projectPath);
     const rel = assertRelativeRef(ref);
     const text = serialize(data);
-    await this.touchProject();
-    await this.putSerialized(rel, text);
+    const route = routeRef(rel);
+    if (this.fence && !this.tx() && route.kind !== "document") {
+      await this.putObjectFenced(this.fence, rel, route, Buffer.from(text, "utf-8"));
+      return;
+    }
+    await this.fenced(async () => {
+      await this.touchProject();
+      await this.putSerialized(rel, text);
+    });
   }
 
   /**
@@ -504,6 +759,10 @@ export class PgS3ProjectStore implements ProjectStore {
     const route = routeRef(rel);
     if (route.kind === "document") {
       throw new Error(`'${rel}' is a JSON document; write it with writeJson, not writeBytes`);
+    }
+    if (this.fence && !this.tx()) {
+      await this.putObjectFenced(this.fence, rel, route, bytes);
+      return;
     }
     await this.touchProject();
     await this.putObjectIndexed(rel, route, bytes);
@@ -540,23 +799,25 @@ export class PgS3ProjectStore implements ProjectStore {
   async remove(projectPath: string, ref: string): Promise<void> {
     const rel = assertRelativeRef(ref);
     if (!this.isAnchor(projectPath)) return;
-    const db = this.db();
     const route = routeRef(rel);
-    if (route.kind === "document") {
-      await db.query("DELETE FROM documents WHERE project_id = $1 AND name = $2", [this.projectId, rel]);
-      return;
-    }
-    const deleted =
-      route.kind === "staging"
-        ? await db.query<{ s3_key: string }>(
-            "DELETE FROM staging WHERE project_id = $1 AND staging_id = $2 RETURNING s3_key",
-            [this.projectId, route.stagingId],
-          )
-        : await db.query<{ s3_key: string }>(
-            "DELETE FROM blobs WHERE project_id = $1 AND key = $2 RETURNING s3_key",
-            [this.projectId, rel],
-          );
-    await this.releaseObjects(deleted.rows.map((r) => r.s3_key));
+    await this.fenced(async () => {
+      const db = this.db();
+      if (route.kind === "document") {
+        await db.query("DELETE FROM documents WHERE project_id = $1 AND name = $2", [this.projectId, rel]);
+        return;
+      }
+      const deleted =
+        route.kind === "staging"
+          ? await db.query<{ s3_key: string }>(
+              "DELETE FROM staging WHERE project_id = $1 AND staging_id = $2 RETURNING s3_key",
+              [this.projectId, route.stagingId],
+            )
+          : await db.query<{ s3_key: string }>(
+              "DELETE FROM blobs WHERE project_id = $1 AND key = $2 RETURNING s3_key",
+              [this.projectId, rel],
+            );
+      await this.releaseObjects(deleted.rows.map((r) => r.s3_key));
+    });
   }
 
   // ── internals ────────────────────────────────────────────────────────────
@@ -648,43 +909,93 @@ export class PgS3ProjectStore implements ProjectStore {
     route: Exclude<Route, { kind: "document" }>,
     bytes: Uint8Array,
   ): Promise<void> {
-    const s3Key = this.newS3Key(rel);
-    await this.backend.s3.send(
-      new PutObjectCommand({ Bucket: this.backend.bucket, Key: s3Key, Body: bytes }),
-    );
-    const now = Date.now() / 1000;
-    let previous: QueryResult<{ prev_s3_key: string | null }>;
+    const s3Key = await this.putObject(rel, bytes);
+    let prevKey: string | null;
     try {
-      // The CTE reads the row as it was before this statement (one statement,
-      // one snapshot), so `prev_s3_key` is the object the row used to point at
-      // — or NULL when the ref is new.
-      previous =
-        route.kind === "staging"
-          ? await this.db().query(
-              "WITH prev AS (SELECT s3_key FROM staging WHERE project_id = $1 AND staging_id = $2) " +
-                "INSERT INTO staging (project_id, staging_id, s3_key, created_at) " +
-                "VALUES ($1, $2, $3, to_timestamp($4)) " +
-                "ON CONFLICT (project_id, staging_id) DO UPDATE SET s3_key = EXCLUDED.s3_key, " +
-                "created_at = EXCLUDED.created_at " +
-                "RETURNING (SELECT s3_key FROM prev) AS prev_s3_key",
-              [this.projectId, route.stagingId, s3Key, now],
-            )
-          : await this.db().query(
-              "WITH prev AS (SELECT s3_key FROM blobs WHERE project_id = $1 AND key = $2) " +
-                "INSERT INTO blobs (project_id, key, s3_key, bytes, sha256, created_at) " +
-                "VALUES ($1, $2, $3, $4, $5, to_timestamp($6)) " +
-                "ON CONFLICT (project_id, key) DO UPDATE SET s3_key = EXCLUDED.s3_key, " +
-                "bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, created_at = EXCLUDED.created_at " +
-                "RETURNING (SELECT s3_key FROM prev) AS prev_s3_key",
-              [this.projectId, rel, s3Key, bytes.byteLength, createHash("sha256").update(bytes).digest("hex"), now],
-            );
+      prevKey = await this.indexObject(rel, route, s3Key, bytes);
     } catch (e) {
       await this.backend.deleteObjects([s3Key]);
       throw e;
     }
     const ctx = this.tx();
     if (ctx) ctx.deleteOnRollback.push(s3Key);
-    const prevKey = previous.rows[0]?.prev_s3_key;
     if (prevKey && prevKey !== s3Key) await this.releaseObjects([prevKey]);
+  }
+
+  /**
+   * A fenced store's single blob or staged write outside a transaction. The
+   * S3 PUT can take up to `S3_REQUEST_TIMEOUT_MS`, so no pool client is held
+   * across it: the claim pre-check runs on the pool, the object goes up with
+   * no connection checked out, and only then a short transaction (touch, index
+   * upsert, `CLAIM_FENCE_SQL`, COMMIT) points the row at it. Anything that
+   * stops that transaction committing — `StaleClaimError` included — deletes
+   * the new object, so a stale attempt leaves no orphan.
+   */
+  private async putObjectFenced(
+    fence: ClaimFence,
+    rel: string,
+    route: Exclude<Route, { kind: "document" }>,
+    bytes: Uint8Array,
+  ): Promise<void> {
+    await this.checkClaim(this.backend.pool, fence, CLAIM_PRECHECK_SQL);
+    const s3Key = await this.putObject(rel, bytes);
+    try {
+      await this.runTransaction(
+        async () => {
+          await this.touchProject();
+          const prevKey = await this.indexObject(rel, route, s3Key, bytes);
+          if (prevKey && prevKey !== s3Key) await this.releaseObjects([prevKey]);
+        },
+        false,
+        false,
+      );
+    } catch (e) {
+      await this.backend.deleteObjects([s3Key]);
+      throw e;
+    }
+  }
+
+  /** Put `bytes` under a fresh key for `rel`; returns the key. */
+  private async putObject(rel: string, bytes: Uint8Array): Promise<string> {
+    const s3Key = this.newS3Key(rel);
+    await this.backend.s3.send(
+      new PutObjectCommand({ Bucket: this.backend.bucket, Key: s3Key, Body: bytes }),
+    );
+    return s3Key;
+  }
+
+  /** Point the staging or blobs row for `rel` at `s3Key`; returns the key the
+   *  row held before, or `null` when the ref is new. */
+  private async indexObject(
+    rel: string,
+    route: Exclude<Route, { kind: "document" }>,
+    s3Key: string,
+    bytes: Uint8Array,
+  ): Promise<string | null> {
+    const now = Date.now() / 1000;
+    // The CTE reads the row as it was before this statement (one statement,
+    // one snapshot), so `prev_s3_key` is the object the row used to point at
+    // — or NULL when the ref is new.
+    const previous: QueryResult<{ prev_s3_key: string | null }> =
+      route.kind === "staging"
+        ? await this.db().query(
+            "WITH prev AS (SELECT s3_key FROM staging WHERE project_id = $1 AND staging_id = $2) " +
+              "INSERT INTO staging (project_id, staging_id, s3_key, created_at) " +
+              "VALUES ($1, $2, $3, to_timestamp($4)) " +
+              "ON CONFLICT (project_id, staging_id) DO UPDATE SET s3_key = EXCLUDED.s3_key, " +
+              "created_at = EXCLUDED.created_at " +
+              "RETURNING (SELECT s3_key FROM prev) AS prev_s3_key",
+            [this.projectId, route.stagingId, s3Key, now],
+          )
+        : await this.db().query(
+            "WITH prev AS (SELECT s3_key FROM blobs WHERE project_id = $1 AND key = $2) " +
+              "INSERT INTO blobs (project_id, key, s3_key, bytes, sha256, created_at) " +
+              "VALUES ($1, $2, $3, $4, $5, to_timestamp($6)) " +
+              "ON CONFLICT (project_id, key) DO UPDATE SET s3_key = EXCLUDED.s3_key, " +
+              "bytes = EXCLUDED.bytes, sha256 = EXCLUDED.sha256, created_at = EXCLUDED.created_at " +
+              "RETURNING (SELECT s3_key FROM prev) AS prev_s3_key",
+            [this.projectId, rel, s3Key, bytes.byteLength, createHash("sha256").update(bytes).digest("hex"), now],
+          );
+    return previous.rows[0]?.prev_s3_key ?? null;
   }
 }

@@ -8,6 +8,10 @@ found during this PR's own eval verification (F4), which did not exist before
 this PR). Every line is checkable by eye against a run-log transcript
 (`output.text_response`, `output.tool_calls`, `output.file_changes`) or by a
 mechanical scan of `research.json`'s `hypotheses[]`/`conflicts[]` diff.
+**Those two files no longer exist.** Issue #2792 folded both into
+`packages/engine/plugin/agents/hypothesis-tracking.md` on 2026-09-29; the
+prohibitions below were carried over with the body and still hold, but read
+them against the agent file.
 
 Judgement calls ("is this claim specific enough", "does this evidence really
 bear on the hypothesis") are deliberately excluded — they belong to the judge.

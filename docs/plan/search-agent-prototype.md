@@ -13,7 +13,8 @@ against seeded rows until the worker exists); the store half of D6–8 built 202
 #2652; `PgS3ProjectStore`, `createServer(principal)`, `hosted-stdio.js`); D9–10 and D15
 built 2026-09-18 (PR #2656; the worker — one SDK turn per queue message, the transcript in
 Postgres, the six agents via `agents=`); D14 scripted and the D17 prep built 2026-09-18
-(PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, `proto-token`, and
+(PR #2668; `make proto-kill`, `proto-seed`, `proto-audit`, the operator-token recipe
+(superseded by U3: `make proto-grant`; the web tier refreshes between attempts), and
 `tool_calls.duration_ms` filled); D16 built 2026-09-18 (PR #2659; the
 Streamable HTTP entrypoint wrapping `createServer(principal)`, the transport smoke over
 every tool but the four auth exclusions, the compose `tools` service); per-request store
@@ -376,7 +377,9 @@ that matters here: a redelivered message carries the same `turn_id`, and that cl
 be granted immediately — that *is* the resume path, and refusing it stalls every
 kill-resume iteration at D14 and D17.
 
-**Everything else about locking is deferred to R8, deliberately.** An earlier draft
+**Everything else about locking is deferred to R8, deliberately** (now built: R8's
+status note, U6). The redelivery is still granted immediately; the earlier attempt is the
+one fenced out. An earlier draft
 specified a full protocol here — `claim_epoch` fencing, epoch-conditioned release,
 completion-record-before-claim, a 409 refusal arm and four named residuals. That protocol
 is textbook code with no unknowns in it, and this section's own conclusion is that the
@@ -392,7 +395,10 @@ every round it existed. It belongs in code with tests, not in prose.
    one-token `converse` on `us.anthropic.claude-sonnet-4-6` in `us-east-1` returned.
 2. **Service Quotas increase request** for Claude input TPM. Takes days. A single
    session runs ~166k tokens/min against a 2M TPM default, so 50 concurrent
-   sessions is not a default-quota workload.
+   sessions is not a default-quota workload. (Superseded 2026-10-09, handoff U18:
+   Bedrock exempts cache reads and counts output 5×, so a session settles at
+   ~26–43k; the Sonnet 4.6 default is 6M; the per-day quota binds first.
+   `docs/search-agent-capacity.md`.)
 
 3. **Two emails** (drafted separately): one to FS AI Platform covering the Agent
    Gateway's API surface, prompt-caching behaviour, token quota, and Guardrails
@@ -511,8 +517,9 @@ Seven pass criteria, plus one measurement that sets a branch:
   "no persistence", which is why this plan removes the writable *project* directory
   and not the whole filesystem. Proved against a real `SessionStore`: with a read-only
   `CLAUDE_CONFIG_DIR` the turn returns `is_error=False`, the correct answer and empty
-  stderr, while writing **0 files and appending 0 frames**. Add `os.access(dir, W_OK)`
-  at worker start.
+  stderr, while writing **0 files and appending 0 frames**. Built (U10): a `TMPDIR`
+  write test that exits the worker 2 at start, and a per-turn rule that closes a model
+  turn with 0 entries appended as `transcript_lost` (500, and `/healthz` 503).
 - **Frames appended > 0 *strictly before the kill*, and the resumed turn's loaded entry
   count ≥ the count at kill time.** "Frames > 0 per turn" is not enough: under the
   SDK's default batching a single end-of-turn flush satisfies it while the mid-turn
@@ -1113,6 +1120,22 @@ TAP's route:
 - Both: the bare `claude-sonnet-4-6` is 400, and `tool-search-tool-2025-10-19` is 400
   on Converse. The second was measured this time, not only read.
 
+**Re-run 2026-09-30 on the deployed test bed:** integ, `search-fulltext-agentgateway`
+on v1.6.0-alpha.2 (its #8), with `--max-scans 6 --context-1m --cache-ttl`. It matches
+the local v1.6.0-alpha.2 run: FAIL on `stop_reasons` and `tool_choice` only, with the
+same two 400s.
+- `tool_reference`: passes.
+- Streaming: `text/event-stream`, first body byte 1.06 s of 4.2 s.
+- `body_limit`: 6 scans (5,947,512 bytes) all 200, with no `maxBufferSize` set.
+- Betas: all 12 the CLI sends return 200, including the two 0.12.0 rejected.
+- `context_1m`: 200 on 224,025 input tokens, in 9.5 s.
+- `cache_ttl`: FAIL. The write and the 1 s read hit (7,214 tokens). The read at 6m40s
+  read 0 and rewrote all 7,214, so upstream #3670 holds on the deployed gateway too.
+
+So tool search works through a deployed gateway. F2 still stands, because TAP pins
+v1.5.0. This is the test bed, not TAP's route. It carries only the haiku alias and no
+API-key consumer.
+
 For what the CLI itself sends, `passthrough_proxy.py --upstream http://host:port` now
 fronts a gateway as well as `api.anthropic.com`.
 
@@ -1241,7 +1264,7 @@ without whichever Bedrock refuses.
   configuration-only `update-environment` took 78 s, restarted sqsd and left the app
   process running. API option settings override the same option in `.ebextensions`.
   nginx sits between sqsd and the app with a 60 s `proxy_read_timeout`; the bundle's
-  `.platform` override to 36000 s was required, or nginx cuts first. The 512 MB bundle
+  `.platform` override to 43200 s was required, or nginx cuts first. The 512 MB bundle
   cap and the `.ebextensions/*.config` rule are documented and were not exercised.
 - **D3** docker-compose skeleton: postgres, **elasticmq** (SQS API — not RabbitMQ,
   whose semantics differ and whose client code you would throw away), **minio**, and
@@ -1609,7 +1632,7 @@ without whichever Bedrock refuses.
   ~90 s mock iteration, so the message would go visible again mid-turn and — because a
   redelivery carries the same body and therefore the same `turn_id`, which the lock now
   grants immediately — a second worker would be handed the lock and start the
-  same turn. The production `VisibilityTimeout` is asserted by a config
+  same turn (since U6 its claim fences the first attempt's writes; R8). The production `VisibilityTimeout` is asserted by a config
   test, not exercised in the loop. Kill the **worker container** — the shim is a separate
   service and survives to issue `ChangeMessageVisibility(0)`. Not `kill -9` on the
   worker PID, which orphans the `claude` child, which keeps
@@ -1853,24 +1876,11 @@ without whichever Bedrock refuses.
   resumed turn must show `list_subkeys` called and returning ≥ 1 key. Criterion 6 is a finding
   recorded under P1, not something this run proves. This is FamilySearch question 1. Iterate.
   **Prep done 2026-09-18 (PR #2668); the run is four commands and a browser.**
-  1. **Never source `proto/env.sh` or run `make proto-token` while a turn is in flight**
-     (2026-09-23): a FamilySearch refresh revokes the previous access token, so the
-     in-flight attempt's calls answer 401 — the Auth section's measurement. Between turns
-     it is safe. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
+  1. `BLOCKED_TOOLS=person_read,person_search,person_ancestors,person_record_matches,person_person_matches
      make proto-up` — the harness's tree-read block (the fixture's answer sits in the live
-     tree; `proto-demo` sets the same list), then the engine and the stack. `proto/env.sh` exports the model
-     key and writes the FamilySearch token, refreshed from the desktop login through
-     `dev/fs-token.ts`, to `apps/server/proto/.fs-token`, which the worker reads **per
-     turn**; its status line must say both are set. **The token protocol: `make e2e-login`
-     FIRST** — a fresh login, refresh token ~24 h — and then `make proto-token` between
-     turns, which since 2026-09-21 forces a refresh when the stored token has under
-     **thirty-five** minutes of life left (`dev/fs-token.ts --min-life`, default 30 —
-     `READ_TIMEOUT_S` in minutes, so the token outlives a full-length turn — plus the auth
-     module's own five-minute expiry buffer; widen it with `PROTO_TOKEN_MIN_LIFE`). The
-     line this replaces — run `make proto-token` before the fifty-minute mark — was a no-op by
-     construction: `getValidToken` returns the stored access token unchanged unless it has
-     **already** expired, so a refresh at minute 52 handed the stack the same eight
-     minutes, which is how the 2026-09-21 run below died mid-delegation.
+     tree; `proto-demo` sets the same list), then the engine and the stack; then `make
+     proto-grant` once per stack. The operator-token protocol that stood here is
+     superseded by U3: `make proto-grant`; the web tier refreshes between attempts.
   2. `make proto-seed FIXTURE=bagley-father-1884` — the fixture's `starting-research.json`
      and tree into the Postgres/S3 store through `PgS3ProjectStore`, and a session on
      that project; prints the session id and the research question (any e2e fixture or
@@ -1895,8 +1905,8 @@ without whichever Bedrock refuses.
   surfaced nowhere until 2026-09-21: `PgSessionStore.counters()` had no caller, so the
   2026-09-21 run could not have asserted this criterion whatever else it did. **What voids the run:** the kill
   landing before `task_started` (a plain turn kill, D14 again — post the next prompt and
-  retry); a FamilySearch tool answering with the reconnect instruction (the token
-  expired — `make e2e-login`, then `make proto-token`, new session); `receive_count` 3 (the worker did not come
+  retry); a FamilySearch tool answering with the reconnect instruction (the grant was
+  refused or is missing — `make proto-grant`, new session); `receive_count` 3 (the worker did not come
   back before the second redelivery — `docker start` it); more than one worker kill.
   **Run live 2026-09-21** (`sess_25297de9b15b4ef5`, turn
   `6f22712a-1c91-4272-8f7f-24dabc6cd9a7`) on `bagley-father-1884`, driven from the
@@ -2002,7 +2012,8 @@ without whichever Bedrock refuses.
   and 22 assertions, `receive_count` 1, $1.24. So a background delegation cannot occur in
   the worker any more (corrected 2026-09-29: it can; the rewrite catches only an explicit
   `true`, and CLI 2.1.220 also backgrounds a call without the flag, as the 2026-09-21 run's
-  two `record-extractor` calls were): criterion 1's delegation case is the foreground one,
+  two `record-extractor` calls were; since PR #3011 the rewrite covers every call not
+  explicitly `false`, so it cannot again): criterion 1's delegation case is the foreground one,
   which passed on
   2026-09-20 (D14) and on the first 2026-09-23 re-run, and the resume rule keeps covering
   a zero-turn redelivery from any other cause.
@@ -2045,14 +2056,11 @@ without whichever Bedrock refuses.
   compose default is 0 (off), and `proto-demo` itself stays a one-turn run. With the cap
   above 0 the worker binds a `Stop` hook (`apps/server/proto/worker/options.py`,
   `make_stop_hook`) that vetoes the model's voluntary yield exactly as the harness's does:
-  the same predicate and the same veto text for a **silent** stop — with one delta,
-  recorded because it will grow: since 2026-09-20 the harness also answers a
-  *well-formed* hand-back (one that names its next step and asks) with the
-  researcher's "Yes." rather than the veto (`classify_hand_back` / `hand_back_outcome`,
-  issues #2328 and #2292). The worker mirrors the silent-stop fallback only: the
-  classifier reads the harness's in-process narration list, and #2292's prose half has
-  not landed, so copying a moving wording would drift the moment it does. Revisit when
-  #2292 lands. The rest is as the harness has it —
+  the same predicate and the same veto text for every stop. From 2026-09-20 the
+  harness answered a *well-formed* hand-back (one that names its next step and asks)
+  with the researcher's "Yes." instead (issues #2328 and #2292); issue #2292 retired
+  that hand-back on 2026-09-27, and handoff U17 removed the "Yes." branch, so the
+  harness's classifier is telemetry only. The rest is as the harness has it —
   (`should_continue_run`, ported from
   `eval/harness/e2e/stop_checker.py` — allow once `project.status == "completed"`, once
   the cap is spent, or when the previous nudge produced no tool call, the no-progress
@@ -2166,7 +2174,10 @@ without whichever Bedrock refuses.
   comparison needs `make e2e-run TEST=<fixture>` first, which is the lead's call and a
   billed research run. Nothing here writes under `eval/runlogs/`: a prototype run is not an
   e2e run, and the comparison's own output goes to stdout and, with `OUT`, to the
-  gitignored export directory. Offline tests (no judge call, no stack, no model):
+  gitignored export directory. A committed run with more than one query (a stall-resume,
+  or a background subagent's `task_notification`) is tagged on its line: its duration, SDK
+  turns and main-thread tokens cover its last query only, and its cost its last CLI process
+  (#3128). Offline tests (no judge call, no stack, no model):
   `eval/harness/tests/unit/test_e2e_grade_files.py` in `make harness-test`, and
   `apps/server/tests/test_proto_d18.py` plus the two recipes' shape in
   `tests/test_proto_config.py`, both in `make proto-test`. Forty guards were each shown red
@@ -2707,7 +2718,9 @@ anything measured in integ before then is the shared pool. Which account is unse
 (the fulltext P25 accounts if the agent counts as the same product, else a new one via
 a GEM intake). The burndown multiplier and whether cache reads are exempt are unknown
 and the largest variable in the estimate (50 sessions is ~0.5M or ~8.1M TPM); the
-information is in the responses, we test it ourselves. Do not let a `model:` be pinned
+information is in the responses, we test it ourselves. (Answered 2026-10-09, handoff
+U18: 5× output, cache reads exempt, documented and read back from
+`EstimatedTPMQuotaUsage`; ~2M for 50 sessions. `docs/search-agent-capacity.md`.) Do not let a `model:` be pinned
 in our provider block — it overrides the client's model and breaks per-agent selection.
 Gateway capacity is one 0.25 vCPU / 512 MB task per environment, `desiredCount: 1`,
 no autoscaling, parsing and re-serialising every body for every tenant; per-account
@@ -2768,8 +2781,9 @@ category of control — injection is an input-integrity problem on a channel nei
 mechanism reads — so do not accept "tune the guardrail" as a plan. And it is not even
 on: `guardrailIdentifier` is a placeholder in beta and prod, and their README warns
 that enabling `PROMPT_ATTACK` 403s every request on v1.3.x. Exposure, from the corpus:
-5,554 of 27,002 tool calls return externally-authored content — 20.6% of all calls,
-35.8% of MCP calls, about 34 per run over 163 runs — mostly `record_search`,
+5,234 of 27,002 tool calls return text a third party wrote — 19.4% of all calls;
+5,199 of them are MCP calls, 33.6% of 15,474 (the other 35 are WebFetch/WebSearch); about 32 per run over 163 runs (`d016032e5`; set and rule in
+`apps/server/dev/review_figures_runlogs.py`; an unrecorded set first gave 5,554) — mostly `record_search`,
 `record_read`, `image_transcribe`, `wiki_place_page`, `fulltext_search`. The
 gateway-side fix is theirs and small (emit `guardContent` for `toolResult`, or teach
 promptGuard to walk tool-result parts) and covers every tenant; the semantic half is
@@ -2799,6 +2813,18 @@ mismatched write is a no-op and that worker aborts. One column, two `WHERE` clau
 roughly one to two days with a two-worker integration test. It is textbook, which is why
 it was cut from the build plan rather than from this register.
 *Owner: us; needs a two-instance test before production.*
+**Status:** resolved by U6 (PR #3299; `familysearch-handoff.md`, U6). One column,
+`turns.claim_epoch` (`010_claim_epoch.sql`), minted by every claim of an open turn; claims
+are still granted immediately. A stale close raises rather than returning, so it never
+releases a held message; the zero-progress counter is conditioned on the epoch; the
+transcript append and every tool-server commit take a `FOR SHARE` fence on the turn row,
+so a write that races the newer claim waits for it and then rolls back. **Deviation from
+the wording above:** no heartbeat column or lease, since claims are never refused and
+nothing would read one; the epoch check before every tool call and the fenced append are
+the conditioned touch, the sweep's epoch bump is the expiry (as is the web tier's
+`fail_turn`, an epoch-less close), and ending an overlong live
+attempt stays U26's time limit. Proven against real Postgres with two worker claims and
+two tool-server processes (2026-10-09, n=1). Scaling past one instance still waits on U18.
 
 **R9 — Blueprint provisioner coverage and the custom AMI check.** The architecture
 document's own first blocker: with no FamilySearch-baked AMI for Python 3.12 / Node 24
@@ -2862,7 +2888,8 @@ idle-session billing.
 ## Corrections to the architecture document
 
 - **"Exactly 24 take a `projectPath` and 24 are pure HTTP callers" is 21 and 27** —
-  21 take a `projectPath` and the other 27 do not; several of those 27 make no network
+  21 take a `projectPath` and the other 27 do not, of 48 at `e18d99b10` (27 and 26 of 53
+  at `19ea6d089`; `packages/engine/mcp-server/dev/count-projectpath-tools.ts`); several that take none make no network
   call either, so "pure HTTP callers" is the wrong gloss for them too.
   The 24 is a file count that includes three helper modules exporting no tool. The
   argument survives; a reviewer who checks the number stops trusting the rest.
@@ -2894,7 +2921,9 @@ All from the committed corpus at `eval/runlogs/e2e/`, **measured at `e18d99b10`*
 hex-shaped stamp near a figure in those specs only, and does not cover `docs/plan/`). 161 run logs across 94 fixtures; 51 carry the three-element timeline
 that makes sub-run segmentation possible. Re-derive with a timeline parse over
 `usage.timeline` plus `usage.continue_nudges`; **the derivation scripts must land in
-`dev/` with this change, not in a session scratchpad a reviewer cannot reach.** Counts
+`dev/` with this change, not in a session scratchpad a reviewer cannot reach.** They
+landed late (U22): `apps/server/dev/review_figures_runlogs.py` reproduces the segment,
+call-duration and spill figures here at `e18d99b10`; the other rows were not rebuilt. Counts
 that are not corpus figures were re-taken against `main` on 2026-09-10: agents,
 `fs` importers and vitest files moved; the `getValidToken` 19 turned out to be grep lines, not calls.
 
