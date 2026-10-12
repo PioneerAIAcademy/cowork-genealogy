@@ -195,6 +195,24 @@ def test_passes_on_the_abbreviated_marriage_form():
     check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
 
 
+def test_passes_when_a_vital_event_aside_also_carries_a_comma():
+    """Round 5 review: the comma-before-year check the prior fix used read
+    `(m. Margaret Hayes, 1849)` and `(bapt. Skibbereen, 1814)` as naming the
+    census year, because both happen to carry a comma before their year for
+    reasons unrelated to naming a census -- separating a name, or a baptism
+    place, from its own date. Both open with a vital-event marker ("m.",
+    "bapt.") and must still be excluded; the real census year, 1861, is named
+    plainly elsewhere in the same gap. Must NOT raise."""
+    gap = [{"start": "1849", "end": "1861",
+            "expected_events": [
+                "England census (m. Margaret Hayes, 1849)",
+                "England census (bapt. Skibbereen, 1814)",
+                "England census 1861",
+            ],
+            "severity": "high"}]
+    check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
 def test_fires_on_cross_country_page_contamination():
     """Finding #3: a year attributed to Ireland that is absent from the Ireland
     page but present on another fetched page (England's 1921) must be caught.

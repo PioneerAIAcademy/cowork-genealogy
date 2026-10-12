@@ -26,12 +26,29 @@ from validators_lib import assert_foreign_keys_valid
 US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
 _YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
 _PAREN_RE = re.compile(r"\([^()]*\)")
-# A year immediately preceded by a comma, at the end of a parenthetical's
-# content -- "<jurisdiction>, 1861" -- as opposed to a bounding life event's
-# own year with no punctuation before it ("married 1859"). See
-# `_names_census_year` for why this is the second, reverse-order half of that
-# check.
-_COMMA_YEAR_RE = re.compile(r",\s*(1[89]\d\d)\s*$")
+# A parenthetical OPENING with a genealogy vital-event marker -- the
+# complement of opening with a year. A round-5 review found the comma-before-
+# year check this replaced too loose: "(m. Margaret Hayes, 1849)" and "(bapt.
+# Skibbereen, 1814)" both have a comma before the year for a reason that has
+# nothing to do with naming the census (separating a name, or a baptism
+# place, from its own date), and the comma rule read both as the census year.
+# Checking the OPENING token instead of punctuation anywhere in the string is
+# the same structural move "opens with year" already makes -- a parenthetical
+# starts with the one thing it's actually labelled by, a year or a vital-
+# event abbreviation, not scattered punctuation. This list is the exact set
+# issue #2797's and #3231's review rounds found in practice: "married"/
+# "marriage"/"m.", "wed", "born"/"b.", "died"/"death"/"d.", "bapt."/
+# "baptised"/"baptized", "buried"/"burial", "widow"/"widowed",
+# "emigrated"/"emigration". It is closed over GENEALOGY VITAL-EVENT
+# VOCABULARY, not over jurisdictions or census names -- a materially
+# different, much smaller kind of list than the per-country table ADR-0012
+# forbids.
+_LIFE_EVENT_OPEN_RE = re.compile(
+    r"^(?:marr(?:y|ied|iage)|m|wed(?:ding)?|born|b|died|death|d|"
+    r"bapt(?:is(?:ed|m)|iz(?:ed|m))?|bur(?:ial|ied)|widow(?:ed)?|"
+    r"emigrat(?:ed|ion))\.?(?=\s|$)",
+    re.IGNORECASE,
+)
 
 
 # --- Helpers ----------------------------------------------------------
@@ -255,28 +272,30 @@ def _census_year_of_entry(entry: str) -> int | None:
     census_at = [m.start() for m in re.finditer("census", blanked.lower())]
     if not census_at:
         return None
-    # A parenthetical names the census year when the year is presented as a
-    # DATA FIELD -- jurisdiction and year together, in either order -- not
-    # when it is a bounding life event's own year. "(married 1859)", "(m.
-    # 1859)", "(bapt. 1859)", "(buried 1870)", "(widowed 1859)", "(emigrated
-    # 1859)" all have the shape "<verb> <year>", no punctuation between them,
-    # and must not be returned as the census year (finding #4). "(1861,
-    # England & Wales)" has the year FIRST; an independent review found the
-    # reverse order, "(England & Wales, 1861)", just as plausible a phrasing
-    # for the same fact and not covered by "opens with year" alone -- it was
-    # read as a bounding span and its year discarded entirely, reproducing
-    # #2797's "produced no census gap naming a year" failure for a different
-    # token order. Both year-first and comma-then-year are accepted as naming
-    # the census; a bare verb immediately before the year, with no
-    # punctuation, is not. This is still structural, not a word list: the
-    # comma is what a "<jurisdiction>, <year>" field pairing carries and a
-    # "<verb> <year>" phrase does not, in every shape above and the ones a
-    # word list would have to keep enumerating.
+    # A parenthetical names the census year unless it OPENS with a genealogy
+    # vital-event marker -- the complement of opening with a year. "(married
+    # 1859)", "(m. 1859)", "(bapt. 1859)", "(buried 1870)", "(widowed 1859)",
+    # "(emigrated 1859)" all open with a marker and must not be returned as
+    # the census year (finding #4). "(1861, England & Wales)" opens with the
+    # year itself. "(England & Wales, 1861)" opens with neither -- "England"
+    # is not a marker -- so it still correctly names the census year without
+    # needing to recognize it as a jurisdiction at all.
+    #
+    # A round-5 review found a PRIOR version of this check, which looked for
+    # a comma before the year anywhere in the parenthetical rather than a
+    # marker at its start, too loose: "(m. Margaret Hayes, 1849)" and "(bapt.
+    # Skibbereen, 1814)" both carry a comma before their year for a reason
+    # that has nothing to do with naming the census -- separating a name, or
+    # a baptism place, from its own date -- and the comma rule misread both
+    # as the census year. Checking the opening token is the same structural
+    # move "opens with year" already makes: a parenthetical is introduced by
+    # the one thing it is actually labelled with, not by punctuation that can
+    # appear for unrelated reasons anywhere inside it.
     def _names_census_year(paren_text: str) -> bool:
-        inner = paren_text[1:-1]
-        if _YEAR_RE.match(inner.lstrip()) is not None:
+        inner = paren_text[1:-1].lstrip()
+        if _YEAR_RE.match(inner) is not None:
             return True
-        return _COMMA_YEAR_RE.search(inner) is not None
+        return _LIFE_EVENT_OPEN_RE.match(inner) is None
 
     bounding_spans = [
         m.span() for m in _PAREN_RE.finditer(entry) if not _names_census_year(m.group(0))

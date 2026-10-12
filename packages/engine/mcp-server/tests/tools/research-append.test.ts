@@ -2238,6 +2238,23 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok).toBe(false);
     });
 
+    // Round-5 review: arm 2's exclusion list stopped at "Census"/"Federal",
+    // so every other word in the census's own FORMAL name -- its bureau
+    // name, its common descriptive name, its own ordinal -- was captured as
+    // a candidate jurisdiction word and silenced it, on the exact timeline
+    // this guard exists for.
+    it.each([
+      ["the bureau's own name", "1890 Federal Population Census"],
+      ["the common descriptive name", "1890 Population Census"],
+      ["another common descriptive name", "1890 Decennial Census"],
+      ["the census's own ordinal name", "Eleventh Census, 1890"],
+      ["a jurisdiction LEVEL word, not a name", "Schuylkill County census 1890"],
+    ])("still fires on the census's own formal name, on the mixed timeline: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
     // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
     // in the entry, which wrongly silenced every one of these on the exact
     // immigrant timeline this guard exists for -- none names a jurisdiction

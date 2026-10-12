@@ -456,16 +456,30 @@ const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
 // (part of the phrase being classified, not a jurisdiction) or
 // "United"/"States" (already covered by TIMELINE_NAMES_US_RE, checked first
 // -- reaching this regex at all means the text did not match it
-// case-insensitively in any form). Captured so the caller can check it
-// against the timeline's own recorded US places. "[Cc]ensus" deliberately,
-// not a trailing /i flag -- an /i flag would also make the leading
-// `[A-Z][a-z]+` match a lowercase word, defeating the whole point of
-// requiring a CAPITALIZED word. An independent review found the first cut's
-// bare lowercase "census" meant "Denmark Census 1890" (capital C) never
-// matched this regex at all and fell through to arm 3's fallback -- the
-// exact silencing this arm exists to provide, lost on nothing but a
-// capitalization choice.
-const TIMELINE_NAMES_OTHER_JURISDICTION_RE = /\b(?!Census\b|Federal\b|United\b|States\b)([A-Z][a-z]+) [Cc]ensus\b/;
+// case-insensitively in any form). Also not "Population"/"Decennial"/
+// "Eleventh"/"County" -- round-5 review found all four allowed through on
+// the Schuylkill timeline: "1890 Federal Population Census" and "1890
+// Population Census" (the record's actual bureau name), "1890 Decennial
+// Census" (the common descriptive name), "Eleventh Census, 1890" (the
+// 1890 census's own formal ordinal name -- the 11th US federal census),
+// and "Schuylkill County census 1890" whenever the timeline's events carry
+// only `standard_place`, which never literally contains the word "County".
+// These describe the census itself or a jurisdiction's administrative
+// LEVEL, never a jurisdiction's NAME -- adding them to the exclusion is a
+// small, closed set of English census-descriptive vocabulary, not a
+// per-country table. "Eleventh" alone is excluded, not every ordinal: this
+// guard only ever fires on the literal year 1890 (TIMELINE_1890_RE), so no
+// other ordinal can appear beside "Census" and still pass that check.
+// Captured so the caller can check it against the timeline's own recorded
+// US places. "[Cc]ensus" deliberately, not a trailing /i flag -- an /i flag
+// would also make the leading `[A-Z][a-z]+` match a lowercase word,
+// defeating the whole point of requiring a CAPITALIZED word. An independent
+// review found the first cut's bare lowercase "census" meant "Denmark
+// Census 1890" (capital C) never matched this regex at all and fell
+// through to arm 3's fallback -- the exact silencing this arm exists to
+// provide, lost on nothing but a capitalization choice.
+const TIMELINE_NAMES_OTHER_JURISDICTION_RE =
+  /\b(?!Census\b|Federal\b|United\b|States\b|Population\b|Decennial\b|Eleventh\b|County\b)([A-Z][a-z]+) [Cc]ensus\b/;
 
 export function timelineCensus1890Invariants(entry: any): string[] {
   const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];
