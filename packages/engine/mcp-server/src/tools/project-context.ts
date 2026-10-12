@@ -402,6 +402,7 @@ export const projectContextSchema = {
     "what is open or waiting on the researcher, and the next step. No headings, " +
     "tables or lists, and no identifiers, file names, tool names or field names: " +
     "say \"the proof summary\" or \"the parentage question\", never q_001 or ps_001. " +
+    "nextStep values name ids and agents; restate them in plain words. " +
     "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +

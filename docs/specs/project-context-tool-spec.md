@@ -405,12 +405,16 @@ was still deferred and arrived through ToolSearch, description included):
 > what is open or waiting on the researcher, and the next step. No headings,
 > tables or lists, and no identifiers, file names, tool names or field names:
 > say "the proof summary" or "the parentage question", never q_001 or ps_001.
-> Do not read the project files and do not delegate.
+> nextStep values name ids and agents; restate them in plain words. Do not
+> read the project files and do not delegate.
 
 It leads the description rather than closing it. Measured on `ut_research_025`
 (2026-10-12): appended after the field list, the clause was ignored — the reply
 was headings, a table and raw ids. Moved to the front it held in 2 of 3 runs,
-the third quoting `ps_001`; with the two worked examples added, 3 of 3.
+the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
+0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
+miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
+("gps-mentor (proof-critique) — ps_001").
 
 **Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
 request is answered by the main thread in one plain paragraph from
