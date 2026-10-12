@@ -9,8 +9,9 @@
 #   (b) /project, the CLI's cwd anchor: root-owned 0555, and empty;
 #   (c) /tmp must be a tmpfs (TMPDIR, "writable, never persistent");
 #   (d) the staging app directory root-owned and not group/other-writable;
-#   (e) U3: the slot users each turn's CLI runs as (WORKER_TURN_USERS in
-#       02-worker.config), sharing one primary group;
+#   (e) U3: the slot users each turn's CLI runs as, sharing one primary group: a superset
+#       of the names WORKER_TURN_USERS (02-worker.config) names; probe cases select the
+#       first N (U18, rehearse.py slots_4/slots_8), so the 8 exist on every instance;
 #   (f) U3: web.service runs as root, so the worker can launch each CLI as its slot user
 #       (the platform runs it as webapp). The drop-in lives under /usr/lib: every deploy,
 #       app or configuration, deregisters web and deletes /etc/systemd/system/web.service.d
@@ -72,7 +73,7 @@ chmod -R go-w,a+rX "$staging"
 
 # (e)
 TURN_GROUP=genealogy-turn
-TURN_USERS="genealogy-turn-0 genealogy-turn-1"
+TURN_USERS="genealogy-turn-0 genealogy-turn-1 genealogy-turn-2 genealogy-turn-3 genealogy-turn-4 genealogy-turn-5 genealogy-turn-6 genealogy-turn-7"
 getent group "$TURN_GROUP" >/dev/null || groupadd --system "$TURN_GROUP"
 for user in $TURN_USERS; do
   id -u "$user" >/dev/null 2>&1 \

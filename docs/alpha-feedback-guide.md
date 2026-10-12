@@ -493,9 +493,10 @@ plugin loader, viewer context injection, OS-specific file handling. Diagnose it
 
 The `check-runlogs` CI gate is blocking and checks two things your Step-6
 baseline run can no longer satisfy, because `SKILL.md` changed underneath it:
-the latest run log per touched skill must be **active** (its snapshot matching
-the branch's current skill files), and its `.ann.json` must carry a correction
-for **every** (test, dimension) pair. `make gate-skill` writes no run logs by
+the run log your PR adds for each touched skill (or, if it adds none, the
+latest one) must be **active** (its snapshot matching the branch's current
+skill files), and its `.ann.json` must carry a correction for **every**
+dimension of each sampled test. `make gate-skill` writes no run logs by
 design, so do one full run against the edited skill:
 
 ```bash

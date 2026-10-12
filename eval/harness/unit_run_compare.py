@@ -15,6 +15,11 @@ hash of every file each run depended on (skill or agent body, tests, rubric,
 fixtures). A cost move with no changed file is the run-to-run wobble, and the
 wobble itself is not measured yet: a change smaller than it is luck.
 
+**"Run settings that differ"** names an envelope setting that moved — the
+model, or `tool_search` (`--no-tool-search` loads every tool schema up front,
+which moves cost with no file changed). A log written before `tool_search`
+existed ran with it on, and is read that way.
+
 Zero API spend — pure formatting over run logs.
 """
 
@@ -29,6 +34,9 @@ from skill_latency_report import UNIT_RUNLOGS
 from unit_run_report import run_logs
 
 SHOW_CHANGED_FILES = 12
+#: Envelope settings compared, with the value an older log that lacks the key
+#: ran with. `tool_search` could not be turned off before it was recorded.
+_SETTING_DEFAULTS: dict[str, Any] = {"model": None, "tool_search": True}
 
 
 def _load(path: Path) -> dict[str, Any] | None:
@@ -83,6 +91,16 @@ def changed_files(before: dict[str, Any], after: dict[str, Any]) -> list[str] | 
     return out
 
 
+def differing_settings(before: dict[str, Any], after: dict[str, Any]) -> list[str]:
+    """`"<key> <before> -> <after>"` for each envelope setting that moved."""
+    out = []
+    for key, default in _SETTING_DEFAULTS.items():
+        b, a = before.get(key, default), after.get(key, default)
+        if b != a:
+            out.append(f"{key} {b!r} -> {a!r}")
+    return out
+
+
 def _pct(before: float, after: float) -> str:
     return f"{100 * (after - before) / before:+.0f}%" if before else "--"
 
@@ -100,9 +118,13 @@ def compare(before: dict[str, Any], b_name: str, after: dict[str, Any], a_name: 
         f"before: {b_name}  ({before.get('model', '?')})",
         f"after:  {a_name}  ({after.get('model', '?')})",
     ]
+    settings = differing_settings(before, after)
+    out.append("run settings that differ: " + ("; ".join(settings) if settings else "none"))
     changed = changed_files(before, after)
     if changed is None:
         out.append("changed between them: unknown (a log carries no snapshot)")
+    elif not changed and settings:
+        out.append("changed between them: no file — only the run settings above")
     elif not changed:
         out.append("changed between them: nothing — any move below is run-to-run wobble")
     else:

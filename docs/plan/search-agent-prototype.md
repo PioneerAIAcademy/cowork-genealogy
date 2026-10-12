@@ -377,7 +377,9 @@ that matters here: a redelivered message carries the same `turn_id`, and that cl
 be granted immediately — that *is* the resume path, and refusing it stalls every
 kill-resume iteration at D14 and D17.
 
-**Everything else about locking is deferred to R8, deliberately.** An earlier draft
+**Everything else about locking is deferred to R8, deliberately** (now built: R8's
+status note, U6). The redelivery is still granted immediately; the earlier attempt is the
+one fenced out. An earlier draft
 specified a full protocol here — `claim_epoch` fencing, epoch-conditioned release,
 completion-record-before-claim, a 409 refusal arm and four named residuals. That protocol
 is textbook code with no unknowns in it, and this section's own conclusion is that the
@@ -393,7 +395,10 @@ every round it existed. It belongs in code with tests, not in prose.
    one-token `converse` on `us.anthropic.claude-sonnet-4-6` in `us-east-1` returned.
 2. **Service Quotas increase request** for Claude input TPM. Takes days. A single
    session runs ~166k tokens/min against a 2M TPM default, so 50 concurrent
-   sessions is not a default-quota workload.
+   sessions is not a default-quota workload. (Superseded 2026-10-09, handoff U18:
+   Bedrock exempts cache reads and counts output 5×, so a session settles at
+   ~26–43k; the Sonnet 4.6 default is 6M; the per-day quota binds first.
+   `docs/search-agent-capacity.md`.)
 
 3. **Two emails** (drafted separately): one to FS AI Platform covering the Agent
    Gateway's API surface, prompt-caching behaviour, token quota, and Guardrails
@@ -1627,7 +1632,7 @@ without whichever Bedrock refuses.
   ~90 s mock iteration, so the message would go visible again mid-turn and — because a
   redelivery carries the same body and therefore the same `turn_id`, which the lock now
   grants immediately — a second worker would be handed the lock and start the
-  same turn. The production `VisibilityTimeout` is asserted by a config
+  same turn (since U6 its claim fences the first attempt's writes; R8). The production `VisibilityTimeout` is asserted by a config
   test, not exercised in the loop. Kill the **worker container** — the shim is a separate
   service and survives to issue `ChangeMessageVisibility(0)`. Not `kill -9` on the
   worker PID, which orphans the `claude` child, which keeps
@@ -2713,7 +2718,9 @@ anything measured in integ before then is the shared pool. Which account is unse
 (the fulltext P25 accounts if the agent counts as the same product, else a new one via
 a GEM intake). The burndown multiplier and whether cache reads are exempt are unknown
 and the largest variable in the estimate (50 sessions is ~0.5M or ~8.1M TPM); the
-information is in the responses, we test it ourselves. Do not let a `model:` be pinned
+information is in the responses, we test it ourselves. (Answered 2026-10-09, handoff
+U18: 5× output, cache reads exempt, documented and read back from
+`EstimatedTPMQuotaUsage`; ~2M for 50 sessions. `docs/search-agent-capacity.md`.) Do not let a `model:` be pinned
 in our provider block — it overrides the client's model and breaks per-agent selection.
 Gateway capacity is one 0.25 vCPU / 512 MB task per environment, `desiredCount: 1`,
 no autoscaling, parsing and re-serialising every body for every tenant; per-account
@@ -2774,8 +2781,9 @@ category of control — injection is an input-integrity problem on a channel nei
 mechanism reads — so do not accept "tune the guardrail" as a plan. And it is not even
 on: `guardrailIdentifier` is a placeholder in beta and prod, and their README warns
 that enabling `PROMPT_ATTACK` 403s every request on v1.3.x. Exposure, from the corpus:
-5,554 of 27,002 tool calls return externally-authored content — 20.6% of all calls,
-35.8% of MCP calls, about 34 per run over 163 runs — mostly `record_search`,
+5,234 of 27,002 tool calls return text a third party wrote — 19.4% of all calls;
+5,199 of them are MCP calls, 33.6% of 15,474 (the other 35 are WebFetch/WebSearch); about 32 per run over 163 runs (`d016032e5`; set and rule in
+`apps/server/dev/review_figures_runlogs.py`; an unrecorded set first gave 5,554) — mostly `record_search`,
 `record_read`, `image_transcribe`, `wiki_place_page`, `fulltext_search`. The
 gateway-side fix is theirs and small (emit `guardContent` for `toolResult`, or teach
 promptGuard to walk tool-result parts) and covers every tenant; the semantic half is
@@ -2805,6 +2813,18 @@ mismatched write is a no-op and that worker aborts. One column, two `WHERE` clau
 roughly one to two days with a two-worker integration test. It is textbook, which is why
 it was cut from the build plan rather than from this register.
 *Owner: us; needs a two-instance test before production.*
+**Status:** resolved by U6 (PR #3299; `familysearch-handoff.md`, U6). One column,
+`turns.claim_epoch` (`010_claim_epoch.sql`), minted by every claim of an open turn; claims
+are still granted immediately. A stale close raises rather than returning, so it never
+releases a held message; the zero-progress counter is conditioned on the epoch; the
+transcript append and every tool-server commit take a `FOR SHARE` fence on the turn row,
+so a write that races the newer claim waits for it and then rolls back. **Deviation from
+the wording above:** no heartbeat column or lease, since claims are never refused and
+nothing would read one; the epoch check before every tool call and the fenced append are
+the conditioned touch, the sweep's epoch bump is the expiry (as is the web tier's
+`fail_turn`, an epoch-less close), and ending an overlong live
+attempt stays U26's time limit. Proven against real Postgres with two worker claims and
+two tool-server processes (2026-10-09, n=1). Scaling past one instance still waits on U18.
 
 **R9 — Blueprint provisioner coverage and the custom AMI check.** The architecture
 document's own first blocker: with no FamilySearch-baked AMI for Python 3.12 / Node 24
@@ -2868,7 +2888,8 @@ idle-session billing.
 ## Corrections to the architecture document
 
 - **"Exactly 24 take a `projectPath` and 24 are pure HTTP callers" is 21 and 27** —
-  21 take a `projectPath` and the other 27 do not; several of those 27 make no network
+  21 take a `projectPath` and the other 27 do not, of 48 at `e18d99b10` (27 and 26 of 53
+  at `19ea6d089`; `packages/engine/mcp-server/dev/count-projectpath-tools.ts`); several that take none make no network
   call either, so "pure HTTP callers" is the wrong gloss for them too.
   The 24 is a file count that includes three helper modules exporting no tool. The
   argument survives; a reviewer who checks the number stops trusting the rest.
@@ -2900,7 +2921,9 @@ All from the committed corpus at `eval/runlogs/e2e/`, **measured at `e18d99b10`*
 hex-shaped stamp near a figure in those specs only, and does not cover `docs/plan/`). 161 run logs across 94 fixtures; 51 carry the three-element timeline
 that makes sub-run segmentation possible. Re-derive with a timeline parse over
 `usage.timeline` plus `usage.continue_nudges`; **the derivation scripts must land in
-`dev/` with this change, not in a session scratchpad a reviewer cannot reach.** Counts
+`dev/` with this change, not in a session scratchpad a reviewer cannot reach.** They
+landed late (U22): `apps/server/dev/review_figures_runlogs.py` reproduces the segment,
+call-duration and spill figures here at `e18d99b10`; the other rows were not rebuilt. Counts
 that are not corpus figures were re-taken against `main` on 2026-09-10: agents,
 `fs` importers and vitest files moved; the `getValidToken` 19 turned out to be grep lines, not calls.
 
