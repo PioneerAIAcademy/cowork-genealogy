@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Nicolas Uhres was born about 1856 in Keispelt, Luxembourg; the 1880 census of Kehlen commune enumerates him as single and gives that birth year and place.",
+      "details": {
+        "subject_person": "Nicolas Uhres (GYGJ-D1C)",
+        "fact_type": "Birth",
+        "date": "about 1856",
+        "place": "Keispelt, Kehlen, Capellen, Luxembourg"
+      },
+      "supporting_sources": [
+        "Luxembourg, Census Records, 1843-1900 — 1880 census entry for Nicolas Uhres, Kehlen, single, born 1856 in Keispelt"
+      ],
+      "required": true
+    }
+  ]
+}

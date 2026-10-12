@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Hugh Mclachlan married Catherine Muir in 1845 in the parish of Kilninian, Argyll, Scotland (Isle of Mull); the index gives the year only.",
+      "details": {
+        "subject_person": "Hugh Mclachlan (KCWN-N2T)",
+        "fact_type": "Marriage",
+        "date": "1845",
+        "place": "Kilninian, Argyll, Scotland"
+      },
+      "supporting_sources": [
+        "Scotland, Marriages, 1561-1910 — marriage entry for Hugh McLachlan and Catherine Muir, 1845"
+      ],
+      "required": true
+    }
+  ]
+}

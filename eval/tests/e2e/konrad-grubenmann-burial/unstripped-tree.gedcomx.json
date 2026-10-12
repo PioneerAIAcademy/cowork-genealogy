@@ -1,0 +1,1726 @@
+{
+  "persons": [
+    {
+      "id": "KP47-72Q",
+      "ark": "ark:/61903/4:1:KP47-72Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Konrad",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Konrad",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "21 Aug 1698",
+          "standard_date": "21 Aug 1698",
+          "place": "Teufen, Appenzell, Switzerland",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "17 Mar 1787",
+          "standard_date": "17 Mar 1787"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2Z6-WP4"
+        },
+        {
+          "ref": "3B18-2LD"
+        }
+      ]
+    },
+    {
+      "id": "KP47-WH9",
+      "ark": "ark:/61903/4:1:KP47-WH9",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Johannes",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Johannes",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "31Dec1732",
+          "standard_date": "31 Dec 1732",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "13Sep1773",
+          "standard_date": "13 Sep 1773"
+        }
+      ]
+    },
+    {
+      "id": "KP47-W6G",
+      "ark": "ark:/61903/4:1:KP47-W6G",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Elisabeth",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Elsbeth",
+          "surname": "Grubenmaenn",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Elssbeth",
+          "surname": "Grubenmaenn",
+          "type": "BirthName"
+        },
+        {
+          "id": "c9075aec-0093-4635-8218-b4b05b7e90a8",
+          "given": "Elisabeth",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 Aug 1735",
+          "standard_date": "22 Aug 1735",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "11 Jan 1801",
+          "standard_date": "11 Jan 1801"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P37-Z3G"
+        }
+      ]
+    },
+    {
+      "id": "KP47-49L",
+      "ark": "ark:/61903/4:1:KP47-49L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22Oct1740",
+          "standard_date": "22 Oct 1740",
+          "place": "Stein, Appenzell, Switzerland or, Stein Am Rhein, Schaffhausen, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "K8W7-P4H",
+      "ark": "ark:/61903/4:1:K8W7-P4H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Barbara",
+          "surname": "Iller",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Barbara",
+          "surname": "Jller",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 May 1672",
+          "standard_date": "10 May 1672",
+          "place": "Teufen, Appenzell Ausserrhoden, Schweiz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "24 Dec 1705",
+          "standard_date": "24 Dec 1705"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W4HV-LR2"
+        },
+        {
+          "ref": "Q6XK-V7Z"
+        },
+        {
+          "ref": "3B54-878"
+        }
+      ]
+    },
+    {
+      "id": "KP47-CJ1",
+      "ark": "ark:/61903/4:1:KP47-CJ1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Hans Konrad",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Hans Konrad",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "28Jul1731",
+          "standard_date": "28 Jul 1731",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "KP47-HJT",
+      "ark": "ark:/61903/4:1:KP47-HJT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Barbara",
+          "surname": "Oberteufer",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Barbara",
+          "surname": "Obertaufer",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Barbara",
+          "surname": "Oberteufer Muller",
+          "type": "BirthName"
+        },
+        {
+          "id": "c9075aec-0093-4635-8218-b4b05b7e90a8",
+          "given": "Barbara Oberteufer",
+          "surname": "Muller",
+          "type": "BirthName"
+        },
+        {
+          "id": "987fae84-c453-47f5-b891-4de724e7968e",
+          "given": "Barbara",
+          "surname": "Oberteufer",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "29 Oct 1705",
+          "standard_date": "29 Oct 1705",
+          "place": "of Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "29 Oct 1705",
+          "standard_date": "29 Oct 1705",
+          "place": "Hundwil, AR., Swtz",
+          "standard_place": "Hundwil, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "18 Feb 1742",
+          "standard_date": "18 Feb 1742"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q2Z6-WTP"
+        },
+        {
+          "ref": "3B18-KR2"
+        }
+      ]
+    },
+    {
+      "id": "LLCD-4SY",
+      "ark": "ark:/61903/4:1:LLCD-4SY",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8ff6e9df-173a-4e96-92d4-6aa520e5865b",
+          "preferred": true,
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "14 Aug 1734",
+          "standard_date": "14 Aug 1734",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "446554b1-2ccb-4842-b104-50c11db18055",
+          "type": "Christening",
+          "date": "14 August 1734",
+          "standard_date": "14 Aug 1734",
+          "place": "Hundwil, Appenzell Ausserrhoden, Switzerland",
+          "standard_place": "Hundwil, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3B18-KZQ"
+        }
+      ]
+    },
+    {
+      "id": "LLCD-43M",
+      "ark": "ark:/61903/4:1:LLCD-43M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8ff6e9df-173a-4e96-92d4-6aa520e5865b",
+          "preferred": true,
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "2 Jul 1738",
+          "standard_date": "2 Jul 1738",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "child"
+        }
+      ]
+    },
+    {
+      "id": "LLCD-4SL",
+      "ark": "ark:/61903/4:1:LLCD-4SL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8ff6e9df-173a-4e96-92d4-6aa520e5865b",
+          "preferred": true,
+          "given": "Jakob",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Jakob",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "2 Jun 1727",
+          "standard_date": "2 Jun 1727",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "Sep 1727",
+          "standard_date": "Sep 1727"
+        }
+      ]
+    },
+    {
+      "id": "LLCD-4SR",
+      "ark": "ark:/61903/4:1:LLCD-4SR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8ff6e9df-173a-4e96-92d4-6aa520e5865b",
+          "preferred": true,
+          "given": "Johannes",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Johannes",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "31 Dec 1732",
+          "standard_date": "31 Dec 1732",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "13 Sep 1773",
+          "standard_date": "13 Sep 1773"
+        }
+      ]
+    },
+    {
+      "id": "LCMW-H4Z",
+      "ark": "ark:/61903/4:1:LCMW-H4Z",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Jakob",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Jakob",
+          "surname": "Gubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "18 Oct 1668",
+          "standard_date": "18 Oct 1668",
+          "place": "Teufen, Appenzell, Switz.",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "4 Nov 1744",
+          "standard_date": "4 Nov 1744"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W4HV-G5K"
+        },
+        {
+          "ref": "7LXC-4PB"
+        },
+        {
+          "ref": "Q6XK-V3N"
+        },
+        {
+          "ref": "Q6XK-NL3"
+        },
+        {
+          "ref": "3B54-8WF"
+        },
+        {
+          "ref": "32VT-V7G"
+        }
+      ]
+    },
+    {
+      "id": "LLCD-4S1",
+      "ark": "ark:/61903/4:1:LLCD-4S1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8ff6e9df-173a-4e96-92d4-6aa520e5865b",
+          "preferred": true,
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "05efd440-d752-4e8b-9b16-043c51003b3b",
+          "type": "Birth",
+          "date": "1 Oct 1736",
+          "standard_date": "1 Oct 1736",
+          "place": "Stein, Appenzell, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death",
+          "date": "child"
+        }
+      ]
+    },
+    {
+      "id": "KP47-HZ3",
+      "ark": "ark:/61903/4:1:KP47-HZ3",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Jakob",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Jakob",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "25 August 1728",
+          "standard_date": "25 Aug 1728",
+          "place": "Stein, Appenzell Ausserrhoden, Switzerland",
+          "standard_place": "Stein, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "a8506dfb-66d4-4baa-8b69-1d79e321b3c5",
+          "type": "Baptism",
+          "date": "25 August 1728",
+          "standard_date": "25 Aug 1728",
+          "place": "Hundwil, Appenzell Ausserrhoden, Switzerland",
+          "standard_place": "Hundwil, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "b4f6b8c3-ba5e-4e8e-ab86-869dc964814f",
+          "type": "Death",
+          "date": "8 Jan 1772",
+          "standard_date": "8 Jan 1772"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3FMQ-QHQ"
+        },
+        {
+          "ref": "Q2Z6-8V8"
+        },
+        {
+          "ref": "Q2Z6-4YK"
+        },
+        {
+          "ref": "Q2Z6-WJH"
+        },
+        {
+          "ref": "Q2Z6-7ZT"
+        }
+      ]
+    },
+    {
+      "id": "MZ39-N1W",
+      "ark": "ark:/61903/4:1:MZ39-N1W",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "3 Jan 1692",
+          "standard_date": "3 Jan 1692"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "3 Jan 1692",
+          "standard_date": "3 Jan 1692",
+          "place": "Teufen Appenzell Switz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "K4J9-BPL",
+      "ark": "ark:/61903/4:1:K4J9-BPL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Anna",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Anna",
+          "surname": "Grubernmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a6e5a3fd-01d1-4337-a52c-3d0919114981",
+          "type": "Christening",
+          "date": "12 March 1693",
+          "standard_date": "12 Mar 1693",
+          "place": "Teufen, Appenzell Ausserrhoden, Switzerland",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "17 Mar 1693",
+          "standard_date": "17 Mar 1693",
+          "place": "Teufen, Appenzell, Switzerland",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "3 Mar 1758",
+          "standard_date": "3 Mar 1758"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W4HK-4R6"
+        },
+        {
+          "ref": "W4HV-1G5"
+        },
+        {
+          "ref": "W4HV-LCD"
+        },
+        {
+          "ref": "W447-ZZ7"
+        },
+        {
+          "ref": "W44Q-XP8"
+        },
+        {
+          "ref": "W44Q-8H8"
+        },
+        {
+          "ref": "W44Q-42D"
+        },
+        {
+          "ref": "W44Q-SX7"
+        },
+        {
+          "ref": "W49N-49B"
+        },
+        {
+          "ref": "793M-3YX"
+        }
+      ]
+    },
+    {
+      "id": "K8HX-CQG",
+      "ark": "ark:/61903/4:1:K8HX-CQG",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Jakob",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "20 Jun 1694",
+          "standard_date": "20 Jun 1694",
+          "place": "Teufen, Appenzell, Switzerland",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "20 May 1771",
+          "standard_date": "20 May 1771"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7LXC-ZBK"
+        },
+        {
+          "ref": "7LXC-Z21"
+        },
+        {
+          "ref": "7LXC-ZQ4"
+        },
+        {
+          "ref": "7LXC-CKR"
+        },
+        {
+          "ref": "7LXC-C3J"
+        },
+        {
+          "ref": "7LXC-HKH"
+        },
+        {
+          "ref": "7LXC-H9Z"
+        },
+        {
+          "ref": "7LXC-4JF"
+        },
+        {
+          "ref": "SC7N-VJJ"
+        }
+      ]
+    },
+    {
+      "id": "MZ39-JVN",
+      "ark": "ark:/61903/4:1:MZ39-JVN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Barbara",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 Dec 1695",
+          "standard_date": "22 Dec 1695",
+          "place": "Teufen Appenzell, Switz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "12 Jun 1696",
+          "standard_date": "12 Jun 1696"
+        }
+      ]
+    },
+    {
+      "id": "MZ39-JKX",
+      "ark": "ark:/61903/4:1:MZ39-JKX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Johannes",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "94461359-56f6-4ce3-b35c-86e778d441eb",
+          "type": "Birth",
+          "date": "3 Feb 1697",
+          "standard_date": "3 Feb 1697",
+          "place": "Teufen, Appenzell, Switzerland",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "28 Dec 1767",
+          "standard_date": "28 Dec 1767"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "32VT-2FR"
+        },
+        {
+          "ref": "32VT-23Y"
+        },
+        {
+          "ref": "32VT-JTD"
+        }
+      ]
+    },
+    {
+      "id": "MZ39-JLB",
+      "ark": "ark:/61903/4:1:MZ39-JLB",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "5 Nov 1699",
+          "standard_date": "5 Nov 1699",
+          "place": "Teufen Appenzell, Switz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "6e58be4a-adb1-46ac-b329-833f284b7ed8",
+          "type": "Baptism",
+          "date": "5 Nov 1699",
+          "standard_date": "5 Nov 1699",
+          "place": "Teufen, Appenzell Ausserrhoden, Schweiz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "12 Nov 1760",
+          "standard_date": "12 Nov 1760",
+          "place": "Teufen, Appenzell Ausserrhoden, Schweiz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "597cfb62-6608-4dbd-89b3-3a7793a988de",
+          "type": "Burial",
+          "date": "12 Nov 1760",
+          "standard_date": "12 Nov 1760",
+          "place": "Teufen, Appenzell Ausserrhoden, Schweiz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WQFK-6MV"
+        },
+        {
+          "ref": "WQFK-8Y9"
+        },
+        {
+          "ref": "WQFK-8SZ"
+        },
+        {
+          "ref": "WQFK-ZCM"
+        },
+        {
+          "ref": "WQFK-CFT"
+        },
+        {
+          "ref": "Q6XK-V9C"
+        },
+        {
+          "ref": "Q6XK-JJ2"
+        },
+        {
+          "ref": "Q6XK-J93"
+        },
+        {
+          "ref": "Q6XK-NDG"
+        }
+      ]
+    },
+    {
+      "id": "MZ39-JPS",
+      "ark": "ark:/61903/4:1:MZ39-JPS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Barbara",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ac425c18-b914-4dcb-bee6-eebdff153eef",
+          "type": "Birth",
+          "date": "10 Jan 1701",
+          "standard_date": "10 Jan 1701",
+          "place": "Teufen, Appenzell, Switzerland",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "17 Oct 1770",
+          "standard_date": "17 Oct 1770"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7GR1-CB1"
+        }
+      ]
+    },
+    {
+      "id": "MZ39-J5H",
+      "ark": "ark:/61903/4:1:MZ39-J5H",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Ulrich",
+          "surname": "Grubenmann",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "25 Feb 1702",
+          "standard_date": "25 Feb 1702",
+          "place": "Teufen Appenzell, Switz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        },
+        {
+          "id": "af6ccb95-d860-4cfa-80f7-9a146c73325d",
+          "type": "Baptism",
+          "date": "25 February 1702",
+          "standard_date": "25 Feb 1702",
+          "place": "Switzerland",
+          "standard_place": "Switzerland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "4 Nov 1702",
+          "standard_date": "4 Nov 1702"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3B54-83D"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KP47-72Q",
+      "person2": "KP47-HJT",
+      "facts": [
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "19 Apr 1724",
+          "standard_date": "19 Apr 1724"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "place": "Switzerland",
+          "standard_place": "Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "LCMW-H4Z",
+      "person2": "K8W7-P4H",
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Marriage",
+          "date": "5 Jun 1692",
+          "standard_date": "5 Jun 1692",
+          "place": "Teufen, Appenzell Ausserrhoden, Schweiz",
+          "standard_place": "Teufen, Appenzell Ausserrhoden, Switzerland"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "KP47-72Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "KP47-72Q",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "LLCD-4SL"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "LLCD-4SL"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "KP47-HZ3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "KP47-HZ3",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "KP47-CJ1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "KP47-CJ1",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "KP47-WH9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "KP47-WH9",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "LLCD-4SR"
+    },
+    {
+      "id": "R14",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "LLCD-4SR"
+    },
+    {
+      "id": "R15",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "LLCD-4SY"
+    },
+    {
+      "id": "R16",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "LLCD-4SY",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R17",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "KP47-W6G",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R18",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "KP47-W6G",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R19",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "LLCD-4S1"
+    },
+    {
+      "id": "R20",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "LLCD-4S1"
+    },
+    {
+      "id": "R21",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "LLCD-43M"
+    },
+    {
+      "id": "R22",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "LLCD-43M"
+    },
+    {
+      "id": "R23",
+      "type": "ParentChild",
+      "parent": "KP47-72Q",
+      "child": "KP47-49L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R24",
+      "type": "ParentChild",
+      "parent": "KP47-HJT",
+      "child": "KP47-49L",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R25",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "K8HX-CQG"
+    },
+    {
+      "id": "R26",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "K8HX-CQG"
+    },
+    {
+      "id": "R27",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "MZ39-JVN"
+    },
+    {
+      "id": "R28",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "MZ39-JVN"
+    },
+    {
+      "id": "R29",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "MZ39-JPS"
+    },
+    {
+      "id": "R30",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "MZ39-JPS"
+    },
+    {
+      "id": "R31",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "MZ39-J5H"
+    },
+    {
+      "id": "R32",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "MZ39-J5H"
+    },
+    {
+      "id": "R33",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "K4J9-BPL"
+    },
+    {
+      "id": "R34",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "K4J9-BPL"
+    },
+    {
+      "id": "R35",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "MZ39-JKX"
+    },
+    {
+      "id": "R36",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "MZ39-JKX"
+    },
+    {
+      "id": "R37",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "MZ39-JLB"
+    },
+    {
+      "id": "R38",
+      "type": "ParentChild",
+      "parent": "K8W7-P4H",
+      "child": "MZ39-JLB"
+    },
+    {
+      "id": "R39",
+      "type": "ParentChild",
+      "parent": "LCMW-H4Z",
+      "child": "MZ39-N1W"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_KP47-72Q",
+      "title": "Konrad Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Konrad Grubenmann (PID KP47-72Q); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-72Q"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_KP47-WH9",
+      "title": "Johannes Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Johannes Grubenmann (PID KP47-WH9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-WH9"
+    },
+    {
+      "id": "sd_person_KP47-W6G",
+      "title": "Elisabeth Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Elisabeth Grubenmann (PID KP47-W6G); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-W6G"
+    },
+    {
+      "id": "sd_person_KP47-49L",
+      "title": "Ulrich Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ulrich Grubenmann (PID KP47-49L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-49L"
+    },
+    {
+      "id": "sd_person_K8W7-P4H",
+      "title": "Barbara Iller",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Barbara Iller (PID K8W7-P4H); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K8W7-P4H"
+    },
+    {
+      "id": "sd_person_KP47-CJ1",
+      "title": "Hans Konrad Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Hans Konrad Grubenmann (PID KP47-CJ1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-CJ1"
+    },
+    {
+      "id": "sd_person_KP47-HJT",
+      "title": "Barbara Oberteufer",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Barbara Oberteufer (PID KP47-HJT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-HJT"
+    },
+    {
+      "id": "sd_person_LLCD-4SY",
+      "title": "Ulrich Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ulrich Grubenmann (PID LLCD-4SY); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LLCD-4SY"
+    },
+    {
+      "id": "sd_person_LLCD-43M",
+      "title": "Ulrich Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ulrich Grubenmann (PID LLCD-43M); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LLCD-43M"
+    },
+    {
+      "id": "sd_person_LLCD-4SL",
+      "title": "Jakob Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jakob Grubenmann (PID LLCD-4SL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LLCD-4SL"
+    },
+    {
+      "id": "sd_person_LLCD-4SR",
+      "title": "Johannes Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Johannes Grubenmann (PID LLCD-4SR); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LLCD-4SR"
+    },
+    {
+      "id": "sd_person_LCMW-H4Z",
+      "title": "Jakob Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jakob Grubenmann (PID LCMW-H4Z); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LCMW-H4Z"
+    },
+    {
+      "id": "sd_person_LLCD-4S1",
+      "title": "Ulrich Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Ulrich Grubenmann (PID LLCD-4S1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LLCD-4S1"
+    },
+    {
+      "id": "sd_person_KP47-HZ3",
+      "title": "Jakob Grubenmann",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jakob Grubenmann (PID KP47-HZ3); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP47-HZ3"
+    },
+    {
+      "id": "3B18-2LD",
+      "title": "Conrad Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66V4-B629 : Sun Mar 10 04:23:38 UTC 2024), Entry for Ulrich Grubenmann and Conrad Grubenmann, 14 Aug 1734.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66V4-B623"
+    },
+    {
+      "id": "Q2Z6-WP4",
+      "title": "Conrad Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-3LFL : Tue Sep 08 22:58:38 UTC 2026), Entry for Jacob Grubenmann and Conrad Grubenmann, 25 Aug 1728.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-3LFG"
+    },
+    {
+      "id": "7P37-Z3G",
+      "title": "Elisabeta Grubenmänin, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F88-D5NY : Sun Mar 10 12:13:46 UTC 2024), Entry for Barbara Waldburger and Ullrich Waldburger, 6 Oct 1770.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F88-D5N1"
+    },
+    {
+      "id": "W4HV-LR2",
+      "title": "Barbara Illeri, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-L4LC : Fri Mar 08 17:01:58 UTC 2024), Entry for Anna Grubeman and Jacob Grubeman, 12 Mar 1693.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-L4L6"
+    },
+    {
+      "id": "Q6XK-V7Z",
+      "title": "Barbara Iller, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-T4F9 : Fri Mar 08 20:31:46 UTC 2024), Entry for Maria Grubeman and Jacob Grubeman, 5 Nov 1699.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-T4FQ"
+    },
+    {
+      "id": "3B54-878",
+      "title": "Barbara Iller, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-2FFN : Fri Mar 08 19:47:38 UTC 2024), Entry for Ulrich Grubeman and Jacob Grubeman, 25 Feb 1702.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-2FFK"
+    },
+    {
+      "id": "Q2Z6-WTP",
+      "title": "Barbara Obertrüfer, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-3LFL : Tue Sep 08 22:58:38 UTC 2026), Entry for Jacob Grubenmann and Conrad Grubenmann, 25 Aug 1728.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-3LFP"
+    },
+    {
+      "id": "3B18-KR2",
+      "title": "Barbara Obertrüfery, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66V4-B629 : Sun Mar 10 04:23:38 UTC 2024), Entry for Ulrich Grubenmann and Conrad Grubenmann, 14 Aug 1734.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66V4-B627"
+    },
+    {
+      "id": "3B18-KZQ",
+      "title": "Ulrich Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66V4-B629 : Sun Mar 10 04:23:38 UTC 2024), Entry for Ulrich Grubenmann and Conrad Grubenmann, 14 Aug 1734.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66V4-B629"
+    },
+    {
+      "id": "W4HV-G5K",
+      "title": "Jacob Grubeman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-L4LC : Fri Mar 08 17:01:58 UTC 2024), Entry for Anna Grubeman and Jacob Grubeman, 12 Mar 1693.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-L4L8"
+    },
+    {
+      "id": "7LXC-4PB",
+      "title": "Jacob Grubemann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66J1-MXT5 : Tue Sep 08 23:09:54 UTC 2026), Entry for Jacob Grubemann and Jacob Grubemann, 3 Jun 1722.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66J1-MXTR"
+    },
+    {
+      "id": "Q6XK-V3N",
+      "title": "Jacob Grubeman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-T4F9 : Fri Mar 08 20:31:46 UTC 2024), Entry for Maria Grubeman and Jacob Grubeman, 5 Nov 1699.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-T4F3"
+    },
+    {
+      "id": "Q6XK-NL3",
+      "title": "Jacob Gruberm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZP-CGZM : Thu Mar 07 17:10:48 UTC 2024), Entry for Gebhard Zürcher and Bernhard Zürcher, 27 Oct 1723.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZP-CGZ3"
+    },
+    {
+      "id": "3B54-8WF",
+      "title": "Jacob Grubeman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-2FFN : Fri Mar 08 19:47:38 UTC 2024), Entry for Ulrich Grubeman and Jacob Grubeman, 25 Feb 1702.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-2FFJ"
+    },
+    {
+      "id": "32VT-V7G",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66J1-62B8 : Wed Sep 09 00:11:09 UTC 2026), Entry for Johannes Grubenmann and Jacob Grubenmann, 8 Mar 1726.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66J1-62BX"
+    },
+    {
+      "id": "3FMQ-QHQ",
+      "title": "Schefer Family records compiled by Julius Billeter",
+      "citation": "Salt Lake City Family History Library microfilm #193,482"
+    },
+    {
+      "id": "Q2Z6-8V8",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F88-8GNQ : Fri Mar 08 20:54:31 UTC 2024), Entry for Barbara Grubenmann and Jacob Grubenmann, 7 Jan 1770.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F88-8GN7"
+    },
+    {
+      "id": "Q2Z6-4YK",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F8H-J3CK : Sun Mar 10 06:18:32 UTC 2024), Entry for Barbara and Jacob Grubenmann, 3 Jan 1770.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F8H-J3C2"
+    },
+    {
+      "id": "Q2Z6-WJH",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-3LFL : Tue Sep 08 22:58:38 UTC 2026), Entry for Jacob Grubenmann and Conrad Grubenmann, 25 Aug 1728.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-3LFL"
+    },
+    {
+      "id": "Q2Z6-7ZT",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F8H-24TG : Sun Mar 10 08:00:39 UTC 2024), Entry for Barbara and Jacob Grubenmann, 13 Apr 1771.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F8H-24TT"
+    },
+    {
+      "id": "W4HK-4R6",
+      "title": "Anna Gruberm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-PRHT : Fri Mar 08 05:03:25 UTC 2024), Entry for Magdale Fässler and Joss Fässler, 2 Apr 1734.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-PRH1"
+    },
+    {
+      "id": "W4HV-1G5",
+      "title": "Anna Gruebermann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZL-DM4R : Sun Mar 10 11:18:38 UTC 2024), Entry for Joss Fässler and Anna Gruebermann, 5 Dec 1732.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZL-DM4Y"
+    },
+    {
+      "id": "W4HV-LCD",
+      "title": "Anna Grubeman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-L4LC : Fri Mar 08 17:01:58 UTC 2024), Entry for Anna Grubeman and Jacob Grubeman, 12 Mar 1693.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-L4LC"
+    },
+    {
+      "id": "W447-ZZ7",
+      "title": "Anna Grubenmanni, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-TL2M : Thu Mar 07 08:32:37 UTC 2024), Entry for Johannes Zürcher and Lorenz Zürcher, 29 Dec 1736.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-TL2Z"
+    },
+    {
+      "id": "W44Q-XP8",
+      "title": "Anna Gruberm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-BS1H : Sun Mar 10 05:33:38 UTC 2024), Entry for Barbara Zürcher and Lorenz Zürcher, 22 Mar 1717.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-BS1J"
+    },
+    {
+      "id": "W44Q-8H8",
+      "title": "Anna Grubermann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-17FL : Sun Mar 10 13:49:43 UTC 2024), Entry for Anna Zürcher and Lorenz Zürcher, 2 Aug 1719.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-17F5"
+    },
+    {
+      "id": "W44Q-42D",
+      "title": "Anna Grubermänn, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZ1-YKN1 : Fri Mar 08 13:49:48 UTC 2024), Entry for Lorenz Zürcher and Anna Grubermänn, 5 May 1723.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZ1-YKJM"
+    },
+    {
+      "id": "W44Q-SX7",
+      "title": "Anna Grubermann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZP-W6CL : Sun Mar 10 17:12:43 UTC 2024), Entry for Lorenz Zürcher and Bernt Zürcher, 8 Apr 1716.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZP-W6Z7"
+    },
+    {
+      "id": "W49N-49B",
+      "title": "Anna Gruberm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-559X : Fri Mar 08 21:05:01 UTC 2024), Entry for Jacob Zürcher and Lorenz Zürcher, 9 Mar 1718.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-559J"
+    },
+    {
+      "id": "793M-3YX",
+      "title": "Anna Gruberm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-B5S8 : Sun Mar 10 13:51:51 UTC 2024), Entry for Rägula Zürcher and Lorenz Zürcher, 30 Aug 1721.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-B5SK"
+    },
+    {
+      "id": "7LXC-ZBK",
+      "title": "Jacob Brukman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66VH-MZVB : Fri Mar 08 03:03:50 UTC 2024), Entry for Hans Ulrich Brukman and Jacob Brukman, 22 Feb 1737.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66VH-MZK9"
+    },
+    {
+      "id": "7LXC-Z21",
+      "title": "Jacob Grubenman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F88-WMGQ : Sun Mar 10 09:01:26 UTC 2024), Entry for Anna Judita Signere and Jacob Grubenman, 20 Mar 1767.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F88-WMGW"
+    },
+    {
+      "id": "7LXC-ZQ4",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66J5-11ZW : Tue Sep 08 20:27:57 UTC 2026), Entry for Jacob Grubenmann and Jacob Grubenmann, 25 Apr 1723.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66J5-11ZH"
+    },
+    {
+      "id": "7LXC-CKR",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-7N12 : Tue Sep 08 20:10:33 UTC 2026), Entry for Anna Grubenmann and Jacob Grubenmann, 13 Sep 1730.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-7N1G"
+    },
+    {
+      "id": "7LXC-C3J",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-C6FC : Tue Sep 08 21:31:55 UTC 2026), Entry for Elisabeth Grubenmann and Jacob Grubenmann, 1 Jan 1729.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-C6F8"
+    },
+    {
+      "id": "7LXC-HKH",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-7N9L : Tue Sep 08 23:44:53 UTC 2026), Entry for Barbara Grubenmann and Jacob Grubenmann, 24 Feb 1726.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-7N9G"
+    },
+    {
+      "id": "7LXC-H9Z",
+      "title": "Jacob Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6F88-M973 : Sun Mar 10 12:57:48 UTC 2024), Entry for Johannes Grubenmann and Jacob Grubenmann, 17 May 1758.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6F88-M977"
+    },
+    {
+      "id": "7LXC-4JF",
+      "title": "Jacob Grubemann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66J1-MXT5 : Tue Sep 08 23:09:54 UTC 2026), Entry for Jacob Grubemann and Jacob Grubemann, 3 Jun 1722.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66J1-MXT5"
+    },
+    {
+      "id": "SC7N-VJJ",
+      "title": "Julius Billeter Records for Signer Family of Hundwil, Appenzell, Switzerland",
+      "citation": "Salt Lake City Family History Center  Microfilm #193484 & 193482"
+    },
+    {
+      "id": "32VT-2FR",
+      "title": "Johannes Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66JR-CRQ6 : Tue Sep 08 23:26:14 UTC 2026), Entry for Jacob Grubenmann and Johannes Grubenmann, 1 Dec 1728.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66JR-CRQF"
+    },
+    {
+      "id": "32VT-23Y",
+      "title": "Johannes Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66J5-5BP8 : Tue Sep 08 21:00:11 UTC 2026), Entry for Johannes Grubenmann and Johannes Grubenmann, 30 Jan 1727.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66J5-5BPF"
+    },
+    {
+      "id": "32VT-JTD",
+      "title": "Johannes Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:66J1-62B8 : Wed Sep 09 00:11:09 UTC 2026), Entry for Johannes Grubenmann and Jacob Grubenmann, 8 Mar 1726.",
+      "url": "https://familysearch.org/ark:/61903/1:1:66J1-62B8"
+    },
+    {
+      "id": "WQFK-6MV",
+      "title": "Maria Grubermän, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-K82F : Thu Mar 07 02:33:24 UTC 2024), Entry for Jacob Züch and Gebhard Züch, 10 Jun 1739.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-K82L"
+    },
+    {
+      "id": "WQFK-8Y9",
+      "title": "Maria Grubermänni, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-PXJM : Sun Mar 10 09:29:48 UTC 2024), Entry for Jacob Zürser and Gebhard Zürser, 18 Mar 1737.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-PXJC"
+    },
+    {
+      "id": "WQFK-8SZ",
+      "title": "Marÿ Grubenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-R48G : Fri Mar 08 21:17:28 UTC 2024), Entry for Johannes Zürcher and Gebarth Zürcher, 21 Jul 1734.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-R48R"
+    },
+    {
+      "id": "WQFK-ZCM",
+      "title": "Marÿa Grubenm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-LND2 : Thu Mar 07 12:09:04 UTC 2024), Entry for Jacob Zürcher and Gebhard Zürcher, 10 Sep 1725.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-LNDB"
+    },
+    {
+      "id": "WQFK-CFT",
+      "title": "Marÿa Gruberm, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-VJVC : Wed Mar 06 18:14:33 UTC 2024), Entry for Gebhard Zürcher and Gebhard Zürcher, 29 Aug 1724.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-VJVX"
+    },
+    {
+      "id": "Q6XK-V9C",
+      "title": "Maria Grubeman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-T4F9 : Fri Mar 08 20:31:46 UTC 2024), Entry for Maria Grubeman and Jacob Grubeman, 5 Nov 1699.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-T4F9"
+    },
+    {
+      "id": "Q6XK-JJ2",
+      "title": "Mareÿ Gruebenmann, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZ2-SDQJ : Sun Mar 10 22:45:17 UTC 2024), Entry for Barbara Zürcher and Gebarth Zürcher, 4 Oct 1730.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZ2-SDQK"
+    },
+    {
+      "id": "Q6XK-J93",
+      "title": "Maria Grubenmänn, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZ1-14WD : Sun Mar 10 15:20:23 UTC 2024), Entry for Maria Grubenmänn and Gebhard Zürcher, 12 Nov 1760.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZ1-14WD"
+    },
+    {
+      "id": "Q6XK-NDG",
+      "title": "Marÿa Grubermänn, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZP-CGZM : Thu Mar 07 17:10:48 UTC 2024), Entry for Gebhard Zürcher and Bernhard Zürcher, 27 Oct 1723.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZP-CGZ4"
+    },
+    {
+      "id": "7GR1-CB1",
+      "title": "Barbara Grubermänn, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-56WD : Thu Mar 07 21:56:28 UTC 2024), Entry for Johannes Fässler and Johannes Fässler, 26 Sep 1733.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-56WV"
+    },
+    {
+      "id": "3B54-83D",
+      "title": "Ulrich Grubeman, „Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996“",
+      "citation": "\"Schweiz, Katholische und Reformiert Kirchenbücher, 1418-1996\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6FZK-2FFN : Fri Mar 08 19:47:38 UTC 2024), Entry for Ulrich Grubeman and Jacob Grubeman, 25 Feb 1702.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6FZK-2FFN"
+    }
+  ]
+}
