@@ -7,7 +7,6 @@ import {
   earliestYearOfSelfFacts,
   latestYearOfSelfFacts,
   earliestYearOfChildFacts,
-  factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
 } from "../../src/utils/fact-helpers.js";
 import {
@@ -129,6 +128,32 @@ describe("earliestDayOfSelfFacts / latestDayOfSelfFacts — day-level mode", () 
       earliestDayOfSelfFacts(anchorMob, new Set(["NotARealType"])),
     ).toBeNull();
   });
+
+  it("bound picks which end of each fact's range is compared", () => {
+    // Abt 1870 spans 1869..1871; the exact 1 Jun 1870 sits inside it.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N", given: "Bound", surname: "Case" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "Abt 1870", standard_date: "Abt 1870" },
+            { id: "F2", type: "Residence", date: "1 Jun 1870", standard_date: "1 Jun 1870" },
+          ],
+        },
+      ],
+    };
+    const mob = new Mob(tree, "I1");
+    const minOfMins = earliestDayOfSelfFacts(mob, null)!;
+    const minOfMaxes = earliestDayOfSelfFacts(mob, null, null, 0, "max")!;
+    const maxOfMaxes = latestDayOfSelfFacts(mob, null)!;
+    const maxOfMins = latestDayOfSelfFacts(mob, null, null, 0, "min")!;
+    // The defaults are the widest reading; "max"/"min" pick the exact fact.
+    expect(minOfMins).toBeLessThan(minOfMaxes);
+    expect(maxOfMins).toBeLessThan(maxOfMaxes);
+    expect(minOfMaxes).toBe(maxOfMins);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -186,36 +211,8 @@ describe("earliestYearOfChildFacts — walks all children's facts", () => {
 });
 
 // ────────────────────────────────────────────────────────────────────
-// factDaysDiffEarliestLatest / factDaysDiffLatestLatest
+// factDaysDiffLatestLatest
 // ────────────────────────────────────────────────────────────────────
-
-describe("factDaysDiffEarliestLatest — used by W1 (hasEventBeforeBirth)", () => {
-  it("returns a positive number when birth-like is later than the earliest event", () => {
-    // Set 1 = any event, Set 2 = birth-like.
-    // earliest any-event ≈ 1850, latest birth-like ≈ 1851 → diff ≈ ~365 days.
-    const diff = factDaysDiffEarliestLatest(
-      anchorMob,
-      null,
-      null,
-      BIRTHLIKE_FACT_TYPES,
-      null,
-    );
-    expect(diff).not.toBeNull();
-    expect(diff!).toBeGreaterThan(0);
-  });
-
-  it("returns null when either side is empty", () => {
-    expect(
-      factDaysDiffEarliestLatest(
-        anchorMob,
-        new Set(["NotARealType"]),
-        null,
-        BIRTHLIKE_FACT_TYPES,
-        null,
-      ),
-    ).toBeNull();
-  });
-});
 
 describe("factDaysDiffLatestLatest — used by W3 (hasEventAfterDeath)", () => {
   it("returns negative or near-zero when no event is after the latest deathlike", () => {
