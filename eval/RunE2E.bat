@@ -58,6 +58,11 @@ rem the corpus is built from come from this entry point, so a flag that could be
 rem set by accident here would silently contaminate repo-wide figures. Run the
 rem 1M arm from the Makefile on a machine where that is the deliberate intent.
 rem CI rejects such a run if it is committed under eval/runlogs/e2e/.
+rem TOOL_SEARCH=0 (--no-tool-search, every tool schema loaded up front) is
+rem DELIBERATELY not mirrored either, for the same reason: an off run is not
+rem comparable to the corpus, the harness refuses it under eval/runlogs/e2e/,
+rem and CI rejects one committed there. Run it from the Makefile with
+rem RUNLOG_ROOT pointing outside the repo.
 call uv run python -m e2e.run_e2e --test %SLUG%%E2E_FLAGS%
 
 echo.

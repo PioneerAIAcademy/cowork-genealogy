@@ -4,11 +4,17 @@
     "skill": "tree-edit",
     "name": "Report record matches for a tree person using person_record_matches",
     "type": "positive",
-    "description": "User invokes tree-edit directly and asks what records FamilySearch has matched to Patrick Flynn (FamilySearch ID LZNY-BRF). Tests that tree-edit calls person_record_matches and correctly reports the accepted attachment, the two pending hints, and their confidence levels — without making any edits to the tree.",
-    "tags": ["tree-edit", "person-record-matches", "record-hints", "no-op-edit", "direct-arm"]
+    "description": "User invokes tree-edit directly and asks what records FamilySearch has matched to Patrick Flynn (FamilySearch ID LZNY-BRF), accepted and pending. Tests that tree-edit calls person_record_matches and correctly reports the accepted attachment, the two pending matches, and their confidence levels — without making any edits to the tree. Reviewing the pending matches (hints) is search-hints' since issue #2029; this test covers the listing tree-edit kept.",
+    "tags": [
+      "tree-edit",
+      "person-record-matches",
+      "record-hints",
+      "no-op-edit",
+      "direct-arm"
+    ]
   },
   "input": {
-    "delegation": "Check what records are attached to this person — Patrick Flynn, FamilySearch ID LZNY-BRF. What hints does FamilySearch have for this person? Tell me which matches are accepted and which are pending.\n\nprojectPath: <workspace>",
+    "delegation": "Check what records are attached to this person — Patrick Flynn, FamilySearch ID LZNY-BRF. Tell me which matches are accepted and which are pending.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -18,7 +24,7 @@
     "Should call person_record_matches with the `id` parameter set to LZNY-BRF (not a made-up ID). The tool's schema declares `id` and nothing else — a call passing `personId` or `person_id` is wrong, and no fixture covers it any more",
     "Should clearly distinguish the accepted match (1850 census, confidence 5) from the two pending hints (1860 census confidence 3, Pennsylvania Death Certificates confidence 2)",
     "Should NOT make any edits to tree.gedcomx.json or research.json — this is a read-only query, not an edit request",
-    "Should recommend the user review the two pending hints, especially the higher-confidence 1860 census match"
+    "Listing is the whole job: should NOT recommend accepting or rejecting the pending matches. Pointing out that they are hints the researcher can have reviewed is fine; adjudicating them is search-hints' job"
   ],
   "execution": {
     "max_wall_clock_seconds": 120

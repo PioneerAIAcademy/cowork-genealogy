@@ -466,6 +466,17 @@ describe("the guard script's decisions", () => {
   });
 
   it.each([
+    ["Write", "/project/external-collections.json"],
+    ["Edit", "C:\\Users\\Dell\\project\\external-collections.json"],
+  ])("denies %s on %s and names the tool that writes it", (tool, file_path) => {
+    const out = runGuard({ tool_name: tool, tool_input: { file_path } });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(
+      "external-collections.json is written only by external_links_search",
+    );
+  });
+
+  it.each([
     ["Read", { file_path: "/project/research.json" }],
     ["mcp__genealogy__research_append", { file_path: "/project/research.json" }],
     ["Bash", { command: "cat /project/research.json" }],
@@ -688,6 +699,57 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("person_evidence");
+  });
+
+  // init-project (issue #2122) is laned, not routed: nothing is routed to it,
+  // and the lane is what keeps it out of `questions`, which it wrote on
+  // `ut_init_project_q4v` and `_vqx` (v10) while it was still a skill on the
+  // main thread, where no lane applies.
+  const IP_AGENT = "genealogy-research:init-project";
+
+  it("denies the init-project agent a research question", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "questions", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type: IP_AGENT,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("researcher_profile");
+  });
+
+  it("denies the init-project agent the project status, which proof-conclusion owns", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "project", op: "update", fields: { status: "completed" } },
+      agent_id: "agent-1",
+      agent_type: IP_AGENT,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
+  });
+
+  it.each([
+    ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
+    ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
+    ["known_holdings", { section: "known_holdings", op: "append", entry: {} }],
+    ["sources (a memory's transcription)", { section: "sources", op: "append", entry: {} }],
+    ["all three in one batch", {
+      ops: [
+        { section: "researcher_profile", op: "update", fields: {} },
+        { section: "known_holdings", op: "append", entry: {} },
+        { section: "sources", op: "append", entry: {} },
+      ],
+    }],
+  ])("permits the init-project agent its own lane — %s", (_label, tool_input) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input,
+      agent_id: "agent-1",
+      agent_type: IP_AGENT,
+    });
+    expect(out).toEqual({});
   });
 
   it("permits the owning agent's real shape — summary + resolve in ONE batch", () => {

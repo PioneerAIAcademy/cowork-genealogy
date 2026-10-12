@@ -1,0 +1,36 @@
+{
+  "tool": "place_search",
+  "description": "Barsebäck parish, Sweden. Captured live 2026-10-02 for the elena-pre-register-birth scenario (issue #2251, the death-record route to a pre-register birth). Response verbatim.",
+  "args": {
+    "placeName": "~Barseb"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Barsebäck, Skåne, Sweden",
+        "type": "Lutheran Parish",
+        "dateRange": "+1997/",
+        "latitude": 55.7715,
+        "longitude": 12.9591,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Barseb%C3%A4ck&focusedId=11968336",
+        "wikipediaUrl": "https://sv.wikipedia.org/wiki/Barseb%C3%A4cks_kyrka"
+      },
+      {
+        "standardPlace": "Barsebäck, Skåne, Sweden",
+        "type": "Populated Place",
+        "latitude": 55.7718,
+        "longitude": 12.9567,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Barseb%C3%A4ck&focusedId=1550753"
+      },
+      {
+        "standardPlace": "Barsebäck, Harjager, Malmöhus, Sweden",
+        "type": "Lutheran Parish",
+        "dateRange": "+1648/+1996",
+        "latitude": 55.7715,
+        "longitude": 12.9591,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Barseb%C3%A4ck&focusedId=3461935",
+        "wikipediaUrl": "https://sv.wikipedia.org/wiki/Barseb%C3%A4cks_kyrka"
+      }
+    ]
+  }
+}

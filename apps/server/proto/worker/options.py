@@ -244,13 +244,18 @@ def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
 
 
 # D16 (PR #2659): the shared Streamable HTTP tool server, the compose `tools` service. Its
-# contract is the two headers the entrypoint reads, both per request and never process
-# state: `Authorization: Bearer <patron token>` becomes the request's principal, and
+# contract is four headers the entrypoint reads, all per request and never process state:
+# `Authorization: Bearer <patron token>` becomes the request's principal, and
 # `X-Genealogy-Project-Id` becomes the request's PgS3ProjectStore. Missing, the project
-# tools answer an instruction naming the header; malformed, the request is a 400. No turn
-# header. The CLI opens the MCP session once per process, once per turn. TOOL_SERVER_URL
-# has no default (U11): a guessed host would be handed the patron's bearer.
+# tools answer an instruction naming the header; malformed, the request is a 400.
+# U6: `X-Genealogy-Turn-Id` and `X-Genealogy-Claim-Epoch` are the attempt's claim fence --
+# both or neither, else a 400 -- and the store refuses to commit a write once a newer claim
+# of that turn holds it. They are fixed per attempt (one mcp.json per attempt), which is
+# exactly an epoch's scope. The CLI opens the MCP session once per process, once per turn.
+# TOOL_SERVER_URL has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
+TURN_ID_HEADER = "X-Genealogy-Turn-Id"
+CLAIM_EPOCH_HEADER = "X-Genealogy-Claim-Epoch"
 # The http entry's per-server `timeout` (ms). Without it CLI 2.1.220 aborts every
 # non-GET HTTP MCP request at 60 s, where the harness's stdio server is cut only by its
 # 1,800,000 ms idle limit (the engine sends no progress notifications, so idle is the
@@ -268,14 +273,25 @@ def tool_server_url(worker_env: Mapping[str, str]) -> str:
     return url
 
 
-def tool_server_headers(*, project_id: str, bearer: str) -> dict[str, str]:
-    """``Authorization: Bearer <grant token>`` and ``X-Genealogy-Project-Id``. An empty
-    bearer raises ValueError: the server reads it as an empty principal and answers every
-    FamilySearch call with the reconnect instruction, a sign-in problem the patron cannot
-    fix by signing in."""
+def tool_server_headers(*, project_id: str, bearer: str, turn_id: str, claim_epoch: int) -> dict[str, str]:
+    """``Authorization: Bearer <grant token>``, ``X-Genealogy-Project-Id`` and the claim
+    fence (U6). An empty bearer raises ValueError: the server reads it as an empty principal
+    and answers every FamilySearch call with the reconnect instruction, a sign-in problem
+    the patron cannot fix by signing in. An empty turn id or an epoch below 1 raises too:
+    every claim mints an epoch of at least 1, and the server refuses a fence it cannot
+    match."""
     if not bearer:
         raise ValueError("refusing to build the tool server entry with an empty bearer")
-    return {"Authorization": f"Bearer {bearer}", PROJECT_ID_HEADER: project_id}
+    if not turn_id:
+        raise ValueError("refusing to build the tool server entry with an empty turn id")
+    if int(claim_epoch) < 1:
+        raise ValueError(f"refusing to build the tool server entry with claim epoch {claim_epoch}")
+    return {
+        "Authorization": f"Bearer {bearer}",
+        PROJECT_ID_HEADER: project_id,
+        TURN_ID_HEADER: turn_id,
+        CLAIM_EPOCH_HEADER: str(int(claim_epoch)),
+    }
 
 
 def tool_server_entry(
@@ -283,15 +299,18 @@ def tool_server_entry(
     *,
     project_id: str,
     bearer: str,
+    turn_id: str,
+    claim_epoch: int,
 ) -> dict[str, Any]:
     """The ``genealogy`` MCP server entry: the shared Streamable HTTP tool server, one
-    process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``
-    and the turn's project id as ``X-Genealogy-Project-Id``. Its per-user config is the
-    ``tools`` service's own environment, not the request's."""
+    process for every turn, at ``TOOL_SERVER_URL`` with the bearer as ``Authorization``,
+    the turn's project id as ``X-Genealogy-Project-Id`` and the attempt's claim fence.
+    Its per-user config is the ``tools`` service's own environment, not the request's."""
     return {
         "type": "http",
         "url": tool_server_url(worker_env),
-        "headers": tool_server_headers(project_id=project_id, bearer=bearer),
+        "headers": tool_server_headers(project_id=project_id, bearer=bearer, turn_id=turn_id,
+                                       claim_epoch=claim_epoch),
         "timeout": MCP_HTTP_TIMEOUT_MS,
     }
 
@@ -710,6 +729,8 @@ def build_worker_options(
     resume: str | None = None,
     session_id: str | None = None,
     bearer: str,
+    turn_id: str,
+    claim_epoch: int,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
     stop_hook: Callable[..., Any] | None = None,
@@ -723,7 +744,10 @@ def build_worker_options(
 
     ``turn_user`` (U3) is the slot user the CLI runs as; ``turn_home``, a directory that user
     owns, is the CLI's ``HOME``, ``TMPDIR`` and ``CLAUDE_CODE_TMPDIR`` (the CLI's own temp dir,
-    else a ``/tmp/claude-<uid>`` every later patron on the slot would share)."""
+    else a ``/tmp/claude-<uid>`` every later patron on the slot would share).
+
+    ``turn_id`` and ``claim_epoch`` (U6) are the attempt's claim fence, sent to the tool
+    server on every request."""
     from claude_agent_sdk import ClaudeAgentOptions, HookMatcher
 
     if resume and session_id:
@@ -775,7 +799,8 @@ def build_worker_options(
         mcp_servers=write_mcp_config(
             config_dir,
             {
-                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer)
+                "genealogy": tool_server_entry(env_in, project_id=project_id, bearer=bearer,
+                                               turn_id=turn_id, claim_epoch=claim_epoch)
             },
         ),
         disallowed_tools=list(DISALLOWED_TOOLS),

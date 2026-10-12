@@ -137,15 +137,21 @@ def test_direct_workspace_stages_agents_and_no_skills(tmp_path):
 
 
 def test_routed_workspace_still_stages_both(tmp_path):
-    """The accept direction: the existing arm is untouched."""
+    """The accept direction: the existing arm is untouched.
+
+    Both halves are asserted. `research-exhaustiveness` lost its skill
+    directory (issue #2738) so it can only check the agent side; `research`
+    still ships one, and without a skill assertion nothing here would notice
+    the routed arm staging no skills at all.
+    """
     build_workspace(
         scenario_name=None,
         scenarios_dir=tmp_path / "nonexistent",
         skills_dir=REPO_ROOT / "packages" / "engine" / "plugin" / "skills",
         target_dir=tmp_path,
     )
-    assert (tmp_path / ".claude" / "skills" / "research-exhaustiveness").is_dir()
     assert (tmp_path / ".claude" / "agents" / "research-exhaustiveness.md").is_file()
+    assert (tmp_path / ".claude" / "skills" / "research").is_dir()
 
 
 # --- recording the spawn --------------------------------------------------

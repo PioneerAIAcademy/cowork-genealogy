@@ -16,6 +16,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 
 import { personReadTool } from "../../src/tools/person-read.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import type { GedcomXSourceReference } from "../../src/types/gedcomx.js";
 import type { FSTreeResponse } from "../../src/types/person-read.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
@@ -1773,7 +1774,7 @@ describe("personReadTool — person-level source refs (#2696)", () => {
 //
 // A relative arrives from the tree read with source REFS but no descriptions: the ref
 // is a full URL to a description the body does not contain, so
-// `keepResolvablePersonSourceRefs` drops it. Half 3 fetches those descriptions and
+// `keepResolvableSourceRefs` drops it. Half 3 fetches those descriptions and
 // keeps the refs.
 //
 // WHY THESE TESTS EXIST AS A SEPARATE BLOCK. `mockOk` is `mockResolvedValueOnce`, so
@@ -2278,5 +2279,342 @@ describe("the subject is persons[0] (#1689 Half 3)", () => {
     } as never);
     const out = await personReadTool({ personId: "K2QT-J56" }, LOCAL);
     expect(out.persons[0].id).toBe("GDZW-NZZ");
+  });
+});
+
+// ─── Issue #3229 — FamilySearch's relationship-level sources on the edges ──
+//
+// A relationship's refs arrive by `descriptionId`, beside a URL to a description the body
+// does not hold, and only in a read of a person the relationship names
+// (`dev/probe-relationship-sources.ts`). Three things have to happen for one to reach the
+// response, and each has a test that is red without it: the ref survives conversion, the
+// parents' reads supply the refs the subject's read holds none of, and the description is
+// read by id so the ref resolves instead of being pruned.
+//
+// Routing is by URL. The description reads run beside the parent reads and the relatives'
+// read, so call order is not a contract, and `mockOk`'s queue would pin one.
+describe("personReadTool — relationship sources on the edges (#3229)", () => {
+  const SUBJECT = "SUBJ-001";
+  const DAD = "DAD-001";
+  const MUM = "MUM-002";
+  const SIB = "SIB-100";
+  const DESCRIPTIONS = "https://api.familysearch.org/platform/sources/descriptions";
+
+  /** A ref as FamilySearch sends it: the full URL AND the bare id (live shape). */
+  const ref = (id: string): GedcomXSourceReference => ({
+    description: `${DESCRIPTIONS}/${id}`,
+    descriptionId: id,
+  });
+
+  // LIVING on purpose, as in the relatives' tests: the memories phase runs only for a
+  // non-living subject, and none of it is under test here.
+  const person = (id: string) => ({
+    id,
+    living: true,
+    names: [{ nameForms: [{ fullText: `Person ${id}` }] }],
+    facts: [],
+  });
+
+  const couple = (id: string, p1: string, p2: string, sources?: GedcomXSourceReference[]) => ({
+    id,
+    type: "http://gedcomx.org/Couple",
+    person1: { resourceId: p1 },
+    person2: { resourceId: p2 },
+    ...(sources ? { sources } : {}),
+  });
+
+  const capr = (
+    id: string,
+    child: string,
+    parent1: string,
+    parent2?: string,
+    sources?: GedcomXSourceReference[],
+  ) => ({
+    id,
+    child: { resourceId: child },
+    parent1: { resourceId: parent1 },
+    ...(parent2 ? { parent2: { resourceId: parent2 } } : {}),
+    ...(sources ? { sources } : {}),
+  });
+
+  /** What `GET /platform/sources/descriptions/{id}` answers: one description, live shape. */
+  const description = (id: string) => ({
+    sourceDescriptions: [
+      {
+        id,
+        about: `https://example.org/${id}`,
+        citations: [{ value: `Citation of ${id}` }],
+        resourceType: "DEFAULT",
+        titles: [{ value: `Title of ${id}` }],
+      },
+    ],
+  });
+
+  const reply = (status: number, body: unknown = {}) =>
+    Promise.resolve({
+      ok: status >= 200 && status < 300,
+      status,
+      json: () => Promise.resolve(body),
+      headers: new Headers(),
+    });
+
+  /** Person reads answer from `persons` by id; a description read as `descriptions` says
+   *  (`"ok"`, a status, or `"reject"` for a transport failure); anything else is a 404. */
+  function route(
+    persons: Record<string, FSTreeResponse>,
+    descriptions: Record<string, "ok" | "reject" | number> = {},
+  ) {
+    mockFetch.mockImplementation((url: string) => {
+      const u = String(url);
+      const d = u.match(/\/platform\/sources\/descriptions\/([^/?]+)/);
+      if (d) {
+        const id = decodeURIComponent(d[1]);
+        const how = descriptions[id] ?? 404;
+        if (how === "reject") return Promise.reject(new TypeError("fetch failed"));
+        return how === "ok" ? reply(200, description(id)) : reply(how);
+      }
+      const p = u.match(/\/platform\/tree\/persons\/([^/?]+)\?/);
+      if (p && persons[p[1]]) return reply(200, persons[p[1]]);
+      return reply(404);
+    });
+  }
+
+  const requested = () => mockFetch.mock.calls.map((c) => String(c[0]));
+  const descriptionReads = () => requested().filter((u) => u.includes("/platform/sources/descriptions/"));
+  const edgesTo = (out: Awaited<ReturnType<typeof personReadTool>>, child: string) =>
+    out.relationships.filter((r) => r.type === "ParentChild" && r.child === child);
+
+  it("keeps a Couple's ref, and reads its description by id into sources[]", async () => {
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person("SPOUSE-1")],
+          relationships: [couple("COUPLE-1", SUBJECT, "SPOUSE-1", [ref("SRC-M")])],
+          childAndParentsRelationships: [],
+        },
+      },
+      { "SRC-M": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    expect(out.relationships.find((r) => r.type === "Couple")!.sources).toEqual([{ ref: "SRC-M" }]);
+    const src = out.sources.find((s) => s.id === "SRC-M");
+    expect(src).toEqual({
+      id: "SRC-M",
+      title: "Title of SRC-M",
+      citation: "Citation of SRC-M",
+      url: "https://example.org/SRC-M",
+    });
+    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-M`]);
+    // A read that lost nothing says nothing, and adds no top-level key.
+    expect(Object.keys(out).sort()).toEqual(["persons", "relationships", "sources"]);
+  });
+
+  it("puts a child-and-parents relationship's ref on BOTH parent edges", async () => {
+    // One relationship is two edges (`synthesizeParentChild`), and the sources belong to the
+    // pair: the subject's edge and the co-parent's both carry them.
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person("CO-1"), person("KID-1")],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-1", "KID-1", "CO-1", SUBJECT, [ref("SRC-C")])],
+        },
+      },
+      { "SRC-C": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    const edges = edgesTo(out, "KID-1");
+    expect(edges.map((e) => e.parent).sort()).toEqual(["CO-1", SUBJECT]);
+    for (const e of edges) expect(e.sources).toEqual([{ ref: "SRC-C" }]);
+    // Two edges, one description, one read.
+    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-C`]);
+  });
+
+  it("fills the parents' Couple's ref from a parent's read, with no per-relationship read", async () => {
+    // The subject's read holds this Couple (it names two persons in the body) WITHOUT its
+    // refs; FamilySearch sends them only in a read of a person the Couple names. The
+    // sibling fan-out already reads each parent, and never merged a Couple from it.
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person(DAD), person(MUM)],
+          relationships: [couple("COUPLE-P", DAD, MUM)],
+          childAndParentsRelationships: [capr("CAPR-S", SUBJECT, DAD, MUM)],
+        },
+        [DAD]: {
+          persons: [person(DAD), person(MUM)],
+          relationships: [couple("COUPLE-P", DAD, MUM, [ref("SRC-P")])],
+          childAndParentsRelationships: [],
+        },
+        [MUM]: { persons: [person(MUM)], relationships: [], childAndParentsRelationships: [] },
+      },
+      { "SRC-P": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    expect(out.relationships.find((r) => r.type === "Couple")!.sources).toEqual([{ ref: "SRC-P" }]);
+    expect(out.sources.map((s) => s.id)).toEqual(["SRC-P"]);
+    // The refs were already in a read the tool makes, so nothing reads a relationship.
+    expect(requested().some((u) => /couple-relationships|child-and-parents-relationships/.test(u))).toBe(false);
+  });
+
+  it("fills a sibling's child-and-parents refs from the parents' reads, onto both edges", async () => {
+    // The real-data path. The subject's read holds the sibling's relationship by id,
+    // WITHOUT refs (29 of 29 over four parents' reads), so the fan-out's prune drops the
+    // parent's copy as already emitted, refs and all. Only the fill carries them over.
+    const sibCapr = capr("CAPR-SIB", SIB, DAD, MUM);
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person(DAD), person(MUM)],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-S", SUBJECT, DAD, MUM), sibCapr],
+        },
+        [DAD]: {
+          persons: [person(DAD), person(SIB)],
+          relationships: [],
+          childAndParentsRelationships: [{ ...sibCapr, sources: [ref("SRC-SIB")] }],
+        },
+        [MUM]: {
+          persons: [person(MUM), person(SIB)],
+          relationships: [],
+          childAndParentsRelationships: [{ ...sibCapr, sources: [ref("SRC-SIB")] }],
+        },
+      },
+      { "SRC-SIB": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    const edges = edgesTo(out, SIB);
+    expect(edges.map((e) => e.parent).sort()).toEqual([DAD, MUM]);
+    for (const e of edges) expect(e.sources).toEqual([{ ref: "SRC-SIB" }]);
+    // Read from both parents, fetched once.
+    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-SIB`]);
+  });
+
+  it("carries the refs of a sibling relationship only a parent's read holds", async () => {
+    // The other arm of "from a parent's read": a half-sibling's relationship the subject's
+    // read does not name arrives whole through the fan-out, refs included.
+    const OTHER = "OTHER-WIFE";
+    const HALF = "HALF-200";
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person(DAD)],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-S", SUBJECT, DAD)],
+        },
+        [DAD]: {
+          persons: [person(DAD), person(OTHER), person(HALF)],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-HALF", HALF, DAD, OTHER, [ref("SRC-H")])],
+        },
+      },
+      { "SRC-H": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    const edges = edgesTo(out, HALF);
+    expect(edges.map((e) => e.parent)).toEqual([DAD]);
+    expect(edges[0].sources).toEqual([{ ref: "SRC-H" }]);
+  });
+
+  it("does not double the refs the subject's own read already holds", async () => {
+    // Fill, not merge: a relationship that has refs keeps exactly those. The parent's copy
+    // of a relationship naming the subject carries the same ones.
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person(DAD), person(MUM)],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-S", SUBJECT, DAD, MUM, [ref("SRC-OWN")])],
+        },
+        [DAD]: {
+          persons: [person(DAD)],
+          relationships: [],
+          childAndParentsRelationships: [capr("CAPR-S", SUBJECT, DAD, MUM, [ref("SRC-OWN"), ref("SRC-OTHER")])],
+        },
+        [MUM]: { persons: [person(MUM)], relationships: [], childAndParentsRelationships: [] },
+      },
+      { "SRC-OWN": "ok", "SRC-OTHER": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    for (const e of edgesTo(out, SUBJECT)) expect(e.sources).toEqual([{ ref: "SRC-OWN" }]);
+    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-OWN`]);
+  });
+
+  it("prunes a ref whose description cannot be read, keeps the edge and its other refs, and counts the shortfall", async () => {
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person("SPOUSE-1"), person("SPOUSE-2")],
+          relationships: [
+            couple("COUPLE-1", SUBJECT, "SPOUSE-1", [ref("SRC-OK"), ref("SRC-GONE")]),
+            couple("COUPLE-2", SUBJECT, "SPOUSE-2", [ref("SRC-DOWN")]),
+          ],
+          childAndParentsRelationships: [],
+        },
+      },
+      { "SRC-OK": "ok", "SRC-GONE": 404, "SRC-DOWN": "reject" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    const [first, second] = out.relationships;
+    // The edge keeps the ref that resolved, and loses only the one that could not.
+    expect(first.sources).toEqual([{ ref: "SRC-OK" }]);
+    // An edge left with none has no key at all, as a person does.
+    expect("sources" in second).toBe(false);
+    expect(out.sources.map((s) => s.id)).toEqual(["SRC-OK"]);
+    // Visible, not silent: a count in the response, the ids on stderr.
+    expect(out.notes).toEqual([expect.stringMatching(/^2 of 3 source descriptions .*could not be read/)]);
+    const log = stderr.mock.calls.map((c) => String(c[0])).join("");
+    expect(log).toContain("SRC-GONE");
+    expect(log).toContain("SRC-DOWN");
+    expect(log).not.toContain("SRC-OK");
+  });
+
+  it("does not read a description the body already holds, and reads one cited twice once", async () => {
+    route(
+      {
+        [SUBJECT]: {
+          persons: [person(SUBJECT), person("SPOUSE-1"), person("KID-1")],
+          relationships: [couple("COUPLE-1", SUBJECT, "SPOUSE-1", [ref("OWN-1"), ref("SHARED-2")])],
+          childAndParentsRelationships: [capr("CAPR-1", "KID-1", SUBJECT, undefined, [ref("SHARED-2")])],
+          sourceDescriptions: [{ id: "OWN-1", titles: [{ value: "Held in the body" }] }],
+        },
+      },
+      { "SHARED-2": "ok" },
+    );
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SHARED-2`]);
+    expect(out.relationships.find((r) => r.type === "Couple")!.sources).toEqual([
+      { ref: "OWN-1" },
+      { ref: "SHARED-2" },
+    ]);
+    expect(edgesTo(out, "KID-1")[0].sources).toEqual([{ ref: "SHARED-2" }]);
+    expect(out.sources.map((s) => s.id).sort()).toEqual(["OWN-1", "SHARED-2"]);
+  });
+
+  it("reads nothing for a ref that can never resolve: FamilySearch metadata, or no id at all", async () => {
+    route({
+      [SUBJECT]: {
+        persons: [person(SUBJECT), person("SPOUSE-1")],
+        relationships: [
+          couple("COUPLE-1", SUBJECT, "SPOUSE-1", [ref("SD_RELATIONSHIP_1"), {}]),
+        ],
+        childAndParentsRelationships: [],
+      },
+    });
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
+
+    expect(descriptionReads()).toEqual([]);
+    // Pruned like any dangling ref, and not reported: there was nothing to read.
+    expect("sources" in out.relationships[0]).toBe(false);
+    expect(out.notes).toBeUndefined();
   });
 });

@@ -39,6 +39,7 @@ import json
 import os
 import shutil
 import sys
+import urllib.request
 from collections.abc import AsyncIterator
 from pathlib import Path
 
@@ -151,7 +152,7 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # from eval/ or from the control-plane package (see the module docstring).
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
 # here: the skills run their stdlib-only scripts through it, and the only way to
@@ -443,7 +444,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "To CREATE a new project use project_create, which writes both files "
                     "together; to add to an existing one use research_append, "
                     "research_log_append, tree_edit or tree_correct. These validate "
-                    "before persisting. Direct file writes never validate."
+                    "before persisting. Direct file writes never validate. "
+                    "external-collections.json is written only by external_links_search given a projectPath."
                 ),
             },
         }
@@ -529,6 +531,33 @@ def _current_base_url() -> str | None:
     if isinstance(url, str) and url:
         return url
     return os.environ.get("ANTHROPIC_BASE_URL")
+
+
+_PROXY_SUFFIX = "/api/anthropic-proxy"
+
+
+def _turn_cost_url() -> str | None:
+    """The control plane's per-turn cost endpoint, or None when there is no proxy
+    (local dev), since the proxy token is what authenticates the report."""
+    base = _current_base_url()
+    if not base or not base.endswith(_PROXY_SUFFIX):
+        return None
+    return base[: -len(_PROXY_SUFFIX)] + "/api/turn-cost"
+
+
+def _post_turn_cost(url: str, api_key: str, payload: dict) -> None:
+    """Blocking; run off the event loop. A failed report is logged, never raised."""
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={"content-type": "application/json", "x-api-key": api_key},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except Exception as exc:
+        _log(f"turn cost report failed: {exc!r}")
 
 
 def _sdk_env(api_key: str | None = None) -> dict[str, str]:
@@ -1479,6 +1508,16 @@ class RealAgent:
                     d_cost, d_in, d_out = self._usage_delta(
                         getattr(message, "total_cost_usd", None), in_tok, out_tok
                     )
+                    url = _turn_cost_url()
+                    if url and d_cost is not None:
+                        asyncio.get_running_loop().run_in_executor(
+                            None, _post_turn_cost, url, current_api_key(), {
+                                "cost_usd": d_cost,
+                                "model": os.environ.get("MODEL") or None,
+                                "input_tokens": d_in,
+                                "output_tokens": d_out,
+                            },
+                        )
                     yield _event(
                         "usage",
                         cost_usd=d_cost,

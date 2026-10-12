@@ -690,6 +690,26 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
+  // `person_record_matches` for the pending matches, `research_query` to find a
+  // hint the project already extracted, `record_read` per hint,
+  // `image_transcribe` to read the image before recommending against a hint (it
+  // calls the tool itself; an agent cannot spawn image-reader), `person_read`
+  // and `Read` for the tree person. Record mode writes one log entry per decided
+  // hint through `research_log_append`. No `research_append`, so no hook lane.
+  "search-hints.md": {
+    tools: [
+      "Read",
+      "image_transcribe",
+      "person_read",
+      "person_record_matches",
+      "record_read",
+      "research_log_append",
+      "research_query",
+    ],
+    denies: [],
+  },
+
   "search-images.md": {
     tools: [
       "Read",
@@ -832,6 +852,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   "translation.md": {
     tools: ["Read"],
+    denies: [],
+  },
+
+  // The folded init-project skill (issue #2122) holds the tools that skill
+  // declared less `place_search` (project_create standardizes places), plus
+  // `Read`, which it had as the main thread: a large `person_read` result is
+  // persisted to a file the agent pages through. Its `research_append` is laned
+  // to `project` (which it owns), `researcher_profile`, `known_holdings` and
+  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // so no spawn tool.
+  "init-project.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "person_search",
+      "project_create",
+      "research_append",
+    ],
     denies: [],
   },
 };

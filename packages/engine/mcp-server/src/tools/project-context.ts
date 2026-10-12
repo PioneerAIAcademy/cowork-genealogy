@@ -10,6 +10,7 @@
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
+import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
@@ -66,6 +67,39 @@ export interface ProjectContextAwaitingUser {
   performed: string | null;
 }
 
+export interface ProjectContextCollectionCounts {
+  total: number;
+  byRecordType: Record<string, number>;
+}
+
+/** Counts from the stored lists; `undefined` when there is nothing to report. Never
+ *  throws: a missing or unreadable file must not fail the whole projection. */
+async function externalCollectionCounts(
+  projectPath: string,
+): Promise<Record<string, ProjectContextCollectionCounts> | undefined> {
+  let doc;
+  try {
+    doc = await readExternalCollections(projectPath);
+  } catch {
+    return undefined;
+  }
+  if (!doc) return undefined;
+  const out: Record<string, ProjectContextCollectionCounts> = {};
+  for (const place of Object.keys(doc.places).sort()) {
+    const rows = Array.isArray(doc.places[place]?.rows) ? doc.places[place].rows : [];
+    const byRecordType: Record<string, number> = {};
+    for (const row of rows) {
+      for (const t of Array.isArray(row?.record_types) ? row.record_types : []) {
+        byRecordType[t] = (byRecordType[t] ?? 0) + 1;
+      }
+    }
+    const sortedTypes: Record<string, number> = {};
+    for (const t of Object.keys(byRecordType).sort()) sortedTypes[t] = byRecordType[t];
+    out[place] = { total: rows.length, byRecordType: sortedTypes };
+  }
+  return out;
+}
+
 export type ProjectContextResult =
   | {
       ok: true;
@@ -82,6 +116,11 @@ export type ProjectContextResult =
       localities: ProjectContextLocality[];
       /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
       awaitingUser: ProjectContextAwaitingUser[];
+      /** Per place stored in external-collections.json: how many curated collections,
+       *  and how many per FamilySearch record type. Counts only, never rows — read the
+       *  rows with research_query({section: "external_collections"}). Absent when no
+       *  list is stored or the file cannot be read. */
+      externalCollections?: Record<string, ProjectContextCollectionCounts>;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -284,9 +323,10 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = questionStates(research);
+  const questionStatuses = questionStates(research, tree);
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
+  const externalCollections = await externalCollectionCounts(input.projectPath);
 
   return {
     ok: true,
@@ -299,6 +339,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     sources,
     localities,
     awaitingUser,
+    ...(externalCollections ? { externalCollections } : {}),
   };
 }
 
@@ -369,7 +410,8 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds, storedStatus}] — per question, how far it " +
+    "[{id, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
+    "competingParentSets}] — per question, how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +
     "verbatim (null when absent or not a string). state is DERIVED from the documents " +
@@ -382,7 +424,8 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. " +
+    "entry with the same urlGenerated. externalCollections counts stored curated " +
+    "collections per place by record type (rows: research_query external_collections). " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +

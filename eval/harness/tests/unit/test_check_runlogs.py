@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
+
 import pytest
 from datetime import date, timedelta
 import re
@@ -399,6 +401,20 @@ def _stage_runlog_dir(tmp_path, monkeypatch, skill="present-skill", candidates=(
         (d / name).write_text("{}", encoding="utf-8")
     monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
     return d
+
+
+def _write_released(tmp_path, name, *, version, timestamp, skill="present-skill"):
+    """Write a released `v{N}.json` carrying the envelope `timestamp` that
+    `release.ts` preserves ("`timestamp` is kept", release.ts:5). Rule 7 reads it
+    to reconstruct the candidate filename the promotion consumed."""
+    import json as _json
+    d = tmp_path / "runlogs-unit" / skill
+    d.mkdir(parents=True, exist_ok=True)
+    (d / name).write_text(
+        _json.dumps({"version": version, "timestamp": timestamp, "released": True}),
+        encoding="utf-8",
+    )
+    return d / name
 
 
 def _five_newer_candidates() -> list[str]:
@@ -972,6 +988,403 @@ def test_rule7_promotion_passes(monkeypatch, tmp_path):
     assert check_runlogs.rule7_deletions(deleted, {}) == 1
 
 
+def test_rule7_same_pr_run_and_release_passes(monkeypatch, tmp_path):
+    """A PR that WRITES a candidate and RELEASES it in the same branch must not
+    have the harness's own prune flagged.
+
+    The documented flow (`docs/plan/eval-runlog-versioning.md` C3) is: the junior
+    runs and grades, the senior clicks Release and pushes to the SAME branch. The
+    write prunes the oldest candidate and prints "commit the deletions"; the
+    release then renames `v{N}_<ts>.json` to `v{N}.json`.
+
+    That promoted candidate is in neither set rule 7 unions: it is not a candidate
+    at head (it is a release now) and it was never deleted (it was renamed inside
+    the PR, so the net three-dot diff shows only the add). The union loses a
+    member, and at keep=5 `prunable_candidates` of 5 names returns nothing, so the
+    harness's own prune reads as a hand-deletion. Measured on PRs #3235 and #3286:
+    eight restores in one day, which is why `record-extraction` and `timeline`
+    carry 6 committed candidates where the cap is 5.
+    """
+    _make_present_skill(tmp_path, monkeypatch)
+    # Head: the four surviving older candidates, plus the release just promoted.
+    # The promoted candidate's own file is GONE from head under that name.
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    # The harness pruned the oldest when it wrote the v9 candidate.
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.ann.json",
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 0
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    ["not-a-timestamp", "../../../etc/passwd", "2026-08-01_00-00-00.json"],
+)
+def test_rule7_a_malformed_timestamp_widens_nothing(monkeypatch, tmp_path, timestamp):
+    """A malformed `timestamp` must not widen the prunable set.
+
+    Note the mechanism, because the name is easy to misread: the bad value IS
+    synthesized into a name and the union DOES receive it. What saves this is
+    downstream, in `prunable_candidates`, which drops any name it cannot parse as
+    a candidate. Nothing here rejects it. Only a WELL-FORMED timestamp can move
+    the arithmetic, which is why the version-keyed skip, not name validation, is
+    the guard that matters."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp=timestamp)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_promotion_synthesis_survives_a_corrupt_release(monkeypatch, tmp_path):
+    """An unreadable or non-JSON release must not raise: the guard falls back to
+    today's arithmetic rather than crashing the whole check."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    d = _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    (d / "v9.json").write_text("{not json", encoding="utf-8")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_over_deletion_still_blocks_in_a_release_pr(monkeypatch, tmp_path):
+    """The other direction: counting the promoted candidate must not wave through
+    a SECOND deletion that the prune rule does not reach.
+
+    With the promoted candidate counted the reconstructed dir holds 6, so exactly
+    one name is prunable. A hand-deletion of a second, newer candidate alongside
+    it must still flag, or the fix would have bought a free slot per release."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(3, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",   # the real prune
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",   # one too many
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_a_drifted_release_timestamp_buys_no_prunable_slot(monkeypatch, tmp_path):
+    """A release whose envelope `timestamp` does not match the candidate filename
+    it replaced must NOT widen the prunable set.
+
+    This is the regression a blind review found in the first draft of the fix.
+    That draft deduped on the synthesized string, so a one-second drift produced a
+    PHANTOM sixth member: the union gained a slot and a hand-deletion of a
+    within-keep candidate was accepted, which the old arithmetic correctly blocked.
+    The guard is version-keyed now: a release whose version already appears among
+    the deletions synthesizes nothing, because its rename is the deletion.
+
+    `release.ts:5` promises the timestamp is kept, but nothing tests that promise,
+    so this must not depend on it."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    # envelope drifts one second from the candidate filename below
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-01")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v9_2026-08-01_00-00-00.json",  # the real rename
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",  # a hand-deletion
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_a_release_whose_version_was_deleted_gets_no_synthesis(
+    monkeypatch, tmp_path
+):
+    """The version-keyed skip from the other side: a release whose version is
+    among the deletions gets no synthesis at all, however its envelope reads.
+
+    This does NOT show that a fabricated release is caught in general. One whose
+    version is absent from the deletions is not covered by this skip and does buy
+    a slot at the keep boundary; see the PR body's residual-hole note."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2099-01-01_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v9_2026-08-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_a_second_run_after_the_release_buys_no_free_deletion(
+    monkeypatch, tmp_path
+):
+    """run -> release -> run again must not authorise a second deletion.
+
+    The blocking hole a blind review found in the first fix. The second write
+    prunes NOTHING, because the release left the directory at 4; but crediting the
+    promoted candidate on top of the newly written one describes a directory that
+    never existed, makes two deletions prunable where the harness pruned once, and
+    waves through a hand-deletion of committed grading.
+
+    The precondition is ordinary, not adversarial: edit the skill, run, senior
+    releases, review comments arrive, edit again, run again -- and rule 2 FORCES
+    that second run once the body changes."""
+    _make_present_skill(tmp_path, monkeypatch)
+    head = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(3, 6)]
+    _stage_runlog_dir(
+        tmp_path, monkeypatch,
+        candidates=[*head, "v10_2026-08-02_00-00-00.json", "v9.json"],
+    )
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",  # the one real prune
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",  # a hand-deletion
+    }
+    added = {"present-skill": ["v9.json", "v10_2026-08-02_00-00-00.json"]}
+    assert check_runlogs.rule7_deletions(deleted, added) == 1
+
+
+def test_rule7_synthesis_ignores_a_release_whose_envelope_is_not_an_object(
+    monkeypatch, tmp_path
+):
+    """A JSON array or scalar is valid JSON and has no envelope. The guard must
+    skip it rather than raise: `rule7_deletions` is unit-tested directly, so its
+    docstring is the contract even where `main()` would crash earlier."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    d = _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    (d / "v9.json").write_text("[1, 2, 3]", encoding="utf-8")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_synthesis_is_released_only_not_any_added_candidate(
+    monkeypatch, tmp_path
+):
+    """Only an added RELEASE may synthesize. If an added candidate could too, the
+    widening would be one slot per added candidate rather than one per PR, which
+    rule 1 does not bound.
+
+    The added name is a SCRATCH log, deliberately. An added candidate returns at
+    the bail-out above and never reaches the released-only filter, so a candidate
+    here would make this test pass for the wrong reason -- which it did until
+    clack391 caught it on #3306.
+
+    Stated plainly, because the fixed test still does not prove what its name
+    says: a scratch log is excluded by its None VERSION, not by its kind. The
+    `kind == "released()"` check is unreachable-by-difference given the bail-out,
+    and the code comment there says so. This pins the OUTCOME -- a non-release
+    added name synthesizes nothing -- which is the part that matters."""
+    names = check_runlogs._promoted_candidate_names(
+        tmp_path, ["scratch_2026-08-01_00-00-00.json"], set()
+    )
+    assert names == set()
+
+
+@pytest.mark.parametrize("timestamp", [None, 123, {"a": 1}, []])
+def test_rule7_a_non_string_timestamp_does_not_raise(monkeypatch, tmp_path, timestamp):
+    """The `isinstance(ts, str)` guard had no test: deleting it left all tests
+    green, while a `null` timestamp would raise AttributeError and crash the whole
+    check. A released log is author-written, so a non-string here is reachable."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp=timestamp)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_two_releases_in_one_pr_synthesize_nothing(monkeypatch, tmp_path):
+    """run -> release -> run -> release must not credit two emptied slots.
+
+    Measured before this guard: 0 errors here against 2 on main, so rule 7's own
+    answer was wrong even though `rule1_max_one_released` fails the PR anyway.
+    Rule 7 should be right without leaning on another rule's verdict."""
+    _make_present_skill(tmp_path, monkeypatch)
+    head = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(3, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*head, "v9.json", "v10.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    _write_released(tmp_path, "v10.json", version=10, timestamp="2026-08-02_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",
+    }
+    added = {"present-skill": ["v9.json", "v10.json"]}
+    assert check_runlogs.rule7_deletions(deleted, added) == 2
+
+
+def test_rule7_version_skip_and_mains_version_exemption_compose(monkeypatch, tmp_path):
+    """The path where synthesis is SKIPPED and main's version exemption carries
+    the deletion: a same-PR release whose pruned candidate shares its version.
+    Neither mechanism alone is obviously sufficient, so pin that they compose."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {"eval/runlogs/unit/present-skill/v9_2026-08-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 0
+
+
+def test_rule7_a_release_with_no_matching_deletion_buys_one_slot(monkeypatch, tmp_path):
+    """KNOWN, BOUNDED HOLE — characterized, not fixed.
+
+    A released log whose version is absent from the deletions is indistinguishable
+    from a real promotion by filename alone, so it synthesizes a phantom candidate
+    and widens the union by one. At the keep boundary that authorises exactly ONE
+    deletion (the oldest) which main blocks. Bound: one, and only the oldest.
+
+    Not closed by requiring the synthesized name to exist in branch history: a
+    junior who runs and releases in a single commit never committed the candidate,
+    so that check reinstates the very false positive this PR removes. Rules 2 and 3
+    independently scrutinize a hand-added release (active snapshot, full
+    annotation).
+
+    If this starts failing, the hole was closed or widened — either way, read the
+    diff rather than updating the expectation."""
+    _make_present_skill(tmp_path, monkeypatch)
+    head = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*head, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    added = {"present-skill": ["v9.json"]}
+    assert check_runlogs.rule7_deletions(deleted, added) == 0
+
+    # the bound: a SECOND hand-deletion is not bought by the same phantom
+    deleted.add("eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json")
+    assert check_runlogs.rule7_deletions(deleted, added) == 1
+
+
+@pytest.mark.parametrize("timestamp", ["  2026-08-01_00-00-00", "2026-08-01_00-00-00  "])
+def test_rule7_a_padded_timestamp_buys_no_slot(monkeypatch, tmp_path, timestamp):
+    """Padding inside a real timestamp is corruption, and the name is NOT repaired.
+
+    Trimming it would synthesize a filename the release flow never wrote. Left
+    alone it does not parse as a candidate, `prunable_candidates` drops it, and the
+    deletion blocks -- fail closed. Deleting the `.strip()` this pins left all 140
+    tests green (clack391, #3306)."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp=timestamp)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_an_unreadable_release_buys_no_slot(monkeypatch, tmp_path):
+    """The OSError arm of the `except (OSError, ValueError)`. Narrowing it to
+    ValueError alone left all 140 tests green: a released log the PR added but
+    which is absent from the tree raises OSError, and an uncaught one would crash
+    the whole check rather than decline the synthesis (clack391, #3306)."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    # staged WITHOUT v9.json, so reading it raises rather than parsing
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=survivors)
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_reads_head_candidates_from_the_prs_own_tree(monkeypatch, tmp_path):
+    """CI checks out the MERGE commit, so the working tree carries candidates only
+    MAIN wrote. They pad the union, and a WITHIN-keep hand-deletion the PR's own tree
+    flags is accepted off that scan -- measured by clack391 on #3306 as main 1 error
+    against 0 here.
+
+    The PR's own tree holds three candidates and releases one; main contributed two
+    more. Off the merge tree the union reaches 7, so the two oldest are prunable and
+    the hand-deletion of `07-03` lands inside them. Off the PR's own three it reaches
+    5, nothing is prunable, and the deletion is what it is."""
+    _make_present_skill(tmp_path, monkeypatch)
+    mine_at_head = ["v1_2026-07-02_00-00-00.json",
+                    "v1_2026-07-04_00-00-00.json",
+                    "v1_2026-07-05_00-00-00.json"]
+    only_main = ["v1_2026-09-01_00-00-00.json", "v1_2026-09-02_00-00-00.json"]
+    _stage_runlog_dir(
+        tmp_path, monkeypatch, candidates=[*mine_at_head, *only_main, "v9.json"]
+    )
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    # a candidate in the middle of the PR's own set, not its oldest
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-03_00-00-00.json"}
+    added = {"present-skill": ["v9.json"]}
+
+    assert check_runlogs.rule7_deletions(deleted, added) == 0, "the merge tree's view"
+    assert (
+        check_runlogs.rule7_deletions(
+            deleted, added, head_listing={"present-skill": set(mine_at_head)}
+        )
+        == 1
+    ), "the PR's own view"
+
+
+def test_rule7_a_legitimate_release_still_passes_under_the_head_listing(
+    monkeypatch, tmp_path
+):
+    """The other direction, which breaking the repo cannot test: the listing must not
+    turn a REAL same-PR run-and-release prune into a failure."""
+    _make_present_skill(tmp_path, monkeypatch)
+    mine = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*mine, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-00")
+    deleted = {"eval/runlogs/unit/present-skill/v1_2026-07-01_00-00-00.json"}
+    assert (
+        check_runlogs.rule7_deletions(
+            deleted, {"present-skill": ["v9.json"]}, head_listing={"present-skill": set(mine)}
+        )
+        == 0
+    )
+
+
+def test_head_candidates_by_skill_is_none_without_a_head_sha(monkeypatch):
+    """No HEAD_SHA (every local run and every test) falls back to the directory
+    scan, which is correct there because the working tree IS the PR's tree.
+
+    Asserts git is never INVOKED, not merely that the result is None: deleting the
+    guard makes `git ls-tree` run against a bogus rev, which fails, which the
+    fail-open arm turns back into None -- so a return-value assertion passes with
+    the guard removed and proves nothing."""
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    called: list[object] = []
+
+    def _never(*a, **k):
+        called.append(a)
+        raise AssertionError("git must not run without a HEAD_SHA")
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", _never)
+    assert check_runlogs.head_candidates_by_skill() is None
+    assert called == []
+
+
+def test_head_candidates_by_skill_falls_back_when_git_fails(monkeypatch):
+    """Fail OPEN. A listing we cannot read is not a reason to crash the check and
+    leave every later rule ungraded."""
+    monkeypatch.setenv("HEAD_SHA", "deadbeef")
+
+    def _boom(*a, **k):
+        raise subprocess.CalledProcessError(128, "git")
+
+    monkeypatch.setattr(check_runlogs.subprocess, "check_output", _boom)
+    assert check_runlogs.head_candidates_by_skill() is None
+
+
+def test_head_candidates_by_skill_keeps_only_candidates(monkeypatch):
+    """Released logs, annotations and scratch logs are not candidates and must not
+    enter the union through this door."""
+    monkeypatch.setenv("HEAD_SHA", "deadbeef")
+    monkeypatch.setattr(
+        check_runlogs.subprocess,
+        "check_output",
+        lambda *a, **k: (
+            "eval/runlogs/unit/alpha/v1_2026-07-01_00-00-00.json\n"
+            "eval/runlogs/unit/alpha/v1_2026-07-01_00-00-00.ann.json\n"
+            "eval/runlogs/unit/alpha/v2.json\n"
+            "eval/runlogs/unit/alpha/scratch_2026-07-01_00-00-00.json\n"
+            "eval/runlogs/unit/beta/v3_2026-08-01_00-00-00.json\n"
+        ),
+    )
+    assert check_runlogs.head_candidates_by_skill() == {
+        "alpha": {"v1_2026-07-01_00-00-00.json"},
+        "beta": {"v3_2026-08-01_00-00-00.json"},
+    }
+
+
 def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):
     """A released `v{N}.json` is canonical and never prunable — deleting it (or
     its annotation) must block."""
@@ -1348,29 +1761,6 @@ def test_rule6_a_test_with_no_runs_blocks(capsys):
     assert "has no runs" in capsys.readouterr().out
 
 
-@pytest.mark.parametrize(
-    "runs",
-    [
-        [{}],
-        [{"outcome": None}],
-        [{"outcome": "FAIL"}],
-        [{"outcome": "failed"}],
-        [{"outcome": "pass"}, {"outcome": "skipped"}],
-    ],
-    ids=["missing", "null", "uppercase", "misspelled", "one-bad-of-two"],
-)
-def test_rule6_blocks_an_outcome_outside_the_schema_enum(runs, capsys):
-    entry = {"test_id": "ut_s_1", "expected_outcome": "pass", "runs": runs}
-    assert check_runlogs.rule6_outcomes("s", {"tests": [entry]}, "v1.json") == 1
-    assert "outside the schema's" in capsys.readouterr().out
-
-
-def test_rule6_accepts_every_value_the_schema_allows(capsys):
-    """The other direction — the guard must not reject a legitimate enum member."""
-    for outcome in ("pass", "partial"):
-        assert _rule6([_t(f"ut_s_{outcome}", [outcome])]) == 0
-
-
 def test_rule6_an_empty_tests_array_is_allowed():
     """`run_tests.py` exits 0 on an empty row set, so blocking here would be a
     second definition. Rules 1 and 3 own "a PR must carry a real run log"."""
@@ -1581,6 +1971,304 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
     assert "rule 6: graded 0 added run log(s)" in out
     assert "ut_ip_scratch" not in out
     assert rc == 0
+
+
+# --- Rules 2, 2b and 3 grade the run log the PR adds (#3272) ---------------------
+#
+# `latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate, so
+# when main released a log newer than the PR's own candidate, rules 2 and 3 graded main's
+# release and the PR's own run was checked by nothing. These build that shape with a
+# snapshot that names a file really on disk: `_clean_log`'s empty snapshot can never be
+# stale, so a test on it would never reach rule 2's comparison.
+
+_TRACKED_REL = "packages/engine/plugin/skills/init-project/SKILL.md"
+_RUNLOGS_REL = "eval/runlogs/unit/init-project"
+_STALE_JUDGE = "0" * 64
+
+
+def _setup_graded_skill(tmp_path, monkeypatch):
+    """`_setup_versioned_skill` plus a tmp repo that really holds the one file the run
+    logs snapshot, so rule 2's `diff_snapshot_vs_disk` runs for real. The judge prompt
+    is a tmp file too, so rule 2b's comparison never depends on the repo's."""
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    repo = tmp_path / "repo"
+    (repo / _TRACKED_REL).parent.mkdir(parents=True)
+    (repo / _TRACKED_REL).write_text("disk body\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    judge = tmp_path / "judge-prompt.md"
+    judge.write_text("judge prompt\n", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "JUDGE_PROMPT_PATH", judge)
+    monkeypatch.delenv("COSMETIC_SKIP_LABELS", raising=False)
+    return skill_dir
+
+
+def _put_runlog(skill_dir, name, *, active, annotated=True, **extra):
+    """Write a clean run log whose snapshot of the tracked file matches disk (`active`)
+    or predates it, with an empty `.ann.json` unless `annotated` is False. The log has
+    no review dimensions, so an empty annotation is a complete one."""
+    body = b"disk body\n" if active else b"older body\n"
+    log = {**_clean_log(), "snapshot": {_TRACKED_REL: normalize(_TRACKED_REL, body)}, **extra}
+    (skill_dir / name).write_text(json.dumps(log), encoding="utf-8")
+    if annotated:
+        _write_ann(skill_dir, name, [])
+
+
+def _pr_adds(monkeypatch, *names):
+    _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" for name in names])
+
+
+def _only_line(out, needle):
+    """The one output line holding `needle`. A message and its detail lines are
+    separate lines, so asserting on the returned line pins that a file name and a
+    wording belong to the SAME message."""
+    lines = [line for line in out.splitlines() if needle in line]
+    assert len(lines) == 1, f"expected one line holding {needle!r}, got {lines}"
+    return lines[0]
+
+
+def _violations(out):
+    """The rule-violation count `main()` prints, so a test can say WHICH rules failed
+    by how many, not just that something did."""
+    m = re.search(r"^(\d+) rule violation\(s\)\.", out, re.M)
+    return int(m.group(1)) if m else 0
+
+
+def test_rules_2_and_2b_grade_the_candidate_the_pr_adds_not_a_newer_release(
+    tmp_path, monkeypatch, capsys
+):
+    """A PR whose candidate predates its merge with main, while main's newer released log
+    matches the merged tree. Rule 2 must name the candidate and call it stale. Graded
+    through `latest_full_skill_runlog` it reads the release, which is active, and passes."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True)
+    added = "v2_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, added, active=False, judge_prompt_hash=_STALE_JUDGE)
+    _pr_adds(monkeypatch, added)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1  # the candidate is annotated, so rule 2 alone fails
+    not_active = _only_line(out, "NOT active")
+    assert f"`{added}`" in not_active and "the run log this PR adds" in not_active
+    stale_judge = _only_line(out, "older judge prompt")
+    assert f"`{added}`" in stale_judge and "the run log this PR adds" in stale_judge
+    assert "v3.json" not in out
+
+
+def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
+    tmp_path, monkeypatch, capsys
+):
+    """The same shape with the candidate active but unannotated. Main's release is
+    annotated, so graded through `latest_full_skill_runlog` rule 3 finds a complete
+    annotation and passes."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True)
+    added = "v2_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, added, active=True, annotated=False)
+    _pr_adds(monkeypatch, added)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1  # the candidate is active, so rule 3 alone fails
+    missing = _only_line(out, "has no annotation file")
+    assert f"`{added}`" in missing and "the run log this PR adds" in missing
+
+
+def test_a_pr_that_adds_two_candidates_is_graded_on_the_newer_one(
+    tmp_path, monkeypatch, capsys
+):
+    """Rule 1 does not bound candidates, so a PR can ship several iterations, and the
+    newest is the run it ships. The older one here is stale and unannotated and must not
+    block (rule 6 still grades both). Versions 9 and 10 on purpose: as strings "v9_"
+    sorts after "v10_", so a sort on the name would pick the stale one. The stale judge
+    hash makes rule 2b's warning name the log that was graded, so a gate that graded
+    nothing cannot pass for this."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    older, newer = "v9_2026-10-08_09-00-00.json", "v10_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, older, active=False, annotated=False, judge_prompt_hash=_STALE_JUDGE)
+    _put_runlog(skill_dir, newer, active=True, judge_prompt_hash=_STALE_JUDGE)
+    _pr_adds(monkeypatch, older, newer)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert f"`{newer}`" in _only_line(out, "older judge prompt")
+    assert "rule 6: graded 2 added run log(s)" in out
+
+
+def test_a_pr_that_adds_no_run_log_is_still_graded_on_the_latest_on_disk(
+    tmp_path, monkeypatch, capsys
+):
+    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, and resolve
+    exactly as before: a released log beats every candidate whatever its version, so the
+    stale `v3.json` is graded and the newer active candidate beside it is not."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False)
+    candidate = "v4_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, candidate, active=True)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1
+    not_active = _only_line(out, "NOT active")
+    assert "`v3.json`" in not_active
+    assert "the latest full-skill run log on disk" in not_active
+    assert candidate not in out
+
+
+def test_a_pr_that_adds_no_run_log_passes_on_an_active_latest_on_disk(
+    tmp_path, monkeypatch, capsys
+):
+    """The green half of the test above. The stale judge hash makes rule 2b's warning
+    name the log that was graded, so a gate that graded nothing cannot pass for this."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True, judge_prompt_hash=_STALE_JUDGE)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0
+    stale_judge = _only_line(out, "older judge prompt")
+    assert "`v3.json`" in stale_judge
+    assert "the latest full-skill run log on disk" in stale_judge
+
+
+def test_a_released_log_the_pr_adds_outranks_the_candidates_it_adds_beside_it(
+    tmp_path, monkeypatch, capsys
+):
+    """The candidate -> release rename arrives as an add, next to the candidates that led
+    to it, and the release is what the PR ships. Both candidates are active and annotated,
+    so only grading the stale release can fail this PR: rc alone proves it was graded."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    candidates = ["v3_2026-10-07_09-00-00.json", "v3_2026-10-07_10-00-00.json"]
+    _put_runlog(skill_dir, "v4.json", active=False)
+    for name in candidates:
+        _put_runlog(skill_dir, name, active=True)
+    _pr_adds(monkeypatch, "v4.json", *candidates)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1
+    not_active = _only_line(out, "NOT active")
+    assert "`v4.json`" in not_active and "the run log this PR adds" in not_active
+
+
+def test_an_unreadable_added_log_is_still_reported_by_rule_6(tmp_path, monkeypatch, capsys):
+    """When the log the PR adds cannot be parsed, rules 2, 2b and 3 have nothing to grade
+    and skip the skill. Rule 6's loop must still run: it is the only thing that reports
+    the file, so a `continue` on that path would pass a PR whose run log is a merge
+    conflict. The release beside it is active and annotated, so grading it instead
+    would pass too."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=True)
+    added = "v2_2026-10-08_10-00-00.json"
+    (skill_dir / added).write_text(
+        "<<<<<<< HEAD\n{}\n=======\n{}\n>>>>>>> main\n", encoding="utf-8"
+    )
+    _write_ann(skill_dir, added, [])
+    _pr_adds(monkeypatch, added)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert _violations(out) == 1
+    assert f"`{added}`" in _only_line(out, "is not readable JSON")
+
+
+def test_every_message_that_names_the_graded_log_says_why_it_was_graded(
+    tmp_path, monkeypatch, capsys
+):
+    """The `main()` tests above reach rule 2's error, rule 2b's warning and rule 3's
+    missing-file error. These are the other messages that name the graded log or its
+    annotation: rule 2's cosmetic-skip warning; rule 3's unreadable and malformed
+    annotation errors, its no-reviewable-dimensions warning, its two untrusted
+    `review_sample` warnings, and its comment and completeness errors."""
+    why = "the run log this PR adds"
+    monkeypatch.setenv("COSMETIC_SKIP_LABELS", "eval-cosmetic-skip:demo")
+    assert check_runlogs.rule2_active("demo", _INACTIVE_LOG, "v2.json", graded=why) == 0
+    waived = _only_line(capsys.readouterr().out, "bypasses rule 2")
+    assert "`v2.json`" in waived and why in waived
+
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    sampled = ["ut_x_000", "ut_x_001"]
+    log = _multi_test_log(20, review_sample={"tests": sampled, "cursor": sampled, "seed": 0})
+    # ut_x_000 reviewed but uncommented; ut_x_001 not reviewed at all.
+    fn = _write_ann(
+        skill_dir,
+        "v2_2026-10-08_10-00-00.json",
+        _corrections_for(["ut_x_000"], comment=None, score=2),
+    )
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir, graded=why) == 1
+    out = capsys.readouterr().out
+    for needle in ("with no comment", "is incomplete"):
+        line = _only_line(out, needle)
+        assert "`v2_2026-10-08_10-00-00.ann.json`" in line and why in line
+
+    unreadable = "v3_2026-10-08_10-00-00.json"
+    (skill_dir / "v3_2026-10-08_10-00-00.ann.json").write_text("{not json", encoding="utf-8")
+    assert check_runlogs.rule3_completeness(
+        "init-project", log, unreadable, skill_dir, graded=why
+    ) == 1
+    line = _only_line(capsys.readouterr().out, "is not valid JSON")
+    assert "`v3_2026-10-08_10-00-00.ann.json`" in line and why in line
+
+    fn = _write_ann(skill_dir, "v4_2026-10-08_10-00-00.json", [{"test_id": "ut_x_000"}])
+    assert check_runlogs.rule3_completeness("init-project", log, fn, skill_dir, graded=why) == 1
+    line = _only_line(capsys.readouterr().out, "missing required keys")
+    assert "`v4_2026-10-08_10-00-00.ann.json`" in line and why in line
+
+    aborted = {"test_id": "ut_x_aborted", "outcome_summary": {"aggregated_dimensions": []}}
+    with_aborted = _multi_test_log(2, review_sample={"tests": ["ut_x_000"], "cursor": [], "seed": 0})
+    with_aborted["tests"].append(aborted)
+    fn = _write_ann(skill_dir, "v5_2026-10-08_10-00-00.json", _corrections_for(["ut_x_000"]))
+    check_runlogs.rule3_completeness("init-project", with_aborted, fn, skill_dir, graded=why)
+    line = _only_line(capsys.readouterr().out, "no reviewable dimensions")
+    assert "`v5_2026-10-08_10-00-00.json`" in line and why in line
+
+    empty_sample = _multi_test_log(2, review_sample={"tests": [], "cursor": [], "seed": 0})
+    fn = _write_ann(skill_dir, "v6_2026-10-08_10-00-00.json", [])
+    check_runlogs.rule3_completeness("init-project", empty_sample, fn, skill_dir, graded=why)
+    line = _only_line(capsys.readouterr().out, "is empty")
+    assert "`v6_2026-10-08_10-00-00.json`" in line and why in line
+
+    ungraded_sample = _multi_test_log(
+        2, review_sample={"tests": ["ut_x_aborted"], "cursor": [], "seed": 0}
+    )
+    ungraded_sample["tests"].append(aborted)
+    fn = _write_ann(skill_dir, "v7_2026-10-08_10-00-00.json", [])
+    check_runlogs.rule3_completeness("init-project", ungraded_sample, fn, skill_dir, graded=why)
+    line = _only_line(capsys.readouterr().out, "would require nothing")
+    assert "`v7_2026-10-08_10-00-00.json`" in line and why in line
+
+
+def test_pr_added_runlog_picks_the_run_the_pr_ships(tmp_path):
+    """The helper on its own: released beats any candidate, then the newest candidate by
+    (version, timestamp) with the version compared as a number, and a name with no file
+    on disk is dropped rather than returned for the caller to fail on."""
+    skill_dir = tmp_path / "init-project"
+    skill_dir.mkdir()
+    candidates = [
+        "v9_2026-10-08_09-00-00.json",
+        "v10_2026-10-01_09-00-00.json",
+        "v10_2026-10-02_09-00-00.json",
+    ]
+    for name in ("v3.json", "v4.json", *candidates):
+        (skill_dir / name).write_text("{}", encoding="utf-8")
+    ghost = "v11_2026-10-09_09-00-00.json"  # added per the diff, absent from disk
+    pick = check_runlogs.pr_added_runlog
+
+    assert pick(skill_dir, ["v3.json", *candidates]) == "v3.json"
+    assert pick(skill_dir, ["v3.json", "v4.json"]) == "v4.json"
+    assert pick(skill_dir, candidates) == "v10_2026-10-02_09-00-00.json"
+    assert pick(skill_dir, [*candidates, ghost]) == "v10_2026-10-02_09-00-00.json"
+    assert pick(skill_dir, [ghost]) is None
+    assert pick(skill_dir, []) is None
 
 
 # --- rule 6: shapes that used to fall through as green ---------------------------
@@ -1865,3 +2553,139 @@ def test_rule8_pinned_in_main(tmp_path, monkeypatch, capsys):
     assert rc == 1
     captured = capsys.readouterr().out
     assert "rule 8:" in captured
+
+
+# --- Rule 2b (judge-prompt hash) — issue #2479 PR 1 ------------------------
+#
+# Rule 2b was warn-only. It now BLOCKS on a judge-prompt-only PR, with a
+# warn-only fallback for a run log that is already skill-side stale (rule 2
+# blocks for its own reason there; a regrade cannot satisfy an inactive log).
+
+_ACTIVE_SNAPSHOT_LOG = {
+    "snapshot": {},
+    "judge_prompt_hash": "a" * 64,
+}
+_STALE_SNAPSHOT_LOG = {
+    "snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"},
+    "judge_prompt_hash": "a" * 64,
+}
+
+
+def _stub_current_prompt_hash(monkeypatch, hex_digest: str) -> None:
+    monkeypatch.setattr(
+        check_runlogs,
+        "hash_file",
+        lambda _label, _path: hex_digest,
+    )
+
+
+def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):
+    """Hash mismatch + skill-side-active log + judge_prompt_edited → BLOCK."""
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_prompt(
+        "demo", _ACTIVE_SNAPSHOT_LOG, "v1.json", judge_prompt_edited=True
+    )
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "`make judge-regrade`" in out
+    assert "older judge prompt" in out
+
+
+def test_rule2b_warns_when_log_is_already_skill_side_stale(monkeypatch, capsys):
+    """2026-10-06 ruling: rule 2 blocks for its own reason; rule 2b warns.
+
+    Proves the downgrade holds even when the PR is editing the judge prompt
+    (`judge_prompt_edited=True`) — a regrade cannot satisfy a log that owes a
+    `make eval-skill` run.
+    """
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_prompt(
+        "demo", _STALE_SNAPSHOT_LOG, "v1.json", judge_prompt_edited=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "cannot satisfy" in out
+
+
+def test_rule2b_warns_when_mismatch_without_prompt_edit(monkeypatch, capsys):
+    """Hash mismatch on a PR that did NOT edit the judge prompt is warn-only.
+
+    A mixed-era corpus is expected across judge-prompt cadences, so the cheap
+    `make judge-regrade` satisfaction path only applies when the PR itself is
+    the thing moving the hash. Default `judge_prompt_edited=False` is this case.
+    """
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_prompt(
+        "demo", _ACTIVE_SNAPSHOT_LOG, "v1.json"
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "interpret the corrected mean cautiously" in out
+
+
+def test_rule2b_passes_silently_when_hash_matches(monkeypatch, capsys):
+    _stub_current_prompt_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_prompt(
+        "demo", _ACTIVE_SNAPSHOT_LOG, "v1.json", judge_prompt_edited=True
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule2b_passes_when_log_has_no_stored_hash(monkeypatch, capsys):
+    """Older run logs predate the field; the rule is a no-op on them."""
+    _stub_current_prompt_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_prompt(
+        "demo", {"snapshot": {}}, "v1.json", judge_prompt_edited=True
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_path):
+    """Judge-prompt arm populates judge_prompt_touched_skills from RUNLOGS_DIR.
+
+    Verifies the second direction of the lint too: a diff that does NOT touch
+    `eval/harness/judge/prompt.md` leaves `judge_prompt_touched_skills` empty
+    and rule 2b never fires, even if the committed logs have stale hashes.
+    """
+    # Seed a tmp RUNLOGS_DIR with one skill whose log has a mismatched hash.
+    skill_dir = tmp_path / "demo"
+    skill_dir.mkdir()
+    log = {
+        "schema_version": 3,
+        "skill": "demo",
+        "snapshot": {},
+        "judge_prompt_hash": "a" * 64,
+        "tests": [],
+    }
+    (skill_dir / "v1_2026-10-09_00-00-00.json").write_text(
+        json.dumps(log), encoding="utf-8"
+    )
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_diff_changes", lambda: [])
+    monkeypatch.setattr(check_runlogs, "git_diff_deleted_paths", lambda: [])
+
+    # No prompt in diff → judge_prompt_touched_skills empty → no rule 2b fire.
+    _stub_current_prompt_hash(monkeypatch, "b" * 64)
+    monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: [])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "`make judge-regrade`" not in out
+    assert rc == 0
+
+    # Now simulate a prompt-only PR → rule 2b fires and blocks.
+    monkeypatch.setattr(
+        check_runlogs,
+        "git_diff_touched_paths",
+        lambda: ["eval/harness/judge/prompt.md"],
+    )
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert "`make judge-regrade`" in out
+    assert rc == 1
