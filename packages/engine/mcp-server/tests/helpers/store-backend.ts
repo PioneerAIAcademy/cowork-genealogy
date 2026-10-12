@@ -1,5 +1,5 @@
 import { FsProjectStore } from "../../src/store/fs-project-store.js";
-import { setProjectStore } from "../../src/store/project-store.js";
+import { getProjectStore, setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 
 /** True under `PROTO_STORE=pg` (U15): the process store is PgRoutingStore. */
 export const ON_PG = process.env.PROTO_STORE === "pg";
@@ -17,4 +17,14 @@ export const ON_PG = process.env.PROTO_STORE === "pg";
 export function fileStoreOnly(reason: string): void {
   if (!reason) throw new Error("fileStoreOnly needs a reason");
   if (ON_PG) setProjectStore(new FsProjectStore());
+}
+
+/**
+ * The store a fault-injecting double should wrap: the routing store under
+ * `PROTO_STORE=pg`, so the injected fault sits in front of PgS3ProjectStore,
+ * and a fresh file store otherwise. Call it inside the test, where the setup
+ * file has installed the router.
+ */
+export function backingStore(): ProjectStore {
+  return ON_PG ? getProjectStore() : new FsProjectStore();
 }

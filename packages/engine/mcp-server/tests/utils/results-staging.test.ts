@@ -14,7 +14,7 @@ import {
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
+import { backingStore } from "../helpers/store-backend.js";
 import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { STAGING_CAPABLE_TOOLS, STAGING_SEARCH_TOOLS } from "../../src/utils/results-staging.js";
 
@@ -54,7 +54,7 @@ describe("results-staging", () => {
     // file store resolves it; every reader must hand the store the relative
     // spelling, or an absolute handle the guard accepted reads as "never staged".
     const keyedStore = (): ProjectStore => {
-      const inner = new FsProjectStore();
+      const inner = backingStore();
       const refuseAbsolute = (ref: string) => {
         if (ref.startsWith("/")) throw new Error(`absolute ref '${ref}' reached the store`);
       };

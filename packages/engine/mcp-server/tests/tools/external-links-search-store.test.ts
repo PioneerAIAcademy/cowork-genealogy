@@ -5,10 +5,9 @@ import { join } from "path";
 import { externalLinksSearchTool } from "../../src/tools/external-links-search.js";
 import { collectionKey, dedupeCollections } from "../../src/utils/external-collections-store.js";
 import { researchQuery } from "../../src/tools/research-query.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { projectContext } from "../../src/tools/project-context.js";
-import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
+import { ON_PG, backingStore, fileStoreOnly } from "../helpers/store-backend.js";
 
 // The stored list (external-collections.json) through the real file store, on a
 // real temp project. Only the network and the place resolver are mocked.
@@ -270,7 +269,7 @@ describe("a stored list that cannot be read", () => {
     await externalLinksSearchTool({ standardPlace: PA, projectPath: project });
     const before = await readFile(join(project, "external-collections.json"), "utf-8");
 
-    const real = new FsProjectStore();
+    const real = backingStore();
     const failingRead = Object.assign(Object.create(Object.getPrototypeOf(real)), real, {
       readText: async () => {
         throw new Error("store unavailable");

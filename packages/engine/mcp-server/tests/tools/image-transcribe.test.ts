@@ -32,13 +32,12 @@ import {
 } from "../../src/utils/image-store.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import {
   runWithProjectStore,
   type ProjectStore,
 } from "../../src/store/project-store.js";
 import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
-import { fileStoreOnly } from "../helpers/store-backend.js";
+import { backingStore, fileStoreOnly } from "../helpers/store-backend.js";
 
 /** The tool's return is `ImageTranscribeResult | NoProjectResult` (#2048); every
  *  test here expects a transcription, so the no-project arm is a failure. */
@@ -749,7 +748,7 @@ describe("imageTranscribeTool — hard image cap (#3010, spec §5.8)", () => {
   });
 
   it("a failed log write never fails the read, and the in-process count still refuses", async () => {
-    const real = new FsProjectStore();
+    const real = backingStore();
     const failingAppend = Object.assign(Object.create(Object.getPrototypeOf(real)), real, {
       appendText: async () => {
         throw new Error("S3 down");
