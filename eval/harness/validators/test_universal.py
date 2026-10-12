@@ -1809,9 +1809,9 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
     dropped pending issue #1837.
 
     A relationship this flags must carry a `notes[]` entry using inference/
-    uncertainty language (see _UNCERTAINTY_MARKERS) -- the same shape as
-    test_pre1880_census_structure_marked_inferred's marker check, applied to
-    the tree side rather than the search log.
+    uncertainty language (see _UNCERTAINTY_MARKERS) -- the shape the search-log
+    pre-1880 census check had before it moved into research_log_append (issue
+    #3054), applied to the tree side rather than the search log.
     """
     before_tree = before_state.get("tree_gedcomx_json") or before_state.get(
         "tree_gedcomx"
