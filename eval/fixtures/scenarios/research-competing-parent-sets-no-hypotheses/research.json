@@ -1,0 +1,477 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of James Tarrant (b. 1792 South Carolina, d. Gallatin County, Illinois; FamilySearch GHLT-TFG), resolving the two competing parent sets in the FamilySearch tree: Samuel Tarrant & Elizabeth (MYBY-58M/GQJT-5K2) vs. James Tarrant Sr. & Jane Burch (LJKZ-ZX1/LC1Y-DZJ).",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-06",
+    "updated": "2026-10-06",
+    "title": "James Tarrant's parents"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "none"
+    ],
+    "narration_guidance": "One-line preamble per skill invocation explaining what you're about to do. Assume basic GPS vocabulary. Define unusual or specialized terminology inline."
+  },
+  "known_holdings": [],
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who was the father of James Tarrant (b. 1792 Greenville County, South Carolina; resided Gallatin County, Illinois 1840–1870; husband of Jane Bruce)?",
+      "rationale": "The FamilySearch tree attaches James to two competing, unsourced parent sets — Samuel Tarrant (Warren Co., KY) and James Tarrant Sr. (d. Jefferson Co., AL). Every downstream ancestral line depends on choosing correctly. Census, military, probate, and tax records for Warren Co., KY and Greenville Co., SC are available to test both candidates.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "created": "2026-10-06",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-06",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Warren County, Kentucky",
+          "date_range": "1810",
+          "repository": "FamilySearch",
+          "rationale": "The 1810 index names only 'Saml Tarrant' (log_001, XH29-646). The original page (image group 004185989_009) gives age-bracket tallies; a male 16–25 fits James (b. 1792). Also tests the tree's 1802 death date for Samuel.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 2,
+          "record_type": "military",
+          "jurisdiction": "United States (War of 1812 pension index; bounty-land warrants)",
+          "date_range": "1812-1880",
+          "repository": "FamilySearch",
+          "rationale": "Search 'United States, War of 1812 Index to Pension Application Files' (coll. 1834325) for James or widow Jane Tarrant. Pension/bounty files often give birthplace, marriage date/place and residences, which can place James in Samuel's household or county.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 3,
+          "record_type": "land",
+          "jurisdiction": "Greenville County, South Carolina",
+          "date_range": "1790-1800",
+          "repository": "FamilySearch",
+          "rationale": "Deeds for Samuel Tarrant selling Greenville land would date his move to Kentucky and confirm he was in Greenville when James was born there in 1792.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_006",
+      "performed": "2026-10-06T14:05:00Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "004185989_009_M9C4-81S",
+        "images_examined": "004185989_00239 to 004185989_00264",
+        "target": "Saml Tarrant household, 1810 census, Warren Co., KY"
+      },
+      "outcome": "positive",
+      "results_examined": 26,
+      "results_available": 43,
+      "plan_item_id": "pli_001",
+      "results_ref": "results/log_006.json",
+      "external_site": null,
+      "notes": "Original 1810 page located (image 00264, p. 267). Saml Tarrant: 1 male 45+, 2 males 16-25, 2 females 45+, no children, no slaves. A male 16-25 fits James (b. 1792); Samuel alive in 1810 contradicts tree death 1802."
+    },
+    {
+      "id": "log_008",
+      "performed": "2026-10-06T15:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Tarrant",
+        "collectionId": "1834325",
+        "collection": "United States, War of 1812 Index to Pension Application Files, 1812-1910"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "results_available": 4,
+      "plan_item_id": "pli_003",
+      "results_ref": "results/log_008.json",
+      "external_site": null,
+      "notes": "4 Tarrant entries. Two cards are one file: James Tarrent/Taurent, Capt. Joseph Price's Co., Tennessee Militia; survivor's application S.O. 21083, certificate S.C. 15209 (survivor pensions were granted under the 1871 act, so this soldier was alive c. 1871+); bounty land in separate file. No widow named. Benjamin and Richard Tarrant not relevant."
+    },
+    {
+      "id": "log_020",
+      "performed": "2026-10-06T17:10:00Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+(Samuel OR Saml) +(Tarrant OR Tarrent OR Tarrants)",
+        "place": "Greenville, South Carolina"
+      },
+      "outcome": "positive",
+      "results_examined": 40,
+      "results_available": 4757,
+      "plan_item_id": "pli_010",
+      "results_ref": "results/log_020.json",
+      "external_site": null,
+      "notes": "Key: 5 May 1792 deed, Samuel Tarrant of Greenville Co. sells 172 acres on Reedy River to Larkin Tarrant (acknowledged May term 1792) - Samuel divesting in the year of James's birth, consistent with a move to Kentucky. A Samuel Tarrant also appears in Greenville in 1815, 1827 and 1829 - a second (younger) Samuel stayed in SC."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "gedcomx_source_description_id": "S2",
+      "citation": "1810 U.S. census, Warren County, Kentucky, population schedule, p. 267, Saml Tarrant household; digital image, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:XH29-646 : accessed 6 October 2026), image group 004185989, image 264; citing NARA microfilm publication M252.",
+      "citation_detail": {
+        "who": "U.S. Census Office",
+        "what": "1810 U.S. census, population schedule",
+        "when_created": "1810",
+        "when_accessed": "2026-10-06",
+        "where": "FamilySearch digital images (DGS 004185989)",
+        "where_within": "Warren County, Kentucky, p. 267, image 264, Saml Tarrant"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:XH29-646",
+      "notes": "Digital image of the original schedule; located by browsing the image group because the index gives no page. Handwriting clear. Tallies verified by two independent readings.",
+      "transcription": "1810 U.S. census, Warren Co., Ky., stamped p. 267 (image 004185989_00264), upper half. Row: 'Saml Tarrant' | FWM <10: . | 10-15: . | 16-25: 2 | 26-44: . | 45+: 1 || FWF <10: . | 10-15: . | 16-25: . | 26-44: . | 45+: 2 | other free: . | slaves: . Neighbors above: Wm Lowrey, Jesse Williamson, Solomon White; below: John Hudspeth, Joseph Duff, Wm Jackson. Terry Tarrant on image 00261 (p. ~264): 1,1,0,1,0 | 2,0,1,0,0 | 0 | 0.",
+      "log_entry_id": "log_006"
+    },
+    {
+      "id": "src_003",
+      "gedcomx_source_description_id": "S4",
+      "citation": "\"United States, War of 1812 Index to Pension Application Files, 1812-1910,\" database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG : accessed 6 October 2026), card for James Tarrent or Taurent (Capt. Joseph Price's Co., Tenn. Mil.), S.O. 21083, S.C. 15209; DGS 004625760, images 265 and 305; citing NARA microfilm publication M313.",
+      "citation_detail": {
+        "who": "U.S. Pension Office",
+        "what": "Index card, War of 1812 pension application files",
+        "when_created": "c. 1871-1910",
+        "when_accessed": "2026-10-06",
+        "where": "FamilySearch digital images (DGS 004625760); NARA M313",
+        "where_within": "Tarrent, James, images 265 and 305"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-06",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG",
+      "notes": "Index card abstracted from the pension file; the file itself (S.O. 21083 / S.C. 15209) has not been seen.",
+      "transcription": "WAR OF 1812. Numbers: S.O. 21083; S.C. 15209. Soldier: Tarrent, James / Taurent, James (or). Widow: [blank]. Service: Capt. Joseph Price's Co., Tenn. Mil. Bounty land: In separate file. Residence, marriage, death: [blank]. | Envelope: Taurent, James (or) Tarrent, James. S.C. 15209. Capt. Joseph Price's Co. Tenn. Mil.",
+      "log_entry_id": "log_008"
+    },
+    {
+      "id": "src_005",
+      "gedcomx_source_description_id": "S6",
+      "citation": "Greenville County, South Carolina, deed, Samuel Tarrant to Larkin Tarrant, 5 May 1792, acknowledged May term 1792, recorded 6 August 1792, p. 164; digital image (full-text), FamilySearch (https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS79-13FG-2 : accessed 6 October 2026).",
+      "citation_detail": {
+        "who": "Greenville County Clerk of Court",
+        "what": "Deed, Samuel Tarrant to Larkin Tarrant",
+        "when_created": "1792",
+        "when_accessed": "2026-10-06",
+        "where": "FamilySearch digital image (full-text search)",
+        "where_within": "p. 164"
+      },
+      "source_classification": "original",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-06",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS79-13FG-2",
+      "notes": "Recorded copy in the county deed book; read from the AI transcription, not yet verified against the image.",
+      "log_entry_id": "log_020"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XH29-646",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "Saml Tarrant",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or neighbor",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_006",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_002",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XH29-646",
+      "record_role": "head_of_household",
+      "fact_type": "residence",
+      "value": "Warren County, Kentucky, 1810",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_006",
+      "date": "1810",
+      "date_certainty": "exact",
+      "place": "Warren County, Kentucky",
+      "standard_place": "Warren, Kentucky, United States",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_003",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XH29-646",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "Free white male aged 45 and over (born before 1765)",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or neighbor",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_006",
+      "date": "1810",
+      "date_certainty": "exact",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_004",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XH29-646",
+      "record_role": "head_of_household",
+      "fact_type": "household_composition",
+      "value": "2 free white males aged 16-25 (born c. 1784-1794) in household",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or neighbor",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_006",
+      "date": "1810",
+      "date_certainty": "exact",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_005",
+      "source_id": "src_001",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:XH29-646",
+      "record_role": "head_of_household",
+      "fact_type": "household_composition",
+      "value": "2 free white females aged 45 and over; no children under 16; no slaves",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member or neighbor",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_006",
+      "date": "1810",
+      "date_certainty": "exact",
+      "record_basis": "inferred"
+    },
+    {
+      "id": "a_013",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG",
+      "record_role": "principal",
+      "fact_type": "name",
+      "value": "James Tarrent or Taurent",
+      "information_quality": "secondary",
+      "informant": "Pension Office clerk abstracting the file",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_008",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_014",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG",
+      "record_role": "principal",
+      "fact_type": "military_service",
+      "value": "Served in Capt. Joseph Price's Co., Tennessee Militia, War of 1812",
+      "information_quality": "secondary",
+      "informant": "Pension Office clerk abstracting the file",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_008",
+      "date": "1812-1815",
+      "date_certainty": "between",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_015",
+      "source_id": "src_003",
+      "record_id": "https://www.familysearch.org/ark:/61903/1:1:X8ZH-MZG",
+      "record_role": "principal",
+      "fact_type": "pension",
+      "value": "Survivor's pension: application S.O. 21083, certificate S.C. 15209; bounty land in separate file",
+      "information_quality": "secondary",
+      "informant": "Pension Office clerk abstracting the file",
+      "informant_proximity": "unknown",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_008",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_020",
+      "source_id": "src_005",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS79-13FG-2",
+      "record_role": "grantor",
+      "fact_type": "residence",
+      "value": "Samuel Tarrant of Greenville County, South Carolina",
+      "information_quality": "primary",
+      "informant": "Samuel Tarrant (grantor), acknowledged in court",
+      "informant_proximity": "self",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_020",
+      "date": "1792-05-05",
+      "date_certainty": "exact",
+      "place": "Greenville County, South Carolina",
+      "standard_place": "Greenville, South Carolina, United States",
+      "record_basis": "stated"
+    },
+    {
+      "id": "a_021",
+      "source_id": "src_005",
+      "record_id": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS79-13FG-2",
+      "record_role": "grantor",
+      "fact_type": "land_transaction",
+      "value": "Sold 172 acres on Reedy River (granted 1789) to Larkin Tarrant Esq. for 80 pounds",
+      "information_quality": "primary",
+      "informant": "Samuel Tarrant (grantor), acknowledged in court",
+      "informant_proximity": "self",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": null,
+      "log_entry_id": "log_020",
+      "date": "1792-05-05",
+      "date_certainty": "exact",
+      "place": "Greenville County, South Carolina",
+      "standard_place": "Greenville, South Carolina, United States",
+      "record_basis": "stated"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1810 Warren Co., KY head 'Saml Tarrant': name matches; age 45+ fits tree birth c.1750; place matches tree death county. Caveat: a second Samuel lived in Greenville Co., SC, but he was in SC, not KY.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1810 Warren Co., KY head 'Saml Tarrant': name matches; age 45+ fits tree birth c.1750; place matches tree death county. Caveat: a second Samuel lived in Greenville Co., SC, but he was in SC, not KY.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1810 Warren Co., KY head 'Saml Tarrant': name matches; age 45+ fits tree birth c.1750; place matches tree death county. Caveat: a second Samuel lived in Greenville Co., SC, but he was in SC, not KY.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_005",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "1810 Warren Co., KY head 'Saml Tarrant': name matches; age 45+ fits tree birth c.1750; place matches tree death county. Caveat: a second Samuel lived in Greenville Co., SC, but he was in SC, not KY.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "One of two males 16-25 in Samuel's 1810 household could be James (b. 1792, age 18); the census names no one but the head, so this is a possibility only.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_020",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Samuel Tarrant of Greenville Co., SC in May 1792 matches the tree's Samuel (Greenville connection; later in Warren Co., KY). A younger Samuel appears in Greenville from 1815; the 1792 date favours the elder man.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_021",
+      "person_id": "I2",
+      "confidence": "probable",
+      "rationale": "Samuel Tarrant of Greenville Co., SC in May 1792 matches the tree's Samuel (Greenville connection; later in Warren Co., KY). A younger Samuel appears in Greenville from 1815; the 1792 date favours the elder man.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_013",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Name and survivor's pension (alive c.1871) are compatible with James (living 1870). No residence, age or spouse is on the card, so identity is unconfirmed until the file is examined.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_014",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Name and survivor's pension (alive c.1871) are compatible with James (living 1870). No residence, age or spouse is on the card, so identity is unconfirmed until the file is examined.",
+      "created": "2026-10-06"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_015",
+      "person_id": "I1",
+      "confidence": "speculative",
+      "rationale": "Name and survivor's pension (alive c.1871) are compatible with James (living 1870). No residence, age or spouse is on the card, so identity is unconfirmed until the file is examined.",
+      "created": "2026-10-06"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1861,6 +1861,77 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
   ];
 }
 
+/** A `proof_summaries` write when the persons this proof bears on — its
+ *  `claims[].relationship.child` entries (when `claims[]` is present), or the
+ *  project's `subject_person_ids` (for a scalar proof with no `claims[]`) —
+ *  have more than two distinct `ParentChild` parents in the pre-call tree, while
+ *  no hypothesis in `preCallResearch` lists the proof's `question_id` in
+ *  `related_question_ids`.
+ *
+ *  Uses the pre-call tree and pre-call research snapshots so a same-batch
+ *  hypothesis write does not satisfy the precondition. */
+export function competingParentSetsInvariants(
+  entry: any,
+  preCallResearch: any,
+  tree: any,
+): string[] {
+  const qid = entry?.question_id;
+  if (typeof qid !== "string" || qid === "") return [];
+
+  const hypotheses = Array.isArray(preCallResearch?.hypotheses) ? preCallResearch.hypotheses : [];
+  const related = hypotheses.filter(
+    (h: any) =>
+      h &&
+      typeof h === "object" &&
+      Array.isArray(h.related_question_ids) &&
+      h.related_question_ids.includes(qid),
+  );
+  if (related.length >= 1) return [];
+
+  const claims = Array.isArray(entry.claims) ? entry.claims : [];
+  let inScope: string[];
+  if (claims.length > 0) {
+    inScope = claims
+      .filter((c: any) => c?.relationship && typeof c.relationship.child === "string")
+      .map((c: any) => c.relationship.child as string);
+  } else {
+    inScope = (
+      Array.isArray(preCallResearch?.project?.subject_person_ids)
+        ? preCallResearch.project.subject_person_ids
+        : []
+    ).filter((id: any): id is string => typeof id === "string");
+  }
+  if (inScope.length === 0) return [];
+
+  const inScopeSet = new Set(inScope);
+  const parents = new Map<string, Set<string>>();
+  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
+    if (!r || typeof r !== "object") continue;
+    if (r.type !== "ParentChild") continue;
+    if (typeof r.child !== "string" || typeof r.parent !== "string") continue;
+    if (r.subtype != null && String(r.subtype).toLowerCase() !== "biological") continue;
+    if (!inScopeSet.has(r.child)) continue;
+    const s = parents.get(r.child) ?? new Set<string>();
+    s.add(r.parent);
+    parents.set(r.child, s);
+  }
+
+  const competing = [...parents].filter(([, s]) => s.size > 2);
+  if (competing.length === 0) return [];
+
+  const details = competing
+    .map(([personId, s]) => `${personId} (${[...s].sort().join(", ")})`)
+    .join("; ");
+  return [
+    `proof_summaries ${entry.id ?? "(new entry)"}: question ${qid} has persons with competing ` +
+      `parent sets — ${details} — but no hypothesis in hypotheses[] lists "${qid}" in ` +
+      `related_question_ids. A conclusion here treats one parent set as correct without ` +
+      `hypothesis-tracking registering the candidates. ` +
+      `Invoke @plugin:hypothesis-tracking first to set up one hypothesis per candidate ` +
+      `parent set, each listing "${qid}" in related_question_ids, then retry.`,
+  ];
+}
+
 /** A question's `status` may not claim an exhaustiveness that its declaration
  *  does not carry.
  *
@@ -3916,6 +3987,11 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
+    // does not satisfy this precondition. The check is not tier-gated because
+    // the competing-parent-sets condition is about the project state at write
+    // time, regardless of which fields this particular op touches.
+    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);
@@ -5073,7 +5149,7 @@ export async function researchAppend(
             preCallCritiquedSummaryIds,
             preCallBlockingConflicts,
             beforeResearch,
-            tree,
+            beforeTree,
             prep.matchScores,
             prep.batchAssertions,
             prep.startingPersonIds,

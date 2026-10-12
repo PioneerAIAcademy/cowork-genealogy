@@ -11,6 +11,15 @@
         "file": "packages/engine/mcp-server/src/tools/research-append.ts",
         "function": "unpersistedConflictResolutionInvariants"
       }
+    },
+    {
+      "name": "competing-parent-sets",
+      "status": "enforcing",
+      "case_file": "competing-parent-sets.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-append.ts",
+        "function": "competingParentSetsInvariants"
+      }
     }
   ],
   "owes_case_file": [
