@@ -21,6 +21,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_init_project import (  # noqa: E402
     _DEFAULT_OBJECTIVE,
     test_objective_default_verbatim as check_objective,
+    test_objective_kept_in_the_users_words as check_stated,
     test_profile_defaults_when_all_default as check_profile,
     test_volunteered_subscriptions_normalized as check_volunteered,
 )
@@ -204,3 +205,57 @@ def test_absent_subscriptions_fails_when_volunteered():
 def test_missing_research_json_fails_volunteered():
     with pytest.raises(AssertionError, match="volunteered-access requires"):
         check_volunteered({"research_json": None}, VOLUNTEERED_TAGGED)
+
+
+# --- test_objective_kept_in_the_users_words ------------------------------
+
+DOYLE = (
+    "Start a new research project to identify the origins of Thomas Doyle, born around "
+    "1830 in Ireland and died 1895 in Northumberland County, Pennsylvania. His FamilySearch "
+    "person ID is MKVT-7XR.\n\nprojectPath: <workspace>"
+)
+STATED = {"tags": ["objective-stated"], "delegation": DOYLE}
+
+
+def _stored(objective):
+    return {"research_json": {"project": {"objective": objective}}}
+
+
+def test_untagged_stated_objective_test_is_skipped():
+    with pytest.raises(pytest.skip.Exception):
+        check_stated(_stored("x"), {"tags": [], "delegation": DOYLE})
+
+
+@pytest.mark.parametrize("objective", [
+    "Identify the origins of Thomas Doyle, born around 1830 in Ireland and died 1895 in "
+    "Northumberland County, Pennsylvania.",
+    "Identify the origins of Thomas Doyle (born about 1830, Ireland).",
+    "The origins of Thomas Doyle, who died in Pennsylvania in 1895.",
+])
+def test_the_users_own_words_pass(objective):
+    check_stated(_stored(objective), STATED)
+
+
+def test_the_generic_default_fails_when_an_objective_was_stated():
+    with pytest.raises(AssertionError, match="must not replace it"):
+        check_stated(_stored(_DEFAULT_OBJECTIVE), STATED)
+
+
+@pytest.mark.parametrize("objective,added", [
+    ("Identify the origins of Thomas Doyle: where in Ireland he came from, and who his "
+     "parents were.", "parents"),
+    ("Identify the Irish origins of Thomas Doyle: county, parish, or townland.", "irish"),
+])
+def test_an_added_direction_fails(objective, added):
+    with pytest.raises(AssertionError, match=added):
+        check_stated(_stored(objective), STATED)
+
+
+def test_reads_the_user_message_on_the_skill_arm():
+    check_stated(_stored("Identify the origins of Thomas Doyle."),
+                 {"tags": ["objective-stated"], "user_message": DOYLE})
+
+
+def test_missing_research_json_fails_a_stated_objective_test():
+    with pytest.raises(AssertionError, match="objective-stated requires"):
+        check_stated({"research_json": None}, STATED)

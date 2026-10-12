@@ -183,9 +183,10 @@ The corrected_score is the *final* human verdict after senior PR review. If a ju
 > renamed-into-place* released `v{N}.json` per skill" (the rename
 > matters because release is a candidate → released git rename — the
 > earlier `--diff-filter=A`-only check missed it). Two new blocking
-> rules join Rule 1: the latest full-skill run log must be active on
-> skill-side files (snapshot matches working tree) and its `.ann.json`
-> must have an entry for every dimension **of the sampled tests** — five
+> rules join Rule 1: the run log the PR adds (else the latest full-skill
+> run log) must be active on skill-side files (snapshot matches working
+> tree) and its `.ann.json` must have an entry for every dimension **of
+> the sampled tests** — five
 > chosen picks plus every test that failed, scored a 1 or 2 on any dimension, or carries a coerced_routing_negative_to_na warning, so the count varies by run; see
 > `eval/harness/harness/review_sample.py`. A run log with no
 > `review_sample` (every one committed before sampling shipped) still

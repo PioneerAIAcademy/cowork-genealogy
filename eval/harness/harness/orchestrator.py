@@ -160,6 +160,7 @@ def run_one_test(
     model: str = DEFAULT_MODEL,
     judge_model: str = DEFAULT_JUDGE_MODEL,
     timestamp: str | None = None,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     """Run a single test; return the per-test entry dict for the envelope.
 
@@ -180,6 +181,7 @@ def run_one_test(
             model=model,
             judge_model=judge_model,
             timestamp=ts,
+            tool_search=tool_search,
         )
     )
 
@@ -192,6 +194,7 @@ async def _run_one_test_async(
     model: str,
     judge_model: str,
     timestamp: str,
+    tool_search: bool = True,
 ) -> dict[str, Any]:
     # --- Runnability gate -----------------------------------------------
     gate = check_runnable(
@@ -312,6 +315,7 @@ async def _run_one_test_async(
             auth=auth,
             model=model,
             judge_model=judge_model,
+            tool_search=tool_search,
         )
         runs.append(single)
         if n_runs > 1:
@@ -518,6 +522,7 @@ async def _execute_single_run(
     auth: AuthConfig,
     model: str,
     judge_model: str,
+    tool_search: bool = True,
 ) -> SingleRun:
     """One run of the skill + validators + judge. Returned to the caller for
     multi-run aggregation in assemble_test_entry."""
@@ -543,6 +548,7 @@ async def _execute_single_run(
         stub_skills=_stub_skills(spec),
         stub_agents=_stub_agents(spec, paths.skills_dir),
         stop_at_stub=_stop_at_stub(spec),
+        tool_search=tool_search,
     )
 
     # --- Uncovered tool-call gate (Phase 2) -----------------------------
@@ -994,6 +1000,7 @@ async def _execute_skill_with_retry(
     stop_at_stub: bool = False,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
+    tool_search: bool = True,
 ) -> tuple[SkillRunResult, dict[str, Any], dict[str, Any]]:
     """Build a fresh workspace and run the skill, retrying transient
     failures with exponential backoff. See `_is_retryable_abort`.
@@ -1088,6 +1095,7 @@ async def _execute_skill_with_retry(
                         declared_tools=declared_skill_tools(
                             spec.skill, paths.skills_dir
                         ),
+                        tool_search=tool_search,
                     )
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)
@@ -1592,6 +1600,11 @@ _MOCK_ENRICHED_KEYS = (
     # run log.
     "unloggedSearches",
     "nilSearchNeedsLog",
+    # Computed by the mock from the call's own arguments (#3054). A nil
+    # record_search with no projectPath carries none of the keys above, so
+    # without this its hint would be stripped from the run log the
+    # surnameVariantHints validator and a reviewer both read.
+    "surnameVariantHints",
 )
 
 
@@ -1935,7 +1948,7 @@ def _compute_outcome(
     return "pass"
 
 
-def _run_judge(
+def build_judge_grade_kwargs(
     *,
     spec: TestSpec,
     rubric: Rubric,
@@ -1943,12 +1956,19 @@ def _run_judge(
     result,
     file_changes,
     before_snapshot: dict[str, Any] | None = None,
-    auth: AuthConfig,
-    judge_model: str,
     validator_failures: list[str] | None = None,
     harness_observations: list[str] | None = None,
     state_observations: list[str] | None = None,
-) -> JudgeOutput:
+) -> dict[str, Any]:
+    """Build the kwargs `grade()` needs, from the same inputs `_run_judge` reads.
+
+    Shared between the live path (`_run_judge`) and the regrade / dry-render
+    path (`judge_regrade.py`) so a judge-prompt regrade sends the SAME prompt a
+    live run does. Rebuilding these inputs by hand in a second place is how
+    `grade()` ends up called with a full rubric on a negative test, an empty
+    `skills_invoked` on a direct test, and "name: error" validator-failure
+    strings where the live path sends bare names.
+    """
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
     # tests don't have rubric dimensions." Grade base dimensions only,
@@ -2029,7 +2049,7 @@ def _run_judge(
             getattr(result, "builtin_tool_calls", []) or [],
             getattr(result, "slash_entry_skill", None),
         )
-    return grade(
+    return dict(
         rubric=judge_rubric,
         judge_context=judge_context,
         scenario_readme=scenario_readme,
@@ -2040,13 +2060,39 @@ def _run_judge(
             file_changes, result.tool_calls, include_content=spec.judge_reads_files
         ),
         tool_calls=result.tool_calls,
-        auth=auth,
-        model=judge_model,
         before_state=_summarize_before_state(before_snapshot),
         validator_failures=validator_failures,
         harness_observations=harness_observations,
         state_observations=state_observations,
     )
+
+
+def _run_judge(
+    *,
+    spec: TestSpec,
+    rubric: Rubric,
+    scenario_readme: str,
+    result,
+    file_changes,
+    before_snapshot: dict[str, Any] | None = None,
+    auth: AuthConfig,
+    judge_model: str,
+    validator_failures: list[str] | None = None,
+    harness_observations: list[str] | None = None,
+    state_observations: list[str] | None = None,
+) -> JudgeOutput:
+    kwargs = build_judge_grade_kwargs(
+        spec=spec,
+        rubric=rubric,
+        scenario_readme=scenario_readme,
+        result=result,
+        file_changes=file_changes,
+        before_snapshot=before_snapshot,
+        validator_failures=validator_failures,
+        harness_observations=harness_observations,
+        state_observations=state_observations,
+    )
+    return grade(**kwargs, auth=auth, model=judge_model)
 
 
 def _negative_judge_context(spec: TestSpec) -> list[str]:

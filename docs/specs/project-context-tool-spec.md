@@ -106,6 +106,9 @@ repo's identifier-casing rule):
     planItemId: string | null,
     performed: string | null,
   }],
+  externalCollections?: {                // stored curated collections, counts only — §2.4
+    [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
+  },
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -175,11 +178,16 @@ artifact is what every downstream check joins on.
 | `concluded` | a proof summary carries `question_id` = this question |
 | `critiqued` | every such summary has a live `proof-critique` evaluation |
 
+`critiqued` is reached only when the user asked for a gps-mentor review — the
+mentor is not on the default `/research` path — so it records that a critique
+exists and gates nothing. A superseded verdict does not count — a
+replacement is itself present and satisfies the join; if nothing replaced it, the
+critique no longer stands.
+
 `nextStep` orders by what blocks what: an unresolved conflict outranks an
 unregistered disagreement, which outranks competing parent sets, which outrank a
-missing critique, which outranks a missing resolve, which outranks a missing
-summary. A superseded verdict does not count — a replacement is itself present and
-satisfies the join; if nothing replaced it, the critique no longer stands.
+missing resolve, which outranks a missing summary. A missing critique is never a
+next step.
 
 **A conflict the evidence shows counts even when nobody registered it.** A
 `conflicts` entry is what `conflict-resolution` *produces*, so an empty
@@ -241,12 +249,12 @@ open ones.
 Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `state`, `nextStep` or `openConflictIds` value.
 
-**`critiqued` is the last rung of the ladder, not the end of the work.** The
-ladder tracks what was *produced*, and the `resolved` write produces nothing, so
-it has no rung of its own — but it is still outstanding, and it is the transition
-no skill body claims. A question that is `critiqued` and not yet resolved reports
-that resolve as its next step. `nextStep` is null only when the question is both
-`critiqued` and resolved.
+**A conclusion is not the end of the work.** The ladder tracks what was
+*produced*, and the `resolved` write produces nothing, so it has no rung of its
+own — but it is still outstanding, and it is the transition no skill body claims.
+A question that is `concluded` or `critiqued` and not yet resolved reports that
+resolve as its next step. `nextStep` is null only when the question has a proof
+summary and is resolved.
 
 **Nothing gates on this field, and that is the design.** `research_append`
 evaluates its own completion preconditions against the document at write time,
@@ -322,6 +330,24 @@ itself when given a `projectPath` (`build-external-search-url-tool-spec.md`
 §6). A hand-off that did not come from the builder — an image link on a
 FamilySearch record, the shape that session hit — is logged in the same shape
 by the `search-external-sites` agent itself.
+
+### 2.4 `externalCollections` — counts of the stored curated collections
+
+Present only when the project holds `external-collections.json` (written by
+`external_links_search`; `external-links-search-tool-spec.md`, "Stored list"):
+
+```typescript
+externalCollections?: {
+  [place: string]: { total: number, byRecordType: { [recordType: string]: number } }
+}
+```
+
+Counts only, never rows — the lists run to hundreds of rows per state, and the
+rows are read with `research_query({section: "external_collections", place,
+recordType})`. `byRecordType` counts a row once per record type it carries, so
+its values can sum past `total`. Places and record types are sorted. The field is
+absent when no list is stored, and also when the file cannot be read: a broken
+cache file must never fail the whole projection.
 
 ## 3. Decisions recorded
 

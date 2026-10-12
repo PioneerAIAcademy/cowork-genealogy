@@ -675,46 +675,6 @@ def find_effects_without_invocation(
     return violations
 
 
-def find_missing_mentor_verdicts(research: dict[str, Any] | None) -> list[str]:
-    """Every `ps_id` a resolved question references must carry a matching
-    `evaluations[]` entry (`focus: "proof-critique"`, `target_id: <ps_id>`) —
-    research/SKILL.md's own final completion check, and per docs/plan/
-    guardrail-enforcement-spec.md §8/§10, this gate is itself just
-    another routing-table step the orchestrator could silently skip under the
-    same context pressure as the four guardrail skills.
-
-    Deliberately reads `research.json`'s `evaluations[]` directly rather than
-    inferring from `tool_calls` — the durable record of whether the gate ran
-    IS the evaluations entry (`gps-mentor` writes only there, per the schema
-    spec's "append-only ownership"), so there's no invocation-log inference
-    needed here the way there is for the four in-session guardrail skills.
-    """
-    research = research or {}
-    questions = research.get("questions") if isinstance(research.get("questions"), list) else []
-    proof_summaries = research.get("proof_summaries") if isinstance(research.get("proof_summaries"), list) else []
-    evaluations = research.get("evaluations") if isinstance(research.get("evaluations"), list) else []
-
-    resolved_question_ids = {
-        q.get("id") for q in questions if isinstance(q, dict) and q.get("status") == "resolved"
-    }
-    referenced_ps_ids = {
-        ps.get("id")
-        for ps in proof_summaries
-        if isinstance(ps, dict) and ps.get("question_id") in resolved_question_ids
-    }
-    verdicted_ps_ids = {
-        ev.get("target_id")
-        for ev in evaluations
-        if isinstance(ev, dict) and ev.get("focus") == "proof-critique"
-    }
-    missing = sorted(pid for pid in (referenced_ps_ids - verdicted_ps_ids) if pid)
-    return [
-        f"proof_summaries entry '{ps_id}' is referenced by a resolved question but has no "
-        "'proof-critique' evaluations[] verdict on record (the mandatory gps-mentor gate)"
-        for ps_id in missing
-    ]
-
-
 def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
     """Every record/tree id a SUCCESSFUL `same_person` call has scored so far.
 
@@ -838,7 +798,10 @@ def _persona_reachable(
     - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
       so a persona was in hand when the assertion was extracted;
     - `record_search` with a retained `results_ref` — the sidecar result
-      carries the record's `gedcomx`.
+      carries the record's `gedcomx`;
+    - `person_record_matches` — an accepted FamilySearch hint (search-hints'
+      record mode). Its ark is a `1:1:` record persona that `record_read`
+      opens, which is how record-extraction fetched it.
 
     Everything else is unreachable: image-, external-site- and PDF-sourced
     assertions, a search whose sidecar was not retained, and **every**
@@ -880,7 +843,7 @@ def _persona_reachable(
     if not isinstance(entry, dict):
         return True  # no log entry — provenance unknown
     tool = entry.get("tool")
-    if tool == "record_read":
+    if tool in ("record_read", "person_record_matches"):
         return True
     if tool == "record_search" and entry.get("results_ref"):
         return True
@@ -1109,8 +1072,7 @@ def check_guardrail_compliance(
 
     docs/specs/guardrail-enforcement-spec.md §8. A guardrail skill's
     effect present in the FINAL project state with no matching successful
-    invocation anywhere in the run, or a resolved question's proof_summary
-    missing its mandatory gps-mentor proof-critique verdict. Mirrors the unit
+    invocation anywhere in the run. Mirrors the unit
     harness's `test_positive_fails_when_skill_not_in_skills_invoked`, which
     had no e2e equivalent. Unlike §4.1's shadow-mode recency check, this only
     asks whether the skill ran AT ALL across the whole run, so it is far less
@@ -1127,12 +1089,11 @@ def check_guardrail_compliance(
     specific required tool for the specific person instead of the skill's mere
     presence in the run.
 
-    Note this is NOT vacuous on a treeless run: `find_missing_mentor_verdicts`
-    takes no tree at all, and the exhaustiveness arm reads only
-    `research["questions"]`. That is why compliance is always a real result
+    Note this is NOT vacuous on a treeless run: the exhaustiveness arm reads
+    only `research["questions"]`. That is why compliance is always a real result
     and never "not checked" for a run this harness performed.
 
-    Lives here beside the three detectors it composes so `e2e.corpus_report`
+    Lives here beside the two detectors it composes so `e2e.corpus_report`
     can import it without dragging `claude_agent_sdk` into its pure-analysis
     posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
     and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
@@ -1143,7 +1104,6 @@ def check_guardrail_compliance(
         find_effects_without_invocation(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
-        + find_missing_mentor_verdicts(final_research)
         + find_person_evidence_missing_same_person(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
@@ -1241,6 +1201,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # folder. Listed because the set is asserted equal to the shipped agent
         # files.
         "search-familysearch-wiki",
+        # A new agent, not a conversion (issue #2029), and no hook route: it
+        # writes only `log` entries, one per researcher verdict on a hint. Listed
+        # because the set is asserted equal to the shipped agent files, and so a
+        # log entry arriving from it is not read as an unnamed-delegate bypass.
+        "search-hints",
         # Same shape as `citation` (issue #2792): a converted skill, no hook
         # route. It is listed because the set is asserted equal to the shipped
         # agent files, and because a `hypotheses` write arriving from it is
@@ -1290,6 +1255,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # to it. Listed because the set is asserted equal to the shipped agent
         # files. `ownership.json` names `agent:survey-surname` on the `log` row.
         "survey-surname",
+        # A new agent (issue #3273): it surveys a tree before any project exists,
+        # so it writes nothing and no hook routes to it. Listed because the set is
+        # asserted equal to the shipped agent files. `ownership.json` names it on
+        # no row.
+        "tree-survey",
         # Same shape as search-images and citation (issue #2120): a
         # cost-motivated conversion, no hook route. It writes `log` entries via
         # `research_log_append` and updates `plan_items` status via
@@ -1297,6 +1267,11 @@ DEDICATED_AGENT_NAMES = frozenset(
         # set is asserted equal to the shipped agent files. `ownership.json`
         # names `agent:search-full-text` on the `plan_items` and `log` rows.
         "search-full-text",
+        # Same shape as citation (issue #2122): a converted skill. The hook lanes
+        # it to `project`, `researcher_profile`, `known_holdings` and `sources` and routes
+        # nothing to it; `ownership.json` names `agent:init-project` on those
+        # rows, the `project` row, and the three tree rows `project_create` writes.
+        "init-project",
     }
 )
 

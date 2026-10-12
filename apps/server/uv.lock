@@ -323,6 +323,7 @@ dev = [
     { name = "anyio" },
     { name = "botocore" },
     { name = "jsonschema" },
+    { name = "mcp" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pyyaml" },
@@ -346,6 +347,10 @@ proto-worker = [
     { name = "cryptography" },
     { name = "psycopg", extra = ["binary"] },
 ]
+sandbox = [
+    { name = "claude-agent-sdk" },
+    { name = "websockets" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -368,6 +373,7 @@ dev = [
     { name = "anyio", specifier = ">=4.14.2" },
     { name = "botocore", specifier = ">=1.40" },
     { name = "jsonschema", specifier = ">=4.22.0" },
+    { name = "mcp", specifier = ">=1.28.1" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", specifier = ">=0.24" },
     { name = "pyyaml", specifier = ">=6.0" },
@@ -388,6 +394,10 @@ proto-worker = [
     { name = "claude-agent-sdk", specifier = "==0.2.128" },
     { name = "cryptography", specifier = ">=48.0.1" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
+]
+sandbox = [
+    { name = "claude-agent-sdk", specifier = "==0.2.128" },
+    { name = "websockets", specifier = ">=13" },
 ]
 
 [[package]]

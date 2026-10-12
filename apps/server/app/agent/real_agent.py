@@ -39,9 +39,11 @@ import json
 import os
 import shutil
 import sys
+import urllib.request
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     CONTINUE_REASON,
     DELEGATION_TOOLS,
@@ -151,7 +153,7 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # from eval/ or from the control-plane package (see the module docstring).
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
 # here: the skills run their stdlib-only scripts through it, and the only way to
@@ -443,7 +445,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     "To CREATE a new project use project_create, which writes both files "
                     "together; to add to an existing one use research_append, "
                     "research_log_append, tree_edit or tree_correct. These validate "
-                    "before persisting. Direct file writes never validate."
+                    "before persisting. Direct file writes never validate. "
+                    "external-collections.json is written only by external_links_search given a projectPath."
                 ),
             },
         }
@@ -529,6 +532,45 @@ def _current_base_url() -> str | None:
     if isinstance(url, str) and url:
         return url
     return os.environ.get("ANTHROPIC_BASE_URL")
+
+
+_PROXY_SUFFIX = "/api/anthropic-proxy"
+
+
+def _turn_cost_url() -> str | None:
+    """The control plane's per-turn cost endpoint, or None when there is no proxy
+    (local dev), since the proxy token is what authenticates the report."""
+    base = _current_base_url()
+    if not base or not base.endswith(_PROXY_SUFFIX):
+        return None
+    return base[: -len(_PROXY_SUFFIX)] + "/api/turn-cost"
+
+
+_BUILD_INFO = Path(BUILD_INFO_PATH)
+
+
+def _sandbox_build() -> str | None:
+    """The build this sandbox's code came from, for the cost report. None outside the
+    image (local dev) or when the stamp is unreadable."""
+    try:
+        return build_label(_BUILD_INFO.read_bytes())
+    except (OSError, ValueError):
+        return None
+
+
+def _post_turn_cost(url: str, api_key: str, payload: dict) -> None:
+    """Blocking; run off the event loop. A failed report is logged, never raised."""
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={"content-type": "application/json", "x-api-key": api_key},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10):
+            pass
+    except Exception as exc:
+        _log(f"turn cost report failed: {exc!r}")
 
 
 def _sdk_env(api_key: str | None = None) -> dict[str, str]:
@@ -626,7 +668,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     sandboxes in one process cannot read each other's progress. It is what
     ``should_continue_run``'s no-progress arm compares between two stops: without it the
     second nudge always looks like no progress and the run stops after one."""
-    counter = {"tool_calls": 0, "delivered": False}
+    counter = {"tool_calls": 0, "delivered": False, "continuations": 0}
     # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
     # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
     # across two stops); `delivered` is not, and the dict outlives the turn because
@@ -691,17 +733,23 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         ]
     }
     if AUTONOMOUS_MAX_NUDGES > 0:
+        stop = make_stop_hook(
+            project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
+            tool_count=lambda: counter["tool_calls"],
+            pending_user_message=(agent.pending_user_message if agent else None),
+            delivered=lambda: counter["delivered"],
+        )
+
+        async def counted_stop(input_data, tool_use_id, ctx):
+            """Counts the stops it overrides, so each turn's cost report says how much
+            of the turn ran past a stop the model chose."""
+            out = await stop(input_data, tool_use_id, ctx)
+            if out.get("decision") == "block":
+                counter["continuations"] += 1
+            return out
+
         hooks["Stop"] = [
-            HookMatcher(
-                matcher=None,
-                hooks=[make_stop_hook(
-                    project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
-                    tool_count=lambda: counter["tool_calls"],
-                    pending_user_message=(agent.pending_user_message if agent else None),
-                    delivered=lambda: counter["delivered"],
-                )],
-                timeout=_PRETOOL_TIMEOUT_S,
-            )
+            HookMatcher(matcher=None, hooks=[counted_stop], timeout=_PRETOOL_TIMEOUT_S)
         ]
     return hooks
 
@@ -1268,12 +1316,14 @@ class RealAgent:
         first cut cleared on the next tool call instead, and was wrong twice: a turn
         that yields without calling any tool never cleared it, and the clearing was
         not main-thread gated, so a straggler subagent call could clear a
-        main-thread delivery. `tool_calls` is deliberately NOT reset -- the
+        main-thread delivery. `continuations` counts THIS turn's overridden stops for
+        the cost report. `tool_calls` is deliberately NOT reset -- the
         no-progress arm compares it across two stops.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
             counter["delivered"] = False
+            counter["continuations"] = 0
 
     def _usage_delta(self, cost, in_tok, out_tok):
         """Convert the SDK's cumulative session totals into per-turn increments.
@@ -1479,6 +1529,19 @@ class RealAgent:
                     d_cost, d_in, d_out = self._usage_delta(
                         getattr(message, "total_cost_usd", None), in_tok, out_tok
                     )
+                    url = _turn_cost_url()
+                    if url and d_cost is not None:
+                        counter = getattr(self, "_hook_counter", None)
+                        asyncio.get_running_loop().run_in_executor(
+                            None, _post_turn_cost, url, current_api_key(), {
+                                "cost_usd": d_cost,
+                                "model": os.environ.get("MODEL") or None,
+                                "input_tokens": d_in,
+                                "output_tokens": d_out,
+                                "build": _sandbox_build(),
+                                "continuations": counter.get("continuations") if counter else None,
+                            },
+                        )
                     yield _event(
                         "usage",
                         cost_usd=d_cost,

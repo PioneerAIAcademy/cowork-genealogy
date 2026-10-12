@@ -1,0 +1,73 @@
+# Publishes the two files a Cowork user installs — releases/genealogy-mcp.mcpb
+# (the MCP server) and releases/genealogy-plugin.zip (the plugin) — to one GitHub
+# Release, tag `cowork-latest`, on every push to main. README.md's download links
+# name that tag, so they never change and always serve main: a user gets what
+# cloning main and building would give them, minus the build.
+#
+# The build and its checks are the last step of the required `vitest` job
+# (engine-tests.yml), run again on the merged commit, so a bundle that does not
+# boot with every manifest tool is never published.
+#
+# The release is edited in place, never deleted and recreated, which would notify
+# every watcher on every merge. The tag moves to the built commit so the
+# release's source links match its files.
+#
+# No `paths:` filter: a missed path would leave the downloads silently stale, and
+# a run costs a few minutes. tests/packaging/release-links.test.ts holds the
+# README's links to TAG and ASSETS below.
+
+name: Cowork release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # move the tag and replace the release's files
+
+# One publish at a time. A newer push waits rather than cancelling a run
+# mid-upload, which could leave the two files from different commits.
+concurrency:
+  group: cowork-release
+  cancel-in-progress: false
+
+env:
+  TAG: cowork-latest
+  ASSETS: releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip
+
+jobs:
+  publish:
+    # workflow_dispatch can run from any branch; only main publishes.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        run: |
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+
+      - name: Build both artifacts and verify the bundle
+        run: make mcpb && ./scripts/verify-mcpb.sh && make plugin
+
+      - name: Publish to the cowork-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -f "$TAG" "$GITHUB_SHA"
+          git push -f origin "refs/tags/$TAG"
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --title "Genealogy Research for Claude Cowork" --notes "First build."
+          fi
+          # $ASSETS unquoted on purpose: it is two paths.
+          gh release upload "$TAG" $ASSETS --clobber
+          gh release edit "$TAG" --notes "Built from ${GITHUB_SHA::7} on $(date -u +%Y-%m-%d). Download both files below, then follow the install steps: https://github.com/${GITHUB_REPOSITORY}#install"

@@ -90,202 +90,79 @@ def test_log_outcome_honest_no_match(before_state, after_state, test):
 
 # --- Pre-1880 census: family structure must be marked inferred --------
 
-# Words a log note uses when it is describing the household around the hit,
-# rather than the hit alone. The rule below only applies once the note starts
-# describing the household — a note that reports the focus person and nothing
-# else has no family structure to qualify.
-_HOUSEHOLD_MENTIONS = (
-    "household",
-    "dwelling",
-    "co-resident",
-    "coresident",
-    "enumerated with",
-    "living with",
-)
-
-# Role assertions that can only be read off a relationship column. Bare role
-# words are deliberately NOT listed: a note may legitimately name a tree-side
-# relative ("searched for George's wife Catherine", where Catherine turns out
-# to be absent from the record), and that is not a claim about what the census
-# stated. These forms are — "head of household", "X as father" — so they
-# trigger the requirement even when the word "household" never appears.
-_ROLE_ASSERTIONS = (
-    r"head\s+of\s+household",
-    r"household\s+head",
-    r"\bas\s+[\"'“‘]?(?:his|her|the)?\s*[\"'“‘]?"
-    r"(?:head|wife|husband|son|daughter|father|mother)\b",
-)
-
-# Possessive kinship claims about a specific named person found in the
-# record — "Amos's children", "Doss's son" — a second phrasing of the same
-# claim _ROLE_ASSERTIONS's "as ROLE" form catches, which "as" alone misses.
-# Scoped to a capitalized name's possessive for the same reason
-# _ROLE_ASSERTIONS avoids bare role words above: a bare pronoun ("his son")
-# is common in a legitimate tree-side reference. This does not exclude every
-# tree-side mention -- "George's wife Catherine" matches -- which is accepted:
-# a pre-1880 note naming a kinship relation with no hedge anywhere is worth
-# flagging either way.
-_POSSESSIVE_KINSHIP_ASSERTIONS = (
-    r"\b(?-i:[A-Z])[a-zA-Z]*'s\s+(?:son|daughter|child|children|wife|husband)\b",
-)
-
-# A plural kinship noun immediately followed by a capitalised word, which in
-# a census note is nearly always a name being introduced — "plus sons Thos
-# T McElwee and Stephen McElwee" — the exact phrasing behind issue #1912's
-# production report. Scoped to the PLURAL forms only (never bare
-# "son"/"daughter"/"wife"/"husband"): a search routinely names a single
-# already-known tree-side relative this way ("anchored on his wife
-# Catherine"), which is not a claim about the record; introducing multiple
-# same-role people by a plural noun is not that pattern. Punctuation
-# (comma, colon, dash) between the noun and the name is treated as
-# adjacent; a sentence boundary is not.
-_PLURAL_KINSHIP_INTRODUCING_NAME = (
-    r"\b(?:sons|daughters|children)\b[\s,:;\u2013\u2014-]+(?-i:[A-Z])",
-)
-
-_CLAIM_PATTERNS = (
-    _ROLE_ASSERTIONS
-    + _POSSESSIVE_KINSHIP_ASSERTIONS
-    + _PLURAL_KINSHIP_INTRODUCING_NAME
-)
-
-# Any of these in the note satisfies the rule. The skill does not have to use
-# SKILL.md's exact sentence — it has to say, in some form, that the structure
-# is an inference rather than something the record stated.
-_ROLE_WORD = r"(?:heads?|relationships?|co-?residents?|roles?)"
-# Deliberately excludes the bare kinship words (wife/husband/son/daughter/
-# father/mother/parent) that _ROLE_ASSERTIONS/_CLAIM_PATTERNS use elsewhere:
-# "Mother indexed as Sarah A. Price" would satisfy an index-near-role check
-# on the NAME being indexed while a flat, unhedged "Household head: Thomas
-# Flynn" sits elsewhere in the same note -- the marker would fire for a
-# reason unrelated to the household-relationship claim it exists to qualify.
-# "household" is excluded too: it is one of the initial describes_household
-# gate words, and adding it here would let ANY "indexed ... household"
-# combination satisfy the marker regardless of what "indexed" modifies
-# (chesworthrm review, issue #1642; verified against all 28 pinned cases).
-
-_INFERENCE_MARKERS = (
-    r"infer",             # infer, infers, inferred, inferring, inference(s) --
-                          # was "inferr" (double-r only), which missed the
-                          # present-tense "indexer infers ParentChild
-                          # relationships" and false-failed a compliant note
-                          # (issue #1642, ut_search_records_010 2026-08-24_16-32-45)
-    r"\bnot\s+(?:a\s+)?stated\b",
-    r"\bunstated\b",
-    r"\bimplied\b",
-    r"\bpresum\w*\b",   # presumed, presumably, presuming -- was
-                          # "presumed" only, which missed a compliant
-                          # "presumably her mother" (issue #1642,
-                          # ut_search_records_017 2026-08-24_12-28-26)
-    r"no\s+relationship\s+(?:to\s+head\s+)?column",
-    r"relationship\s+column[^.]{0,40}\b(?:does\s+not|did\s+not|is\s+not|"
-    r"was\s+not|never|absent)\b",
-    # "indexed"/"indexing" near the actual role/relationship word it
-    # qualifies -- "ParentChild relationships indexed", "indexed as Head
-    # of Household", "co-residents indexed". Deliberately NOT a bare
-    # "index" anywhere in the note: that would also accept "indexed
-    # spelling" / "surname indexed as Flyn" -- notes that flag a NAME or
-    # DATE as indexed while still asserting the household ROLE flat, which
-    # says nothing about the relationship being an inference (issue #1642,
-    # ut_search_records_010/_014/_027 2026-08-28_15-20-05).
-    rf"\bindex\w*\b[^.;,]{{0,20}}\b{_ROLE_WORD}\b",
-    rf"\b{_ROLE_WORD}\b[^.;,]{{0,20}}\bindex\w*\b",
-)
+_CENSUS_REFUSAL = "relationship-to-head"
 
 
-def test_pre1880_census_structure_marked_inferred(
-    before_state, after_state, test
-):
-    """Tag-gated (pre-1880-census-household): a log note that describes a
-    pre-1880 US census household must mark the family structure inferred.
+def _log_append_ops(call) -> list[dict]:
+    """The ops one research_log_append call sent, single-op or `ops[]`."""
+    args = _as_mapping(call.get("args"))
+    ops = args.get("ops")
+    if isinstance(ops, str):
+        try:
+            ops = json.loads(ops)
+        except (ValueError, TypeError):
+            ops = None
+    return [_as_mapping(o) for o in ops] if isinstance(ops, list) else [args]
+
+
+def _op_key(op: dict):
+    """Which search a log op records: its staged handle, else its tool and query."""
+    ref = op.get("stagedResultsRef")
+    if isinstance(ref, str) and ref:
+        return ("ref", ref)
+    return ("query", op.get("tool"), _hashable_key(_as_mapping(op.get("query"))))
+
+
+def test_pre1880_census_structure_marked_inferred(tool_calls, test):
+    """Tag-gated (pre-1880-census-household): a log note that `research_log_append`
+    refused for stating a pre-1880 census household's structure as fact must be
+    re-sent and logged, hedged, in a later call.
 
     SKILL.md's Step 4 rule: 1850/1860/1870 carry no "relationship to head"
-    column, so every "head"/"wife"/"son" read off such a household — and the
-    record's own `ParentChild`/`Couple` edges, which are the indexer's
-    inference from the same signals — is an inference. The body prescribes
-    the output: "Daniel, Margaret, Hannah in one dwelling; family structure
-    inferred from surname, ages and order, not stated", *not* "head Daniel +
-    wife Margaret + daughter Hannah".
+    column, so every "head"/"wife"/"son" read off such a household is an
+    inference (issue #1284). The tool enforces that at write time
+    (`requirePre1880CensusHedge`), and that is the only copy of the rule:
+    what counts as a claim and as a hedge is specified, measured and
+    mutation-tested with the tool (research-log-editor-spec.md § 8.2,
+    `dev/mutate-census-hedge.ts`), and `test_mock_mcp` proves the eval's write
+    path applies it. This validator used to grade notes with its own wider word
+    lists, which made ut_search_records_027 flap on wording the tool had
+    accepted (issue #3054); it then replayed the tool's check, which could not
+    fail, because a refused note is never logged.
 
-    Deterministic rather than judged because compliance is genuinely
-    inconsistent, not because the judge misreads it. See issue #1284.
-
-    Re-measured for this round (issue #1642, chesworthrm review): the PR #1946
-    figure this superseded -- "44 logged searches, marker in 26, 23 pass / 21
-    fail" -- was already stale by the time it was reviewed, because retention
-    keeps only 5 candidate run logs and this PR's own commits rolled three of
-    the five past that measurement. This citation will do the same to whoever
-    reads it next; re-derive rather than trust it. As of this commit, across
-    the 5 committed run logs, the 9 `pre-1880-census-household`-tagged tests
-    produced 43 logged searches; the marker appears in 32. The prior
-    docstring's pass/fail split was a per-note judge-qualification tally
-    (whether a present marker actually qualifies its claim in context, not
-    just appears in the note -- see "the validator is a floor, not a
-    ceiling" in the deep-dive findings doc) and was not re-derived this round;
-    it needs a judge-rationale read per note, not a regex count, so state it
-    freshly rather than carry a guessed number forward. Re-derive the counts
-    above by scanning `research_log_append` notes in
-    `eval/runlogs/unit/search-records/v1_*.json` for the tagged test ids --
-    a call there is sometimes a single entry, sometimes a batched `ops`
-    array of several; count each op with `outcome` in (positive, partial)
-    as one logged search, matching `_new_log_entries`'s own unit of work.
-
-    Requirement: if `notes` describes a household at all (`_HOUSEHOLD_MENTIONS`)
-    or makes a relationship/kinship claim (`_CLAIM_PATTERNS`), an inference
-    marker (`_INFERENCE_MARKERS`) must appear somewhere in the note. This is
-    the original #1284 rule — what catches a bare listing with no hedge
-    anywhere ("...in household of Thomas Flynn and Mary Flynn.", no marker
-    at all) or a flat, unhedged claim ("plus sons Thos T McElwee and Stephen
-    McElwee", issue #1912's actual production text, no marker anywhere in
-    that log entry).
-
-    `_CLAIM_PATTERNS` covers three shapes the same underlying rule reads off:
-    `_ROLE_ASSERTIONS` ("as father", "household head"), a possessive kinship
-    claim naming a specific person ("Amos's children"), and a plural kinship
-    noun bare-introducing named individuals ("sons Thos T McElwee and
-    Stephen McElwee").
-
-    PR #1946 review (issue #1912): a per-sentence variant of this check was
-    tried, to catch a marker present elsewhere in the note that never
-    actually qualifies a specific claim (e.g. "...likely Amos's children.
-    Pre-1880 census — no relationship column; family structure inferred
-    ..."). Withdrawn: `ut_search_records_015`'s own committed, correctly-
-    hedged output ("...household headed by William Mullen ... Indexer-
-    inferred ParentChild/Couple relationships — 1860 census carries no
-    relationship column ...") has the identical two-sentence shape —
-    claim, then the SKILL.md-prescribed hedge as its own following sentence
-    — and no reliable mechanical signal separates the two. Note-wide is the
-    right precision for what a validator (rather than the judge, who reads
-    the whole note as a person would) can safely automate; confirmed against
-    every note in every committed `search-records` run log to date (168
-    notes, tag forced on all of them) with zero false positives.
+    What the model CAN still get wrong is the recovery: a refusal is an error
+    the model must act on, and dropping the search from the log instead leaves
+    it unrecorded. So every op of a refused call (a batch is all-or-nothing) must
+    be logged by a later successful call, matched on its staged handle, else on
+    its tool and query.
     """
     if "pre-1880-census-household" not in test.get("tags", []):
         pytest.skip("not a pre-1880 census household scenario")
+    appends = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "research_log_append"]
+    refused_at = [
+        i for i, c in enumerate(appends)
+        if _as_mapping(c.get("response")).get("ok") is False
+        and _CENSUS_REFUSAL in json.dumps(c.get("response"))
+    ]
+    if not refused_at:
+        pytest.skip("research_log_append refused no census note this run")
 
-    offenders = []
-    for e in _new_log_entries(before_state, after_state):
-        if e.get("tool") != "record_search":
-            continue
-        if e.get("outcome") not in ("positive", "partial"):
-            continue  # a nil found no household to describe
-        notes = e.get("notes") or ""
-
-        describes_household = any(
-            m in notes.lower() for m in _HOUSEHOLD_MENTIONS
-        ) or any(re.search(p, notes, re.IGNORECASE) for p in _CLAIM_PATTERNS)
-        if not describes_household:
-            continue
-        if any(re.search(p, notes, re.IGNORECASE) for p in _INFERENCE_MARKERS):
-            continue
-        offenders.append((e.get("id"), notes))
-
-    assert not offenders, (
-        "a pre-1880 US census has no relationship column, so a log note that "
-        "describes the household must say the family structure is inferred "
-        "rather than stated (SKILL.md Step 4). These entries describe the "
-        "household and assert its structure flat: "
-        + "; ".join(f"{eid}: {notes!r}" for eid, notes in offenders)
+    unrecovered = []
+    for i in refused_at:
+        later = {
+            _op_key(op)
+            for c in appends[i + 1:]
+            if _as_mapping(c.get("response")).get("ok") is True
+            for op in _log_append_ops(c)
+        }
+        for op in _log_append_ops(appends[i]):
+            if _op_key(op) not in later:
+                unrecovered.append(op.get("stagedResultsRef") or op.get("query"))
+    assert not unrecovered, (
+        "research_log_append refused a note for stating a pre-1880 census "
+        "household's structure as fact, and the search it recorded was never "
+        "logged afterwards with the structure marked inferred (SKILL.md Step 4): "
+        + "; ".join(repr(u) for u in unrecovered)
     )
 
 
@@ -603,6 +480,86 @@ def test_jurisdiction_hints_followed(tool_calls, test):
     )
 
 
+# --- surnameVariantHints consumption -----------------------------------
+
+
+def _is_surname_field(key):
+    """`surname` and the five kin `*Surname` fields record-search.ts reads
+    (SURNAME_FIELDS in utils/surname-variant-hints.ts). Matched by shape, not
+    by a copied list, so a sixth kin field is accepted without an edit here.
+    `surnameAlt` is not one: the hint's note directs a form listed for another
+    field into that field, and the alternate name is a union paired with its own
+    given name. A form the hint listed FOR `surnameAlt` is followed there; the
+    caller checks that separately."""
+    return key == "surname" or key.endswith("Surname")
+
+
+def test_surname_variant_hints_followed(tool_calls, test):
+    """Tag-gated (surname-variant-hints-followed): issue #3054 -- when a
+    record_search response carries surnameVariantHints (a search that did not
+    find its subject, on a -datter/-dotter patronymic; see
+    packages/engine/mcp-server/src/utils/surname-variant-hints.ts), some LATER
+    record_search call must put one of the hinted abbreviated forms in a
+    surname field.
+
+    Ground truth: the 2026-07-21 anders-monsen e2e run made 24 record_search
+    calls, varied the bride's given name (Unna -> Urna), and never once sent a
+    surname other than 'Halsteinsdatter'; the index holds 'Urna Halsteinsdr'.
+    The 2026-10-08 baseline of ut_search_records_023 (before the hint) failed
+    6 of 10 runs the same way.
+
+    Any surname field counts, not only the one the hint came from: a role swap
+    (hint on spouseSurname, the bride then searched as principal) is a
+    legitimate way to act on it. "Any later call", not "the next two": two
+    calls issued together before the hint was read, or a given-name retry
+    first, would false-fail a short window. The cost is that a run which
+    wanders nine calls before abbreviating still passes here -- the judge's
+    score-2 band, not this validator, grades that.
+    """
+    if "surname-variant-hints-followed" not in test.get("tags", []):
+        pytest.skip("not a surname-variant-hints scenario")
+    record_calls = [
+        c for c in (tool_calls or [])
+        if c.get("tool", "").split("__")[-1] == "record_search"
+    ]
+
+    hint_pos = None
+    variants = set()
+    alt_variants = set()  # listed for surnameAlt, so followed there too
+    for i, c in enumerate(record_calls):
+        response = c.get("response") or {}
+        hints = response.get("surnameVariantHints") or {}
+        for entry in hints.get("fields") or []:
+            for v in entry.get("variants") or []:
+                if isinstance(v, str) and v.strip():
+                    variants.add(v.strip().lower())
+                    if entry.get("field") == "surnameAlt":
+                        alt_variants.add(v.strip().lower())
+        if variants:
+            hint_pos = i
+            break
+    if hint_pos is None:
+        pytest.skip("no surnameVariantHints returned in this run")
+
+    followed = False
+    for c in record_calls[hint_pos + 1:]:
+        args = c.get("args") or {}
+        for key, value in args.items():
+            if not isinstance(value, str):
+                continue
+            form = value.strip().lower()
+            if (_is_surname_field(key) and form in variants) or (
+                key == "surnameAlt" and form in alt_variants
+            ):
+                followed = True
+    assert followed, (
+        "record_search returned surnameVariantHints listing "
+        + repr(sorted(variants))
+        + ", but no later record_search call put any of them in a surname "
+        "field (issue #3054)."
+    )
+
+
 # --- Asks permission instead of executing a mandated lever -------------
 
 _PERMISSION_PHRASES = (
@@ -705,8 +662,9 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
 
     Paired exactly where it can be: log id -> the staged handle its
     `research_log_append` op finalized -> the `record_search` call whose
-    response staged that handle. An entry with no handle falls back to
-    surname-keyed positional pairing among calls no entry has claimed, because
+    response staged that handle. An entry with no handle is paired with an
+    unclaimed call it traces to exactly, if there is one; otherwise it falls
+    back to surname-keyed positional pairing among calls no entry has claimed, because
     two calls sharing a surname is the skill's own broad-then-narrow pattern and
     an any()-style match would hide a claim one of them never sent. An entry
     past the last call for its surname is left alone.
@@ -753,8 +711,29 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
     for c in calls:
         if id(c) not in claimed:
             free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("surname")), []).append(c)
+
+    def _traces(e: dict, c: dict) -> bool:
+        never_sent, differs = _filter_claim_findings(e.get("query"), _record_search_sent(c.get("args")), vocabulary)
+        return not never_sent and not differs
+
+    # An entry that traces exactly to an unclaimed call is that call's log, first.
+    # Position alone shifted every later pair when one search went unlogged, and
+    # reported four faithful entries of ut_search_records_026 (v5_2026-10-12_12-15-56)
+    # as claiming filters their calls never sent. Each call is claimed once, so two
+    # entries cannot both trace to one call and hide a claim the other never sent.
+    # Most specific entry first: a bare {surname} also traces to a narrower call,
+    # and taken first it steals that call from the entry that names its filters.
+    traced: set[int] = set()
+    for e in sorted(unpaired, key=lambda e: -len(_as_mapping(e.get("query")))):
+        pool = free.get(_hashable_key(_as_mapping(e.get("query")).get("surname")), [])
+        match = next((c for c in pool if _traces(e, c)), None)
+        if match is not None:
+            pool.remove(match)
+            traced.add(id(e))
+            pairs.append((e, match, "exact trace"))
+    still_unpaired = [e for e in unpaired if id(e) not in traced]
     positions: dict[str, int] = {}
-    for e in unpaired:
+    for e in still_unpaired:
         surname = _as_mapping(e.get("query")).get("surname")
         group = _hashable_key(surname)
         i = positions.get(group, 0)

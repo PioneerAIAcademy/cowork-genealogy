@@ -20,7 +20,11 @@ signature contract.
 
 from __future__ import annotations
 
+import re
+
 import pytest
+
+from harness.skill_runner import agent_return_text
 
 
 # --- Tool allowlist ---
@@ -731,3 +735,51 @@ def test_shortfall_matches_document_state(after_state, test):
         for i, claim in enumerate(ps.get("claims") or []):
             if isinstance(claim, dict) and "shortfall" in claim:
                 _check_ceiling(claim["shortfall"], f" claims[{i}]")
+
+
+# --- summary_for_user on the completing call (issue #2951) -------------
+
+_BANNED_USER_WORDS = re.compile(r"\b(proofs?|GPS|exhaustive(?:ly)?)\b", re.IGNORECASE)
+
+
+def _summary_for_user(text: str) -> str | None:
+    """The text after the last line that is exactly `---`, or None."""
+    lines = text.splitlines()
+    marks = [i for i, line in enumerate(lines) if line.strip() == "---"]
+    if not marks:
+        return None
+    return "\n".join(lines[marks[-1] + 1 :]).strip()
+
+
+def _project_status(state) -> str | None:
+    return ((state.get("research_json") or {}).get("project") or {}).get("status")
+
+
+def test_completion_summary_offers_second_opinion(
+    before_state, after_state, agent_returns, text_response, test
+):
+    """Every call that moves `project.status` to `completed` ends its
+    user-facing summary with a second-opinion offer — gps-mentor is off the
+    default path, so this sentence is the user's only route to it — and never
+    says "proof", "GPS" or "exhaustive". Read from the documents, not from a
+    tag, so it binds on every test whose run completes the project. A test
+    tagged `summary-for-user-completion` must also complete it. Reads the
+    agent's own return, not the main thread's relay of it, falling back to
+    `text_response` when the agent returned nothing."""
+    tagged = "summary-for-user-completion" in test.get("tags", [])
+    before, after = _project_status(before_state), _project_status(after_state)
+    if tagged:
+        assert after == "completed", (
+            f"concluding the project's only question should set project.status to "
+            f"'completed'; got {after!r}"
+        )
+    elif not (after == "completed" and before != "completed"):
+        pytest.skip("this call did not complete the project")
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    summary = _summary_for_user(reply)
+    assert summary, "no summary_for_user: the reply has no line that is exactly `---`"
+    assert re.search(r"second opinion", summary, re.IGNORECASE), (
+        "the completing summary_for_user does not offer a second opinion"
+    )
+    banned = sorted({m.group(0) for m in _BANNED_USER_WORDS.finditer(summary)})
+    assert not banned, f"summary_for_user uses words kept out of user text: {banned}"

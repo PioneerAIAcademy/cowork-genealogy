@@ -172,6 +172,17 @@ states no order between the two. Siblings go first: they are two hops from the
 anchor (via a parent) and children are one, so this sheds the furthest kin first,
 which is what "keep the closest" implies.
 
+**Facts copied from the scored record are left out.** Before scoring, every fact
+and name in the mob whose source refs all resolve to the record under scrutiny
+is dropped (`withoutRecordSourced`; the ref walk is `mintedFromThisRecord`'s:
+tree ref → research source → its assertions' `record_id`). A fact or name that
+also cites another source stays, and a person keeps at least one name.
+`materialize_facts` writes a linked record's facts onto the tree person, so a
+re-score after that compares the record with itself. Measured live 2026-10-12 on
+the Gaetjen fixture: the 1875 register persona scored 0.43 (3) against I1 as the
+tree held him and 0.985 (5) once its own facts were on I1; the 1871 arrival
+persona went from no match (0.006) to 0.990 (5).
+
 Not `rank-search-matches.ts`'s exported `buildSubjectDoc`, which selects a
 *subject* for a many-candidate ranking fan-out and deliberately enriches it from
 `research.json`; `matchSubset` selects a *mob* by relationship topology and must
@@ -303,7 +314,7 @@ Written host-side by the tool that computed it, so the payload never round-trips
 through the model on the legitimate path. That is what `match_score` alone never
 was (ADR-0009 constraint 2). **It is not yet unforgeable.**
 `guard_project_files.py`'s `PROTECTED_PROJECT_FILES` covers `research.json`,
-`tree.gedcomx.json` and `starting-tree.gedcomx.json` only, so nothing stops a raw
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` and `external-collections.json` only, so nothing stops a raw
 `Write` to `results/.scores/` from inside the VM: the model cannot produce the
 payload, but it can author the file. Closing that is a precondition for the
 refusal step trusting this record, and it touches ADR-0005, which owns the list.
@@ -398,7 +409,7 @@ from the API is parsed and reduced.
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
 | `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
-| `confidence` | number | only when `matched: true` | Integer 1–10. The API's coarse-bucket confidence rating. Higher is better. |
+| `confidence` | number | only when `matched: true` | Integer 1–5. The API's coarse-bucket confidence rating. Higher is better. |
 | `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. Near-1 means strong match; near-0 means no signal. |
 | `queryArk` | string | yes | The persistent ARK of the focus person in `gedcomx1`, in canonical form (e.g. `"ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
 | `candidateArk` | string | yes | The persistent ARK of the matched person in `gedcomx2`, in canonical form. Derived from `entries[0].id` in the API response (a resolver URL), normalized to `ark:/61903/...`. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
@@ -504,7 +515,7 @@ Each entry's `gedcomx` must include:
 {
   "entries": [
     {
-      "confidence": 5,                                      // int 1–10; OMITTED on no-match
+      "confidence": 5,                                      // int 1–5; OMITTED on no-match
       "id": "https://familysearch.org/ark:/61903/4:1:<CAND>",  // candidate ARK
       "score": 0.99983513                                   // float 0–1
     }
@@ -834,7 +845,7 @@ export const samePersonSchema = {
     "Each gedcomx may contain multiple persons (focus + parents); the primaryId " +
     "tells the tool which one is the focus.\n" +
     "\n" +
-    "Returns a match decision with confidence (integer 1–10, omitted on " +
+    "Returns a match decision with confidence (integer 1–5, omitted on " +
     "no-match) and score (float 0–1). Returns `matched: false` when the API " +
     "doesn't recognize a real match (confidence omitted, score near zero).",
   inputSchema: {

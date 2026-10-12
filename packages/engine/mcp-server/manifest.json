@@ -21,7 +21,19 @@
     "entry_point": "build/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/build/index.js"]
+      "args": ["${__dirname}/build/index.js"],
+      "env": {
+        "GENEALOGY_OPENROUTER_API_KEY": "${user_config.openrouter_api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "openrouter_api_key": {
+      "type": "string",
+      "title": "OpenRouter API key",
+      "description": "Lets it read page scans and browse unindexed films. Get a key at https://openrouter.ai/keys (charged per use). Optional: leave blank to skip, or if your key is already in ~/.familysearch-mcp/config.json.",
+      "sensitive": true,
+      "required": false
     }
   },
   "tools": [
@@ -41,6 +53,7 @@
     { "name": "record_search" },
     { "name": "person_search" },
     { "name": "person_ancestors" },
+    { "name": "tree_gaps" },
     { "name": "same_person" },
     { "name": "person_record_matches" },
     { "name": "record_person_matches" },
@@ -62,6 +75,7 @@
     { "name": "merge_tree_persons" },
     { "name": "research_log_append" },
     { "name": "convert_calendar" },
+    { "name": "census_children_gap" },
     { "name": "build_external_search_url" },
     { "name": "tree_edit" },
     { "name": "tree_correct" },

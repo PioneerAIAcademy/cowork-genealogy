@@ -22,7 +22,11 @@ Two detectors, one vocabulary:
    `classify_server_status` reads it. This is the cheap, decisive check.
 2. **Mid-run backstop** — for a server that dies after init:
    `tool_search_miss_streak` counts consecutive no-match `ToolSearch` results
-   while zero `mcp__` calls have ever succeeded.
+   while zero `mcp__` calls have ever succeeded. **Inert under
+   `--no-tool-search`:** with deferral off there is no ToolSearch reply to
+   count, so a server that dies after init goes unflagged. Accepted for that
+   experiment-only flag (2026-10-09); no off-mode replacement exists, so a dead
+   server shows up only as a run with zero successful genealogy calls.
 
 Preflight asks the CLI the same question a different way
 (`ClaudeSDKClient.get_mcp_status()`), whose `mcpServers` entries have the same

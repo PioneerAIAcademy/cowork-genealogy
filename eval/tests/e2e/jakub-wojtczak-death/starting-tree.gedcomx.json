@@ -1,0 +1,219 @@
+{
+  "persons": [
+    {
+      "id": "PM7N-7HV",
+      "ark": "ark:/61903/4:1:PM7N-7HV",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "dc464889-a147-4b6b-9875-3bcdb8a4b899",
+          "preferred": true,
+          "given": "Jakub",
+          "surname": "Wojtczak",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "abf0a162-5571-4c8f-80fe-9b5bf43829aa",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PM7J-C3Q",
+      "ark": "ark:/61903/4:1:PM7J-C3Q",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "4733dc64-ec62-4d01-a7b3-036e74c7b6fd",
+          "preferred": true,
+          "given": "Stefan",
+          "surname": "Wojtczak",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f418c359-0ba4-4d5b-b7c0-1aa6c59823fe",
+          "type": "Birth",
+          "date": "25 August 1935",
+          "standard_date": "25 Aug 1935"
+        },
+        {
+          "id": "3cce1455-c555-4c68-ba15-78cfc86970f2",
+          "type": "Death",
+          "date": "17 January 2012",
+          "standard_date": "17 Jan 2012"
+        }
+      ]
+    },
+    {
+      "id": "PM7N-NVT",
+      "ark": "ark:/61903/4:1:PM7N-NVT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "66bf349d-766c-4ccc-9b6b-3a4a1b0ba01d",
+          "preferred": true,
+          "given": "Helena",
+          "surname": "Bazelak",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "4ab8c6a0-1fe1-442a-83ec-df19a41cecdb",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PM7N-KTF",
+      "ark": "ark:/61903/4:1:PM7N-KTF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "a42ce442-7268-4810-95c3-9d323f58a0e4",
+          "preferred": true,
+          "given": "Irena",
+          "surname": "Wojtczak",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b46974a0-81ef-4c67-bc92-9c4064202320",
+          "type": "Birth",
+          "date": "25 October 1932",
+          "standard_date": "25 Oct 1932"
+        },
+        {
+          "id": "7b4c0475-b648-4a31-b00b-8998c23bc5ee",
+          "type": "Death",
+          "date": "12 January 2011",
+          "standard_date": "12 Jan 2011"
+        }
+      ]
+    },
+    {
+      "id": "PM7J-3JR",
+      "ark": "ark:/61903/4:1:PM7J-3JR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "53359970-6d09-413e-93af-15a16bac6bf9",
+          "preferred": true,
+          "given": "Kazimierz",
+          "surname": "Wojtczak",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "33d0a20c-482e-4e5b-ba06-d8bb83a36a8b",
+          "type": "Birth",
+          "date": "10 June 1942",
+          "standard_date": "10 Jun 1942"
+        },
+        {
+          "id": "3c909193-ccf9-4524-b894-74cf26e07601",
+          "type": "Death",
+          "date": "9 December 2022",
+          "standard_date": "9 Dec 2022"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "PM7N-7HV",
+      "person2": "PM7N-NVT"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "PM7N-7HV",
+      "child": "PM7N-KTF"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "PM7N-NVT",
+      "child": "PM7N-KTF"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "PM7N-7HV",
+      "child": "PM7J-C3Q"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "PM7N-NVT",
+      "child": "PM7J-C3Q"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "PM7N-7HV",
+      "child": "PM7J-3JR"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "PM7N-NVT",
+      "child": "PM7J-3JR"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_PM7N-7HV",
+      "title": "Jakub Wojtczak",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Jakub Wojtczak (PID PM7N-7HV); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PM7N-7HV"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_PM7J-C3Q",
+      "title": "Stefan Wojtczak",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Stefan Wojtczak (PID PM7J-C3Q); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PM7J-C3Q"
+    },
+    {
+      "id": "sd_person_PM7N-NVT",
+      "title": "Helena Bazelak",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Helena Bazelak (PID PM7N-NVT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PM7N-NVT"
+    },
+    {
+      "id": "sd_person_PM7N-KTF",
+      "title": "Irena Wojtczak",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Irena Wojtczak (PID PM7N-KTF); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PM7N-KTF"
+    },
+    {
+      "id": "sd_person_PM7J-3JR",
+      "title": "Kazimierz Wojtczak",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Kazimierz Wojtczak (PID PM7J-3JR); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PM7J-3JR"
+    }
+  ]
+}

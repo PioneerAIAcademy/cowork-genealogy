@@ -1,6 +1,8 @@
 name: Check e2e fixtures + grading + annotation validation
 
-# Three e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py):
+# The e2e discipline checks on committed files (eval/harness/scripts/check_e2e_fixtures.py) —
+# four blocking run-log gates (grading, 1M window, tool search off, credentials),
+# blocking annotation validation, and two warns. The run-log gates:
 #
 # Grading gate (BLOCKING): every run log added or renamed into the corpus in
 # this PR that produced a final tree must ship its run-<ts>.ann.json in the
@@ -15,6 +17,15 @@ name: Check e2e fixtures + grading + annotation validation
 # comparable to the rest of the corpus (it changes the compaction count and the
 # cache-gap structure) and the corpus scan has no exclusion for it, so keep such
 # a run in a sibling directory outside eval/runlogs/e2e/. Same AR scoping.
+#
+# Tool-search-off gate (BLOCKING): a run log added or renamed into
+# eval/runlogs/e2e/ whose flat usage.tool_search or usage.tool_search_offered is
+# false ran with every tool schema loaded up front (--no-tool-search, or an
+# inherited CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS), so its context size and
+# cache figures are not the corpus's. Absent fields pass. Same AR scoping.
+#
+# Credential gate (BLOCKING): a run log added, renamed or modified in this PR
+# that carries a live FamilySearch, OpenRouter or Anthropic credential.
 #
 # Fixture *validity* (a fixture having a committed passing run log — spec §14)
 # is NOT gated here: it is a recommended authoring practice, not a CI check, so

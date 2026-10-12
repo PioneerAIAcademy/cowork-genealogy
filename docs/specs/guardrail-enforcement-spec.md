@@ -167,7 +167,7 @@ depends on another shipping first.
 |---|---|---|---|---|
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a tier claimed without a prior exhaustiveness declaration | **enforcing** |
 | §5 | Write-boundary invariant | engine (MCP tool) — so Cowork, hosted, both harnesses | a `relationship` assertion whose `relationship_type` contradicts what its own `value` says about the record subject, including a sibling typed as a child. Refuses **21 of 2586 (0.8%)**, measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py` | **enforcing** |
-| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing the two project files without going through a validating tool | **enforcing** |
+| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
 | §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
@@ -175,7 +175,7 @@ depends on another shipping first.
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | §6 | Field ownership by caller (`project.status`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic and so gates this arm with no edit | a `project.status` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, from either the `fields` or `entry` key, on append **and** update. Keyed on presence, not on a value: any write of the field asserts the project's state. The co-written rest of `project` — including the `updated` activity ping — is untouched | **enforcing** (since 2026-09-24). **Nothing proves this arm binds in Cowork**, which is true of every hook arm (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
-| below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
+| below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which `make e2e-advisories SINCE=all` now reports (fired / acted / ignored / condition-never-held / not-observable per advisory, split by `agent_type`). A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: a link made through a relationship assertion is bound on the date arm only, and only when another link ties a one-party assertion of the same record party to the same person. One with no such sibling, including a relationship link written before its party's one-party link, is still not bound, because which of the two people it is about is not decidable from the documents |
 | §5 | An unexplained move between countries caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident` whose record places the linked party in a recognized country other than every country the tree person's Residence/Census facts attest, with no `move_bridge` | **enforcing** (since this change). **Refuses 0 of 5,893** committed confident links (2,617 comparable). Its limits: it compares countries, never states, so a long move inside one country is the prose cap's to catch; it cannot judge whether the quoted `move_bridge` actually explains the move, only that one was named; and a place whose last segment names no recognized country is not checked |
@@ -279,7 +279,7 @@ closes the vocabulary gap; what it does not close is everything below.
 | Row | False denies | Why |
 |---|---:|---|
 | `plan_items` absent from the table | **1,134** | the tool defines the section; the table's own comment *blesses* the status flip it would deny |
-| `evaluations` absent | 172 | a schema-required section; denying it kills the mandatory proof-critique |
+| `evaluations` absent | 172 | a schema-required section; denying it kills every `gps-mentor` verdict write |
 | `hypotheses` → `{hypothesis-tracking}` | 31 | that skill is invoked **0 times in 154 runs** |
 | three rows narrower than the prose table they mirror | 72 | incl. `questions` omitting `proof-conclusion` |
 | `known_holdings` absent | 1 | the prose table declares owners; the code row is missing |
@@ -713,6 +713,7 @@ What the detector currently treats as deciding reachability:
 | non-null `record_persona_id` | yes | `research_append` verified it against the record's `gedcomx.persons[]` on write |
 | `record_read` | yes | returns a `SimplifiedGedcomX` with a persons array — the persona was in hand |
 | `record_search` with a retained `results_ref` | yes | the sidecar result carries the record's `gedcomx` |
+| `person_record_matches` | yes | an accepted FamilySearch hint (search-hints' record mode): its ark is a `1:1:` record persona, which record-extraction fetches with `record_read` |
 | `fulltext_search` | **no** | an FTS result carries transcript text, names and places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry `record_read` (which takes a `1:1:` record-persona ARK) cannot open |
 | image, external site, PDF | **no** | unstructured; no persons array |
 | a search whose sidecar was not retained | **no** | nothing to read the persona out of |
@@ -1532,13 +1533,15 @@ Two properties are load-bearing and must survive any refactor:
 What it does not do: validate the *content* of `stop_criteria` or cross-check
 `log_entry_ids` against real `log[]` entries — a declaration can still be
 present-and-empty. And it says nothing about overclaiming language in
-`narrative_markdown`; that is `gps-mentor`'s proof-critique job, checked by §8.
+`narrative_markdown`; that is `gps-mentor`'s proof-critique job, run when the user asks for a second opinion.
 
 ## 6. Raw-write lockdown
 
-No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json` or
-`tree.gedcomx.json`. Every write goes through a validating MCP tool
-(`research_append`, `research_log_append`, `tree_edit`, `tree_correct`); a
+No raw `Write`, `Edit`, or `NotebookEdit` may target `research.json`,
+`tree.gedcomx.json`, `starting-tree.gedcomx.json` or `external-collections.json`
+(`PROTECTED_PROJECT_FILES`). Every write goes through an MCP tool — a validating
+one (`research_append`, `research_log_append`, `tree_edit`, `tree_correct`) for
+the first two, and `external_links_search` for `external-collections.json`; a
 direct file write never validates.
 
 Three shipping copies, plus the unit harness — which *imports* the plugin
@@ -2293,11 +2296,11 @@ expectation that it graduates.
 
 ## 8. Post-run compliance detectors
 
-Three non-windowed checks over the final project state and the run's tool-call
+Two non-windowed checks over the final project state and the run's tool-call
 log; any violation sets `compliance: fail`. Specified in full — including the historical
 `not_checked` handling — in `docs/specs/e2e-test-spec.md` §7.5. Implemented in
 `skill_invocation.py` (`find_effects_without_invocation`,
-`find_missing_mentor_verdicts`, `find_person_evidence_missing_same_person`).
+`find_person_evidence_missing_same_person`).
 
 **They report; they do not gate.** A violation moves the `compliance` axis and
 nothing else. Until 2026-09-25 it also forced `outcome: fail` regardless of what
@@ -2329,7 +2332,7 @@ Two further properties worth keeping in view here:
   calls away for a different record. That is precisely what §7 exists to catch
   and why both layers are needed.
 - **A required-tool fingerprint beats a proximity heuristic where one exists.**
-  Check 3 works because `same_person` is a *required call*, so "was it called
+  Check 2 works because `same_person` is a *required call*, so "was it called
   for this person" is a fact — but only where the call is possible. It skips a
   link whose own provenance lane cannot yield a record persona from what the run retained, and counts
   what it skipped (§4, "One class of write genuinely cannot satisfy the gate").
@@ -2537,15 +2540,14 @@ this section before reopening one.
   `probable` tier.
 - **Running the tree-reading §8 arms over a hosted feedback bundle** — cannot be
   done, so the hosted feedback bundle corpus is measured with the transcript-only
-  and `research.json`-only detectors instead. A feedback bundle carries no
+  detector instead. A feedback bundle carries no
   `starting_tree` baseline, and its `tree.gedcomx.json` is redacted before it
   leaves the sandbox (`_redact_person`, `apps/server/app/feedback.py`), so the
   arms that diff the final tree against a seed — `find_effects_without_invocation`
   and `check_guardrail_compliance` — would read every seeded relationship as a
   violation (the same no-baseline defect that killed per-turn scoping, above).
-  Only `find_unguarded_protected_writes` (transcript-only) and
-  `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
-  bundle; the adapter and report live in `eval/harness/e2e/`
+  Only `find_unguarded_protected_writes` (transcript-only) is valid over a
+  bundle, and the scan reads no `research.json`; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
   **Two of `find_unguarded_protected_writes`' owner arms move their write
   inside an agent, and whether that write is visible is decided per bundle and
@@ -2672,8 +2674,9 @@ this section before reopening one.
   31" and "0 of 123" do not cover the population the rule is aimed at.
 
   The rejection does not rest on the rate. It rests on three things that hold
-  whatever the rate turns out to be: a lost verdict is **caught downstream** by
-  the completion gate as a visible stall rather than silent corruption; the
+  whatever the rate turns out to be: a lost verdict is **visible to the user who
+  asked for it**, since the mentor now runs only on request, rather than silent
+  corruption; the
   sample **grows on its own** now that attribution has shipped, so no monitoring
   task is needed to improve it; and the alternative is a plane that fails open
   and costs a hook invocation per tool call, bought against an unobserved
@@ -2808,9 +2811,6 @@ that outlive any one of them.
   looks identical to the original bug and nothing here catches it — §8 detects
   "skill never invoked," not "skill invoked, its own reference silently
   skipped."
-- **`gps-mentor`'s own gate may be as skippable as the four.** §8 check 2
-  detects a missing verdict after the fact; nothing prevents the router from
-  skipping the invocation under the same context pressure.
 - **`research-append.ts`'s batch ordering was audited for one TOCTOU case
   only** (§5's). Other same-batch orderings that self-satisfy a precondition —
   adding a `person_evidence` link and consuming it for an assertion in one
