@@ -7,8 +7,16 @@
 
 export interface LogLike {
   id?: string
-  plan_item_id?: string
-  [k: string]: unknown
+  /** `string | null | undefined`, not `string | undefined`: the schema's own `LogEntry`
+   *  types this `string | null` (an entry explicitly not tied to a plan item), and the
+   *  narrower form made this helper reject the exact type it exists to split. The runtime
+   *  arm below was always right — `Boolean(ref)` handles null — so nothing moved but the
+   *  type, which had never been checked against a caller because there was none.
+ *
+ *  The `[k: string]: unknown` index signature went with it: a closed interface like
+ *  `LogEntry` cannot satisfy one, so `T extends LogLike` rejected every real log
+ *  type. A generic admits extra fields without it. */
+  plan_item_id?: string | null
 }
 
 export interface OffPlanSplit<T> {

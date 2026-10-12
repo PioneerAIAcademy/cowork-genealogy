@@ -172,3 +172,40 @@ describe('ResearchLogSection — default sort order', () => {
     ).toBeTruthy()
   })
 })
+
+describe('off-plan group', () => {
+  // `splitOffPlan` shipped with a thorough unit suite and NO render site — the helper
+  // was imported by its own test and nothing else. That is this branch's own finding 13
+  // ("a pure helper with a thorough unit suite is the easiest place to mistake rule
+  // coverage for feature coverage") landing on the branch that wrote it. These test the
+  // wiring, which is the part that was missing.
+
+  const onPlanEntry = (id: string, planItemId: string): LogEntry =>
+    ({ ...patrickFlynnResearch.log[0], id, plan_item_id: planItemId }) as LogEntry
+  const offPlanEntry = (id: string): LogEntry =>
+    ({ ...patrickFlynnResearch.log[0], id, plan_item_id: null }) as LogEntry
+
+  it('renders no group header when every entry is on plan', () => {
+    const itemId = patrickFlynnResearch.plans?.[0]?.items?.[0]?.id ?? 'pli_001'
+    mockResearch({ log: [onPlanEntry('log_a', itemId)] })
+    render(<ResearchLogSection />)
+    expect(screen.queryByTestId('off-plan-group')).toBeNull()
+  })
+
+  it('groups work the plan never accounted for', () => {
+    const itemId = patrickFlynnResearch.plans?.[0]?.items?.[0]?.id ?? 'pli_001'
+    mockResearch({ log: [onPlanEntry('log_a', itemId), offPlanEntry('log_b')] })
+    render(<ResearchLogSection />)
+    const header = screen.getByTestId('off-plan-group')
+    expect(header.textContent).toMatch(/1 entry the plan did not account for/)
+  })
+
+  it('sends a DANGLING plan reference off-plan, not on', () => {
+    // The quiet failure the helper's `knownItemIds` arm exists for: an entry naming an
+    // item that no longer exists is not coverage, and counting it on-plan would let the
+    // plan claim work it never planned.
+    mockResearch({ log: [onPlanEntry('log_a', 'pli_does_not_exist')] })
+    render(<ResearchLogSection />)
+    expect(screen.getByTestId('off-plan-group').textContent).toMatch(/1 entry/)
+  })
+})

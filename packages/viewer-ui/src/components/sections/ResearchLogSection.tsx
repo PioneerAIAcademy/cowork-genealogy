@@ -6,6 +6,7 @@ import Linkify from '../shared/Linkify'
 import { openExternal } from '../../lib/external'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
+import { splitOffPlan } from '../../lib/offPlan'
 import styles from './ResearchLogSection.module.css'
 
 type SortKey = 'performed' | 'tool' | 'outcome' | 'results_examined'
@@ -56,53 +57,23 @@ export default function ResearchLogSection(): React.JSX.Element {
     [logEntries, sortKey, sortDir]
   )
 
-  const sourcesByLogEntry = useMemo(() => indexByLogEntry(sources), [sources])
-  const assertionsByLogEntry = useMemo(() => indexByLogEntry(assertions), [assertions])
+  // Work the plan never accounted for gets its own group. Without it the ticking plan
+  // reads as though it covered everything the run did, which is the quiet version of
+  // lying to the reader. `knownItemIds` also sends a DANGLING reference off-plan: an
+  // entry naming an item that no longer exists is not coverage.
+  const knownItemIds = useMemo(
+    () => new Set((research?.plans ?? []).flatMap((plan) => plan.items.map((item) => item.id))),
+    [research?.plans]
+  )
+  const { onPlan, offPlan } = useMemo(
+    () => splitOffPlan(sorted, knownItemIds),
+    [sorted, knownItemIds]
+  )
 
-  const handleSort = (key: SortKey): void => {
-    if (sortKey === key) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortKey(key)
-      setSortDir('desc')
-    }
-  }
-
-  const renderSortIndicator = (key: SortKey): React.JSX.Element | null => {
-    if (sortKey !== key) return null
-    return <span className={styles.sortIndicator}>{sortDir === 'asc' ? '▲' : '▼'}</span>
-  }
-
-  if (logEntries.length === 0) {
-    return (
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Research Log</h2>
-        <p className={styles.empty}>
-          No log entries yet. Each search — of records, images, full text, and
-          external sites — appends an entry here as research proceeds.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className={styles.section}>
-      <h2 className={styles.sectionTitle}>Research Log</h2>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th onClick={() => handleSort('performed')}>Date{renderSortIndicator('performed')}</th>
-            <th onClick={() => handleSort('tool')}>Tool{renderSortIndicator('tool')}</th>
-            <th onClick={() => handleSort('outcome')}>Outcome{renderSortIndicator('outcome')}</th>
-            <th onClick={() => handleSort('results_examined')}>
-              Results{renderSortIndicator('results_examined')}
-            </th>
-            <th>Sources</th>
-            <th>Assertions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((entry) => {
+  // Extracted so the on-plan and off-plan groups render identical rows: the only
+  // difference is which group they sit in, and duplicating the body would let
+  // the two drift.
+  const renderEntry = (entry: LogEntry): React.JSX.Element => {
             const isExpanded = expandedId === entry.id
             const capturedSources = sourcesByLogEntry.get(entry.id) ?? []
             const producedAssertions = assertionsByLogEntry.get(entry.id) ?? []
@@ -241,7 +212,64 @@ export default function ResearchLogSection(): React.JSX.Element {
                 </td>
               </tr>
             )
-          })}
+  }
+
+  const sourcesByLogEntry = useMemo(() => indexByLogEntry(sources), [sources])
+  const assertionsByLogEntry = useMemo(() => indexByLogEntry(assertions), [assertions])
+
+  const handleSort = (key: SortKey): void => {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('desc')
+    }
+  }
+
+  const renderSortIndicator = (key: SortKey): React.JSX.Element | null => {
+    if (sortKey !== key) return null
+    return <span className={styles.sortIndicator}>{sortDir === 'asc' ? '▲' : '▼'}</span>
+  }
+
+  if (logEntries.length === 0) {
+    return (
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Research Log</h2>
+        <p className={styles.empty}>
+          No log entries yet. Each search — of records, images, full text, and
+          external sites — appends an entry here as research proceeds.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.section}>
+      <h2 className={styles.sectionTitle}>Research Log</h2>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th onClick={() => handleSort('performed')}>Date{renderSortIndicator('performed')}</th>
+            <th onClick={() => handleSort('tool')}>Tool{renderSortIndicator('tool')}</th>
+            <th onClick={() => handleSort('outcome')}>Outcome{renderSortIndicator('outcome')}</th>
+            <th onClick={() => handleSort('results_examined')}>
+              Results{renderSortIndicator('results_examined')}
+            </th>
+            <th>Sources</th>
+            <th>Assertions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {onPlan.map(renderEntry)}
+          {offPlan.length > 0 && (
+            <tr data-testid="off-plan-group">
+              <td colSpan={6} className={styles.offPlanHeader}>
+                Off-plan work — {offPlan.length} entr{offPlan.length === 1 ? 'y' : 'ies'}
+                {' '}the plan did not account for
+              </td>
+            </tr>
+          )}
+          {offPlan.map(renderEntry)}
         </tbody>
       </table>
     </div>
