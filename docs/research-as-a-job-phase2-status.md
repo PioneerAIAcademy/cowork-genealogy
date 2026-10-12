@@ -1,7 +1,18 @@
 # Research as a job — phase 2 status log
 
-**Branch:** `research-as-a-job-phase2` (pushed to origin; **no PR yet, by instruction**).
-**Last updated:** 2026-10-06. The 2026-09-29 entry said the acceptance was blocked on Cia-3's #2793/#2927; **both closed 2026-10-03**, so that block is gone. R2's measurement is now waiting on #3119 instead, and its MECHANISM has changed. Update this file whenever the branch moves.
+**Branch:** `research-as-a-job-phase2`. **Draft PR #3262.**
+**Last updated:** 2026-10-12. Update this file whenever the branch moves.
+
+**Everything this file said was blocking is now closed:** #2793 and #2927 (2026-10-03),
+#3119 (2026-10-08), #2122 (2026-10-12). Nothing external gates this branch.
+
+**What a 2026-10-12 review of this document found, and this revision fixes.** The file
+contradicted itself on `sdk_stream_silence`, named four closed issues as live blockers,
+undercounted the usable trigger tests, called a shipped feature "Not started" — and, worst,
+its one-line summary said the only thing left was R2. That was wrong: **three clauses of
+phase 2's own acceptance are unmet**, and three "deferred" items have no recorded ruling.
+They are listed below rather than left implied. A status log that undercounts what is left
+is worse than no status log.
 
 This is a status log, not a plan. The plan is
 [`docs/plan/research-as-a-job-phase2.md`](./plan/research-as-a-job-phase2.md); the parent
@@ -9,7 +20,9 @@ is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-lat
 
 ## Where we are in one line
 
-*Before phase 2* is built and its acceptance is met except R2's activation measurement.
+*Before phase 2* is built; its acceptance is met except R2. **Phase 2 is NOT fully met** —
+three acceptance clauses are unbuilt (images, uploads, spend-resume) and three items are
+deferred with no ruling. See "What is left" below, which is now the authoritative list.
 **Phase 2 is built.** Every parent item is done or deferred by design. The measurement is
 still the only thing left, but what blocks it has changed: #2793/#2927 closed on 2026-10-03,
 and it now waits on #3119 restoring the activation tests it measures.
@@ -53,26 +66,61 @@ apart.
 
 ## What is left, and who owns it
 
-1. **R2's activation measurement** — no longer blocked by Cia-3. #2793 and #2927 both closed
-   2026-10-03 (#3092), so R3's precondition is satisfied. It now waits on **#3119**
-   (chrisedeson, open): the #2927 activation tests R2 measures were DELETED, and that issue
-   restores them. Its `Touches:` names `eval/tests/unit/research/` and a fresh run log, which
-   is the same snapshot this measurement reads, so the two should land together rather than
-   buy the slot twice.
+Nothing external blocks this branch. Four things are genuinely outstanding.
 
-   **The bar still applies; the mechanism does not.** R2 says "3/3, not one run" because
-   #2927 measured the trigger as a coin flip and one PASS of a coin flip proves nothing. That
-   concern is intact. But "three consecutive all-green SUITE runs" was retired
-   (`eval/CLAUDE.md` § "Clearing a card") after zero-red suites measured 8 of 54, so one
-   unrelated flapper blocked cards that had fixed every red they named. The modern form of
-   the same idea is `run_tests.py --test <id> --runs-per-test 3`, requiring `flaky: false`,
-   then ONE committed suite run. It is the same three draws at roughly a sixth of the spend,
-   and it reports `flaky` per test, which three suite runs never did. Measured today on
-   PR #3077: the scratch settled two ambiguous tests at ~$0.50 each where suite laps at ~$3
-   had settled nothing in three attempts.
+### 1. Phase 2's own acceptance — three clauses unbuilt
 
-   One trigger test survives today and is not enough on its own: `ut_research_005`, tagged
-   `grade:trigger`, passed in `research/v8.json` — on a single run.
+Phase 2's *Acceptance* paragraph (`research-as-a-job-later-REVISED.md`, the reading-experience
+section) has seven clauses. Four are met. These three are not, and each is a **build task, not
+a verification**:
+
+| Clause | State | Evidence |
+|---|---|---|
+| "a census page opens from the feed" | **unbuilt** | `proto/web/app.py`'s route map — `.../image`, `.../logs` and `.../files` all answer 501 |
+| "a PDF attached mid-run reaches the project" | **unbuilt** | no upload route exists in the proto web tier |
+| "a session stopped at the spend bound continues on the same project in one action" | **unbuilt** | `apps/web/src/api.ts`'s `createSession` takes `{title, model, sample}` and carries no project id, so a new session cannot open ON an existing project. `61c1c8941`, the only commit on this item, added a ChatPane notice and nothing else |
+
+The four that ARE met: paragraphs anchored to their step, identifiers linked, no wire names
+or bare collection numbers in chips, a deferred search not rendering as a negative result.
+Sidecar bodies are served (`f2b98b957`); a 404 now means a log genuinely has none.
+
+### 2. Three items deferred with no ruling
+
+`collapsed-card identity`, `compaction state` and `retry state` are recorded here as "Still
+deferred". **`docs/research-as-a-job-decisions.md` contains no ruling on any of them** — zero
+mentions of compaction, retry or collapsed. The same is true of images and uploads above.
+
+A deferral nobody ruled is not a deferral; it is work that fell off the list. Either get a
+ruling or treat them as open.
+
+### 3. R2's activation measurement — the one acceptance for *Before phase 2*
+
+R2 wants: a **new browser session** under the shipped profile, an objective whose answer was
+checked absent from the live tree, **no slash command**, invoking `research` in its first turn
+on **three consecutive runs**.
+
+**The unit corpus cannot stand in for this**, and an earlier draft of this file implied it
+could. Three usable `grade:trigger` tests exist — `ut_research_001`, `_004`, `_005`; a fourth,
+`_h22`, carries the tag but enters with `/research` and so cannot measure triggering at all.
+All three run on `mid-research-flynn`, an **active** project. They measure the #2927 trigger
+flap, which is the shape R2's 3/3 bar exists for, but not R2's literal object: a new session's
+first turn, where the web client prefixes `OPENING_TURN` and init-project holds call 1.
+
+So the unit run is **evidence, not acceptance**. #3119 records these tests proven 3/3 on main
+on 2026-10-08; a re-run is justified only by this branch's `research/SKILL.md` differing from
+the v19 snapshot.
+
+**The live half is blocked on a decision, not on work:** the hosted alpha has `AUTO_CONTINUE`
+off for cost (2026-10-12), which is the switch for continuous research. Turning it back on is
+the lead's call.
+
+### 4. Eval-run debt
+
+Two stale snapshots: `research` (`v19.json`) and `init-project` (`v17.json`). Buy both **once,
+at un-draft, after the final main merge** — any merge touching a skill dir, test, fixture or
+agent re-stales them.
+
+(A third violation, a hand-deleted `init-project` candidate, was restored 2026-10-12.)
 
 ## What changed under this branch while it sat
 
@@ -133,12 +181,12 @@ days after project-status converted.
 | Item | State | Needs |
 |---|---|---|
 | R1 router re-entry | **BUILT** — per-turn system prompt, plus the ledger recording which callee a Skill/Task call names | Nothing |
-| R4 `delivered` outcome | **BUILT** end to end — tool, hook arm, outcome, label, spec | Nothing. No skill body instructs its use yet (the enforcement half) |
-| "Not every turn is a job" finish line | Not started | R4's tool first |
+| R4 `delivered` outcome | **BUILT** end to end — tool, hook arm, outcome, label, spec | The enforcement half is #3372, in review. Note the gap it closes was NOT "no instruction": `DELIVERY_GUIDANCE` named the tool on both hosted planes all along. The router body said "end your turn" at the same moment and the nearer instruction won — a conflict, not an absence |
+| "Not every turn is a job" finish line | **BUILT**, across #3147 (the exit), #3187 (the bounded/job decision), #3235 (save what the turn finds), #3286 (compound asks) — all merged — and #3372 (the enforcement half) **in review** | Keep the "in review" qualifier until #3372 merges: if it is rejected this row is wrong again |
 | Capture a real feed | **DONE 2026-09-29** — `docs/captures/2026-09-29-mcandrew-children/`. 133 min, outcome `completed`, 2,697 events, 282 narration paragraphs | Nothing |
-| `sdk_stream_silence` | Diagnosed, not fixed | Decide: retry budget or per-test cap for 400s+ suites |
-| #2927 | **OPEN — do NOT fix here.** Its own board note says it is moot once #2793 lands, and the small patch would edit the file #2793 deletes | Cia-3 (asked to prioritise 2026-09-29) |
-| #2793 | OPEN, **assigned to Cia-3**, must land serially with #2792 and #2798 | Cia-3 |
+| `sdk_stream_silence` | **Retry fixed** (`74b477107`) — the threshold was never the defect; a 1s/2s/4s backoff put all three attempts inside ~7s of a three-minute stall. **Residual upstream flake remains**: the 2026-09-30 re-run records 0–2 aborts per run, `ut_research_plan_005` the repeat offender | Nothing here. Do not write a bare "fixed" — the retry is fixed, the flake is not |
+| #2927 | **CLOSED 2026-10-03** | Nothing |
+| #2793 | **CLOSED 2026-10-03** | Nothing |
 
 ## Before-phase-2 acceptance scorecard (R2/R3), measured against the capture
 
@@ -176,7 +224,7 @@ here — but one run cannot show that it won't, which is exactly why R2 asks for
    delivery rule was followed in both runs that could act on it; the decision exit was not
    reached in the one run that needed it. One observation, not a rate.
 
-## The one item still open and owned here
+## `sdk_stream_silence` — what was fixed, and what was not
 
 ~~`sdk_stream_silence`~~ — **FIXED** (`74b477107`). The threshold was not the defect: in
 successful runs the non-API gap peaks at 58.7s against a 180s window. The RETRY was — a
@@ -184,8 +232,14 @@ successful runs the non-API gap peaks at 58.7s against a 180s window. The RETRY 
 into the same dead upstream. A stall now waits out a meaningful fraction of the window that
 declared it.
 
-Nothing else here is owned by this branch. What remains is the acceptance above, and it is
-gated on #2927 (Cia-3).
+**The flake it was blamed for is not gone.** The 2026-09-30 re-run records 0-2 aborts per
+run with `ut_research_plan_005` the repeat offender. The retry is fixed; the upstream
+instability is not, and "FIXED" alone over-claimed it.
+
+**"Nothing else here is owned by this branch" was wrong**, and this section's heading with
+it — this was never the one item still open. See "What is left" above: three phase-2
+acceptance clauses are unbuilt (images, uploads, spend-resume), three items are deferred with
+no ruling, and R2 remains. #2927 closed on 2026-10-03 and gates nothing.
 
 ## Findings from phase 2 itself
 
