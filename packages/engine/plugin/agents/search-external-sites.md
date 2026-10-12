@@ -336,7 +336,9 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
-**First, call `research_query` with `section: "conflicts"`.** Do this before
+**First, call `research_query` with `section: "conflicts"` and no other
+argument** — not `questionId`, which selects only conflicts that block that
+question and returns nothing for one linked to none. Do this before
 the `build_external_search_url` call, every time you are about to pass a
 place or date. `project_context` does not return `conflicts[]` and neither
 does the rendered project state, so this call is the only way you can see
@@ -428,8 +430,9 @@ sites" below):
 - Common name → start narrow (add dates, relatives, a specific collection).
 - Include only parameters you're confident about; omit uncertain ones.
 - **Check `conflicts[]` before encoding a place or date** — fetch them with
-  `research_query` (`section: "conflicts"`); `project_context` does not
-  return them, so without that call you are guessing. Consider only
+  `research_query` (`section: "conflicts"`, and no other argument);
+  `project_context` does not return them, so without that call you are
+  guessing. Consider only
   `conflict_type: "fact"` entries whose `disputed_attribute` names that
   field. When more than one such entry names the field, apply the
   highest-precedence status present — `unresolved` beats `resolved` beats
