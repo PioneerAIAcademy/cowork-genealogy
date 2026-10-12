@@ -1664,7 +1664,18 @@ In order:
    `projectPath`, so staging is identical. A read that errors, or returns
    `staged: null`, is reported and skipped; the others proceed.
 3. **One `research_log_append` batch** logs every read (`tool: "record_read"`),
-   finalizing each staged file into its sidecar.
+   finalizing each staged file into its sidecar. A record an accepted
+   FamilySearch hint already logged is the exception (issue #3157): the
+   positive `person_record_matches` entry naming its ark, which no assertion
+   cites yet, is the record's own log entry. The record is still read and
+   staged, but no second `record_read` entry is written; the source and
+   assertions cite the hint's `logId`, and the assertions carry a null
+   `record_persona_id`, because that entry keeps no sidecar for a persona id to
+   resolve against (§3.5). A rejected hint, a hint for another record, and a
+   hint an assertion already cites are not reused. Without this the hint's
+   entry would never be referenced by an assertion, and the router's
+   "log entry with no assertion referencing it" row would send the record back
+   to extraction on every pass.
 4. **One `research_append` call per record.** `research_append` accepts exactly
    one sources append per call, so there is no batch-wide write. A refusal on
    record *k* leaves the records before it written; the resend skip makes a

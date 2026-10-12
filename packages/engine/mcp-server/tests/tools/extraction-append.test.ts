@@ -48,6 +48,8 @@ import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
 
+const EXTRACTION_LANE = { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" } as any;
+
 const citationDetail = {
   who: "Census enumerator",
   what: "1850 U.S. Census",
@@ -139,6 +141,7 @@ describe("extraction_append: only the three call shapes", () => {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
   it("writes exactly {sources, assertions}", () => {
     expect([...EXTRACTION_SECTIONS].sort()).toEqual(["assertions", "sources"]);
@@ -191,6 +194,135 @@ describe("extraction_append: only the three call shapes", () => {
     } as any, LOCAL);
     expect(two.ok).toBe(false);
     expect((two.errors ?? []).join(" ")).toMatch(/`recordIds` and `absences` together/);
+  });
+
+  // ─── §3.4.1 updates-only batch (issue #3159) ──────────────────────────────
+  // `extraction_append` no longer takes `ops`, but the composite persist it calls
+  // does, so the fix is pinned where it lives: `researchAppend` under the lane
+  // `extraction_append` passes it. ──────────────────────────────
+
+  it("folds a sources append when the batch carries only assertion updates on an extracted record (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+      { ...validAssertion("a_002"), fact_type: "birth", value: "1850" },
+      { ...validAssertion("a_003"), fact_type: "death", value: "1920" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "1850 U.S. Census" },
+      ops: [
+        { section: "sources", op: "append", entry: sourceNoRef },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+        { section: "assertions", op: "update", entryId: "a_002", fields: { value: "about 1850" } },
+        { section: "assertions", op: "update", entryId: "a_003", fields: { value: "about 1920" } },
+      ],
+    } as any, EXTRACTION_LANE);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.sourceReuse).toEqual(
+      expect.objectContaining({ action: "updated_existing", srcId: "src_001", sId: "SD-001" }),
+    );
+    expect(r).not.toHaveProperty("sourceDescriptionId");
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(1);
+    const treeAfter = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(treeAfter.sources).toHaveLength(1);
+  });
+
+  it("a mixed batch (appends + updates) drives detection from appends only, not updates (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const { source_id: _s, ...assertionNoSrc } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "Marriage Record" },
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoRef, repository: "OTHER_REPO" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...assertionNoSrc, record_id: "rec2", fact_type: "marriage", value: "1875" },
+        },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+      ],
+    } as any, EXTRACTION_LANE);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Appends drive detection: rec2 has no existing source → "created"
+    expect(r.sourceReuse).toEqual(
+      expect.objectContaining({ action: "created", srcId: "src_002" }),
+    );
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    // The newly appended assertion cites the new source
+    const newAssertion = after.assertions.find((a: any) => a.record_id === "rec2");
+    expect(newAssertion).toBeDefined();
+    expect(newAssertion.source_id).toBe("src_002");
+  });
+
+  it("an update op that sets source_id bypasses updates-only detection (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "1850 U.S. Census" },
+      ops: [
+        { section: "sources", op: "append", entry: sourceNoRef },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith", source_id: "src_002" } },
+      ],
+    } as any, EXTRACTION_LANE);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // Detection did not engage (the only update sets source_id), so no sourceReuse echo
+    expect(r.sourceReuse).toBeUndefined();
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    expect(after.sources[1].id).toBe("src_002");
+  });
+
+  it("a blank-record_id append does not fall through to updates-only detection (#3159)", async () => {
+    const research = baseResearch();
+    research.assertions = [
+      { ...validAssertion("a_001"), fact_type: "name", value: "John Smith" },
+    ] as any;
+    await writeProject(research);
+    const { gedcomx_source_description_id: _g, ...sourceNoRef } = noId(validSource("x"));
+    const { source_id: _s, ...assertionNoSrc } = noId(validAssertion("x"));
+    const r = await researchAppend({
+      projectPath: dir,
+      sourceDescription: { title: "Flynn family Bible" },
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoRef, citation: "Flynn family Bible" } },
+        {
+          section: "assertions",
+          op: "append",
+          entry: { ...assertionNoSrc, record_id: "", fact_type: "marriage", value: "1875" },
+        },
+        { section: "assertions", op: "update", entryId: "a_001", fields: { value: "John H. Smith" } },
+      ],
+    } as any, EXTRACTION_LANE);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    // The batch has an assertion append (even though its record_id is blank),
+    // so updates-only detection must NOT engage. A new source is created.
+    const after = await readResearch();
+    expect(after.sources).toHaveLength(2);
+    expect(after.sources[1].id).toBe("src_002");
+    // The marriage assertion cites the new source, not the census one
+    const marriage = after.assertions.find((a: any) => a.fact_type === "marriage");
+    expect(marriage).toBeDefined();
+    expect(marriage.source_id).toBe("src_002");
   });
 
   // ─── research_append is untouched ─────────────────────────────────────────
@@ -463,6 +595,66 @@ describe("extraction_append: recordIds and absences", () => {
     expect(r.records[0].summary).toMatch(/United States, Census, 1850/);
     expect(r.records[0].summary).toMatch(/Martin Miller \(head_of_household\)/);
     expect(r.records[1].summary).toMatch(/William Miller \(deceased\)/);
+  });
+
+  // ─── an accepted hint's log entry is the record's own (issue #3157) ───────────
+
+  const hintEntry = (id: string, recordId: string, outcome = "positive") => ({
+    id,
+    plan_item_id: null,
+    performed: "2026-01-01T00:00:00Z",
+    tool: "person_record_matches",
+    query: { id: "LZNY-BRF", recordId },
+    outcome,
+    results_examined: 1,
+    external_site: null,
+    results_ref: null,
+  });
+  const seedLog = async (log: any[]) => {
+    const r = await research();
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...r, log }), "utf8");
+  };
+
+  it("cites an accepted hint's log entry and writes no second record_read entry", async () => {
+    const census = element("census-1850-no-relationship-column");
+    await seedLog([hintEntry("log_001", census.recordId)]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, readerFor([census]) as any, LOCAL);
+    expect(r.ok).toBe(true);
+    expect(r.records[0].status).toBe("extracted");
+    expect(r.records[0].logId).toBe("log_001");
+    const after = await research();
+    expect(after.log.map((e: any) => e.id)).toEqual(["log_001"]);
+    expect(after.assertions.length).toBeGreaterThan(0);
+    expect(after.assertions.every((a: any) => a.log_entry_id === "log_001")).toBe(true);
+    expect(after.sources[0].log_entry_id).toBe("log_001");
+  });
+
+  it.each([
+    ["a rejected hint", (rid: string) => hintEntry("log_001", rid, "negative")],
+    ["a hint for another record", () => hintEntry("log_001", "ark:/61903/1:1:ZZZZ-ZZZ")],
+  ])("still logs its own read beside %s", async (_name, make) => {
+    const census = element("census-1850-no-relationship-column");
+    await seedLog([make(census.recordId)]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, readerFor([census]) as any, LOCAL);
+    expect(r.records[0].status).toBe("extracted");
+    const after = await research();
+    expect(after.log.map((e: any) => e.tool)).toEqual(["person_record_matches", "record_read"]);
+    expect(after.assertions.every((a: any) => a.log_entry_id === "log_002")).toBe(true);
+  });
+
+  it("logs one entry for the record with no hint and reuses the hint for the one with", async () => {
+    const census = element("census-1850-no-relationship-column");
+    const death = element("death");
+    await seedLog([hintEntry("log_001", death.recordId)]);
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [census.recordId, death.recordId] },
+      readerFor([census, death]) as any,
+      LOCAL,
+    );
+    expect(r.records.map((o) => o.status)).toEqual(["extracted", "extracted"]);
+    const after = await research();
+    expect(after.log.map((e: any) => e.tool)).toEqual(["person_record_matches", "record_read"]);
+    expect(r.records.map((o) => o.logId)).toEqual(["log_002", "log_001"]);
   });
 
   it("skips a resend BEFORE any read or log write, and names the existing source", async () => {

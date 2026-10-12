@@ -208,6 +208,27 @@ function srcIdOf(result: ResearchAppendResult): string | undefined {
 }
 
 /**
+ * The log entry an accepted FamilySearch hint left for this record: a positive
+ * `person_record_matches` entry naming the record's ark that no assertion cites
+ * yet. `search-hints` logs it with no sidecar, because the hint stages nothing;
+ * extraction cites it instead of logging a second `record_read` for the same
+ * record, which would leave the hint's own entry unreferenced and send the
+ * router back to extract the record again on every pass.
+ */
+function acceptedHintLogId(research: any, bareId: string, citedLogIds: ReadonlySet<unknown>): string | undefined {
+  const log: any[] = Array.isArray(research.log) ? research.log : [];
+  const hit = log.find(
+    (e) =>
+      e?.tool === "person_record_matches" &&
+      e?.outcome === "positive" &&
+      typeof e?.query?.recordId === "string" &&
+      arkToBareId(e.query.recordId) === bareId &&
+      !citedLogIds.has(e.id),
+  );
+  return typeof hit?.id === "string" ? hit.id : undefined;
+}
+
+/**
  * `recordIds`: read each FamilySearch record live, log every read in ONE
  * `research_log_append` batch, then persist each record with its OWN
  * `research_append` call. `research_append` takes exactly one sources append per
@@ -273,28 +294,40 @@ async function recordIdsMode(
 
   const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
   if (staged.length > 0) {
-    // 3. ONE log batch for every read.
-    const logged = await researchLogAppend({
-      projectPath: input.projectPath,
-      ops: staged.map((o) => ({
-        tool: "record_read",
-        query: { recordId: o.recordId },
-        outcome: "positive",
-        resultsExamined: 1,
-        stagedResultsRef: o.stagedRef!,
-      })),
-    });
+    // 3. ONE log batch for every read, except a record an accepted hint already
+    //    logged: that entry is the record's own and is reused, never a second.
+    const assertionLogIds = new Set(
+      (Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => a?.log_entry_id),
+    );
+    const reusedHint = new Set<string>();
+    for (const o of staged) {
+      o.logId = acceptedHintLogId(research, arkToBareId(o.recordId), assertionLogIds);
+      if (o.logId) reusedHint.add(o.recordId);
+    }
+    const fresh = staged.filter((o) => !o.logId);
+    const logged = fresh.length === 0
+      ? { ok: true as const, results: [] as { logId: string; resultsRef?: string | null }[] }
+      : await researchLogAppend({
+          projectPath: input.projectPath,
+          ops: fresh.map((o) => ({
+            tool: "record_read",
+            query: { recordId: o.recordId },
+            outcome: "positive",
+            resultsExamined: 1,
+            stagedResultsRef: o.stagedRef!,
+          })),
+        });
     if (!logged.ok || !("results" in logged)) {
       const errs = (logged as any).errors ?? ["research_log_append refused the batch"];
-      for (const o of staged) {
+      for (const o of fresh) {
         o.status = "refused";
         o.errors = errs;
         o.summary = `${o.recordId}: not extracted, because logging the read was refused: ${errs.join("; ")}.`;
       }
     } else {
       logged.results.forEach((lr, i) => {
-        staged[i].logId = lr.logId;
-        staged[i].stagedRef = lr.resultsRef ?? staged[i].stagedRef;
+        fresh[i].logId = lr.logId;
+        fresh[i].stagedRef = lr.resultsRef ?? fresh[i].stagedRef;
       });
 
       // 4. One research_append per record.
@@ -324,6 +357,11 @@ async function recordIdsMode(
           { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
           { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
         );
+        // A hint's log entry keeps no sidecar, and a persona id must resolve
+        // against one: an assertion under it carries none.
+        if (reusedHint.has(o.recordId)) {
+          for (const op of ops as any[]) if (op?.entry && "record_persona_id" in op.entry) op.entry.record_persona_id = null;
+        }
         const written = await researchAppend(
           { projectPath: input.projectPath, ops, sourceDescription } as ResearchAppendInput,
           { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
