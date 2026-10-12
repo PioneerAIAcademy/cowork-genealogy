@@ -46,6 +46,8 @@ import {
   personAncestorsTool,
   type PersonAncestorsInput,
 } from "./tools/person-ancestors.js";
+import { treeGapsTool } from "./tools/tree-gaps.js";
+import type { TreeGapsInput } from "./types/tree-gaps.js";
 import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
@@ -522,6 +524,21 @@ export function createServer(principal: Principal): Server {
       try {
         const args = request.params.arguments as unknown as PersonAncestorsInput;
         const result = await personAncestorsTool(args, principal);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result) }]
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return {
+          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
+          isError: true
+        };
+      }
+    }
+    if (request.params.name === "tree_gaps") {
+      try {
+        const args = request.params.arguments as unknown as TreeGapsInput;
+        const result = await treeGapsTool(args ?? {}, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };

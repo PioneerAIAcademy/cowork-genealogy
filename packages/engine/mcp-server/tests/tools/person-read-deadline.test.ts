@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 
 /**
- * `person_read` must hand the relatives fetch the SHARED budget, not a fresh one.
+ * `person_read` must hand the relatives fetch, and the fetch of the descriptions behind
+ * the edges' refs (issue #3229), the SHARED budget, not a fresh one.
  *
  * WHY A SEPARATE FILE. The bound is an argument passed from the tool to the module, so
  * seeing it requires mocking `relative-sources.js` — which `person-read.test.ts` cannot
@@ -13,10 +14,11 @@ import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
  */
 vi.mock("../../src/utils/relative-sources.js", () => ({
   fetchRelativeSources: vi.fn(async () => ({ descriptions: [], skipped: [] })),
+  fetchSourceDescriptions: vi.fn(async () => ({ descriptions: [], skipped: [] })),
 }));
 vi.mock("../../src/auth/refresh.js", () => ({ getValidToken: vi.fn() }));
 
-import { fetchRelativeSources } from "../../src/utils/relative-sources.js";
+import { fetchRelativeSources, fetchSourceDescriptions } from "../../src/utils/relative-sources.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { personReadTool } from "../../src/tools/person-read.js";
 import { LOCAL } from "../../src/auth/principal.js";
@@ -24,6 +26,7 @@ import { LOCAL } from "../../src/auth/principal.js";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 const mockedFetchRelatives = vi.mocked(fetchRelativeSources);
+const mockedFetchDescriptions = vi.mocked(fetchSourceDescriptions);
 
 /** Advanced by the mocked tree read so elapsed time is observable. */
 let clockOffset = 0;
@@ -43,6 +46,7 @@ beforeEach(() => {
   clockOffset = 0;
   mockFetch.mockReset();
   mockedFetchRelatives.mockClear();
+  mockedFetchDescriptions.mockClear();
   vi.mocked(getValidToken).mockResolvedValue("test-token");
 });
 
@@ -69,13 +73,26 @@ function treeBody() {
       },
     ],
     childAndParentsRelationships: [
-      { parent1: { resourceId: "SUBJ-001" }, child: { resourceId: "KID-0001" } },
+      {
+        parent1: { resourceId: "SUBJ-001" },
+        child: { resourceId: "KID-0001" },
+        // A ref to a description the body does not hold: it is what starts the fetch.
+        sources: [
+          {
+            description: "https://api.familysearch.org/platform/sources/descriptions/EDGE-1AA",
+            descriptionId: "EDGE-1AA",
+          },
+        ],
+      },
     ],
     sourceDescriptions: [{ id: "OWN-1", titles: [{ value: "Her own" }] }],
   };
 }
 
-describe("person_read hands the relatives fetch the shared budget", () => {
+describe.each([
+  ["relatives", mockedFetchRelatives],
+  ["relationship description", mockedFetchDescriptions],
+])("person_read hands the %s fetch the shared budget", (_fetch, mocked) => {
   /**
    * THE CLOCK HAS TO MOVE, or this file cannot see the bug that matters.
    *
@@ -106,8 +123,8 @@ describe("person_read hands the relatives fetch the shared budget", () => {
     mockTreeReadTaking(20_000);
     await personReadTool({ personId: "SUBJ-001" }, LOCAL);
 
-    expect(mockedFetchRelatives).toHaveBeenCalledTimes(1);
-    const deadline = mockedFetchRelatives.mock.calls[0][2] as number;
+    expect(mocked).toHaveBeenCalledTimes(1);
+    const deadline = mocked.mock.calls[0][2] as number;
     expect(typeof deadline).toBe("number");
     // Entry-anchored: ~40s from `before`. Anchored after a 20s read: ~60s, which this
     // rejects. The 5s tolerance absorbs scheduling, not a whole phase.
@@ -120,12 +137,12 @@ describe("person_read hands the relatives fetch the shared budget", () => {
     expect(deadline - before).toBeLessThan(OCR_PHASE_BUDGET_MS + 5_000);
   });
 
-  it("gives the relatives phase what is LEFT of the budget, not a fresh one", async () => {
+  it("gives the phase what is LEFT of the budget, not a fresh one", async () => {
     // The same property stated from the consumer's side: after 20s of tree read, the
-    // relatives phase must see ~20s remaining, never a full 40s.
+    // phase must see ~20s remaining, never a full 40s.
     mockTreeReadTaking(20_000);
     await personReadTool({ personId: "SUBJ-001" }, LOCAL);
-    const deadline = mockedFetchRelatives.mock.calls[0][2] as number;
+    const deadline = mocked.mock.calls[0][2] as number;
     const remaining = deadline - Date.now();
     expect(remaining).toBeLessThan(OCR_PHASE_BUDGET_MS - 10_000);
     expect(remaining).toBeGreaterThan(0);
