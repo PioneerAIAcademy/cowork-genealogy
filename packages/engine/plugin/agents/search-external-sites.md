@@ -85,8 +85,8 @@ Each invocation does one of three things, and returns:
    1. Call `project_context` and look for the `awaitingUser` row whose
       `urlGenerated` the results came from.
    2. **No row matches** → the search was never handed off. Run steps 1–3 in
-      full first: `place_search`, `external_links_search`, `collections_search`,
-      then `build_external_search_url` without `projectPath`.
+      full first: steps 1–2, `collections_search`, then
+      `build_external_search_url` without `projectPath`.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
       logged `outcome: "error"`.
@@ -270,52 +270,27 @@ either when the researcher wants that domain specifically.
 ### 1. Find the plan item
 
 Read `research.json` `plans[]` and pick the item(s) targeting an external
-repository. Note the record type, the place, and the year window — you'll
-match all three against the curated links below.
+repository. Note the record type, the place, the year window, and its
+`collection_url` if it has one.
 
-### 2. Resolve the place and fetch curated links
+### 2. Find the curated collection
 
-```
-place_search({ placeName: "<place name>" })
-```
+**The plan item carries `collection_url`** → that is your curated URL; go to
+Case A. Do not fetch or search the list.
 
-Take the `standardPlace` from the response — do not guess it — and pass it
-to `external_links_search` with the plan item's year window, your target
-site as `host`, and `projectPath` so the full curated set is retained on disk:
+Otherwise resolve the place — `place_search({ placeName })`, use its
+`standardPlace`, never a guess — and read the stored list:
 
 ```
-external_links_search({
-  standardPlace: "<standardPlace>",
-  startYear: <year>,
-  endYear: <year>,
-  host: "<target-site host, e.g. ancestry.com>",
-  projectPath: "<absolute path of the current working directory>"
-})
+project_context({ projectPath })   // externalCollections: places already fetched
+research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })
 ```
 
-`host` narrows the returned `results[]` toward your target site (so a
-link-dense place can't overflow the response); `projectPath` stages the **full**
-year-filtered set (all sites) to disk and returns a `staged.resultsRef` — hold
-it for the step-4 log. `results[]` is a flat list of `{ url, linkText }`. Consume
-it:
-1. **Filter to your target site** — keep only links whose URL is for your site,
-   e.g. `result.url.includes("ancestry.com")`. `host` already narrows this
-   server-side, but filter here too so you stay correct if any off-site links
-   come through.
-2. **Dedupe by URL** — FS repeats the same URL once per record-type
-   category. Collapse duplicates, and say so in one line when it happens
-   ("collection 8800 appeared 3× under different labels — collapsed to one")
-   so the dedup is visible, not silent.
-3. **Match `linkText` to the plan item's record type.** `linkText` names
-   the collection in plain English ("Pennsylvania Wills and Probate
-   Records"); the collection ID is embedded in the URL path. This match is
-   what step 3 acts on.
-
-**How many links survived the site filter (call it `matched`):**
-- `matched > 0` → a curated URL for your site exists; go to Case A.
-- `matched === 0` but `totalForPlace > 0` → FS curates this place but nothing
-  matches your site + year window; widen the window or fall back (Case B).
-- `totalForPlace === 0` → no curated links here at all; fall back (Case B).
+A place absent from `externalCollections` was never fetched: call
+`external_links_search({ standardPlace, host: "<e.g. ancestry.com>",
+projectPath })` once (it stores the list), then read as above. Keep rows
+whose `url` is on your target site; a row for the plan item's record type and
+years → Case A, none → Case B.
 
 ### 2b. Check FamilySearch's own holdings
 
@@ -356,12 +331,12 @@ in-flight entry is written, and log the search once at step 6.
 
 **Case A — a curated URL exists for the target site.**
 
-First, confirm the curated link actually fits the plan item. Compare its
-`linkText` record type against what you're searching for: a probate plan
+A plan item's `collection_url` already fits; use it. Otherwise confirm the
+curated link fits the plan item. Compare its `link_text` record type against what you're searching for: a probate plan
 item needs a probate/wills/estate collection, not a census or vital-records
 one. **If the only curated link is for a different record type, do not
 present it as the search** — that silently sends the user to the wrong
-collection. Either pick a curated link whose `linkText` matches, or, if
+collection. Either pick a curated link whose `link_text` matches, or, if
 none matches, fall back to Case B and say which record type you were
 looking for.
 
@@ -453,33 +428,6 @@ sites" below):
 - Widen with spelling variants or wildcards when a search returns little.
 
 ### 4. Log the search, then present the URL
-
-**First, persist the curated-links fetch.** If `external_links_search`
-returned a `staged.resultsRef` (present whenever the year-filtered set was
-non-empty), log the fetch as its **own** entry so the full curated set is
-retained on disk — it rides along when the user submits feedback, and makes the
-fetch part of the research record. This is separate from the external-site log
-below:
-
-```
-research_log_append({
-  projectPath: <absolute path of the current working directory>,
-  planItemId: "<pli_XXX or null>",
-  tool: "external_links_search",
-  query: { standardPlace: "<standardPlace>", host: "<host>", startYear: <year>, endYear: <year> },
-  outcome: "<positive if returned > 0, else negative>",
-  resultsExamined: <returned>,
-  notes: "Curated external links for <place>.",
-  // Grades the FETCH, not the search: `positive` whenever links came back,
-  // even if none fit the plan item's record type. Put that in `notes`
-  // ("2 links returned, both wrong record type: tax lists and an 1850
-  // census"). The search's own outcome is the `external_site` entry below.
-  stagedResultsRef: staged.resultsRef   // omit only when there is no staged handle (empty year-filtered set)
-})
-```
-
-Do **not** pass `externalSite` here — that field is only for `external_site`
-entries.
 
 The site search itself is already logged: `build_external_search_url` wrote its
 in-flight `external_site` entry (`outcome: "partial"`, `captureReceived: false`)

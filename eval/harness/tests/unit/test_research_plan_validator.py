@@ -33,7 +33,9 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
     report_survey_surfaces_already_attached_fan_facts as check,
+    test_external_items_carry_a_stored_collection_url as check_coll,
 )
+import json  # noqa: E402
 
 QUAL = "mcp__genealogy__"
 
@@ -1110,3 +1112,76 @@ def test_death_route_map_entry_without_its_tag_fails_before_the_skip():
     b, a = _plan_states([BAPTISM, BURIAL])
     with pytest.raises(AssertionError, match="no 'pre-register-birth'"):
         check_death_route(b, a, {"id": "ut_research_plan_dth", "tags": ["planning"]})
+
+
+# --- V1 grounds a cited collection id in the stored curated list (#2995) ------
+
+# Five digits: V1 checks 5+ digit runs only, so a 4-digit id would pass for nothing.
+_STORED_FILE = json.dumps({"places": {"Pennsylvania, United States": {"rows": [
+    {"key": "ancestry:7163", "url": "https://www.ancestry.com/search/collections/7163/"},
+    {"key": "ancestry:61749", "url": "https://www.ancestry.com/search/collections/61749/"}]}}})
+
+
+def test_v1_grounds_an_id_from_a_research_query_response():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 61749 covers 1870.")])
+    served = [_call("research_query", {"ok": True, "section": "external_collections",
+                                       "items": [{"url": "https://www.ancestry.com/search/collections/61749/"}]})]
+    check_v1(before, after, served)
+
+
+def test_v1_grounds_an_id_from_the_starting_stored_list():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 61749 covers 1870.")])
+    before["files"] = {"external-collections.json": _STORED_FILE}
+    check_v1(before, after, [])
+
+
+def test_v1_still_fires_on_an_id_in_neither():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 60207 covers 1870.")])
+    before["files"] = {"external-collections.json": _STORED_FILE}
+    with pytest.raises(AssertionError, match="60207"):
+        check_v1(before, after, [])
+
+
+# --- a new external item names a stored collection (#2995) --------------------
+
+COLL = {"tags": ["collection-url"]}
+STORED_URL = "https://www.ancestry.com/search/collections/7163/"
+
+
+def _ext(item_id, collection_url=None):
+    item = _item(item_id)
+    item["repository"] = "Ancestry"
+    if collection_url is not None:
+        item["collection_url"] = collection_url
+    return item
+
+
+def _coll_states(new_items, stored=_STORED_FILE):
+    before, after = _states(new_items)
+    if stored is not None:
+        after["files"] = {"external-collections.json": stored}
+    return before, after
+
+
+def test_collection_url_passes_on_a_stored_url():
+    check_coll(*_coll_states([_item("pli_010"), _ext("pli_011", STORED_URL)]), COLL)
+
+
+def test_collection_url_fires_when_no_external_item_carries_one():
+    with pytest.raises(AssertionError, match="no new non-FamilySearch"):
+        check_coll(*_coll_states([_item("pli_010"), _ext("pli_011")]), COLL)
+
+
+def test_collection_url_fires_on_an_unstored_url():
+    with pytest.raises(AssertionError, match="not a stored"):
+        check_coll(*_coll_states([_ext("pli_011", "https://www.ancestry.com/search/collections/9093/")]), COLL)
+
+
+def test_collection_url_fires_when_nothing_is_stored():
+    with pytest.raises(AssertionError, match="not a stored"):
+        check_coll(*_coll_states([_ext("pli_011", STORED_URL)], stored=None), COLL)
+
+
+def test_collection_url_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_coll(*_coll_states([_ext("pli_011")]), {"tags": []})

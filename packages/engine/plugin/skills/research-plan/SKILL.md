@@ -15,6 +15,8 @@ allowed-tools:
   - collections_search
   - volume_search
   - external_links_search
+  - project_context
+  - research_query
   - place_search
   - place_search_all
   - wiki_read
@@ -25,7 +27,7 @@ allowed-tools:
 
 **Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
 
-**Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search`, `volume_search` and `external_links_search`; use `place_search_all` when jurisdictions changed across the period. Those three tools return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
+**Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search` and `volume_search`; use `place_search_all` when jurisdictions changed across the period. Both return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
 
 **Write `plans` and `plan_items` only through `research_append` — never hand-edit `research.json`.** It assigns ids, enforces the schema and the one-active-plan invariant, and writes atomically; on `{ ok: false, errors }` nothing is written, so fix the input and re-issue. No separate `validate_research_schema` step is needed.
 
@@ -52,7 +54,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 |------|---------|
 | `collections_search` | Which FamilySearch record collections cover this place — the records to consider planning |
 | `volume_search` | Digitized volumes (image groups) for this place/period — browse-only films not in indexed collections |
-| `external_links_search` | FS-curated third-party URLs (Ancestry, MyHeritage, archives) for this place/period |
+| `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2b) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
 | `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |
@@ -155,16 +157,14 @@ usable one is the worse mistake.
 
 ### 2. Survey the locality — know-how from locality-guide, records you find yourself
 
-Two different things go into a plan, and they come from two different
-places: **(a) how to search this place** — its jurisdictional history,
+A plan draws on two things: **(a) how to search this place** — its jurisdictional history,
 boundary changes, naming conventions, indexing quirks — and **(b) which
 records actually exist** there.
 
 **(a) The know-how + facts come from the `localities` entry — you read
 it, you do not invoke `locality-guide`.** The orchestrator runs
-`locality-guide` before handing off to you when a jurisdiction hasn't
-been surveyed, so by the time you plan, `research.json` should already
-hold a `localities` entry for the target place (`jurisdictions`,
+`locality-guide` first, so `research.json` should already hold a
+`localities` entry for the target place (`jurisdictions`,
 `quirks`, `guide`). **Read it.** If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
@@ -172,8 +172,7 @@ locality-guide. **Stop and return to the orchestrator, noting that the
 jurisdiction needs a locality survey**; the orchestrator will run
 `locality-guide` and then re-invoke you. You have no place-survey tools;
 for the record-type pages named in Step 3's pre-work, fetch by
-constructed URL. The `localities` entry is your source for *how* to
-search the place.
+constructed URL.
 
 **(b) Then discover which records exist**, with your own tools, applying
 that know-how:
@@ -181,15 +180,18 @@ that know-how:
 ```
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
-external_links_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
+project_context({ projectPath })
+research_query({ projectPath, section: "external_collections", place: "Schuylkill, Pennsylvania, United States", recordType: "Census" })
 place_search({ placeName: "Schuylkill County, Pennsylvania" })   // resolve the standardPlace you write on plan items
 ```
 
 `volume_search` surfaces browse-only image groups (digitized microfilm,
 book scans) that `collections_search` won't — plan them when the question
-may need unindexed records. `external_links_search` returns a flat list
-of curated third-party URLs; use `linkText` + the URL host to identify
-each and dedupe by URL. Let the guide's quirks steer this — e.g. if it
+may need unindexed records. A third-party item's `collection_url` is
+the matching `research_query` row's `url` (`recordType` from
+`externalCollections`), else omitted. Place absent from
+`externalCollections`: `external_links_search({ standardPlace,
+startYear, endYear, projectPath })` once, then read. Let the guide's quirks steer this — e.g. if it
 says the parish is indexed only at county level, weight the county
 collection, not the exact-parish one.
 
@@ -209,7 +211,7 @@ this session or it is in `research.json`. To plan a national collection
 (e.g. a US federal census), first run
 `collections_search({ standardPlace: "United States" })`.
 
-**What you need in hand before writing the plan:**
+**Before writing the plan, know:**
 - Which record types exist for this place and period
 - Whether records survive (fires, floods, wartime destruction)
 - Where records are held and how to access them (indexed, images-only,

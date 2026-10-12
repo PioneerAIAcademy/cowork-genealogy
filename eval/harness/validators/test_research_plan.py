@@ -583,8 +583,13 @@ def test_research_plan_no_out_of_lane_tools(
 # page links collection ids (the Denmark_Military_Records fixture links
 # collection/2243379), and SKILL.md lets a rationale cite an id "a tool
 # returned this session", so a page-quoted id is served, not invented.
+#
+# research_query joined when external_links_search started storing the curated
+# list (#2995): research-plan reads collection urls back through
+# `research_query({section: "external_collections"})` instead of fetching.
 _TRACEABLE_ID_TOOLS = {
     "collections_search", "volume_search", "external_links_search", "wiki_read",
+    "research_query",
 }
 
 
@@ -672,8 +677,12 @@ def test_research_plan_rationale_identifiers_traceable(
     # fabrication, and _grounded_identifiers already excludes years. Both arms
     # use _grounded_identifiers so a hyphenated range (json.dumps preserves the
     # hyphen) grounds both endpoints; the CITED side below stays strict.
-    grounded = _served_identifiers(tool_calls) | _grounded_identifiers(
-        json.dumps(before)
+    grounded = (
+        _served_identifiers(tool_calls)
+        | _grounded_identifiers(json.dumps(before))
+        | _grounded_identifiers(
+            str((before_state.get("files") or {}).get("external-collections.json") or "")
+        )
     )
     errors: list[str] = []
     for plan in new_plans:
@@ -689,6 +698,50 @@ def test_research_plan_rationale_identifiers_traceable(
     assert not errors, (
         "untraceable identifier in a plan rationale:\n  - " + "\n  - ".join(errors)
     )
+
+
+def _stored_collection_urls(state) -> set[str]:
+    raw = (state.get("files") or {}).get("external-collections.json")
+    try:
+        doc = json.loads(raw) if isinstance(raw, str) else None
+    except ValueError:
+        return set()
+    places = doc.get("places") if isinstance(doc, dict) else None
+    return {
+        row["url"]
+        for entry in (places.values() if isinstance(places, dict) else [])
+        for row in ((entry or {}).get("rows") or [] if isinstance(entry, dict) else [])
+        if isinstance(row, dict) and isinstance(row.get("url"), str)
+    }
+
+
+def test_external_items_carry_a_stored_collection_url(before_state, after_state, test):
+    """Tag-gated (collection-url): research-plan names the curated collection an
+    external-repository item targets, read from the stored list (#2995).
+
+    Fails iff no new non-FamilySearch item carries `collection_url`, or one
+    carries a url that is not a row of the project's `external-collections.json`.
+    `research_append` refuses the second already; this pins the first, which a
+    run that never writes the field would pass silently."""
+    if "collection-url" not in test.get("tags", []):
+        pytest.skip("not a collection-url test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or []) if isinstance(i, dict)]
+    external = [i for i in items if str(i.get("repository") or "").lower() != "familysearch"]
+    assert any(i.get("collection_url") for i in external), (
+        f"no new non-FamilySearch plan item carries collection_url "
+        f"({[i.get('id') for i in external]})"
+    )
+    stored = _stored_collection_urls(after_state)
+    bad = [
+        f"{i.get('id')}: {i['collection_url']!r}"
+        for i in items
+        if i.get("collection_url") and i["collection_url"] not in stored
+    ]
+    assert not bad, "collection_url is not a stored curated collection:\n  - " + "\n  - ".join(bad)
 
 
 # --- V5: an availability claim must match the returned personCount ----------
