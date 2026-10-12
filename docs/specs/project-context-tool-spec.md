@@ -393,17 +393,24 @@ cache file must never fail the whole projection.
 
 ## 5.1 Status-answering clause
 
-The tool's `description` carries a second-paragraph instruction that reaches
-the main thread on every plane (the tool is `ALWAYS_LOAD` in
-`src/tool-schemas.ts`, and the unit harness serves the compiled production
-description in `eval/harness/harness/mock_mcp.py`):
+The tool's `description` opens with an instruction that reaches the main
+thread on every plane (the tool is `ALWAYS_LOAD` in `src/tool-schemas.ts`, and
+the unit harness serves the compiled production description in
+`eval/harness/harness/mock_mcp.py`; in the 2026-10-12 harness runs the schema
+was still deferred and arrived through ToolSearch, description included):
 
 > When the user asks where the project stands ("where are we?", "summarize
 > progress", "what have we found?") or reopens a project, call this and answer
 > from it in ONE plain-language paragraph: the objective, what is established,
-> what is open or waiting on the researcher, and the next step. No
-> identifiers, file names, tool names or field names. Do not read the project
-> files and do not delegate.
+> what is open or waiting on the researcher, and the next step. No headings,
+> tables or lists, and no identifiers, file names, tool names or field names:
+> say "the proof summary" or "the parentage question", never q_001 or ps_001.
+> Do not read the project files and do not delegate.
+
+It leads the description rather than closing it. Measured on `ut_research_025`
+(2026-10-12): appended after the field list, the clause was ignored — the reply
+was headings, a table and raw ids. Moved to the front it held in 2 of 3 runs,
+the third quoting `ps_001`; with the two worked examples added, 3 of 3.
 
 **Decided (lead, 2026-10-06):** delete the `project-status` agent; a status
 request is answered by the main thread in one plain paragraph from

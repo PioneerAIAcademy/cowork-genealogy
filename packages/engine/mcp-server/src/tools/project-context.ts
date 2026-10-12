@@ -396,6 +396,13 @@ function diedByYear(p: any): number | null {
 export const projectContextSchema = {
   name: "project_context",
   description:
+    "When the user asks where the project stands (\"where are we?\", \"summarize " +
+    "progress\", \"what have we found?\") or reopens a project, call this and answer " +
+    "from it in ONE plain-language paragraph: the objective, what is established, " +
+    "what is open or waiting on the researcher, and the next step. No headings, " +
+    "tables or lists, and no identifiers, file names, tool names or field names: " +
+    "say \"the proof summary\" or \"the parentage question\", never q_001 or ps_001. " +
+    "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
@@ -431,13 +438,7 @@ export const projectContextSchema = {
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
-    "a problem. Writes nothing. " +
-    "When the user asks where the project stands (\"where are we?\", \"summarize " +
-    "progress\", \"what have we found?\") or reopens a project, call this and answer " +
-    "from it in ONE plain-language paragraph: the objective, what is established, " +
-    "what is open or waiting on the researcher, and the next step. No identifiers, " +
-    "file names, tool names or field names. Do not read the project files and do " +
-    "not delegate.",
+    "a problem. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {
