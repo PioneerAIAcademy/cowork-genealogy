@@ -1,0 +1,19 @@
+{
+  "id": "thomas-hanrahan-marriage",
+  "name": "Thomas Hanrahan — marriage in February 1868, Tipperary, Ireland",
+  "genre": "record-hint",
+  "source_pid": "KHGX-XWG",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Thomas Hanrahan, born about 1840 in Ireland and living in Saratoga, New York, in 1880, marry Johanna Ryan?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1860s",
+    "geography": "IE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 14, hint-samples.csv row 495, flag adds_marriage, confidence 3). Draft transcribed from an 1868 Ballylooby, County Tipperary Catholic parish marriage register; unverified."
+}

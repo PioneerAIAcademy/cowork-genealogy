@@ -1,0 +1,123 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Ida F.",
+          "surname": "Braman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1875",
+          "place": "Taunton, Bristol, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "page": "1880 Census, Taunton, Charles W. Braman household"
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "primary": true,
+          "date": "1946",
+          "place": "Taunton, Bristol, Massachusetts, United States",
+          "sources": [
+            {
+              "ref": "S3",
+              "page": "1946 Taunton death register"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Charles W.",
+          "surname": "Braman",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Ellen",
+          "surname": "Sullivan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S3",
+          "page": "1946 death register, father named",
+          "quality": 2
+        },
+        {
+          "ref": "S2",
+          "page": "1900 Census, relationship to head",
+          "quality": 2
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1",
+      "sources": [
+        {
+          "ref": "S3",
+          "page": "1946 death register, mother named",
+          "quality": 2
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "1880 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S2",
+      "title": "1900 U.S. Federal Census",
+      "author": "U.S. Census Bureau"
+    },
+    {
+      "id": "S3",
+      "title": "Massachusetts Vital Records, Deaths",
+      "author": "Commonwealth of Massachusetts, Registry of Vital Records"
+    }
+  ]
+}

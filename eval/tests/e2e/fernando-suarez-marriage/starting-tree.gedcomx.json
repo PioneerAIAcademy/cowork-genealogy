@@ -1,0 +1,580 @@
+{
+  "persons": [
+    {
+      "id": "GZ6S-8MW",
+      "ark": "ark:/61903/4:1:GZ6S-8MW",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "3658ed61-f48a-4fd2-82ce-82a76dfb6b61",
+          "preferred": true,
+          "given": "Fernando",
+          "surname": "Suarez Franco",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "fa1174cb-73f0-4bb9-9328-e1591b1f9e76",
+          "type": "Birth",
+          "date": "1866",
+          "standard_date": "1866",
+          "place": "Antioquia, Colombia",
+          "standard_place": "Antioquia, Colombia"
+        },
+        {
+          "id": "171e83c3-b349-4feb-b3d4-b2ed9904e43b",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7KDK-HNF"
+        },
+        {
+          "ref": "3YNQ-WR5"
+        },
+        {
+          "ref": "3YNQ-WFV"
+        },
+        {
+          "ref": "3Y6D-5T3"
+        },
+        {
+          "ref": "3425-L36"
+        },
+        {
+          "ref": "3425-21G"
+        }
+      ]
+    },
+    {
+      "id": "GZ6S-FMD",
+      "ark": "ark:/61903/4:1:GZ6S-FMD",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "cb6d18e8-e45c-4ed1-8941-a3e7482b7510",
+          "preferred": true,
+          "given": "Julia Rosa",
+          "surname": "Suarez Ramirez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "56fbccf3-8e19-4df5-bc7e-b767bd416e79",
+          "type": "Birth",
+          "date": "18 June 1896",
+          "standard_date": "18 Jun 1896",
+          "place": "Caramanta, Antioquia, Colombia",
+          "standard_place": "Caramanta, Antioquia, Colombia"
+        },
+        {
+          "id": "7a50ee11-0314-472f-9817-cf82f37cf2ff",
+          "type": "Christening",
+          "date": "21 June 1896",
+          "standard_date": "21 Jun 1896",
+          "place": "Caramanta, Antioquia, Colombia",
+          "standard_place": "Caramanta, Antioquia, Colombia"
+        },
+        {
+          "id": "373beb18-fcb0-4297-b660-73eb813b1a6a",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3YNQ-WJ6"
+        },
+        {
+          "ref": "3425-21G"
+        }
+      ]
+    },
+    {
+      "id": "GZ6S-6DN",
+      "ark": "ark:/61903/4:1:GZ6S-6DN",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "048f803f-12b8-4337-9504-3eac63071514",
+          "preferred": true,
+          "given": "Manuela",
+          "surname": "Franco",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6c80d4b3-6441-4f10-9ee9-bfd6028bbf05",
+          "type": "Birth",
+          "date": "1836",
+          "standard_date": "1836",
+          "place": "Antioquia, Colombia",
+          "standard_place": "Antioquia, Colombia"
+        },
+        {
+          "id": "16df7d49-9662-4dee-bbbe-46a3c5b545cc",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7KDK-HQ5"
+        },
+        {
+          "ref": "3Y6D-RH8"
+        }
+      ]
+    },
+    {
+      "id": "PSTN-HRH",
+      "ark": "ark:/61903/4:1:PSTN-HRH",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "b721e557-af65-4512-9045-c4f5ee79c1c2",
+          "preferred": true,
+          "given": "JUAN ESTEBAN",
+          "surname": "SUAREZ RAMIREZ",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f552e514-3537-4f90-9803-965a02e3ba4d",
+          "type": "Birth",
+          "date": "1898",
+          "standard_date": "1898",
+          "place": "Caramanta, Antioquia, Colombia",
+          "standard_place": "Caramanta, Antioquia, Colombia"
+        },
+        {
+          "id": "0a5fc67c-00e4-4d70-a46a-2ad659c5373b",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PSTN-ZFY",
+      "ark": "ark:/61903/4:1:PSTN-ZFY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "3453fcad-2f2a-4b3e-b092-ff263d2f2847",
+          "preferred": true,
+          "given": "ROSAURA",
+          "surname": "BALESTEROS",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "54dcc9d9-fc4d-457c-b9c4-1cf204fa4529",
+          "type": "Birth",
+          "date": "1896",
+          "standard_date": "1896"
+        },
+        {
+          "id": "0af94e3d-ce0a-4eee-bce3-3fe5d9109c4f",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "GZ6S-XXF",
+      "ark": "ark:/61903/4:1:GZ6S-XXF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "bcdaf9b6-85ed-4577-afe6-ca423fecbcc6",
+          "preferred": true,
+          "given": "Maria Jesus",
+          "surname": "Ramirez Henao",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "552efc99-02fe-49c0-bf1a-4375b4ef8aa2",
+          "type": "Birth",
+          "date": "1849",
+          "standard_date": "1849",
+          "place": "Antioquia, Colombia",
+          "standard_place": "Antioquia, Colombia"
+        },
+        {
+          "id": "b038d2f6-dc17-4cd8-8376-8c25ebe7335b",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "3YNQ-W1Z"
+        },
+        {
+          "ref": "3YNQ-WV9"
+        },
+        {
+          "ref": "3Y6D-5B6"
+        },
+        {
+          "ref": "3425-21G"
+        }
+      ]
+    },
+    {
+      "id": "PSTN-GTP",
+      "ark": "ark:/61903/4:1:PSTN-GTP",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "265f4c2c-88ae-4123-9933-0f0c59e9c2b6",
+          "preferred": true,
+          "given": "MARIA DEL CARMEN",
+          "surname": "SUAREZ RAMIREZ",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "523eb160-6c84-4b93-8841-8e7ddaf7ae49",
+          "type": "Birth",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Caramanta, Antioquia, Colombia",
+          "standard_place": "Caramanta, Antioquia, Colombia"
+        },
+        {
+          "id": "f3f94072-d6c8-480d-ad33-7052b9a24a2d",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "PSTN-VM9",
+      "ark": "ark:/61903/4:1:PSTN-VM9",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "d5350f7e-1337-43b7-87c6-6df1cc5dae15",
+          "preferred": true,
+          "given": "ANA ROSA",
+          "surname": "SUAEREZ RAMIREZ",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3527c5ef-9954-4b69-b35c-49ad5b7c895e",
+          "type": "Birth",
+          "date": "1904",
+          "standard_date": "1904",
+          "place": "Caramanta, Antioquia, Colombia",
+          "standard_place": "Caramanta, Antioquia, Colombia"
+        },
+        {
+          "id": "e8e4a4a8-2c59-4b36-9611-0a7e0d4146d2",
+          "type": "Death",
+          "date": "1930",
+          "standard_date": "1930"
+        }
+      ]
+    },
+    {
+      "id": "GZ6S-8M1",
+      "ark": "ark:/61903/4:1:GZ6S-8M1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c0a49f26-f91e-4251-90f0-88e1209f3ff4",
+          "preferred": true,
+          "given": "Juan De Dios",
+          "surname": "Suarez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5b8fb816-1238-4c48-b7b1-4cd120d020a8",
+          "type": "Birth",
+          "date": "1830",
+          "standard_date": "1830",
+          "place": "Antioquia, Colombia",
+          "standard_place": "Antioquia, Colombia"
+        },
+        {
+          "id": "b0622dcf-b2fe-4612-81b6-4ffa88a7df4b",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7KDK-4VY"
+        },
+        {
+          "ref": "3YNQ-W2S"
+        },
+        {
+          "ref": "3Y6D-R7M"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GZ6S-8MW",
+      "person2": "PSTN-ZFY",
+      "facts": [
+        {
+          "id": "b29ff0e6-3754-45e4-8bc8-f265f66ea331",
+          "type": "Marriage",
+          "date": "19 de abril de 1931",
+          "standard_date": "19 Apr 1931",
+          "place": "Aguadas, Caldas, Colombia",
+          "standard_place": "Aguadas, Caldas, Colombia"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GZ6S-8MW",
+      "person2": "GZ6S-XXF"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "GZ6S-8M1",
+      "person2": "GZ6S-6DN"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GZ6S-8M1",
+      "child": "GZ6S-8MW"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GZ6S-6DN",
+      "child": "GZ6S-8MW"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GZ6S-8MW",
+      "child": "GZ6S-FMD"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GZ6S-XXF",
+      "child": "GZ6S-FMD"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GZ6S-8MW",
+      "child": "PSTN-HRH"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GZ6S-XXF",
+      "child": "PSTN-HRH"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GZ6S-8MW",
+      "child": "PSTN-GTP"
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GZ6S-XXF",
+      "child": "PSTN-GTP"
+    },
+    {
+      "id": "R12",
+      "type": "ParentChild",
+      "parent": "GZ6S-8MW",
+      "child": "PSTN-VM9"
+    },
+    {
+      "id": "R13",
+      "type": "ParentChild",
+      "parent": "GZ6S-XXF",
+      "child": "PSTN-VM9"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GZ6S-8MW",
+      "title": "Fernando Suarez Franco",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Fernando Suarez Franco (PID GZ6S-8MW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZ6S-8MW"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GZ6S-FMD",
+      "title": "Julia Rosa Suarez Ramirez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Julia Rosa Suarez Ramirez (PID GZ6S-FMD); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZ6S-FMD"
+    },
+    {
+      "id": "sd_person_GZ6S-6DN",
+      "title": "Manuela Franco",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Manuela Franco (PID GZ6S-6DN); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZ6S-6DN"
+    },
+    {
+      "id": "sd_person_PSTN-HRH",
+      "title": "JUAN ESTEBAN SUAREZ RAMIREZ",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for JUAN ESTEBAN SUAREZ RAMIREZ (PID PSTN-HRH); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PSTN-HRH"
+    },
+    {
+      "id": "sd_person_PSTN-ZFY",
+      "title": "ROSAURA BALESTEROS",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for ROSAURA BALESTEROS (PID PSTN-ZFY); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PSTN-ZFY"
+    },
+    {
+      "id": "sd_person_GZ6S-XXF",
+      "title": "Maria Jesus Ramirez Henao",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Jesus Ramirez Henao (PID GZ6S-XXF); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZ6S-XXF"
+    },
+    {
+      "id": "sd_person_PSTN-GTP",
+      "title": "MARIA DEL CARMEN SUAREZ RAMIREZ",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for MARIA DEL CARMEN SUAREZ RAMIREZ (PID PSTN-GTP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PSTN-GTP"
+    },
+    {
+      "id": "sd_person_PSTN-VM9",
+      "title": "ANA ROSA SUAEREZ RAMIREZ",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for ANA ROSA SUAEREZ RAMIREZ (PID PSTN-VM9); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PSTN-VM9"
+    },
+    {
+      "id": "sd_person_GZ6S-8M1",
+      "title": "Juan De Dios Suarez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Juan De Dios Suarez (PID GZ6S-8M1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GZ6S-8M1"
+    },
+    {
+      "id": "3YNQ-WR5",
+      "title": "Fernando Suárez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDZ-NQ44 : Mon Aug 10 04:04:10 UTC 2026), Entry for María del Carmen and Fernando Suárez, 1 de febrero de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDZ-NQ4H"
+    },
+    {
+      "id": "3Y6D-5T3",
+      "title": "Fernando Juárez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDH-4KMG : Sun Aug 09 23:25:56 UTC 2026), Entry for Carberan and Fernando Juárez, 28 de mayo de 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDH-4KMP"
+    },
+    {
+      "id": "7KDK-HNF",
+      "title": "Fernando Suarez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGLM-JB3R : Fri Oct 02 15:04:08 UTC 2026), Entry for Fernando Suarez and Rosana Ballesteros, 19 de abril de 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGLM-JB3R"
+    },
+    {
+      "id": "3425-L36",
+      "title": "Fernando Suarez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGLM-8BYP : Sun Aug 09 18:34:54 UTC 2026), Entry for Ana Rosa Suarez and Fernando Suarez, 10 de marzo de 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGLM-8BYY"
+    },
+    {
+      "id": "3YNQ-WFV",
+      "title": "Fernando Suárez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDW-L7XX : Sun Aug 09 22:59:56 UTC 2026), Entry for Julia Rosa and Fernando Suárez, 21 de junio de 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDW-L7XF"
+    },
+    {
+      "id": "3425-21G",
+      "title": "Colombia, Catholic Church Records, 1576-2019; https://familysearch.org/ark:/61903/3:1:3Q9M-CSSS-97H3-R?cc=1726975&wc=CGXF-7M9%3A1044032901%2C1588775291%2C1044032803%2C1588775345",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019,\" database with images, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/3:1:3Q9M-CSSS-97H3-R?cc=1726975&wc=CGXF-7M9%3A1044032901%2C1588775291%2C1044032803%2C1588775345 : 5 December 2021), Antioquia > Caramanta > Inmaculada Concepción > Bautismos 1894-1897, vol 10 > image 157 of 230; La Arquidiocesis de Caragena (The Archdiocese of Cartagena), Colombia.",
+      "url": "https://familysearch.org/ark:/61903/3:1:3Q9M-CSSS-97H3-R"
+    },
+    {
+      "id": "3YNQ-WJ6",
+      "title": "Julia Rosa, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDW-L7XX : Sun Aug 09 22:59:56 UTC 2026), Entry for Julia Rosa and Fernando Suárez, 21 de junio de 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDW-L7XX"
+    },
+    {
+      "id": "7KDK-HQ5",
+      "title": "Manuela Franco, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGLM-JB3R : Fri Oct 02 15:04:08 UTC 2026), Entry for Fernando Suarez and Rosana Ballesteros, 19 de abril de 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGLM-JBQS"
+    },
+    {
+      "id": "3Y6D-RH8",
+      "title": "Manuela Franco, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDH-4KMG : Sun Aug 09 23:25:56 UTC 2026), Entry for Carberan and Fernando Juárez, 28 de mayo de 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDH-4KMT"
+    },
+    {
+      "id": "3YNQ-W1Z",
+      "title": "María Jesús Ramírez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDZ-NQ44 : Mon Aug 10 04:04:10 UTC 2026), Entry for María del Carmen and Fernando Suárez, 1 de febrero de 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDZ-NQ4C"
+    },
+    {
+      "id": "3YNQ-WV9",
+      "title": "María, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDW-L7XX : Sun Aug 09 22:59:56 UTC 2026), Entry for Julia Rosa and Fernando Suárez, 21 de junio de 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDW-L7XN"
+    },
+    {
+      "id": "3Y6D-5B6",
+      "title": "María Jesús Ramírez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDH-4KMG : Sun Aug 09 23:25:56 UTC 2026), Entry for Carberan and Fernando Juárez, 28 de mayo de 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDH-4KM5"
+    },
+    {
+      "id": "7KDK-4VY",
+      "title": "Juan de Dios Suarez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGLM-JB3R : Fri Oct 02 15:04:08 UTC 2026), Entry for Fernando Suarez and Rosana Ballesteros, 19 de abril de 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGLM-JB3Y"
+    },
+    {
+      "id": "3YNQ-W2S",
+      "title": "Juan de Dios Juárez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDW-L7XX : Sun Aug 09 22:59:56 UTC 2026), Entry for Julia Rosa and Fernando Suárez, 21 de junio de 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDW-L7XV"
+    },
+    {
+      "id": "3Y6D-R7M",
+      "title": "Juan de Dios Juárez, \"Colombia, registros parroquiales y diocesanos, 1576-2019\"",
+      "citation": "\"Colombia, registros parroquiales y diocesanos, 1576-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6DDH-4KMG : Sun Aug 09 23:25:56 UTC 2026), Entry for Carberan and Fernando Juárez, 28 de mayo de 1898.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6DDH-4KMR"
+    }
+  ]
+}
