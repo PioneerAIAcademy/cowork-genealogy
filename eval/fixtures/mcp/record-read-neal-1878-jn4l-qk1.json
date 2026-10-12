@@ -1,0 +1,41 @@
+{
+  "tool": "record_read",
+  "description": "The Yell County, Arkansas marriage behind JN4L-QK1, for ut_search_records_jurisdiction_hint. Stocked to stop an ABORT, not for realism, exactly as record-read-ackerman-1860-m7qz-8kd.json is: record_read is not in the harness's LIVE_TOOLS, so with no fixture the tool is never registered and any call to it is a Type 1 uncovered call that aborts the run at exit 2. Observed in search-records v5_2026-10-12_11-04-37, where the skill followed the jurisdiction hint, got this record as its single hit, read it, and the test died ungraded after eight prior runs had stopped short of the read. Mirrors the gedcomx the matching record_search fixtures already return for this id — Jesse alone with the 1878 Marriage fact, NO spouse person — so the test's premise is unchanged: the point is that the Arkansas retry found a record, not who he married.",
+  "args": {
+    "recordId": "~JN4L-QK1"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p1",
+        "gender": "Male",
+        "names": [
+          {
+            "given": "Jesse",
+            "surname": "Neal"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "~1857",
+            "place": "Arkansas"
+          },
+          {
+            "type": "Marriage",
+            "date": "1878",
+            "place": "Yell County, Arkansas"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "title": "Arkansas, County Marriages, 1837-1957",
+        "recordId": "ark:/61903/1:1:JN4L-QK1"
+      }
+    ],
+    "places": []
+  }
+}

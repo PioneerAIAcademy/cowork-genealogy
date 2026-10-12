@@ -22,7 +22,8 @@
     "record-search-neal-marriage-arkansas-marriageplace",
     "record-search-neal-marriage-nil-with-jurisdiction-hint",
     "catalog-search-empty",
-    "catalog-search-empty-keywords"
+    "catalog-search-empty-keywords",
+    "record-read-neal-1878-jn4l-qk1"
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: after a record_search response carries a non-empty jurisdictionHints, the next 1-2 record_search calls in the same plan-item sequence must try the top-ranked candidate's place (here, Yell County, Arkansas -- the subject's own Birth-fact place) before reverting to the originally-searched jurisdiction (Union County, South Carolina).",
