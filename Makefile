@@ -1657,3 +1657,9 @@ DEPLOY_URL := https://genealogy-workbench.fly.dev
 .PHONY: deploy-status
 deploy-status: ## Health-check the deployed control plane (expect "db":"postgres")
 	curl -s $(DEPLOY_URL)/api/health | jq
+
+# Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
+# here. Reads turn_costs (apps/server/app/cost_report.py).
+.PHONY: alpha-costs
+alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"
