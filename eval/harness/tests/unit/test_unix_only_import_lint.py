@@ -8,12 +8,16 @@ nothing caught it. This lint reads source, not platform, so a Linux runner catch
 a Windows break (issue #3310).
 
 The rule: an import of a module in ``UNIX_ONLY`` anywhere that runs at import time
-is flagged. That is everywhere except inside a ``def``, ``async def`` or ``lambda``
-body -- class bodies and module-level ``if``/``try``/``with``/``for``/``match``
+is flagged. That is everywhere except inside a ``def`` or ``async def`` body --
+class bodies and module-level ``if``/``try``/``with``/``for``/``match``
 blocks all run on import. There is no exemption for ``try: ... except ImportError``
 or ``if sys.platform ...``; the fix is a function-local import, as in
 ``turn_users.parse``. ``from .pwd import x`` (``level > 0``) is a local module and
 is not flagged.
+
+The lint checks where an import is written, not what runs: a module-level call
+to a function holding a lazy import (``_X = _uid()``) still imports ``pwd`` on
+load and is not caught. Nothing in the repo does that today.
 
 An AST pass, not a grep, for the same reason as ``test_encoding_lint.py``: a
 per-line grep false-flags a lazy import with unusual indentation and misses one in
@@ -46,8 +50,8 @@ UNIX_ONLY = frozenset(
 
 LAZY_EXAMPLE = "apps/server/proto/worker/turn_users.py"
 
-# 503 .py files on 2026-10-12. parents[3] lands on eval/, which has its own
-# CLAUDE.md and 339 .py files -- the floor sits above that so a wrong root fails
+# 504 .py files on 2026-10-12. parents[3] lands on eval/, which has its own
+# CLAUDE.md and 340 .py files -- the floor sits above that so a wrong root fails
 # here, not just on the LAZY_EXAMPLE check.
 MIN_FILES_SCANNED = 450
 
@@ -60,9 +64,6 @@ class _ImportTimeImports(ast.NodeVisitor):
         return
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-        return
-
-    def visit_Lambda(self, node: ast.Lambda) -> None:
         return
 
     def visit_Import(self, node: ast.Import) -> None:

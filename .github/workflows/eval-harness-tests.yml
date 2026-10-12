@@ -85,9 +85,9 @@ jobs:
           # `^eval/triggering/` also gate the repo-wide encoding lint
           # (tests/unit/test_encoding_lint.py, issue #1285) and the Unix-only
           # import lint (test_unix_only_import_lint.py, issue #3310), which
-          # AST-scan every .py in the repo: the job must run whenever a scanned .py under those
-          # trees changes, or a reintroduced bare open()/read_text() there merges
-          # with this check green. All apps/ Python lives under apps/server/, so
+          # AST-scan every .py in the repo: the job must run whenever a scanned
+          # .py under those trees changes, or a reintroduced bare
+          # open()/read_text() or top-level `import pwd` there merges green. All apps/ Python lives under apps/server/, so
           # ^apps/server/ (not the broader ^apps/) is exact coverage -- apps/web and
           # apps/electron hold no .py.
           #
