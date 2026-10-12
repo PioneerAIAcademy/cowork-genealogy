@@ -79,6 +79,10 @@ from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
 
 from proto.worker.deny import host_path_denied, project_read_denied
+# Used at the tool_calls record below. The import was lost in the 2026-10-12 main
+# merge -- the conflicted hunk carrying it went to main's side while the call site
+# survived in an auto-merged region, leaving a NameError no import-time check sees.
+from proto.worker.writer_record import writer_record
 
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
@@ -505,24 +509,10 @@ def make_pretool_hook(
                     reason=stop_now)
             return _halt(stop_now)
 
-        # A bounded request that is met must not run on to the proof, the nudge cap or the
-        # spend bound. It sits AFTER the halt check, so the researcher's own stop still
-        # outranks it.
-        #
-        # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
-        # session's tool set, so without this a record-extractor saying "delivered" would
-        # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
-        # stop the parent, 3 of 3 on compose). `agent_id` is tested for
-        # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
-        # `agent_type` alone is not sufficient because it is present on the main thread of
-        # a session started with `--agent`. That is the discriminator the shipped plugin
-        # hook already uses (`owner_denied`, hooks/guard_project_files.py), reused rather
-        # than re-derived.
-        # A subagent's call falls through to ordinary handling, where the tool returns its
-        # harmless acknowledgement and the run carries on.
-
-        # The exit, AFTER the halt check so Stop keeps precedence: Stop is the researcher's own
-
+        # The "I need you" exit, AFTER the halt check so Stop keeps precedence: Stop is
+        # the researcher's own instruction and an ask cannot overrule it. Decisions are
+        # ASYNCHRONOUS -- a person answers hours later and an attempt is capped -- so the
+        # turn ENDS here and the answer arrives as the next message.
         if tool_name == DECISION_TOOL:
             try:
                 record({
@@ -557,6 +547,20 @@ def make_pretool_hook(
         # request that is met must not run on to the proof, the nudge cap or $35. It sits
         # AFTER the halt check, so the researcher's own stop still outranks it.
 
+        # A bounded request that is met must not run on to the proof, the nudge cap or the
+        # spend bound. It sits AFTER the halt check, so the researcher's own stop still
+        # outranks it.
+        #
+        # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
+        # session's tool set, so without this a record-extractor saying "delivered" would
+        # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
+        # stop the parent, 3 of 3 on compose). `agent_id` is tested for MEMBERSHIP, not
+        # truthiness: it is absent as a KEY on the main thread, and `agent_type` alone is
+        # not sufficient because it is present on the main thread of a session started
+        # with `--agent`. That is the discriminator the shipped plugin hook already uses
+        # (`owner_denied`, hooks/guard_project_files.py), reused rather than re-derived.
+        # A subagent's call falls through to ordinary handling, where the tool returns its
+        # harmless acknowledgement and the run carries on.
         if tool_name == DELIVERED_TOOL and "agent_id" not in data:
             try:
                 record({

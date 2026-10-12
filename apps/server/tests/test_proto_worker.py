@@ -745,6 +745,28 @@ def _call(hook, data):
     return asyncio.run(hook(data, tool_use_id, {"signal": None}))
 
 
+def test_a_decision_row_records_what_the_call_wrote(tmp_path):
+    """The decision arm's `tool_calls` row carries `wrote`, the shape of what a write
+    wrote (None for a read).
+
+    This exists because the `writer_record` IMPORT was lost in the 2026-10-12 main merge
+    while the call site survived -- and the arm wraps `record()` in
+    `except Exception`, so the NameError was SWALLOWED: no crash, no failing test, just a
+    ledger row that silently stopped being written. Nothing covered the use of
+    `writer_record`, only the function itself."""
+    rows: list[dict] = []
+    hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
+    _call(hook, {"tool_name": "AskUserQuestion",
+                 "tool_input": {"questions": [{"question": "Which Patrick?"}]},
+                 "tool_use_id": "tu-9", "session_id": "sdk-sid"})
+    assert rows, "the decision arm recorded no row at all"
+    assert "wrote" in rows[-1], (
+        "the decision row lost its `wrote` column -- if `writer_record` raised, the arm's "
+        "except swallowed it and this is the only thing that says so"
+    )
+    assert rows[-1]["decision"] == "decision"
+
+
 def test_every_call_gets_a_tool_calls_row_with_the_decision(tmp_path):
     rows: list[dict] = []
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))

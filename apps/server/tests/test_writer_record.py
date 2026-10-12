@@ -12,7 +12,7 @@ not the payload. A diff needs to know what moved, and storing whole entries woul
 every record body in the call log.
 """
 
-from proto.web.writer_record import writer_record
+from proto.worker.writer_record import writer_record
 
 
 def test_a_section_append_records_section_op_and_id():

@@ -91,8 +91,6 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from proto.web.job_state import job_state
-from proto.web.sidecar import fetch_sidecar, sidecar_key, sidecar_payload
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
@@ -111,6 +109,12 @@ import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+from web.job_state import job_state  # noqa: E402  (the four states the list shows)
+from web.sidecar import (  # noqa: E402  (search-result chip bodies, from the blob store)
+    fetch_sidecar,
+    sidecar_key,
+    sidecar_payload,
+)
 
 log = logging.getLogger("proto.web")
 # What the patron sees when SendMessage fails. Never the exception: an AWS refusal names the

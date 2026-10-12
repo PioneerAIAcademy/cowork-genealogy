@@ -40,7 +40,13 @@ from web.app import PgStore, ReadyCheckError, create_app  # noqa: E402
 
 FILES = migrate.load()
 NAMES = [m.name for m in FILES]
-LATEST = "011_session_entries_uuid_index.sql"
+#: Derived, not hardcoded: this is the LAST file on disk, and a branch that adds a
+#: migration moved it twice before CI said so -- these `_pg` tests are skipped
+#: locally (no Postgres), so a stale literal here passes every local run.
+#: From the DIRECTORY, not from NAMES above: deriving it from the loader would make
+#: `NAMES[-1] == LATEST` vacuous. This way the assertion still cross-checks the
+#: loader against what is on disk.
+LATEST = sorted(q.name for q in migrate.SQL_DIR.glob("*.sql"))[-1]
 RACE_SQLSTATES = {"23505", "42P07", "42710", "XX000"}
 
 
