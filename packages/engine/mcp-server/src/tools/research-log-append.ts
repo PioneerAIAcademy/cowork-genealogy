@@ -372,8 +372,10 @@ export function censusMentions(notes: string): CensusMention[] {
   const push = (years: string, qualifier: string, post: string, before = false) => {
     const from = relationshipColumnFrom(`${qualifier} ${post}`);
     if (from === null || Number.isNaN(from)) return;
-    for (const y of years.match(new RegExp(CENSUS_YEAR, "g")) ?? []) {
-      out.push({ year: Number(y) - (before ? 1 : 0), columnFrom: from });
+    // The prefix qualifies the year it touches, not the run: "before 1880 and
+    // 1880 census" is a pre-1880 census and the 1880 one.
+    for (const [i, y] of (years.match(new RegExp(CENSUS_YEAR, "g")) ?? []).entries()) {
+      out.push({ year: Number(y) - (before && i === 0 ? 1 : 0), columnFrom: from });
     }
   };
   for (const m of notes.matchAll(CENSUS_BEFORE)) {
@@ -475,11 +477,22 @@ const SOURCE_NAMED =
  * spouse", a flat spouse-and-children claim that is exactly what this gate is
  * for. Searched against `notes`, hence the `i`.
  *
- * The plural is spelled out: `\bco-?resident\b` stops short of "co-residents",
- * so "sidecar co-residents are Henry and Margaret Ackerman only" walked through.
- * Adding it newly refused nothing in the corpus re-measure.
+ * The PLURAL is not in this set: "no co-residents listed" and "co-residents not
+ * checked" are about the search, not the household. It is a claim when names
+ * follow it -- see `CORESIDENTS_NAMED`.
  */
-const CORESIDENCE_CLAIM = /\b(?:co-?residents?|enumerated with|living with)\b/i;
+const CORESIDENCE_CLAIM = /\b(?:co-?resident|enumerated with|living with)\b/i;
+
+/**
+ * Plural co-residents WITH the people named: "sidecar co-residents are Henry and
+ * Margaret Ackerman only", "Co-residents: Henry, Margaret". `\bco-?resident\b`
+ * stops short of the plural, so that ut_search_records_027 note walked through.
+ * A name has to follow the noun, directly or after `are`/`were`/`include`/a
+ * colon, so a note that says co-residents were not listed or not checked is
+ * left alone. Case-sensitive for the name, against `notes`.
+ */
+const CORESIDENTS_NAMED =
+  /\b[Cc]o-?residents\b\s*(?:(?:are|were|include[sd]?|including)\s+|:\s*)?[A-Z]/;
 
 /**
  * The ABSTRACT half. `household` and `dwelling` are ordinary nouns for the
@@ -645,6 +658,31 @@ function hasHouseholdCompound(notes: string): boolean {
  * same limit the compound arm accepts.
  */
 const ROSTER_NAME = String.raw`[A-Z][\w.'’-]*(?:[ ][A-Z][\w.'’-]*){0,2}`;
+
+/**
+ * State and country names, so "Household search covered Ohio, Indiana and
+ * Kentucky" is not read as three people. A closed list, so it is safe in the
+ * same way as `PLACE_MARKER`: a place missing here causes a refusal the caller
+ * can act on. It leaves out every state that is also a common given name
+ * (Virginia, Georgia, Florida, Nevada, Carolina), because a person wrongly
+ * listed here would cancel the deny silently.
+ */
+const ROSTER_PLACE_NAMES = new Set([
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware",
+  "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
+  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
+  "Nebraska", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+  "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
+  "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Washington", "West Virginia",
+  "Wisconsin", "Wyoming",
+  "Ireland", "England", "Scotland", "Wales", "Germany", "Prussia", "Bavaria", "Norway", "Sweden",
+  "Denmark", "Holland", "Netherlands", "France", "Switzerland", "Canada", "Mexico", "Italy",
+  "Poland", "Austria",
+]);
+
+const isPlaceRun = (run: string): boolean =>
+  ROSTER_PLACE_NAMES.has(run.replace(/\.$/, "")) ||
+  run.split(" ").some((t) => PLACE_MARKER_ONLY.test(t.replace(/\.$/, "")));
 const HOUSEHOLD_ROSTER_G = new RegExp(
   String.raw`\b[Hh]ousehold\b(?:[ ][a-z][\w.'’-]*){0,3}[ ]?:?[ ]+(${ROSTER_NAME}(?:(?:[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+)${ROSTER_NAME})+)`,
   "g",
@@ -654,7 +692,7 @@ function hasHouseholdRoster(sentence: string): boolean {
   for (const m of sentence.matchAll(HOUSEHOLD_ROSTER_G)) {
     const people = m[1]
       .split(/[ ]?,[ ]*(?:and[ ]+)?|[ ]+and[ ]+/)
-      .filter((run) => run.split(" ").every((t) => !PLACE_MARKER_ONLY.test(t.replace(/\.$/, ""))));
+      .filter((run) => !isPlaceRun(run));
     if (people.length >= 2) return true;
   }
   return false;
@@ -693,7 +731,7 @@ const ROLE_IN_PARENS =
  * move the carve-out's anchor silently, and a deny whose anchor drifts fails
  * open. Lowercased input.
  */
-const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAIM.source}`);
+const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAIM.source}|\\bco-?residents\\b`);
 
 /**
  * Kinship asserted about a NAMED person. Case-sensitive on purpose (the
@@ -716,13 +754,41 @@ const HOUSEHOLD_ANCHOR = new RegExp(`${HOUSEHOLD_NOUN.source}|${CORESIDENCE_CLAI
  * attribution is a hedge, though `INDEXED_ROLE_HEDGES` honours it only beside
  * head/relationship/co-resident/role, never beside a bare kinship word.
  *
- * A PLURAL role may also be separated from its names by punctuation: "plus
- * sons, Thos T McElwee and Stephen McElwee". The singular roles may not: "Groom's
- * father: Christopher Jespersen" is a marriage record's field label, which the
- * corpus re-measure showed the wider arm refusing.
+ * A PLURAL role may also be separated from its names by punctuation ("plus
+ * sons, Thos T McElwee and Stephen McElwee") -- `PLURAL_KINSHIP_PUNCTUATED`,
+ * payload only. The singular roles may not: "Groom's father: Christopher
+ * Jespersen" is a marriage record's field label, which the corpus re-measure
+ * showed the wider arm refusing.
+ *
+ * `AS_ROLE` and `HOUSEHOLD_HEAD_NAMED` are the role shapes the eval validator
+ * caught before it became a replay of this check: "Mary Flynn listed as wife",
+ * "Thomas Flynn as head", "Household head Thomas Flynn". The head shape wants a
+ * name after it, so "no Stribling appeared as a household head on any readable
+ * page" stays a negative result. An index attribution ("indexed as Head") is
+ * still a hedge, through `INDEXED_ROLE_HEDGES`.
+ *
+ * `AS_ROLE` counts only in a sentence that names no other record type
+ * (`SOURCE_NAMED`): "the death records naming Sarah A. Bagley as mother" and
+ * "child baptism records ... (Chresten Nielsen as father)" are what those
+ * records state, and the corpus re-measure refused both without this.
  */
+const AS_ROLE =
+  /\bas\s+["'“‘]?(?:(?:his|her|the)\s+)?["'“‘]?(?:head|wife|husband|son|daughter|father|mother)\b/i;
+const HOUSEHOLD_HEAD_NAMED = /\b[Hh]ousehold\s+head\s*[:,\u2013\u2014-]?\s*[A-Z]/;
+
+const assertsAsRole = (notes: string): boolean =>
+  // Not cut at an initial, or "naming Sarah A. Bagley as mother" loses its source.
+  notes.split(/(?<!\b[A-Z])[.;]\s/).some((sentence) => AS_ROLE.test(sentence) && !SOURCE_NAMED.test(sentence.toLowerCase()));
 const KINSHIP_CLAIM =
-  /(?<!\b(?:his|her|their)\s)\b(?:(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+|(?:sons|daughters|children)[ ]?[,:\u2013\u2014-][ ]*)(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
+  /(?<!\b(?:his|her|their)\s)\b(?:mother|father|wife|husband|sons?|daughters?|parents?|children)\s+(?:(?:is|was|are|were)\s+(?:listed|recorded|shown|given|named)\s+as\s+)?[A-Z]/;
+
+/**
+ * The punctuated plural. Read ONLY against a staged pre-1880 census payload, like
+ * `POSSESSIVE_KINSHIP`: in a note alone it refused "Searched 1850 census for
+ * children, Mary and John: nil", a search plan, and a nil stages no payload.
+ */
+const PLURAL_KINSHIP_PUNCTUATED =
+  /(?<!\b(?:his|her|their)\s)\b(?:sons|daughters|children)[ ]?[,:\u2013\u2014-][ ]*[A-Z]/;
 
 /**
  * The POSSESSIVE form, which puts the name before the role: "Ezra and Noah
@@ -779,7 +845,7 @@ const RELATIONSHIP_COLUMN_DENIED = new RegExp(
  * A. Mullen" are not cut at their abbreviating periods.
  */
 function assertsHousehold(notes: string): boolean {
-  if (CORESIDENCE_CLAIM.test(notes)) return true;
+  if (CORESIDENCE_CLAIM.test(notes) || CORESIDENTS_NAMED.test(notes)) return true;
   return notes
     .split(/[.;]\s/)
     .some((sentence) => HOUSEHOLD_CLAIM.test(sentence) || hasHouseholdCompound(sentence) || hasHouseholdRoster(sentence));
@@ -857,7 +923,13 @@ export function requirePre1880CensusHedge(
   // can only move `claimAt` earlier, which makes this carve-out HARDER to
   // trigger -- the fail-closed direction, which is the one to be wrong in for a
   // clause that cancels a deny.
-  const claimAt = [text.search(HOUSEHOLD_ANCHOR), notes.search(KINSHIP_CLAIM), notes.search(POSSESSIVE_KINSHIP)]
+  const claimAt = [
+    text.search(HOUSEHOLD_ANCHOR),
+    notes.search(KINSHIP_CLAIM),
+    notes.search(PLURAL_KINSHIP_PUNCTUATED),
+    notes.search(POSSESSIVE_KINSHIP),
+    notes.search(AS_ROLE),
+  ]
     .filter((i) => i >= 0)
     .reduce((a, b) => Math.min(a, b), Number.POSITIVE_INFINITY);
   const isAboutOtherSource =
@@ -879,7 +951,10 @@ export function requirePre1880CensusHedge(
   // of the other two saw it.
   const assertsKinship =
     KINSHIP_CLAIM.test(notes) ||
+    (payloadYears.length > 0 && PLURAL_KINSHIP_PUNCTUATED.test(notes)) ||
     (payloadYears.length > 0 && POSSESSIVE_KINSHIP.test(notes)) ||
+    assertsAsRole(notes) ||
+    HOUSEHOLD_HEAD_NAMED.test(notes) ||
     ROLE_IN_PARENS.test(notes) ||
     /\bhead\s+of\s+(?:the\s+)?household\b/.test(text);
   if (!describesHousehold && !assertsKinship) return;

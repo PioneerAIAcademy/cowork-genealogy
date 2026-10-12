@@ -160,6 +160,18 @@ def test_late_follow_up_after_a_parallel_pair_passes():
     check(calls, TAGGED)
 
 
+def test_surname_alt_hint_followed_in_surname_alt_passes():
+    """A hint on the maiden-name union field is followed in that same field."""
+    calls = [
+        rs_call(
+            {"surname": "Monsen", "surnameAlt": "Halsteinsdatter", "givenName": "Unna"},
+            hint_response(field="surnameAlt"),
+        ),
+        rs_call({"surname": "Monsen", "surnameAlt": "Halsteinsdr", "givenName": "Urna"}),
+    ]
+    check(calls, TAGGED)
+
+
 def test_bare_tool_name_is_recognised():
     calls = [
         dict(FIRST_NIL, tool="record_search"),

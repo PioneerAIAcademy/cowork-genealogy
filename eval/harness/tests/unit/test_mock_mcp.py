@@ -1582,3 +1582,17 @@ def test_surname_hint_degrades_with_a_warning_on_node_failure(tmp_path, monkeypa
             tmp_path, args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
         )
     assert (unlogged, hint) == ([], None)
+
+
+@pytest.mark.parametrize(
+    "platform, path, expected",
+    [
+        ("linux", "/home/x/build/tools/a.js", "/home/x/build/tools/a.js"),
+        ("win32", "C:\\Users\\x\\build\\a.js", "file:///C:/Users/x/build/a.js"),
+        ("linux", "/home/o'neil/a.js", "/home/o\\'neil/a.js"),
+    ],
+    ids=["posix-bare-path", "windows-file-url", "quote-escaped"],
+)
+def test_node_module_url_is_the_one_import_specifier(monkeypatch, platform, path, expected):
+    monkeypatch.setattr(mock_mcp.sys, "platform", platform)
+    assert mock_mcp._node_module_url(path) == expected

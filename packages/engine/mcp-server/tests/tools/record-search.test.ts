@@ -2248,7 +2248,7 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
     // The only branch that stages a sidecar, so the only one where "never staged"
     // can be shown. The note must not claim the rows are empty: one of them may
     // be the subject under a different spelling.
-    it("fires, says 'did not find the subject', precedes results, and is not staged", async () => {
+    it("fires, says 'did not identify the subject', precedes results, and is not staged", async () => {
       mockFetch.mockResolvedValueOnce(
         makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
       );
@@ -2261,7 +2261,7 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
       expect(out.totalMatches).toBe(1);
       expect(out.ranked?.subjectResolvable).toBe(false);
       expect(out.surnameVariantHints?.fields[0].variants[0]).toBe("Halsteinsdr");
-      expect(out.surnameVariantHints?.note).toMatch(/did not find the subject/);
+      expect(out.surnameVariantHints?.note).toMatch(/did not identify the subject/);
       expect(out.surnameVariantHints?.note).not.toMatch(/found nobody|no results/i);
       const keys = Object.keys(out);
       expect(keys.indexOf("surnameVariantHints")).toBe(keys.indexOf("results") - 1);

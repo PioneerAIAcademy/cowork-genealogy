@@ -670,6 +670,46 @@ describe("requirePre1880CensusHedge refuses a household roster and accepts the g
     ok("Ezra and Noah Whitfield, also in that entry, are likely Amos's children, inferred from surname and age.");
   });
 
+  it.each([
+    "Mary Flynn listed as wife.",
+    "Thomas Flynn as head, Mary as wife.",
+    "Household head Thomas Flynn, b. 1822.",
+  ])("refuses a role stated with 'as' or after 'household head' %#", (n) => bad(n));
+
+  it.each([
+    // A negative result names no head.
+    "1850 census: no Stribling appeared as a household head on any readable page.",
+    // What another record states, in the sentence that names it, initial and all.
+    "Born ~1785 per 1870 census. Gerusha's identity is ruled out by the death records naming Sarah A. Bagley as mother.",
+    "Top matches are child baptism records attached to KN3K-9Q3 (Chresten Nielsen as father).",
+    // An index attribution is a hedge.
+    "Thomas Flynn indexed as head.",
+  ])("leaves a role 'as' alone where it is not a census claim %#", (n) => ok(n));
+
+  it.each([
+    "One result: Patrick Flynn. No co-residents listed.",
+    "One result: Patrick Flynn. Co-residents not checked.",
+  ])("does not read plural co-residents with no names as a claim %#", (n) => ok(n));
+
+  it("reads state and country names in a roster as places, but not a state that is also a given name", () => {
+    ok("Household search covered Ohio, Indiana and Kentucky.");
+    ok("Household shows New York and Ireland as birthplaces.");
+    bad("Household lists George and Virginia.");
+  });
+
+  it("reads a punctuated plural role only against a staged payload", () => {
+    const n = "Searched 1850 census for children, Mary and John: nil.";
+    expect(() => requirePre1880CensusHedge(n)).not.toThrow();
+    bad(n);
+  });
+
+  it("takes 'before' off the year it touches, not every year in the run", () => {
+    expect(censusMentions("before 1880 and 1880 census")).toEqual([
+      { year: 1879, columnFrom: 1880 },
+      { year: 1880, columnFrom: 1880 },
+    ]);
+  });
+
   it("accepts plural co-residents beside an index hedge", () => {
     ok("Co-residents indexed: Henry and Margaret Ackerman.");
   });

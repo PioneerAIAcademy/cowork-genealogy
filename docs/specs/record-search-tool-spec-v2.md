@@ -1062,11 +1062,16 @@ substitutes for dotter."* Both endings map to `dr`, `dtr`, `d`, in that order �
 
 Fires when **both** of:
 
-- the search did not find the subject — `totalMatches` is 0 **or** ranking
-  reported `subjectResolvable: false` (the `jurisdictionHints` test, and for the
-  same reason: rows that matched nobody are the same situation as no rows);
-- at least one surname field — `surname`, `spouseSurname`, `fatherSurname`,
-  `motherSurname`, `parentSurname`, `otherSurname` — ends in `datter` or
+- the search did not identify the subject — `totalMatches` is 0 **or** ranking
+  reported `subjectResolvable: false` (`searchFoundNobody`, the one test
+  `jurisdictionHints` also calls, and for the same reason: rows that matched
+  nobody are the same situation as no rows). Both of the ranker's branches
+  count, including the one where the subject has no dated or placed fact and
+  the rows may hold her: an abbreviated surname is still worth trying there,
+  which is why the note says the search did not *identify* the subject;
+- at least one surname field — `surname`, `surnameAlt`, `spouseSurname`,
+  `fatherSurname`, `motherSurname`, `parentSurname`, `otherSurname` — ends in
+  `datter` or
   `dotter` (trimmed, case-insensitive) with at least one letter before the
   ending.
 
@@ -1076,7 +1081,7 @@ It needs no tree, so unlike `jurisdictionHints` it does not require
 | Field | Type | Description |
 |-------|------|-------------|
 | `fields` | object[] | One entry per qualifying input field, in the order above: `field` (the input field name), `searched` (the value sent, trimmed), `variants` (the stem plus each abbreviation — `Halsteinsdr`, `Halsteinsdtr`, `Halsteinsd`). The stem keeps the caller's spelling; an all-capitals ending gets capital abbreviations. |
-| `note` | string | The rule in plain language: retry each form **in the same field it replaces** (not `surnameAlt`), in the same call as each given-name spelling being tried, before concluding the record is not indexed — and these are spellings to try, not evidence. It says the search "did not find the subject", never that it found nothing: on the `subjectResolvable: false` branch the rows are present and one may be the subject. |
+| `note` | string | The rule in plain language: retry each form **in the same field as the surname it replaces** (a form listed for `surname` goes in `surname`, not `surnameAlt`), in the same call as each given-name spelling being tried, before concluding the record is not indexed — and these are spellings to try, not evidence. It says the search "did not identify the subject", never that it found nothing: on the `subjectResolvable: false` branch the rows are present and one may be the subject. |
 
 **Why every surname field, not only `surname`.** The lead's ruling (2026-10-06)
 names `surname`. The case that motivated it does not fit that: the bride is not
@@ -1084,15 +1089,18 @@ indexed as a principal at all, and the one search that finds her is
 `surname=Monsen givenName=Anders spouseGivenName=Urna spouseSurname=Halsteinsdr`
 (`eval/tests/e2e/anders-monsen-ancestry/README.md`). A `surname`-only hint would
 pass the unit test and miss the production case, and a mother's patronymic on a
-christening search is abbreviated the same way. Widened to all six fields on the
-user's decision of 2026-10-08 and put back to the lead as a question; narrowing
-it again is a change to `SURNAME_FIELDS` alone.
+christening search is abbreviated the same way. Widened to the six fields above
+on the user's decision of 2026-10-08 and put back to the lead as a question, then
+to `surnameAlt` too: it is the maiden-name union, the field a woman's patronymic
+most often travels in, and leaving it out missed the case this hint exists for.
+Narrowing it again is a change to `SURNAME_FIELDS` alone.
 
 **Why the note says "same field", not `surnameAlt`.** A form already sent as
-`surnameAlt` is not dropped from the list, and the note steers away from that
-field: the alternate name is a union paired with its own given name, so a
-short form tried there with one given-name spelling may still need trying with
-another.
+`surnameAlt` is not dropped from the list, and the note steers a form listed for
+another field away from `surnameAlt`: the alternate name is a union paired with
+its own given name, so a short form tried there with one given-name spelling may
+still need trying with another. A form listed for `surnameAlt` itself goes back
+in `surnameAlt`.
 
 **Serialized before `results`**, for the reason given under "`rankingSkipped`":
 anything after `results` is the first thing a size bound drops, which matters on
@@ -1888,6 +1896,8 @@ either and importing from the other would make the two mutually importing.
   trigger and content. Import-free, because the eval mock runs it out of the
   compiled build.
 - `patronymicVariants(surname)` — the abbreviated forms of one surname, or `[]`.
+- `searchFoundNobody(out)` — the did-not-identify-the-subject test, shared with
+  `jurisdictionHints` in `record-search.ts`.
 - `SURNAME_FIELDS`, `PATRONYMIC_ABBREVIATIONS`, `SURNAME_VARIANT_HINTS_NOTE`.
 
 ### `packages/engine/mcp-server/src/index.ts`
@@ -1981,7 +1991,9 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 67 | Serialized immediately before `results` | Key order |
 | 68 | Silent on a nil `Neal` and a nil `Johnson` | Non-qualifying surname; pins the rejected `-son` case |
 | 69 | Silent when the search found records and no ranking ran | Trigger is "did not find the subject", not "any search" |
-| 70 | Fires on rows + `subjectResolvable: false`, says "did not find the subject", precedes `results`, and is absent from the staged sidecar | The one branch that stages, so the only place "never staged" can be shown |
+| 70 | Fires on rows + `subjectResolvable: false`, says "did not identify the subject", precedes `results`, and is absent from the staged sidecar | The one branch that stages, so the only place "never staged" can be shown |
+| 71 | Emitted on `surnameAlt`, the maiden-name union | The field a woman's patronymic most often travels in |
+| 72 | `searchFoundNobody` true on a nil and on rows with `subjectResolvable: false`, false otherwise | One test for both hints |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63

@@ -53,7 +53,7 @@ import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
-import { surnameVariantHints } from "../utils/surname-variant-hints.js";
+import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
 import { rankSearchMatches } from "./rank-search-matches.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
@@ -1168,8 +1168,7 @@ export async function recordSearchTool(
     input.marriageYearFrom !== undefined ||
     input.marriageYearTo !== undefined;
 
-  const foundNobody =
-    out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
+  const foundNobody = searchFoundNobody(out);
 
   // The place that was just searched is not always `marriagePlace`. In practice
   // the caller usually scopes a marriage search with `recordCountry` +

@@ -469,9 +469,10 @@ def _is_surname_field(key):
     """`surname` and the five kin `*Surname` fields record-search.ts reads
     (SURNAME_FIELDS in utils/surname-variant-hints.ts). Matched by shape, not
     by a copied list, so a sixth kin field is accepted without an edit here.
-    `surnameAlt` is deliberately not one: the hint's note directs each form into
-    the field it replaces, and the alternate name is a union paired with its own
-    given name."""
+    `surnameAlt` is not one: the hint's note directs a form listed for another
+    field into that field, and the alternate name is a union paired with its own
+    given name. A form the hint listed FOR `surnameAlt` is followed there; the
+    caller checks that separately."""
     return key == "surname" or key.endswith("Surname")
 
 
@@ -506,6 +507,7 @@ def test_surname_variant_hints_followed(tool_calls, test):
 
     hint_pos = None
     variants = set()
+    alt_variants = set()  # listed for surnameAlt, so followed there too
     for i, c in enumerate(record_calls):
         response = c.get("response") or {}
         hints = response.get("surnameVariantHints") or {}
@@ -513,6 +515,8 @@ def test_surname_variant_hints_followed(tool_calls, test):
             for v in entry.get("variants") or []:
                 if isinstance(v, str) and v.strip():
                     variants.add(v.strip().lower())
+                    if entry.get("field") == "surnameAlt":
+                        alt_variants.add(v.strip().lower())
         if variants:
             hint_pos = i
             break
@@ -523,10 +527,11 @@ def test_surname_variant_hints_followed(tool_calls, test):
     for c in record_calls[hint_pos + 1:]:
         args = c.get("args") or {}
         for key, value in args.items():
-            if (
-                _is_surname_field(key)
-                and isinstance(value, str)
-                and value.strip().lower() in variants
+            if not isinstance(value, str):
+                continue
+            form = value.strip().lower()
+            if (_is_surname_field(key) and form in variants) or (
+                key == "surnameAlt" and form in alt_variants
             ):
                 followed = True
     assert followed, (
@@ -639,8 +644,9 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
 
     Paired exactly where it can be: log id -> the staged handle its
     `research_log_append` op finalized -> the `record_search` call whose
-    response staged that handle. An entry with no handle falls back to
-    surname-keyed positional pairing among calls no entry has claimed, because
+    response staged that handle. An entry with no handle is paired with an
+    unclaimed call it traces to exactly, if there is one; otherwise it falls
+    back to surname-keyed positional pairing among calls no entry has claimed, because
     two calls sharing a surname is the skill's own broad-then-narrow pattern and
     an any()-style match would hide a claim one of them never sent. An entry
     past the last call for its surname is left alone.
@@ -687,8 +693,27 @@ def report_log_query_traces_to_record_search_call(before_state, after_state, too
     for c in calls:
         if id(c) not in claimed:
             free.setdefault(_hashable_key(_as_mapping(c.get("args")).get("surname")), []).append(c)
-    positions: dict[str, int] = {}
+
+    def _traces(e: dict, c: dict) -> bool:
+        never_sent, differs = _filter_claim_findings(e.get("query"), _record_search_sent(c.get("args")), vocabulary)
+        return not never_sent and not differs
+
+    # An entry that traces exactly to an unclaimed call is that call's log, first.
+    # Position alone shifted every later pair when one search went unlogged, and
+    # reported four faithful entries of ut_search_records_026 (v5_2026-10-12_12-15-56)
+    # as claiming filters their calls never sent. Each call is claimed once, so two
+    # entries cannot both trace to one call and hide a claim the other never sent.
+    still_unpaired = []
     for e in unpaired:
+        pool = free.get(_hashable_key(_as_mapping(e.get("query")).get("surname")), [])
+        match = next((c for c in pool if _traces(e, c)), None)
+        if match is None:
+            still_unpaired.append(e)
+        else:
+            pool.remove(match)
+            pairs.append((e, match, "exact trace"))
+    positions: dict[str, int] = {}
+    for e in still_unpaired:
         surname = _as_mapping(e.get("query")).get("surname")
         group = _hashable_key(surname)
         i = positions.get(group, 0)

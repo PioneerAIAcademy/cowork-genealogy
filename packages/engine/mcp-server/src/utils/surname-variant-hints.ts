@@ -30,9 +30,11 @@
 /** Every input field that carries a surname, in `RecordSearchInput` order. The
  *  bride in the case that motivated this is not indexed as a principal at all —
  *  only `spouseSurname: "Halsteinsdr"` finds her — so `surname` alone would miss
- *  the shape the real index answers. */
+ *  the shape the real index answers. `surnameAlt` is the maiden-name union, the
+ *  field a woman's patronymic most often travels in. */
 export const SURNAME_FIELDS = [
   "surname",
+  "surnameAlt",
   "spouseSurname",
   "fatherSurname",
   "motherSurname",
@@ -61,11 +63,12 @@ export interface SurnameVariantHints {
 }
 
 export const SURNAME_VARIANT_HINTS_NOTE =
-  "This search did not find the subject under the surname(s) as written. " +
+  "This search did not identify the subject under the surname(s) as written. " +
   "Scandinavian clerks abbreviated the patronymic ending -datter/-dotter " +
   "('daughter') as dr., dtr. or d., and indexes transcribe the abbreviation " +
   "without the period. Retry with each form listed below, placed in the SAME " +
-  "field it replaces (not in surnameAlt), and in the same call as each " +
+  "field as the surname it replaces (a form listed for surname goes in surname, " +
+  "not in surnameAlt), and in the same call as each " +
   "given-name spelling you are trying — an index that abbreviated the surname " +
   "may also have transcribed the given name differently — before concluding " +
   "the record is not indexed. These are spellings to TRY, not evidence: a " +
@@ -88,13 +91,27 @@ export function patronymicVariants(surname: string): string[] {
 }
 
 /**
+ * Did this search fail to identify its subject? No matches at all, or rows that
+ * ranking judged it could not resolve to the subject (`subjectResolvable: false`,
+ * either of the ranker's two branches). The one test both `surnameVariantHints`
+ * and `record_search`'s `jurisdictionHints` fire on.
+ */
+export function searchFoundNobody(out: {
+  totalMatches?: unknown;
+  ranked?: { subjectResolvable?: unknown } | null;
+}): boolean {
+  return out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
+}
+
+/**
  * The hint for one search, or `undefined` when it does not apply. Holds the
  * whole rule — trigger and content — so the tool and the eval mock cannot
  * disagree about either.
  *
- * Fires when the search did not find its subject: no matches at all, or rows
- * that ranking judged to hold no match (`subjectResolvable: false`), the same
- * test `jurisdictionHints` uses. It needs no tree and no `projectPath`.
+ * Fires when `searchFoundNobody`. It needs no tree and no `projectPath`. On the
+ * ranker's unscoreable-subject branch the rows may still hold her, which is why
+ * the note says the search did not IDENTIFY the subject rather than that it
+ * found nothing; an abbreviated surname is still worth trying there.
  */
 export function surnameVariantHints(
   input: Partial<Record<SurnameField, unknown>>,
@@ -103,9 +120,7 @@ export function surnameVariantHints(
     ranked?: { subjectResolvable?: unknown } | null;
   },
 ): SurnameVariantHints | undefined {
-  const foundNobody =
-    out.totalMatches === 0 || out.ranked?.subjectResolvable === false;
-  if (!foundNobody) return undefined;
+  if (!searchFoundNobody(out)) return undefined;
 
   const fields: SurnameVariantHint[] = [];
   for (const field of SURNAME_FIELDS) {

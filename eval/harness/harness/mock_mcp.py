@@ -305,6 +305,15 @@ def _run_node_eval(
     )
 
 
+def _node_module_url(p: Path | str) -> str:
+    """A compiled module's path as a Node ESM import specifier, safe to embed in
+    a single-quoted JS string. Windows needs a ``file:///`` URL: Node rejects a
+    bare drive-letter path (``C:/...``) with ERR_UNSUPPORTED_ESM_URL_SCHEME.
+    The one copy every ``node --eval`` site here uses."""
+    posix = str(p).replace("\\", "/").replace("'", "\\'")
+    return ("file:///" + posix) if sys.platform == "win32" else posix
+
+
 _build_tool_catalog_cache: dict[str, dict[str, Any]] | None = None
 
 
@@ -347,8 +356,7 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
     schemas_js = _MCP_BUILD / "tool-schemas.js"
     if not schemas_js.exists():
         return {}
-    sjs_posix = str(schemas_js).replace("\\", "/").replace("'", "\\'")
-    schemas_url = ("file:///" + sjs_posix) if sys.platform == "win32" else sjs_posix
+    schemas_url = _node_module_url(schemas_js)
     script = (
         f"import {{ allToolSchemas }} from '{schemas_url}';"
         " const out = allToolSchemas.map("
@@ -492,11 +500,6 @@ def _surname_hints_module_present() -> bool:
     return False
 
 
-def _node_module_url(p: Path) -> str:
-    posix = str(p).replace("\\", "/").replace("'", "\\'")
-    return ("file:///" + posix) if sys.platform == "win32" else posix
-
-
 def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> dict[str, Any] | None:
     """The hint for a nil `record_search` with no projectPath — the one path that
     spawns no node process of its own. None when it does not apply or node fails
@@ -598,9 +601,7 @@ def _record_match_score(
     if not (sp_js.exists() and ms_js.exists() and pio_js.exists()):
         return False
 
-    def _url(path: Path) -> str:
-        posix = str(path).replace("\\", "/").replace("'", "\\'")
-        return ("file:///" + posix) if sys.platform == "win32" else posix
+    _url = _node_module_url
 
     payload = {
         "projectPath": str(workspace).replace("\\", "/"),
@@ -706,9 +707,7 @@ def _stage_and_compact_search_results(
     if not stager_js.exists():
         return None, response, [], ranked
 
-    def _url(p: Path) -> str:
-        posix = str(p).replace("\\", "/").replace("'", "\\'")
-        return ("file:///" + posix) if sys.platform == "win32" else posix
+    _url = _node_module_url
 
     compactor = _STAGED_COMPACTORS.get(tool_name)
     if compactor and compactor_js.exists():
@@ -887,8 +886,7 @@ def _stage_person_read(
         _warn_unstaged(f"no engine build at {person_read_js}")
         return response
 
-    posix = str(person_read_js).replace("\\", "/").replace("'", "\\'")
-    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    url = _node_module_url(person_read_js)
     script = (
         f"import {{ stagePersonRead }} from '{url}';"
         " import { readFileSync } from 'node:fs';"
@@ -1394,10 +1392,7 @@ def _make_validate_handler(workspace: Path | None, call_log: list[dict[str, Any]
             }
         else:
             project_path = str(_ws).replace("\\", "/").replace("'", "\\'")
-            # Node.js ESM requires file:// URLs for absolute imports on Windows;
-            # bare drive-letter paths like C:/... fail with ERR_UNSUPPORTED_ESM_URL_SCHEME.
-            vjs_posix = str(_vjs).replace("\\", "/").replace("'", "\\'")
-            validator_url = ("file:///" + vjs_posix) if sys.platform == "win32" else vjs_posix
+            validator_url = _node_module_url(_vjs)
             script = (
                 f"import {{ validateResearchSchema }} from '{validator_url}';"
                 f" const r = await validateResearchSchema({{ projectPath: '{project_path}' }});"
@@ -1457,8 +1452,7 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
                 "errors": [f"research_log_append: {reason}"],
             }
         else:
-            ajs_posix = str(_ajs).replace("\\", "/").replace("'", "\\'")
-            append_url = ("file:///" + ajs_posix) if sys.platform == "win32" else ajs_posix
+            append_url = _node_module_url(_ajs)
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -1522,8 +1516,7 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                 "errors": [f"research_append: {reason}"],
             }
         else:
-            ajs_posix = str(_ajs).replace("\\", "/").replace("'", "\\'")
-            append_url = ("file:///" + ajs_posix) if sys.platform == "win32" else ajs_posix
+            append_url = _node_module_url(_ajs)
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -1609,8 +1602,7 @@ def _make_person_quality_handler(
         if not _js.exists():
             response = {"ok": False, "errors": [f"person_quality: build not found: {_js}"]}
         else:
-            js_posix = str(_js).replace("\\", "/").replace("'", "\\'")
-            js_url = ("file:///" + js_posix) if sys.platform == "win32" else js_posix
+            js_url = _node_module_url(_js)
             input_obj = dict(args)
             # Rebase only a projectPath the skill actually sent: filling one in
             # would hide a skill that drops it, which in production quietly
@@ -1689,8 +1681,7 @@ def _make_compiled_tool_handler(
                 "errors": [f"{tool_name}: {reason}"],
             }
         else:
-            tjs_posix = str(_tjs).replace("\\", "/").replace("'", "\\'")
-            tool_url = ("file:///" + tjs_posix) if sys.platform == "win32" else tjs_posix
+            tool_url = _node_module_url(_tjs)
 
             # Override projectPath with workspace; pipe the full input via
             # stdin so no value needs JS-string escaping.
@@ -1703,10 +1694,7 @@ def _make_compiled_tool_handler(
             # harness is one user per process, so LOCAL is the right one — the same
             # binding the stdio dispatcher makes. Nothing typechecks this script, so
             # a signature change here surfaces only at harness runtime.
-            principal_js = str(_MCP_BUILD / "auth" / "principal.js").replace("\\", "/")
-            principal_url = (
-                ("file:///" + principal_js) if sys.platform == "win32" else principal_js
-            )
+            principal_url = _node_module_url(_MCP_BUILD / "auth" / "principal.js")
             takes_principal = tool_name in _COMPILED_TOOLS_WITH_PRINCIPAL
             principal_import = (
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""

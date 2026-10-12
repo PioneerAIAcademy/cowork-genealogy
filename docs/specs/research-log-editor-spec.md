@@ -490,18 +490,27 @@ Scope, and why it is this narrow:
   `ut_search_records_027`'s "Spouse field absent in index — reading full record
   to view household members and marriage indicator" only says what it is about
   to read, and "no Stribling appeared as a household head on any readable page"
-  is a negative result. The relational phrases (`co-resident` and its plural,
-  `enumerated with`, `living with`) are exempt, because they predicate
-  co-residence on their own; the plural was missing, and "sidecar co-residents
-  are Henry and Margaret Ackerman only" walked through. A role labelling a named
-  person — `Amos (head), Nancy (wife)` — counts on the kinship side, as does a
-  plural role parted from its names by punctuation (`plus sons, Thos T McElwee
-  and Stephen McElwee`) and, against a staged pre-1880 payload only, a
-  possessive (`are Amos's children`). The singular roles keep needing a space
-  (`Groom's father: Christopher Jespersen` is a marriage record's field label),
-  and the possessive is not read in a note alone (`JPW's children were
-  christened` sat beside an 1810 census mention); both narrowings come from the
-  corpus re-measure, where the wider forms refused exactly those two notes.
+  is a negative result. The relational phrases (`co-resident`, `enumerated
+  with`, `living with`) are exempt, because they predicate co-residence on their
+  own. The plural `co-residents` counts only with the people named after it
+  (`sidecar co-residents are Henry and Margaret Ackerman only`, which walked
+  through when only the singular was read), so "no co-residents listed" and
+  "co-residents not checked" stay notes about the search.
+
+  On the kinship side: a role labelling a named person (`Amos (head), Nancy
+  (wife)`); a role stated with `as` (`Mary Flynn listed as wife`, `Thomas Flynn
+  as head`), but only in a sentence that names no other record type, since "the
+  death records naming Sarah A. Bagley as mother" is what those records state;
+  and `Household head ⟨Name⟩`, which wants the name, so "no Stribling appeared
+  as a household head" stays a negative result. Against a staged pre-1880
+  payload only: a plural role parted from its names by punctuation (`plus sons,
+  Thos T McElwee and Stephen McElwee`) and a possessive (`are Amos's children`).
+  In a note alone those two refused a search plan ("Searched 1850 census for
+  children, Mary and John: nil") and a christening aside (`JPW's children were
+  christened`). The singular roles keep needing a space (`Groom's father:
+  Christopher Jespersen` is a marriage record's field label). Every one of these
+  narrowings comes from the corpus re-measure or review, where the wider form
+  refused exactly the note quoted.
 
   **A household phrase followed by a roster is a claim too**, because it places
   people in the household exactly as `household includes ⟨X⟩` does: `Household
@@ -516,8 +525,12 @@ Scope, and why it is this narrow:
   transcription paragraph below still holds. The roster arm reads case under the
   compound arm's terms — one of three conditions: the household phrase, two or
   more capitalised runs joined by a comma or `and`, and at least two of them
-  naming no place (`Household shows Bucks Co., PA …` is not a roster). A roster
-  written in lower case is missed.
+  naming no place — no place marker (`Household shows Bucks Co., PA …`) and not
+  a state or common emigrant-country name (`Household search covered Ohio,
+  Indiana and Kentucky`). The states that are also given names (`Virginia`,
+  `Georgia`, `Florida`, `Nevada`) are left off that list on purpose: a missing
+  place refuses a note the caller can rewrite, a person wrongly listed would
+  cancel the deny silently. A roster written in lower case is missed.
 
   **Capitalisation is never the test.** The first version asked whether a
   capital sat within 24 characters of the noun, which is not a test for a name
@@ -534,7 +547,7 @@ Scope, and why it is this narrow:
 
   **Every clause and guard goes red when it alone is removed**, which is
   checked by `dev/mutate-census-hedge.ts` rather than asserted. Run it rather
-  than trusting this sentence: it takes each of the twenty-nine out in turn and
+  than trusting this sentence: it takes each of the thirty-seven out in turn and
   exits non-zero on any the suite does not notice. Two rounds of this card
   shipped a mechanism no test exercised, each time because a note written for
   one clause incidentally satisfied a neighbour, so reading the tests does not
@@ -578,7 +591,9 @@ Scope, and why it is this narrow:
   A `ut_search_records_027` note saying both was graded compliant on every
   dimension.
 - **"pre-1880 census" binds as a census before 1880.** Read as 1880, which has
-  the column, it skipped the whole note whatever else the note asserted.
+  the column, it skipped the whole note whatever else the note asserted. The
+  prefix takes a year off the year it touches only: "before 1880 and 1880
+  census" is a pre-1880 census and the 1880 one.
 - **The eval grades with this function, not a copy of the rule.**
   `search-records`' `test_pre1880_census_structure_marked_inferred` replays the
   compiled `requirePre1880CensusHedge` on each logged note with the rows of its
@@ -607,11 +622,11 @@ the same strings rather than a separate population. All three newly refused are
 flat "in household of ⟨Name⟩" claims logged against an 1850 payload, the shape
 the rule exists for.
 
-The roster arm, the plural `co-residents`, the punctuated plural role, the
-payload-only possessive, the two "no relationship" hedges and the `pre-1880`
-binding, measured together against `main` at d73b35895 (2026-10-12), newly
-refuse **0** and newly free **0** notes or paired payload ops in the committed
-corpus. Each closes a wording seen in uncommitted
+The roster arm, the named plural `co-residents`, the `as`-role and `Household
+head ⟨Name⟩` shapes, the payload-only punctuated plural and possessive, the two
+"no relationship" hedges and the `pre-1880` binding, measured together against
+`main` at 7f482e579 (2026-10-12), newly refuse **0** and newly free **0** notes
+or paired payload ops in the committed corpus. Each closes a wording seen in uncommitted
 `ut_search_records_027` scratch runs, or one the eval validator caught before it
 became a replay of this check; the corpus measures that none of them reaches a
 note it did not already judge the same way.

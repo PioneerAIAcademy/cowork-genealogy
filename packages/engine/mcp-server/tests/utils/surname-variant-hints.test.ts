@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   patronymicVariants,
+  searchFoundNobody,
   surnameVariantHints,
   SURNAME_FIELDS,
 } from "../../src/utils/surname-variant-hints.js";
@@ -61,7 +62,7 @@ describe("surnameVariantHints", () => {
         variants: ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd"],
       },
     ]);
-    expect(hint?.note).toMatch(/did not find the subject/);
+    expect(hint?.note).toMatch(/did not identify the subject/);
     expect(hint?.note).toMatch(/SAME field/);
     expect(hint?.note).toMatch(/not evidence/);
   });
@@ -72,6 +73,22 @@ describe("surnameVariantHints", () => {
     );
     const hint = surnameVariantHints(input, NIL);
     expect(hint?.fields.map((e) => e.field)).toEqual([...SURNAME_FIELDS]);
+  });
+
+  it("reads the maiden-name union field, surnameAlt", () => {
+    const hint = surnameVariantHints({ surname: "Monsen", surnameAlt: "Halsteinsdatter" }, NIL);
+    expect(hint?.fields).toEqual([
+      { field: "surnameAlt", searched: "Halsteinsdatter", variants: ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd"] },
+    ]);
+    expect(SURNAME_FIELDS).toHaveLength(7);
+  });
+
+  it("searchFoundNobody: a nil, or rows ranking could not resolve; nothing else", () => {
+    expect(searchFoundNobody({ totalMatches: 0 })).toBe(true);
+    expect(searchFoundNobody({ totalMatches: 4, ranked: { subjectResolvable: false } })).toBe(true);
+    expect(searchFoundNobody({ totalMatches: 4, ranked: { subjectResolvable: true } })).toBe(false);
+    expect(searchFoundNobody({ totalMatches: 4 })).toBe(false);
+    expect(searchFoundNobody({ totalMatches: 4, ranked: null })).toBe(false);
   });
 
   it("skips fields that do not qualify and non-string values", () => {
