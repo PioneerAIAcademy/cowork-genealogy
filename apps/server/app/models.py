@@ -68,8 +68,10 @@ class Project(SQLModel, table=True):
 
 class TurnCost(SQLModel, table=True):
     """One row per completed agent turn, reported by the sandbox (POST /api/turn-cost).
-    Sum by project_id for a session's cost, by user_id and day for a patron's. No foreign
-    keys: a deleted session's spend still happened, so its rows outlive the project."""
+    Sum by project_id for a session's cost, by user_id and day for a patron's, by build for
+    a deploy's. No foreign keys: a deleted session's spend still happened, so its rows
+    outlive the project. A column added here must be nullable and added to the live table
+    by ``db.add_missing_columns``."""
     __tablename__ = "turn_costs"
     id: int | None = Field(default=None, primary_key=True)
     project_id: str = Field(index=True)
@@ -78,4 +80,9 @@ class TurnCost(SQLModel, table=True):
     cost_usd: float
     input_tokens: int | None = None
     output_tokens: int | None = None
+    # The sandbox image's commit (``<sha>`` or ``<sha>+dirty``), so a sandbox that
+    # outlives a deploy is still billed to the code it runs.
+    build: str | None = None
+    # Stops the Stop hook overrode during this turn; 0 when the hook is off.
+    continuations: int | None = None
     created: datetime = Field(default_factory=utcnow, sa_type=_TZ, index=True)
