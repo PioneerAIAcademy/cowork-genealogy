@@ -32,6 +32,7 @@ PINNED = {
     "009_grant_session.sql": "fdab812023f0abc3ec2e58041f643e370ffabe14f345e105a6eb42aa22565fc8",
     "010_claim_epoch.sql": "a9ee9f17ca640192089d42999445e6acb9cbce1071dd64fcc61cede221c8c9c3",
     "011_session_entries_uuid_index.sql": "ca31d8c245493b9b020ffe014d874ce098895f8b34053e37ac53039a5d281493",
+    "013_retention.sql": "30529b5d95ee18f4e2c573780ab94992fbf9603e6441d695133c775d48cb015d",
 }
 
 
@@ -108,7 +109,7 @@ ALL = sorted(PINNED)
 @pytest.mark.parametrize("shipped, ledger, label, pending, ahead", [
     (ALL, None, "schema: unmigrated", ALL, []),
     (ALL, {}, "schema: behind 001_schema.sql", ALL, []),
-    (ALL, {n: PINNED[n] for n in ALL[:-1]}, "schema: behind 011_session_entries_uuid_index.sql", ALL[-1:], []),
+    (ALL, {n: PINNED[n] for n in ALL[:-1]}, f"schema: behind {ALL[-1]}", ALL[-1:], []),
     (ALL, _ledger(), None, [], []),
     (ALL, _ledger(**{"012_future.sql": "f"}), None, [], ["012_future.sql"]),
     (ALL, _ledger(**{"004_worker.sql": "edited"}), "schema: drift 004_worker.sql", [], []),
@@ -120,8 +121,8 @@ ALL = sorted(PINNED)
      ["000_early.sql"], []),
     (["000_early.sql", *ALL, "012_new.sql"], _ledger(), "schema: out_of_order 000_early.sql",
      ["000_early.sql", "012_new.sql"], []),
-    ([*ALL, "012_new.sql"], {n: PINNED[n] for n in ALL[:-1]}, "schema: behind 011_session_entries_uuid_index.sql",
-     ["011_session_entries_uuid_index.sql", "012_new.sql"], []),
+    ([*ALL, "012_new.sql"], {n: PINNED[n] for n in ALL[:-1]}, f"schema: behind {ALL[-1]}",
+     [*ALL[-1:], "012_new.sql"], []),
     (ALL, {n: PINNED[n] for n in ALL if n != "005_resume_guard.sql"}, "schema: out_of_order 005_resume_guard.sql",
      ["005_resume_guard.sql"], []),
 ], ids=["unmigrated", "empty-ledger", "behind", "ok", "ahead", "drift", "out-of-order-low", "out-of-order-high",

@@ -712,6 +712,18 @@ def test_base_profile_disables_the_sweep():
             assert int(_compose_default(env["SWEEP_INTERVAL_S"])[1]) == 0, f"{name}: the sweep must stay off"
 
 
+def test_base_profile_disables_retention():
+    """U19: retention purges idle sessions' transcripts for good; the compose volume holds the
+    ones the acceptance tools read, so every service that sets it defaults it off."""
+    found = []
+    for name, service in _load(COMPOSE)["services"].items():
+        env = _env(service)
+        if "RETENTION_INTERVAL_S" in env:
+            found.append(name)
+            assert int(_compose_default(env["RETENTION_INTERVAL_S"])[1]) == 0, f"{name}: retention must stay off"
+    assert found == ["worker"], found
+
+
 def test_smoke_error_visibility_exceeds_shutdown_grace():
     """The smoke's `sigterm` case restarts the worker mid-turn; its redelivery must arrive
     after the old process is gone, whether it exited on its own or was SIGKILLed."""

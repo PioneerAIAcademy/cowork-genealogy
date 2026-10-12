@@ -40,7 +40,7 @@ from web.app import PgStore, ReadyCheckError, create_app  # noqa: E402
 
 FILES = migrate.load()
 NAMES = [m.name for m in FILES]
-LATEST = "011_session_entries_uuid_index.sql"
+LATEST = NAMES[-1]
 RACE_SQLSTATES = {"23505", "42P07", "42710", "XX000"}
 
 
@@ -301,7 +301,7 @@ async def test_a_service_start_takes_no_table_lock(monkeypatch):
 
 def test_lock_timeout_bounds_a_migration_queued_behind_traffic(monkeypatch, tmp_path):
     monkeypatch.setattr(migrate, "_sleep", _no_retry)
-    files = sql_dir(tmp_path, {"012_probe_column.sql": "ALTER TABLE turns ADD COLUMN x int;\n"})
+    files = sql_dir(tmp_path, {"900_probe_column.sql": "ALTER TABLE turns ADD COLUMN x int;\n"})
     with database() as dsn:
         reader = psycopg.connect(dsn)
         try:
@@ -310,11 +310,11 @@ def test_lock_timeout_bounds_a_migration_queued_behind_traffic(monkeypatch, tmp_
             with pytest.raises(psycopg.errors.LockNotAvailable):
                 migrate.migrate(dsn, sql_dir=files, lock_timeout_s=0.5, attempts=1)
             assert time.monotonic() - started < 3
-            assert "012_probe_column.sql" not in ledger(dsn)
+            assert "900_probe_column.sql" not in ledger(dsn)
         finally:
             reader.rollback()
             reader.close()
-        assert migrate.migrate(dsn, sql_dir=files) == ["012_probe_column.sql"]
+        assert migrate.migrate(dsn, sql_dir=files) == ["900_probe_column.sql"]
         assert "x" in columns(dsn, "turns")
 
 
@@ -323,12 +323,12 @@ def test_a_failing_file_rolls_back_and_keeps_earlier_files(monkeypatch, tmp_path
     broken = "ALTER TABLE turns ADD COLUMN u9_probe int; SELECT 1/0;\n"
     with database(apply=False) as dsn:
         with pytest.raises(psycopg.errors.DivisionByZero) as raised:
-            migrate.migrate(dsn, sql_dir=sql_dir(tmp_path / "a", {"012_broken.sql": broken}))
+            migrate.migrate(dsn, sql_dir=sql_dir(tmp_path / "a", {"900_broken.sql": broken}))
         assert raised.value.sqlstate == "22012"
         assert sorted(ledger(dsn)) == NAMES, "the files before the broken one stay applied"
         assert "u9_probe" not in columns(dsn, "turns")
-        fixed = sql_dir(tmp_path / "b", {"012_broken.sql": "ALTER TABLE turns ADD COLUMN u9_probe int;\n"})
-        assert migrate.migrate(dsn, sql_dir=fixed) == ["012_broken.sql"]
+        fixed = sql_dir(tmp_path / "b", {"900_broken.sql": "ALTER TABLE turns ADD COLUMN u9_probe int;\n"})
+        assert migrate.migrate(dsn, sql_dir=fixed) == ["900_broken.sql"]
         assert "u9_probe" in columns(dsn, "turns")
 
 
@@ -436,7 +436,7 @@ async def test_a_dml_only_role_runs_the_services_but_not_the_migration(monkeypat
             worker.SHUTDOWN.set()
         assert await asyncio.to_thread(migrate.migrate, role_dsn) == []
         before = ledger_rows(dsn)
-        pending = sql_dir(tmp_path, {"012_owner_only.sql": "ALTER TABLE turns ADD COLUMN u9_dml int;\n"})
+        pending = sql_dir(tmp_path, {"900_owner_only.sql": "ALTER TABLE turns ADD COLUMN u9_dml int;\n"})
         with pytest.raises(psycopg.errors.InsufficientPrivilege) as raised:
             await asyncio.to_thread(migrate.migrate, role_dsn, sql_dir=pending)
         assert raised.value.sqlstate == "42501"
