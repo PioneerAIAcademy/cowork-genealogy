@@ -943,19 +943,45 @@ def rule5_annotations_parse(runlogs_dir: Path) -> int:
     return bad
 
 
-def _promoted_candidate_names(skill_dir: Path, added: list[str]) -> set[str]:
+def _promoted_candidate_names(
+    skill_dir: Path, added: list[str], deleted_candidates: set[str]
+) -> set[str]:
     """Filenames of the candidates this PR's added releases were promoted from.
 
     `v{N}.json` carries the `timestamp` of the run, not of the release, so the
-    candidate it consumed was `v{N}_{timestamp}.json`. Returns the empty set when
-    the file is unreadable, is not valid JSON, or carries no usable `timestamp`:
-    the conservative direction, since a missing name only shrinks the prunable
-    set back to today's behaviour and can never wave a deletion through.
+    candidate it consumed was `v{N}_{timestamp}.json`.
+
+    Synthesis is SKIPPED when a candidate of that version is already among the
+    deletions, and that skip is what makes this safe. It is the merge-base shape,
+    where the rename shows as `D` and the union is complete unaided. The first
+    draft deduped on the synthesized STRING instead, which a one-second drift
+    between the envelope `timestamp` and the candidate filename defeats: the
+    phantom name becomes a sixth member, buys a free prunable slot, and a
+    hand-deletion of a WITHIN-keep candidate is then accepted. That was a
+    regression against the old arithmetic, not a pre-existing hole, and it was
+    reproduced before this guard replaced the string compare.
+
+    Returns the empty set when the file is unreadable, is not valid JSON, or
+    carries no usable `timestamp` -- the conservative direction, since a missing
+    name only shrinks the prunable set back to today's behaviour.
+
+    A malformed-but-present `timestamp` is NOT rejected here: it is synthesized
+    and then ignored downstream, because `prunable_candidates` drops any name it
+    cannot parse as a candidate. Only a WELL-FORMED timestamp can move the
+    arithmetic, which is why the version-keyed skip above, not name validation,
+    is the guard that matters.
     """
+    deleted_versions = {
+        v
+        for n in deleted_candidates
+        if (v := classify(n).version) is not None
+    }
     out: set[str] = set()
     for name in added:
         c = classify(name)
         if c.kind != "released" or c.version is None:
+            continue
+        if c.version in deleted_versions:
             continue
         try:
             doc = json.loads((skill_dir / name).read_text(encoding="utf-8"))
@@ -964,11 +990,6 @@ def _promoted_candidate_names(skill_dir: Path, added: list[str]) -> set[str]:
         ts = doc.get("timestamp")
         if not isinstance(ts, str) or not ts.strip():
             continue
-        # No validation of the reconstructed name is needed, and adding some was
-        # dead code: `prunable_candidates` already ignores anything it does not
-        # parse as a candidate, so a malformed envelope contributes nothing to
-        # the union rather than injecting a filename. Pinned by
-        # test_rule7_promotion_synthesis_rejects_an_unusable_timestamp.
         out.add(f"v{c.version}_{ts.strip()}.json")
     return out
 
@@ -1047,7 +1068,7 @@ def rule7_deletions(
         # its rename shows as `D`, so it is already in `deleted_candidate_json`,
         # and the set dedupes the overlap.
         promoted_candidate_json = _promoted_candidate_names(
-            skill_dir, added_by_skill.get(skill, [])
+            skill_dir, added_by_skill.get(skill, []), deleted_candidate_json
         )
         prunable = set(
             prunable_candidates(

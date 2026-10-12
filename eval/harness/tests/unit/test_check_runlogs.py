@@ -1068,6 +1068,45 @@ def test_rule7_over_deletion_still_blocks_in_a_release_pr(monkeypatch, tmp_path)
     assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
 
 
+def test_rule7_a_drifted_release_timestamp_buys_no_prunable_slot(monkeypatch, tmp_path):
+    """A release whose envelope `timestamp` does not match the candidate filename
+    it replaced must NOT widen the prunable set.
+
+    This is the regression a blind review found in the first draft of the fix.
+    That draft deduped on the synthesized string, so a one-second drift produced a
+    PHANTOM sixth member: the union gained a slot and a hand-deletion of a
+    within-keep candidate was accepted, which the old arithmetic correctly blocked.
+    The guard is version-keyed now: a release whose version already appears among
+    the deletions synthesizes nothing, because its rename is the deletion.
+
+    `release.ts:5` promises the timestamp is kept, but nothing tests that promise,
+    so this must not depend on it."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    # envelope drifts one second from the candidate filename below
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2026-08-01_00-00-01")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v9_2026-08-01_00-00-00.json",  # the real rename
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",  # a hand-deletion
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
+def test_rule7_a_fabricated_release_envelope_buys_no_slot(monkeypatch, tmp_path):
+    """Same guard from the other side: a release whose version is among the
+    deletions gets no synthesis at all, however its envelope reads."""
+    _make_present_skill(tmp_path, monkeypatch)
+    survivors = [f"v1_2026-07-0{i}_00-00-00.json" for i in range(2, 6)]
+    _stage_runlog_dir(tmp_path, monkeypatch, candidates=[*survivors, "v9.json"])
+    _write_released(tmp_path, "v9.json", version=9, timestamp="2099-01-01_00-00-00")
+    deleted = {
+        "eval/runlogs/unit/present-skill/v9_2026-08-01_00-00-00.json",
+        "eval/runlogs/unit/present-skill/v1_2026-07-02_00-00-00.json",
+    }
+    assert check_runlogs.rule7_deletions(deleted, {"present-skill": ["v9.json"]}) == 1
+
+
 def test_rule7_deleted_released_log_blocks(monkeypatch, capsys, tmp_path):
     """A released `v{N}.json` is canonical and never prunable — deleting it (or
     its annotation) must block."""
