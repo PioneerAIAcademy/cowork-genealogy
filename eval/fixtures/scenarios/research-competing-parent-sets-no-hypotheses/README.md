@@ -18,8 +18,6 @@ The real project was messier when proof-conclusion ran. It had 10 positive log e
 
 - The source run used an install that predates the 2026-09-18 rename to `record_basis` (#2524). The assertions were migrated with the engine's own back-compat mapping (`src/utils/record-basis.ts`: direct → stated, indirect → inferred).
 
-Verify the carve before relying on the test.
-
 ## PII
 
-The persons are deceased, public Family Tree persons already named on public issue #3177, and the competing parent sets are the finding under test. Names are kept, as for a recorded e2e run. Review before committing.
+The persons are deceased, public Family Tree persons already named on public issue #3177, and the competing parent sets are the finding under test. Names are kept, as for a recorded e2e run.
