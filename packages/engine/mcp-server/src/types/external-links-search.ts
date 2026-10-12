@@ -11,8 +11,10 @@ export interface FSPlaceExternalCollection {
   place?: string;
   startYear?: string;
   endYear?: string;
-  // Other fields (record_type, recordTypeId, cost, content_type,
-  // source_url) exist in the response but the tool ignores them.
+  record_type?: string;
+  cost?: string;
+  content_type?: string;
+  // recordTypeId and source_url also exist in the response; the tool drops them.
 }
 
 export interface FSPlaceExternalResponse {
@@ -33,10 +35,9 @@ export interface ExternalLinksSearchResult {
     startYear?: number;
     endYear?: number;
   };
-  // Total curated resources for the place BEFORE the year filter. The single
-  // non-derivable count: results: [] with totalForPlace: 12 reads as
-  // "resources exist here, just not in your years". results.length is the
-  // matched count, so there is no separate matchedCount field.
+  // Distinct curated resources for the place (after dedupe) BEFORE the year
+  // filter. The single non-derivable count: results: [] with totalForPlace: 12
+  // reads as "resources exist here, just not in your years".
   totalForPlace: number;
   // Number of links in `results` after year + host filtering and the inline
   // cap. Equal to `results.length`; surfaced explicitly so a capped/filtered
@@ -49,6 +50,14 @@ export interface ExternalLinksSearchResult {
   // nil for that place and year window, not merely a host filter that matched none.
   nilSearchNeedsLog?: string;
   results: PlaceExternalLink[];
+  // True when INLINE_CAP cut `results`. The stored list and the staged sidecar
+  // hold the full set; page it with research_query or narrow with `host`.
+  inlineCapped?: true;
+  // Present when `projectPath` named a project: the file and the places whose
+  // entries this fetch wrote.
+  stored?: { file: string; places: string[] };
+  // Why the stored list could not be written. The search itself succeeded.
+  collectionsError?: string;
   // Host-side staging handle (search-result-staging-spec.md). Present only when
   // `projectPath` was supplied and the pre-filter set was non-empty. The staged
   // sidecar holds the FULL year-filtered set (before any host filter or inline

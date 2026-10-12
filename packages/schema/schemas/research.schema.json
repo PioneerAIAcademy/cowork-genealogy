@@ -276,7 +276,9 @@
             { "type": "null" }
           ]
         },
-        "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" }
+        "status": { "$ref": "enums.schema.json#/$defs/plan_item_status" },
+        "skip_category": { "$ref": "enums.schema.json#/$defs/skip_category" },
+        "skip_reason": { "type": "string" }
       }
     },
     "log_entry": {
@@ -474,6 +476,9 @@
         "confidence": { "$ref": "enums.schema.json#/$defs/person_evidence_confidence" },
         "rationale": { "type": "string" },
         "core_identifier_conflict": {
+          "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
+        },
+        "move_bridge": {
           "anyOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }]
         },
         "match_score": {

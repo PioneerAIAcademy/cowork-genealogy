@@ -10,11 +10,14 @@ from pathlib import Path
 import pytest
 
 from e2e.corpus_report import (
+    _calibration_ratios,
     VIOLATION_ARMS,
     RecomputeTally,
     classify,
+    format_calibration,
     format_recompute,
     format_report,
+    format_spend,
     main,
     recompute_tally,
     spend_tally,
@@ -25,7 +28,6 @@ from e2e.pricing import estimate_cost_usd
 from e2e.runlog_selection import all_result_jsons, is_result_json, run_date
 from harness.skill_invocation import (
     find_effects_without_invocation,
-    find_missing_mentor_verdicts,
     find_person_evidence_missing_same_person,
 )
 
@@ -196,13 +198,6 @@ def _detector_messages() -> list[str]:
         *find_person_evidence_missing_same_person(
             [], {"person_evidence": [{"person_id": "I1", "record_persona_id": "r1"}]}, tree
         ),
-        *find_missing_mentor_verdicts(
-            {
-                "questions": [{"status": "resolved", "proof_summary_id": "ps1"}],
-                "proof_summaries": [{"id": "ps1"}],
-                "evaluations": [],
-            }
-        ),
     ]
 
 
@@ -211,9 +206,8 @@ def test_every_live_detector_message_maps_to_a_named_arm():
 
     The comment above VIOLATION_ARMS tells the reader that anything in `other`
     is a message that was reworded. That is only true if every arm the detector
-    can emit today is mapped — `person-evidence` and `proof-critique` were not,
-    so a bypass of the mandatory gps-mentor gate would have surfaced as an
-    unnamed bucket indistinguishable from drift.
+    can emit today is mapped — `person-evidence` once was not, so its bypasses
+    would have surfaced as an unnamed bucket indistinguishable from drift.
     """
     messages = _detector_messages()
     unmapped = [m for m in messages if classify(m) == "other"]
@@ -699,13 +693,12 @@ def test_a_windowed_report_says_so_where_it_states_a_denominator():
 # --- issue #1484: --recompute, the spend split, and the cost estimator ------
 
 
-_MENTOR_GAP_RESEARCH = {
-    # A resolved question whose proof_summary carries no gps-mentor proof-critique
-    # verdict — the shape `find_missing_mentor_verdicts` fires on (mirrors the
-    # `_detector_messages` helper above, so it tracks the real detector).
-    "questions": [{"status": "resolved", "proof_summary_id": "ps1"}],
-    "proof_summaries": [{"id": "ps1"}],
-    "evaluations": [],
+_EXHAUSTIVENESS_GAP_RESEARCH = {
+    # An exhaustive declaration with no research-exhaustiveness invocation in the
+    # run — the shape the exhaustiveness arm fires on from research.json alone
+    # (mirrors the `_detector_messages` helper above, so it tracks the real
+    # detector).
+    "questions": [{"exhaustive_declaration": {"declared": True}}],
 }
 
 
@@ -727,19 +720,19 @@ def _run_with_sidecars(runs_dir: Path, slug: str, final_research: dict, final_tr
 
 def test_recompute_recovers_violations_a_stored_only_read_counts_as_zero(tmp_path: Path):
     runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
-    run = _run_with_sidecars(runs, "myfix", _MENTOR_GAP_RESEARCH, {"persons": []})
+    run = _run_with_sidecars(runs, "myfix", _EXHAUSTIVENESS_GAP_RESEARCH, {"persons": []})
     (fixtures / "myfix").mkdir(parents=True)
     _write(fixtures / "myfix", "starting-tree.gedcomx.json", {"persons": []})
 
     # Default (stored) path: no guardrail_bypass_violations field -> zero.
     assert sum(tally([run]).arms.values()) == 0
 
-    # --recompute path: the mentor-verdict gap is recovered from the sidecars.
+    # --recompute path: the exhaustiveness gap is recovered from the sidecars.
     rt = recompute_tally([run], fixtures_root=fixtures)
     assert rt.scanned == 1
     assert rt.skipped == []
     assert sum(rt.arms.values()) > 0
-    assert rt.arms.get("mentor verdict", 0) > 0
+    assert rt.arms.get("exhaustiveness", 0) > 0
     # Recompute found MORE than stored (which was absent) -> not a regression.
     assert rt.regressed == []
 
@@ -823,7 +816,7 @@ def test_recompute_arm_order_breaks_ties_alphabetically():
 
 def test_recompute_skips_a_run_whose_fixture_has_no_seed_tree(tmp_path: Path):
     runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
-    run = _run_with_sidecars(runs, "noseed", _MENTOR_GAP_RESEARCH, {"persons": []})
+    run = _run_with_sidecars(runs, "noseed", _EXHAUSTIVENESS_GAP_RESEARCH, {"persons": []})
     fixtures.mkdir()  # no noseed/ dir -> no starting-tree.gedcomx.json to read
 
     rt = recompute_tally([run], fixtures_root=fixtures)
@@ -854,3 +847,85 @@ def test_spend_separates_recorded_estimated_and_unrecoverable(tmp_path: Path):
     assert (spend.recorded_n, spend.estimated_n, spend.neither_n) == (1, 1, 1)
     assert spend.recorded == 4.0
     assert spend.estimated > 0
+
+
+# ---------------------------------------------------------------------------
+# Multi-query runs (#3128). Their token block is the last query's. Their cost
+# is the whole run's when they never resumed, and the last process's when they
+# did, so the calibration drops them and `recorded` is called a floor when a
+# resumed run is in it.
+# ---------------------------------------------------------------------------
+
+_ONE_QUERY = [[0.0, "system:init", []], [5.0, "assistant", []], [9.0, "result", []]]
+_TWO_QUERIES = [
+    [0.0, "system:init", []],
+    [5.0, "system:task_notification", []],
+    [5.5, "system:init", []],
+    [9.0, "result", []],
+]
+
+
+def _costed_run(timeline, *, resumes=0, cost=4.0):
+    return {
+        "usage": {
+            "total_cost_usd": cost,
+            "num_turns": 30,
+            "resumes": resumes,
+            "timeline": timeline,
+            "usage": {"input_tokens": 1000, "output_tokens": 2000},
+        }
+    }
+
+
+def test_calibration_drops_and_counts_a_multi_query_run(tmp_path: Path):
+    one = _write(tmp_path, "run-1.json", _costed_run(_ONE_QUERY))
+    two = _write(tmp_path, "run-2.json", _costed_run(_TWO_QUERIES))
+    calibration = _calibration_ratios([one, two])
+    assert len(calibration.ratios) == 1
+    assert calibration.n_multi_query == 1
+
+
+def test_calibration_counts_only_runs_that_would_have_calibrated(tmp_path: Path):
+    """A multi-query run with no recorded cost was never a calibrating run, so it
+    is not counted as excluded: the count equals the drop in n."""
+    costless = _write(tmp_path, "run-1.json", _costed_run(_TWO_QUERIES, cost=None))
+    assert _calibration_ratios([costless]).n_multi_query == 0
+
+
+def test_format_calibration_prints_the_exclusion_count():
+    assert "2 multi-query run(s) excluded" in format_calibration([0.9, 0.8], 2)
+    assert "excluded" not in format_calibration([0.9, 0.8], 0)
+
+
+def test_format_calibration_says_so_when_every_calibrating_run_was_excluded():
+    """With every candidate flagged, "no run carries both" is false: they did."""
+    out = format_calibration([], 2)
+    assert "2 multi-query run(s) excluded" in out
+    assert "no run carries both" not in out
+    assert format_calibration([], 0) == (
+        "  calibrate-cost: no run carries both a recorded cost and token counts."
+    )
+
+
+def test_the_spend_line_names_the_runs_its_accuracy_note_left_out(tmp_path: Path):
+    clean = _write(tmp_path, "run-1.json", _costed_run(_ONE_QUERY))
+    spend = spend_tally([clean])
+    assert "3 multi-query run(s) excluded" in format_spend(spend, [0.9], 3)
+    assert "excluded" not in format_spend(spend, [0.9])
+
+
+def test_spend_calls_recorded_a_floor_when_a_resumed_run_is_in_it(tmp_path: Path):
+    resumed = _write(tmp_path, "run-1.json", _costed_run(_TWO_QUERIES, resumes=1))
+    clean = _write(tmp_path, "run-2.json", _costed_run(_ONE_QUERY))
+    spend = spend_tally([resumed, clean])
+    assert spend.resumed_n == 1
+    assert spend.recorded == 8.0
+    assert "1 of them resumed after a stall" in format_spend(spend, [])
+    assert "resumed" not in format_spend(spend_tally([clean]), [])
+
+
+def test_a_resumed_run_with_no_recorded_cost_is_not_counted_as_a_floor(tmp_path: Path):
+    """The floor is about `recorded`, so only runs that put a cost into it count:
+    a resumed run whose cost is null is not in that total at all."""
+    costless = _write(tmp_path, "run-1.json", _costed_run(_TWO_QUERIES, resumes=1, cost=None))
+    assert spend_tally([costless]).resumed_n == 0

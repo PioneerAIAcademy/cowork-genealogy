@@ -8,13 +8,16 @@ description: >-
   message with `--autonomous`, or any open-ended research goal that needs
   multiple steps (question selection, planning, searching, extraction, proof
   conclusion). Choose this over any sub-skill when the user states an objective
-  rather than a specific action. Do NOT use when the user explicitly targets one
-  step only (search-records, research-plan, question-selection, etc.), wants
-  only a status summary (project-status), or has no project yet (init-project
-  first).
+  rather than a specific action. Start it rather than first asking the user
+  about the person: it reads what the project already records about them.
+  Do NOT use when the user explicitly targets one step only (search-records,
+  research-plan, question-selection, etc.), wants only a status summary
+  (project-status), or has no project yet (init-project first).
 allowed-tools:
   - validate_research_schema
   - research_query
+  - person_read
+  - source_attachments
 ---
 
 # /research — Full GPS Research Workflow
@@ -32,9 +35,10 @@ moving.
 
 ## Continuous work
 
-**You work continuously, in one turn, until a stop condition in
-§"When to stop" is met.** This is how every run behaves; it is not a
-mode and no flag turns it on. Proceed without pausing for clarifying
+**Once a request is a job, you work continuously, in one turn, until a
+stop condition in §"When to stop" is met.** That is how every job
+behaves; it is not a mode and no flag turns it on. A *bounded* request
+is decided before this applies — see §"Bounded request or job". Proceed without pausing for clarifying
 questions: use your best judgment for any decision that would normally
 prompt the user (which records to prioritize when several are plausible,
 how to weight conflicting evidence, when to declare exhaustiveness), and
@@ -42,8 +46,11 @@ log the decision and your rationale in the appropriate research.json
 field (log entry, assertion rationale, or conflict resolution analysis)
 so the audit trail captures it.
 
-**You are the only driver.** Do **not** end your turn to announce, plan,
-or ask about a next step. After a sub-skill returns, immediately invoke
+**On a job, you are the only driver.** Do **not** end your turn to
+announce, plan, or ask about a next step. (A bounded request is the
+exception, and the only one: it ends once every deliverable it named is
+produced — see
+§"Bounded request or job".) After a sub-skill returns, immediately invoke
 the next sub-skill in the **same turn**, and keep going through the full
 routing loop (§"What to do" steps 2–4). Trust the compact summaries the
 sub-skills and writer tools return plus the state you already hold in
@@ -56,27 +63,88 @@ briefly, but always follow the narration with the actual tool call or
 sub-skill invocation in the same turn.
 
 The user can type at any time and can halt you at any time. Neither is
-something you stop and wait for.
+something you stop and wait for. A bounded request's closing offer is
+not an exception: you end the turn there rather than waiting, and their
+reply arrives as the next message.
 
 ## Direct user requests name a destination, not a shortcut
 
-When the user says "write the conclusion," "move toward a proof
-conclusion," "conclude this," or anything else that names a downstream
+**On a job**, when the user says "write the conclusion," "move toward a
+proof conclusion," "conclude this," or anything else that names a downstream
 skill or artifact directly, treat it as "drive the routing table forward
 to that outcome" — not as permission to invoke that skill immediately.
+(A *bounded* request that names a destination does not walk the table at
+all — see §"Bounded request or job".)
 Re-enter step 1 of "What to do," re-derive the current state from
 `research.json`, and walk the routing table from wherever the project
-actually is: unclassified assertions, unresolved conflicts, un-run Mentor
-gates, and any person the conclusion depends on not yet identity-linked all
-still apply. Only reach the downstream destination once the routing table's
+actually is: unclassified assertions, unresolved conflicts, and any person
+the conclusion depends on not yet identity-linked all still apply. Only reach the downstream destination once the routing table's
 precondition row for it is actually satisfied — by whichever call that row
 names. If the user explicitly overrides after being told what is missing,
 that is their call — but the gap must be surfaced first, every time,
 regardless of how directly the request named the destination.
 
+A review request — "second opinion", "review my work", "is this
+defensible?" — is not a destination. Invoke `@plugin:gps-mentor` at once
+(see **Second opinion**), including on a completed project.
+
+A request to review FamilySearch hints is an entry point, not a downstream
+destination: take it through "Hint review" below.
+
+## Bounded request or job
+
+**Decide this first, before any `research_query`.**
+
+**`--autonomous` is always a job**, whatever shape the question takes. The flag
+means drive this to completion, so the list below does not apply to it.
+
+**Bounded** — the message asks for one or more deliverables, every one of them
+from this list:
+finding a record; reviewing the sources already attached to a person; whether
+two people are the same, or should be merged; a verdict on a hint; a
+transcription; where the records are for a place and period; a research plan;
+a records-request letter; whether a person's children or siblings are complete;
+a status question such as "where are we?".
+Two or more of them in one message is still bounded: deliver each, name each,
+and end the turn when the last one is met. A message that also asks for
+open-ended research is a job.
+
+**A job** — everything else. Route it exactly as the rest of this file says.
+
+A bounded request and a *named destination* are different things, and a message
+can be both. "Create a research plan for Mary Hales, but leave it at that" names
+a destination AND is bounded: naming a destination says **where** to end up,
+bounded says **whether to continue past it**. Hand a bounded request straight
+to the step that owns its deliverable — a
+transcription to `@plugin:image-reader`, a plan to `research-plan`, a record to
+`search-records`. Do not walk the routing table from the top for one: that table
+sequences a *job*, and on a project with no questions yet its first satisfiable
+row sends you to `@plugin:question-selection` — the one place a bounded request
+must not go. Deliver what was asked, and stop: at least one hand-off per
+deliverable, since one deliverable can need two (a record found goes on through
+`record-extraction`), and a status question is answered from `project_context`
+without a hand-off at all.
+
+**Start from what is already attached.** Before routing to any search —
+on a bounded request or a job alike — when the project holds a FamilySearch
+link for the person, read what they already have: `person_read` for the
+attached sources and relatives, `source_attachments` for where a source
+is already attached. Never search for a record that is already attached,
+and never offer to add a person who is already in the tree.
+
+When a bounded request is met, **end your turn**. Say what you produced first:
+the turn ends where you stop, so anything you were going to add afterwards never
+reaches the researcher. Name what this turn saved and where — "Saved to Susan
+Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
+not save: the record and the person it was for, not "an extraction did not
+finish". Then offer to take it further, and end. The offer is not
+something you wait for — their answer arrives as the next message.
+
 ## What to do
 
-1. **Query `research.json` — don't `Read` the whole file.** Use
+1. **Query `research.json` — don't `Read` the whole file.** Open the routing
+   pass with `project_context`: it computes the next step host-side, including
+   unregistered disagreements that no `research_query` slice reports. Then use
    `research_query` to pull just the slice you need: which questions
    exist, which have plans, which plans have log entries, which entries
    have produced assertions, which are classified, which are linked to
@@ -134,23 +202,24 @@ regardless of how directly the request named the destination.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | Objective but no questions | `@plugin:question-selection` (derive first question) |
+   | **No `research.json` at all** | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: `research-plan` may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `research-plan` |
-   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `search-external-sites` for non-FS sources) |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `exhausted` plan, which a revision leaves behind still `planned` | `search-records` (or `@plugin:search-external-sites` for non-FS sources) |
    | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_read`) |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | `record-extraction` (see the enforced contract below) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
-   | `tree.gedcomx.json` gives the subject **more than one set of parents** (`ParentChild` relationships to two or more different parent couples) and no `hypotheses` entry covers each set — `Read` the tree to check; `research_query` does not see it | `@plugin:hypothesis-tracking`, naming each parent couple's tree ids — one hypothesis per set. Never compare or eliminate the sets yourself |
-   | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
+   | `project_context` reports **`competingParentSets`** for the question (its `nextStep` reads `hypothesis-tracking — competing parent sets`) — the tree gives a person more than one set of parents with no hypothesis per set | `@plugin:hypothesis-tracking`, naming the person and parent ids it lists — one hypothesis per parent couple. Never compare or eliminate the sets yourself |
+   | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
+   | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
-    | `proof-conclusion` wrote `<ps_id>`, and (tier < probable, or its concluded relationship or fact is now in `tree.gedcomx.json`) | **Mentor gate** (`proof-critique` on `<ps_id>`) — **mandatory to invoke and record, not optional.** This is the last of the three mentor checkpoints and the only one that reads the proof's `narrative_markdown` as a self-contained document — it is specifically designed to catch things like a summary sentence that contradicts the list two paragraphs below it, a tier claim the cited assertions don't support, or hedging language inconsistent with a "Proved" tier. None of the earlier checkpoints check for this; skipping this one means nothing does. "Mandatory" means the gate must run and its verdict must land in `evaluations[]` before the question can be considered done — it does NOT mean you must apply its suggested fix; see **Mentor checkpoints** for that distinction. |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First verify BOTH gates, in order — do not write `completed` until both hold:** (1) **Tree-encoding** — every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. (2) **Mentor verdict on record** — does every `ps_id` referenced by a resolved question have a corresponding `evaluations[]` entry with `focus: "proof-critique"` and matching `target_id`? If not, run the mentor gate on it first. Marking a question `resolved` is not, by itself, evidence either check happened. Once both are verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop |
 
    **Record-extraction contract — enforced, not advisory.** Inline
@@ -168,9 +237,8 @@ regardless of how directly the request named the destination.
    **Conflict/hypothesis contract — enforced, not advisory.** Inline
    elimination of a namesake or other candidate, or inline comparison of
    two records for possible shared identity, is **forbidden** outside
-   `conflict-resolution` / `hypothesis-tracking` — including mid-critique,
-   when you are revising a proof narrative in response to a mentor
-   verdict. Persist the reasoning first (a `hypotheses` entry for a
+   `conflict-resolution` / `hypothesis-tracking` — including while you are
+   revising a proof narrative. Persist the reasoning first (a `hypotheses` entry for a
    competing/ruled-out candidate, a `conflicts` entry for two records
    compared), then cite the resulting `h_`/`c_` id in the narrative — never
    the reverse. A proof narrative that names an elimination or an identity
@@ -203,9 +271,17 @@ regardless of how directly the request named the destination.
    `@plugin:proof-conclusion`, the assertion ids for
    `@plugin:person-evidence`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, the place and period for
-   `@plugin:locality-guide`. The agent runs in fresh context and reads the
+   `@plugin:locality-guide`, the `planItemId` (plus the parish page as
+   `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
+   file path or the results text) for `@plugin:search-external-sites`, and the
+   `personId` (and, on the second spawn, the researcher's verdicts) for
+   `@plugin:search-hints`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
+
+   **Never re-raise a hand-off listed in `project_context`'s `awaitingUser`** —
+   the researcher already has that link. When they bring back a capture for one,
+   or say they cannot open it, spawn `@plugin:search-external-sites` with it.
 
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
@@ -240,7 +316,10 @@ regardless of how directly the request named the destination.
    A front-loaded plan is a **prioritized list, not a checklist to
    drain.** Consult `@plugin:research-exhaustiveness` as soon as analyzed
    evidence plausibly answers the active question — do not reflexively
-   execute the remaining `planned` items first. Exhaustiveness is the
+   execute the remaining `planned` items first. When it names items
+   still open, close them out through the skill that owns each: a moot
+   item is `skipped` with a reason, a plan new information has
+   invalidated is superseded via `research-plan`. Exhaustiveness is the
    stop gate: it weighs the question against the 7-point stop criteria,
    assessed in order and stopping at the first that fails, and either
    declares the search reasonably
@@ -273,7 +352,7 @@ regardless of how directly the request named the destination.
    that are easy to consider "settled" once a later, more interesting
    search captures your attention. They are not settled until each has
    a linked assertion or an explicit reason it needs none. New evidence may reveal new
-   questions — return to `question-selection`. Resolved conflicts may
+   questions — return to `@plugin:question-selection`. Resolved conflicts may
    unblock `proof-conclusion`. Do not assume the chain is linear; the
    same sub-skill may be invoked multiple times across the run. Do not
    stop after invoking just one sub-skill — that's the start of the
@@ -315,84 +394,45 @@ After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
    tree and is not a gate failure, even though the scalar `tier` (the
    stronger of the per-claim tiers) already reads `probable`.
 2. **If it is missing, re-invoke `@plugin:proof-conclusion` for the same question** (its
-    §6 writes the relationship or fact). Do this *before* the `proof-critique` mentor
-    review and before anything marks the question resolved.
- 3. **This is a hard gate — and so, separately, is the proof-critique mentor
-    gate on that `<ps_id>`** (see **Mentor checkpoints** and the routing
-    table): never let `question-selection` mark the question resolved, and
-    never let `project.status` reach `"completed"`, while either check fails —
-    any tier-≥-probable conclusion unencoded in the tree, or any resolved
-    question's `ps_id` with no `proof-critique` verdict on record. A run does
-    not finish with a conclusion that never reached the tree, or that never
-    went through its mandatory review.
+    §6 writes the relationship or fact). Do this before anything marks the
+    question resolved.
+ 3. **This is a hard gate:** never let `question-selection` mark the question
+    resolved, and never let `project.status` reach `"completed"`, while any
+    tier-≥-probable conclusion is unencoded in the tree. A run does not finish
+    with a conclusion that never reached the tree.
 
 At tier `possible` / `not_proved` / `disproved` no tree write is expected (the
 conclusion is a documented lead, not a tree assertion), so the gate is satisfied
 trivially.
 
-## Mentor checkpoints
+## Second opinion
 
-After `proof-conclusion` writes a proof summary, invoke the
-`gps-mentor` subagent once for an independent `proof-critique` of the
-finished proof. The mentor reads project state in a fresh context,
-evaluates the written conclusion against a focused rubric, and records
-a structured verdict. It is **read-only** — it never modifies project
-files; it writes only to `evaluations/`.
-
-**One gate, at the end — mandatory to invoke and record; advisory only in
-what it recommends.**
-It runs *after* the answer is already persisted, so its verdict cannot force
-a rewrite of a conclusion the researcher already reached, and it never
-re-opens a resolved question by itself. But per the routing table's final
-completion check, a question is not actually done — and `project.status`
-may not go to `completed` — until this gate has run and a matching
-`proof-critique` verdict is on record in `evaluations[]` for every `ps_id`
-a resolved question references. Marking a question `resolved` is not, by
-itself, evidence this happened. (The former `pre-exhaustiveness` and
-`conclusion-readiness` pre-gates were removed for a *different* reason: they
-duplicated `research-exhaustiveness`'s own 7-point check and
-`proof-conclusion`'s tier analysis, the read-only mentor cannot verify
-exhaustiveness without search tools, and their forced rework starved the
-proof step. That history doesn't apply to this final gate, which only
-requires a verdict on record, not that the researcher act on it. The mentor
-still *supports* those focuses **on-demand** — see below.)
-
-### When to invoke
-
-| Trigger | Focus | Target |
-|---------|-------|--------|
-| `proof-conclusion` just wrote `<ps_id>` | `proof-critique` | `<ps_id>` |
-| User asks "review my work", "is this defensible?", "critique my proof", "am I ready to conclude?", "second opinion", "mentor" | `on-demand` | most recent question / proof summary / `"project"` |
-
-For the `proof-critique` gate, first check `evaluations/` for an existing
-`proof-critique-<ps_id>-*.json` newer than the last edit to that proof
-summary; if a current verdict exists, act on it rather than re-invoking.
-Otherwise invoke `@plugin:gps-mentor` naming the focus and target_id.
-
-### Verdict handling — the recommendation is advisory; invoking the gate isn't
-
-For each gated transition, check `evaluations/` for an existing
-verdict file matching `<focus>-<target_id>-*.json` that is newer
-than the most recent state change to the target (latest log entry,
-assertion, conflict, plan-item update, or proof_summary edit
-referencing the target). If a current verdict exists, skip the
-re-invocation and act on the existing verdict. Otherwise, invoke
-`@plugin:gps-mentor` with a delegation message naming the focus
-and target_id.
+`gps-mentor` runs only when the user asks for it — "review my work", "is
+this defensible?", "what would a senior genealogist say?", "critique my
+proof", "am I ready to conclude?", "mentor", "second opinion", or any
+equivalent — never as a routing step. When they do,
+invoke `@plugin:gps-mentor` with a delegation message naming the focus
+and target_id: `focus: on-demand`, and `target_id` set to the most recent
+question, proof summary, or the literal string `"project"` if no specific
+target is implied. It is read-only on the tree and on every section except
+`evaluations[]`.
 
 | Verdict | Action |
 |---------|--------|
 | `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
-| `address_first` | Surface `narrative_for_user` and record each `must_address` item to the audit trail. **Do not block, re-open the resolved question, or force a remediation skill.** Log it and continue; the watching researcher may choose to act on it. The mentor is a support, not a gatekeeper. |
+| `address_first` | Surface `narrative_for_user`. **Do not block, re-open a resolved question, or force a remediation skill.** The user decides whether to act on it. |
 | `refused` | Surface the refusal message; it names the correct target. |
 
-### On-demand invocation
+## Hint review
 
-When the user says "review my work", "is this defensible?", "what
-would a senior genealogist say?", "mentor", "second opinion", or
-any equivalent, invoke `@plugin:gps-mentor` with `focus: on-demand`
-and `target_id` set to the most recent question, proof summary, or
-the literal string `"project"` if no specific target is implied.
+When the user asks to check, review or validate the FamilySearch hints on a
+person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay its
+return as-is, and stop: whether to accept a hint is the researcher's decision,
+which only the user can supply (§"When to stop"). When the researcher answers,
+spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
+verdicts as `{ark, verdict}` per hint, verbatim. Never pass a verdict the
+researcher did not state — a triage recommendation is not one. The accepted
+hints' positive log entries then route to `record-extraction` through the table.
 
 ## When to stop
 
@@ -418,36 +458,61 @@ rationale, and continue; the audit trail captures the choice for later
 review. "Only the user can supply it" means the research cannot proceed
 without them — not that the call is difficult, contested, or slow.
 
-**These four are the *only* stop conditions.** Finishing a
+**On a JOB, these four are the *only* stop conditions.** Finishing a
 sub-skill is not one of them — having selected a question, written a
 plan, or run one search, you are mid-loop, not done. Do not end your
 turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
+**A bounded request has a fifth: its deliverable.** When everything the
+message asked for is produced — one deliverable or several — end the turn;
+see §"Bounded request or job".
+
+### Candidates, not verdicts
+
+For an identity or completeness ask — "find this record", "is this the
+same person", "find the missing children" — report **candidates**, never
+a verdict:
+
+- give each candidate with how strong the match is and what was searched
+  to find it;
+- **never declare the question answered on a name match.** A name is not
+  an identification;
+- end with an offer to **research it further** — never an offer to extract,
+  attach, or link. Those are writes, and `search-records` forbids offering one
+  on an unsettled identity. Offer the investigation, not the write.
+
+A single plausible candidate is still a candidate. The researcher decides
+whether it is their person; your job is to show them what you found and
+what it rests on.
+
 ## What this skill does not do
 
-- It does not introduce new GPS logic. Every sub-skill encodes its
-  own portion of the GPS standard; this skill only routes between
-  them.
+- It introduces no new GPS *method*: every sub-skill encodes its own portion of
+  the standard and this skill only routes between them. §"Candidates, not
+  verdicts" restates the identity bar `person-evidence` already owns, for the
+  bounded path that does not reach it.
 - It does not skip steps. GPS depends on the full chain — extraction
   (which writes final evidence classifications) precedes
   person-linking, person-linking precedes conflict detection, conflict
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
-  `research.json` does not exist, route to `init-project` first.
+  `research.json` does not exist, route to `@plugin:init-project` first,
+  passing the researcher's own words verbatim, plus `projectPath`, and
+  nothing else.
 
 ## Re-invocation behavior
 
-**Writes:** nothing directly. This skill is a thin orchestrator — it
-reads `research.json` to decide the next step and delegates every
-write to the sub-skill it routes to. It does **not** insert defensive
+**Writes:** nothing directly — it holds no writer tool. This skill is a thin
+orchestrator: it reads `research.json` to decide the next step, reads a linked
+person's attached sources (`person_read`, `source_attachments`) before any
+search, and delegates every write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each
 validate the whole project before persisting); it calls
 `validate_research_schema` (read-only) only to confirm an external/manual
-edit to the files. The only side-channel writes
-during a run come from the `gps-mentor` subagent it invokes, which
-writes verdict files under `evaluations/` and never touches
-`research.json` or `tree.gedcomx.json`.
+edit to the files. When the user asks for a second opinion, the
+`gps-mentor` subagent it invokes records its verdict in `evaluations[]`
+and never touches `tree.gedcomx.json`.
 
 **On repeat invocation:** safe to re-run at any point. It re-reads
 `research.json` and resumes routing from the current state — the same

@@ -394,6 +394,8 @@ REJECTED = {
                                   "forbidden web/Dockerfile"),
     "a template README": ("worker", lambda: _add("worker", **{"README.md": b"#"}), "forbidden README.md"),
     "a top-level folder": ("web", lambda: {f"bundle/{k}": v for k, v in good("web").items()}, "top-level folder"),
+    "an .ebextensions file that is not .config": ("tools", lambda: _add("tools", **{
+        ".ebextensions/03-u13.yaml": b"option_settings: {}\n"}), "is not a .config file"),
     "a hook without its exec bit": ("worker", lambda: _add("worker", **{
         ".platform/hooks/predeploy/01-worker-layout.sh": (b"#!/bin/bash\n", 0o644)}), "has no exec bit"),
     "a hook stored with no Unix mode": ("worker", lambda: _add("worker", **{

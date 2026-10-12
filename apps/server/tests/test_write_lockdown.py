@@ -136,6 +136,52 @@ async def test_hook_allows_bash_without_combined_secrets_and_network(command):
     assert out == {}
 
 
+# ── credential read guard ────────────────────────────────────────
+
+@pytest.mark.parametrize(
+    "tool_name, tool_input",
+    [
+        ("Read", {"file_path": "/home/user/.familysearch-mcp/tokens.json"}),
+        ("Read", {"file_path": "~/.familysearch-mcp/config.json"}),
+        ("Read", {"file_path": r"C:\Users\gen\.familysearch-mcp\tokens.json"}),
+        ("Glob", {"pattern": "/home/user/.familysearch-mcp/*"}),
+        ("Glob", {"path": "/home/user/.familysearch-mcp", "pattern": "*.json"}),
+        ("Grep", {"pattern": "token", "path": "/home/user/.familysearch-mcp"}),
+        ("Grep", {"pattern": "x", "glob": "**/.familysearch-mcp/**"}),
+    ],
+)
+async def test_hook_denies_credential_read(tool_name, tool_input):
+    out = await real_agent._pretool_hook(
+        {"tool_name": tool_name, "tool_input": tool_input}, None, None
+    )
+    hook = out["hookSpecificOutput"]
+    assert hook["permissionDecision"] == "deny"
+    assert "credentials directory" in hook["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize(
+    "tool_name, tool_input",
+    [
+        ("Read", {"file_path": "/home/user/project/research.json"}),
+        ("Read", {"file_path": "/home/user/.claude/projects/abc/tool-results/x.txt"}),
+        ("Grep", {"pattern": "token"}),
+        ("Glob", {"pattern": "**/*.json"}),
+        ("Read", {"file_path": "/project/familysearch-mcp-notes.md"}),
+        ("Read", {"file_path": "/home/user/.familysearch-mcp-old/tokens.json"}),
+        ("Read", {"file_path": None}),
+        ("Read", {}),
+        ("Read", None),
+        ("Read", {"file_path": ""}),
+        ("Grep", {"path": 42}),
+    ],
+)
+async def test_hook_allows_non_credential_reads(tool_name, tool_input):
+    out = await real_agent._pretool_hook(
+        {"tool_name": tool_name, "tool_input": tool_input}, None, None
+    )
+    assert out == {}
+
+
 # ── the wiring ───────────────────────────────────────────────────
 
 def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
@@ -193,12 +239,20 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
 
     exfil_tools = real_agent._EXFIL_GUARD_TOOLS
     assert exfil_tools, "_EXFIL_GUARD_TOOLS is empty — the Bash exfiltration arm would go inert"
-    # THREE constants, not two. The earlier form of this join omitted
-    # _EXFIL_GUARD_TOOLS, and the spec still described a two-constant derivation
-    # after the Bash arm landed.
+
+    credential_tools = real_agent._CREDENTIAL_READ_GUARD_TOOLS
+    assert credential_tools, "_CREDENTIAL_READ_GUARD_TOOLS is empty — the credential-read arm would go inert"
+
+    # FIVE constants now. The derivation started at two, gained a third with the
+    # Bash exfiltration arm, a fourth with the foreground-delegation arm
+    # (issue #2813), and a fifth with the credential-read arm (issue #2485).
+    # Sorted because the source is a frozenset and an unsorted join would make
+    # the matcher differ between runs.
+    delegation_tools = real_agent.DELEGATION_TOOLS
+    assert delegation_tools, "DELEGATION_TOOLS is empty — the foreground arm would go inert"
     expected = "|".join(
         (
-            "^(" + "|".join((*file_tools, *exfil_tools)) + ")$",
+            "^(" + "|".join((*file_tools, *exfil_tools, *credential_tools, *sorted(delegation_tools))) + ")$",
             *(f".*{t}$" for t in device_tools),
         )
     )
@@ -209,7 +263,7 @@ def test_the_matcher_tracks_the_deny_arm_constants(tmp_path, monkeypatch):
     # The bare names are ANCHORED. Unanchored, the CLI's regex branch is a
     # search, so `Write` also bound `TodoWrite` — a tool this hook can deny
     # nothing about, which is the class of call the narrowing exists to spare.
-    for t in (*file_tools, *exfil_tools):
+    for t in (*file_tools, *exfil_tools, *credential_tools, *delegation_tools):
         assert re.fullmatch(real_agent._PRETOOL_MATCHER, t), f"{t} no longer binds"
         assert not re.search(real_agent._PRETOOL_MATCHER, f"Todo{t}Suffix"), (
             f"{t} is unanchored in the matcher, so it binds names that merely "
@@ -399,6 +453,10 @@ def test_the_matcher_binds_every_tool_name_the_hook_compares_against():
         "the walk no longer reaches direct_project_file_write, so it is not seeing "
         "the raw-write arms at all. Re-point it at however the hook now dispatches."
     )
+    assert "credential_read_denied" in functions, (
+        "the walk no longer reaches credential_read_denied, so it is not seeing "
+        "the credential-read arm at all."
+    )
 
     pattern = real_agent._PRETOOL_MATCHER
     unbound = sorted(
@@ -429,10 +487,13 @@ async def test_the_matcher_covers_every_tool_the_hook_can_deny():
     """
     pattern = real_agent._PRETOOL_MATCHER
     payload = {
-        "file_path": "research.json",
+        "file_path": "/home/user/.familysearch-mcp/tokens.json",
         "files": [{"path": "research.json"}],
         "command": "cat > research.json",
         "ops": [],
+        "path": "/home/user/.familysearch-mcp/",
+        "pattern": "/home/user/.familysearch-mcp/*",
+        "glob": "**/.familysearch-mcp/**",
     }
     unbound_but_denied = []
     for tool_name in (
@@ -536,7 +597,8 @@ def test_the_matcher_stays_in_the_clis_regex_branch():
 
 @pytest.mark.parametrize(
     "tool_name",
-    ["Write", "Edit", "NotebookEdit", "Bash", "device_commit_files",
+    ["Write", "Edit", "NotebookEdit", "Bash", "Read", "Grep", "Glob",
+     "device_commit_files",
      "mcp__remote-devices__device_commit_files",
      "mcp__remote-devices__Genealogy_Research__device_commit_files"],
 )
@@ -551,3 +613,60 @@ def test_the_matcher_binds_under_both_readings(tool_name):
     pattern = real_agent._PRETOOL_MATCHER
     assert re.search(pattern, tool_name), f"{tool_name} does not bind under search"
     assert re.fullmatch(pattern, tool_name), f"{tool_name} does not bind under fullmatch"
+
+
+# ── delegations run in the foreground (issue #2813, feedback #3156 and #3159) ──
+#
+# The Stop hook cannot see that a turn is waiting on its own background subagent
+# -- it reads `project.status` and its own counters -- so it nudges, and the
+# model answers the nudge by spawning a DUPLICATE of the agent still running.
+# Measured twice on the alpha: duplicate q_001/q_002 from two question-selection
+# spawns, and four record-extractors relaunched synchronously while the
+# background copies kept going. The prototype has forced the foreground since
+# the 2026-09-23 lead ruling; this is that arm on the hosted plane.
+
+async def test_a_delegation_is_rewritten_to_run_in_the_foreground():
+    out = await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"subagent_type": "record-extractor"}}, None, None
+    )
+    hook = out["hookSpecificOutput"]
+    assert hook["permissionDecision"] == "allow", "this arm changes the call, it does not refuse it"
+    assert hook["updatedInput"]["run_in_background"] is False
+    assert hook["updatedInput"]["subagent_type"] == "record-extractor", "other input is preserved"
+
+
+async def test_a_delegation_with_no_flag_at_all_is_rewritten():
+    """The measured incidents carried NO flag: CLI 2.1.220 backgrounds an agent
+    when the key is absent, so 'absent' is the case that matters most."""
+    out = await real_agent._pretool_hook({"tool_name": "Task", "tool_input": {}}, None, None)
+    assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False
+
+
+async def test_an_explicit_foreground_delegation_is_left_alone():
+    assert await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"run_in_background": False}}, None, None
+    ) == {}
+
+
+def test_the_matcher_reaches_every_delegation_tool():
+    """The arm above is inert unless the matcher binds the hook for these tools.
+    That is this file's own documented failure mode: an arm that landed while the
+    matcher was `None` bound by accident and went inert when it was narrowed."""
+    import re
+    for tool in real_agent.DELEGATION_TOOLS:
+        assert re.search(real_agent._PRETOOL_MATCHER, tool), (
+            f"{tool} is handled by _pretool_hook but _PRETOOL_MATCHER does not bind it, "
+            "so the arm never runs"
+        )
+    assert not re.search(real_agent._PRETOOL_MATCHER, "AgentFoo"), "the alternation stays anchored"
+
+
+async def test_an_explicitly_backgrounded_delegation_is_rewritten():
+    """The case where the rewrite overturns a decision the model made on purpose,
+    and the one the other three tests miss. Mutating the predicate from
+    `is not False` to `is None` passed the whole server suite, because nothing
+    covered an explicit True."""
+    out = await real_agent._pretool_hook(
+        {"tool_name": "Agent", "tool_input": {"run_in_background": True}}, None, None
+    )
+    assert out["hookSpecificOutput"]["updatedInput"]["run_in_background"] is False

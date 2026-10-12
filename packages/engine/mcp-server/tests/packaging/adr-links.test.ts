@@ -25,8 +25,8 @@ import { citedPaths, pathResolves } from "./repo-paths.js";
  * (`research.json`), tool names (`mcp__genealogy__record_read`), and prose, so
  * the lint has no false positives to train people to ignore. The extraction
  * rule lives in `./repo-paths.ts` and is shared with `doc-links.test.ts`,
- * which applies it to the process docs, the `.claude/` tooling, and every
- * section of every ADR and spec. That makes the path check here a subset of
+ * which applies it to the process docs, the `.claude/` tooling, and every doc
+ * under `docs/` except `docs/plan/` and `docs/deep-dives/`, ADRs whole. That makes the path check here a subset of
  * that one; it stays because the required-field and index checks live here.
  */
 

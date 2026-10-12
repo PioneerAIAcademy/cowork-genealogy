@@ -21,9 +21,11 @@ from e2e.subagent_capture import (
     collect_subagents,
     sdk_cache_dir,
     is_runaway_turn,
+    pair_tool_calls,
     parse_jsonl,
     summarize_transcript,
     summarize_turn,
+    transcript_agent_id,
 )
 
 
@@ -449,6 +451,277 @@ def test_cache_dir_falls_back_to_the_leaf_when_no_whole_path_key_matches(
     assert sdk_cache_dir(workspace) is not None
 
 
+# ---------------------------------------------------------------------------
+# #3045 — background subagents' tool calls are backfilled into `tool_calls` from
+# their transcript, since they never reach the parent message stream.
+# ---------------------------------------------------------------------------
+
+
+def _tool_use_block(tuid, name, args=None):
+    return {"type": "tool_use", "id": tuid, "name": name, "input": args or {}}
+
+
+def _tool_result_block(tuid, text, is_error=False):
+    return {
+        "type": "tool_result",
+        "tool_use_id": tuid,
+        "content": [{"type": "text", "text": text}],
+        "is_error": is_error,
+    }
+
+
+def _assistant_rec(blocks):
+    return {"type": "assistant", "message": {"role": "assistant", "content": blocks}}
+
+
+def _user_rec(blocks):
+    return {"type": "user", "message": {"role": "user", "content": blocks}}
+
+
+def test_transcript_agent_id_derives_id_from_filename():
+    assert transcript_agent_id(Path("/x/subagents/agent-a1b2c3.jsonl")) == "a1b2c3"
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["session-uuid.jsonl", "agent-.jsonl", "notagent-123.jsonl"],
+)
+def test_transcript_agent_id_none_for_non_agent_names(name: str):
+    assert transcript_agent_id(Path(name)) is None
+
+
+def test_pair_tool_calls_matches_result_to_its_tool_use():
+    records = [
+        _assistant_rec([_tool_use_block("tu1", "mcp__genealogy__record_read", {"id": "R1"})]),
+        _user_rec([_tool_result_block("tu1", '{"ok": true}')]),
+    ]
+    pairs = pair_tool_calls(records)
+    assert len(pairs) == 1
+    assert pairs[0]["tool"] == "mcp__genealogy__record_read"  # full name, not bare-ified
+    assert pairs[0]["args"] == {"id": "R1"}
+    assert pairs[0]["content"] == [{"type": "text", "text": '{"ok": true}'}]
+    assert pairs[0]["is_error"] is False
+
+
+def test_pair_tool_calls_unmatched_tool_use_keeps_none():
+    # A run killed mid-call leaves a tool_use with no matching tool_result.
+    pairs = pair_tool_calls([_assistant_rec([_tool_use_block("tu9", "Read")])])
+    assert len(pairs) == 1
+    assert pairs[0]["content"] is None
+    assert pairs[0]["is_error"] is False
+
+
+def test_pair_tool_calls_tolerates_non_object_records_and_content():
+    records = [
+        "a string",  # not a dict
+        {"type": "assistant", "message": {"content": "not a list"}},
+        _assistant_rec([{"type": "thinking"}, _tool_use_block("tu1", "Glob")]),
+    ]
+    pairs = pair_tool_calls(records)  # must not raise
+    assert len(pairs) == 1
+    assert pairs[0]["tool"] == "Glob"
+
+
+def _async_launch_entry(agent_id: str) -> dict:
+    """An `Agent` result announcing a background spawn — what gates the backfill."""
+    return {
+        "tool": "Agent",
+        "args": {},
+        "response_summary": f"Async agent launched successfully. agentId: {agent_id}",
+    }
+
+
+def _seed_transcript(home: Path, workspace: Path, agent_id: str, records, meta=None):
+    """Seed one `agent-<agent_id>.jsonl` (+ optional meta) in the SDK cache."""
+    subagents = (
+        home / ".claude" / "projects" / _key(workspace) / "session-uuid" / "subagents"
+    )
+    subagents.mkdir(parents=True, exist_ok=True)
+    (subagents / f"agent-{agent_id}.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in records), encoding="utf-8"
+    )
+    if meta is not None:
+        (subagents / f"agent-{agent_id}.meta.json").write_text(
+            json.dumps(meta), encoding="utf-8"
+        )
+
+
+def test_backfill_appends_a_background_agents_three_calls(shortspace: Path, monkeypatch):
+    """Acceptance 1: a background transcript with 3 calls -> 3 entries with its id.
+
+    Calls the function directly, so it does not cover the call site in
+    `run_e2e_test` — removing that call leaves this test green. Break the backfill
+    itself (e.g. `pair_tool_calls -> []`) and the three entries never appear.
+    """
+    from e2e.orchestrator import backfill_background_tool_calls
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc123"
+    records = []
+    for i in range(3):
+        records.append(_assistant_rec([_tool_use_block(f"tu{i}", "mcp__genealogy__image_read", {"n": i})]))
+        records.append(_user_rec([_tool_result_block(f"tu{i}", f'{{"page": {i}}}')]))
+    _seed_transcript(home, workspace, "bg777", records, meta={"agentType": "search-images"})
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    # The log must announce bg777 as a background spawn, or nothing is backfilled.
+    tool_calls: list[dict] = [_async_launch_entry("bg777")]
+    backfill_background_tool_calls(workspace, tool_calls)
+
+    backfilled = [tc for tc in tool_calls if tc.get("agent_id") == "bg777"]
+    assert len(backfilled) == 3
+    for i, entry in enumerate(backfilled):
+        assert entry["agent_type"] == "search-images"
+        assert entry["tool"] == "mcp__genealogy__image_read"
+        assert entry["args"] == {"n": i}
+        # Full entry shape, same keys a synchronous call gets.
+        assert set(entry) == {
+            "tool", "args", "response_summary", "is_error", "result_chars",
+            "agent_id", "agent_type",
+        }
+        assert isinstance(entry["result_chars"], int)
+        assert entry["is_error"] is False
+
+
+def test_backfill_only_touches_announced_background_agents(shortspace: Path, monkeypatch):
+    """A synchronous agent whose stream entries carry no `agent_id` is NOT backfilled.
+
+    Two real shapes leave a synchronous agent's entry without an `agent_id`: its
+    result never arrived (cap/timeout mid-call), or its call was to a nonexistent
+    tool and was refused before the hook ran (error result, `agent_id: None`).
+    Either way the id is absent from `existing`, so dedup-by-`agent_id` alone would
+    re-add the agent's calls from its transcript. Gating on the "Async agent
+    launched" announcement is what prevents that. This test fails under a
+    pure-`existing` dedup.
+    """
+    from e2e.orchestrator import backfill_background_tool_calls
+
+    home = shortspace / "home"
+    records = [
+        _assistant_rec([_tool_use_block("tu1", "mcp__genealogy__record_read", {"id": "R"})]),
+        _user_rec([_tool_result_block("tu1", "{}")]),
+    ]
+
+    # (a) mid-call: the agent's stream entry has no result and no agent_id.
+    ws_a = shortspace / "e2e-sync-noresult-aaa111"
+    _seed_transcript(home, ws_a, "sync99", records, meta={"agentType": "record-extractor"})
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    tc_a = [{"tool": "mcp__genealogy__record_read", "args": {"id": "R"}, "response_summary": None}]
+    backfill_background_tool_calls(ws_a, tc_a)
+    assert tc_a == [{"tool": "mcp__genealogy__record_read", "args": {"id": "R"}, "response_summary": None}]
+
+    # (b) nonexistent-tool: the result arrived with agent_id None, is_error True.
+    ws_b = shortspace / "e2e-sync-errored-bbb222"
+    _seed_transcript(home, ws_b, "sync88", records, meta={"agentType": "record-extractor"})
+    tc_b = [{"tool": "mcp__genealogy__nope", "args": {}, "is_error": True, "agent_id": None}]
+    backfill_background_tool_calls(ws_b, tc_b)
+    assert tc_b == [{"tool": "mcp__genealogy__nope", "args": {}, "is_error": True, "agent_id": None}]
+
+
+def test_backfill_shape_matches_production_summary_helpers(shortspace: Path, monkeypatch):
+    """The backfilled summary/length must be what the main stream would have produced.
+
+    Uses `image_transcribe`, whose `transcription` key is summary-exempt, so the
+    call must pass `tool_name` to `_summarize_tool_response` exactly as the main
+    stream does — omitting it truncates the transcription at ~500 chars. The
+    assertion against the real helper WITH `tool_name` fails if the backfill drops
+    it, and the whole-text assertion shows the field is not truncated.
+    """
+    from e2e.orchestrator import (
+        _raw_result_chars,
+        _summarize_tool_response,
+        backfill_background_tool_calls,
+    )
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc124"
+    long_text = "LINE " * 400  # > 500 chars; would be truncated without the exemption
+    doc = json.dumps({"transcription": long_text, "pageUrl": "x"})
+    content = [{"type": "text", "text": doc}]
+    records = [
+        _assistant_rec([_tool_use_block("tu1", "mcp__genealogy__image_transcribe", {})]),
+        {"type": "user", "message": {"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": "tu1", "content": content, "is_error": False},
+        ]}},
+    ]
+    _seed_transcript(home, workspace, "bg1", records, meta={"agentType": "search-images"})
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    tool_calls: list[dict] = [_async_launch_entry("bg1")]
+    backfill_background_tool_calls(workspace, tool_calls)
+    entry = next(tc for tc in tool_calls if tc.get("agent_id") == "bg1")
+    tool = "mcp__genealogy__image_transcribe"
+    assert entry["response_summary"] == _summarize_tool_response(content, tool_name=tool)
+    assert entry["result_chars"] == _raw_result_chars(content)
+    # The exempt transcription survives whole — proof tool_name reached the summarizer.
+    assert long_text.strip() in entry["response_summary"]
+
+
+def test_backfill_does_not_double_count_a_synchronous_agent(shortspace: Path, monkeypatch):
+    """Acceptance 2 (the other direction): an announced agent already in the stream is skipped.
+
+    The agent IS announced as background, so the announcement gate does not skip
+    it — the `agent_id in existing` clause is what must, because its calls already
+    reached the stream under that id. Without the announcement entry the gate
+    would skip it first and this would not exercise the `existing` check at all;
+    with it, deleting `or agent_id in existing` reds this test.
+    """
+    from e2e.orchestrator import backfill_background_tool_calls
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc125"
+    _seed_transcript(
+        home, workspace, "sync42",
+        [_assistant_rec([_tool_use_block("tu1", "mcp__genealogy__record_read")]),
+         _user_rec([_tool_result_block("tu1", "{}")])],
+        meta={"agentType": "record-extractor"},
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    # Announced as background AND already captured in the stream under its id.
+    existing = {"tool": "mcp__genealogy__record_read", "args": {}, "agent_id": "sync42"}
+    tool_calls = [_async_launch_entry("sync42"), existing]
+    assert any(tc.get("agent_id") == "sync42" for tc in tool_calls)  # dedup predicate holds
+
+    backfill_background_tool_calls(workspace, tool_calls)
+    assert tool_calls == [_async_launch_entry("sync42"), existing]  # nothing appended, no duplicate
+
+
+def test_backfill_never_raises_on_a_truncated_transcript(shortspace: Path, monkeypatch):
+    """Acceptance 3: an unparseable transcript leaves tool_calls unchanged, no exception."""
+    from e2e.orchestrator import backfill_background_tool_calls
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc126"
+    subagents = (
+        home / ".claude" / "projects" / _key(workspace) / "session-uuid" / "subagents"
+    )
+    subagents.mkdir(parents=True)
+    (subagents / "agent-bad.jsonl").write_text("not json at all\n", encoding="utf-8")
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    # Announce "bad" as background so the backfill actually tries to parse its
+    # (unparseable) transcript — otherwise the announcement gate skips it first.
+    tool_calls: list[dict] = [_async_launch_entry("bad")]
+    backfill_background_tool_calls(workspace, tool_calls)  # must not raise
+    assert tool_calls == [_async_launch_entry("bad")]
+
+
+def test_backfill_no_cache_dir_leaves_tool_calls_unchanged(tmp_path: Path, monkeypatch):
+    from e2e.orchestrator import backfill_background_tool_calls
+
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "nonexistent")
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    tool_calls = [{"tool": "x", "agent_id": None}]
+    backfill_background_tool_calls(tmp_path / "e2e-x", tool_calls)
+    assert tool_calls == [{"tool": "x", "agent_id": None}]
+
+
 def _seed_raw(tmp_path: Path, monkeypatch, jsonl: bytes, meta: bytes | None = None):
     """Cache holding one transcript written as raw bytes."""
     workspace = tmp_path / "e2e-x-abc12345"
@@ -629,3 +902,236 @@ def test_subagent_usage_is_all_zeros_not_absent_when_nothing_carried_usage():
         "cache_read_input_tokens": 0,
         "cache_creation_input_tokens": 0,
     }
+
+
+# ---------------------------------------------------------------------------
+# Per-helper peak window, compactions and model (T1.3,
+# docs/plan/cost-latency-10x.md §7: "verify before assuming Haiku is safe inside
+# an agent"). `usage` above is a SUM — what the helper spent. The peak is a MAX —
+# the tallest single pile it read, i.e. how close it came to the compaction line.
+# Two helpers can spend the same and differ completely on that.
+# ---------------------------------------------------------------------------
+
+
+def _window_record(message_id, *, window, model="claude-sonnet-4-6", block="text"):
+    """One block-record of a message whose read window totals `window` tokens."""
+    return {
+        "type": "assistant",
+        "message": {
+            "role": "assistant",
+            "id": message_id,
+            "model": model,
+            "stop_reason": "end_turn",
+            "content": [{"type": block}],
+            "usage": {
+                "input_tokens": 3,
+                "output_tokens": 50,
+                "cache_read_input_tokens": window - 3 - 100,
+                "cache_creation_input_tokens": 100,
+            },
+        },
+    }
+
+
+def _boundary(meta):
+    return {"type": "system", "subtype": "compact_boundary", "compactMetadata": meta}
+
+
+def test_peak_window_is_the_max_message_not_the_sum():
+    """20k, 35k, 52k read across three messages → the peak is 52,000, not 107,000.
+
+    Each message is repeated across three block records, the shape Claude Code
+    writes; a max is unmoved by the repeats, and the test pins that it stays so.
+    """
+    records = []
+    for mid, window in (("m1", 20_000), ("m2", 35_000), ("m3", 52_000)):
+        for block in ("thinking", "text", "tool_use"):
+            records.append(_window_record(mid, window=window, block=block))
+    summary = summarize_transcript(records)
+    assert summary["peak_window_tokens"] == 52_000
+    assert summary["peak_window_tokens"] != 107_000
+
+
+def test_peak_window_excludes_output_tokens():
+    summary = summarize_transcript([_window_record("m1", window=40_000)])
+    assert summary["peak_window_tokens"] == 40_000  # not 40,050
+
+
+def test_peak_window_is_zero_when_no_message_carries_usage():
+    summary = summarize_transcript([{"message": {"role": "assistant", "content": []}}])
+    assert summary["peak_window_tokens"] == 0
+
+
+def test_a_helper_that_never_compacted_has_an_empty_list():
+    summary = summarize_transcript([_window_record("m1", window=40_000)])
+    assert summary["compactions"] == []
+
+
+def test_a_compaction_is_recorded_with_its_real_figures():
+    records = [
+        _window_record("m1", window=160_000),
+        _boundary({"trigger": "auto", "preTokens": 167_201, "postTokens": 14_299}),
+        _window_record("m2", window=20_000),
+    ]
+    summary = summarize_transcript(records)
+    assert summary["compactions"] == [
+        {"trigger": "auto", "pre_tokens": 167_201, "post_tokens": 14_299}
+    ]
+    # The peak saturates before the squeeze; the count is the signal.
+    assert summary["peak_window_tokens"] == 160_000
+
+
+def test_a_missing_post_tokens_is_unknown_not_zero():
+    """`postTokens` is optional in the CLI; 0 would read as "squeezed to nothing"."""
+    summary = summarize_transcript([_boundary({"trigger": "auto", "preTokens": 167_000})])
+    assert summary["compactions"] == [
+        {"trigger": "auto", "pre_tokens": 167_000, "post_tokens": None}
+    ]
+
+
+@pytest.mark.parametrize(
+    "meta",
+    [None, "a string", [1, 2], {"trigger": 7, "preTokens": "x", "postTokens": True}],
+)
+def test_a_malformed_compaction_still_counts_and_never_raises(meta):
+    """The squeeze happened, so it is an entry — with unknowns, never a raise."""
+    record = {"type": "system", "subtype": "compact_boundary"}
+    if meta is not None:
+        record["compactMetadata"] = meta
+    summary = summarize_transcript([record])
+    assert summary["compactions"] == [
+        {"trigger": None, "pre_tokens": None, "post_tokens": None}
+    ]
+
+
+def test_the_word_compact_boundary_inside_a_message_is_not_a_compaction():
+    """A helper that reads code mentioning the marker has not been squeezed."""
+    records = [
+        {
+            "type": "assistant",
+            "message": {
+                "role": "assistant",
+                "content": [{"type": "text", "text": '"subtype": "compact_boundary"'}],
+            },
+        },
+        {"type": "user", "subtype": "compact_boundary"},
+    ]
+    assert summarize_transcript(records)["compactions"] == []
+
+
+def test_models_are_the_distinct_ids_in_first_seen_order():
+    records = [
+        _window_record("m1", window=1_000, model="claude-sonnet-4-6"),
+        _window_record("m2", window=1_000, model="claude-haiku-4-5-20251001"),
+        _window_record("m3", window=1_000, model="claude-sonnet-4-6"),
+    ]
+    assert summarize_transcript(records)["models"] == [
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5-20251001",
+    ]
+
+
+@pytest.mark.parametrize("model", ["<synthetic>", None, 7, ""])
+def test_models_skip_placeholders_and_non_strings(model):
+    records = [
+        _window_record("m1", window=1_000, model="claude-sonnet-4-6"),
+        _window_record("m2", window=1_000, model=model),
+    ]
+    assert summarize_transcript(records)["models"] == ["claude-sonnet-4-6"]
+
+
+def test_collect_subagents_carries_the_new_fields_into_the_runlog_shape(
+    shortspace: Path, monkeypatch
+):
+    """The last step before `E2eResult.subagents`: what the run log will hold."""
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-frederick-abc123"
+    subagents = home / ".claude" / "projects" / _key(workspace) / "session-uuid" / "subagents"
+    subagents.mkdir(parents=True)
+    records = [
+        _window_record("m1", window=90_000),
+        _boundary({"trigger": "auto", "preTokens": 167_000, "postTokens": 12_000}),
+        _window_record("m2", window=30_000),
+    ]
+    (subagents / "agent-1.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in records), encoding="utf-8"
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    summaries, status = collect_subagents(workspace)
+    assert status == "captured"
+    assert summaries[0]["peak_window_tokens"] == 90_000
+    assert len(summaries[0]["compactions"]) == 1
+    assert summaries[0]["models"] == ["claude-sonnet-4-6"]
+
+
+# ---------------------------------------------------------------------------
+# The main thread's own meter (unit harness, routed tests run their skill here).
+# ---------------------------------------------------------------------------
+
+
+def test_collect_main_thread_reads_the_parent_session_and_skips_sidechains(
+    shortspace: Path, monkeypatch
+):
+    from e2e.subagent_capture import collect_main_thread
+
+    home = shortspace / "home"
+    workspace = shortspace / "eval-ut-abc123"
+    cache = home / ".claude" / "projects" / _key(workspace)
+    (cache / "session-uuid" / "subagents").mkdir(parents=True)
+    main_records = [
+        _window_record("m1", window=60_000),
+        _boundary({"trigger": "auto", "preTokens": 167_000, "postTokens": 9_000}),
+        _window_record("m2", window=20_000),
+        dict(_window_record("s1", window=190_000), isSidechain=True),
+    ]
+    (cache / "session-uuid.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in main_records), encoding="utf-8"
+    )
+    # A subagent transcript one level down must never be read as the main thread.
+    (cache / "session-uuid" / "subagents" / "agent-1.jsonl").write_text(
+        json.dumps(_window_record("x", window=150_000)), encoding="utf-8"
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    main = collect_main_thread(workspace)
+    assert main == {
+        "peak_window_tokens": 60_000,
+        "compactions": [{"trigger": "auto", "pre_tokens": 167_000, "post_tokens": 9_000}],
+        "models": ["claude-sonnet-4-6"],
+    }
+
+
+def test_collect_main_thread_is_none_not_zero_when_nothing_is_found(tmp_path: Path, monkeypatch):
+    from e2e.subagent_capture import collect_main_thread
+
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    assert collect_main_thread(tmp_path / "nowhere") is None
+
+
+def test_duration_is_earliest_to_latest_timestamp_not_first_to_last():
+    """`queued_command` attachments carry their enqueue time, so a later record
+    can be stamped earlier; the span must still be max - min."""
+    from e2e.subagent_capture import subagent_duration_seconds
+
+    records = [
+        {"type": "user", "timestamp": "2026-10-05T14:00:05.000Z"},
+        {"type": "attachment", "timestamp": "2026-10-05T14:00:00.000Z"},
+        {"type": "assistant", "timestamp": "2026-10-05T14:01:47.500Z"},
+    ]
+    assert subagent_duration_seconds(records) == 107.5
+    assert summarize_transcript(records)["duration_seconds"] == 107.5
+
+
+@pytest.mark.parametrize("records", [
+    [],
+    [{"timestamp": "2026-10-05T14:00:00.000Z"}],
+    [{"timestamp": "not a time"}, {"timestamp": 7}, {}],
+])
+def test_duration_is_none_not_zero_without_two_timestamps(records):
+    from e2e.subagent_capture import subagent_duration_seconds
+
+    assert subagent_duration_seconds(records) is None

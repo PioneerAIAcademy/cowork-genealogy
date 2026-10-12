@@ -1,0 +1,542 @@
+{
+  "run_log": "v6.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Step 5 gives https://www.archivportal-bw.de, which no tool returned: external_links_search returned 0 links, and the URL is in no fixture or in the scenario. SKILL.md (line 601) says to take links only from a tool result, never from memory, and I can't confirm the address exists (the Landesarchiv BW's own site is landesarchiv-bw.de). The Archion parish URL is correctly taken from loc_001. Civil registration from 1876 ✓. Also, the judge's \"emigration applications are the only secular pre-1876 Württemberg records naming parents\" overstates it; probate inventories (Inventuren und Teilungen), for example, also name heirs."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Gives the Archion parish link, what the register would settle, what to look for (Familienregister/baptism ~1843, spellings Seger/Säger), and the offer to walk through capturing the page. Seven items written."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four discovery calls matched their fixtures (place, collections, volume, external links); research_append wrote 1 plan + 7 items; no fixture_not_found."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Familienregister, baptism, parents' marriage, siblings, emigration file, marriage fallback and a compiled-tree lead: each rationale says what the record would name."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every item is about Katharina's parents; item 3 states the marriage-is-not-proof-of-the-child limit; the sibling item says what it corroborates about her."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Familienregister and baptism first; item 6 is fallback_for pli_002; secondary trees last; date windows run past 1843 into the emigration/marriage years."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Baiersbronn (Freudenstadt) in Württemberg ✓; emigration files placed with the Landesarchiv BW ✓; civil registration correctly capped at 1876."
+    },
+    {
+      "test_id": "ut_research_plan_arc",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No prior plan for q_001; one active plan created with 7 planned items; nothing edited."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Collection facts match the responses (1999196 browse-only, personCount 0; SYNTH-PA-CHURCH name-searchable, 982,415), using SKILL.md's prescribed phrases. Item 2's \"Diocese of Philadelphia until 1868\" repeats the scenario's loc_001 quirk. Historically Schuylkill stayed with Philadelphia until Allentown in 1961, so that's a fixture error (flagged on #2251), not the skill's."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Church- and probate-focused, as the message asks: Thomas's probate, his marriage, Patrick's marriage, Thomas's burial, cemetery, and FAN Flynn households' probate. Six items, all aimed at the mother's identity."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "place, collections and external-links calls all matched their fixtures; research_query and research_append were well-formed; no fixture_not_found."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Probate, church marriage/burial, cemetery and FAN probate, each with a rationale naming what it would show about the mother or Patrick's parentage."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every Thomas-side item says what it reveals about Patrick (named as son or heir, the mother's identity); the FAN item gives its route back to Patrick."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. The spec requires at least one explicit fallback_for, and all six items have fallback_for null. The order itself is sound (probate, then church, then cemetery, then FAN). The test's example (\"Diocese of Scranton Archives holds originals\") is historically wrong for Schuylkill, but it's only an example."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "County correct (1811 on). The diocese remark comes from the provided loc_001, and I scored the skill's use of its inputs, as on h4k and ut_002. If you grade the plan as delivered, a 2."
+    },
+    {
+      "test_id": "ut_research_plan_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "pl_002 completed and the question is still probable, so add-new: pl_003 active, pl_002 untouched."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified against the fixtures: 3000101 (personCount 96,420) and 3000102 (79,760); volumes 003100201 at 88% and 003100202 at 84% record-searchable. The 1824 split and co-equal successor parishes are stated correctly, and both collections use SKILL.md's \"name-searchable (personCount N)\" phrase."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First plan for q_001; both successor parishes covered from the start, each with an index → full-text → external chain, plus FAN and newspaper breadth. Eight items."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 14 calls matched their fixtures (place for East and West, collections, volumes, external links for both parishes); research_append was well-formed."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Marriage records answer a where-did-he-marry question directly; full-text items target the 12% and 16% of entries missing from the index; FAN and newspaper add breadth with stated purposes."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The FAN item says how a kinsman's filing (or Silas as surety) would place Silas in one parish; nothing pursues a relative for their own sake."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified the chains: pli_003 fallback_for pli_001, pli_005 fallback_for pli_003, and the same for West (2→4→6). The two parishes are co-equal primaries with no fallback between them, which is exactly what the boundary-split rule requires. Indexed before full-text before external."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "East and West Feliciana from 1824 ✓; the external items reach back to 1820, which covers the undivided parish before the split."
+    },
+    {
+      "test_id": "ut_research_plan_fbn",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No prior plan for q_001; one active plan with 8 planned items; nothing edited."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Checked the reply: \"1875\" appears only as a date range and \"Deed\" only as a volume name. It never states what S1 records (Patrick's 1875 land purchase in Schuylkill, Deed Book 42); pli_009 just notes \"Patrick already carries source S1\". That fact bears directly on the question (a sibling already in the destination county), and it's the long-standing gap this test targets (partial on Sept 28 too)."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Same omission: the survey of already-attached facts didn't read S1's content before planning a census search for Patrick."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All discovery calls matched their fixtures; research_append wrote 1 plan + 9 items. Collections described with SKILL.md's phrases (\"browse-only (personCount 0)\")."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Census, naturalization, church, mine inspectors' reports and directories each target the move or the mining claim, with a stated purpose."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "pli_009's rationale does state what Patrick's records reveal about Michael: his presence and mining work \"would corroborate that Michael's move was part of a family or community chain migration… directly supporting the coal-mining rationale.\" That's the required link to the subject, stated explicitly."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified fallback_for: pli_002 → pli_001, pli_004 → pli_003, pli_008 → pli_007. Post-move Schuylkill censuses before the pre-move nationwide ones; FAN last."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County (1811 on) and \"United States\" for an unknown pre-move place are both correct. The judge's Scranton remark comes from loc_001's known-wrong quirk, not from the plan."
+    },
+    {
+      "test_id": "ut_research_plan_bpx",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "No prior plan; one active plan with 9 planned items; nothing edited."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified ids against collections-search-us-national: 1438024 (38,558,371), 1417683 (50,169,452), 1325221 (76,211,837), each described as \"name-searchable (personCount N)\". 1880 relationship column ✓, 1890 loss ✓, Patrick's ages ✓."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three requested years, each with a FamilySearch primary, an Ancestry alternative and a Thomas-focused item; explains why there's no 1890 search."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "collections_search(\"United States\") matched its fixture; research_query/append were well-formed; no fixture_not_found. No military-page fetch for this Irish-born subject, which is correct."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\tCensus throughout is right here: the request is specifically the post-1860 censuses, and each rationale says what that year adds (1880's relationship column most of all)."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The Thomas-focused items are justified by what they show about Patrick's parentage (Thomas in the same household, the relationship statement)."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified fallback_for: each year's Ancestry and Thomas items point to that year's FamilySearch primary. Free before paid within every year, as the test requires."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Schuylkill County throughout 1870–1900; no boundary issue applies."
+    },
+    {
+      "test_id": "ut_research_plan_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "pl_001 and pl_002 completed, new active pl_003; prior plans untouched."
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Confirmed the N/A is safe: the run made 0 MCP calls, changed no files and wrote no text before Skill(record-extraction), which is this test's correct_skill. The judge's original 1 was scoring the empty reply, which is the hand-off truncation, not a routing failure. None of the \"real output first\" cases the banner warns about applies."
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Same check: routed straight to record-extraction for \"pull the key facts out of the death certificate\"; research-plan did no work of its own, so there's nothing to grade."
+    },
+    {
+      "test_id": "ut_research_plan_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Agree: zero MCP calls (the Skill hand-off is a built-in call)."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The surname order is applied correctly from the fetched page (García father's, Romero mother's); collections 1500692, 1784529, 1500693 and 2015362 match their personCounts; civil registration from 1871 ✓. One misattribution: item 4 says \"Per the naming customs wiki, priests may reverse or conflate the two surnames\", but Spain_Naming_Customs mentions reversal only for US-emigrant families. The caution is sound craft; the source credited is wrong. The earlier run's Granada/Chancillería error didn't recur."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Baptism (96% indexed volume), parents' marriage, siblings, full-text fallback, later marriage/death, and an Ancestry fallback. The naming-customs fetch happened (validator passed)."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "wiki_read hit wiki-read-spain-naming-customs; collections, volume and external-links calls all matched; no fixture_not_found.Each item names what it would show about the parents. The full-text item (4) searches the Santa María registers with the order treated as unsettled, which is credited under the test's instructions."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Each item names what it would show about the parents. The full-text item (4) searches the Santa María registers with the order treated as unsettled, which is credited under the test's instructions."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All six items serve María Josefa's parentage; the sibling item says what it corroborates."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Verified fallback_for: pli_004 and pli_006 both → pli_001. Indexed baptism first, then marriage, siblings and later records."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Vélez-Málaga, Santa María parish, Diocese of Málaga, civil registration 1871: all correct, and no wrong-repository item this time."
+    },
+    {
+      "test_id": "ut_research_plan_csn",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First plan for q_001; one active plan with 6 planned items."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. The plan names the premise problem: statewide death certificates start 1 Jan 1911 (loc_001). It cites collections 1804888 (personCount 421,870), 1417491 (2,900,412) and 1875188 (0), plus volume 007834412, exactly as the fixtures give them. All three external URLs (Ancestry 1222, KDLA, Find a Grave) are in the external-links-search-kentucky fixture, so nothing is made up."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. It's the first plan for q_001 and has 8 items covering county death registers, statewide certificates, the Ancestry mirror, the 1870 and 1880 censuses, probate, cemetery and KDLA probate. Each item has a rationale and the fallbacks are explicit."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. place, collections, volume and external-links each matched their Muhlenberg/Kentucky fixture by predicate, with no fixture_not_found. The write was one batched research_append, and no validator failed."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. It doesn't just accept the \"death certificates\" premise: it leads with the pre-1911 county registers as the closest equivalent and treats probate as the main pre-1911 death evidence. Keeping the 1911–1920 item is justified as a cheap elimination check, since he'd have been about 97 by then."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Every item is about Elijah's own death. The census items are only there to bracket the death window and name survivors for the probate browse. No relative is pursued for their own sake."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. It searches name-searchable sources before browse-only ones, and the census window narrows the probate browse that follows. The fallbacks pli_003→pli_001 and pli_008→pli_006 are recorded in fallback_for."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Muhlenberg County (1798–present, per place_search) covers the whole window. The plan switches from county records to state records at 1911."
+    },
+    {
+      "test_id": "ut_research_plan_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "\tAgree. research_query found 0 plans for q_001, so it created pl_001 as active with every item planned. There's exactly one active plan."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. The patronymic gives Asmund as father. The c. 1685–1700 birth estimate fits the 1712 marriage and the son's 1718 christening. The 1688 register start is cited from loc_002. Collections 1520594, 1520596 and 1520597 (name-searchable) and 1974200 (browse-only, personCount 0) match the fixture, and V5 passed. ArkivDigital and the Riksarkivet mantalslängder URLs both come from external_links_search."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. 9 items. They cover the marriage anchor with image check, baptism index with browse and ArkivDigital fallbacks, the parents' marriage, sibling baptisms, mantalslängder, and Elena's own burial (pli_008) as the pre-register route. The register-start constraint is stated and the plan is built around it."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with the 2, but not the reason. recordTypeGroups was fine. The miss is the place: volume_search was called on Malmöhus, Sweden, but the test fixtures cover only the parishes (Barsebäck, Västra Karaby). SKILL.md says start at the specific level and broaden only when that returns nothing usable. Västra Karaby, the marriage parish, was known, so going straight to the county skipped that step. The plan recovered by using loc_002's image groups. All other calls (wiki_read, place_search, collections_search, external_links_search) matched."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "rubric",
+      "dimension_name": "Record type selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Church marriage, baptism and burial answer parentage and birthplace directly, and mantalslängder gives household evidence. test_pre_register_birth_plans_death_route passed: pli_008 is her own burial as a separate item."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "rubric",
+      "dimension_name": "Objective scope containment",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Every item feeds Elena's birthplace or parentage. The parents' marriage and sibling baptisms are justified by what they reveal about her, not pursued for their own sake."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Västra Karaby and Barsebäck are in Harjagers härad, Malmöhus. A county-wide baptism search is reasonable because her birth parish is unknown, and the 1688 register start follows the 1686 church law."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "rubric",
+      "dimension_name": "Sequencing logic",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. Name-searchable indexes come before browse-only images, then external sources. The fallbacks pli_004→pli_003 and pli_009→pli_004 are in fallback_for, and the same-plan validator passed. The burial window (1718–1770) starts at her last known living date."
+    },
+    {
+      "test_id": "ut_research_plan_dth",
+      "dimension_source": "rubric",
+      "dimension_name": "Plan mode and lifecycle",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree. It's the first plan for q_001: pl_001 is active and all 9 items are planned. test_research_plan_new_plan_for_q_001 passed."
+    }
+  ]
+}

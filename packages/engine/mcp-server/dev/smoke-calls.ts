@@ -157,6 +157,24 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
+  //
+  // personReadRef first, while the project does not exist yet, asserting its
+  // refusal through the transport. A successful staged create cannot be
+  // smoked: the run has one project, every later row works on the one the
+  // next row creates, and a second create is refused as "already exist".
+  {
+    tool: "project_create",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      objective: "Does the staged-read path reach the store?",
+      personReadRef: STAGED_REF,
+    }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && /personReadRef/.test(JSON.stringify(res.body?.errors ?? "")),
+      detail: brief(res, 300),
+    }),
+  },
   {
     tool: "project_create",
     offline: true,
@@ -446,6 +464,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // reaches both with no flag (the tool ignores `relatives`).
   tokenStep("person_read", { personId: FS_PID }),
   tokenStep("person_ancestors", { personId: FS_PID }),
+  tokenStep("tree_gaps", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
   tokenStep("collections_search", { standardPlace: "England" }),
@@ -536,7 +555,22 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ standardPlace: "Pennsylvania, United States" }),
     expect: (res) => ({ ok: !res.isError && res.body?.error === undefined && !!res.body?.population, detail: brief(res) }),
   },
-  { tool: "external_links_search", args: () => ({ standardPlace: "England" }), expect: noError },
+  // With projectPath, so the hosted run writes external-collections.json through
+  // the bound store and reads it back. England (753 links) is under the 1,000-row cap.
+  {
+    tool: "external_links_search",
+    args: (ctx) => ({ standardPlace: "England, United Kingdom", projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok: !res.isError && (res.body?.stored?.places?.length ?? 0) > 0 && !res.body?.collectionsError,
+      detail: brief(res),
+    }),
+  },
+  {
+    tool: "research_query",
+    label: "research_query (external_collections)",
+    args: (ctx) => ({ projectPath: ctx.projectPath, section: "external_collections", place: "England, United Kingdom" }),
+    expect: (res) => ({ ok: !res.isError && res.body?.ok === true && res.body?.count > 0, detail: brief(res) }),
+  },
 ];
 
 // ─── Completeness guard ──────────────────────────────────────────────────────

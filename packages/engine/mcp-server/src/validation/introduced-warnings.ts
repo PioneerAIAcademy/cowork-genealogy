@@ -16,6 +16,7 @@
  */
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedRelationship } from "../types/gedcomx.js";
+import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type { PersonWarning } from "../types/person-warnings.js";
 import { Mob } from "../utils/mob.js";
 import { calculateWarnings } from "../tools/person-warnings.js";
@@ -25,6 +26,94 @@ export function warningId(w: PersonWarning): string {
   const factIds = (w.facts ?? []).map((f) => f.id).sort();
   return `${w.issueType}|${w.personId}|${w.relatedPersonId ?? ""}|${factIds.join(",")}`;
 }
+
+/**
+ * Rewrite a before-tree warning's person references collapsed→survivor so it
+ * can be matched against the after-tree warning it became.
+ *
+ * BOTH id fields, because `warningId` keys on both. Remapping only `personId`
+ * leaves a pre-existing warning that merely NAMES a collapsed person — every
+ * `relatives*` tag, and anything carrying a `relatedPersonId` — with a before
+ * key the after side can never equal, so the subtraction misses it and the
+ * merge is refused for a warning it did not introduce.
+ */
+function remapWarning(
+  w: PersonWarning,
+  collapseMap?: Map<string, string>,
+): PersonWarning {
+  if (!collapseMap) return w;
+  const personId = collapseMap.get(w.personId) ?? w.personId;
+  const relatedPersonId =
+    w.relatedPersonId === undefined
+      ? undefined
+      : (collapseMap.get(w.relatedPersonId) ?? w.relatedPersonId);
+  if (personId === w.personId && relatedPersonId === w.relatedPersonId) return w;
+  return { ...w, personId, relatedPersonId };
+}
+
+// Warning types exempt from the gate.
+//
+// THE LINE IS THE CLASS, NOT THE FREQUENCY. A tag is exempt when it reports a
+// DATA-QUALITY artefact -- an import that duplicated a person, a stub with one
+// fact, two spellings of one name -- and gating when it reports a genealogical
+// IMPOSSIBILITY the writer would be asserting. Picking by frequency instead
+// put a real impossibility (`hasCloseChildBirthsIgnoreSimilarChildren`: two
+// DISSIMILAR children born 2-240 days apart) on the exempt side while the
+// duplicate-person class it is paired with kept refusing.
+//
+// A relative/gendered form is exempt iff its self form is. They are the same
+// predicate at the same severity evaluated from a different anchor, so
+// splitting them means one write refuses and an identical one does not.
+// Enforced by `person-warnings-spec-drift.test.ts`, which derives the pairs
+// from ALL_WARNING_TAGS rather than listing them: stated as prose the rule
+// was silently broken by four pairs.
+//
+// Measured over the committed e2e final trees with
+// dev/measure-parentage-gate-rate.ts; re-derive before changing this, and do
+// not hand-copy the counts.
+export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
+  // Import and stub artefacts -- predate the gate seeing parentage edges.
+  "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
+  "tooManyBirthDates2",           // duplicate birth facts in imported records
+  "relativesTooManyBirthDates2",
+  "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
+  "relativesHasEventBeforeBirth365_2",
+  "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
+  "hasBlankName",                 // a name node with empty given/surname — named-party materializations
+
+  // One person recorded twice: the duplicate-person class, which is what an
+  // import produces rather than a claim the writer is making.
+  "similarChildren",
+  "similarChildrenConflictingDates",
+
+  // Date-precision artefacts: an imprecise or duplicated date, not a claim.
+  "relativesHasEventBeforeChristening365_3",
+  "hasEventBeforeChristening365_3",
+  "relativesDeathRangeGreaterThan2",
+  "deathRangeGreaterThan2",       // a death recorded as a multi-year range
+  "maleRelativesHasDiffSurname",               // self form `hasDiffSurnameMale` exempt above
+
+  // Child-bearing age and marriage-interval priors. Each appears in a self, a
+  // gendered and a relative form; all forms travel together.
+  //
+  // `earliestChildBirthToBirth12` and `relativesEarliestChildBirthToBirth12`
+  // are the deliberate hole in that pairing, and are NOT exempt. At cutoff 12
+  // the tag stops being an age prior: it is the only check that fires when a
+  // child is born BEFORE their parent, an impossibility rather than an
+  // implausibility, and exempting it let every gated writer accept one. The
+  // gendered forms at cutoff 14 stay exempt -- 13 and 14 are young, not
+  // impossible. What makes un-exempting 12 safe is that the predicate now
+  // reads the child's LATEST date bound, so an imprecise date no longer
+  // fires it; before that change this entry was buying real false refusals.
+  "femaleRelativesLatestChildBirthToBirth45",
+  "latestChildBirthToBirthFemale45",
+  "femaleRelativesEarliestChildBirthToBirth14",
+  "earliestChildBirthToBirthFemale14",
+  "maleRelativesEarliestChildBirthToBirth14",
+  "earliestChildBirthToBirthMale14",
+  "relativesLatestChildBirthToMarriage35",
+  "latestChildBirthToMarriage35",
+]);
 
 /** Compute warnings for a single person on a tree, returning [] if the
  *  person does not exist (e.g. collapsed after a merge) or if the warning
@@ -42,6 +131,35 @@ function warningsForPerson(
   } catch {
     return [];
   }
+}
+
+/**
+ * Every person one relationship hop out from `seed` in the AFTER tree,
+ * excluding the seed itself.
+ *
+ * Deliberately NOT transitive: one hop is what `calculateWarnings` reaches
+ * when it anchors a `relatives*` warning, so one hop is what the before side
+ * has to be able to see. A full walk would compute warnings for the whole
+ * connected component on every write.
+ *
+ * The before tree was scanned here too, on the reasoning that an edge REMOVAL
+ * strands the neighbour on the other side. That was asserted, not measured,
+ * and it is wrong: a removed edge's own endpoints are already in `seed`
+ * (`computeTouchedPersonIds` adds both), and every other neighbour of theirs
+ * survives in the after tree, so the before pass added nobody. Dropping it
+ * leaves the gate suite at 466/466 and the corpus rate unchanged at 67.
+ */
+function oneHopNeighbours(
+  afterTree: SimplifiedGedcomX,
+  seed: ReadonlySet<string>,
+): string[] {
+  const out = new Set<string>();
+  for (const r of afterTree.relationships ?? []) {
+    const ends = relationshipEndpoints(r);
+    if (!ends.some((e) => seed.has(e))) continue;
+    for (const e of ends) if (!seed.has(e)) out.add(e);
+  }
+  return [...out];
 }
 
 export interface WarningJustificationInput {
@@ -69,11 +187,41 @@ export function introducedWarnings(
   touchedPersonIds: string[],
   warningJustifications?: WarningJustificationInput[],
   collapseMap?: Map<string, string>,
+  /** Measurement-only. `false` bypasses `GATE_EXEMPT_TYPES`, so the committed
+   *  rate script can re-derive what the exempt list is actually buying rather
+   *  than quoting a number nobody can reproduce. No shipped caller passes it. */
+  applyExemptions = true,
+  /** Measurement-only. `false` skips the one-hop widening below, so the rate
+   *  script can re-derive the false refusals the widening removes. No shipped
+   *  caller passes it. */
+  widenOneHop = true,
 ): IntroducedWarningsResult {
   // Dedupe touched ids and, for merges, remap collapsed→survivor
   const uniqueIds = new Set<string>();
   for (const id of touchedPersonIds) {
     uniqueIds.add(collapseMap?.get(id) ?? id);
+  }
+  // Then widen by one relationship hop. `calculateWarnings` reports warnings
+  // anchored on an anchor's relatives, not just the anchor, so the after side
+  // sees a neighbour's warning while the before side cannot reach that
+  // neighbour at all when the path is the edge being added. The warning is
+  // then pre-existing but invisible to the subtraction, and the write is
+  // refused for it. Same defect as the collapsed-id remap above, reached by a
+  // different route.
+  //
+  // Measured over the committed e2e final trees with
+  // `dev/measure-parentage-gate-rate.ts --no-widen-hop`: on PARENTAGE EDGES it
+  // removes 16 of 83 refusals that no write introduced, leaving 67, and the
+  // widened run finds the same distinct warnings -- it loses no true refusal
+  // there. It is NOT subtract-only in general: review measured fact writes
+  // separately (sampling every fourth committed fact as an added fact) at 37
+  // refusals without the hop and 47 with, the 10 extra all parent-anchored and
+  // all true catches. Both directions are the same mechanism -- the before side
+  // can now reach what the after side reports.
+  if (widenOneHop) {
+    for (const id of oneHopNeighbours(afterTree, uniqueIds)) {
+      uniqueIds.add(id);
+    }
   }
 
   // Collect before and after warnings for every touched person
@@ -92,10 +240,7 @@ export function introducedWarnings(
 
     for (const bid of beforeIds) {
       for (const w of warningsForPerson(beforeTree, bid)) {
-        // Remap warning personId collapsed→survivor for matching
-        const remapped: PersonWarning = collapseMap?.has(w.personId)
-          ? { ...w, personId: collapseMap.get(w.personId)! }
-          : w;
+        const remapped = remapWarning(w, collapseMap);
         beforeWarnings.set(warningId(remapped), remapped);
       }
     }
@@ -105,24 +250,10 @@ export function introducedWarnings(
     }
   }
 
-  // Warning types exempt from the gate. The satisfiability replay (ADR-0011
-  // limit 2) showed these fire routinely on minimal trees and FamilySearch
-  // imports, producing false-deny rates too high for the gate's intended
-  // catches (implausible lifespan, event after death, burial after death).
-  // Each is a data-quality indicator — not a genealogical contradiction the
-  // writer introduced through a judgment error.
-  const GATE_EXEMPT_TYPES = new Set([
-    "missingFactsAndRelatives",     // stub detection — every one-fact person trips it on remove
-    "tooManyBirthDates2",           // duplicate birth facts in imported records
-    "hasEventBeforeBirth365_2",     // fires when adding a second birth-like fact
-    "hasDiffSurnameMale",           // two names with different surnames — common in merges and imports
-    "hasBlankName",                 // a name node with empty given/surname — named-party materializations
-  ]);
-
   // Delta: warnings in after that were not in before
   const introduced: Array<PersonWarning & { warningId: string }> = [];
   for (const [wid, w] of afterWarnings) {
-    if (!beforeWarnings.has(wid) && !GATE_EXEMPT_TYPES.has(w.issueType)) {
+    if (!beforeWarnings.has(wid) && !(applyExemptions && GATE_EXEMPT_TYPES.has(w.issueType))) {
       introduced.push({ ...w, warningId: wid });
     }
   }
@@ -191,21 +322,25 @@ export function computeTouchedPersonIds(
   for (const r of after.relationships ?? []) {
     if (r.id) afterRels.set(r.id, r);
   }
+  // `relationshipEndpoints`, never a hand-written field read. These three
+  // sites read only `person1`/`person2` -- the Couple pair -- so a ParentChild
+  // edge, which carries `parent`/`child` and no `person1`, marked NOBODY as
+  // touched and the gate could not fire on any parentage write.
   for (const [id, r] of afterRels) {
     const br = beforeRels.get(id);
     if (!br || JSON.stringify(br) !== JSON.stringify(r)) {
-      if (r.person1) touched.add(r.person1);
-      if (r.person2) touched.add(r.person2);
+      for (const e of relationshipEndpoints(r)) touched.add(e);
+      // The BEFORE side of a changed relationship is the repoint case: when a
+      // parent moves A -> B, A must enter `touched` or the before-side
+      // warnings are never computed and the delta is wrong in A's favour.
       if (br) {
-        if (br.person1) touched.add(br.person1);
-        if (br.person2) touched.add(br.person2);
+        for (const e of relationshipEndpoints(br)) touched.add(e);
       }
     }
   }
   for (const [id, r] of beforeRels) {
     if (!afterRels.has(id)) {
-      if (r.person1) touched.add(r.person1);
-      if (r.person2) touched.add(r.person2);
+      for (const e of relationshipEndpoints(r)) touched.add(e);
     }
   }
 

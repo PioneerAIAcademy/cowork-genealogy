@@ -33,10 +33,18 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { HEALTHZ_TIMEOUT_MS, startHttpServer, type ReadyReport } from "../../src/http-server.js";
+import {
+  CLAIM_EPOCH_HEADER,
+  claimFenceFromHeaders,
+  HEALTHZ_TIMEOUT_MS,
+  PROJECT_ID_HEADER,
+  startHttpServer,
+  TURN_ID_HEADER,
+  type ReadyReport,
+} from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
-import type { ProjectStore } from "../../src/store/project-store.js";
+import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
@@ -48,7 +56,8 @@ let base: string;
 let root: string;
 // Every id the server bound a store for, in order — the store half's oracle.
 const bindStore = vi.fn(
-  (projectId: string, _signal: AbortSignal): ProjectStore => new ScopedFsStore(root, projectId),
+  (projectId: string, _signal: AbortSignal, _fence?: ClaimFence): ProjectStore =>
+    new ScopedFsStore(root, projectId),
 );
 const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
@@ -224,6 +233,114 @@ describe("tool server over Streamable HTTP", () => {
       id: null,
     });
     expect(bindStore).not.toHaveBeenCalled();
+  });
+
+  describe("2d. the claim fence (U6): X-Genealogy-Turn-Id + X-Genealogy-Claim-Epoch, both or neither", () => {
+    const TURN = "X-Genealogy-Turn-Id";
+    const EPOCH = "X-Genealogy-Claim-Epoch";
+    const INVALID_CLAIM_FENCE = {
+      jsonrpc: "2.0",
+      error: {
+        code: -32600,
+        message:
+          "Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, " +
+          "once each, with X-Genealogy-Project-Id.",
+      },
+      id: null,
+    };
+
+    /** One tools/call over raw fetch, so a header can be sent malformed or twice. */
+    const post = (headers: Array<[string, string]>) =>
+      fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: [
+          ["Content-Type", "application/json"],
+          ["Accept", "application/json, text/event-stream"],
+          ...headers,
+        ],
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } },
+        }),
+      });
+
+    it("both headers valid: bindStore's third argument is the fence; neither: undefined", async () => {
+      const turnId = randomUUID();
+      bindStore.mockClear();
+      const fenced = await post([
+        [PROJECT_HEADER, `fence-${randomUUID()}`],
+        [TURN, turnId],
+        [EPOCH, "7"],
+      ]);
+      expect(fenced.status).toBe(200);
+      await fenced.text();
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      expect(bindStore.mock.calls[0][2]).toEqual({ turnId, claimEpoch: "7" });
+
+      bindStore.mockClear();
+      const unfenced = await post([[PROJECT_HEADER, `fence-${randomUUID()}`]]);
+      expect(unfenced.status).toBe(200);
+      await unfenced.text();
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      expect(bindStore.mock.calls[0][2]).toBeUndefined();
+    });
+
+    it.each<[string, Array<[string, string]>]>([
+      ["only the turn header", [[TURN, "t1"]]],
+      ["only the epoch header", [[EPOCH, "1"]]],
+      ["epoch 0", [[TURN, "t1"], [EPOCH, "0"]]],
+      ["epoch -1", [[TURN, "t1"], [EPOCH, "-1"]]],
+      ["epoch abc", [[TURN, "t1"], [EPOCH, "abc"]]],
+      ["epoch 07", [[TURN, "t1"], [EPOCH, "07"]]],
+      ["epoch 1.5", [[TURN, "t1"], [EPOCH, "1.5"]]],
+      ["an empty epoch", [[TURN, "t1"], [EPOCH, ""]]],
+      ["a 19-digit epoch", [[TURN, "t1"], [EPOCH, "1000000000000000000"]]],
+      ["a duplicated epoch", [[TURN, "t1"], [EPOCH, "1"], [EPOCH, "2"]]],
+      ["a joined epoch '1, 2'", [[TURN, "t1"], [EPOCH, "1, 2"]]],
+      ["a turn id with '/'", [[TURN, "t/1"], [EPOCH, "1"]]],
+    ])("%s is a 400 before any tool runs", async (_name, fence) => {
+      bindStore.mockClear();
+      const res = await post([[PROJECT_HEADER, `fence-${randomUUID()}`], ...fence]);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual(INVALID_CLAIM_FENCE);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it("a fence with no project header is a 400, not an unbound store", async () => {
+      bindStore.mockClear();
+      const res = await post([
+        [TURN, "t1"],
+        [EPOCH, "1"],
+      ]);
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual(INVALID_CLAIM_FENCE);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it.each<[string, Array<[string, string]>, { turnId: string; claimEpoch: string }]>([
+      ["mixed-case header names", [["x-GENEALOGY-turn-ID", "t1"], ["X-genealogy-CLAIM-epoch", "3"]], { turnId: "t1", claimEpoch: "3" }],
+      ["whitespace-padded values", [[TURN, " t1 "], [EPOCH, " 2 "]], { turnId: "t1", claimEpoch: "2" }],
+      ["an 18-digit epoch", [[TURN, "t1"], [EPOCH, "999999999999999999"]], { turnId: "t1", claimEpoch: "999999999999999999" }],
+    ])("accepts %s", async (_name, fence, expected) => {
+      bindStore.mockClear();
+      const res = await post([[PROJECT_HEADER, `fence-${randomUUID()}`], ...fence]);
+      expect(res.status).toBe(200);
+      await res.text();
+      expect(bindStore.mock.calls[0][2]).toEqual(expected);
+    });
+
+    it("claimFenceFromHeaders refuses an array value (a header node:http does not join)", () => {
+      expect(
+        claimFenceFromHeaders({
+          [PROJECT_ID_HEADER]: "p",
+          [TURN_ID_HEADER]: ["t1", "t2"] as unknown as string,
+          [CLAIM_EPOCH_HEADER]: "1",
+        }),
+      ).toEqual({ kind: "malformed" });
+      expect(claimFenceFromHeaders({ [PROJECT_ID_HEADER]: "p" })).toEqual({ kind: "absent" });
+    });
   });
 
   it("3. a FamilySearch tool with no Authorization header gets the hosted reauth text, never the desktop one", async () => {

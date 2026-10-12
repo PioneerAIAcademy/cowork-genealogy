@@ -21,7 +21,9 @@
   "mcp_fixtures": [
     "record-search-gallo-hungary-no-results",
     "record-search-gallo-slovakia-hit",
-    "record-read-gallo-1893-baptism"
+    "record-read-gallo-1893-baptism",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "execution": {
     "max_turns": 35,

@@ -204,6 +204,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "API spend.",
     )
     parser.add_argument(
+        "--tool-search",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Deferred tool loading (ENABLE_TOOL_SEARCH). ON by default, as "
+        "the committed corpus runs. --no-tool-search loads every tool schema "
+        "up front — experiment-only: the invocation is non-releasable (writes "
+        "scratch_<ts>.json) and the run log records `tool_search: false`.",
+    )
+    parser.add_argument(
         "--allow-missing-judge",
         action="store_true",
         help="Run even without ANTHROPIC_API_KEY. Positive tests will all "
@@ -829,6 +838,7 @@ def main(argv: list[str] | None = None) -> int:
         mode=mode,
         has_tag_filter=has_tag_filter,
         runs_per_test=resolved_runs_per_test,
+        tool_search=args.tool_search,
     )
     invocation_timestamp = now_utc_filename_timestamp()
     print(
@@ -836,6 +846,8 @@ def main(argv: list[str] | None = None) -> int:
         f"runs_per_test={resolved_runs_per_test}, "
         f"timestamp={invocation_timestamp}"
     )
+    if not args.tool_search:
+        print("tool search: OFF (scratch log)")
     print(f"Running {len(specs)} test(s)...")
     print()
 
@@ -921,6 +933,13 @@ def main(argv: list[str] | None = None) -> int:
     # actually executed against.
     judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
     judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
+    # Judge model stamped at the envelope so judge-model bumps are dated and
+    # comparable rather than silently invalidating historical scores (issue
+    # #2479 PR 1). One value per run log — `judge.grade()` has no per-call
+    # override today, and `DEFAULT_JUDGE_MODEL` is already a dated id, not
+    # an alias.
+    from harness.judge import DEFAULT_JUDGE_MODEL as _DEFAULT_JUDGE_MODEL
+    judge_model = _DEFAULT_JUDGE_MODEL
     snapshot_cache: dict[str, dict] = {}
     partial_paths: dict[str, Path] = {}
 
@@ -961,8 +980,10 @@ def main(argv: list[str] | None = None) -> int:
                     harness_version=HARNESS_VERSION,
                     model=DEFAULT_MODEL,
                     judge_prompt_hash=judge_hash,
+                    judge_model=judge_model,
                     snapshot=_snapshot_for(skill),
                     tests=entries,
+                    tool_search=args.tool_search,
                 )
                 partial_paths[skill] = write_partial_runlog(
                     log,
@@ -1041,6 +1062,7 @@ def main(argv: list[str] | None = None) -> int:
                     auth=auth,
                     paths=paths,
                     timestamp=invocation_timestamp,
+                    tool_search=args.tool_search,
                 )
                 inflight[fut] = (idx, spec)
 
@@ -1302,6 +1324,7 @@ def main(argv: list[str] | None = None) -> int:
             if pp.exists():
                 sp = promote_partial_to_scratch(pp, timestamp=invocation_timestamp)
                 print(f"  → wrote {_format_path(sp)} (partial)")
+                _write_readable_report(sp)
                 promoted = True
         if not promoted:
             print("  (no tests finished — nothing to save)")
@@ -1340,9 +1363,11 @@ def main(argv: list[str] | None = None) -> int:
             harness_version=HARNESS_VERSION,
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
+            judge_model=judge_model,
             snapshot=_snapshot_for(skill),
             tests=entries,
             review_sample=sample,
+            tool_search=args.tool_search,
         )
         path = write_run_log(
             log,
@@ -1355,6 +1380,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         written_paths.append(path)
         print(f"  → wrote {_format_path(path)} ({len(entries)} test(s))")
+        _write_readable_report(path)
 
     # The final run logs supersede the in-progress partials; remove them.
     for pp in partial_paths.values():
@@ -1372,6 +1398,26 @@ def main(argv: list[str] | None = None) -> int:
     if saw_exec_abort:
         return 3
     return 0
+
+
+def _write_readable_report(log_path: Path) -> None:
+    """Write `log_path`'s readable `.txt` beside it and drop orphaned reports.
+
+    `make unit-report` does the same on demand; doing it here means every run
+    leaves one. A report that fails to render must never fail a run whose log
+    is already safely written, so this only prints.
+    """
+    try:
+        from unit_run_report import prune_orphan_reports, write_reports
+
+        written, _skipped, unreadable = write_reports([log_path], force=True)
+        for report in written:
+            print(f"  → wrote {_format_path(report)} (readable report)")
+        if unreadable:
+            print(f"  (no readable report: {_format_path(log_path)} could not be read)")
+        prune_orphan_reports(log_path.parent)
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
 
 
 if __name__ == "__main__":

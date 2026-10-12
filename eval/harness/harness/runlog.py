@@ -154,6 +154,15 @@ class SingleRun:
     # advisory deliberately does not. Present so a future run log can settle
     # whether a reaction call ever executes at all (issue #2740).
     suppressed_post_deny_calls: list[dict] = field(default_factory=list)
+    # Busiest moment / compactions / model, read from the SDK's own transcripts
+    # by `_execute_skill_with_retry` before the session store is deleted.
+    # `subagents` is one compact `e2e.subagent_capture` summary per helper (the
+    # agent under test, on a direct-arm test); `main_thread` is the parent
+    # session (where a routed test's skill runs). None when no capture ran — an
+    # abort before execution — which the serializer leaves out entirely.
+    subagents: list[dict[str, Any]] | None = None
+    subagent_capture_status: str | None = None
+    main_thread: dict[str, Any] | None = None
 
 
 # ---- Timing helpers ------------------------------------------------------
@@ -278,8 +287,9 @@ def derive_activated(
     text_response: str,
     other_skill_names: set[str] | None = None,
     agents_spawned: list[str] | None = None,
+    handed_off: bool = False,
 ) -> bool:
-    """Per unit-test-spec.md §6 three-rule definition.
+    """Per unit-test-spec.md §6's rules.
 
     Attribution of file changes / files created / substantive responses
     to the skill under test requires that the skill actually ran — it
@@ -305,11 +315,19 @@ def derive_activated(
     (`validators/test_universal.py`) opens `if activated is not True:
     pytest.skip(...)`, so a direct run stuck at False would silently lose that
     gate rather than fail it.
+
+    **`stop_at_stub` (#3119).** Such a run ends at the skill's first stubbed
+    hand-off, before it can write or summarize, so its narration can be a short
+    line naming the next row, which reads as routing away. The caller passes
+    `handed_off=True` only for a run that stop ended, and then the recorded
+    hand-off is the skill's work.
     """
     attributed = skill in skills_invoked
     if agents_spawned is not None:
         attributed = skill in agents_spawned
     if attributed:
+        if handed_off:
+            return True
         if file_changes:
             for f_diff in file_changes.values():
                 if f_diff and f_diff.get("sections_modified"):
@@ -489,6 +507,18 @@ def assemble_test_entry(
                 if r.suppressed_post_deny_calls
                 else {}
             ),
+            # Written only when the capture ran, like `started_at`: an absent
+            # key means "not captured" (an older log, or an abort before
+            # execution), never a zero.
+            **(
+                {
+                    "subagents": r.subagents,
+                    "subagent_capture_status": r.subagent_capture_status,
+                }
+                if r.subagent_capture_status is not None
+                else {}
+            ),
+            **({"main_thread": r.main_thread} if r.main_thread is not None else {}),
             "skill_cost_usd": r.skill_cost_usd,
             "output": r.output,
             "validators": {
@@ -576,9 +606,11 @@ def build_run_log(
     harness_version: str,
     model: str,
     judge_prompt_hash: str,
+    judge_model: str | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
     review_sample: dict[str, Any] | None = None,
+    tool_search: bool | None = None,
 ) -> dict[str, Any]:
     """Wrap per-test entries in the run-log envelope.
 
@@ -590,6 +622,11 @@ def build_run_log(
     envelope is `additionalProperties: false`, and its absence is what makes
     every pre-sampling run log, and every partial write, fall back to the
     every-dimension rule in `check_runlogs.rule3_completeness`.
+
+    `tool_search` records `--tool-search` / `--no-tool-search`. `run_tests.py`
+    passes it on every write, the default `True` included, so a new log says
+    which way it ran; None omits it, and absence (every log written before the
+    field) means on — no unit run could turn it off until the flag existed.
     """
     totals = {k: 0 for k in _TOTALS_KEYS}
     for entry in tests:
@@ -618,8 +655,15 @@ def build_run_log(
         "tests": tests,
         "totals": totals,
     }
+    # judge_model is optional (issue #2479 PR 1) — absent on logs that pre-date
+    # the field. Omit the key entirely when unknown so historical logs stay
+    # byte-identical rather than gaining a stray `"judge_model": null`.
+    if judge_model:
+        envelope["judge_model"] = judge_model
     if review_sample is not None:
         envelope["review_sample"] = review_sample
+    if tool_search is not None:
+        envelope["tool_search"] = tool_search
     return envelope
 
 

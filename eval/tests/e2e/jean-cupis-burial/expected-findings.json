@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Jean-Baptiste Cupis was buried on 1 May 1788 at Montreuil (now Montreuil, Seine-Saint-Denis), France, the day after his death on 30 April 1788; the parish entry indexes him as Jean Baptiste de Cupis, born about 1710.",
+      "details": {
+        "subject_person": "Jean-Baptiste Cupis (K642-XP9)",
+        "fact_type": "Burial",
+        "date": "1 May 1788",
+        "place": "Montreuil, Seine-Saint-Denis, Île-de-France, France"
+      },
+      "supporting_sources": [
+        "France, Seine-Saint-Denis, Parish and Civil Registration, 1523-1932 — burial entry for Jean Baptiste de Cupis, 1 May 1788"
+      ],
+      "required": true
+    }
+  ]
+}

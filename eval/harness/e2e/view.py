@@ -9,7 +9,7 @@ live-watches.
 Open that folder once in the viewer (its "Open Project" button, or start the
 viewer with `make electron`); every later `make e2e-view` overwrites the two
 files in place, so an already-open viewer refreshes live across the
-run -> interpret -> grade -> improve -> re-run loop.
+run -> grade -> interpret -> improve -> re-run loop.
 
 Picks the newest run by mtime across both prefixes, so it works on a gitignored
 `scratch_*` skipped run as well as a committed `run-*` (pass/partial/fail) one.

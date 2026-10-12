@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "user_message": "Run separate full-text searches for Thomas Flynn AND for Patrick Flynn appearing as witnesses in Schuylkill County records — both names must be queried.",
+    "delegation": "Run separate full-text searches for Thomas Flynn AND for Patrick Flynn appearing as witnesses in Schuylkill County records — both names must be queried.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -30,6 +30,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should construct a full-text query targeting Flynn family names in witness/associate contexts — typically requires phrase quoting or proximity operators since 'Flynn' as a witness appears in others' records rather than the family's own",
     "The canonical-spelling queries ('Thomas Flynn', 'Patrick Flynn') are sufficient when they return results. Per rubric Query construction: this dimension grades queries the skill ACTUALLY EXECUTED, not a wishlist — variants like 'Flynne'/'Phlynn'/'Thos' are valuable but NOT required when the canonical query already recovers the record. Judges MUST NOT score partial on the grounds that variants could have been tried proactively.",
     "Should report the fixture's results as FAN evidence rather than as direct subject evidence — the value is in establishing community networks, not in confirming Patrick's birth or parentage directly"

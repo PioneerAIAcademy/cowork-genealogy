@@ -1,0 +1,19 @@
+{
+  "id": "elsa-heikkinen-birth",
+  "name": "Elsa Brita Heikkinen — birth in May 1832, Iisalmi, Kuopio, Finland",
+  "genre": "record-hint",
+  "source_pid": "M76V-5PF",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Elsa Brita Heikkinen, christened 16 June 1832 in Iisalmi, Kuopio, Finland, daughter of Anders Johan Heikkinen and Lisa Pardanen, born?",
+  "tags": {
+    "question_type": "birth_date",
+    "era": "1830s",
+    "geography": "FI"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 10, hint-samples.csv row 359, flag adds_birth, confidence 3). Draft transcribed from an 1851-1860 Iisalmi church census (communion book) entry; unverified."
+}

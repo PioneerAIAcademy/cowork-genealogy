@@ -8,7 +8,7 @@
     "tags": ["fulltext", "boosting", "too-many-results", "probable-words", "snippet-scanning"]
   },
   "input": {
-    "user_message": "Search the full-text index for Thomas Flynn in Schuylkill County. He was a coal miner and land owner in Branch Township in the 1870s–1880s.",
+    "delegation": "Search the full-text index for Thomas Flynn in Schuylkill County. He was a coal miner and land owner in Branch Township in the 1870s–1880s.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -21,6 +21,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "The first fulltext_search call returns 847 total results — well above the >500 threshold for the too-many-results ladder (search-strategies.md). The skill must narrow before reporting results, either via probable-word boosting or collection scoping from includeFacets.",
     "PROBABLE-WORD BOOSTING (primary criterion): A skill that adds non-required probable words — bare terms like the occupation ('miner', 'coal'), a location word ('Branch'), a spouse name, or a record-type phrase ('deed', 'will') — to boost likely matches without excluding anything, scores PASS on Query construction. These are bare un-prefixed terms in the keywords or a follow-up call; they raise matching records in ranking without excluding non-matches.",
     "COLLECTION SCOPING (also acceptable): A skill that uses includeFacets on the first call and scopes a follow-up to a facet-derived collectionId also scores PASS on Query construction. Both paths address the too-many-results problem.",

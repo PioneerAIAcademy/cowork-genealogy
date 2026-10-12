@@ -86,10 +86,17 @@ def default_project_id(fixture: Path) -> str:
     return f"proj_{stem}_{uuid.uuid4().hex[:6]}"
 
 
+def node_dsn(pg_dsn: str) -> str:
+    """What node-postgres connects with: ``$PROTO_NODE_PG_DSN`` when set (U13: a URI through
+    the bastion's forward, since node-postgres cannot read psycopg's ``hostaddr=`` form),
+    else the driver's own DSN."""
+    return os.environ.get("PROTO_NODE_PG_DSN") or pg_dsn
+
+
 def seed(files: list[tuple[str, Path]], *, project_id: str, pg_dsn: str, s3_endpoint: str) -> int:
     manifest = {"projectId": project_id, "anchorPath": ANCHOR,
                 "files": [{"ref": ref, "path": str(path)} for ref, path in files]}
-    env = {**os.environ, "PROTO_PG_DSN": pg_dsn, "PROTO_S3_ENDPOINT": s3_endpoint}
+    env = {**os.environ, "PROTO_PG_DSN": node_dsn(pg_dsn), "PROTO_S3_ENDPOINT": s3_endpoint}
     proc = subprocess.run(
         ["npx", "tsx", "dev/seed-project.ts"], cwd=ENGINE_DIR, input=json.dumps(manifest),
         text=True, encoding="utf-8", env=env, capture_output=True,

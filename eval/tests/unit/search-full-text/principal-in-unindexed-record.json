@@ -8,7 +8,7 @@
     "tags": ["fulltext", "principal-search", "unindexed-records"]
   },
   "input": {
-    "user_message": "Thomas Flynn may have deeded property in Schuylkill County, Pennsylvania around 1877–1882. The deed books from that period were digitized as scanned images on FamilySearch, but the names were never transcribed into the indexed genealogy database. Search for any deed or land record naming Thomas Flynn as a grantor, grantee, or party to a transaction.",
+    "delegation": "Thomas Flynn may have deeded property in Schuylkill County, Pennsylvania around 1877–1882. The deed books from that period were digitized as scanned images on FamilySearch, but the names were never transcribed into the indexed genealogy database. Search for any deed or land record naming Thomas Flynn as a grantor, grantee, or party to a transaction.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -22,6 +22,7 @@
     "max_wall_clock_seconds": 600
   },
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "The user explicitly says these deed books are digitized image scans with names not in the indexed record database — the only way to find Thomas Flynn here is via full-text search of the AI-transcribed images. The skill MUST call fulltext_search. Routing to record_search or telling the user to search the indexed genealogy database is a fail.",
     "The returned record shows Thomas Flynn as the GRANTOR (principal party) in a land deed — not as a witness. The skill should recognize this as a principal-role mention, log the result, and present it for image verification.",
     "QUERY-CONSTRUCTION GRADING NOTE: keywords-first is preferred per SKILL.md Step 3, but a name-field query that finds the record is also acceptable. The decisive criterion is that fulltext_search was used at all. A skill that routes to record_search or suggests the user use the indexed name search scores FAIL.",

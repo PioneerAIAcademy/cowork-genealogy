@@ -300,6 +300,11 @@ KEPT (sep./s., a.d., gest., get., ev.); SS. T3 regraded PW; d.d. M→PW.
 **For #2259:** The vocabulary section is deleted outright. The Latin and German
 abbreviation sections are each reduced to their residue rather than deleted wholesale.
 
+Applied in #2259: the 41 carried rows were deleted and the 8-row residue (Latin
+{d.d., SS., sep./s., a.d.}, German {Ehem., gest., get., ev.}) stayed inline rather
+than being routed to the wiki — fetching the word lists is out of all proportion to
+the residue (lead ruling 2026-10-06; ADR-0012, "What stays in the plugin").
+
 ---
 
 ## Secondary tallies

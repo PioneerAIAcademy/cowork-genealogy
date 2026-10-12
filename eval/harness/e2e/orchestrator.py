@@ -77,6 +77,7 @@ from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
     GENEALOGY_SERVER_NAME,
+    TOOL_SEARCH_NAME,
     backstop_fired,
     classify_server_status,
     find_server_entry,
@@ -86,19 +87,32 @@ from e2e.mcp_health import (
     tool_search_miss_streak,
     unavailable_message,
 )
-from e2e.result import E2eResult, timestamp_slug, write_result_files
+from e2e.result import (
+    E2eResult,
+    result_message_covers_last_query_only,
+    timestamp_slug,
+    write_result_files,
+)
 from e2e.stop_checker import (
     COUNTED_TERMINAL_REASONS,
     classify_hand_back,
     derive_stop_reason,
-    hand_back_outcome,
+    hand_back_key,
     project_completed,
     read_research_json,
     read_tree_json,
     should_continue_run,
     terminal_reason,
 )
-from e2e.subagent_capture import collect_subagents, sdk_cache_dir
+from e2e.subagent_capture import (
+    collect_subagents,
+    find_session_transcript,
+    find_subagent_transcripts,
+    pair_tool_calls,
+    parse_jsonl,
+    sdk_cache_dir,
+    transcript_agent_id,
+)
 from e2e import judge as judge_module
 
 
@@ -316,7 +330,7 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
 # prefix. This is the route that actually mattered: measured live 2026-08-15,
@@ -330,6 +344,18 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.
 # Mirrored in all three lockdown copies even though only the plugin one ever
 # sees the bridge; the parity test holds them to one vector set.
 DEVICE_WRITE_TOOLS = ("device_commit_files",)
+
+# The credential-read arm's directory marker and the tools it inspects.
+# A path that has `.familysearch-mcp` as a SEGMENT (not a substring) is a
+# credential read. No `os`/`posixpath`/`re` inside the predicate: the parity
+# test's `_load` lifts only literal assignments and `_`-prefixed functions
+# with no imports.
+_CREDENTIAL_DIR = ".familysearch-mcp"
+_CREDENTIAL_READ_TOOLS = {
+    "Read": ("file_path",),
+    "Grep": ("path", "glob"),
+    "Glob": ("path", "pattern"),
+}
 
 # A path has no newline and is no longer than the platform allows. Both bounds
 # keep the payload walk below off file CONTENT travelling alongside the paths,
@@ -404,6 +430,30 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
     return name if name in PROTECTED_PROJECT_FILES else None
+
+
+def credential_read_denied(tool_name: str, tool_input) -> str | None:
+    """The tool name if a read targets the credentials directory, else None.
+
+    Inspects Read.file_path, Grep.path, Grep.glob, Glob.path, Glob.pattern.
+    Denies when any path argument, with backslashes folded to forward slashes
+    and lowercased, has a path segment equal to `.familysearch-mcp`.
+
+    Never raises: a non-string or missing argument means allow.
+    No os/posixpath/re — the parity test's _load runs no imports.
+    """
+    keys = _CREDENTIAL_READ_TOOLS.get(tool_name)
+    if keys is None:
+        return None
+    input_dict = tool_input if isinstance(tool_input, dict) else {}
+    for key in keys:
+        value = input_dict.get(key)
+        if not isinstance(value, str):
+            continue
+        segments = value.replace("\\", "/").lower().split("/")
+        if _CREDENTIAL_DIR in segments:
+            return tool_name
+    return None
 
 
 # --- P2: the two opt-in filesystem denials (--deny-shell, --deny-project-reads)
@@ -1388,6 +1438,101 @@ def apply_tool_result(entry: dict[str, Any], block: ToolResultBlock, summary: st
     entry["result_chars"] = _raw_result_chars(block.content)
 
 
+# The spawn announcement an `Agent`/`Task` result carries for a background
+# subagent: "Async agent launched … agentId: <id>". This is the canonical way to
+# identify a background agent — the same signal issue #3045's measurement recipe
+# uses — and the only one that distinguishes it from a synchronous agent whose
+# stream entries happen to carry no `agent_id`.
+_ASYNC_AGENT_ID = re.compile(r"Async agent launched.*?agentId:\s*([A-Za-z0-9]+)", re.S)
+
+
+def backfill_background_tool_calls(
+    workspace: Path, tool_calls: list[dict[str, Any]]
+) -> None:
+    """Append a background subagent's tool calls to `tool_calls`, from its transcript.
+
+    A synchronous subagent's calls are recorded by `_consume` from the parent
+    message stream (with `agent_id`/`agent_type` joined from
+    `caller_by_tool_use_id`). A BACKGROUND subagent ("Async agent launched") runs
+    in its own sub-session whose messages never flow through that stream, so its
+    calls were missing from `tool_calls` while its turns still showed up in
+    `subagents[].turns` — the run log contradicted itself (#3045).
+
+    Source is the transcript, not the stream (`subagent_capture.pair_tool_calls`),
+    so these entries are appended AFTER the main-stream entries and `tool_calls`
+    is therefore NOT chronological across agents. Mutating in place is safe only
+    here: every consumer that reads `tool_calls` by order, index or length —
+    `narration`'s `tool_calls_before`, the guardrail shadow-window scanners
+    (`find_unguarded_protected_writes`, `recently_succeeded`) and
+    `same_person_scored_ids` — has already run by this call site. These entries
+    are therefore RECORDED, not re-scored; they were invisible to those scanners
+    before this existed and remain so.
+
+    Only agents the log ANNOUNCED as background are backfilled — those with an
+    `Agent`/`Task` result reading "Async agent launched … agentId: <id>". A
+    synchronous agent is therefore never backfilled, even when its stream entries
+    carry no `agent_id` (an entry whose result never arrived at a cap/timeout, or
+    a call to a nonexistent tool refused before the hook runs, both leave
+    `agent_id` unset — so an "already in `existing`" test alone would re-add them).
+    A transcript already present in `existing` is skipped too, before parsing,
+    which keeps the large synchronous transcripts from being re-read. If a
+    background announcement is ever absent, that agent stays missing, which is the
+    behaviour today.
+
+    Backfilled entries carry `agent_id` (from the filename) and `agent_type` (from
+    `meta.json`) even when the call's result never arrived — unlike the sync
+    "result never came" entry, which carries neither; `docs/specs/e2e-test-spec.md`
+    §8.1.1 records that difference.
+
+    Best-effort — never raises, matching `collect_subagents`: a missing or
+    unparseable transcript leaves `tool_calls` exactly as it was.
+    """
+    try:
+        background = {
+            m.group(1)
+            for tc in tool_calls
+            if tc.get("tool") in ("Agent", "Task")
+            for m in _ASYNC_AGENT_ID.finditer(str(tc.get("response_summary") or ""))
+        }
+        existing = {tc["agent_id"] for tc in tool_calls if tc.get("agent_id")}
+        for jsonl, meta_path in find_subagent_transcripts(workspace):
+            agent_id = transcript_agent_id(jsonl)
+            if agent_id not in background or agent_id in existing:
+                continue
+            records = parse_jsonl(jsonl, errors="replace")
+            if not records:
+                continue
+            agent_type: str | None = None
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if isinstance(meta, dict):
+                    agent_type = meta.get("agentType")
+            for raw in pair_tool_calls(records):
+                content = raw.get("content")
+                tool_calls.append(
+                    {
+                        "tool": raw["tool"],
+                        "args": raw["args"],
+                        "response_summary": (
+                            _summarize_tool_response(content, tool_name=raw["tool"])
+                            if content is not None
+                            else None
+                        ),
+                        "is_error": raw["is_error"],
+                        "result_chars": (
+                            _raw_result_chars(content) if content is not None else 0
+                        ),
+                        "agent_id": agent_id,
+                        "agent_type": agent_type,
+                    }
+                )
+    except Exception:  # noqa: BLE001 — capture must never fail an otherwise-loggable run
+        return
+
+
 def _timeline_tool_label(tool: str, args: dict | None) -> str:
     """Human-legible label for a `timeline` entry's tool-names list.
 
@@ -1551,7 +1696,7 @@ def merge_whole_run_usage(
     residual (total minus main) rather than a measurement. Appendix A3 item 4 of
     that plan is a published claim that was nothing but this gap restated.
 
-    Four rules, each returning `None` rather than a plausible-but-wrong number,
+    Five rules, each returning `None` rather than a plausible-but-wrong number,
     because a wrong figure here gets compared against real costs from clean runs:
 
     1. **No main-thread token block** -> `(None, None)`. Nothing to add to.
@@ -1566,10 +1711,17 @@ def merge_whole_run_usage(
        summing `subagents[].turns[]`: those are one entry per content *block*, each
        repeating its message's totals, so the sum overstates cache reads by ~2x.
        Unknown is unknown.
-    4. **No subagents at all** -> main's four fields, copied. A run with no
-       delegation, and a run whose capture failed (`subagent_capture_status`
-       non-ok, which yields an empty list), both land here and both are correct:
-       the merged figure equals the main-thread one and nothing errors.
+    4. **No subagents at all** -> main's four fields, copied. A one-query run
+       with no delegation, and a run whose capture failed
+       (`subagent_capture_status` non-ok, which yields an empty list), both land
+       here and both are correct: the merged figure equals the main-thread one
+       and nothing errors. A multi-query run returns at rule 5 first.
+    5. **More than one query** (`result_message_covers_last_query_only`) ->
+       `(None, None)`. The ResultMessage counted the last query only, so the main
+       block is a fraction of the run's and adding the subagents to it would give
+       a figure that looks complete and is not (#3128). Summing each query's
+       ResultMessage would recover almost none of the corpus: a query cut off by a
+       stall never emits one.
 
     The returned dict is always a fresh object carrying exactly
     `pricing.PRICED_FIELDS`, never the caller's inner block and never its extra
@@ -1579,6 +1731,8 @@ def merge_whole_run_usage(
     if not isinstance(usage, dict):
         return None, None
     if usage.get("usage_source") == "streamed_fallback":
+        return None, None
+    if result_message_covers_last_query_only(usage):
         return None, None
     inner = usage.get("usage")
     if not isinstance(inner, dict):
@@ -1785,6 +1939,7 @@ async def _run_agent(
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[
     list[dict[str, Any]],  # tool_calls
     list[dict[str, Any]],  # narration
@@ -1926,18 +2081,26 @@ async def _run_agent(
     # discrepancy can be checked against a version delta (the local CLI the SDK
     # spawns may differ from Cowork's bundled one).
     cli_version: dict[str, str | None] = {"v": None}
+    # Whether the FIRST init's `tools` list offered ToolSearch; None when that
+    # init carried no list. Listed at init; blind to the per-model gate (see
+    # env_for_sdk) — `False` proves tool search was off, `True` does not prove
+    # it was on.
+    tool_search_offered: dict[str, Any] = {"v": None, "seen": False}
     resumes = {"n": 0}  # how many times we resumed after a stall (capped)
     MAX_RESUME = 2
 
     # Streamed usage accumulator. The SDK's ResultMessage carries the
-    # authoritative duration/turns/cost, but it only arrives on a CLEAN end —
-    # a wall-clock timeout, an inactivity abort or a no-progress stall cuts the
-    # stream before it, so `usage` stayed {} and the run landed in the runlog
-    # with no turns, no duration and no tokens at all. That silently blinded
-    # every `timeout` run (9 of 9 in the corpus as of 2026-07-20) — exactly the
-    # runs whose cost and turn count you most want to see. Accumulating per
-    # AssistantMessage gives a fallback that is always available. See
-    # _fallback_usage below for what is and isn't recoverable this way.
+    # authoritative duration/turns/cost (on a run with more than one query its
+    # duration and turns cover the last query and its cost the last CLI
+    # process, see `result_message_covers_last_query_only`), but it only
+    # arrives on a CLEAN end — a wall-clock timeout, an inactivity abort or a
+    # no-progress stall cuts the stream before it, so `usage` stayed {} and the
+    # run landed in the runlog with no turns, no duration and no tokens at all.
+    # That silently blinded every `timeout` run (9 of 9 in the corpus as of
+    # 2026-07-20) — exactly the runs whose cost and turn count you most want to
+    # see. Accumulating per AssistantMessage gives a fallback that is always
+    # available. See _fallback_usage below for what is and isn't recoverable this
+    # way.
     streamed: dict[str, dict[str, int]] = {}
     # Thread tag per accumulated message, keyed the same way `streamed` is.
     # Declared HERE, beside `streamed` — not inside `_consume` or its
@@ -1993,10 +2156,26 @@ async def _run_agent(
                         "To CREATE a new project use project_create, which writes both "
                         "files together; to add to an existing one use research_append, "
                         "research_log_append, tree_edit or tree_correct. These validate "
-                        "before persisting. Direct file writes never validate."
+                        "before persisting. Direct file writes never validate. "
+                        "external-collections.json is written only by external_links_search given a projectPath."
                     ),
                 },
             }
+
+        # Credential-read lockdown (unconditional). Deny Read/Grep/Glob on
+        # ~/.familysearch-mcp/ — the agent must not read FamilySearch tokens
+        # or the OpenRouter key. Auth goes through the login tool; a missing
+        # key is reported by image_transcribe itself. After the write lockdown
+        # and OUTSIDE the opt-in filesystem denials below, because the
+        # PR #2990 leak was a default run.
+        cred_denied = credential_read_denied(tool_name, input_data.get("tool_input") or {})
+        if cred_denied:
+            _emit(f"[blocked credential read] {tool_name}")
+            return _pretool_deny(
+                f"{tool_name} on the credentials directory is not permitted. "
+                "FamilySearch auth goes through the login flow, and a missing "
+                "OpenRouter key is reported by image_transcribe itself."
+            )
 
         # P2 — the two opt-in filesystem denials (--deny-shell,
         # --deny-project-reads). After the write lockdown, which is
@@ -2358,11 +2537,12 @@ async def _run_agent(
         research = read_research_json(workspace)
 
         # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
-        # is not invisible — it returns {} below and used to be counted nowhere.
+        # is not invisible — it returns {} below and used to be counted nowhere. The
+        # class is telemetry only; the reply below never depends on it (U17).
         # Only the agent's last words count, and only when no tool call landed after
         # them: 2 of the 71 committed narration nudges have tool calls between the last
-        # TextBlock and the nudge, and post-#2292 a hand-back narrated before a batch of
-        # calls would otherwise read as `step` on a turn that ended silently.
+        # TextBlock and the nudge, and a hand-back narrated before a batch of calls
+        # would otherwise read as `step` on a turn that ended silently.
         last_text = None
         for entry in reversed(narration):
             # `blocked` is a hook-deny message, not the agent's words — and a
@@ -2395,14 +2575,14 @@ async def _run_agent(
                 mcp_unavailable=mcp_state["unavailable"],
             )
             if reason in COUNTED_TERMINAL_REASONS:
-                key, _ = hand_back_outcome(hand_back, project_is_completed=completed_now)
+                key = hand_back_key(hand_back, project_is_completed=completed_now)
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             else:
                 key = f"terminal_{reason}"
                 hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
             return {}
 
-        counter_key, reply = hand_back_outcome(hand_back, project_is_completed=completed_now)
+        counter_key = hand_back_key(hand_back, project_is_completed=completed_now)
         hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
         continue_nudges["n"] += 1
         last_nudge_activity_count["n"] = activity_count["n"]
@@ -2423,18 +2603,12 @@ async def _run_agent(
             f"{fixture.caps.max_continue_nudges}] agent yielded "
             f"({counter_key}); resuming"
         )
-        # A well-formed hand-back is the skill doing what #2292 asks of it, and in an
-        # e2e run the harness IS the user — so it gets the researcher's answer, "Yes.",
-        # not a scolding. `reply` is None for a silent stop, which keeps the existing
-        # block-reason semantics below.
-        #
-        # This wording deliberately does NOT tell the agent to emit
-        # "Next: <step>. Continue?": research/SKILL.md:53-55 calls that a failure in
-        # autonomous mode, so instructing it here would recreate the harness-vs-skill
-        # contradiction this card's sequencing exists to prevent, with the sides
-        # swapped. #2292 flips this wording when it lands the prose.
-        if reply is not None:
-            return {"decision": "block", "reason": reply}
+        # One reply for every vetoed stop, whatever its class: the worker's
+        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
+        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
+        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
+        # Stop policy the prototype does not run (U17). This tree cannot import the
+        # constant, so `test_continue_policy_parity.py` pins the copy.
         return {
             "decision": "block",
             "reason": (
@@ -2474,25 +2648,16 @@ async def _run_agent(
         # hook, not the allowlist, so it can deny per-call with arguments.
         allowed_tools=BASELINE_ALLOWED_TOOLS + ["mcp__genealogy"],
         permission_mode="dontAsk",
-        # ENABLE_TOOL_SEARCH turns tool search ON, not off. This comment used to
-        # say "forcing tool search off" while setting "true"; the polarity is
-        # inverted (issue #1110). Read off the installed CLI (v2.1.220): a truthy
-        # value (`true|1|yes|on`) selects deferred/tool-search mode, `auto`/
-        # `auto:N` is the adaptive variant, and only a FALSY value
-        # (`false|0|no|off`) selects "standard" mode, where every schema is
-        # loaded up front. Unset also lands on tool-search mode, so deleting the
-        # variable eager-loads nothing. (Additionally forced off on a
-        # non-first-party ANTHROPIC_BASE_URL, on Vertex, and under
-        # CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS.)
-        #
-        # So "true" below means e2e runs WITH tool search: the ~38-tool
-        # genealogy server's schemas are deferred (except ALWAYS_LOAD in
-        # tool-schemas.ts) and re-discovered via ToolSearch mid-session (the
-        # 17x in the spriggs run, ~11% of all tool calls across recent runs).
-        # Idea 3a of the speedup plan wanted the opposite; flipping to "false"
-        # is a separate, tracked decision that requires re-measuring the tool
-        # mix, so the value is left as it has been running. `env` MERGES onto
-        # the inherited environment (claude_agent_sdk
+        # ENABLE_TOOL_SEARCH has ONE source, env_for_sdk (its docstring holds
+        # the polarity: truthy or unset = on, falsy = off). `tool_search`
+        # (default True; `--no-tool-search` turns it off, experiment-only)
+        # picks the value. On, the ~38-tool genealogy server's schemas are
+        # deferred (except ALWAYS_LOAD in tool-schemas.ts) and re-discovered via
+        # ToolSearch mid-session. Off, every schema is loaded up front and the
+        # #941 mid-run backstop below is inert: it counts no-match ToolSearch
+        # replies, and there are none. A literal "true" used to sit in this dict
+        # ahead of env_for_sdk's own key, which always won, so it set nothing.
+        # `env` MERGES onto the inherited environment (claude_agent_sdk
         # subprocess_cli merges os.environ, then options.env), so this adds the
         # var without dropping PATH.
         #
@@ -2509,9 +2674,8 @@ async def _run_agent(
         # fills the output budget with thinking (see subagent_capture); recorded
         # in the runlog. Applies session-wide (parent + every subagent).
         env={
-            "ENABLE_TOOL_SEARCH": "true",
             **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
-            **env_for_sdk(resolve_auth()),
+            **env_for_sdk(resolve_auth(), tool_search=tool_search),
         },
         # Parent model: the --agent-model override (also applied to staged
         # subagents in build_workspace) or the fixture's default.
@@ -2823,9 +2987,25 @@ async def _run_agent(
                     sid = data.get("session_id")
                     if sid:
                         session_id["id"] = sid
-                    ver = data.get("version") or data.get("cli_version")
+                    # 2.1.139's init carries `claude_code_version`; the other
+                    # two keys are kept for a CLI that spells it either way.
+                    ver = (
+                        data.get("claude_code_version")
+                        or data.get("version")
+                        or data.get("cli_version")
+                    )
                     if ver:
                         cli_version["v"] = ver
+                    # First init only: a resume re-spawns the CLI with the same
+                    # env, so a later list says nothing new.
+                    if message.subtype == "init" and not tool_search_offered["seen"]:
+                        tool_search_offered["seen"] = True
+                        tools_listed = data.get("tools")
+                        tool_search_offered["v"] = (
+                            TOOL_SEARCH_NAME in tools_listed
+                            if isinstance(tools_listed, list)
+                            else None
+                        )
                     timeline.append(
                         [
                             round(now - run_started, 1),
@@ -2886,6 +3066,10 @@ async def _run_agent(
                             "inconclusive": (
                                 "still connecting (normal at init); the "
                                 "ToolSearch backstop covers it from here"
+                                if tool_search
+                                else "still connecting (normal at init); tool "
+                                "search is OFF, so the ToolSearch backstop is "
+                                "inactive — watch for zero genealogy calls"
                             ),
                             "unavailable": (
                                 "UNAVAILABLE — aborting"
@@ -2934,6 +3118,11 @@ async def _run_agent(
                         "total_cost_usd": message.total_cost_usd,
                         "usage": message.usage,
                     }
+                    # The SDK's own per-model ledger, helpers included (T1.11):
+                    # the reconciliation source for per-model pricing. Only
+                    # written when the SDK supplied it — absent, never null or {}.
+                    if isinstance(getattr(message, "model_usage", None), dict):
+                        usage["model_usage"] = message.model_usage
                     if message.is_error and aborted_reason is None:
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*
@@ -2956,6 +3145,21 @@ async def _run_agent(
                         aborted_reason = "cost_cap"
                     if aborted_reason is None and message.stop_reason == "max_turns":
                         aborted_reason = "max_turns"
+
+                # The PreToolUse deny's `continue_: False` does not end the session:
+                # past the cap every call is denied, a denied call still counts as
+                # activity, and the Stop hook nudged the agent on until cost or the
+                # wall clock ended it (hannah 2026-10-05: 56 denied calls, 38 nudges).
+                # The cap is crossed mid-run, so it outranks a cost_cap set from the
+                # final ResultMessage.
+                if tool_call_count["n"] > fixture.caps.tool_calls and aborted_reason in (
+                    None,
+                    "cost_cap",
+                ):
+                    aborted_reason = "max_tool_calls"
+                    error = f"tool_calls cap ({fixture.caps.tool_calls}) exceeded"
+                    await _shutdown(iterator)
+                    return
 
                 # Progress watchdog: a stall is "stream alive, no progress". The
                 # plain inactivity timer above misses it (messages keep arriving),
@@ -3053,12 +3257,15 @@ async def _run_agent(
             f" (was: {error})"
         )
 
-    # A ResultMessage populates `usage` with the SDK's authoritative numbers.
-    # Every abort path (wall-clock timeout, inactivity silence, no-progress
-    # stall) cuts the stream before it, leaving `usage` empty — so fall back to
-    # what the stream already told us. `usage_source` marks which one you're
-    # reading: a fallback block has exact token counts but a null cost, and
-    # must not be compared against a clean run's `total_cost_usd`.
+    # A ResultMessage populates `usage` with the SDK's authoritative numbers,
+    # except on a run with more than one query, where its tokens, turns and
+    # duration cover the last query and its cost and API time the last CLI
+    # process (`result_message_covers_last_query_only`). Every abort path (wall-clock
+    # timeout, inactivity silence, no-progress stall) cuts the stream before it,
+    # leaving `usage` empty — so fall back to what the stream already told us.
+    # `usage_source` marks which one you're reading: a fallback block has exact
+    # token counts but a null cost, and must not be compared against a clean run's
+    # `total_cost_usd`.
     result_message_seen = "num_turns" in usage
     if not result_message_seen:
         usage = _fallback_usage(
@@ -3100,6 +3307,10 @@ async def _run_agent(
         # means the CLI default (sonnet-5 -> 32000).
         "max_output_tokens": max_output_tokens,
         "cli_version": cli_version["v"],
+        # What the CLI offered at init, not what took effect: blind to the
+        # per-model gate — `false` proves off, `true` does not prove on.
+        # `tool_search` (what was asked for) is added in run_e2e_test.
+        "tool_search_offered": tool_search_offered["v"],
         "caps": {
             "wall_clock_seconds": fixture.caps.wall_clock_seconds,
             "inactivity_seconds": fixture.caps.inactivity_seconds,
@@ -3122,7 +3333,7 @@ async def _run_agent(
     if guardrail_shadow_violations:
         _emit(
             f"[guardrail-shadow] {len(guardrail_shadow_violations)} protected write(s) "
-            "with no recent matching Skill invocation (shadow mode — not denied)"
+            "with no recent matching Skill call or typed agent spawn (shadow mode — not denied)"
         )
     # issue #963 — fold in the hook-sourced provenance gaps collected live in
     # pretool_hook. Same list because both answer "a guardrail's effect landed
@@ -3244,6 +3455,26 @@ def collect_post_hoc_shadow(
     return out
 
 
+def _write_readable_report(result_path: Path) -> None:
+    """Write the run's readable `.txt` into `<runlog dir>/reports/`. Never raises.
+
+    Beside the run log it describes, so a run redirected with `--runlog-root`
+    stays self-contained. The grade stays hidden in it until the run is graded
+    (spec §7.4) — see `e2e.run_report`. A report that fails to render must never
+    cost a run whose log is already written, so this only prints.
+    """
+    try:
+        from e2e.run_report import write_reports
+
+        written, _skipped, unreadable = write_reports([result_path], force=True)
+        for report in written:
+            print(f"  readable report: {report}")
+        if unreadable:
+            print(f"  (no readable report: {result_path} could not be read)")
+    except Exception as exc:  # noqa: BLE001 — a report must never fail the run
+        print(f"  (no readable report: {type(exc).__name__}: {exc})")
+
+
 def _find_session_transcript(workspace: Path) -> Path | None:
     """Locate the Agent SDK's raw session JSONL for this run.
 
@@ -3263,17 +3494,11 @@ def _find_session_transcript(workspace: Path) -> Path | None:
 
     Returns the newest matching JSONL, or None if none is found. Never raises:
     a failure here must not cost the run its log.
+
+    The lookup itself is `subagent_capture.find_session_transcript`, shared with
+    the unit harness's main-thread capture.
     """
-    try:
-        cache = sdk_cache_dir(workspace)
-        if cache is None:
-            return None
-        candidates = list(cache.glob("*.jsonl"))
-        if not candidates:
-            return None
-        return max(candidates, key=lambda p: p.stat().st_mtime)
-    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
-        return None
+    return find_session_transcript(workspace)
 
 
 async def run_e2e_test(
@@ -3291,6 +3516,7 @@ async def run_e2e_test(
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
+    tool_search: bool = True,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
 
@@ -3363,6 +3589,7 @@ async def run_e2e_test(
             deny_shell=deny_shell,
             deny_project_reads=deny_project_reads,
             context_1m=context_1m,
+            tool_search=tool_search,
         )
 
         final_research = read_research_json(workspace)
@@ -3453,16 +3680,11 @@ async def run_e2e_test(
             tool_calls, final_research, final_tree, starting_tree=starting_tree
         )
 
-        # SHADOW MODE ONLY (issue #1193) — a new ParentChild/Couple relationship
-        # was written this run but the free, deterministic `person_warnings`
-        # guardrail was never called. Folded into the same already-plumbed
-        # `guardrail_shadow_violations` field, discriminated by its `kind` key so
-        # the shadow report counts it in its own bucket. Logs; never fails the
-        # run — unlike guardrail_bypass_violations above, this does not feed
-        # compliance. (Neither feeds `outcome` any more: the §8 detectors were
-        # demoted from the gate, so the contrast is now only about compliance.) Promotion to a hard gate, or a mandatory call in the
-        # `/research` orchestrator so an inlined write is still gated, is gated on
-        # measuring this fire rate across the corpus (issue #1193, question b).
+        # SHADOW MODE ONLY (issue #2840) — a tree writer returned
+        # unjustified_warnings but the agent never re-called with
+        # warningJustifications. The engine gate (PR 1 of #2840) now prevents
+        # unjustified writes from landing; this detects the case where the agent
+        # gave up after a refusal.
         warnings_unchecked_shadow = find_relationship_writes_without_warnings_check(
             tool_calls, final_tree, starting_tree=starting_tree
         )
@@ -3553,6 +3775,11 @@ async def run_e2e_test(
             # compacts differently from the corpus, so a reader comparing runs
             # has to be able to see it without inferring it from the numbers.
             "betas": list(_BETAS_1M) if context_1m else [],
+            # What `--no-tool-search` asked for; `tool_search_offered` (from
+            # _run_agent) is what the CLI offered. Off is not comparable to the
+            # corpus — every schema is loaded up front — and CI rejects a run
+            # with either one False committed under eval/runlogs/e2e/.
+            "tool_search": tool_search,
         }
 
         # Summarize any subagent transcripts (record-extractor, image-reader, …)
@@ -3562,6 +3789,11 @@ async def run_e2e_test(
         # surfaces a runaway-thinking subagent freeze directly in the committed
         # runlog, which tool_calls alone can't show. See subagent_capture.py.
         subagents, subagent_capture_status = collect_subagents(workspace)
+        # #3045 — a background ("Async agent launched") subagent's tool calls never
+        # reach the message stream `_consume` builds `tool_calls` from, so recover
+        # them here from the same transcripts `collect_subagents` reads and append
+        # them (out of chronological order; see backfill_background_tool_calls).
+        backfill_background_tool_calls(workspace, tool_calls)
 
         # The whole-run figure (#2582). `usage["usage"]` is main-thread only, so
         # until this merge every cost figure over this corpus was main plus a
@@ -3604,6 +3836,7 @@ async def run_e2e_test(
             final_research=final_research,
             timestamp=result.captured_at,
         )
+        _write_readable_report(paths["result"])
 
         # Copy the raw SDK session transcript next to the runlog. The runlog
         # carries a summarized trace; this JSONL carries per-message

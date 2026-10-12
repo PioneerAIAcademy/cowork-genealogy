@@ -12,7 +12,7 @@ to each zip's root. Plan: docs/plan/familysearch-handoff.md, U12; the interface 
 - U11: no file under a template directory but its README, and no tier ``Dockerfile``,
   names one of ``layout.py``'s dev-only variables outside a comment;
 - the logs block, the health paths, nginx at 1800 s for tools, one instance for worker
-  and tools;
+  and tools until U18 chooses the scaling metric (U6's fencing is built);
 - the worker's ``ENGINE_PLUGIN_DIR`` is where its predeploy hook puts the plugin, and the
   hook is executable in git and runs under ``set -euo pipefail``;
 - the CA variable names ``/var/app/current/`` plus the bundle's CA path.
@@ -196,6 +196,7 @@ def test_no_dev_variable_in_a_template(tier):
 
 @pytest.mark.parametrize(("tier", "env", "dev"), [
     ("worker", {"DEV_PATHS": "true"}, True),
+    ("web", {"DEV_LOGIN": "true"}, True),
     ("tools", {"GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS": "30000"}, True),
     ("web", {"BLOCKED_TOOLS": "person_read"}, True),
     ("worker", {"AUTONOMOUS_MAX_NUDGES": "60"}, True),
@@ -248,6 +249,7 @@ def test_no_dev_variable_in_a_shipped_file_or_image(tier):
 @pytest.mark.parametrize(("tier", "text", "dev"), [
     ("worker", "set -euo pipefail\nexport DEV_PATHS=1\n", True),
     ("worker", "FROM python:3.12-slim\nENV DEV_PATHS=1\n", True),
+    ("web", "ENV DEV_LOGIN=true\n", True),
     ("worker", "export DEV_PATHS=1  # a trailing comment is not a comment line\n", True),
     ("web", 'RUN echo "${GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS}"\n', True),
     ("tools", "ENV AUTONOMOUS_MAX_NUDGES=5\n", True),
@@ -289,7 +291,9 @@ def test_tools_alb_idle_timeout_is_alone_in_its_file():
 
 
 @pytest.mark.parametrize("tier", ["worker", "tools"])
-def test_one_instance_until_u6(tier):
+def test_one_instance_until_u18(tier):
+    """Handoff step 13: U6's claim fencing is built, so the gate on a second instance
+    is now U18's scaling metric. The templates stay 1/1 until then."""
     asg = _settings(tier, ASG_NS)
     assert (asg.get("MinSize"), asg.get("MaxSize")) == ("1", "1"), (tier, asg)
 
@@ -303,6 +307,20 @@ def test_worker_runtime_paths_match_the_hook_and_layout():
 
 def test_web_dist_dir_is_the_layout_directory():
     assert _env("web").get("WEB_DIST_DIR") == layout.WEB_DIST_DIR
+
+
+def test_root_drop_in_lives_where_a_deploy_does_not_delete_it():
+    """U13 (2026-10-07): every deploy, app or configuration, deregisters web and deletes
+    /etc/systemd/system/web.service.d after predeploy and before the restart, so a drop-in
+    there never governs the deploy's own start; the worker came up as webapp. One under
+    /usr/lib/systemd/system/web.service.d survived both kinds of deploy."""
+    text = WORKER_HOOK.read_text(encoding="utf-8")
+    live = [ln for ln in text.splitlines() if not ln.lstrip().startswith("#")]
+    assert any(re.fullmatch(r"printf '\[Service\]\\nUser=root\\nGroup=root\\n' > "
+                            r"/usr/lib/systemd/system/web\.service\.d/10-genealogy-root\.conf", ln)
+               for ln in live), "the hook writes no root drop-in under /usr/lib"
+    assert not any("/etc/systemd/system/web.service.d" in ln for ln in live), \
+        "a drop-in under /etc is deleted by every deploy"
 
 
 def test_worker_hook_is_executable_in_git_and_strict():
@@ -326,14 +344,44 @@ def test_ca_variable_names_the_bundled_ca(tier):
     assert env.get("PGSSLMODE") == "verify-full", (tier, env)
 
 
-def test_the_hook_creates_exactly_the_slot_users_the_worker_is_told():
-    """U3: the hook's users and 02-worker.config's WORKER_TURN_USERS are two copies of one
-    list. A name only in the config refuses start (no such user); one only in the hook is a
-    slot no turn uses."""
+def _slot_cases() -> dict[str, dict]:
+    """Each rehearsal probe case that resizes the worker's slots (U18 slots_4/slots_8): its
+    HttpConnections and WORKER_TURN_USERS names. Loaded the way test_proto_rehearsal.py loads it."""
+    spec = importlib.util.spec_from_file_location("u18_bundles_rehearse", PROTO / "eb-rehearsal" / "rehearse.py")
+    rh = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rh)
+    out: dict[str, dict] = {}
+    for name, case in rh.CASES.items():
+        for namespace, option, value in case.get("ops", {}).get("worker", []):
+            if (namespace, option) == (rh.SQSD_NS, "HttpConnections"):
+                out.setdefault(name, {})["connections"] = int(value)
+            elif (namespace, option) == (ENV_NS, "WORKER_TURN_USERS"):
+                out.setdefault(name, {})["users"] = str(value).split()
+    return out
+
+
+def test_the_hook_users_are_a_superset_prefix_of_the_slot_users():
+    """U3/U18: 02-worker.config's WORKER_TURN_USERS is the first HttpConnections of the hook's
+    users. A name not in the hook refuses start (no such user); the hook makes as many as the
+    largest rehearsal slot case names (>= 8 before those cases exist), so a slot case is a
+    plain config deploy on an instance the deployed bundle already laid out (PLAN option a)."""
     text = WORKER_HOOK.read_text(encoding="utf-8")
     match = re.search(r'^TURN_USERS="([^"]+)"$', text, re.MULTILINE)
     assert match, f"{WORKER_HOOK.name} sets no TURN_USERS=\"…\""
-    assert match.group(1).split() == _env("worker")["WORKER_TURN_USERS"].split()
+    hook = match.group(1).split()
+    config = _env("worker")["WORKER_TURN_USERS"].split()
+    connections = int(_settings("worker", "aws:elasticbeanstalk:sqsd")["HttpConnections"])
+    assert len(set(hook)) == len(hook), f"duplicate hook users: {hook}"
+    assert len(set(config)) == len(config), f"duplicate WORKER_TURN_USERS: {config}"
+    assert len(config) == connections, \
+        f"WORKER_TURN_USERS names {len(config)} users for HttpConnections {connections}"
+    assert hook[:len(config)] == config, f"WORKER_TURN_USERS {config} is not a prefix of the hook's {hook}"
+    cases = _slot_cases()
+    for name, case in cases.items():
+        users = case.get("users", [])
+        assert hook[:len(users)] == users, f"{name}'s WORKER_TURN_USERS {users} is not a prefix of the hook's"
+    need = max((max(case.get("connections", 0), len(case.get("users", []))) for case in cases.values()), default=8)
+    assert len(hook) >= need, f"the hook creates {len(hook)} users; a slot case needs {need}"
     assert re.search(r"useradd [^\n]*--gid \"\$TURN_GROUP\"", text), "the users share the hook's group"
     # The offline smoke runs the hook with no systemd; an unguarded reload fails the deploy.
     reload_lines = [ln for ln in text.splitlines() if "systemctl daemon-reload" in ln and not ln.lstrip().startswith("#")]

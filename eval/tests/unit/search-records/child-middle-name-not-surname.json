@@ -28,7 +28,9 @@
     "validate-research-schema",
     "record-read-sarah-a-mullen-wicn-1860-m01",
     "record-read-sarah-m-price-wicn-1880-p01",
-    "record-read-sarah-price-wicn-1880-p02"
+    "record-read-sarah-price-wicn-1880-p02",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "NEW FLOW: record_search ranks host-side when it is called with projectPath AND subjectId, returning the ranking inline as `ranked` (match score + attachment flag for every candidate). The skill should pass subjectId and triage from `ranked` — NOT per-result same_person, NOT a separate source_attachments call, and NOT a separate rank_search_matches call (the search folds all three in). It re-ranks the staged Price candidates by match score against the subject and returns compact stubs for the review surface.",

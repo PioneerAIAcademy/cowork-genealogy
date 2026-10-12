@@ -215,7 +215,9 @@ class Seeder(threading.Thread):
         # The worker's own close: turn_done event + turns.completed_at in one commit. Two
         # commits would open a window where a stream replays turn_done and then announces
         # turn_active, leaving ChatPane busy with nothing left to clear it.
-        self.last_seq = _load_worker_complete()(conn, {"turn_id": self.turn_id, "session_id": self.session_id}, 0)
+        # claim_epoch=None: a seeder, not an attempt (U6), so the close fences every attempt out.
+        self.last_seq = _load_worker_complete()(conn, {"turn_id": self.turn_id, "session_id": self.session_id}, 0,
+                                                claim_epoch=None)
 
 
 # ── embedded mode ───────────────────────────────────────────────────────────────
@@ -248,8 +250,9 @@ class Embedded:
         self.pg = pgserver.get_server(self.pgdata)
         self.dsn = self.pg.get_uri()
         os.environ["PG_DSN"] = self.dsn
-        # U2: the driver signs in through dev-login, which an https PUBLIC_URL or
-        # FamilySearch sign-in would turn off.
+        # U2: the driver signs in through dev-login, which is opt-in and which an https
+        # PUBLIC_URL or FamilySearch sign-in would turn off.
+        os.environ["DEV_LOGIN"] = "true"
         os.environ.pop("PUBLIC_URL", None)
         os.environ.pop("FAMILYSEARCH_WEB_ENABLED", None)
         import migrate  # proto/ is on sys.path (HERE, above)

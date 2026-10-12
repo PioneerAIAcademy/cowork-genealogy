@@ -176,7 +176,7 @@ def test_start_reports_the_spend_cap_and_prices_and_a_typo_is_logged(tmp_path, c
     finally:
         _stop(proc)
     assert start["spend_cap_usd"] == expected
-    assert start["prices"] == {"input": 2.5, "cache_write": 6.0, "cache_read": 0.3, "output": 15.0}
+    assert start["prices"] == {"input": 2.5, "cache_write": 3.75, "cache_read": 0.3, "output": 15.0}
     bad_env = [line for line in seen if line.get("ev") == "bad_env"]
     if bad:
         assert bad_env == [{"ev": "bad_env", "name": "SESSION_SPEND_CAP_USD", "value": cap, "using": 35.0}]
@@ -248,7 +248,7 @@ def test_hook_python_child_path_starts_with_the_interpreter_dir(tmp_path, path, 
     opts = options.build_worker_options(
         project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
         store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
-        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token",
+        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", turn_id="turn-1", claim_epoch=1,
     )
     exe_dir = os.path.dirname(sys.executable)
     assert opts.env["PATH"] == (exe_dir if tail is None else f"{exe_dir}{os.pathsep}{tail}")

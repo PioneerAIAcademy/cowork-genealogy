@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_translation_014",
+    "skill": "translation",
+    "name": "Expand German register abbreviations: deleted rows plus the kept gest./get. residue",
+    "type": "positive",
+    "description": "A German family-register entry mixing four abbreviations #2259 deletes (geb., verh., verw., led.) with two it keeps inline (gest., get.). gest. and get. are the confusable pair the residue guards — both are d-words and the model gets gest. (died) wrong cold, offering getauft (baptized) instead. This test exercises both halves of #2259: deletion costs nothing on the carried rows, and the residue is load-bearing on gest./get.",
+    "tags": ["german", "family-register", "church-record", "abbreviations", "residue-necessity", "issue-2259", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Translate this German family-register summary: 'Johann Müller, geb. 3. Mai 1820, get. 5. Mai 1820, verh. 1845 mit Anna Weber. Anna war verw. seit 1850 und gest. 12. Februar 1880. Ihr Sohn Peter blieb led.'",
+    "scenario": null
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "Grade each abbreviation's expansion individually. Translating the surrounding entry correctly does not earn credit for an abbreviation that is left unexpanded, mis-expanded, or dropped.",
+    "`geb.` must be expanded to `geboren` — 'born' (Johann born 3 May 1820).",
+    "`get.` must be expanded to `getauft` — 'baptized' (Johann baptized 5 May 1820).",
+    "`gest.` must be expanded to `gestorben` — 'died' (Anna died 12 February 1880). It must NOT be rendered as 'baptized' / getauft; gest. (died) and get. (baptized) are distinct and both appear here.",
+    "`verh.` must be expanded to `verheiratet` — 'married' (Johann married Anna Weber in 1845).",
+    "`verw.` must be expanded to `verwitwet` — 'widowed' (Anna widowed since 1850).",
+    "`led.` must be expanded to `ledig` — 'unmarried' / single (the son Peter remained unmarried).",
+    "Should note the genealogical implications: the born/baptized pair gives a baptism within two days of birth; widowed-since-1850 implies Johann died by 1850; an unmarried son is a terminal line for that branch."
+  ]
+}

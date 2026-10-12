@@ -308,8 +308,6 @@ Batching applies every op to a single in-memory tree, validates once, and writes
 
 **Person merging:** proof-conclusion decides WHETHER to merge; the merge tool repoints all references. Before any merge: (1) check `source_attachments` — if the record is already in the tree, stop; (2) call `merge_warnings` as a dry-run — `severity: "contradiction"` blocks (revisit identity; only override with explicit user confirmation and a logged explanation); `severity: "implausible"` is advisory. Get confirmation, then call `merge_tree_persons`.
 
-After the batched tree write(s) — the `tree_edit` batch plus any `tree_correct` call — or a merge, run `check-warnings` **once** (see `## Validation Protocol` below) — not after each op.
-
 **Verify the conclusion landed.** Before you present or mark the project complete, confirm the relationship(s) you concluded are now in the tree — the persons are *linked* by a `ParentChild`/`Couple` relationship, not merely added as unconnected persons. If a concluded parentage or marriage is not linked, the tree does not yet reflect your conclusion: go back and write the relationship.
 
 ### 7. Resolve the question — in the same batch, never separately
@@ -327,7 +325,7 @@ You own the resolution of **the question you actually concluded**: `status: "res
 `project.updated` is stamped for you — do **not** set it yourself. Any `research_append` on the `project` section stamps `updated` to today's date and accepts no field except `status` (passing `updated` is rejected).
 
 - If ALL questions are now `resolved`, call `research_append({ section: "project", op: "update", fields: { status: "completed" } })` — the same write stamps `updated`.
-- That write is refused while a blocking conflict is unresolved, or while any resolved question's proof summary has no `proof-critique` verdict. Both are pre-call snapshots: settling one in the same batch does not count — do it, then complete in a later call.
+- That write is refused while a blocking conflict is unresolved. It is a pre-call snapshot: settling the conflict in the same batch does not count — settle it, then complete in a later call.
 - A tier-≥-probable conclusion whose persons gained no tree structure returns a WARNING, not a refusal. Encode it in the tree, then retry.
 - Otherwise (no status change), call `research_append({ section: "project", op: "update", fields: {} })` to stamp `updated` alone.
 
@@ -668,16 +666,12 @@ the project against the published schemas and write nothing on
 errors. (`validate-schema` remains available as a user-invokable audit
 of the whole project.)
 
-What is NOT structural — and so still needs an explicit step:
-
-1. **Invoke `check-warnings`** after any tree edit or merge (added or
-   updated facts/relationships, or a person merge). This checks for
-   genealogical impossibilities the schema validator cannot (married
-   before 12, died after 120, child born after a parent's death, a
-   merge that put the same person on both ends of a relationship, etc.).
-
-This is not auto-triggered — you must invoke it explicitly.
-
+The tree writer tools also refuse a write that introduces an unjustified
+genealogical warning (`tree_edit`, `tree_correct`, `merge_tree_persons`,
+`materialize_facts`). When a write would introduce a warning, the tool
+returns `{ ok: false, reason: "unjustified_warnings" }` with each
+warning's id. Re-call with `warningJustifications` for each id, or
+abandon the write.
 
 ---
 
@@ -694,7 +688,7 @@ reproduce it, re-argue the evidence, or walk the assertions again. Return
 - key limitations: unresolved conflicts accounted for, named records still
   unsearched, and any gap that would narrow the answer
 - next-step hint for the caller (e.g. "conflict-resolution on c_001",
-  "mentor proof-critique outstanding", "q_002 still open")
+  "q_002 still open")
 
 On a decline, return the failed precondition, the id that blocks it, and the
 skill to route to — in the same ≤10 lines.
@@ -704,12 +698,23 @@ skill to route to — in the same ≤10 lines.
 After the lines above, write a line containing only `---`, then exactly two
 paragraphs of plain prose with **no label, heading or field name**:
 
-1. One paragraph for someone who has never done genealogy: what was concluded
-   about this person, how firmly, and what the conclusion rests on. Say how
-   sure it is in plain words rather than by naming a tier. No identifiers,
-   file names, tool names or field names; a person is a name, a record is
-   what it is ("the 1885 county estate file").
-2. One sentence: what happens next, in plain language.
+1. One paragraph for someone who has never done genealogy: what was found
+   about this person, how firmly, and what the finding rests on. Say how
+   sure it is in plain words rather than by naming a tier: "well established"
+   at `proved`, "likely" at `probable`, and "a possible answer" or "not yet
+   answered" below that. Call it a "finding", or a "conclusion" only at
+   `proved`. End the paragraph with one plain sentence on what was not
+   searched, restated from the unsearched records named in the summary's own
+   `exhaustive_search_summary`; if it names none, say that every place the
+   answer was likely to be recorded was searched. No identifiers, file names,
+   tool names or field names; a person is a name, a record is what it is
+   ("the 1885 county estate file"). Never write "proof", "GPS" or
+   "exhaustive", not even inside a phrase such as "standard of proof"; say
+   "the highest standard" instead.
+2. One sentence: what happens next, in plain language. When this invocation
+   set `project.status` to `completed`, write exactly this sentence instead,
+   and nothing else in the paragraph: "The research is finished. If you'd like
+   a second opinion on it, just ask."
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

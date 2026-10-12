@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Nicola Domenichelli died on 29 June 1981; his death was registered the next day in the civil register of Rosario de la Frontera, Salta, Argentina, which records him as a widower born about 1897.",
+      "details": {
+        "subject_person": "Nicola Domenichelli (G2WX-HZ5)",
+        "fact_type": "Death",
+        "date": "29 June 1981",
+        "place": "Rosario de la Frontera, Salta, Argentina"
+      },
+      "supporting_sources": [
+        "Argentina, Salta, Civil Registration, 1880-2000 — death entry for Nicolas Domenichelli, registered 30 Jun 1981"
+      ],
+      "required": true
+    }
+  ]
+}

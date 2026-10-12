@@ -21,9 +21,9 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
   `? & % #`, so `GENEALOGY_PG_DSN` carries no `sslmode`; a DSN `sslmode` would override
   `PGSSLMODE`. Against an RDS Proxy or a non-RDS CA, override both at API level.
 - **`02-tools-alb.config` is a file of its own** because a validation error drops the whole
-  file. In a SingleInstance environment there is no load balancer: whether Beanstalk
-  ignores the namespace or rejects the deploy is a U13 measurement, and if it rejects, the
-  setting moves to an API-level one.
+  file. A SingleInstance environment has no load balancer and ignores the file, and one
+  created with a Classic load balancer silently loses its 1,800 s idle timeout (U13,
+  2026-10-07).
 - **Application Load Balancer, chosen at creation.** `create-environment` must pass
   `Namespace=aws:elasticbeanstalk:environment,OptionName=LoadBalancerType,Value=application`
   (and `EnvironmentType` `LoadBalanced`). The API default is `classic`, whose 60 s idle
@@ -32,9 +32,12 @@ the logs block, `asg` 1/1, and nginx at 1800 s or more.
 - **Not in the bundle:** `GENEALOGY_PG_DSN`, `GENEALOGY_S3_BUCKET` (both required, or
   `build/http.js` exits 2 before listening), the other `GENEALOGY_S3_*` variables, and the
   config overrides in `../tools/README.md`. Each is an API-level setting.
-- **No debug hold, here or at API level.** `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and
-  `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS` are test-only (handoff step 9). The template test and
-  `make eb-bundles-verify` refuse any `GENEALOGY_DEBUG_*` variable, and a hold set at API
-  level makes `build/http.js` print `debug holds set (never in production):
-  NAME="value"` on stderr before it listens (U11).
+- **No debug hold in the bundle, and none at API level outside a rehearsal.**
+  `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS` are
+  test-only (handoff step 9). The template test and `make eb-bundles-verify` refuse any
+  `GENEALOGY_DEBUG_*` variable in the bundle. The one API-level use is acceptance step 4 on
+  U13's rehearsal host, through `../eb-rehearsal/rehearse.py probe --case debug_hold`, which
+  sets `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` and removes it when the case ends.
+  A hold set at API level makes `build/http.js` print `debug holds set (never in production):
+  NAME="value"` on stderr before it listens (U11), so it shows in the logs.
 - **The instance count** is a default; an API-level `aws:autoscaling:asg` setting wins.

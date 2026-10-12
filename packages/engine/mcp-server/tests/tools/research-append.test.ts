@@ -21,7 +21,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { researchAppend, countryConsistency, mintedFromThisRecord } from "../../src/tools/research-append.js";
+import { researchAppend, countryConsistency, mintedFromThisRecord, personaReachable } from "../../src/tools/research-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import {
@@ -3670,12 +3670,10 @@ describe("research_append (project singleton section)", () => {
     expect(research.project.status).toBe("active");
   });
 
-  // ── Completed-gate: the mentor verdict (issue #1490 phase 1) ──
-  // Prose carried this rule since PR #811 ("verify BOTH gates, in order — do
-  // not write completed until both hold"; #1029 touched the file but not that
-  // row) and 29 of 128 completed runs in the committed e2e corpus reach
-  // `completed` with at least one uncritiqued summary anyway — 23%, of which
-  // 23 predate the prose. This is that rule at the write boundary.
+  // ── Completed-gate: no mentor verdict is required (issue #2951) ──
+  // A gps-mentor `proof-critique` verdict used to be a precondition on
+  // `completed`. The mentor now runs only on request, so a proof summary with no
+  // critique must not block completion.
 
   const resolvedQuestion = () => ({
     id: "q_001",
@@ -3702,22 +3700,10 @@ describe("research_append (project singleton section)", () => {
     exhaustive_search_summary: "Every identified repository was searched.",
     narrative_markdown: "The evidence establishes the parentage.",
   });
-  const critique = (targetId = "ps_001", extra: Record<string, unknown> = {}) => ({
-    id: "ev_001",
-    focus: "proof-critique",
-    target_id: targetId,
-    target_type: "proof_summary",
-    verdict: "looks_solid",
-    file_path: "evaluations/proof-critique-ps_001.json",
-    timestamp: "2026-01-02T00:00:00Z",
-    superseded_by: null,
-    ...extra,
-  });
-  const withProof = (evaluations: Record<string, unknown>[] = []) => {
+  const withProof = () => {
     const r = baseResearch();
     r.questions.push(resolvedQuestion());
     r.proof_summaries.push(summary());
-    r.evaluations.push(...evaluations);
     return r;
   };
 
@@ -3786,8 +3772,8 @@ describe("research_append (project singleton section)", () => {
 
   it("allows the summary and the resolve in ONE batch, summary first", async () => {
     // Reads live state on purpose: the summary and the resolve are two halves of
-    // one author's conclusion, unlike the mentor verdict which must come from a
-    // different actor. 7 of 154 corpus resolve-calls do exactly this, all with
+    // one author's conclusion, unlike the exhaustive declaration, which must come
+    // from research-exhaustiveness. 7 of 154 corpus resolve-calls do exactly this, all with
     // the summary ordered first — a pre-call snapshot would refuse all 7.
     const r0 = baseResearch();
     r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
@@ -3832,7 +3818,7 @@ describe("research_append (project singleton section)", () => {
   it("a batch cannot resolve its own blocking conflict and complete", async () => {
     // The conflict gate used to read `research.conflicts` LIVE, and applyOne
     // mutates in place per op — so one batch could settle the conflict and
-    // complete in the same call. Same defect the mentor gate's snapshot avoids.
+    // complete in the same call. Same defect the exhaustive-declaration snapshot avoids.
     await writeProject(withConflict(conflictBase()));
     const r = await researchAppend({
       projectPath: dir,
@@ -3859,21 +3845,18 @@ describe("research_append (project singleton section)", () => {
     expect(research.project.status).toBe("active");
   });
 
-  it("refuses completed when a resolved question's proof summary has no mentor verdict", async () => {
+  it("allows completed when a resolved question's proof summary has no mentor verdict", async () => {
     await writeProject(withProof());
     const r = await complete();
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    const msg = r.errors.join(" ");
-    expect(msg).toMatch(/cannot set project\.status/);
-    expect(msg).toMatch(/ps_001/);
-    expect(msg).toMatch(/proof-critique/);
+    expect(r.ok).toBe(true);
     const research = await readResearch();
-    expect(research.project.status).toBe("active"); // nothing written
+    expect(research.project.status).toBe("completed");
   });
 
-  it("allows completed once the summary carries a proof-critique verdict", async () => {
-    await writeProject(withProof([critique()]));
+  it("a resolved question with no proof summary still completes, on seeded state", async () => {
+    const r0 = baseResearch();
+    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
+    await writeProject(r0);
     const r = await complete();
     expect(r.ok).toBe(true);
   });
@@ -3897,7 +3880,7 @@ describe("research_append (project singleton section)", () => {
   it("warns on completion when a probable conclusion added no tree structure (#1490)", async () => {
     // Baseline == current tree, so I1 (linked to the summary via a_001) gained
     // nothing this session — the conclusion was reached and left un-encoded.
-    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    await writeProject(withEvidence(withProof()), baseTree);
     await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
@@ -3919,7 +3902,7 @@ describe("research_append (project singleton section)", () => {
         },
       ],
     };
-    await writeProject(withEvidence(withProof([critique()])), current);
+    await writeProject(withEvidence(withProof()), current);
     await writeBaseline(baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
@@ -3930,80 +3913,13 @@ describe("research_append (project singleton section)", () => {
   it("does not warn when the project predates the baseline (fail-open) (#1490)", async () => {
     // No starting-tree.gedcomx.json on disk — a legacy project. The check must
     // fail open (no warning), never treat every fact as new.
-    await writeProject(withEvidence(withProof([critique()])), baseTree);
+    await writeProject(withEvidence(withProof()), baseTree);
     const r = await complete();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.validation.warnings.join(" ")).not.toMatch(/no tree person it draws evidence from/);
   });
 
-  it("does not count a superseded verdict", async () => {
-    // If a newer verdict replaced it, that one is itself in evaluations[] and
-    // satisfies the gate. If nothing replaced it, the critique no longer stands.
-    await writeProject(withProof([critique("ps_001", { superseded_by: "ev_002" })]));
-    const r = await complete();
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/ps_001/);
-  });
-
-  it("a batch cannot satisfy its own precondition", async () => {
-    // The critique set is snapshotted before any op applies, so appending the
-    // verdict and completing in one call must still refuse. Read live, the gate
-    // would grade its own homework.
-    await writeProject(withProof());
-    // The tool assigns entry ids, so an append entry must not carry one.
-    const { id: _id, ...critiqueEntry } = critique();
-    const r = await researchAppend({
-      projectPath: dir,
-      ops: [
-        { section: "evaluations", op: "append", entry: critiqueEntry as never },
-        { section: "project", op: "update", fields: { status: "completed" } },
-      ],
-    } as never);
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/ps_001/);
-    const research = await readResearch();
-    expect(research.project.status).toBe("active");
-  });
-
-  it("a resolved question with no proof summary passes vacuously, on seeded state", async () => {
-    // Still deliberate, but the state is now reachable only by seeding it:
-    // questionResolvedInvariants refuses the transition through the tool. What
-    // this pins is that an already-seeded document still LOADS and completes —
-    // a gate on a transition must not retroactively invalidate documents that
-    // predate it.
-    const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), resolution_assertion_ids: [] });
-    await writeProject(r0);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-  });
-
-  it("counts a question resolved by DATE alone toward the critique requirement", async () => {
-    // `resolved` is an ISO date or null, so the old `=== true` never matched and
-    // a date-resolved question's summary escaped the mentor gate entirely.
-    // `question-state.ts` has always read this field as truthy-or-not, so the
-    // two disagreed about the same question.
-    const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "exhaustive_declared" });
-    r0.proof_summaries.push(summary());
-    await writeProject(r0);
-    const r = await complete();
-    expect(r.ok).toBe(false);
-    if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/ps_001/);
-  });
-
-  it("ignores a summary whose question is not resolved", async () => {
-    const r0 = baseResearch();
-    r0.questions.push({ ...resolvedQuestion(), status: "open", resolved: null });
-    r0.proof_summaries.push(summary());
-    await writeProject(r0);
-    const r = await complete();
-    expect(r.ok).toBe(true);
-  });
 });
 
 // ─── Batch ops ───────────────────────────────────────────────────────────────
@@ -4679,7 +4595,16 @@ describe("research_append (batch ops)", () => {
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "skipped" }, planId: "pl_001" },
+        // `skip_category` is required on a new skip (#1830); this test is about
+        // the terminal-plan gate, so it sends a valid skip rather than asserting
+        // the absence of an unrelated rule.
+        {
+          section: "plan_items",
+          op: "update",
+          entryId: "pli_001",
+          fields: { status: "skipped", skip_category: "answered" },
+          planId: "pl_001",
+        },
       ],
     });
 
@@ -4825,6 +4750,13 @@ describe("research_append (batch ops)", () => {
   });
   it("(in-flight) refuses an unrelated question", async () => {
     await refusedFor(running(), { depends_on: [], unblocks: [] });
+  });
+  it("(in-flight) tells a same-batch resolve-and-append to split into two calls", async () => {
+    await writeProject(running());
+    const r = await researchAppend(newQ());
+    const msg = (errorsOf(r) ?? []).join("\n");
+    expect(msg).toMatch(/as it stood before the call/);
+    expect(msg).toMatch(/write the resolution in its own call and append the new question in the next one/);
   });
   it("(in-flight) refuses when unblocks names the question but no conflict blocks it", async () => {
     await refusedFor(running(), { unblocks: ["q_001"] });
@@ -5166,12 +5098,18 @@ describe("research_append (batch ops)", () => {
   });
 
   it("(d4-logattr) NEVER refuses an in_progress or a skipped move", async () => {
+    // This rule is about `completed` only. A `skipped` move separately needs a
+    // `skip_category` (#1830), enforced by its own suite, so the skip arm sends
+    // one. Without it this test asserts the ABSENCE of a rule it was never
+    // about, and reds whenever an unrelated plan-item precondition lands.
     for (const status of ["in_progress", "skipped"]) {
       await writeProject(attrResearch("planned", []));
+      const fields: Record<string, unknown> =
+        status === "skipped" ? { status, skip_category: "answered" } : { status };
       const r = await researchAppend({
         projectPath: dir,
         ops: [
-          { section: "plan_items", op: "update", entryId: "pli_001", fields: { status }, planId: "pl_001" },
+          { section: "plan_items", op: "update", entryId: "pli_001", fields, planId: "pl_001" },
         ],
       } as any);
       expect(errorsOf(r) ?? [], `status ${status}`).toEqual([]);
@@ -6298,6 +6236,30 @@ describe("research_append (composite persist + enforcement)", () => {
     ]);
     expect(r.validation.warnings.join(" ")).toMatch(/names no country/);
     expect((await readResearch()).assertions[1].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+  });
+
+  it("resolves a bare place against the other places of its own record only", async () => {
+    // Genealogist ruling 2026-10-06, option C: the will's bare "Shenandoah" went
+    // to New Zealand with no context. Context is per record, never the batch.
+    await writeProject();
+    const a = (record_id: string, place: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: { ...noId(validAssertion("x", "src_001")), record_id, place },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("rec-A", "Shenandoah"),
+        a("rec-A", "Borough of Shenandoah, County of Schuylkill"),
+        a("rec-B", "Dublin, Ireland"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
+      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    });
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
   });
 
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
@@ -9511,7 +9473,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       projectPath: dir,
       ops: [
         { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
-        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped" } },
+        // `skip_category` is required on a new skip (#1830). Without it that
+        // refusal pre-empts the G2 one and this test stops exercising the
+        // snapshot-read vector it exists for.
+        { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_002", fields: { status: "skipped", skip_category: "answered" } },
         { section: "questions", op: "update", entryId: "q_001", fields: { exhaustive_declaration: DECLARATION } },
       ],
     } as any);
@@ -9536,19 +9501,43 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
     expect(singleOk(r).ok).toBe(true);
   });
 
-  it("allows a declaration while items are still `planned` — the licensed early consultation", async () => {
-    // research/SKILL.md routes here deliberately before the plan is drained.
-    // 122 corpus items sit at `planned` across 31 correct declarations; a gate
-    // built from the skill body's stricter opening sentence refuses all 31.
+  it("refuses a declaration while items are still `planned`, naming every one (#1830)", async () => {
+    // Reversed 2026-10-05: this test licensed the old behaviour, where a
+    // leftover `planned` item did not block. The measurement that decided it is
+    // in planCompleteInvariants' docstring — 38 leftovers across the e2e corpus
+    // and not one recorded reason, under prose that already asked for one.
     await writeProject(exhResearch(["completed", "planned", "planned"]));
-    const r = await researchAppend({
+    const errs = failure(await researchAppend({
       projectPath: dir,
       section: "questions",
       op: "update",
       entryId: "q_001",
       fields: { exhaustive_declaration: DECLARATION },
-    });
-    expect(singleOk(r).ok).toBe(true);
+    })).errors.join(" ");
+    expect(errs).toMatch(/cannot be declared exhaustive/);
+    // BOTH ids, not just the first: a refusal naming one of two sends the
+    // planner back for a second round it could have finished in one.
+    expect(errs).toMatch(/pli_002/);
+    expect(errs).toMatch(/pli_003/);
+    expect(errs).toMatch(/'planned'/);
+    // The completed item is not a blocker and must not be named as one.
+    expect(errs).not.toMatch(/pli_001/);
+  });
+
+  it("names the in_progress and the planned items separately when both are present", async () => {
+    // The two arms carry different remedies — one waits for a search to finish,
+    // the other needs disposal — so a reader has to be able to tell which item
+    // is which. A single merged list reads as one problem with four causes.
+    await writeProject(exhResearch(["in_progress", "planned"]));
+    const errs = failure(await researchAppend({
+      projectPath: dir,
+      section: "questions",
+      op: "update",
+      entryId: "q_001",
+      fields: { exhaustive_declaration: DECLARATION },
+    })).errors.join(" ");
+    expect(errs).toMatch(/pli_001[^.]*'in_progress'/);
+    expect(errs).toMatch(/pli_002[^.]*'planned'/);
   });
 
   it("ignores an in_progress item on a plan belonging to a DIFFERENT question", async () => {
@@ -10495,5 +10484,106 @@ describe("mintedFromThisRecord counts person-level refs (#2696)", () => {
 
   it("a person-level ref to another record means it was not minted from this one", () => {
     expect(mintedFromThisRecord("I9", "REC-A", research, tree([{ ref: "S1" }, { ref: "S2" }]))).toBe(false);
+  });
+});
+
+describe("personaReachable — an accepted FamilySearch hint is a re-openable record (#2029)", () => {
+  // search-hints' record mode logs an accepted hint as tool `person_record_matches`
+  // with no sidecar, and record-extraction reuses that log entry. The hint's ark
+  // is a 1:1: record persona record_read opens, so the same_person score gate
+  // must still bind on a link made from it.
+  const research = (tool: string) => ({
+    assertions: [{ id: "a_001", record_id: "ark:/61903/1:1:MABC", record_persona_id: null, log_entry_id: "log_6" }],
+    log: [{ id: "log_6", tool, results_ref: null }],
+  });
+
+  it("is reachable when the assertion came from an accepted hint", () => {
+    expect(personaReachable({ assertion_id: "a_001" }, research("person_record_matches"))).toBe(true);
+  });
+
+  it("still treats an image-sourced assertion as unreachable", () => {
+    expect(personaReachable({ assertion_id: "a_001" }, research("image_transcribe"))).toBe(false);
+  });
+});
+
+// ─── An unexplained move: the update path (#2537) ───────────────────────────
+//
+// `research-append-unexplained-move.test.ts` calls the invariant directly; these
+// go through `researchAppend`, which decides whether an update re-checks the
+// move at all. Re-pointing a link is a new pairing: without the re-check, a
+// confident link on a record inside the cluster could be moved onto one across
+// the ocean in a second call.
+
+describe("research_append — unexplained move, update path", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-move-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  /** I1 lived in Sussex; rec_ENG places him there, rec_TN in Tennessee. I2 has no residence. */
+  async function write() {
+    const r = baseResearch();
+    const a = (id: string, recordId: string, factType: string, extra: Record<string, unknown>) => ({
+      ...validAssertion(id), record_id: recordId, fact_type: factType, ...extra,
+    });
+    r.assertions = [
+      ...r.assertions,
+      a("a_020", "rec_ENG", "name", { value: "William Weller" }),
+      a("a_021", "rec_ENG", "residence", { value: "Horsham", place: "Horsham, Sussex, England" }),
+      a("a_030", "rec_TN", "name", { value: "William Weller" }),
+      a("a_031", "rec_TN", "residence", { value: "Maury", place: "Maury, Tennessee, United States" }),
+    ] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    const tree = JSON.parse(JSON.stringify(baseTree));
+    tree.persons[0].facts = [{ id: "F1", type: "Residence", date: "1851", place: "Horsham, Sussex, England" }];
+    tree.persons.push({ id: "I2", gender: "Male", names: [{ id: "N2", given: "William", surname: "Weller" }] });
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await attestEveryAssertion(dir, "I1");
+    await attestEveryAssertion(dir, "I2");
+  }
+  const appendConfident = (assertionId: string, personId: string) =>
+    researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: {
+        assertion_id: assertionId, person_id: personId, confidence: "confident",
+        rationale: "Name and household agree.", match_score: null,
+        created: "2026-10-07", superseded_by: null,
+      },
+    });
+  const update = (entryId: string, fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields });
+
+  it("refuses re-pointing a confident link's assertion onto a record across the move", async () => {
+    await write();
+    const appended = await appendConfident("a_020", "I1");
+    expect(appended.ok).toBe(true);
+    const r = await update(singleOk(appended).entryId, { assertion_id: "a_030" });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/move_bridge/);
+  });
+
+  it("refuses re-pointing a confident link's person onto one the move does not fit", async () => {
+    await write();
+    const appended = await appendConfident("a_030", "I2");
+    expect(appended.ok).toBe(true);
+    const r = await update(singleOk(appended).entryId, { person_id: "I1" });
+    expect(r.ok).toBe(false);
+    expect(failure(r).errors?.join(" ")).toMatch(/move_bridge/);
+  });
+
+  it("still allows a rationale-only edit on a confident link across the move", async () => {
+    await write();
+    const appended = await appendConfident("a_030", "I2");
+    const id = singleOk(appended).entryId;
+    // Make it a pre-rule link across the move: point it at I1 behind the tool's back.
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    research.person_evidence.find((e: any) => e.id === id).person_id = "I1";
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
   });
 });

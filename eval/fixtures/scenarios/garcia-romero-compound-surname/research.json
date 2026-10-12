@@ -1,0 +1,102 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of María Josefa García Romero, born about 1843 in Vélez-Málaga, Málaga, Spain",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-02",
+    "updated": "2026-10-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were the parents of María Josefa García Romero (born about 1843, Vélez-Málaga, Málaga, Spain)?",
+      "rationale": "Primary research objective. She carries two surnames and no parent is in the tree; nothing has been searched yet.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-02",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+      "for_place": "Vélez-Málaga, Málaga, Andalusia, Spain",
+      "time_period": "1835-1870",
+      "jurisdictions": [
+        {
+          "name": "Vélez-Málaga, Málaga, Andalusia, Spain (municipality)",
+          "date_range": "historical"
+        },
+        {
+          "name": "Santa María parish, Vélez-Málaga",
+          "date_range": "historical"
+        },
+        {
+          "name": "Diocese of Málaga",
+          "date_range": "historical"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1784529",
+          "title": "Spain, Catholic Church Records, 1307-2005",
+          "date_range": "1306-2005"
+        },
+        {
+          "id": "1500692",
+          "title": "Spain, Baptisms, 1502-1940",
+          "date_range": "1501-1940"
+        }
+      ],
+      "quirks": [
+        "Civil registration in Spain began in 1871; for a birth about 1843 the parish baptism register is the primary record.",
+        "The Santa María parish registers for Vélez-Málaga from 1837 (image groups 004104131) are not name-indexed but are full-text searchable; a 1841-1845 births volume (004458370) is 96% name-indexed.",
+        "Baptism entries in this period normally name both parents and the four grandparents."
+      ],
+      "guide_markdown": "## Vélez-Málaga, Málaga, Spain — 1835-1870\n\nBefore civil registration (1871) the parish books are the vital record. Santa María's books from 1837 are on FamilySearch, unindexed but full-text searchable; one births volume for 1841-1845 is name-indexed.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Genealogy",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Spain_Church_Records",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-10-02"
+    }
+  ]
+}

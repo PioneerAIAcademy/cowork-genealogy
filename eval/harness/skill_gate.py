@@ -53,8 +53,32 @@ from typing import Any
 from harness.auth import AuthConfig, AuthError, resolve_auth
 from harness.loader import InvalidTestError, TestSpec, load_test
 from harness.orchestrator import REPO_ROOT, OrchestratorPaths, run_one_test
+from harness.snapshot import diff_snapshot_vs_disk
 
 _SCORE_LABEL = {3: "pass", 2: "partial", 1: "fail", None: "n/a"}
+
+
+def stale_snapshot_paths(
+    snapshot: dict[str, str], skill: str, repo_root: Path
+) -> list[str]:
+    """Baseline paths that differ from disk, other than the gated skill's own SKILL.md."""
+    if not snapshot:
+        return []
+    own = f"packages/engine/plugin/skills/{skill}/SKILL.md"
+    return [p for p in sorted(diff_snapshot_vs_disk(snapshot, repo_root)) if p != own]
+
+
+def drift_signal(signal: "GateSignal", snapshot_drifted: list[str]) -> "GateSignal":
+    """Force NEEDS YOUR EYES when the baseline drifted outside the gated skill."""
+    if not snapshot_drifted:
+        return signal
+    shown = snapshot_drifted[:5]
+    tail = " ..." if len(snapshot_drifted) > 5 else ""
+    reason = (
+        f"baseline snapshot drifted on {len(snapshot_drifted)} path(s) outside "
+        f"this skill — the comparison may be stale: " + ", ".join(shown) + tail
+    )
+    return GateSignal("NEEDS YOUR EYES", [reason] + signal.reasons)
 
 
 # --------------------------------------------------------------------------
@@ -259,6 +283,7 @@ class Baseline:
     #: read as human-verified.
     corrected: int = 0
     total: int = 0
+    snapshot: dict[str, str] = field(default_factory=dict)
 
 
 def incumbent_baseline(
@@ -311,7 +336,11 @@ def incumbent_baseline(
                     n_corrected += 1
         scores[tid] = dims
 
-    return Baseline(scores=scores, path=log_path, corrected=n_corrected, total=n_total)
+    return Baseline(
+        scores=scores, path=log_path,
+        corrected=n_corrected, total=n_total,
+        snapshot=env.get("snapshot") or {},
+    )
 
 
 # --------------------------------------------------------------------------
@@ -515,10 +544,16 @@ def main(argv: list[str] | None = None) -> int:
     # Is there actually an uncommitted edit to evaluate? (git diff vs HEAD.) A
     # stale baseline with no current edit is the main false-positive trap — the
     # gate would otherwise credit unrelated committed drift (or judge noise) as a
-    # "fix." Comparing against the baseline *snapshot* body can't catch this (a
-    # stale baseline differs from the working tree for unrelated reasons), so ask
-    # git whether the operator has actually changed the skill.
+    # "fix." The snapshot comparison below catches *committed* drift in other
+    # files; this catches the *uncommitted* edit to the skill itself.
     no_edit = not _has_uncommitted_skill_edit(args.skill)
+
+    # --- Snapshot drift: does the baseline match the current working tree? ---
+    # The gated skill's own SKILL.md always differs from the baseline (it IS
+    # the edit being gated), so exclude it. Any OTHER path differing means the
+    # baseline was recorded against different repo state — fixtures, other
+    # skills, agent bodies — and the comparison is stale.
+    snapshot_drifted = stale_snapshot_paths(baseline.snapshot, args.skill, REPO_ROOT)
 
     gate_specs = [mined_spec]
     from harness.versioning import now_utc_filename_timestamp
@@ -540,6 +575,7 @@ def main(argv: list[str] | None = None) -> int:
             "also predate the committed body; run a fresh `make eval-skill` if "
             "unsure.",
         ] + signal.reasons)
+    signal = drift_signal(signal, snapshot_drifted)
     total_cost = sum(
         float((e.get("totals") or {}).get("total_cost_usd") or 0.0)
         for e in cand_entries.values()

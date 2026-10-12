@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Umbelina Maria Azevedo died on 14 November 1910 in the city of Rio de Janeiro, Brazil, where her death was registered in the civil register; the entry indexes her as Umbelina Azevedo Da Silva, born about 1879.",
+      "details": {
+        "subject_person": "Umbelina Maria Azevedo (GXSQ-V3L)",
+        "fact_type": "Death",
+        "date": "14 November 1910",
+        "place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+      },
+      "supporting_sources": [
+        "Brasil, Rio de Janeiro, Registro Civil, 1804-2013 — death entry for Umbelina Azevedo Da Silva, 14 Nov 1910"
+      ],
+      "required": true
+    }
+  ]
+}

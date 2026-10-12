@@ -1,7 +1,7 @@
 # `build_external_search_url` — external-site search URL tool — Spec
 
 > **Status:** New (2026-09-09), corrected 2026-09-10 after review. Migrates
-> the deterministic URL-templating the `search-external-sites` skill
+> the deterministic URL-templating the `search-external-sites` skill (now an agent)
 > previously performed **by hand in prose** into a tested MCP tool. The
 > skill's own SKILL.md carried seven site-wide templates (Ancestry,
 > MyHeritage, FindMyPast, FindAGrave, Newspapers.com, Chronicling America, and
@@ -17,7 +17,7 @@ as a fresh site-wide search or by appending parameters onto a FamilySearch-
 curated collection link. Given a `projectPath` it also logs the hand-off (§6).
 
 ```
-build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, notes, access, logId? } | { ok: false, reason, errors, supportedSites? }
+build_external_search_url({ site, baseUrl?, locale?, attributes }) -> { ok: true, url, handoffLine, notes, access, logId? } | { ok: false, reason, errors, supportedSites? }
 ```
 
 ---
@@ -72,8 +72,8 @@ Facts still verifiable in the current tree, cited at their current location:
 | Fact | Source |
 |------|--------|
 | `conflicts[]` c_001 rejects Pennsylvania in favor of Ireland | `eval/fixtures/scenarios/mid-research-flynn/research.json` |
-| The "check `conflicts[]` before encoding" rule | `packages/engine/plugin/skills/search-external-sites/SKILL.md` §"3. Build the URL" |
-| The two worked examples now encoding Ireland | `packages/engine/plugin/skills/search-external-sites/SKILL.md` §"3. Build the URL" (Case A and Case B) |
+| The "check `conflicts[]` before encoding" rule | `packages/engine/plugin/agents/search-external-sites.md` §"3. Build the URL" |
+| The two worked examples now encoding Ireland | `packages/engine/plugin/agents/search-external-sites.md` §"3. Build the URL" (Case A and Case B) |
 | `digital_newspaper_archive` is an open bucket identified by `url_generated`, not a fixed per-state URL | `docs/specs/schemas/enums.schema.json` (`$defs.external_site`), [`research-schema-spec.md` §5.4 `log`](research-schema-spec.md#54-log) |
 | `convert_calendar` — the architectural precedent for a pure, no-network, no-project-files tool | `packages/engine/mcp-server/src/tools/convert-calendar.ts` |
 | `research-log-append.ts` derives its MCP schema enum from `VALIDATOR_ENUMS`; this tool deliberately does **not** (§8) — `SUPPORTED_SITES` is the keys of its own `SITE_BASE_URL`, since the shared enum also names `familysearch_web`, which the tool has no template for | `packages/engine/mcp-server/src/tools/research-log-append.ts`, `EXTERNAL_SITE_VALUES` |
@@ -152,16 +152,22 @@ build_external_search_url({
 ### 3.1 Return value
 
 ```typescript
-{ ok: true, url: string, notes: string[], access: "free" | "free_bot_protected" | "subscription" }
+{ ok: true, url: string, handoffLine: string, notes: string[], access: "free" | "free_bot_protected" | "subscription" }
 | { ok: false, reason: "unsupported_site", errors: string[], supportedSites: string[] }
 | { ok: false, reason: "base_url_required", errors: string[] }
 | { ok: false, reason: "invalid_base_url", errors: string[] }
 | { ok: false, reason: "outside_coverage", errors: string[] }
 | { ok: false, reason: "no_attributes", errors: string[] }
 // MCP tool only (buildExternalSearchUrlTool, §6): the build above, plus
-| { ok: true, url, notes, access, logId?: string }   // logId when projectPath was given
+| { ok: true, url, handoffLine, notes, access, logId?: string }   // logId when projectPath was given
 | { ok: false, reason: "log_write_failed", errors: string[] }
 ```
+
+`handoffLine` is the hand-off as the researcher reads it — `Open this search:`, a
+newline, then `url` — built in the tool from the same string it logs as
+`url_generated`. The agent pastes it whole. A model that retyped a long URL into
+its reply drifted from the logged one (a doubled segment, a dropped segment),
+so the line is built here rather than in the agent.
 
 `notes` carries non-fatal observations the caller should narrate:
 
@@ -613,13 +619,11 @@ network vantage; a second vantage would settle it.
   (`project-context-tool-spec.md` §2.3). The log write's warnings and its
   nil-escalation note are merged into `notes`. Writes nothing to
   `tree.gedcomx.json`.
-- **`projectPath` and `planItemId` are not advertised yet.** The function
-  accepts them; the skill-to-agent conversion adds them to the MCP `inputSchema`
-  in the same change that deletes the skill's own step-4
-  `research_log_append` call. Advertised earlier, a model following the
-  skill's habit of passing `projectPath` everywhere would log each URL
-  twice. Until then the write path is reachable only from the tests and the
-  eval harness.
+- **`projectPath` and `planItemId` are advertised** in the MCP `inputSchema`, in
+  the same change that removed the in-flight `research_log_append` call from the
+  search-external-sites agent, so a hand-off is logged once. The description
+  tells the caller not to log it again, and to omit `projectPath` when the
+  results are already in hand.
 - **Does not decide which event a search targets, or resolve `conflicts[]`.**
   Those are the skill's judgments (SKILL.md `:314-333`) — the tool receives
   already-decided attribute values and templates them.

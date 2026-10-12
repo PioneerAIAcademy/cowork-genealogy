@@ -243,6 +243,65 @@ describe("hasEventBeforeBirth predicate", () => {
     // Only fact is the birth itself. earliest event == latest birth, diff = 0.
     expect(hasEventBeforeBirth(new Mob(tree, "I1"), 365 * 2)).toBe(false);
   });
+
+  // Knowing divergence from warnings.java:918 — see the predicate's docstring.
+  // Each date is read as generously as it allows, so imprecision never
+  // manufactures an event-before-birth on its own.
+  const fact = (id: string, type: string, date: string) => ({
+    id,
+    type,
+    date,
+    standard_date: date,
+  });
+  const onePerson = (facts: ReturnType<typeof fact>[]) =>
+    new Mob(
+      {
+        persons: [
+          {
+            id: "I1",
+            gender: "Female",
+            names: [{ id: "N", given: "Margaret", surname: "Mercer" }],
+            facts,
+          },
+        ],
+      },
+      "I1",
+    );
+
+  it.each(["Abt 1868", "Est 1868", "Bef 1868", "Bet 1860 and 1868"])(
+    "is silent when the only fact is an imprecise birth (%s)",
+    (date) => {
+      expect(hasEventBeforeBirth(onePerson([fact("F1", "Birth", date)]), 365 * 2)).toBe(false);
+    },
+  );
+
+  it("is silent on an approximate birth and an approximate residence in the same year", () => {
+    // Abt 1870 spans 1869-01-01..1871-12-31: the Java pairing reads 1,094 days.
+    const mob = onePerson([fact("F1", "Birth", "Abt 1870"), fact("F2", "Residence", "Abt 1870")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(false);
+  });
+
+  it("is silent on year-only dates two years apart (generous gap 366 days)", () => {
+    const mob = onePerson([fact("F1", "Birth", "1860"), fact("F2", "Residence", "1858")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(false);
+  });
+
+  it("still fires when imprecise dates are more than 2 years apart on every reading", () => {
+    // Residence read as late as 1851-12-31, birth as early as 1859-01-01.
+    const mob = onePerson([fact("F1", "Birth", "Abt 1860"), fact("F2", "Residence", "Abt 1850")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a death 3 years before birth fires", () => {
+    const mob = onePerson([fact("F1", "Birth", "1 Jan 1850"), fact("F2", "Death", "1 Jan 1847")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a birth 5 years before the latest christening fires", () => {
+    // The latest birth-like fact is the christening; the birth is the event.
+    const mob = onePerson([fact("F1", "Birth", "1 Jan 1800"), fact("F2", "Christening", "1 Jan 1805")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -385,6 +444,154 @@ describe("earliestChildBirthToBirth predicate", () => {
     expect(
       earliestChildBirthToBirth(new Mob(christeningOnly, "P"), 14),
     ).toBe(true);
+  });
+
+  // The child side reads each date's LATEST bound, so the check fires on a
+  // certainty rather than a possibility. Every test above uses exact years,
+  // where the two bounds coincide and the distinction is invisible — these
+  // are the cases that tell them apart, and the reason #2840 could stop
+  // exempting `earliestChildBirthToBirth12` from the write gate.
+  const parentThen = (childDate: string): SimplifiedGedcomX => ({
+    persons: [
+      {
+        id: "P",
+        gender: "Male",
+        names: [{ id: "N1", given: "The", surname: "Parent" }],
+        facts: [
+          { id: "F1", type: "Birth", date: "1860", standard_date: "1860" },
+        ],
+      },
+      {
+        id: "C",
+        gender: "Female",
+        names: [{ id: "N2", given: "The", surname: "Child" }],
+        facts: [
+          { id: "F2", type: "Birth", date: childDate, standard_date: childDate },
+        ],
+      },
+    ],
+    relationships: [{ id: "R", type: "ParentChild", parent: "P", child: "C" }],
+  });
+
+  it("does not fire on an imprecise child date whose LATEST bound clears the cutoff", () => {
+    // `Bef 1880` spans 1870..1880. Read at its earliest bound the gap is
+    // 1870 − 1860 = 10 ≤ 12 and this fired; the child may equally have been
+    // born in 1880, at the parent's age 20. Firing on that is firing on a
+    // possibility, and the gate refuses writes on the result.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("Bef 1880"), "P"), 12),
+    ).toBe(false);
+  });
+
+  it("still fires when the child is born BEFORE the parent", () => {
+    // The impossibility this tag is the only check for, and the one the
+    // write gate stopped exempting. −10 ≤ 12.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1850"), "P"), 12),
+    ).toBe(true);
+  });
+
+  it("still fires on a precise date inside the cutoff", () => {
+    // Guards the other direction: the latest-bound read must not stop the
+    // check firing where it always did. Parent aged 8.
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1868"), "P"), 12),
+    ).toBe(true);
+  });
+
+  it("does not fire on a precise date outside the cutoff", () => {
+    expect(
+      earliestChildBirthToBirth(new Mob(parentThen("1890"), "P"), 12),
+    ).toBe(false);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// The age-12 tags are emitted ONCE PER IMPOSSIBLE CHILD, and the age-14
+// tags name the child that actually tripped them.
+//
+// Both halves are a divergence from Java, recorded in
+// person-warnings-tool-spec.md beside the latest-bound one. A single warning
+// per parent cannot say WHICH child is impossible, and the write gate
+// subtracts on a key that includes the child — so one warning keyed on
+// whichever child sorted first made a second impossible child either refuse
+// (key changed) or LAND (key already carried), depending only on the dates.
+// ────────────────────────────────────────────────────────────────────
+
+describe("age-12 is per impossible child", () => {
+  const kid = (id: string, date: string) => ({
+    id,
+    gender: "Male",
+    names: [{ id: `${id}-n`, given: id, surname: "X" }],
+    facts: [{ id: `${id}b`, type: "Birth", date, standard_date: date }],
+  });
+  const mother = (children: Array<[string, string]>): SimplifiedGedcomX =>
+    ({
+      persons: [
+        {
+          id: "M",
+          gender: "Female",
+          names: [{ id: "M-n", given: "Mary", surname: "X" }],
+          facts: [{ id: "Mb", type: "Birth", date: "1860", standard_date: "1860" }],
+        },
+        ...children.map(([id, d]) => kid(id, d)),
+      ],
+      relationships: children.map(([id], i) => ({
+        id: `R${i}`,
+        type: "ParentChild",
+        parent: "M",
+        child: id,
+      })),
+    }) as unknown as SimplifiedGedcomX;
+
+  const age12 = (tree: SimplifiedGedcomX) => {
+    const m = new Mob(tree, "M");
+    return calculateWarnings(m, m, m, true).filter(
+      (w) => w.issueType === "earliestChildBirthToBirth12",
+    );
+  };
+
+  it("emits one warning per impossible child, not one for the parent", () => {
+    // Mother born 1810 with children at 10 and 11 is a real corpus shape
+    // (elisabetha-sugecz-parents). Keyed on one child, the other two were
+    // invisible to the gate.
+    const ws = age12(mother([["A", "1866"], ["B", "1868"], ["C", "1890"]]));
+    expect(ws.map((w) => w.relatedPersonId).sort()).toEqual(["A", "B"]);
+  });
+
+  it("names the child that tripped it, not the earliest POSSIBLE one", () => {
+    // B is certainly age 8. C spans 1850..1880 and is possible-only. Read at
+    // the earliest bound C sorts first, so the warning named C and the
+    // age-14 message read "at most -10".
+    const ws = age12(mother([["B", "1868"], ["C", "Bet 1850 and 1880"]]));
+    expect(ws.map((w) => w.relatedPersonId)).toEqual(["B"]);
+  });
+
+  it("does not fire on a child that is only possibly impossible", () => {
+    expect(age12(mother([["C", "Bet 1850 and 1880"]]))).toEqual([]);
+  });
+
+  it("the age-14 message states the age that triggered it", () => {
+    // A father born 1860 with a child `Bef 1874` trips the cutoff at exactly
+    // 14; read at the child's earliest bound the message said 4.
+    const tree = {
+      persons: [
+        {
+          id: "M",
+          gender: "Male",
+          names: [{ id: "M-n", given: "John", surname: "X" }],
+          facts: [{ id: "Mb", type: "Birth", date: "1860", standard_date: "1860" }],
+        },
+        kid("K", "Bef 1874"),
+      ],
+      relationships: [{ id: "R", type: "ParentChild", parent: "M", child: "K" }],
+    } as unknown as SimplifiedGedcomX;
+    const m = new Mob(tree, "M");
+    const w = calculateWarnings(m, m, m, true).find(
+      (x) => x.issueType === "earliestChildBirthToBirthMale14",
+    );
+    expect(w?.message).toContain("at most 14");
+    expect(w?.relatedPersonId).toBe("K");
   });
 });
 
@@ -982,6 +1189,77 @@ describe("structural counters", () => {
     });
     expect(tooManyFathers(new Mob(tree, "I1"))).toBe(false);
   });
+
+  // Only parents whose edge CLAIMS biological parentage count. #2840 made
+  // these two tags refuse tree writes, so counting an Adoptive edge refuses
+  // the write that records the adoption.
+  const withParentSubtype = (
+    sub: string | undefined,
+    gender: "Male" | "Female",
+  ) => {
+    // BOTH parents take `gender`. Hardcoding the first as Male left the
+    // mother case with one mother, so `tooManyMothers` returned false whatever
+    // the subtype filter did and the test could not fail. The father cases are
+    // unchanged by this — they already passed Male for both.
+    const tree = makeTreeWithRelatives({
+      parents: [{ gender }, { gender }],
+      children: 0,
+    });
+    // Second parent edge only; the first stays an unqualified (biological) one.
+    const second = tree.relationships!.filter((r) => r.type === "ParentChild")[1];
+    if (sub) (second as { subtype?: string }).subtype = sub;
+    return tree;
+  };
+
+  for (const sub of ["Adoptive", "Step", "Foster", "Guardian"]) {
+    it(`tooManyFathers does not fire for a ${sub} father beside a biological one`, () => {
+      expect(tooManyFathers(new Mob(withParentSubtype(sub, "Male"), "I1"))).toBe(
+        false,
+      );
+    });
+  }
+
+  // `parent_subtype_recommended` is an OPEN enum, so nothing rejects a tree
+  // carrying a case variant or the upstream GedcomX spelling whose `Parent`
+  // suffix the simplified format drops and restores on round-trip. Matched as
+  // an exact string, every one of these counted as biological.
+  for (const sub of ["adoptive", "ADOPTIVE", "AdoptiveParent", "StepParent"]) {
+    it(`tooManyFathers tolerates the subtype spelling "${sub}"`, () => {
+      expect(
+        tooManyFathers(new Mob(withParentSubtype(sub, "Male"), "I1")),
+      ).toBe(false);
+    });
+  }
+
+  it("counts an UNRECOGNIZED subtype as biological rather than guessing", () => {
+    // The safe direction: a value we cannot interpret may mean anything, and
+    // treating it as non-biological would silently drop a real second father.
+    expect(
+      tooManyFathers(new Mob(withParentSubtype("Putative", "Male"), "I1")),
+    ).toBe(true);
+  });
+
+  it("tooManyMothers does not fire for an Adoptive mother beside a biological one", () => {
+    expect(
+      tooManyMothers(new Mob(withParentSubtype("Adoptive", "Female"), "I1")),
+    ).toBe(false);
+  });
+
+  // The other direction, twice: an explicit `Biological` subtype and an absent
+  // one must both still count, or the subtype filter has quietly disarmed the
+  // check. Absent is biological by FamilySearch's data model, and 1427 of the
+  // 2266 committed ParentChild edges carry no subtype at all.
+  it("tooManyFathers still fires for two explicitly Biological fathers", () => {
+    expect(
+      tooManyFathers(new Mob(withParentSubtype("Biological", "Male"), "I1")),
+    ).toBe(true);
+  });
+
+  it("tooManyFathers still fires when neither edge carries a subtype", () => {
+    expect(
+      tooManyFathers(new Mob(withParentSubtype(undefined, "Male"), "I1")),
+    ).toBe(true);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -1397,6 +1675,61 @@ describe("hasEventBeforeChristening predicate", () => {
     };
     expect(hasEventBeforeChristening(new Mob(tree, "I1"), 365 * 3)).toBe(false);
   });
+
+  // Knowing divergence from warnings.java:930 — see the predicate's docstring.
+  // The christening is in the event set too, so it must never fire against itself.
+  const fact = (id: string, type: string, date: string) => ({
+    id,
+    type,
+    date,
+    standard_date: date,
+  });
+  const onePerson = (facts: ReturnType<typeof fact>[]) =>
+    new Mob(
+      {
+        persons: [
+          {
+            id: "I1",
+            gender: "Male",
+            names: [{ id: "N", given: "Lone", surname: "Christening" }],
+            facts,
+          },
+        ],
+      },
+      "I1",
+    );
+
+  it.each(["Abt 1868", "Est 1868", "Bef 1868", "Bet 1860 and 1868", "1868"])(
+    "is silent when the only fact is an imprecise christening (%s)",
+    (date) => {
+      expect(hasEventBeforeChristening(onePerson([fact("F1", "Christening", date)]), 365 * 3)).toBe(false);
+    },
+  );
+
+  it("is silent on a christening and a baptism both dated Bet 1860 and 1868", () => {
+    const mob = onePerson([
+      fact("F1", "Christening", "Bet 1860 and 1868"),
+      fact("F2", "Baptism", "Bet 1860 and 1868"),
+    ]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(false);
+  });
+
+  it("still fires when imprecise dates are more than 3 years apart on every reading", () => {
+    // Census read as late as 1842-12-31 (1841-12-31 plus the fudge), christening
+    // as early as 1848-01-01 (1849-01-01 less the fudge).
+    const mob = onePerson([fact("F1", "Christening", "Abt 1850"), fact("F2", "Census", "Abt 1840")]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a residence 4 years before the christening fires", () => {
+    const mob = onePerson([fact("F1", "Christening", "1 Jan 1850"), fact("F2", "Residence", "1 Jan 1846")]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a residence 2 years before the christening is silent", () => {
+    const mob = onePerson([fact("F1", "Christening", "1 Jan 1850"), fact("F2", "Residence", "1 Jan 1848")]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(false);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────
@@ -1720,6 +2053,23 @@ describe("calculateWarnings — orchestrator", () => {
       expect(w.personId).toBe("I1");
       expect(w.severity).toBe("contradiction");
     }
+  });
+
+  it("emits no hasEventBeforeBirth365_2 when the only fact is Birth Abt 1868", () => {
+    // ut_init_project_q4v / _wm7 (issue #1962): an approximate birth on an
+    // imported relative was reported as a contradiction against itself.
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Female",
+          names: [{ id: "N", given: "Margaret", surname: "Mercer" }],
+          facts: [{ id: "F1", type: "Birth", date: "Abt 1868", standard_date: "Abt 1868" }],
+        },
+      ],
+    };
+    const tags = finalWarnings(new Mob(tree, "I1")).map((w) => w.issueType);
+    expect(tags).not.toContain("hasEventBeforeBirth365_2");
   });
 
   it("returns both earliestChildBirthToBirthMale14 AND earliestChildBirthToBirth12 for a male young father (Java emits both)", () => {

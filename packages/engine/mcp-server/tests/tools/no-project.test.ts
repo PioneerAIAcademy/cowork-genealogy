@@ -46,6 +46,7 @@ import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import { personWarningsTool } from "../../src/tools/person-warnings.js";
 import { buildExternalSearchUrlTool } from "../../src/tools/build-external-search-url.js";
+import { validateResearchSchema } from "../../src/tools/validate-research-schema.js";
 import {
   NO_PROJECT_MESSAGE_READ,
   NO_PROJECT_MESSAGE_WRITE,
@@ -54,7 +55,7 @@ import {
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read", "image_transcribe"]);
+const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "sidecar_read", "image_transcribe", "validate_research_schema"]);
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
@@ -63,7 +64,7 @@ const READERS = new Set(["research_query", "project_context", "person_warnings",
  *  error to flatten into a result and mirrors the thrown messages instead. */
 // `image_transcribe` joined both sets with its `file` input (#2048): it classifies
 // the directory itself, throws the two loud states, and RETURNS the no-project answer.
-const THROWERS = new Set(["person_warnings", "sidecar_read", "image_transcribe"]);
+const THROWERS = new Set(["person_warnings", "sidecar_read", "image_transcribe", "validate_research_schema"]);
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -160,6 +161,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   {
     tool: "person_warnings",
     call: (projectPath) => personWarningsTool({ projectPath, personId: "I1" } as any),
+  },
+  {
+    tool: "validate_research_schema",
+    call: (projectPath) => validateResearchSchema({ projectPath }),
   },
 ];
 
@@ -321,5 +326,206 @@ describe("build_external_search_url with projectPath", () => {
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/research\.json not found in projectPath/);
+  });
+});
+
+// ── derivation: CALLS is complete ───────────────────────────────────────────
+//
+// Issue #2480 item 3 — the CALLS roster above was hand-maintained, so a new
+// project-reading tool that forgot `noProjectResult()` was uncovered.  This
+// derivation test traces static imports from every tool source file and flags
+// any tool that transitively reaches project-io / results-staging /
+// image-store / project-store but is absent from CALLS.
+
+import { readFileSync, existsSync } from "fs";
+import { resolve, relative, dirname } from "path";
+import { allToolSchemas } from "../../src/tool-schemas.js";
+
+/** Modules whose import means the tool reads or writes project files. */
+const PROJECT_MODULES = new Set([
+  "utils/project-io",
+  "utils/results-staging",
+  "utils/image-store",
+  "store/project-store",
+]);
+
+/**
+ * Tools that transitively reach a project module but are deliberately NOT in
+ * CALLS.  Each entry explains why it is exempt:
+ *
+ * - `build_external_search_url`: returns `ok: true` with a note, not
+ *   `noProjectResult()` — the URL is still useful without a project; tested
+ *   separately above.
+ * - `record_search`: optional enrichment from project context; primary search
+ *   works without a project.
+ * - `fulltext_search`: stages results when inside a project; the search itself
+ *   works without one.
+ * - `person_read`: stages the read when inside a project; the read works
+ *   without one.
+ * - `record_read`: stages the read when inside a project; the read works
+ *   without one.
+ * - `external_links_search`: stages results optionally.
+ * - `same_person`: reads project context optionally for enrichment.
+ * - `rank_search_matches`: reads project context optionally for scoring.
+ * - `person_quality`: reads tree optionally for quality scoring.
+ * - `image_read`: saves source image optionally when inside a project.
+ * - `project_create`: writes project files, but it creates them rather than
+ *   reading existing ones.
+ * - `volume_bisect`: imports browse-budget which classifies the project path
+ *   for cap tracking; the bisect itself works without a project.
+ * - `wiki_place_page`: imports the validator for enum checks, whose module
+ *   imports `isInsideProject`; the page fetch works without a project.
+ */
+const OPTIONAL_PROJECT_TOOLS = new Set([
+  "build_external_search_url",
+  "record_search",
+  "fulltext_search",
+  "person_read",
+  "record_read",
+  "external_links_search",
+  "same_person",
+  "rank_search_matches",
+  "person_quality",
+  "image_read",
+  "project_create",
+  "volume_bisect",
+  "wiki_place_page",
+]);
+
+const SRC_ROOT = resolve(__dirname, "../../src");
+
+/** Extract relative-to-src import targets from a TS source file. */
+function localImports(absPath: string): string[] {
+  const src = readFileSync(absPath, "utf-8");
+  const out: string[] = [];
+  // Match value imports/re-exports only — skip `import type` and `export type`
+  // which are erased at compile time and create no runtime dependency.
+  for (const m of src.matchAll(/^(?!.*\b(?:import|export)\s+type\b).*\bfrom\s+["'](\.[^"']+)["']/gm)) {
+    const specifier = m[1].replace(/\.js$/, "");
+    const resolved = resolve(dirname(absPath), specifier);
+    // Stay within src/.
+    if (!resolved.startsWith(SRC_ROOT)) continue;
+    // Try .ts extension.
+    const tsPath = resolved + ".ts";
+    if (existsSync(tsPath)) out.push(tsPath);
+  }
+  return out;
+}
+
+/** Return true if the transitive import closure of `startFile` reaches any PROJECT_MODULE. */
+function reachesProjectModule(startFile: string): boolean {
+  const visited = new Set<string>();
+  const stack = [startFile];
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    // Check if this file IS a project module.
+    const rel = relative(SRC_ROOT, current).replace(/\\/g, "/").replace(/\.ts$/, "");
+    if (PROJECT_MODULES.has(rel)) return true;
+    for (const dep of localImports(current)) {
+      if (!visited.has(dep)) stack.push(dep);
+    }
+  }
+  return false;
+}
+
+/** Map each tool name in allToolSchemas to its source file(s) via tool-schemas.ts imports. */
+function buildToolFileMap(): Map<string, string> {
+  const schemasSrc = readFileSync(resolve(SRC_ROOT, "tool-schemas.ts"), "utf-8");
+  // Parse import lines: `import { fooSchema } from "./tools/bar.js";`
+  const importMap = new Map<string, string>(); // schemaVarName → absolute file path
+  for (const m of schemasSrc.matchAll(/import\s*\{([^}]+)\}\s*from\s*["'](\.[^"']+)["']/g)) {
+    const names = m[1].split(",").map((n) => n.trim().replace(/\s+as\s+\S+/, ""));
+    const specifier = m[2].replace(/\.js$/, "");
+    const absPath = resolve(SRC_ROOT, specifier + ".ts");
+    for (const n of names) {
+      if (n) importMap.set(n, absPath);
+    }
+  }
+  const toolToFile = new Map<string, string>();
+  // Cache each file's content once rather than re-reading per schema.
+  const fileContents = new Map<string, string>();
+  for (const file of new Set(importMap.values())) {
+    try { fileContents.set(file, readFileSync(file, "utf-8")); } catch { /* skip */ }
+  }
+  for (const schema of allToolSchemas) {
+    const name = (schema as any).name as string;
+    for (const [file, content] of fileContents) {
+      if (content.includes(`name: "${name}"`)) {
+        toolToFile.set(name, file);
+        break;
+      }
+    }
+  }
+  return toolToFile;
+}
+
+describe("CALLS roster derivation (issue #2480)", () => {
+  const callsSet = new Set(CALLS.map((c) => c.tool));
+  const toolFileMap = buildToolFileMap();
+
+  it("every tool in allToolSchemas maps to a source file", () => {
+    const unmapped: string[] = [];
+    for (const schema of allToolSchemas) {
+      const name = (schema as any).name as string;
+      if (!toolFileMap.has(name)) unmapped.push(name);
+    }
+    expect(unmapped, "tools with no source file mapping").toEqual([]);
+  });
+
+  it("every derived project-reading tool is in CALLS or OPTIONAL_PROJECT_TOOLS", () => {
+    const missing: string[] = [];
+    for (const [tool, file] of toolFileMap) {
+      if (reachesProjectModule(file) && !callsSet.has(tool) && !OPTIONAL_PROJECT_TOOLS.has(tool)) {
+        missing.push(tool);
+      }
+    }
+    expect(
+      missing,
+      "these tools transitively import a project module but are absent from " +
+      "both CALLS and OPTIONAL_PROJECT_TOOLS — either add a CALLS row with a " +
+      "noProjectResult() test, or document the exemption in OPTIONAL_PROJECT_TOOLS",
+    ).toEqual([]);
+  });
+
+  it("every CALLS tool is genuinely derived as project-reading", () => {
+    const notDerived: string[] = [];
+    for (const tool of callsSet) {
+      const file = toolFileMap.get(tool);
+      if (!file || !reachesProjectModule(file)) notDerived.push(tool);
+    }
+    expect(
+      notDerived,
+      "these CALLS tools do not transitively reach a project module — " +
+      "either the import chain changed or the tool no longer reads project files",
+    ).toEqual([]);
+  });
+
+  it("every OPTIONAL_PROJECT_TOOLS entry is genuinely derived as project-reading", () => {
+    const notDerived: string[] = [];
+    for (const tool of OPTIONAL_PROJECT_TOOLS) {
+      const file = toolFileMap.get(tool);
+      if (!file || !reachesProjectModule(file)) notDerived.push(tool);
+    }
+    expect(
+      notDerived,
+      "these OPTIONAL_PROJECT_TOOLS entries do not transitively reach a " +
+      "project module — remove them from the exclusion set",
+    ).toEqual([]);
+  });
+
+  // Break proof: extraction_append reaches project-io through research-append,
+  // and tree_correct reaches it through tree-edit.
+  it("extraction_append is derived through research-append", () => {
+    const file = toolFileMap.get("extraction_append")!;
+    expect(file).toBeDefined();
+    expect(reachesProjectModule(file)).toBe(true);
+  });
+
+  it("tree_correct is derived through tree-edit", () => {
+    const file = toolFileMap.get("tree_correct")!;
+    expect(file).toBeDefined();
+    expect(reachesProjectModule(file)).toBe(true);
   });
 });

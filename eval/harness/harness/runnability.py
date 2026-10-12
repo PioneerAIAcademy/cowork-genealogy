@@ -249,6 +249,32 @@ def check_runnable(
             f"run_skills to execute the callee, stub_skills to deny it.",
         )
 
+    # `stop_at_stub` ends the run at the first stubbed hand-off (#3119). With
+    # nothing stubbed it can never fire, and on a negative test the routing
+    # short-circuit already owns the stop: both are declarations that silently
+    # do nothing, so refuse them. A `no-shortcut` test must set it, because its
+    # validator fails on any paired row reached besides the expected one and,
+    # without the stop, the router walks on down the table to those rows.
+    if spec.execution.get("stop_at_stub"):
+        if spec.type != "positive":
+            return RunnabilityResult(
+                False,
+                "execution.stop_at_stub is for positive tests only; a negative "
+                "test already stops at its correct_skill hand-off",
+            )
+        if not stubbed:
+            return RunnabilityResult(
+                False,
+                "execution.stop_at_stub requires a non-empty stub_skills — with "
+                "nothing stubbed the stop could never fire",
+            )
+    if "no-shortcut" in spec.tags and not spec.execution.get("stop_at_stub"):
+        return RunnabilityResult(
+            False,
+            "a no-shortcut test must set execution.stop_at_stub: its verdict is "
+            "the first hand-off, and without the stop the router walks on past it",
+        )
+
     # `grade:trigger` grades a positive test on activation alone
     # (grading_mode "trigger"): the verdict is that the skill under test
     # fired, and the judge dimensions are recorded but do not gate. Its whole
@@ -286,6 +312,15 @@ def check_runnable(
     # directory here would fail a correctly-routed test for a migration the
     # test is not about. A name matching NEITHER is still the typo this catches.
     if spec.type == "negative" and spec.negative and spec.expected_outcome != "xfail":
+        # NOT widened to accept an agent. Issue #2825 ruling C: a converted
+        # callee's negatives abort `not_runnable` until that suite's own
+        # conversion lands, and "that is an aborted row, not a wrong verdict,
+        # and it is accepted" -- the lead explicitly rejected widening THIS gate
+        # to resolve an agent. An earlier revision of this branch widened it, and
+        # that was worse than the abort: `_compute_outcome` and the routing
+        # short-circuit still key on `Skill` calls, so a correctly routed run
+        # would have graded a guaranteed `fail` instead of an accepted abort,
+        # across every converted-callee negative in every suite.
         for i, name in enumerate(spec.negative.get("correct_skill", []) or []):
             if not (Path(skills_dir) / name).is_dir() and not (
                 Path(agents_dir) / f"{name}.md"

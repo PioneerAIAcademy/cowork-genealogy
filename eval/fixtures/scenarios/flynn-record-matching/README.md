@@ -44,3 +44,12 @@ Built for the research-log result-retention eval cases — it exercises the
   correlation analysis alone.
 - search-records / search-full-text writing fresh sidecars against the open
   plan items `pli_001` / `pli_002`.
+
+## Starting tree
+
+`starting-tree.gedcomx.json` is a copy of `tree.gedcomx.json`: Patrick (I1),
+Thomas (I2) and Mary (I3) all pre-exist the research, and none carries a
+source ref. Without it, an agent that materializes the 1850 census facts onto
+Patrick before linking him makes him look minted from that record, and
+`research_append` refuses his real `same_person` score as circular
+(`ut_person_evidence_010`, 2026-10-07).

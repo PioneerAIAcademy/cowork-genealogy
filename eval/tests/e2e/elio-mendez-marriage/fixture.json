@@ -1,0 +1,19 @@
+{
+  "id": "elio-mendez-marriage",
+  "name": "Elio María Méndez — marriage in July 1924, Guaraque, Mérida, Venezuela",
+  "genre": "record-hint",
+  "source_pid": "PQLG-9J4",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Elio María Méndez marry Domitila Castro, the mother of his children born 1926–1931 in Guaraque and Tovar, Mérida, Venezuela, and who were his parents?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1920s",
+    "geography": "VE"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 30, hint-samples.csv row 974, flags adds_father/adds_mother/adds_marriage, confidence 3). Draft transcribed from a 1924 Santa Bárbara, Guaraque, Mérida civil marriage registration; unverified."
+}

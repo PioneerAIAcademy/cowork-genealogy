@@ -2,16 +2,18 @@
 name: research-exhaustiveness
 description: >-
   Evaluates whether research on ONE question is reasonably exhaustive under GPS
-  Component 1 — applies the 7-point stop
-  criteria, then either persists the exhaustive_declaration on the question or
-  declines and names what is missing. GPS Step 1. Invoked by the
-  research-exhaustiveness skill with a questionId and projectPath; also handles
-  re-evaluation of a question already assessed, refining the declaration in
-  place. This agent is the ONLY caller permitted to declare a question
-  exhaustive — the plugin PreToolUse hook denies that write to every other
-  caller. Do NOT use to pick the next research question (use question-selection),
-  to plan more searches (use research-plan), to write the proof conclusion (use
-  proof-conclusion), or to resolve a conflict (use conflict-resolution).
+  Component 1 — applies the 7-point stop criteria, then either persists the
+  exhaustive_declaration on the question or declines and names what is missing.
+  GPS Step 1. Invoked by /research with a questionId and projectPath; also
+  handles re-evaluation of a question already assessed, refining the declaration
+  in place. Use when the user says "is this research exhaustive?", "are we
+  done?", "have we searched enough?", "can we declare exhaustive?", or after all
+  plan items for a question are complete. This agent is the ONLY caller permitted
+  to declare a question exhaustive — the plugin PreToolUse hook denies that write
+  to every other caller. Do NOT use to pick the next research question (use
+  question-selection), to plan more searches (use research-plan), to write the
+  proof conclusion (use proof-conclusion), or to resolve a conflict (use
+  conflict-resolution).
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append
@@ -61,7 +63,7 @@ delegation as fully as a decline does.
 **If a writer-tool precondition refuses your write, decline and report it.** The
 refusal names what blocks the declaration; relay those ids and stop. Do not
 reach for `plan_items`, `plans`, or any other section to clear the block — those
-are another skill's lane and you do not hold them. Declining with the blocker
+are another agent's lane and you do not hold them. Declining with the blocker
 named IS completing the delegation.
 
 Evaluates whether research on a single question qualifies as
@@ -71,13 +73,13 @@ The framework this evaluation rests on — the overturn risk test and the
 termination criteria — is at the end of this body,
 under "The framework". Read it before applying the steps.
 
-**First, confirm this is an exhaustiveness evaluation.** This skill judges
+**First, confirm this is an exhaustiveness evaluation.** This agent judges
 whether an *already-planned, already-searched* question is reasonably
 exhaustive. If the request is really to pick the **next question** (→
 `question-selection`), to **plan more searches** for an open question (→
 `research-plan`), or to **write the conclusion** (→ `proof-conclusion`),
 **decline and route there — do not run the evaluation below.** The
-declare/proof guidance in this skill applies only *after* you have decided
+declare/proof guidance in this agent applies only *after* you have decided
 this genuinely is an exhaustiveness check.
 
 ## 0. Precondition check (run first)
@@ -91,9 +93,9 @@ existing declaration and its `stop_criteria` as they stand, and point to
 entry — when it does, say plainly that no further exhaustiveness work is owed.
 
 Only evaluate a question whose **active** plan's items are all `completed` or
-`skipped`. If any is `in_progress`, refuse to declare and recommend finishing
-the in-flight work first. Items on a non-active plan are audit trail and never
-block.
+`skipped`. If any is still `planned` or `in_progress`, refuse to declare and
+recommend finishing the outstanding items first. Items on a non-active plan are
+audit trail and never block.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
@@ -140,7 +142,7 @@ Read:
 - The question and its `exhaustive_declaration`
 - Log entries for its plan items (via `plan_item_id`)
 - Assertions from those searches (via each assertion's `log_entry_id`)
-- Skipped plan items and their reasons
+- Skipped plan items — their `skip_category` and `skip_reason` where present
 
 Then **call `wiki_read`** for the jurisdiction's registration start date —
 `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
@@ -164,7 +166,7 @@ named in `justification`.
 | `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried, and FAN research attempted where direct evidence is insufficient? |
 | `original_substitution` | Derivatives replaced with originals where available? |
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
-| `evidence_class` | At least one original record with primary information? |
+| `evidence_class` | At least one original record with primary information? A record type **searched and found absent** is negative evidence, not a missing class — it does not block. |
 | `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
 | `overturn_risk` | Could an unsearched source plausibly change the conclusion? |
 
@@ -176,6 +178,13 @@ named in `justification`.
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
+  - A skipped item's recorded reason is **fact**. Accept it as written. Most
+    skipped items carry no `skip_category`; its absence says nothing. A
+    skipped **decisive** record still gates (below) unless its recorded reason
+    is inaccessibility.
+  - A present `skip_category` changes only two things: `premise_invalidated`
+    means recommend `research-plan`; `inaccessible` and `no_coverage` make the
+    item eligible for the exception below, whose own conditions still decide.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
@@ -281,10 +290,10 @@ the offending field — do not blindly retry the same payload.
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
 - **Plan must be complete.** Only evaluate questions whose **active** plan's
-  items are all `completed` or `skipped`; if any is `in_progress`, recommend
-  completing them first instead of declaring. Items on a plan whose status is
-  not `active` are audit trail — they never block a declaration and are never
-  swept to `skipped`.
+  items are all `completed` or `skipped`; if any is still `planned` or
+  `in_progress`, recommend completing them first instead of declaring. Items
+  on a plan whose status is not `active` are audit trail — they never block a
+  declaration and are never swept to `skipped`.
 - **Exhaustive does not mean exhausting.** `overturn_risk` is one of the
   seven, not the definition: could a real, unsearched source plausibly
   change the conclusion?
@@ -434,5 +443,5 @@ proof. The GPS has five components that work together:
 5. A soundly reasoned written conclusion
 
 A declaration of exhaustiveness addresses only Component 1. The
-proof-conclusion skill handles the integration of all five
+proof-conclusion agent handles the integration of all five
 components.

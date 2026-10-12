@@ -1,0 +1,554 @@
+{
+  "persons": [
+    {
+      "id": "GXSQ-V3L",
+      "ark": "ark:/61903/4:1:GXSQ-V3L",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "946bbeb9-cc5f-45b7-80b0-8a9ab546ab59",
+          "preferred": true,
+          "given": "Umbelina Maria",
+          "surname": "Azevedo",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c7246d1b-782d-4f30-9b06-983c25de79cf",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P38-X36"
+        },
+        {
+          "ref": "7P38-SC5"
+        },
+        {
+          "ref": "7P3Z-1L6"
+        },
+        {
+          "ref": "7P3Z-S1X"
+        },
+        {
+          "ref": "7P3C-1Z2"
+        }
+      ]
+    },
+    {
+      "id": "GXSQ-VV2",
+      "ark": "ark:/61903/4:1:GXSQ-VV2",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "4a61a3dc-5cab-448a-b19b-1991e96561c9",
+          "preferred": true,
+          "given": "Antônio Francisco",
+          "surname": "Pariz",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "55d51b65-fd73-4aab-877b-1e376f3ff30d",
+          "type": "Birth",
+          "date": "1909",
+          "standard_date": "1909",
+          "place": "Espírito Santo, Brasil",
+          "standard_place": "Espirito Santo, Brazil"
+        },
+        {
+          "id": "152bd693-9ce9-44d5-be5d-7d430c58fc99",
+          "type": "Death",
+          "date": "7 de setembro de 1971",
+          "standard_date": "7 Sep 1971",
+          "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+          "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P3C-1WS"
+        }
+      ]
+    },
+    {
+      "id": "PQHC-328",
+      "ark": "ark:/61903/4:1:PQHC-328",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "fb435806-9a51-4453-b7d3-09ba474410e1",
+          "preferred": true,
+          "given": "Florita Umbelina",
+          "surname": "dos Santos",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "618e8690-6364-4772-9ea5-24c43d17fa38",
+          "type": "Birth",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Espírito Santo, Brasil",
+          "standard_place": "Espirito Santo, Brazil"
+        },
+        {
+          "id": "9a4f1c6f-b447-4a66-a775-d183a35c1d1a",
+          "type": "Death",
+          "date": "2 de julho de 1980",
+          "standard_date": "2 Jul 1980",
+          "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+          "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P38-MZB"
+        }
+      ]
+    },
+    {
+      "id": "PQHH-Y3W",
+      "ark": "ark:/61903/4:1:PQHH-Y3W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "e91b7999-1a11-44b6-a5ba-41b9c3ff718f",
+          "preferred": true,
+          "given": "Maura Umbelina",
+          "surname": "Ferreira",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "3db4f695-59ab-483e-8e5a-8a953a4f8fd8",
+          "type": "Birth",
+          "date": "1918",
+          "standard_date": "1918"
+        },
+        {
+          "id": "92c85f03-5636-4aeb-95bd-b4ab659f0c28",
+          "type": "Death",
+          "date": "19 de dezembro de 1978",
+          "standard_date": "19 Dec 1978",
+          "place": "Duque de Caxias, Rio de Janeiro, Brasil",
+          "standard_place": "Duque de Caxias, Rio de Janeiro, Brazil"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P38-X5N"
+        }
+      ]
+    },
+    {
+      "id": "PQHC-CJV",
+      "ark": "ark:/61903/4:1:PQHC-CJV",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "231d4ae5-a9b5-4d74-b205-566927913754",
+          "preferred": true,
+          "given": "Alice Umbelina",
+          "surname": "Pariz",
+          "type": "BirthName"
+        },
+        {
+          "id": "e05ccc68-72e8-4c2d-bf7d-8c6cefc86b94",
+          "given": "Alice Umbelina",
+          "surname": "dos Santos",
+          "type": "MarriedName"
+        },
+        {
+          "id": "07c90512-c8db-4e59-8ad7-c01a9b48deec",
+          "given": "Alice",
+          "surname": "Paris dos Santos",
+          "type": "MarriedName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ad0d9bb7-1529-4d08-8cc8-afd93c99eb9d",
+          "type": "Birth",
+          "date": "1902",
+          "standard_date": "1902"
+        },
+        {
+          "id": "99ff6e3a-7ae8-4c89-a718-be762dc6bcac",
+          "type": "Death",
+          "date": "7 de abril de 1990",
+          "standard_date": "7 Apr 1990",
+          "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+          "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P3Z-38B"
+        }
+      ]
+    },
+    {
+      "id": "PQHC-7Z2",
+      "ark": "ark:/61903/4:1:PQHC-7Z2",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "84ba34e3-3ecf-4fe9-8980-a81ad6342399",
+          "preferred": true,
+          "given": "Maria Glória",
+          "surname": "Pariz",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "2c886d22-58b7-4e58-a025-253954a98daf",
+          "type": "Birth",
+          "date": "1912",
+          "standard_date": "1912",
+          "place": "Espírito Santo, Brasil",
+          "standard_place": "Espirito Santo, Brazil"
+        },
+        {
+          "id": "435d2ca4-8462-49f3-852b-2143129a876b",
+          "type": "Death",
+          "date": "17 de maio de 1982",
+          "standard_date": "17 May 1982",
+          "place": "Rio de Janeiro, Rio de Janeiro, Brasil",
+          "standard_place": "Rio de Janeiro, Rio de Janeiro, Brazil"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P38-3Q6"
+        }
+      ]
+    },
+    {
+      "id": "GXSQ-FYP",
+      "ark": "ark:/61903/4:1:GXSQ-FYP",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "502f16f7-30dd-466b-8914-5a32e5d45859",
+          "preferred": true,
+          "given": "Francisco Antônio",
+          "surname": "Pariz",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f56923c2-ab4f-49d4-8ecd-8deb203ba725",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7P38-X9S"
+        },
+        {
+          "ref": "7P38-S4G"
+        },
+        {
+          "ref": "7P3Z-1KH"
+        },
+        {
+          "ref": "7P3Z-SYC"
+        },
+        {
+          "ref": "7P3C-1HV"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GXSQ-FYP",
+      "person2": "GXSQ-V3L"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GXSQ-FYP",
+      "child": "PQHC-CJV",
+      "sources": [
+        {
+          "ref": "7P3Z-3H5"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GXSQ-V3L",
+      "child": "PQHC-CJV",
+      "sources": [
+        {
+          "ref": "7P3Z-3H5"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GXSQ-FYP",
+      "child": "GXSQ-VV2"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GXSQ-V3L",
+      "child": "GXSQ-VV2"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "GXSQ-FYP",
+      "child": "PQHC-7Z2",
+      "sources": [
+        {
+          "ref": "7P38-396"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GXSQ-V3L",
+      "child": "PQHC-7Z2",
+      "sources": [
+        {
+          "ref": "7P38-396"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "GXSQ-FYP",
+      "child": "PQHC-328",
+      "sources": [
+        {
+          "ref": "7P38-MHQ"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "GXSQ-V3L",
+      "child": "PQHC-328",
+      "sources": [
+        {
+          "ref": "7P38-MHQ"
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "GXSQ-FYP",
+      "child": "PQHH-Y3W",
+      "sources": [
+        {
+          "ref": "7P38-XGT"
+        }
+      ]
+    },
+    {
+      "id": "R11",
+      "type": "ParentChild",
+      "parent": "GXSQ-V3L",
+      "child": "PQHH-Y3W",
+      "sources": [
+        {
+          "ref": "7P38-XGT"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GXSQ-V3L",
+      "title": "Umbelina Maria Azevedo",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Umbelina Maria Azevedo (PID GXSQ-V3L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GXSQ-V3L"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_GXSQ-VV2",
+      "title": "Antônio Francisco Pariz",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Antônio Francisco Pariz (PID GXSQ-VV2); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GXSQ-VV2"
+    },
+    {
+      "id": "sd_person_PQHC-328",
+      "title": "Florita Umbelina dos Santos",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Florita Umbelina dos Santos (PID PQHC-328); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQHC-328"
+    },
+    {
+      "id": "sd_person_PQHH-Y3W",
+      "title": "Maura Umbelina Ferreira",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maura Umbelina Ferreira (PID PQHH-Y3W); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQHH-Y3W"
+    },
+    {
+      "id": "sd_person_PQHC-CJV",
+      "title": "Alice Umbelina Pariz",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Alice Umbelina Pariz (PID PQHC-CJV); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQHC-CJV"
+    },
+    {
+      "id": "sd_person_PQHC-7Z2",
+      "title": "Maria Glória Pariz",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Glória Pariz (PID PQHC-7Z2); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PQHC-7Z2"
+    },
+    {
+      "id": "sd_person_GXSQ-FYP",
+      "title": "Francisco Antônio Pariz",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Francisco Antônio Pariz (PID GXSQ-FYP); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GXSQ-FYP"
+    },
+    {
+      "id": "7P3C-1Z2",
+      "title": "Umbelina Maria Azevedo, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77HN-KKT2 : Tue Mar 11 12:03:42 UTC 2025), Entry for Antonio Francisco Pariz and Francisco Antonio Azevedo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77HV-S4T2"
+    },
+    {
+      "id": "7P3Z-1L6",
+      "title": "Umbelina Maria Pariz de Azevedo, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:79FM-TFZM : Sat Apr 18 01:16:24 UTC 2026), Entry for Florita Umbelina dos Santos and Antonio Francisco Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:79FM-TFN2"
+    },
+    {
+      "id": "7P38-SC5",
+      "title": "Umbelina Maria de Azevedo, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:794X-QD3Z : Thu Apr 23 01:15:52 UTC 2026), Entry for Maria Glória Ferreira and Francisco Antonio Paris.",
+      "url": "https://familysearch.org/ark:/61903/1:1:794X-QDZM"
+    },
+    {
+      "id": "7P38-X36",
+      "title": "Umbelina Maria de Azevedo, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77F3-D8T2 : Sun Oct 19 05:46:27 UTC 2025), Entry for Maura Umbelina Ferreira and Francisco Antonio Parez, 19 Dez 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77F3-DD3Z"
+    },
+    {
+      "id": "7P3Z-S1X",
+      "title": "Umbelina Maria de Azevedo, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYG1-SQ2M : Mon Oct 13 13:36:30 UTC 2025), Entry for Alice Umbelina dos Santos and Francisco Antonio Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WYG1-SQT2"
+    },
+    {
+      "id": "7P3C-1WS",
+      "title": "Antonio Francisco Pariz, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77HN-KKT2 : Tue Mar 11 12:03:42 UTC 2025), Entry for Antonio Francisco Pariz and Francisco Antonio Azevedo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77HN-KKT2"
+    },
+    {
+      "id": "7P38-MZB",
+      "title": "Florita Umbelina dos Santos, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:79FM-TFZM : Sat Apr 18 01:16:24 UTC 2026), Entry for Florita Umbelina dos Santos and Antonio Francisco Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:79FM-TFZM"
+    },
+    {
+      "id": "7P38-X5N",
+      "title": "Maura Umbelina Ferreira, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77F3-D8T2 : Sun Oct 19 05:46:27 UTC 2025), Entry for Maura Umbelina Ferreira and Francisco Antonio Parez, 19 Dez 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77F3-D8T2"
+    },
+    {
+      "id": "7P3Z-38B",
+      "title": "Alice Umbelina dos Santos, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYG1-SQ2M : Mon Oct 13 13:36:30 UTC 2025), Entry for Alice Umbelina dos Santos and Francisco Antonio Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WYG1-SQ2M"
+    },
+    {
+      "id": "7P38-3Q6",
+      "title": "Maria Glória Ferreira, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:794X-QD3Z : Thu Apr 23 01:15:52 UTC 2026), Entry for Maria Glória Ferreira and Francisco Antonio Paris.",
+      "url": "https://familysearch.org/ark:/61903/1:1:794X-QD3Z"
+    },
+    {
+      "id": "7P38-X9S",
+      "title": "Francisco Antonio Parez, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77F3-D8T2 : Sun Oct 19 05:46:27 UTC 2025), Entry for Maura Umbelina Ferreira and Francisco Antonio Parez, 19 Dez 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77F3-DDMM"
+    },
+    {
+      "id": "7P38-S4G",
+      "title": "Francisco Antonio Paris, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:794X-QD3Z : Thu Apr 23 01:15:52 UTC 2026), Entry for Maria Glória Ferreira and Francisco Antonio Paris.",
+      "url": "https://familysearch.org/ark:/61903/1:1:794X-QDW2"
+    },
+    {
+      "id": "7P3Z-1KH",
+      "title": "Antonio Francisco Pariz, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:79FM-TFZM : Sat Apr 18 01:16:24 UTC 2026), Entry for Florita Umbelina dos Santos and Antonio Francisco Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:79FM-TF6Z"
+    },
+    {
+      "id": "7P3Z-SYC",
+      "title": "Francisco Antonio Pariz, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYG1-SQ2M : Mon Oct 13 13:36:30 UTC 2025), Entry for Alice Umbelina dos Santos and Francisco Antonio Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WYG1-SQPZ"
+    },
+    {
+      "id": "7P3C-1HV",
+      "title": "Francisco Antonio Azevedo, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77HN-KKT2 : Tue Mar 11 12:03:42 UTC 2025), Entry for Antonio Francisco Pariz and Francisco Antonio Azevedo.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77HN-K2MM"
+    },
+    {
+      "id": "7P3Z-3H5",
+      "title": "Alice Umbelina dos Santos, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WYG1-SQ2M : Mon Oct 13 13:36:30 UTC 2025), Entry for Alice Umbelina dos Santos and Francisco Antonio Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:WYG1-SQ2M"
+    },
+    {
+      "id": "7P38-396",
+      "title": "Maria Glória Ferreira, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:794X-QD3Z : Thu Apr 23 01:15:52 UTC 2026), Entry for Maria Glória Ferreira and Francisco Antonio Paris.",
+      "url": "https://familysearch.org/ark:/61903/1:1:794X-QD3Z"
+    },
+    {
+      "id": "7P38-MHQ",
+      "title": "Florita Umbelina dos Santos, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:79FM-TFZM : Sat Apr 18 01:16:24 UTC 2026), Entry for Florita Umbelina dos Santos and Antonio Francisco Pariz.",
+      "url": "https://familysearch.org/ark:/61903/1:1:79FM-TFZM"
+    },
+    {
+      "id": "7P38-XGT",
+      "title": "Maura Umbelina Ferreira, “Brasil, Rio de Janeiro, Registro Civil, 1804-2013”",
+      "citation": "\"Brasil, Rio de Janeiro, Registro Civil, 1804-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:77F3-D8T2 : Sun Oct 19 05:46:27 UTC 2025), Entry for Maura Umbelina Ferreira and Francisco Antonio Parez, 19 Dez 1978.",
+      "url": "https://familysearch.org/ark:/61903/1:1:77F3-D8T2"
+    }
+  ]
+}

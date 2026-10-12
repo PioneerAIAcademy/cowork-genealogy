@@ -18,7 +18,7 @@ import logging
 
 from sqlmodel import Session, select
 
-from . import anthropic_proxy, auth, feedback, sandbox_heartbeat, sessions
+from . import anthropic_proxy, auth, feedback, sandbox_heartbeat, sessions, turn_costs
 from .config import assert_production_config, get_settings
 from .db import get_engine, init_db
 from .models import FamilySearchToken, Project, User, utcnow
@@ -132,6 +132,7 @@ app.include_router(auth.callback_router)  # top-level /callback (reuses the FS d
 app.include_router(sessions.router)
 app.include_router(feedback.router)
 app.include_router(anthropic_proxy.router)
+app.include_router(turn_costs.router)
 
 
 @app.get("/api/health")

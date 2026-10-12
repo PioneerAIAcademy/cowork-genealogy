@@ -803,20 +803,19 @@ def test_check_guardrail_compliance_is_empty_for_a_clean_run():
     assert check_guardrail_compliance([], {}, {}, starting_tree={"persons": []}) == []
 
 
-def test_check_guardrail_compliance_aggregates_all_three_checks():
-    """One call, three non-windowed §4.4 arms. The `mentor` arm below reads
-    only research.json, which is why compliance is a real result even on a
-    run that produced no tree."""
+def test_check_guardrail_compliance_is_a_real_result_on_a_treeless_run():
+    """The proof-conclusion arm reads only research.json, which is why
+    compliance is a real result even on a run that produced no tree. A
+    resolved question's uncritiqued proof summary is not a violation: the
+    gps-mentor critique runs only on request."""
     research = {
         "questions": [{"id": "q1", "status": "resolved"}],
         "proof_summaries": [{"id": "ps1", "question_id": "q1"}],
-        "exhaustive_declaration": {"declared": True},
+        "evaluations": [],
     }
     violations = check_guardrail_compliance([], research, None)
-    # The gps-mentor arm reads only research.json...
-    assert any("proof-critique" in v for v in violations)
-    # ...and the proof-conclusion arm fires from the same call.
     assert any("proof-conclusion" in v for v in violations)
+    assert not any("proof-critique" in v for v in violations)
 
 
 # --- load_seed_person_ids (issue #963 seed read; fail-open) ------------------
@@ -1455,6 +1454,61 @@ def test_merge_counts_a_missing_subagent_field_as_zero_not_as_unknown():
     )
     assert merged["output_tokens"] == 209
     assert merged["input_tokens"] == 100
+
+
+def _timeline(*kinds):
+    return [[float(i), kind, [], "2026-09-24T07:23:44.000Z", None] for i, kind in enumerate(kinds)]
+
+
+def test_merge_is_null_when_a_background_subagent_started_a_second_query():
+    """anders-monsen-ancestry 2026-09-24's shape (#3128): a background subagent's
+    `task_notification`, then a fresh `system:init`. The ResultMessage counted the
+    last query only (`num_turns` 3 against about 106 real turns), so adding the
+    subagents to it gives a figure that looks complete and is not."""
+    usage = {
+        "usage_source": "result_message",
+        "num_turns": 3,
+        "resumes": 0,
+        "usage": dict(_MAIN),
+        "timeline": _timeline(
+            "system:init", "assistant", "system:task_notification",
+            "system:init", "assistant", "result",
+        ),
+    }
+    assert merge_whole_run_usage(usage, [_sub(output_tokens=50)]) == (None, None)
+
+
+def test_merge_is_null_on_a_stall_resume():
+    """The case a `num_turns` or duration heuristic passes wrongly: 157 turns look
+    like a whole run, but the resume began a second query."""
+    usage = {
+        "usage_source": "result_message",
+        "num_turns": 157,
+        "resumes": 1,
+        "usage": dict(_MAIN),
+        "timeline": _timeline(
+            "system:init", "assistant", "tool_result",
+            "system:init", "assistant", "result",
+        ),
+    }
+    assert merge_whole_run_usage(usage, [_sub(output_tokens=50)]) == (None, None)
+
+
+def test_merge_is_unchanged_on_one_query_that_compacted():
+    """Compaction emits `system:compact_boundary`, not `system:init`, so an ordinary
+    long run stays one query and keeps its merged figure."""
+    usage = {
+        "usage_source": "result_message",
+        "num_turns": 90,
+        "usage": dict(_MAIN),
+        "timeline": _timeline(
+            "system:init", "assistant", "system:compact_boundary",
+            "assistant", "system:compact_boundary", "result",
+        ),
+    }
+    merged, cost = merge_whole_run_usage(usage, [_sub(output_tokens=50)])
+    assert merged == {**_MAIN, "output_tokens": 250}
+    assert cost is not None and cost > 0
 
 
 def test_wall_ts_matches_the_transcript_format_byte_for_byte():

@@ -25,7 +25,9 @@
     "record-search-jackson-1900-mary-no-results",
     "record-search-jackson-1900-bitsie-record",
     "rank-search-matches-jackson-bitsie",
-    "record-read-bitsie-jackson-bjkn-90a"
+    "record-read-bitsie-jackson-bjkn-90a",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
   ],
   "judge_context": [
     "Should first try the formal name: issue a record_search (with projectPath, count:50) with surname='Jackson', givenName='Mary' against the 1900 collection. This returns zero results per the fixture",

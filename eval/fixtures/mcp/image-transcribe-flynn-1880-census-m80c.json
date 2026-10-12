@@ -1,0 +1,14 @@
+{
+  "tool": "image_transcribe",
+  "description": "The image behind hint M80C, the 1880 census page for Patrick's household. It reads FLYNN, not the index's Glynn, so the index-vs-tree disagreement resolves in the tree's favour. Keyed on `ark` (search-hints passes the record's imageArk as `ark`, not `imageId`), so image-transcribe-any, keyed on imageId, never shadows it (issue #2029).",
+  "args": {
+    "ark": "~3Q9M-CS80-L7Q2"
+  },
+  "response": {
+    "transcription": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridget — W F 30 — Wife — Married — Keeping house — Born Ireland\nFlynn, Mary — W F 6 — Daughter — Born Pennsylvania\nFlynn, Thomas — W M 3 — Son — Born Pennsylvania",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702114
+    }
+  }
+}

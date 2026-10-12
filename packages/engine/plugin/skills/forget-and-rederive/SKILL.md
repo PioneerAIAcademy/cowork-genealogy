@@ -104,8 +104,9 @@ relationship but keeps the documentary fact that carries the same conclusion (a
 `tree_forget` removes both the structure and the fact, and is the only mechanism
 that does.
 
-If the researcher hasn't seeded a project yet, run `init-project` first (which
-builds the full tree). This skill edits an existing tree; it does not create one.
+If the researcher hasn't seeded a project yet, run `@plugin:init-project` first
+(which builds the full tree), passing the researcher's own words verbatim, plus
+`projectPath`, and nothing else. This skill edits an existing tree; it does not create one.
 
 ### 2. Always dry-run first
 
@@ -167,7 +168,7 @@ are worth reading carefully rather than routing around:
 
 Proceed exactly as you would for a real question — `/research`, or the relevant
 sub-skills. If the forgotten slice isn't already covered by an open research
-question, create or reopen one (via `question-selection`) that targets exactly
+question, create or reopen one (via the `question-selection` agent) that targets exactly
 what was forgotten, and let it drive a plan — do not fall back to ad-hoc
 `record_search` calls with no `plan_item_id`. A forgotten relationship is a new
 question in its own right.

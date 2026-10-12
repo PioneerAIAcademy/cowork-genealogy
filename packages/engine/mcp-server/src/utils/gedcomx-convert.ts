@@ -67,33 +67,61 @@ function stripUri(uri: string | undefined): string | undefined {
   return uri.startsWith(URI_PREFIX) ? uri.slice(URI_PREFIX.length) : uri;
 }
 
-// Reduce a fact-type string to a clean short name:
+// Reduce a fact-type string to a clean short name the tree accepts:
 //   "http://gedcomx.org/Birth"                  → "Birth"
 //   "data:,Baptism"                             → "Baptism"
 //   "data:,Military%20Draft%20Registration"     → "Military Draft Registration"
+//   "data:,Military+Draft+Registration"         → "Military Draft Registration"
+//   "data:,will"                                → "Will"
+//   "data:,%22Presented+to+Society%22"          → "Presented to Society"
+//   "data:,100%25+english"                      → "Custom 100% english"
 //   "http://familysearch.org/v1/Foo"            → "Foo"
 //   "Foo" (already short)                       → "Foo"
 // Strips known URI prefixes, takes the trailing path segment otherwise,
-// then URL-decodes the result. Returns the input unchanged if decoding
-// throws on a malformed percent sequence.
+// then URL-decodes the result, keeping it undecoded if decoding throws on a
+// malformed percent sequence, and tidies it with `treeFactType`.
 function stripFactTypeUri(uri: string | undefined): string | undefined {
   if (typeof uri !== "string") return undefined;
   let stripped: string;
   if (uri.startsWith(URI_PREFIX)) {
     stripped = uri.slice(URI_PREFIX.length);
   } else if (uri.startsWith("data:,")) {
-    stripped = uri.slice("data:,".length);
+    // A space arrives as `+` as often as `%20`: one tree held both
+    // "Previous+Residence" and "Previous%20Residence". A literal plus is `%2B`.
+    stripped = uri.slice("data:,".length).replace(/\+/g, " ");
   } else if (uri.includes("://")) {
     const lastSlash = uri.lastIndexOf("/");
     stripped = lastSlash >= 0 ? uri.slice(lastSlash + 1) : uri;
   } else {
     stripped = uri;
   }
+  let decoded: string;
   try {
-    return decodeURIComponent(stripped);
+    decoded = decodeURIComponent(stripped);
   } catch {
-    return stripped;
+    decoded = stripped;
   }
+  return treeFactType(decoded);
+}
+
+// A `data:,` type is a label a FamilySearch user typed for a custom event, and
+// the tree requires every fact type to start with an uppercase letter
+// (`checkTreeFact` in validation/validator.ts). Labels such as "will",
+// "scholastic-achievement" or a quoted "Presented to Society" do not, and one
+// such fact on any relative made `project_create` refuse the whole starting
+// tree (KNDX-MKG, 2026-10-09). So: trim, drop one pair of wrapping quotes,
+// raise a lowercase first letter, and keep a label that still cannot start
+// with an uppercase letter ("100% english") whole behind a "Custom " prefix
+// rather than lose the fact. No colon after "Custom": `addUri` reads a leading
+// `word:` as a URI scheme, so "Custom: ..." would not round-trip under
+// `http://gedcomx.org/` the way every other custom type does.
+function treeFactType(label: string): string {
+  let out = label.trim();
+  const quoted = /^["'“‘](.*)["'”’]$/s.exec(out);
+  if (quoted) out = quoted[1].trim();
+  if (/^[a-z]/.test(out)) out = out[0].toUpperCase() + out.slice(1);
+  if (/^[A-Z]/.test(out)) return out;
+  return out === "" ? "Custom" : `Custom ${out}`;
 }
 
 function addUri(value: string | undefined): string | undefined {
@@ -378,7 +406,15 @@ function simplifySourceRef(
   ref: GedcomXSourceReference,
 ): SimplifiedSourceReference {
   const out: SimplifiedSourceReference = {};
-  const refId = stripFragment(ref.description);
+  // `descriptionId` first, `description` second. They agree wherever both appear,
+  // but `description` is a full URL on a RELATIVE's ref -- a URL never equals the
+  // bare id a fetched description carries, so `keepResolvableSourceRefs`
+  // (exact string match) would drop every relative source however many we fetch.
+  // Preferring the id upstream already sends is what makes issue #1689 Half 3
+  // work at all, and it cannot drift from the id it names the way parsing the
+  // URL's last segment could. Subject refs are `#<id>` fragments and are
+  // unaffected -- `stripFragment` already produced the same bare id for them.
+  const refId = ref.descriptionId ?? stripFragment(ref.description);
   if (refId !== undefined) out.ref = refId;
 
   const qualifiers = Array.isArray(ref.qualifiers) ? ref.qualifiers : [];
@@ -400,7 +436,10 @@ function simplifySourceRef(
   return out;
 }
 
-function simplifySourceDescription(
+/** Exported for `person-read`, which converts the descriptions a relative's own
+ *  `/sources` read returns before shaping them. Same GedcomX shape as the tree body's,
+ *  so converting them any other way would be a parallel copy of this that drifts. */
+export function simplifySourceDescription(
   desc: GedcomXSourceDescription,
 ): SimplifiedSourceDescription {
   const out: SimplifiedSourceDescription = {};

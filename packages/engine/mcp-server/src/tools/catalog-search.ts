@@ -483,7 +483,7 @@ export async function catalogSearchTool(
     // wrong-answer-not-an-error class as Maine -> Timor-Leste, one layer up.
     repId = await standardPlaceToRepId(place);
 
-    // Resolution is unbudgeted (withRetry x3 over a 30s fetch). Overrunning
+    // Resolution is unbudgeted (each Places fetch runs a full 30s first attempt). Overrunning
     // leaves the search a timeoutMs of 0, whose abort reads "timed out after
     // 0ms" and names the query URL but neither the Catalog nor a way out.
     if (Date.now() >= deadline) {

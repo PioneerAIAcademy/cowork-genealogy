@@ -15,8 +15,8 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const tablePath = join(here, "..", "..", "config", "given-name-variants.json");
 const strategiesPath = join(
-  here, "..", "..", "..", "plugin", "skills",
-  "search-full-text", "references", "search-strategies.md",
+  here, "..", "..", "..", "plugin", "agents",
+  "search-full-text.md",
 );
 const mechanicsPath = join(
   here, "..", "..", "..", "plugin", "skills",
