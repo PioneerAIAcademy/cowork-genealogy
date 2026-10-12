@@ -29,7 +29,7 @@ afterEach(() => {
 
 describe('SessionList delete', () => {
   it('shows the refusal and keeps the session when the delete is refused', async () => {
-    const detail = 'A turn is still open on this session; press Stop, and try again once it has ended'
+    const detail = 'A turn is still running on this session; press Stop, and try again once it has ended'
     const del = vi.spyOn(api, 'deleteSession').mockRejectedValue(new ApiError(409, detail))
     render(<SessionList onOpen={vi.fn()} />)
     fireEvent.click(await screen.findByTitle('Delete session'))

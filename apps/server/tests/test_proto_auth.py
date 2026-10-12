@@ -633,8 +633,8 @@ def _delete_answer(sdk_session_id: str | None = "sdk-uuid", active: bool = False
     def answer(sql: str):
         if sql.startswith("SELECT project_id, sdk_session_id FROM sessions"):
             return {"project_id": "proj_1", "sdk_session_id": sdk_session_id}
-        if sql.endswith("AS active"):
-            return {"active": active}
+        if sql.endswith("AS live"):
+            return {"live": active}
         return None
     return answer
 

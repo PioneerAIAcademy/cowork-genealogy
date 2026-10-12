@@ -128,15 +128,49 @@ async def test_a_session_the_worker_never_started_deletes(pg_dsn, role_dsn):
     assert await PgStore(role_dsn).delete_session(row.session_id) is False
 
 
-async def test_a_running_turn_refuses_the_delete_and_keeps_every_row(pg_dsn, role_dsn):
+def open_turn(dsn: str, row, *, enqueued_ago_s: int = 0, claimed_ago_s: int | None = None) -> str:
+    turn_id = "turn_" + uuid.uuid4().hex[:10]
+    sql(dsn, "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, claimed_at) "
+             "VALUES (%s, %s, %s, '{}', now() - make_interval(secs => %s), "
+             "now() - make_interval(secs => %s::int))",
+        (turn_id, row.session_id, row.project_id, enqueued_ago_s, claimed_ago_s))
+    return turn_id
+
+
+OLD_S = 3600
+
+
+@pytest.mark.parametrize("shape", ["queued unclaimed", "just claimed", "attempt connected"])
+async def test_a_turn_that_may_be_running_refuses_the_delete_and_keeps_every_row(pg_dsn, role_dsn, shape):
     row, sdk = await populated(pg_dsn)
-    sql(pg_dsn, "INSERT INTO turns (turn_id, session_id, project_id, message) VALUES (%s, %s, %s, '{}')",
-        ("turn_" + uuid.uuid4().hex[:10], row.session_id, row.project_id))
-    before = session_rows(pg_dsn, row.session_id)
-    with pytest.raises(SessionBusy):
-        await PgStore(role_dsn).delete_session(row.session_id)
+    attempt = None
+    if shape == "queued unclaimed":
+        open_turn(pg_dsn, row)
+    elif shape == "just claimed":
+        open_turn(pg_dsn, row, enqueued_ago_s=OLD_S, claimed_ago_s=5)
+    else:  # claimed long ago, but run_turn's connection is still open: a long run
+        turn_id = open_turn(pg_dsn, row, enqueued_ago_s=OLD_S, claimed_ago_s=OLD_S)
+        attempt = psycopg.connect(pg_dsn, application_name=f"turn:{turn_id}")
+    try:
+        before = session_rows(pg_dsn, row.session_id)
+        with pytest.raises(SessionBusy):
+            await PgStore(role_dsn).delete_session(row.session_id)
+    finally:
+        if attempt is not None:
+            attempt.close()
     assert session_rows(pg_dsn, row.session_id) == before
     assert transcript(pg_dsn, sdk) == sorted(SUBPATHS)
+
+
+@pytest.mark.parametrize("claimed_ago_s", [None, OLD_S], ids=["never sent", "claim failed"])
+async def test_a_stranded_turn_does_not_block_the_delete(pg_dsn, role_dsn, claimed_ago_s):
+    """Nothing closes these short of the RetentionPeriod backstop, and Stop cannot: a turn
+    committed but never sent, and one whose last claim failed with no attempt left."""
+    row, sdk = await populated(pg_dsn)
+    open_turn(pg_dsn, row, enqueued_ago_s=OLD_S, claimed_ago_s=claimed_ago_s)
+    assert await PgStore(role_dsn).delete_session(row.session_id) is True
+    assert set(session_rows(pg_dsn, row.session_id).values()) == {0}
+    assert transcript(pg_dsn, sdk) == []
 
 
 async def test_a_held_message_alone_does_not_block_the_delete(pg_dsn, role_dsn):
