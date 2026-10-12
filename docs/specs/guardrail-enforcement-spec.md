@@ -2416,10 +2416,10 @@ this section before reopening one.
   that it would have no instances to govern: the guard registry's `guards[]`
   holds one entry and it is already enforcing, the registry test introduced with
   the labelled-case rule already forces a case set on every *new* harness
-  detector, and two checks graduated after the rule was first proposed. The
-  free-text half survives as a docstring requirement on the guards that carry a
-  lexical predicate — a guard whose predicate reads free text names the
-  declared-or-recomputed alternative it rejected.
+  detector, and two checks graduated after the rule was first proposed. The ruling addresses the
+  graduation-instrument half only; item 3's second sentence — that a guard whose
+  predicate reads free text should name the declared-or-recomputed alternative it
+  rejected — was not separately ruled on and is enforced nowhere today.
 
 - **Converting the four skills to agents** (which would give a real `agent_id`
   and make hook attribution trivial). All four do mandatory on-demand `Read` of

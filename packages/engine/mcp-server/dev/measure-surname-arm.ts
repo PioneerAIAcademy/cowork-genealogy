@@ -92,6 +92,13 @@ for (const rel of trackedFinalResearch()) {
   }
 }
 
+// A corpus-path miss prints all zeros and exits 0, which reads as "the arm
+// never fires" — the self-confirming direction for a decision to set it aside.
+// Fail loudly instead: the committed corpus always has runs and confident
+// links, so zero of either means the scan did not reach it.
+if (runs === 0) throw new Error("no committed final-research logs matched — corpus path wrong?");
+if (confident === 0) throw new Error(`scanned ${runs} run(s) but found 0 confident person_evidence links — shape changed?`);
+
 const pct = (n: number, d: number) => `${((100 * n) / d).toFixed(1)}%`;
 console.log(`runs (git ls-files)        ${runs}`);
 console.log(`confident links            ${confident}`);
