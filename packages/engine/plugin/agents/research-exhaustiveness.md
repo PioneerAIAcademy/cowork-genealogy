@@ -93,9 +93,9 @@ existing declaration and its `stop_criteria` as they stand, and point to
 entry — when it does, say plainly that no further exhaustiveness work is owed.
 
 Only evaluate a question whose **active** plan's items are all `completed` or
-`skipped`. If any is `in_progress`, refuse to declare and recommend finishing
-the in-flight work first. Items on a non-active plan are audit trail and never
-block.
+`skipped`. If any is still `planned` or `in_progress`, refuse to declare and
+recommend finishing the outstanding items first. Items on a non-active plan are
+audit trail and never block.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
@@ -142,7 +142,7 @@ Read:
 - The question and its `exhaustive_declaration`
 - Log entries for its plan items (via `plan_item_id`)
 - Assertions from those searches (via each assertion's `log_entry_id`)
-- Skipped plan items and their reasons
+- Skipped plan items — their `skip_category` and `skip_reason` where present
 
 Then **call `wiki_read`** for the jurisdiction's registration start date —
 `{State}_Vital_Records` for a US state, `{Country}_Civil_Registration`
@@ -166,7 +166,7 @@ named in `justification`.
 | `repository_breadth` | All relevant repositories, jurisdictions, and name variants tried, and FAN research attempted where direct evidence is insufficient? |
 | `original_substitution` | Derivatives replaced with originals where available? |
 | `independent_verification` | At least two independent sources? (Same informant = one unit.) |
-| `evidence_class` | At least one original record with primary information? |
+| `evidence_class` | At least one original record with primary information? A record type **searched and found absent** is negative evidence, not a missing class — it does not block. |
 | `conflict_resolution` | All discrepancies resolved? Unresolved conflicts block proof. |
 | `overturn_risk` | Could an unsearched source plausibly change the conclusion? |
 
@@ -178,6 +178,13 @@ named in `justification`.
   source remains. Explain what is missing and recommend expanding the plan
   (`research-plan`). **When in doubt, a gap is unsearched, not unobtainable —
   default to `research-plan`.**
+  - A skipped item's recorded reason is **fact**. Accept it as written. Most
+    skipped items carry no `skip_category`; its absence says nothing. A
+    skipped **decisive** record still gates (below) unless its recorded reason
+    is inaccessibility.
+  - A present `skip_category` changes only two things: `premise_invalidated`
+    means recommend `research-plan`; `inaccessible` and `no_coverage` make the
+    item eligible for the exception below, whose own conditions still decide.
   - *Narrow exception — a source verified **inaccessible*** (a browse-only
     image over the MCP transport cap; a record **sealed by privacy law** —
     e.g. a recent vital record still inside its statutory embargo and
@@ -283,10 +290,10 @@ the offending field — do not blindly retry the same payload.
 - **One declaration at a time.** Each invocation evaluates exactly one
   question.
 - **Plan must be complete.** Only evaluate questions whose **active** plan's
-  items are all `completed` or `skipped`; if any is `in_progress`, recommend
-  completing them first instead of declaring. Items on a plan whose status is
-  not `active` are audit trail — they never block a declaration and are never
-  swept to `skipped`.
+  items are all `completed` or `skipped`; if any is still `planned` or
+  `in_progress`, recommend completing them first instead of declaring. Items
+  on a plan whose status is not `active` are audit trail — they never block a
+  declaration and are never swept to `skipped`.
 - **Exhaustive does not mean exhausting.** `overturn_risk` is one of the
   seven, not the definition: could a real, unsearched source plausibly
   change the conclusion?

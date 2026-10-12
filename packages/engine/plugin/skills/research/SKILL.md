@@ -212,9 +212,10 @@ something you wait for — their answer arrives as the next message.
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). The record-extractor agent deliberately cannot and does not link; its output ALWAYS flows through person-evidence next |
    | Evidence conflicts present | `conflict-resolution` |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
-   | Analyzed evidence now plausibly answers the active question — **even with plan items still `planned`** | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
+   | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
    | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
+   | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
     | All questions are `resolved` and `project.status` still `active` | **First verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** this router holds no writer tool, and `docs/specs/schemas/ownership.json` names `proof-conclusion`, not this router, as the `project` section's only skill caller. Then stop. |
@@ -312,7 +313,10 @@ something you wait for — their answer arrives as the next message.
    A front-loaded plan is a **prioritized list, not a checklist to
    drain.** Consult `@plugin:research-exhaustiveness` as soon as analyzed
    evidence plausibly answers the active question — do not reflexively
-   execute the remaining `planned` items first. Exhaustiveness is the
+   execute the remaining `planned` items first. When it names items
+   still open, close them out through the skill that owns each: a moot
+   item is `skipped` with a reason, a plan new information has
+   invalidated is superseded via `research-plan`. Exhaustiveness is the
    stop gate: it weighs the question against the 7-point stop criteria,
    assessed in order and stopping at the first that fails, and either
    declares the search reasonably
