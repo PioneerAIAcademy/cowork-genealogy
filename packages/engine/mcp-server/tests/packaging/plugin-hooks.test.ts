@@ -189,8 +189,15 @@ describe("plugin hooks are packaged and wired", () => {
         // ${CLAUDE_PLUGIN_ROOT} is the only portable way to reference a
         // bundled script; a relative path resolves against the session's cwd.
         expect(hook.command).toContain("${CLAUDE_PLUGIN_ROOT}");
-        const rel = hook.command!.split("${CLAUDE_PLUGIN_ROOT}/")[1]?.trim();
-        expect(existsSync(join(PLUGIN_DIR, rel))).toBe(true);
+        // Each use must sit inside double quotes: the root is a user path, and
+        // an unquoted one with a space ("C:\Users\First Last\...") splits
+        // into two arguments, so the hook errors and blocks every Write.
+        const uses = hook.command!.split("${CLAUDE_PLUGIN_ROOT}").length - 1;
+        const quoted = [...hook.command!.matchAll(/"\$\{CLAUDE_PLUGIN_ROOT\}\/([^"]+)"/g)];
+        expect(quoted.length, `unquoted \${CLAUDE_PLUGIN_ROOT} in: ${hook.command}`).toBe(uses);
+        for (const [, rel] of quoted) {
+          expect(existsSync(join(PLUGIN_DIR, rel))).toBe(true);
+        }
       }
     }
   });
@@ -456,6 +463,17 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("research_append");
     // No stopReason — a denied write is recoverable and the turn continues.
     expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["Write", "/project/external-collections.json"],
+    ["Edit", "C:\\Users\\Dell\\project\\external-collections.json"],
+  ])("denies %s on %s and names the tool that writes it", (tool, file_path) => {
+    const out = runGuard({ tool_name: tool, tool_input: { file_path } });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(
+      "external-collections.json is written only by external_links_search",
+    );
   });
 
   it.each([

@@ -1,0 +1,91 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Locate Josiah Barnes (b. c. 1818, Massachusetts) and his household in the 1855 Massachusetts State Census",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-08-10",
+    "updated": "2026-08-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [
+      "MyHeritage"
+    ],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Josiah Barnes enumerated in the 1855 Massachusetts State Census, and who was in his household?",
+      "rationale": "The 1855 Massachusetts State Census is one of the two surviving state schedules and should place the subject's household mid-decade, between the 1850 and 1860 federal censuses.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-08-10",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "exhaustive_declaration": {
+        "declared": false,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-08-10",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Massachusetts, United States",
+          "date_range": "1855",
+          "repository": "MyHeritage",
+          "rationale": "MyHeritage indexes the 1855 Massachusetts State Census; the researcher has a MyHeritage subscription, so this search is immediately actionable.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-08-10T15:00:00.000Z",
+      "tool": "external_site",
+      "query": {
+        "givenName": "Josiah",
+        "surname": "Barnes",
+        "birthYear": 1818
+      },
+      "outcome": "partial",
+      "results_examined": 0,
+      "notes": "baseUrl: https://www.myheritage.com/research/collection-20822/1855-massachusetts-state-census",
+      "external_site": {
+        "site": "myheritage",
+        "url_generated": "https://www.myheritage.com/research/collection-20822/1855-massachusetts-state-census?s=1&formId=master&formMode=1&useTranslation=1&exactSearch=&p=1&action=query&view_mode=card&qname=Name+fn.Josiah+fnmo.1+ln.Barnes+lnmsrs.false&qevents-event1=Event+et.birth+ey.1818&qevents=List",
+        "capture_received": false
+      },
+      "results_ref": null
+    }
+  ],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

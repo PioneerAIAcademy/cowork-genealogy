@@ -21,10 +21,7 @@ import {
   OCR_MAX_TOKENS,
   MAX_OCR_INPUT_BYTES,
 } from "../utils/ocr.js";
-import {
-  recordBrowseAndCheckBudget,
-  __clearBrowseBudgetForTests,
-} from "../utils/browse-budget.js";
+import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import { getProjectStore } from "../store/project-store.js";
 import {
   classifyProjectPath,
@@ -43,7 +40,7 @@ import type {
 
 // Re-exported so existing importers (tests, dev/probe-ocr-finish-reason.ts) keep
 // their import path after the extraction to src/utils/ (issue #2183).
-export { __clearBrowseBudgetForTests, OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
+export { OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
 
 // The digest's bounded excerpt (issue #2489): enough for a caller to triage a
 // staged transcription without asking for the full text.
@@ -218,6 +215,9 @@ export async function imageTranscribeTool(
     // `source` below keeps the url the agent actually passed.
     label = resolved.label;
 
+    // The hard image cap (§5.8): refuse before the fetch and the OCR.
+    const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe");
+
     // Resolve credentials/config before FETCHING the image: a missing key should
     // fail fast and never leave a fetched scan unused. It sits below the input
     // resolve on purpose — hoisting it above made a malformed ark report a
@@ -233,6 +233,7 @@ export async function imageTranscribeTool(
       principal,
       resolved.memoryShape,
     );
+    await recordImageBrowse(browse);
     bytes = fetched.bytes;
     contentType = fetched.contentType;
     sizeBytes = fetched.sizeBytes;
@@ -304,11 +305,6 @@ export async function imageTranscribeTool(
     if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
 
-  const browseBudget = recordBrowseAndCheckBudget(
-    input.imageId,
-    input.projectPath,
-  );
-
   // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
   // line the model never reached, and a target may sit below the cut — a
   // half-read page must never yield a clean NOT FOUND negative (#1974).
@@ -376,7 +372,6 @@ export async function imageTranscribeTool(
     ...(staged !== undefined ? { staged } : {}),
     ...(stagingError !== undefined ? { stagingError } : {}),
     ...(digest !== undefined ? { digest } : {}),
-    ...(browseBudget ? { browseBudget } : {}),
     ...(lookingForExpansion && input.lookingFor
       ? {
           nameExpansion: {

@@ -73,9 +73,11 @@ Whenever you persist a place on a fact, assertion, or timeline event, also set
 its **`standard_place`** companion (snake_case in the data formats) when one can
 be found:
 
-- If the place came from a `record_read` / `record_search` / `person_read`
-  result, that fact already carries a converter-resolved `standard_place` —
-  **copy it** (no tool call).
+- A place from a `person_read` result needs nothing: `project_create` builds
+  the tree from the read, `standard_place` included.
+- If the place came from a `record_read` / `record_search` result, that fact
+  already carries a converter-resolved `standard_place` — **copy it** (no tool
+  call).
 - Otherwise call `place_search({ placeName: "<place>" })` and use the first
   result's `standardPlace`. Resolve each distinct place once.
 - Leave `standard_place` null when `place` is null or nothing resolves.

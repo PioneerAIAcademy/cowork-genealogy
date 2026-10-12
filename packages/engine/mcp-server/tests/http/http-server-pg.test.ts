@@ -107,7 +107,13 @@ if (!DSN || !ENDPOINT) {
       } catch (e: any) {
         if (e?.name !== "BucketAlreadyOwnedByYou" && e?.name !== "BucketAlreadyExists") throw e;
       }
-      server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {}, bindStore });
+      server = await startHttpServer({
+        host: "127.0.0.1",
+        port: 0,
+        baseConfig: {},
+        bindStore,
+        checkReady: () => backend.checkReady(),
+      });
       const address = server.address();
       if (!address || typeof address !== "object") throw new Error("server did not bind a port");
       base = `http://127.0.0.1:${address.port}`;
@@ -119,6 +125,13 @@ if (!DSN || !ENDPOINT) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       for (const id of projectIds) await purge(id);
       await backend.close();
+    });
+
+    it("healthy stack: 200, both checks ok", async () => {
+      const res = await fetch(`${base}/healthz`);
+      const text = await res.text();
+      expect(res.status, text).toBe(200);
+      expect(JSON.parse(text)).toMatchObject({ ok: true, checks: { postgres: { ok: true }, s3: { ok: true } } });
     });
 
     it("two concurrent requests with different X-Genealogy-Project-Id headers write and read their own rows", async () => {

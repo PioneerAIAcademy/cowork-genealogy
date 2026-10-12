@@ -9,6 +9,7 @@ import {
   RESEARCH_QUERY_SECTIONS,
   RESEARCH_QUERY_EXCLUDED,
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
+  SECTION_FILTERS,
 } from "../../src/tools/research-query.js";
 
 describe("research_query", () => {
@@ -46,6 +47,105 @@ describe("research_query", () => {
     expect(result.count).toBe(1);
     expect(result.items.map((i) => i.id)).toEqual(["a_001"]);
     expect(result.truncated).toBe(false);
+  });
+
+  it("filters assertions by assertionId — an EXACT match on the assertion's own id", async () => {
+    // The field is `id`. An assertion object has no `assertion_id` key — that
+    // is person_evidence's POINTER to one — so a rule on `assertion_id` here
+    // is accepted by the tool and matches nothing, ever, returning a silent
+    // `count: 0` indistinguishable from "no such assertion".
+    //
+    // Two assertions, and the assertion is on EXACTLY one: a test that only
+    // checked "did not throw", or "returned something", passes under the wrong
+    // field (0 items) and under a widened mode.
+    await writeResearch({
+      assertions: [
+        { id: "a_001", record_id: "REC1", record_role: "principal", fact_type: "birth" },
+        { id: "a_002", record_id: "REC2", record_role: "child", fact_type: "death" },
+      ],
+    });
+
+    const result = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      assertionId: "a_002",
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.count).toBe(1);
+    expect(result.items.map((i) => i.id)).toEqual(["a_002"]);
+  });
+
+  it("every SECTION_FILTERS field names a real property on that section's schema", async () => {
+    // The class guard, not a second one-off. A rule naming a field the section
+    // does not have compiles, passes every test, is accepted by the tool, and
+    // returns `count: 0` forever -- the exact defect the `assertionId`/
+    // `assertion_id` comment warns about in prose. CLAUDE.md: when the bug is
+    // the second instance of a class, write one shared guard.
+    const schema = JSON.parse(
+      readFileSync(
+        join(__dirname, "..", "..", "..", "..", "..", "docs", "specs", "schemas", "research.schema.json"),
+        "utf-8",
+      ),
+    );
+    const bad: string[] = [];
+    for (const [section, filters] of Object.entries(SECTION_FILTERS)) {
+      const ref = schema.properties?.[section]?.items?.$ref;
+      if (!ref) continue; // not an array-of-objects section; nothing to check
+      const def = schema.$defs?.[ref.replace("#/$defs/", "")];
+      const props = def?.properties ?? {};
+      for (const [key, rule] of Object.entries(filters as Record<string, any>)) {
+        for (const f of rule.fields ?? [rule.field]) {
+          if (f && !(f in props)) bad.push(`${section}.${key} -> ${f}`);
+        }
+      }
+    }
+    expect(
+      bad,
+      `these filter rules name a field the section's schema does not have, so ` +
+        `they are accepted by the tool and match nothing, ever: ${bad.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  it("keeps assertionId mapped to a DIFFERENT field on each sibling section", async () => {
+    // Five sections take `assertionId` and it means two different things: on
+    // `assertions` the item's own `id`, everywhere else a field REFERENCING an
+    // assertion. Only `assertions` and `hypotheses` were pinned, so an editor
+    // seeing `{field:"id"}` directly above `person_evidence: {field:
+    // "assertion_id"}` could "fix the inconsistency" to `id` — after which
+    // person_evidence matches nothing ever (a pe_ entry's id starts with pe_),
+    // person-evidence's "an empty result IS the answer: unlinked" idiom calls
+    // every assertion unlinked, and the suite stays green.
+    await writeResearch({
+      assertions: [{ id: "a_001", fact_type: "birth" }],
+      person_evidence: [{ id: "pe_001", person_id: "P1", assertion_id: "a_001" }],
+      conflicts: [{ id: "c_001", competing_assertion_ids: ["a_001"], status: "open" }],
+      proof_summaries: [{ id: "ps_001", supporting_assertion_ids: ["a_001"] }],
+    });
+
+    for (const [section, id] of [
+      ["person_evidence", "pe_001"],
+      ["conflicts", "c_001"],
+      ["proof_summaries", "ps_001"],
+    ] as const) {
+      const r = await researchQuery({ projectPath: dir, section, assertionId: "a_001" });
+      expect(r.ok, section).toBe(true);
+      if (!r.ok) return;
+      expect(r.count, section).toBe(1);
+      expect(r.items.map((i) => i.id), section).toEqual([id]);
+    }
+
+    // ...and the same id on `assertions` returns the assertion itself, not
+    // anything referencing it.
+    const own = await researchQuery({
+      projectPath: dir,
+      section: "assertions",
+      assertionId: "a_001",
+    });
+    expect(own.ok).toBe(true);
+    if (!own.ok) return;
+    expect(own.items.map((i) => i.id)).toEqual(["a_001"]);
   });
 
   it("filters assertions by questionId — a CONTAINS match on extracted_for_question_ids", async () => {
@@ -444,6 +544,83 @@ describe("research_query", () => {
   });
 });
 
+// --- conflicts: unregistered disagreements (ut_research_h22) -------------
+
+describe("research_query — conflicts reports unregistered disagreements", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-disagree-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // I2's birthplace: England on one census, Alabama on another, for q_001.
+  // I3's birthplace disagrees too, but only on q_002's assertions.
+  const research = (conflicts: any[] = []) => ({
+    assertions: [
+      { id: "a_1", fact_type: "birth", place: "England", extracted_for_question_ids: ["q_001"] },
+      { id: "a_2", fact_type: "birth", place: "Alabama, United States", extracted_for_question_ids: ["q_001"] },
+      { id: "a_3", fact_type: "birth", place: "Alabama", extracted_for_question_ids: ["q_002"] },
+      { id: "a_4", fact_type: "birth", place: "Mississippi", extracted_for_question_ids: ["q_002"] },
+    ],
+    person_evidence: [
+      { id: "pe_1", person_id: "I2", assertion_id: "a_1" },
+      { id: "pe_2", person_id: "I2", assertion_id: "a_2" },
+      { id: "pe_3", person_id: "I3", assertion_id: "a_3" },
+      { id: "pe_4", person_id: "I3", assertion_id: "a_4" },
+    ],
+    conflicts,
+  });
+
+  async function query(extra: Record<string, unknown>, conflicts: any[] = []) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research(conflicts)), "utf-8");
+    const result = await researchQuery({ projectPath: dir, section: "conflicts", ...extra } as any);
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("unreachable");
+    return result;
+  }
+
+  it("reports a disagreement nobody registered while count stays 0", async () => {
+    const result = await query({});
+    expect(result.count).toBe(0);
+    expect(result.unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2"] },
+      { personId: "I3", fact: "birth place", assertionIds: ["a_3", "a_4"] },
+    ]);
+  });
+
+  it("scopes to the question's own assertions under questionId", async () => {
+    const result = await query({ questionId: "q_001" });
+    expect(result.unregisteredDisagreements).toEqual([
+      { personId: "I2", fact: "birth place", assertionIds: ["a_1", "a_2"] },
+    ]);
+  });
+
+  it("drops a pair a conflicts entry already names", async () => {
+    const conflict = { id: "c_001", status: "unresolved", competing_assertion_ids: ["a_1", "a_2"] };
+    const result = await query({}, [conflict]);
+    expect(result.count).toBe(1);
+    expect(result.unregisteredDisagreements?.map((d) => d.personId)).toEqual(["I3"]);
+  });
+
+  it("narrows to disagreements naming assertionId", async () => {
+    const result = await query({ assertionId: "a_4" });
+    expect(result.unregisteredDisagreements?.map((d) => d.personId)).toEqual(["I3"]);
+  });
+
+  it("reports them under status 'unresolved' and omits them under any other status", async () => {
+    expect((await query({ status: "unresolved" })).unregisteredDisagreements).toHaveLength(2);
+    expect((await query({ status: "resolved" })).unregisteredDisagreements).toBeUndefined();
+  });
+
+  it("adds nothing to another section's read", async () => {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research()), "utf-8");
+    const result = await researchQuery({ projectPath: dir, section: "assertions" });
+    expect(result.ok && "unregisteredDisagreements" in result).toBe(false);
+  });
+});
+
 // --- #2936: localities, and the completeness guard -----------------------
 
 describe("research_query — localities (#2936)", () => {
@@ -624,5 +801,105 @@ describe("research_query — every array section is queryable or deliberately ex
     // exist.
     const stale = Object.keys(RESEARCH_QUERY_EXCLUDED).filter((s) => !arraySections.includes(s));
     expect(stale, `RESEARCH_QUERY_EXCLUDED names section(s) the schema no longer has`).toEqual([]);
+  });
+
+});
+
+// --- log × questionId: one call replacing the per-plan-item walk (T2.1) ---
+describe("research_query — log × questionId", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-plan-question-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeResearch(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+  }
+
+  const plansFixture = {
+    plans: [
+      { id: "pl_001", question_id: "q_001", status: "active",
+        items: [{ id: "pli_001" }, { id: "pli_002" }] },
+      { id: "pl_002", question_id: "q_001", status: "superseded",
+        items: [{ id: "pli_003" }] },
+      { id: "pl_003", question_id: "q_002", status: "active",
+        items: [{ id: "pli_004" }] },
+    ],
+    log: [
+      { id: "log_001", plan_item_id: "pli_001" },
+      { id: "log_002", plan_item_id: "pli_002" },
+      { id: "log_003", plan_item_id: "pli_003" },
+      { id: "log_004", plan_item_id: "pli_004" },
+      { id: "log_005", plan_item_id: null },
+      { id: "log_006", plan_item_id: "pli_001" },
+    ],
+  };
+
+  it("log × questionId returns every entry for any plan item of the question's plans", async () => {
+    await writeResearch(plansFixture);
+    const result = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    // Includes the superseded plan's item (audit trail); excludes q_002's and the unplanned entry.
+    expect(result.items.map((i) => i.id)).toEqual(["log_001", "log_002", "log_003", "log_006"]);
+    expect(result.count).toBe(4);
+  });
+
+  it("log × questionId equals the union of the per-item planItemId walk", async () => {
+    await writeResearch(plansFixture);
+    const joined = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    const walked: string[] = [];
+    for (const planItemId of ["pli_001", "pli_002", "pli_003"]) {
+      const r = await researchQuery({ projectPath: dir, section: "log", planItemId });
+      if (r.ok) walked.push(...r.items.map((i) => i.id));
+    }
+    if (!joined.ok) throw new Error("joined call failed");
+    expect(joined.items.map((i) => i.id).sort()).toEqual(walked.sort());
+  });
+
+  it("log × questionId ANDs with planItemId like every other filter", async () => {
+    await writeResearch(plansFixture);
+    const r = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001", planItemId: "pli_002" });
+    if (!r.ok) throw new Error("failed");
+    expect(r.items.map((i) => i.id)).toEqual(["log_002"]);
+    const none = await researchQuery({ projectPath: dir, section: "log", questionId: "q_002", planItemId: "pli_002" });
+    if (!none.ok) throw new Error("failed");
+    expect(none.count).toBe(0);
+  });
+
+  it("log × questionId for a question with no plans is an empty result, not an error", async () => {
+    await writeResearch(plansFixture);
+    const r = await researchQuery({ projectPath: dir, section: "log", questionId: "q_009" });
+    expect(r).toMatchObject({ ok: true, count: 0, items: [] });
+  });
+
+  it("log × questionId errors (not count:0) when plans is missing — a corrupt document", async () => {
+    await writeResearch({ log: plansFixture.log });
+    const r = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(JSON.stringify(r)).toContain("'plans' is missing or not an array");
+  });
+
+  it("log × questionId pages a >50-entry result with offset", async () => {
+    const log = Array.from({ length: 60 }, (_, k) => ({ id: `log_${k}`, plan_item_id: "pli_001" }));
+    await writeResearch({ plans: plansFixture.plans, log });
+    const first = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001" });
+    const second = await researchQuery({ projectPath: dir, section: "log", questionId: "q_001", offset: 50 });
+    if (!first.ok || !second.ok) throw new Error("failed");
+    expect(first).toMatchObject({ count: 60, truncated: true });
+    expect(first.items).toHaveLength(50);
+    expect(second.items).toHaveLength(10);
+    expect(second.truncated).toBe(false);
+  });
+
+  it("the unsupported-filter error for log now names questionId", async () => {
+    await writeResearch(plansFixture);
+    const r = await researchQuery({ projectPath: dir, section: "log", personId: "P1" } as never);
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r)).toContain("supported: planItemId, questionId");
   });
 });

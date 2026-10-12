@@ -9,7 +9,7 @@
  * It scaffolds a throwaway project in a temp directory, so it touches nothing
  * of yours and needs no existing research folder.
  *
- * Requires a valid FS session (run `login` first, or set FS_ACCESS_TOKEN).
+ * Requires a valid FS session: run `login` first (tokens.json is the only source).
  *
  * Usage:
  *   npx tsx dev/try-same-person-project.ts

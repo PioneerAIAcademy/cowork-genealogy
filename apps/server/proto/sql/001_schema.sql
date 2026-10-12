@@ -1,7 +1,7 @@
 -- D3 Postgres schema for the search-agent prototype
 -- (docs/plan/search-agent-prototype.md, "Week 1" D3). Idempotent: every statement is
 -- CREATE ... IF NOT EXISTS, so re-running against a populated database is a no-op.
--- Applied by the postgres container's /docker-entrypoint-initdb.d on first start.
+-- Applied once by `migrate.py` (U9), which records it in schema_migrations.
 --
 -- No foreign keys, on purpose: the D3 stub worker upserts sessions/turns from a
 -- message body and nothing creates projects yet. Constraints arrive with the real

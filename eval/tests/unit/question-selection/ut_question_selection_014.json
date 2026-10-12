@@ -5,10 +5,17 @@
     "name": "First question tests a disputed parent assignment, not confirms it",
     "type": "positive",
     "description": "Regression for #1471. The objective disputes the parents currently attached to Anton Vogt, which are unverified tree data (quality:1), and the user has stated the doubt and evidence up front (a death record placing him in Luxembourg, not Wisconsin). The first research question must be framed to TEST that assignment against independent records (confirm-or-refute), never to confirm it or treat the existing tree parents as established. Synthetic scenario — no PII. Note: the interactive doubt-elicitation ask cannot be exercised single-turn, so the doubt is supplied in the message and this test asserts the resulting persisted question's framing.",
-    "tags": ["question-selection", "from-objective", "first-question", "regression", "verifies-disputed-parents"]
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "first-question",
+      "regression",
+      "verifies-disputed-parents",
+      "direct-arm"
+    ]
   },
   "input": {
-    "user_message": "The parents currently attached to Anton Vogt (I1) look wrong to me — I have his death record showing he died in Luxembourg, not Wisconsin, and I believe he was born about 1860 in Wisconsin. Pick the first research question to investigate.",
+    "delegation": "Select and record the next research question for this project.\n\nThe user said: \"The parents currently attached to Anton Vogt (I1) look wrong to me — I have his death record showing he died in Luxembourg, not Wisconsin, and I believe he was born about 1860 in Wisconsin. Pick the first research question to investigate.\"\n\nprojectPath: <workspace>",
     "scenario": "disputed-parents-unsourced"
   },
   "judge_context": [

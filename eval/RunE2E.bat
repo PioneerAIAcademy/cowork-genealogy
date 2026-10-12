@@ -4,7 +4,7 @@ cd %~dp0
 echo === Cowork Genealogy E2E Benchmark — Run a test ===
 echo.
 echo This runs ONE e2e fixture against LIVE FamilySearch. It is expensive:
-echo typically 20-60 minutes and $3-10 in API cost. Run one at a time.
+echo About an hour and single-digit dollars, with a long tail (docs\e2e-testing-guide.md, overview table, row 5). Run one at a time.
 echo.
 set /p SLUG="Which fixture (slug) do you want to run? (e.g. kenneth-quass-death): "
 
@@ -58,10 +58,16 @@ rem the corpus is built from come from this entry point, so a flag that could be
 rem set by accident here would silently contaminate repo-wide figures. Run the
 rem 1M arm from the Makefile on a machine where that is the deliberate intent.
 rem CI rejects such a run if it is committed under eval/runlogs/e2e/.
+rem TOOL_SEARCH=0 (--no-tool-search, every tool schema loaded up front) is
+rem DELIBERATELY not mirrored either, for the same reason: an off run is not
+rem comparable to the corpus, the harness refuses it under eval/runlogs/e2e/,
+rem and CI rejects one committed there. Run it from the Makefile with
+rem RUNLOG_ROOT pointing outside the repo.
 call uv run python -m e2e.run_e2e --test %SLUG%%E2E_FLAGS%
 
 echo.
-echo Done. Four result files were written under eval\runlogs\e2e\%SLUG%\.
-echo Use InterpretE2E (the /interpret-e2e-result skill) to read the verdict,
-echo then commit the fixture and its passing run log via GitHub Desktop.
+echo Done. If the run finished, it wrote three result files under eval\runlogs\e2e\%SLUG%\.
+echo Next, in Claude Code: /grade-e2e-run first, then /interpret-e2e-result.
+echo Then commit the run log, its .ann.json and both .final-* files (plus the fixture, if you authored it) via GitHub Desktop.
+echo If it says the host slept, do not grade it: commit its three files, keep the machine awake (eval\README.md) and re-run.
 pause

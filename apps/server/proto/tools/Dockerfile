@@ -5,14 +5,14 @@
 #
 # src/ is compiled here, never the host's build/ -- that stays in the context on
 # purpose for the E2B image, but a laptop's stale build must not become the service.
-FROM node:22-slim AS build
+FROM node:24-slim AS build
 
 WORKDIR /app
 COPY packages/engine/mcp-server/package.json packages/engine/mcp-server/package-lock.json packages/engine/mcp-server/tsconfig.json ./
 COPY packages/engine/mcp-server/src ./src
 RUN npm ci --ignore-scripts && npx tsc
 
-FROM node:22-slim
+FROM node:24-slim
 
 WORKDIR /app
 COPY packages/engine/mcp-server/package.json packages/engine/mcp-server/package-lock.json ./

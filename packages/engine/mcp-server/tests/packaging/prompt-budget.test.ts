@@ -12,7 +12,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 //
 // Settled by the lead 2026-07-31, amended 2026-09-24 (issue #976, #2879):
 //   - The report is warn-only; the baseline file must be current (issue #2879).
-//   - Delta-only. No absolute ceiling per file yet (issue #1275).
+//   - Delta-only. No absolute ceiling per file (lead, 2026-09-27).
 //   - Prose bytes for prompt files, characters for tool descriptions.
 //
 // A committed prompt-sizes.json records the current sizes at HEAD. A staleness

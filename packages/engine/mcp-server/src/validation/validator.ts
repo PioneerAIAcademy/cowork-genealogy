@@ -131,6 +131,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // and `italian_genealogy` are keyword-only — see build-external-search-url.ts.
   "archives_gov", "archive_org", "billiongraves", "digitalarkivet",
   "antenati", "library_archives_canada", "american_ancestors", "italian_genealogy",
+  // Browse sites (issue #2802): German church books, reached through the
+  // parish page rather than a name search.
+  "archion", "matricula",
 ]);
 
 /**
@@ -579,7 +582,7 @@ export const RESEARCH_SHAPES = {
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
-    "core_identifier_conflict", "match_score", "created", "superseded_by",
+    "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -900,6 +903,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
 
     const items = Array.isArray(pl.items) ? pl.items : [];
+    const planItemIds = new Set(
+      items.map((it: any) => (it && typeof it === "object" ? it.id : undefined)),
+    );
     for (let j = 0; j < items.length; j++) {
       const item = items[j];
       const ip = `${pp}/items[${j}]`;
@@ -915,6 +921,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
       if ("status" in item) {
         checkEnum(item.status, "plan_item_status", ip, report);
+      }
+      // `fallback_for` is `^pli_` or null in the JSON Schema, the same drift as
+      // the log's `plan_item_id` below. It must also name an item of this same
+      // plan: a fallback is tried when a sibling comes back empty, so an id from
+      // another plan (or a superseded one) can never be acted on.
+      if (item.fallback_for !== null && item.fallback_for !== undefined) {
+        const fb = item.fallback_for;
+        if (typeof fb !== "string" || !fb.startsWith(ID_PREFIXES.plan_items)) {
+          addError(
+            report,
+            ip,
+            `fallback_for '${String(fb)}' must be a '${ID_PREFIXES.plan_items}' id of an item in this plan, or null`,
+          );
+        } else if (!planItemIds.has(fb)) {
+          addError(
+            report,
+            ip,
+            `fallback_for '${fb}' is not an item in this plan (${pl.id ?? "?"}); ` +
+              "name a sibling item of the same plan, or null",
+          );
+        }
       }
     }
   }
@@ -1176,6 +1203,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
           pp,
           "core_identifier_conflict must be a non-empty string or null",
         );
+      }
+    }
+    if ("move_bridge" in pe && pe.move_bridge != null) {
+      if (typeof pe.move_bridge !== "string" || pe.move_bridge === "") {
+        addError(report, pp, "move_bridge must be a non-empty string or null");
       }
     }
     if ("assertion_id" in pe) {

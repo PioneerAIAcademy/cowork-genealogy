@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_b6h",
+    "skill": "source-evaluation",
+    "name": "Which of two disagreeing sources to believe — hand back to conflict-resolution, call no tool",
+    "type": "negative",
+    "description": "The agent's front-door gate, reached by direct spawn. The delegation is the deleted routing negative ut_source_evaluation_c5n's message verbatim: it asks which of two sources to believe, which is conflict-resolution's weighing, not an audit of whether a source belongs on the profile or was indexed correctly. The agent must call no tool and return the one-line 'Hand-back: conflict-resolution — <clause>'. Added in issue #2796 when the two description-routing negatives (h3t, c5n) were deleted: those graded which skill Cowork picked from a description, which never reached this gate; this test reaches the gate itself. A DIRECT negative graded on its invariant (unit-test-spec.md 5.2.1), gated by test_scope_handback_calls_no_tool in eval/harness/validators/test_source_evaluation.py.",
+    "tags": [
+      "scope-handback",
+      "handback-to-conflict-resolution",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The 1900 census says Christian was born in 1875 and the 1885 state census says 1852 -- which one should I believe?\n\nprojectPath: <workspace>",
+    "scenario": "christian-hole-quality"
+  },
+  "mcp_fixtures": [
+    "person-read-hole-attached-sources",
+    "record-read-hole-1900-census",
+    "record-read-hole-mn-death-index",
+    "record-read-hole-1885-state-census",
+    "source-attachments-hole-1885",
+    "person-read-hole-wx7-otter-tail",
+    "person-quality-hole-detail"
+  ],
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
+    "Choosing which of two disagreeing sources to believe is conflict-resolution's work. The correct, complete response is the one-line hand-back 'Hand-back: conflict-resolution — <clause>' with no tool calls and no audit. Do NOT penalize the agent for not reading the sources, not weighing them, or for the reply being one line.",
+    "The scope-handback invariant validator decides this test's outcome: no MCP tool call, both project files unchanged, and a Hand-back line naming conflict-resolution."
+  ],
+  "negative": {
+    "correct_skill": ["conflict-resolution"],
+    "grade_on_invariant": true,
+    "explanation": "A source-vs-source weighing belongs to conflict-resolution. On the direct arm there is no router whose choice could be graded, so the test is graded on the front-door invariant: the agent hands back by name and calls nothing."
+  }
+}

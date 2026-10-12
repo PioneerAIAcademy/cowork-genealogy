@@ -115,5 +115,14 @@ export interface RankSearchMatchesResult {
    * and would shift every ranking in the eval corpus.
    */
   relativeTermNote?: string;
+  /**
+   * Present and `true` when the subject has no date narrower than a year (a bare
+   * or qualified year such as "1829" or "Abt 1829" does not count) AND no named
+   * spouse, parent or child in the tree or the subject's linked evidence —
+   * i.e. nothing that separates this person from any same-named individual.
+   * For the search-records namesake gate (#2213 PR3, not yet built).
+   * Omitted when the subject is not too thin; never `false`.
+   */
+  subjectTooThin?: true;
   matches: RankedMatch[];
 }

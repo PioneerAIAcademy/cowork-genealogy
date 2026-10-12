@@ -12,7 +12,7 @@
     ]
   },
   "input": {
-    "user_message": "Run a full-text search for Patrick Flynn using the FamilySearch tree person ID KWCJ-RN4. Use the natural-language entry point so the upstream uses the person's known facts to widen the search.",
+    "delegation": "Run a full-text search for Patrick Flynn using the FamilySearch tree person ID KWCJ-RN4. Use the natural-language entry point so the upstream uses the person's known facts to widen the search.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
@@ -22,6 +22,7 @@
     "wiki-search-any"
   ],
   "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
     "Should call fulltext_search with the nlQuery parameter containing the tree person ID 'KWCJ-RN4' — NOT a keyword query like `+Patrick +Flynn`",
     "Should explain briefly why nlQuery is the right field here (per SKILL.md and references/query-syntax.md, the upstream resolves the tree ID against the person's facts and aliases — a keyword query would not get that expansion)",
     "Should report the two records the fixture returns (1869 deed transferring land to Patrick Flynn, and the 1885 Cornelius Sheridan estate appraisement on which Patrick Flynn served as appraiser) as new evidence — both link to Patrick Flynn in non-principal roles and would not have been obvious from a name-only keyword query"

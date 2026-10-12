@@ -18,6 +18,11 @@
 # and releases their held messages into turns. SWEEP_INTERVAL_S therefore defaults to 0
 # here; a run that turns it on should also set WORKER_QUEUE_URL empty, so nothing it
 # releases can enqueue a paid turn. Every value reads the shell, so smoke.py can override it.
+#
+# U3: attempts here are unbounded until U26; neither FamilySearch session limit is
+# guaranteed for them (the shim abandons at READ_TIMEOUT_S without a kill), so this
+# overlay sets no FS_GRANT_MAX_START_AGE_S: any value would read as a guarantee nothing
+# enforces.
 services:
   worker:
     environment:

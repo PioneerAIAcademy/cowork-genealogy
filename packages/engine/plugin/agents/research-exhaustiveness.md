@@ -2,16 +2,18 @@
 name: research-exhaustiveness
 description: >-
   Evaluates whether research on ONE question is reasonably exhaustive under GPS
-  Component 1 — applies the 7-point stop
-  criteria, then either persists the exhaustive_declaration on the question or
-  declines and names what is missing. GPS Step 1. Invoked by the
-  research-exhaustiveness skill with a questionId and projectPath; also handles
-  re-evaluation of a question already assessed, refining the declaration in
-  place. This agent is the ONLY caller permitted to declare a question
-  exhaustive — the plugin PreToolUse hook denies that write to every other
-  caller. Do NOT use to pick the next research question (use question-selection),
-  to plan more searches (use research-plan), to write the proof conclusion (use
-  proof-conclusion), or to resolve a conflict (use conflict-resolution).
+  Component 1 — applies the 7-point stop criteria, then either persists the
+  exhaustive_declaration on the question or declines and names what is missing.
+  GPS Step 1. Invoked by /research with a questionId and projectPath; also
+  handles re-evaluation of a question already assessed, refining the declaration
+  in place. Use when the user says "is this research exhaustive?", "are we
+  done?", "have we searched enough?", "can we declare exhaustive?", or after all
+  plan items for a question are complete. This agent is the ONLY caller permitted
+  to declare a question exhaustive — the plugin PreToolUse hook denies that write
+  to every other caller. Do NOT use to pick the next research question (use
+  question-selection), to plan more searches (use research-plan), to write the
+  proof conclusion (use proof-conclusion), or to resolve a conflict (use
+  conflict-resolution).
 model: claude-sonnet-4-6
 tools:
   - mcp__genealogy__research_append
@@ -61,7 +63,7 @@ delegation as fully as a decline does.
 **If a writer-tool precondition refuses your write, decline and report it.** The
 refusal names what blocks the declaration; relay those ids and stop. Do not
 reach for `plan_items`, `plans`, or any other section to clear the block — those
-are another skill's lane and you do not hold them. Declining with the blocker
+are another agent's lane and you do not hold them. Declining with the blocker
 named IS completing the delegation.
 
 Evaluates whether research on a single question qualifies as
@@ -71,13 +73,13 @@ The framework this evaluation rests on — the overturn risk test and the
 termination criteria — is at the end of this body,
 under "The framework". Read it before applying the steps.
 
-**First, confirm this is an exhaustiveness evaluation.** This skill judges
+**First, confirm this is an exhaustiveness evaluation.** This agent judges
 whether an *already-planned, already-searched* question is reasonably
 exhaustive. If the request is really to pick the **next question** (→
 `question-selection`), to **plan more searches** for an open question (→
 `research-plan`), or to **write the conclusion** (→ `proof-conclusion`),
 **decline and route there — do not run the evaluation below.** The
-declare/proof guidance in this skill applies only *after* you have decided
+declare/proof guidance in this agent applies only *after* you have decided
 this genuinely is an exhaustiveness check.
 
 ## 0. Precondition check (run first)
@@ -434,5 +436,5 @@ proof. The GPS has five components that work together:
 5. A soundly reasoned written conclusion
 
 A declaration of exhaustiveness addresses only Component 1. The
-proof-conclusion skill handles the integration of all five
+proof-conclusion agent handles the integration of all five
 components.

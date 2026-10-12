@@ -157,6 +157,24 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
+  //
+  // personReadRef first, while the project does not exist yet, asserting its
+  // refusal through the transport. A successful staged create cannot be
+  // smoked: the run has one project, every later row works on the one the
+  // next row creates, and a second create is refused as "already exist".
+  {
+    tool: "project_create",
+    offline: true,
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      objective: "Does the staged-read path reach the store?",
+      personReadRef: STAGED_REF,
+    }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && /personReadRef/.test(JSON.stringify(res.body?.errors ?? "")),
+      detail: brief(res, 300),
+    }),
+  },
   {
     tool: "project_create",
     offline: true,
@@ -446,6 +464,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // reaches both with no flag (the tool ignores `relatives`).
   tokenStep("person_read", { personId: FS_PID }),
   tokenStep("person_ancestors", { personId: FS_PID }),
+  tokenStep("tree_gaps", { personId: FS_PID }),
   tokenStep("record_read", { recordId: "QVS9-DHDB" }),
   tokenStep("fulltext_search", { keywords: "smoke" }),
   tokenStep("collections_search", { standardPlace: "England" }),
@@ -494,6 +513,22 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       detail: brief(res),
     }),
   },
+  // The Catalog search service answers 401 with an empty body when no bearer
+  // is sent, so this is a token tool despite the catalogue being public data.
+  // NOTE: unlike the rows above, this one does NOT reach getValidToken before
+  // any I/O — on the standardPlace path place resolution runs first and its
+  // own requests go out ahead of the Catalog call.
+  tokenStep("catalog_search", {
+    standardPlace: "Maine, United States",
+    exactPlace: true,
+    count: 3,
+    hydrate: 2,
+  }),
+
+  // Pure signal: no network, no token, no project state. The hosted PreToolUse hook
+  // ends the turn on its NAME before it executes, so this exercises the arm that
+  // runs only where no hook binds (Cowork, the e2e harness).
+  { tool: "research_delivered", args: () => ({ summary: "the plan you asked for" }), expect: noError },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
@@ -520,7 +555,22 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: () => ({ standardPlace: "Pennsylvania, United States" }),
     expect: (res) => ({ ok: !res.isError && res.body?.error === undefined && !!res.body?.population, detail: brief(res) }),
   },
-  { tool: "external_links_search", args: () => ({ standardPlace: "England" }), expect: noError },
+  // With projectPath, so the hosted run writes external-collections.json through
+  // the bound store and reads it back. England (753 links) is under the 1,000-row cap.
+  {
+    tool: "external_links_search",
+    args: (ctx) => ({ standardPlace: "England, United Kingdom", projectPath: ctx.projectPath }),
+    expect: (res) => ({
+      ok: !res.isError && (res.body?.stored?.places?.length ?? 0) > 0 && !res.body?.collectionsError,
+      detail: brief(res),
+    }),
+  },
+  {
+    tool: "research_query",
+    label: "research_query (external_collections)",
+    args: (ctx) => ({ projectPath: ctx.projectPath, section: "external_collections", place: "England, United Kingdom" }),
+    expect: (res) => ({ ok: !res.isError && res.body?.ok === true && res.body?.count > 0, detail: brief(res) }),
+  },
 ];
 
 // ─── Completeness guard ──────────────────────────────────────────────────────

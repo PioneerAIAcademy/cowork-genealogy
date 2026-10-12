@@ -7,6 +7,7 @@ import {
 } from "../utils/fs-image-fetch.js";
 import { imageViewerUrl } from "../utils/ark.js";
 import { saveSourceImage } from "../utils/image-store.js";
+import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 
 // The MCP transport between this server and the calling agent caps a single
 // response near 1 MiB. Base64 inflates raw bytes by ~33%, so this floor on
@@ -44,6 +45,9 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
     "image_read",
   );
 
+  // The hard image cap (spec image-transcribe §5.8): refuse before the fetch.
+  const browse = await checkImageBrowseCap(input, input.projectPath, "image_read");
+
   // `memoryShape` must be forwarded, not defaulted. `ImageReadInput extends
   // FsImageInput`, so `memoryArtifactUrl` is already accepted here and the
   // schema has no `additionalProperties: false` -- dropping the flag sent the
@@ -55,6 +59,7 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
     principal,
     memoryShape
   );
+  await recordImageBrowse(browse);
 
   // Refuse oversized images before encoding — returning them would overflow
   // the MCP transport buffer and crash the session (see MAX_INLINE_IMAGE_BYTES).

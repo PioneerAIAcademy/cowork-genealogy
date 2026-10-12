@@ -579,6 +579,8 @@ def test_disputed_parents_missing_info_handled(before_state, after_state, test, 
 # this validator never runs on them.
 _PREMISE_PROPERTY_TEST_SIGNALS = (
     r"\bmaiden or married\b",
+    # "her maiden name or her married name", "maiden surname or the married name"
+    r"\bmaiden(?:\s+(?:sur)?name)?\s+or\s+(?:(?:her|the|a)\s+)?married\b",
     r"\bmarried or maiden\b",
     r"\bwhether\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
     r"^\s*(?:was|is|did|does)\b[^.?]*\b(?:maiden|married|surname|birth name)\b",
@@ -604,6 +606,29 @@ _PREMISE_PROPERTY_TEST_SIGNALS = (
 _FACT_NAMING_ESCAPE = r"\bwhat\b[^.?]*\b(?:maiden|birth)\s+(?:\([^)]*\)\s+)?(?:name|surname)\b"
 
 
+def _premise_question_offends(question: str) -> bool:
+    """A bare property test, or a value question that then re-asks the recorded
+    name as a choice.
+
+    The escape exempts a question that names the gating fact by value. It used to
+    exempt the whole question; now it exempts only what comes BEFORE the value
+    phrase. A leading test that the value then answers ("Was she born a Hartwell,
+    and if not, what was her maiden name?") still passes, but a classification
+    appended AFTER the value ("What was her birth surname -- was 'Hartwell' her
+    maiden name or her married name?") fails: it can be answered without finding
+    the surname (genealogist ruling, 2026-09-30).
+    """
+    text = question.lower()
+    # Lazy, so the cut falls at the FIRST value phrase: greedy, "What was her birth
+    # surname -- was it her maiden name or her married name?" would stretch the match
+    # to the later "maiden name" and swallow the very choice it must catch.
+    m = re.search(_FACT_NAMING_ESCAPE.replace(r"[^.?]*", r"[^.?]*?", 1), text)
+    if m is None:
+        return any(re.search(sig, text) for sig in _PREMISE_PROPERTY_TEST_SIGNALS)
+    tail = text[m.end():]
+    return any(re.search(sig, tail) for sig in _PREMISE_PROPERTY_TEST_SIGNALS)
+
+
 def test_premise_question_names_fact(before_state, after_state, test):
     """Tag-gated: when the objective's premise is an unverified surname origin,
     the new question must name the fact sought, not test a property of the name
@@ -616,15 +641,7 @@ def test_premise_question_names_fact(before_state, after_state, test):
         pytest.skip("missing research.json for diff")
     new = _new_questions(before, after)
     assert new, "expected a new question naming the fact the premise gates; none was added"
-    offenders = [
-        q.get("question")
-        for q in new
-        if not re.search(_FACT_NAMING_ESCAPE, (q.get("question") or "").lower())
-        and any(
-            re.search(sig, (q.get("question") or "").lower())
-            for sig in _PREMISE_PROPERTY_TEST_SIGNALS
-        )
-    ]
+    offenders = [q.get("question") for q in new if _premise_question_offends(q.get("question") or "")]
     assert not offenders, (
         "at least one written question is a bare property test of a name "
         "(e.g. 'Was Curtis her maiden or married name?') whose branch names no "

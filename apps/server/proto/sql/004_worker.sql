@@ -1,7 +1,7 @@
 -- D9-10 worker (docs/plan/search-agent-prototype.md, "Week 2"): what the real worker
--- records that the D3 stub did not. Additive and idempotent like 001-003 -- applied by
--- initdb on an empty volume AND by the worker at start (proto/worker/worker.py), so a
--- volume that predates this file gets the columns without a `make proto-down`.
+-- records that the D3 stub did not. Additive and idempotent like 001-003 -- applied once
+-- by `migrate.py`, so a volume that predates this file gets the columns without a
+-- `make proto-down`.
 --
 -- sessions.sdk_session_id: the Agent SDK's session id, CHOSEN by the worker when the
 -- session's first turn is claimed (one COALESCE write, before the CLI spawns) and
@@ -14,7 +14,9 @@
 -- tool_calls.tool_use_id: the CLI's id for the call, so the PostToolUse hook can stamp
 -- the row the PreToolUse hook wrote with its duration (acceptance criterion 4).
 -- turns.nudges (D18): how many times the worker's Stop hook vetoed the model's voluntary
--- yield on the completing attempt (AUTONOMOUS_MAX_NUDGES); 0 when the arm is off.
+-- yield, cumulative across the turn's attempts (AUTONOMOUS_MAX_NUDGES); 0 on a turn the
+-- worker closed without a veto, arm on or off. NULL: not closed yet and never vetoed, a
+-- turn the web tier closed before any worker saw it (enqueue_failed), or a pre-D18 row.
 
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS sdk_session_id        text;
 ALTER TABLE turns    ADD COLUMN IF NOT EXISTS cost_usd              numeric;

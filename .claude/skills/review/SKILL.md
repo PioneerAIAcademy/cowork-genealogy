@@ -264,8 +264,10 @@ Read the whole diff first. Do not flag anything the diff already fixes.
 **Stop and go to the lead** — these are not yours to approve, whatever the diff
 looks like. Say so in the report and name which one:
 
-- Changes `research.json` or simplified-GedcomX **schema** — a new field, a new
-  value on a closed enum, or a tree-shape change.
+- Changes `research.json` or simplified-GedcomX **schema** — a required field, a
+  new section, a new value on a closed enum, or a renamed or removed field. A new
+  optional field on an existing section is a senior's to approve: check it is in
+  every site `CLAUDE.md` lists for a new field.
 - Touches `packages/engine/mcp-server/src/auth/`, or anything holding a
   credential.
 - Reverses something in `docs/adrs/` or contradicts a `CLAUDE.md` rule.

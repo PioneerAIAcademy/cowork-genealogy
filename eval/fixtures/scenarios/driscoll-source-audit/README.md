@@ -12,8 +12,8 @@ real `GJ72-9W*` shape so a skill's "is this a FamilySearch ID?" gate fires. All
 tool responses are mocked from `eval/fixtures/mcp/`; nothing hits FamilySearch.
 
 - **`GJ72-9WD` — Cornelius Driscoll** (subject). Profile records a birth of
-  `1814` in `Ireland`, a marriage on `9 June 1849` at Sherbrooke, an 1861
-  residence there, and a burial place with **no burial date**. It records **no
+  `1814` in `Ireland`, a marriage on `9 June 1849` at Sherbrooke, 1851 and
+  1861 residences there, and a burial place with **no burial date**. It records **no
   death date at all**.
 - **`GJ72-9WF` — Margaret Hayes** (wife). Present so the marriage has a
   spouse; nothing is attached to her.

@@ -108,6 +108,11 @@ export const UNPREFIXED_IMAGE_ID_RE = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z
 // imageViewerUrl needs to derive a film-viewer link from it.
 const DGS_URL_RE = /^https:\/\/(?:www\.)?familysearch\.org\/das\/v2\/dgs:(\d+_\d+)\/dist\.jpg$/;
 
+/** The `NUMBER_NUMBER` imageId a DGS distribution URL embeds, or undefined. */
+export function dgsImageId(url: string): string | undefined {
+  return DGS_URL_RE.exec(url)?.[1];
+}
+
 /**
  * Build a FamilySearch viewer URL for a tool's image input, so the user can
  * click through and verify what the agent read. Returns `undefined` when no
@@ -135,9 +140,9 @@ export function imageViewerUrl(
   }
   if (input.ark !== undefined) {
     // DGS distribution URL: extract the embedded imageId and build a film viewer.
-    const dgsMatch = DGS_URL_RE.exec(input.ark);
-    if (dgsMatch) {
-      const [dgsNumber, seq] = dgsMatch[1].split("_");
+    const dgsId = dgsImageId(input.ark);
+    if (dgsId) {
+      const [dgsNumber, seq] = dgsId.split("_");
       const imageNumber = parseInt(seq, 10);
       if (imageNumber < 1) return undefined;
       return `https://www.familysearch.org/search/film/${dgsNumber}?i=${imageNumber - 1}`;

@@ -35,14 +35,14 @@ export const IMAGES_SUBDIR = "images";
 // never stamp a whole transcription "verified whole". It lives here, not in
 // image-transcribe.ts, because both the writer (image_transcribe) and the reader
 // (research_append) already import this module. Process-lifetime, never persisted
-// (as browseBudgetSeen is); keyed by the bound store's projectId when it has one —
+// (as the image cap's in-process count is); keyed by the bound store's projectId when it has one —
 // patron isolation under the shared-process http.ts entrypoint, where every request
 // presents the same anchor projectPath — else by projectPath. Only reads that
 // PERSISTED an image land here (an imageRef is what a source cites); a read with no
 // projectPath leaves no image_filename to join, the known limitation in
 // image-transcribe-tool-spec §8.6. image_filename, not imageId, is the key because
 // it is the only identifier both tools share — an ARK read gets one too, so an ARK
-// read is NOT the browse-budget imageId blind spot.
+// read is NOT the image cap's imageId blind spot.
 const sourceImageCaps = new Set<string>();
 
 /** Canonicalize an image ref/filename that arrives raw from an LLM relay. The
@@ -59,18 +59,19 @@ function normalizeImageRef(ref: string): string {
 }
 
 /** The patron-isolating scope shared by the two process-lifetime caches
- *  (`sourceImageCaps` here, `browseBudgetSeen` in image-transcribe.ts): the bound
+ *  (`sourceImageCaps` here, `seenInProcess` in utils/browse-budget.ts): the bound
  *  store's `projectId` when there is one — the patron-isolating identity under the
  *  shared-process `http.ts` entrypoint, where every request presents the SAME
  *  anchor `projectPath` (`/project`), so keying on projectPath would collide two
- *  patrons (#2457 B2, browse budget #2771). getProjectStore() returns the
+ *  patrons (#2457 B2, image cap #2771). getProjectStore() returns the
  *  request-bound store there — every http tool call runs inside runWithProjectStore
  *  — so record and read resolve the same projectId for one project and distinct ids
  *  across patrons. A header-less request instead binds an *unbound* store, whose
  *  projectId is undefined (not a throw), so scope falls back to the anchor
  *  projectPath; for the cap that fallback is never reached (the unbound store's I/O
- *  throws before any cap is recorded or read), but the browse budget performs no
- *  store I/O, so two header-less patrons share the fallback bucket — the accepted
+ *  throws before any cap is recorded or read), but the image cap falls back to
+ *  its in-process count when the unbound store refuses, so two header-less patrons
+ *  share the fallback bucket — the accepted
  *  known limitation in image-transcribe-tool-spec §5.8. On the file backend
  *  projectId is undefined — one process serves one project — so fall back to the
  *  normalized projectPath. When even that is absent (image_transcribe's own

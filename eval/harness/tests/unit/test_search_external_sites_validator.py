@@ -64,6 +64,8 @@ from test_search_external_sites import (  # noqa: E402
     test_plan_items_are_updated_never_appended as check_v7,
     test_the_log_is_append_only as check_v8,
     test_the_url_logged_is_the_url_presented as check_v4,
+    test_triage_closes_its_open_handoff as check_triage,
+    test_archion_browse_handoff as check_archion,
     report_collection_scoped_url_with_no_backed_collection_id as check_2521,
     test_writes_only_to_log_and_plans as check_v7b,
 )
@@ -660,3 +662,92 @@ def test_2521_skips_a_run_with_no_collection_scoped_url():
     after = _research([_site_entry()])  # site-wide URL, no /collections/
     with pytest.raises(pytest.skip.Exception):
         check_2521({}, after, POSITIVE)
+
+
+# --- V4 on the direct arm: the agent's own return, not the relay -------
+
+
+def test_v4_reads_the_agents_own_return_on_the_direct_arm():
+    """On the direct arm the main thread only relays; the URL is in the agent's
+    return. Reading `text_response` there would fire on a correct run."""
+    before, after = _states(after_log=[_site_entry()])
+    returns = [{"subagent_type": "search-external-sites", "text": f"Search link: {URL}"}]
+    expect_passes(lambda: check_v4(before, after, "Relayed.", POSITIVE, agent_returns=returns))
+
+
+def test_v4_on_the_direct_arm_still_fires_when_the_agent_omitted_the_url():
+    before, after = _states(after_log=[_site_entry()])
+    returns = [{"subagent_type": "search-external-sites", "text": "Here is a link: https://example.com/other"}]
+    expect_fires(
+        lambda: check_v4(before, after, f"Relayed {URL}", POSITIVE, agent_returns=returns),
+        "not in\n?.*the reply|never presented",
+    )
+
+
+# --- triage closes its open hand-off -----------------------------------
+
+TRIAGE = {"type": "positive", "tags": ["triage-closes-handoff"]}
+OPEN_URL = "https://www.myheritage.com/research/collection-20822/x?qname=Josiah"
+
+
+def _handoff(entry_id, outcome, url, capture):
+    return {
+        "id": entry_id, "tool": "external_site", "outcome": outcome,
+        "external_site": {"site": "myheritage", "url_generated": url, "capture_received": capture},
+    }
+
+
+def test_triage_quiet_when_the_closing_entry_carries_the_rows_url():
+    before, after = _states(
+        before_log=[_handoff("log_001", "partial", OPEN_URL, False)],
+        after_log=[_handoff("log_001", "partial", OPEN_URL, False), _handoff("log_002", "positive", OPEN_URL, True)],
+    )
+    expect_passes(lambda: check_triage(before, after, TRIAGE))
+
+
+def test_triage_fires_when_the_closing_entry_names_another_url():
+    before, after = _states(
+        before_log=[_handoff("log_001", "partial", OPEN_URL, False)],
+        after_log=[
+            _handoff("log_001", "partial", OPEN_URL, False),
+            _handoff("log_002", "positive", OPEN_URL + "&p=2", True),
+        ],
+    )
+    expect_fires(lambda: check_triage(before, after, TRIAGE), "still open")
+
+
+def test_triage_fires_when_nothing_was_logged():
+    before, after = _states(
+        before_log=[_handoff("log_001", "partial", OPEN_URL, False)],
+        after_log=[_handoff("log_001", "partial", OPEN_URL, False)],
+    )
+    expect_fires(lambda: check_triage(before, after, TRIAGE), "still open")
+
+
+# --- the Archion browse hand-off ----------------------------------------
+
+ARCHION = {"type": "positive", "tags": ["archion-browse"]}
+PARISH = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn"
+
+
+def _build(**args):
+    return {"tool": "mcp__genealogy__build_external_search_url", "args": args}
+
+
+def test_archion_quiet_on_the_parish_page_with_projectpath():
+    calls = [_build(site="archion", baseUrl=PARISH, attributes={}, projectPath="/p")]
+    expect_passes(lambda: check_archion(calls, ARCHION))
+
+
+@pytest.mark.parametrize(
+    "calls, match",
+    [
+        ([], "no build_external_search_url call with site 'archion'"),
+        ([_build(site="ancestry", attributes={"surname": "Seeger"}, projectPath="/p")], "site 'archion'"),
+        ([_build(site="archion", attributes={}, projectPath="/p")], "no Archion parish page"),
+        ([_build(site="archion", baseUrl=PARISH, attributes={})], "omitted projectPath"),
+    ],
+    ids=["no_call", "wrong_site", "no_baseurl", "no_projectpath"],
+)
+def test_archion_fires(calls, match):
+    expect_fires(lambda: check_archion(calls, ARCHION), match)

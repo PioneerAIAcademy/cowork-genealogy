@@ -79,7 +79,7 @@ sanctioned scraping MCP, or a future API integration:
 - MyHeritage — broad indexed records and family trees
 - FindMyPast — UK and Ireland records
 
-The current `search-external-sites` skill works around the API gap by
+The current `search-external-sites` agent works around the API gap by
 guiding the user through manual captures. An MCP would make those
 workflows direct.
 

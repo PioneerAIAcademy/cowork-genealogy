@@ -10,11 +10,10 @@
       "west-virginia",
       "civil-war",
       "jurisdiction",
-      "topical-fixture-required"
-    ]
+      "topical-fixture-required", "direct-arm"]
   },
   "input": {
-    "user_message": "My ancestor was listed as born in Virginia in the 1860 census, but the 1870 census says West Virginia. Did they move?",
+    "delegation": "My ancestor was listed as born in Virginia in the 1860 census, but the 1870 census says West Virginia. Did they move?",
     "scenario": null
   },
   "mcp_fixtures": [

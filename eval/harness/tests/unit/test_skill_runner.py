@@ -1660,6 +1660,739 @@ def test_a_quota_in_the_suppressed_reaction_turn_still_aborts(tmp_path, monkeypa
     )
 
 
+# --- stop_at_stub: a test that ends at its first stubbed hand-off (#3119) -----
+#
+# A `no-shortcut` router test's verdict is the router's FIRST routing decision. Its
+# own doctrine then tells it to walk on down the table, and a stub cannot stop that
+# walk: the stub's text comes back as a tool result, and stubs write nothing. So
+# `execution.stop_at_stub` ends the run at the first hand-off to a stubbed name, by
+# `Skill` call or agent spawn, reusing the negative-test stop path above.
+
+
+def _skill_block(skill, block_id):
+    from claude_agent_sdk import ToolUseBlock
+
+    return ToolUseBlock(id=block_id, name="Skill", input={"skill": skill})
+
+
+def _spawn_block(agent, block_id):
+    from claude_agent_sdk import ToolUseBlock
+
+    return ToolUseBlock(
+        id=block_id, name="Agent", input={"subagent_type": agent, "prompt": "go"}
+    )
+
+
+def _turn(text, *blocks, message_id=None):
+    """One AssistantMessage. `message_id` is the API response's id, which the CLI
+    sends on every message and which a `stop_at_stub` stop reads to tell the
+    hand-off's own turn from the model's next one."""
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    content = [TextBlock(text=text)] if text else []
+    return AssistantMessage(
+        content=[*content, *blocks], model="stub", message_id=message_id
+    )
+
+
+def _results(*tool_use_ids, parent_tool_use_id=None):
+    """The UserMessage carrying a turn's tool results, as the CLI streams it."""
+    from claude_agent_sdk import ToolResultBlock, UserMessage
+
+    return UserMessage(
+        content=[
+            ToolResultBlock(tool_use_id=i, content="denied", is_error=True)
+            for i in tool_use_ids
+        ],
+        parent_tool_use_id=parent_tool_use_id,
+    )
+
+
+def _done():
+    from claude_agent_sdk import ResultMessage
+
+    return ResultMessage(
+        subtype="result", duration_ms=1, duration_api_ms=1,
+        is_error=False, num_turns=3, session_id="S1",
+    )
+
+
+_ACTIVATE = {"tool_name": "Skill", "tool_input": {"skill": "research"}}
+_SPAWN_QS = {
+    "tool_name": "Agent",
+    "tool_input": {"subagent_type": "question-selection", "prompt": "go"},
+}
+# The orchestrator passes every stubbed name as `stub_skills` and the agent-only
+# ones as `stub_agents` too.
+_ROWS = {"question-selection": None, "locality-guide": None}
+
+
+async def _run_stop_at_stub(
+    monkeypatch, tmp_path, hook_inputs, messages, *, message_first=False,
+    returns=None, **run_kwargs
+):
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        if message_first:
+            return _MessageFirstHookStream(hook, hook_inputs, messages)
+        return _HookDrivingStream(hook, hook_inputs, messages, returns=returns)
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        **run_kwargs,
+    )
+
+
+def _router_messages(handoff_block):
+    return [
+        _turn("Reading the project.", _skill_block("research", "activation-id"),
+              message_id="turn-1"),
+        _turn("No questions yet, routing to the first row.", handoff_block,
+              message_id="turn-2"),
+        _turn("Next, the locality survey.", _spawn_block("locality-guide", "walk-id"),
+              message_id="turn-3"),
+        _done(),
+    ]
+
+
+def test_stop_at_stub_ends_the_run_at_a_stubbed_spawn(tmp_path, monkeypatch):
+    import asyncio
+
+    returns = []
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
+        _router_messages(_spawn_block("question-selection", "tool-use-id")),
+        returns=returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "routing to the first row" in result.text_response, (
+        "the hand-off turn itself was dropped"
+    )
+    assert "locality survey" not in result.text_response, (
+        "the run read on past the first stubbed hand-off"
+    )
+    assert result.aborted_reason is None, "a stop_at_stub stop is a clean end"
+    assert "hookSpecificOutput" not in returns[0] and "continue_" not in returns[0], (
+        "the router's own entry was denied or stopped"
+    )
+    assert returns[1]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert returns[1]["continue_"] is False
+
+
+def test_stop_at_stub_ends_the_run_at_a_stubbed_skill_call(tmp_path, monkeypatch):
+    import asyncio
+
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [_ACTIVATE, {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
+        _router_messages(_skill_block("research-plan", "tool-use-id")),
+        stop_at_stub=True, stub_skills={"research-plan": None},
+    ))
+
+    assert result.skills_invoked == ["research", "research-plan"]
+    assert "locality survey" not in result.text_response
+    assert result.aborted_reason is None
+
+
+def test_stop_at_stub_lets_an_unstubbed_call_through(tmp_path, monkeypatch):
+    """Only a stubbed name stops the run. The skill's own entry is never stubbed,
+    and a call to an unstubbed skill runs as it would in any test."""
+    import asyncio
+
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [_ACTIVATE, {"tool_name": "Skill", "tool_input": {"skill": "search-external-sites"}}],
+        [
+            _turn("Reading the project.", _skill_block("research", "tool-use-id")),
+            _turn("Checking outside sites.", _skill_block("search-external-sites", "x-id")),
+            _turn("Here is what the project needs next."),
+            _done(),
+        ],
+        stop_at_stub=True, stub_skills=_ROWS,
+    ))
+
+    assert "Here is what the project needs next." in result.text_response, (
+        "the run stopped at a hand-off to an unstubbed name"
+    )
+
+
+def test_stop_at_stub_holds_when_the_hook_fires_after_its_message(tmp_path, monkeypatch):
+    """Under the message-first ordering the flag is not up while the hand-off
+    message is scanned, so the stop needs a match by name, not by id alone."""
+    import asyncio
+
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_SPAWN_QS],
+        [
+            _turn("No questions yet, routing to the first row.",
+                  _spawn_block("question-selection", "tool-use-id"), message_id="turn-1"),
+            _turn("Next, the locality survey.",
+                  _spawn_block("locality-guide", "walk-id"), message_id="turn-2"),
+            _done(),
+        ],
+        message_first=True,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "routing to the first row" in result.text_response
+    assert "locality survey" not in result.text_response, (
+        "the late-hook ordering read on past the first stubbed hand-off"
+    )
+    assert result.no_result_message is True, "the stop path never fired"
+
+
+def test_stop_at_stub_holds_for_a_skill_call_when_the_hook_fires_after_it(
+    tmp_path, monkeypatch
+):
+    """The message-first ordering again, for a `Skill` hand-off: the match by
+    name has to cover a `Skill` block as well as a spawn."""
+    import asyncio
+
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [{"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}],
+        [
+            _turn("Routing to the plan.", _skill_block("research-plan", "tool-use-id"),
+                  message_id="turn-1"),
+            _turn("Next, the searches.", _skill_block("search-records", "walk-id"),
+                  message_id="turn-2"),
+            _done(),
+        ],
+        message_first=True,
+        stop_at_stub=True, stub_skills={"research-plan": None, "search-records": None},
+    ))
+
+    assert "Routing to the plan." in result.text_response
+    assert "Next, the searches." not in result.text_response
+    assert result.no_result_message is True
+
+
+def test_a_second_hand_off_in_the_same_turn_is_denied_and_recorded(tmp_path, monkeypatch):
+    """What keeps `test_no_paired_skill_shortcut` worth running: a router that
+    spawns question-selection and a downstream row in one turn gets both denied,
+    the unstubbed one included, and both recorded for the validator to read."""
+    import asyncio
+
+    returns = []
+    downstream = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "person-evidence", "prompt": "go"},
+    }
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS, downstream],
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _turn("Routing.", _spawn_block("question-selection", "tool-use-id"),
+                  _spawn_block("person-evidence", "second-id")),
+            _done(),
+        ],
+        returns=returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None},
+        stub_agents={"question-selection": None},
+    ))
+
+    for denied in returns[1:]:
+        assert denied["hookSpecificOutput"]["permissionDecision"] == "deny"
+        assert denied["continue_"] is False
+    spawned = [
+        c["args"].get("subagent_type") for c in result.builtin_tool_calls
+        if c["tool"] == "Agent"
+    ]
+    assert spawned == ["question-selection", "person-evidence"]
+
+
+def test_a_skill_call_after_the_stop_is_armed_is_denied_too(tmp_path, monkeypatch):
+    """The same-turn rule for a `Skill` call: once a stubbed spawn arms the stop,
+    a call to an unstubbed skill in that turn is denied and recorded, not run."""
+    import asyncio
+
+    returns = []
+    plan = {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS, plan],
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _turn("Routing.", _spawn_block("question-selection", "tool-use-id"),
+                  _skill_block("research-plan", "second-id")),
+            _done(),
+        ],
+        returns=returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None},
+        stub_agents={"question-selection": None},
+    ))
+
+    assert returns[2]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert returns[2]["continue_"] is False
+    assert result.skills_invoked == ["research", "research-plan"]
+
+
+def test_a_spawn_of_an_unstubbed_agent_does_not_stop_the_run(tmp_path, monkeypatch):
+    import asyncio
+
+    returns = []
+    mentor = {"tool_name": "Agent", "tool_input": {"subagent_type": "gps-mentor", "prompt": "go"}}
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, mentor],
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _turn("Asking the mentor.", _spawn_block("gps-mentor", "x-id")),
+            _turn("Here is what the project needs next."),
+            _done(),
+        ],
+        returns=returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "continue_" not in returns[1], "an unstubbed spawn armed the stop"
+    assert "Here is what the project needs next." in result.text_response
+
+
+def test_a_skill_call_inside_a_subagent_does_not_stop_the_run(tmp_path, monkeypatch):
+    import asyncio
+
+    returns = []
+    asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [{"tool_name": "Skill", "tool_input": {"skill": "research-plan"},
+          "agent_id": "agent-sub-1"}],
+        [_turn("Working."), _done()],
+        returns=returns,
+        stop_at_stub=True, stub_skills={"research-plan": None},
+    ))
+
+    assert len(returns) == 1
+    assert "continue_" not in returns[0], "a subagent's Skill call stopped the run"
+
+
+def test_a_spawn_inside_a_subagent_does_not_stop_the_run(tmp_path, monkeypatch):
+    """Hand-offs are the main thread's, the rule `spawned_agents` uses."""
+    import asyncio
+
+    returns = []
+    asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [{**_SPAWN_QS, "agent_id": "agent-sub-1"}],
+        [_turn("Working."), _done()],
+        returns=returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert len(returns) == 1
+    assert "hookSpecificOutput" not in returns[0] and "continue_" not in returns[0], (
+        "a subagent's spawn was treated as the router's hand-off"
+    )
+
+
+def test_without_stop_at_stub_a_stubbed_spawn_still_continues(tmp_path, monkeypatch):
+    """The default is unchanged: a positive test's stub denies and continues."""
+    import asyncio
+
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path, [_ACTIVATE, _SPAWN_QS],
+        _router_messages(_spawn_block("question-selection", "tool-use-id")),
+        stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "locality survey" in result.text_response
+
+
+def test_an_unreadable_skill_call_after_the_stop_is_armed_is_denied(tmp_path, monkeypatch):
+    """Before the stop is armed an unreadable call is left alone, as in any test;
+    once it is armed, no later main-thread hand-off runs, whatever its name."""
+    import asyncio
+
+    returns = []
+    unread = {"tool_name": "Skill", "tool_input": {"unexpected": "x"}}
+    result = asyncio.run(_run_stop_at_stub(
+        monkeypatch, tmp_path,
+        [_ACTIVATE, unread, _SPAWN_QS, unread, {**unread, "agent_id": "agent-sub-1"}],
+        _router_messages(_spawn_block("question-selection", "tool-use-id")),
+        returns=returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "continue_" not in returns[1], "an unreadable call before the stop was denied"
+    assert returns[3]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert returns[3]["continue_"] is False
+    assert "continue_" not in returns[4], "a subagent's unreadable call was denied"
+    assert len(result.unread_skill_calls) == 3
+
+
+# The CLI streams one block per AssistantMessage, every block of one model turn
+# carrying that turn's `message_id`, and each hook runs where it runs relative to
+# the messages. `_InterleavedStream` scripts that: a hook entry runs only when the
+# consumer asks for the next message, so a hook scripted after the point where the
+# run stopped never runs, as a closed stream never runs it.
+
+
+class _InterleavedStream:
+    """Yields scripted messages, running each ("hook", input, tool_use_id) entry
+    when the consumer reaches it, and keeping what the hook returned by id."""
+
+    def __init__(self, hook, events, returns):
+        self._hook = hook
+        self._events = list(events)
+        self._returns = returns
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        while self._events:
+            event = self._events.pop(0)
+            if isinstance(event, tuple):
+                _, hook_input, tool_use_id = event
+                self._returns[tool_use_id] = await self._hook(hook_input, tool_use_id, None)
+                continue
+            return event
+        raise StopAsyncIteration
+
+    async def aclose(self):
+        return None
+
+
+async def _run_interleaved(monkeypatch, tmp_path, events, returns, **run_kwargs):
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _InterleavedStream(hook, events, returns)
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    return await sr.run_skill(
+        user_message="go",
+        workspace=tmp_path,
+        fixture_names=[],
+        fixtures_dir=tmp_path,
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        **run_kwargs,
+    )
+
+
+def _hook_runs(hook_input, tool_use_id):
+    return ("hook", hook_input, tool_use_id)
+
+
+_SPAWN_PE = {
+    "tool_name": "Agent",
+    "tool_input": {"subagent_type": "person-evidence", "prompt": "go"},
+}
+_QS_ONLY = {"question-selection": None}
+
+
+def _spawned(result):
+    return [
+        c["args"].get("subagent_type") for c in result.builtin_tool_calls
+        if c["tool"] == "Agent"
+    ]
+
+
+def test_a_same_turn_hand_off_in_its_own_message_is_recorded_when_hooks_run_first(
+    tmp_path, monkeypatch
+):
+    """Each hook runs before its own block's message. A stop at the hand-off
+    message closed the stream before the second spawn's hook ran, so the second
+    spawn was never recorded and the validators could not see it."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _hook_runs(_ACTIVATE, "activation-id"),
+            _turn("Reading the project.", _skill_block("research", "activation-id"),
+                  message_id="turn-1"),
+            _turn("Routing to the first row.", message_id="turn-2"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _turn("", _spawn_block("question-selection", "qs-id"), message_id="turn-2"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id"), message_id="turn-2"),
+            _results("qs-id", "pe-id"),
+            _turn("Reacting to the denial.", message_id="turn-3"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+    assert returns["pe-id"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "Routing to the first row." in result.text_response
+    assert "Reacting to the denial." not in result.text_response
+    assert result.aborted_reason is None
+    assert result.no_result_message is True, "the stop path never fired"
+
+
+def test_a_same_turn_hand_off_after_the_stop_is_armed_is_not_read_as_the_reaction(
+    tmp_path, monkeypatch
+):
+    """The first spawn's hook runs after its message and before the second
+    spawn's message. That message then arrives with the stop armed; read as the
+    model's reaction, it ended the run before its own hook ran."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _results("qs-id", "pe-id"),
+            _turn("Reacting to the denial.", message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+    assert returns["pe-id"]["continue_"] is False
+    assert "Reacting to the denial." not in result.text_response
+
+
+def test_without_message_ids_the_stop_waits_for_the_turns_tool_results(
+    tmp_path, monkeypatch
+):
+    """The fallback end of the hand-off turn is its first main-thread tool result.
+    An earlier turn's results and a subagent's do not end it."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Reading the project.", _skill_block("research", "activation-id")),
+            _hook_runs(_ACTIVATE, "activation-id"),
+            _results("activation-id"),
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id")),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _results("mentor-call-id", parent_tool_use_id="mentor-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id")),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _results("qs-id", "pe-id"),
+            _turn("Reacting to the denial."),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+    assert "Reacting to the denial." not in result.text_response
+    assert result.no_result_message is True
+
+
+def test_a_reaction_whose_hook_ran_first_is_still_the_reaction(tmp_path, monkeypatch):
+    """The reaction's own call can reach the hook before its message reaches the
+    loop. An id match on that call read the reaction as the hand-off turn and
+    recorded its text as the router's."""
+    import asyncio
+
+    returns = {}
+    walk = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "locality-guide", "prompt": "go"},
+    }
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _results("qs-id"),
+            _hook_runs(walk, "walk-id"),
+            _turn("Next, the locality survey.",
+                  _spawn_block("locality-guide", "walk-id"), message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills=_ROWS, stub_agents=_ROWS,
+    ))
+
+    assert "Next, the locality survey." not in result.text_response
+    assert result.no_result_message is True
+
+
+def test_a_subagents_messages_neither_start_nor_end_the_hand_off_turn(
+    tmp_path, monkeypatch
+):
+    """A subagent's own messages carry the spawn's id as their parent. Its call to
+    a stubbed name is not the router's hand-off, and its message after the
+    hand-off is not the router's next turn."""
+    import asyncio
+    from claude_agent_sdk import AssistantMessage, TextBlock
+
+    def subagent_turn(text, *blocks, message_id):
+        return AssistantMessage(
+            content=[TextBlock(text=text), *blocks], model="stub",
+            parent_tool_use_id="mentor-id", message_id=message_id,
+        )
+
+    returns = {}
+    mentor = {
+        "tool_name": "Agent",
+        "tool_input": {"subagent_type": "gps-mentor", "prompt": "go"},
+    }
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _hook_runs(mentor, "mentor-id"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _turn("", _spawn_block("gps-mentor", "mentor-id"), message_id="turn-1"),
+            subagent_turn("Mentor notes.", _skill_block("research-plan", "sub-id"),
+                          message_id="sub-turn-1"),
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            subagent_turn("More mentor notes.", message_id="sub-turn-2"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _turn("", _spawn_block("person-evidence", "pe-id"), message_id="turn-1"),
+            _results("mentor-id", "qs-id", "pe-id"),
+            _turn("Reacting to the denial.", message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None, "research-plan": None},
+        stub_agents=_QS_ONLY,
+    ))
+
+    assert "Routing to the first row." in result.text_response, (
+        "the run stopped on the subagent's message, before the router's hand-off"
+    )
+    assert _spawned(result) == ["gps-mentor", "question-selection", "person-evidence"]
+    assert "Reacting to the denial." not in result.text_response
+
+
+def test_a_hand_off_in_the_next_turn_is_not_recorded_when_its_hook_runs_first(
+    tmp_path, monkeypatch
+):
+    """The model's next turn can reach the hook before its message reaches the
+    loop. The hook denies and records the call, but it belongs to that turn, not
+    the hand-off's, so it must not stay in `builtin_tool_calls` or
+    `skills_invoked`, where `test_no_paired_skill_shortcut` would count the walk
+    the stop exists to cut off."""
+    import asyncio
+
+    returns = {}
+    plan = {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _turn("Routing to the first row.",
+                  _spawn_block("question-selection", "qs-id"), message_id="turn-1"),
+            _hook_runs(_SPAWN_QS, "qs-id"),
+            _results("qs-id"),
+            _hook_runs(_SPAWN_PE, "pe-id"),
+            _hook_runs(plan, "plan-id"),
+            _turn("Next, the evidence and the plan.",
+                  _spawn_block("person-evidence", "pe-id"),
+                  _skill_block("research-plan", "plan-id"), message_id="turn-2"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True,
+        stub_skills={"question-selection": None, "research-plan": None},
+        stub_agents=_QS_ONLY,
+    ))
+
+    assert returns["pe-id"]["continue_"] is False, "the next turn's spawn was let run"
+    assert returns["plan-id"]["continue_"] is False, "the next turn's Skill call was let run"
+    assert _spawned(result) == ["question-selection"]
+    assert "research-plan" not in result.skills_invoked
+    assert "Next, the evidence and the plan." not in result.text_response
+
+
+def test_dropping_a_next_turn_call_keeps_an_earlier_call_of_the_same_name(
+    tmp_path, monkeypatch
+):
+    """The next-turn filter removes the denied call by position. An earlier,
+    legitimate call to the same skill stays, and so does the order of the list:
+    removing by name would take out the first `search-records` instead, or both
+    of its `builtin_tool_calls` records, which are equal as values."""
+    import asyncio
+
+    returns = {}
+    search = {"tool_name": "Skill", "tool_input": {"skill": "search-records"}}
+    plan = {"tool_name": "Skill", "tool_input": {"skill": "research-plan"}}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [
+            _hook_runs(search, "search-1"),
+            _turn("Searching first.", _skill_block("search-records", "search-1"),
+                  message_id="turn-1"),
+            _hook_runs(plan, "plan-id"),
+            _turn("Routing to the plan.", _skill_block("research-plan", "plan-id"),
+                  message_id="turn-2"),
+            _results("plan-id"),
+            _hook_runs(search, "search-2"),
+            _turn("Searching again.", _skill_block("search-records", "search-2"),
+                  message_id="turn-3"),
+            _done(),
+        ],
+        returns,
+        stop_at_stub=True, stub_skills={"research-plan": None},
+    ))
+
+    assert "continue_" not in returns["search-1"], "the earlier call was denied"
+    assert returns["search-2"]["continue_"] is False
+    assert result.skills_invoked == ["search-records", "research-plan"]
+    assert [
+        c["args"].get("skill") for c in result.builtin_tool_calls if c["tool"] == "Skill"
+    ] == ["search-records", "research-plan"]
+
+
+def test_a_first_hand_off_whose_message_never_arrives_is_kept(tmp_path, monkeypatch):
+    """A stream that ends after the first hand-off's hook but before its message
+    (an abort, a cap) has no turn to measure against. The filter must not drop
+    that hand-off: it is the run's routing evidence."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [_hook_runs(_SPAWN_QS, "qs-id"), _done()],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert returns["qs-id"]["continue_"] is False
+    assert _spawned(result) == ["question-selection"]
+
+
+def test_two_hand_offs_whose_messages_never_arrive_are_both_kept(tmp_path, monkeypatch):
+    """With no message there is no turn to measure against, so a same-turn
+    shortcut cannot be told from a next-turn walk: every denial is kept, the
+    second as well as the first."""
+    import asyncio
+
+    returns = {}
+    result = asyncio.run(_run_interleaved(
+        monkeypatch, tmp_path,
+        [_hook_runs(_SPAWN_QS, "qs-id"), _hook_runs(_SPAWN_PE, "pe-id"), _done()],
+        returns,
+        stop_at_stub=True, stub_skills=_QS_ONLY, stub_agents=_QS_ONLY,
+    ))
+
+    assert returns["pe-id"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert _spawned(result) == ["question-selection", "person-evidence"]
+
+
 # --- the short-circuit's abort clearing is scoped, and nothing pinned it ------
 #
 # `if routing_resolved["v"] and aborted_reason != QUOTA_ABORT_REASON: clear`
@@ -1776,3 +2509,246 @@ def test_the_suppressed_reaction_calls_are_recorded_not_dropped(tmp_path, monkey
         "a post-deny call must still stay OUT of attempted_mcp_calls, or the "
         "uncovered_tool_call advisory fires on a deliberately stopped run"
     )
+
+
+# --- #3116: a slash-command entry records the skill it loaded -----------------
+#
+# `skills_invoked` is filled by the PreToolUse hook on a `Skill` call. A slash
+# command is expanded by the CLI, so the hook never fires and `/research …` --
+# the entry point production uses -- was ungradable.
+#
+# Step 0 measured what reaches the SDK stream: no `<command-name>`, no `Base
+# directory for this skill`, no `isMeta`, no `sourceToolUseID`. So the rule is
+# "registered and staged", not "expanded" (ruling: chesworthrm, 2026-10-05).
+
+
+def _staged(tmp_path, *names):
+    root = tmp_path / ".claude" / "skills"
+    for n in names:
+        (root / n).mkdir(parents=True)
+    return root
+
+
+def test_slash_entry_records_a_registered_and_staged_skill(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/research --autonomous Who…", ["research"], root) == "research"
+
+
+def test_slash_entry_to_an_unknown_skill_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/no-such-skill go", ["research"], root) is None
+
+
+def test_slash_prefix_without_registration_records_nothing(tmp_path):
+    """The prefix-only guard.
+
+    A rule keyed on the leading `/` alone would let every slash test pass
+    activation by default. `slash_commands` comes from the init SystemMessage
+    and is what distinguishes a command the CLI registered from a message that
+    merely starts with a slash.
+    """
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/research go", [], root) is None
+
+
+def test_registered_but_unstaged_skill_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/other go", ["other"], root) is None
+
+
+def test_a_namespaced_spelling_records_nothing(tmp_path):
+    """Staging is by bare name, so a namespaced command resolves to no dir."""
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert (
+        slash_skill_from_entry("/genealogy-research:research go", ["research"], root)
+        is None
+    )
+
+
+def test_an_ordinary_message_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("Research the parents of X", ["research"], root) is None
+
+
+def test_a_bare_slash_records_nothing(tmp_path):
+    from harness.skill_runner import slash_skill_from_entry
+
+    root = _staged(tmp_path, "research")
+    assert slash_skill_from_entry("/", ["research"], root) is None
+    assert slash_skill_from_entry("/ research", ["research"], root) is None
+
+
+# --- #3116: the stream capture and the insertion, end to end ------------------
+#
+# The pure helper above is tested with hand-built lists. These drive the real
+# `run_skill` so the message TYPE, the `data` key spelling and the entry format
+# are asserted against what the SDK actually emits -- a mismatch in any of them
+# makes the whole feature a silent no-op indistinguishable from the pre-fix
+# state, with every helper test still green.
+
+
+def _run_with_init(monkeypatch, tmp_path, user_message, init_data, stage="research"):
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    if stage:
+        (tmp_path / ".claude" / "skills" / stage).mkdir(parents=True)
+
+    async def fake_query(*, prompt, options):
+        yield SystemMessage(subtype="init", data=init_data)
+        yield ResultMessage(
+            subtype="result",
+            duration_ms=1,
+            duration_api_ms=1,
+            is_error=False,
+            num_turns=1,
+            session_id="s",
+            total_cost_usd=0.0,
+            usage={},
+            result="done",
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    return asyncio.run(
+        sr.run_skill(
+            user_message=user_message,
+            workspace=tmp_path,
+            fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+
+
+def test_slash_entry_is_recorded_from_the_real_init_message(monkeypatch, tmp_path):
+    """The shape here is what Step 0 measured off the live SDK: a bare name,
+    no leading slash, under `data["slash_commands"]` on `subtype="init"`."""
+    r = _run_with_init(
+        monkeypatch,
+        tmp_path,
+        "/research --autonomous Who were the parents?",
+        {"slash_commands": ["research", "search-full-text"]},
+    )
+    assert r.skills_invoked == ["research"]
+    assert r.slash_entry_skill == "research"
+
+
+def test_no_init_slash_commands_records_nothing(monkeypatch, tmp_path):
+    """Guards the key spelling: if `slash_commands` ever moves or is renamed,
+    this reds instead of the feature silently reverting."""
+    r = _run_with_init(monkeypatch, tmp_path, "/research go", {})
+    assert r.skills_invoked == []
+    assert r.slash_entry_skill is None
+
+
+def test_a_leading_slash_spelling_in_slash_commands_is_not_assumed(monkeypatch, tmp_path):
+    """The SDK emits bare names. If it ever emitted `/research`, the feature
+    would silently stop working -- this pins which spelling is relied on."""
+    r = _run_with_init(
+        monkeypatch, tmp_path, "/research go", {"slash_commands": ["/research"]}
+    )
+    assert r.skills_invoked == []
+
+
+def test_a_non_slash_message_records_nothing_end_to_end(monkeypatch, tmp_path):
+    r = _run_with_init(
+        monkeypatch, tmp_path, "Research the parents", {"slash_commands": ["research"]}
+    )
+    assert r.skills_invoked == []
+    assert r.slash_entry_skill is None
+
+
+def test_a_non_init_system_message_is_ignored(monkeypatch, tmp_path):
+    """SystemMessage covers several subtypes; only init carries the list."""
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    (tmp_path / ".claude" / "skills" / "research").mkdir(parents=True)
+
+    async def fake_query(*, prompt, options):
+        yield SystemMessage(subtype="compact_boundary", data={"slash_commands": ["research"]})
+        yield ResultMessage(
+            subtype="result", duration_ms=1, duration_api_ms=1, is_error=False,
+            num_turns=1, session_id="s", total_cost_usd=0.0, usage={}, result="d",
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    r = asyncio.run(
+        sr.run_skill(
+            user_message="/research go", workspace=tmp_path, fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+    assert r.skills_invoked == []
+
+
+def test_a_non_mapping_data_does_not_abort_the_run(monkeypatch, tmp_path):
+    """A non-dict `data` on some other subtype must not raise inside the
+    stream loop, which would abort a paid run on a message we otherwise skip."""
+    r = _run_with_init(monkeypatch, tmp_path, "/research go", None)
+    assert r.skills_invoked == []
+
+
+def test_slash_entry_is_first_and_each_skill_call_recorded_once(monkeypatch, tmp_path):
+    """A slash entry plus three `Skill` calls (#3116's fourth case). Pins index
+    0 -- an append puts the entry point last -- and the unconditional insert --
+    a `not in skills_invoked` guard drops it when the model also calls
+    `Skill(research)`."""
+    import asyncio
+    from claude_agent_sdk import ResultMessage, SystemMessage
+    from harness import skill_runner as sr
+    from harness.auth import AuthConfig
+
+    (tmp_path / ".claude" / "skills" / "research").mkdir(parents=True)
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        return _HookDrivingStream(
+            hook,
+            [
+                {"tool_name": "Skill", "tool_input": {"skill": s}}
+                for s in ("question-selection", "research", "research-plan")
+            ],
+            [
+                SystemMessage(subtype="init", data={"slash_commands": ["research"]}),
+                ResultMessage(
+                    subtype="result", duration_ms=1, duration_api_ms=1,
+                    is_error=False, num_turns=1, session_id="s",
+                ),
+            ],
+        )
+
+    monkeypatch.setattr(sr, "query", fake_query)
+    monkeypatch.setattr(sr, "create_mock_server", lambda *a, **kw: (None, [], {}))
+    r = asyncio.run(
+        sr.run_skill(
+            user_message="/research go", workspace=tmp_path, fixture_names=[],
+            fixtures_dir=tmp_path,
+            auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+            max_wall_clock_seconds=10,
+        )
+    )
+    assert r.skills_invoked == [
+        "research", "question-selection", "research", "research-plan"
+    ]

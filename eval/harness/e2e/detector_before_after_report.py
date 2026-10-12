@@ -16,6 +16,7 @@ CLI (from eval/harness/):
   uv run python -m e2e.detector_before_after_report --detector lane-check
   uv run python -m e2e.detector_before_after_report --detector proof-conclusion-arm
   uv run python -m e2e.detector_before_after_report --detector person-evidence-arm
+  uv run python -m e2e.detector_before_after_report --detector direct-spawn-credit --since all
   uv run python -m e2e.detector_before_after_report --detector lane-check --test bagley-father-1884
   uv run python -m e2e.detector_before_after_report --detector proof-conclusion-arm --since all
 """
@@ -40,6 +41,7 @@ from e2e.runlog_selection import (
 from harness.context_policy import bare_tool_name
 from harness.skill_invocation import (
     DEDICATED_AGENT_NAMES,
+    GUARDRAIL_SKILLS,
     _iter_ops,
     find_effects_without_invocation,
     find_person_evidence_missing_same_person,
@@ -430,7 +432,85 @@ def _replay_same_person_provenance(paths: list[Path]) -> tuple[list[Divergence],
     return out, skipped
 
 
+# --- direct-spawn-credit: find_effects_without_invocation credits a typed
+# --- Agent/Task spawn by its stripped subagent_type, beside Skill calls ------
+
+
+def _never_invoked_arms(violations: list[str]) -> list[str]:
+    """The guardrail arms a violation list names as never invoked, by arm name,
+    because the correction rewords every message and a string diff would flag
+    every run."""
+    return sorted(
+        arm for arm in GUARDRAIL_SKILLS if any(f"'{arm}' was never successfully invoked" in v for v in violations)
+    )
+
+
+def _direct_spawn_credit_old(
+    tool_calls: list[dict[str, Any]], research: dict[str, Any], tree: dict[str, Any], starting_tree: dict[str, Any] | None
+) -> list[str]:
+    """Pre-fix replica: the real detector fed the run with every `Agent`/`Task`
+    entry removed. It reads `tool_calls` only to build its `invoked` set, so
+    this is the Skill-only rule (keeping the namespace strip on `Skill` names,
+    which no committed run exercises), and it tracks any later arm edit for
+    free instead of copying every arm here."""
+    skill_only = [e for e in tool_calls if e.get("tool") not in ("Agent", "Task")]
+    return _never_invoked_arms(find_effects_without_invocation(skill_only, research, tree, starting_tree=starting_tree))
+
+
+def _direct_spawn_credit_new(
+    tool_calls: list[dict[str, Any]], research: dict[str, Any], tree: dict[str, Any], starting_tree: dict[str, Any] | None
+) -> list[str]:
+    return _never_invoked_arms(find_effects_without_invocation(tool_calls, research, tree, starting_tree=starting_tree))
+
+
+def _replay_direct_spawn_credit(paths: list[Path]) -> tuple[list[Divergence], int, int]:
+    """Returns (divergences, n_skipped_no_fixture_starting_tree, n_eligible).
+
+    A divergence names the arms that stopped firing. Every one should read
+    "no longer fires": the correction only adds names to `invoked`, so an arm
+    that starts firing is a defect in the replica or the detector."""
+    out: list[Divergence] = []
+    skipped = 0
+    eligible = 0
+    for path in paths:
+        final_tree_path = path.with_name(path.name.replace(".json", ".final-tree.gedcomx.json"))
+        final_research_path = path.with_name(path.name.replace(".json", ".final-research.json"))
+        if not final_tree_path.is_file() or not final_research_path.is_file():
+            continue  # this run produced no final state at all -- not this detector's input
+        starting_tree = _fixture_starting_tree(path.parent.name)
+        if starting_tree is None:
+            skipped += 1
+            continue
+        eligible += 1
+        final_tree = json.loads(final_tree_path.read_text(encoding="utf-8"))
+        final_research = json.loads(final_research_path.read_text(encoding="utf-8"))
+        tool_calls = json.loads(path.read_text(encoding="utf-8")).get("tool_calls") or []
+        old = _direct_spawn_credit_old(tool_calls, final_research, final_tree, starting_tree)
+        new = _direct_spawn_credit_new(tool_calls, final_research, final_tree, starting_tree)
+        if old != new:
+            cleared = [a for a in old if a not in new]
+            added = [a for a in new if a not in old]
+            out.append(
+                Divergence(
+                    run_file=str(path.relative_to(REPO_ROOT)),
+                    fixture=path.parent.name,
+                    old_result=old,
+                    new_result=new,
+                    note="; ".join(
+                        part
+                        for part in (
+                            f"NOW FIRES: {', '.join(added)}" if added else "",
+                            f"no longer fires: {', '.join(cleared)}" if cleared else "",
+                        )
+                        if part
+                    ),
+                )
+            )
+    return out, skipped, eligible
+
+
 DETECTORS: dict[str, Callable[[list[Path]], Any]] = {
+    "direct-spawn-credit": _replay_direct_spawn_credit,
     "lane-check": _replay_lane_check,
     "person-evidence-arm": _replay_person_evidence_arm,
     "proof-conclusion-arm": _replay_proof_conclusion_arm,
@@ -473,7 +553,18 @@ def main(argv: list[str] | None = None) -> int:
     # would otherwise fall through to lane-check's replay while printing the NEW
     # detector's name on the header: a silently wrong report, not a crash (found by
     # review).
-    if args.detector == "proof-conclusion-arm":
+    if args.detector == "direct-spawn-credit":
+        divergences, skipped, eligible = _replay_direct_spawn_credit(paths)
+        if skipped:
+            print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")
+        cleared = sum(len(set(d.old_result) - set(d.new_result)) for d in divergences)
+        added = sum(len(set(d.new_result) - set(d.old_result)) for d in divergences)
+        print(
+            f"{eligible} run(s) replayed; {cleared} (run, arm) never-invoked violation(s) cleared, "
+            f"{added} newly firing."
+        )
+        print(format_divergences(args.detector, divergences))
+    elif args.detector == "proof-conclusion-arm":
         divergences, skipped = _replay_proof_conclusion_arm(paths)
         if skipped:
             print(f"Skipped {skipped} run(s): no matching fixture starting-tree.gedcomx.json.")

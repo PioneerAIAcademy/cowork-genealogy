@@ -30,7 +30,7 @@ STATE_FILE = ".agent_state.json"
 # A mock that still asked would keep producing a schema-valid document while no
 # longer standing in for what production does.
 _EXPERIENCE_LEVEL = "novice"
-_NARRATION = 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.'
+_NARRATION = 'Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence.'
 
 
 def _event(kind: str, **kw) -> dict:

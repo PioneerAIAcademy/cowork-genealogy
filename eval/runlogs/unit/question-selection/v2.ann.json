@@ -1,0 +1,166 @@
+{
+  "run_log": "v2.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First question on a new single-fact objective, restated with identifiers (Priority 4); empty depends_on and unblocks are correct for a first question. The rationale's claim that Pennsylvania required death certificates from 1906 is accurate, so the 1908 certificate is a sound first target."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Question and metadata complete, and the researcher text is clean (two paragraphs, no ids or skill names). But the presentation note's objective-vs-question distinction is missing: the text never separates the overall goal from the single question pursued next. The judge's rationale credits that distinction and a plain-language next step, but the step it quotes ('Pass q_001 to research-plan') is from the caller lines."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; research_append carried every required field."
+    },
+    {
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names the person with birth and death estimates and places, and the single fact sought. Restating the objective is correct for a first question here."
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "pli_006 (Thomas Flynn probate) is in_progress in mid-research-flynn. The agent rejected the delegation's claim that the search was 'effectively done', took the plan item's status as authoritative, and wrote no question. It never attempted a research_append, so its own rule held without the tool refusal being needed.\n\n\n\n"
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Named the in-flight item, explained why it blocks a new question and that the delegation doesn't override it, and noted that the probate outcome may change which question comes next. Researcher text is two plain paragraphs with no ids or skill names."
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Seven valid read-only calls (project_context plus six research_query sections); no write attempted, which is correct here."
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No question was written, which is correct, so this doesn't apply."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Checked flynn-census-exhausted: only the 1850 and 1860 censuses are in the search log, and the timeline has a high-severity gap from 1860 to the 1908 death, so 1870, 1880 and 1900 are genuinely unsearched. Targeting that record set over the proof summary's probate suggestion follows the priority rule: a major unsearched record set comes before one targeted record."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "timeline_gap basis, rationale grounded in the gap and the probable-tier proof, depends_on q_002 (the resolved household context), unblocks q_001, and persisted. The timelines section was queried before the write, and its validator passed."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; the append succeeded first time with every required field."
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names the person with birth and death details, the three census years, and asks for the values (where enumerated, which household relationships are stated) rather than a yes/no. A search plan follows directly."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The objective disputes the tree's parents, which rest only on unverified compiled data (quality 1). The question tests the assignment confirm-or-refute instead of relying on the tree, and the rationale uses the user's Luxembourg death record to flag a possible misidentification of Anton himself."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First question recorded with rationale, basis and correct empty links (nothing exists yet to depend on or unblock). Judge slip: its rationale says the question unblocks downstream questions; unblocks is empty, which is correct here"
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; research_append carried every required field."
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names all three people, Anton's birth estimate and place, and the specific relationship under test. Confirm-or-refute is the sanctioned form for a disputed claim already on the tree."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The user gave no evidence for the doubt and no birth details. The agent didn't stall to ask (correct: no one is waiting) and wrote a confirm-or-refute test of the disputed parents. 'Wisconsin' isn't fabricated; it's I1's on-file birth fact, though that fact rests on the same unverified tree data as the disputed parents."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "First question recorded with rationale, basis and metadata; it proceeds on the objective's premise without asking for missing evidence, as the test requires."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All calls valid; research_append carried every required field."
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names all three people, Anton's on-file birth estimate and place, and the relationship under test. Confirm-or-refute is the sanctioned form for a disputed claim on the tree."
+    }
+  ]
+}

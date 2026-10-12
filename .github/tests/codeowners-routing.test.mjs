@@ -131,6 +131,13 @@ const TABLE = [
   ['deploy/Dockerfile', D],
   ['apps/server/sandbox/e2b.Dockerfile', D],
   ['apps/server/uv.lock', D],
+  // The Beanstalk templates and pins (U12): Procfile, .config and requirements.txt
+  // match no extension rule, so without their own rules these deploy
+  // definitions would need no senior.
+  ['apps/server/proto/eb-tools/Procfile', D],
+  ['apps/server/proto/eb-web/.ebextensions/01-web.config', D],
+  ['apps/server/proto/eb-worker/Procfile', D],
+  ['apps/server/proto/web/requirements.txt', D],
 ];
 {
   const before = failures;

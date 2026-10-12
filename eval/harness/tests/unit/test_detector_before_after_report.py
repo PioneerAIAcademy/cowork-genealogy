@@ -15,6 +15,8 @@ import json
 from e2e.detector_before_after_report import (
     DETECTORS,
     REPO_ROOT,
+    _direct_spawn_credit_new,
+    _direct_spawn_credit_old,
     _fixture_starting_tree,
     _lane_check_eligible,
     _lane_check_new,
@@ -238,3 +240,38 @@ def test_every_registered_detector_has_a_main_branch():
     source = inspect.getsource(mod.main)
     for name in DETECTORS:
         assert f'args.detector == "{name}"' in source, f"{name} has no main() branch"
+
+
+# --- direct-spawn-credit -------------------------------------------------------
+
+_PS_RESEARCH = {"proof_summaries": [{"id": "ps_001"}]}
+
+
+def test_direct_spawn_credit_diverges_only_on_a_typed_spawn():
+    """A typed spawn is what the correction credits; a Skill call was credited
+    before and after, and a run that spawned nothing fires under both."""
+    spawn = [{"tool": "Agent", "args": {"subagent_type": "proof-conclusion", "prompt": "q_001"}}]
+    assert _direct_spawn_credit_old(spawn, _PS_RESEARCH, {}, None) == ["proof-conclusion"]
+    assert _direct_spawn_credit_new(spawn, _PS_RESEARCH, {}, None) == []
+
+    skill = [{"tool": "Skill", "args": {"skill": "proof-conclusion"}}]
+    assert _direct_spawn_credit_old(skill, _PS_RESEARCH, {}, None) == []
+    assert _direct_spawn_credit_new(skill, _PS_RESEARCH, {}, None) == []
+
+    for nothing in ([], [{"tool": "Agent", "args": {"prompt": "untyped"}}]):
+        assert _direct_spawn_credit_old(nothing, _PS_RESEARCH, {}, None) == ["proof-conclusion"]
+        assert _direct_spawn_credit_new(nothing, _PS_RESEARCH, {}, None) == ["proof-conclusion"]
+
+
+def test_direct_spawn_credit_replay_finds_the_corpus_direct_spawn_runs():
+    """The replay reaches the corpus and is not dead: committed runs spawn paired
+    agents directly, so it must report divergences. The subset check is a
+    sanity bound only; the old replica is the same detector minus spawns, so it
+    holds by construction."""
+    from e2e.detector_before_after_report import _replay_direct_spawn_credit
+    from e2e.runlog_selection import all_result_jsons
+
+    divergences, _skipped, eligible = _replay_direct_spawn_credit(all_result_jsons())
+    assert eligible > 100, f"only {eligible} runs replayed; expected the corpus"
+    assert divergences, "the corpus holds direct-spawn runs; zero divergences means the arm is dead"
+    assert all(set(d.new_result) <= set(d.old_result) for d in divergences)

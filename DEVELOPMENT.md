@@ -24,6 +24,9 @@ cd packages/engine/mcp-server && npx vitest run -t "test name"       # Run tests
 ./scripts/build-mcpb.sh                              # Package .mcpb extension (→ releases/)
 ./scripts/verify-mcpb.sh                             # Verify the packed .mcpb (contents + boots)
 ./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
+make eb-bundles                                      # Build the prototype's Beanstalk bundles (→ releases/eb-*.zip)
+make eb-bundles-verify                               # Verify them (layout, Procfile/PORT, offline pip per arch)
+make eb-bundles-smoke                                # Boot each offline in Docker [EB_PLATFORM=linux/arm64]
 ```
 
 After building, both artifacts land in `releases/`:

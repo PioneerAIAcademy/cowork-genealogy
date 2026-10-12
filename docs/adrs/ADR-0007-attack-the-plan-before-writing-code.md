@@ -174,7 +174,8 @@ that their task was mis-scoped.
 > `packages/engine/mcp-server/tests/packaging/doc-links.test.ts` — every repo
 > path, markdown link, `make` target, and **slash command** cited in
 > `.claude/agents/`, `.claude/commands/`, `.claude/skills/`, and
-> `docs/task-lifecycle.md` resolves. A slash command resolves to
+> `docs/task-lifecycle.md` resolves, and every path, link and `make` target in
+> `docs/` outside `docs/plan/` and `docs/deep-dives/` (this file included). A slash command resolves to
 > `.claude/commands/<name>.md`, `.claude/skills/<name>/SKILL.md`,
 > `packages/engine/plugin/skills/<name>/SKILL.md`, or a named `BUILT_INS` entry.
 > `packages/engine/mcp-server/tests/packaging/adr-links.test.ts` — the same for

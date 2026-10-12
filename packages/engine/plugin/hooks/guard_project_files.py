@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Deny raw Write/Edit/NotebookEdit on research.json and tree.gedcomx.json.
 
+Also on external-collections.json, which only `external_links_search` (given a
+`projectPath`) writes: it is the curated-collections list skills read back.
+
 Every write to those two files must go through the MCP writer tools, which
 validate before persisting. A direct file write never validates. `project_create`
 brings a project into being (both files, one validated call); `research_append`,
@@ -44,7 +47,7 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
-PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json")
+PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
@@ -174,9 +177,27 @@ AGENT_WRITABLE_SECTIONS = {
     # search-images updates the status of the plan item a browse executed. Its
     # browse log goes through research_log_append, which carries no `section`.
     "search-images": frozenset({"plan_items"}),
+    # search-external-sites updates the status of the plan item a search executed.
+    # Its log entries go through research_log_append and build_external_search_url,
+    # which carry no `section`.
+    "search-external-sites": frozenset({"plan_items"}),
+    # search-full-text updates the status of the plan item a search executed.
+    # Its search log goes through research_log_append, which carries no `section`.
+    # This is a repo CI requirement, not a runtime gate (the guard does not fire
+    # for agents outside the listed sections).
+    "search-full-text": frozenset({"plan_items"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
+    # question-selection appends new `q_` entries and writes nothing else. A
+    # lane is required by tests/packaging/plugin-hooks.test.ts for every agent
+    # granted research_append, so this row exists even though NO hook route
+    # points at this agent -- do not read it as one. It is deliberately narrow:
+    # `questions` carries a routed claim, `exhaustive_declaration.declared:
+    # true`, which belongs to research-exhaustiveness. Creating a question
+    # writes `declared: false`, which the guard already permits, so this lane
+    # widens nothing (issue #2115).
+    "question-selection": frozenset({"questions"}),
     # locality-guide writes one `localities` entry per surveyed place, and
     # nothing else in research.json.
     "locality-guide": frozenset({"localities"}),
@@ -230,7 +251,8 @@ REASON = (
     "must go through the writer tools. To CREATE a new project use project_create, "
     "which writes both files together; to add to an existing one use "
     "research_append, research_log_append, tree_edit or tree_correct. These "
-    "validate before persisting. Direct file writes never validate."
+    "validate before persisting. Direct file writes never validate. "
+    "external-collections.json is written only by external_links_search given a projectPath."
 )
 
 
@@ -352,10 +374,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
 
     **Gating on `research_append` alone is complete, and here is the check that
     says so** — it looks like an oversight and is the first thing a reader asks.
-    Of the five declared writers of any research.json section
+    Of the six declared writers of any research.json section
     (`research_append`, `project_create`, `research_log_append`,
-    `extraction_append`, `merge_tree_persons`), only `merge_tree_persons` also
-    writes a section this function routes, and it reaches `person_evidence` and
+    `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
+    only `merge_tree_persons` also writes a section this function routes, and it
+    reaches `person_evidence` and
     `proof_summaries` without ever passing through here.
 
     That is safe for a structural reason, not a lucky one: it writes those

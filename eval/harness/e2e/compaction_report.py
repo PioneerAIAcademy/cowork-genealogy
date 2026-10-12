@@ -27,7 +27,9 @@ posture as `nudge_report.py`, `corpus_report.py`, and `latency_report.py`.
 
 ## How a call is placed into a segment
 
-`usage.timeline` is `[[elapsed_s, kind, tool_names?], ...]`. A
+`usage.timeline` is `[[elapsed_s, kind, tool_names, wall_ts, message_id], ...]`
+since 2026-10-02 (#2582); rows written before that are 3- or 2-wide, so index
+rather than unpack. A
 `system:compact_boundary` entry increments the segment counter (segment 0 is
 before the first compaction). An `assistant` entry's `tool_names` list (added
 by #895, 2026-07-26 — runs before that date carry the 2-element form and
@@ -136,7 +138,15 @@ def aligned_calls(doc: dict) -> tuple[list[tuple[float, int, dict]], str | None]
             continue
         if kind != "assistant":
             continue
-        if len(entry) != 3:
+        # `< 3`, not `!= 3`: this reader needs columns 0 and 2, and the row grew
+        # to five on 2026-10-02 (#2582 added `wall_ts` and `message_id`). Under
+        # `!= 3` every run written after that date would have returned
+        # `unsegmentable-timeline` here — an *exclusion reason*, not an error, so
+        # `make e2e-compaction` and `make e2e-ranked-reads` (which imports this
+        # same function) would have kept printing and looked healthy while
+        # silently dropping every new run. The legacy 2-wide row stays rejected,
+        # which `test_e2e_compaction_report.py` pins.
+        if len(entry) < 3:
             return [], "unsegmentable-timeline"
         elapsed = entry[0]
         for _ in entry[2]:

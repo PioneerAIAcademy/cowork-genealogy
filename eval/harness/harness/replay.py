@@ -128,6 +128,7 @@ SECTION_ID_PREFIX = {
 }
 
 _ID_RE = re.compile(r'"(?:entryId|logId)"\s*:\s*"([^"]+)"')
+_URL_RE = re.compile(r'"url"\s*:\s*"([^"]+)"')
 _OK_RE = re.compile(r'"ok"\s*:\s*(true|false)')
 _FULL_LEN_RE = re.compile(r'"_full_length"\s*:\s*(\d+)')
 
@@ -399,6 +400,43 @@ def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) ->
     out.note_unmodelled(f"update:no-such-id:{section}")
 
 
+def _builder_hand_off(entry: dict) -> tuple[dict, str] | None:
+    """The log op a `build_external_search_url` call wrote, with its id.
+
+    The builder writes only when called with a `projectPath`, and then exactly
+    one entry: the in-flight `external_site` hand-off. Applied only when the
+    ledger kept both the returned `logId` and `url` — never with a synthesised
+    id, because the 155 committed calls that carried no projectPath wrote
+    nothing, and inventing an entry for each would be the opposite lie.
+    """
+    args = entry.get("args") if isinstance(entry.get("args"), dict) else {}
+    if not args.get("projectPath") or entry.get("is_error"):
+        return None
+    result = parse_tool_result(entry.get("response_summary"))
+    if result is None or result.get("ok") is not True or not result.get("ids"):
+        return None
+    summary = entry.get("response_summary")
+    text = summary if isinstance(summary, str) else json.dumps(summary, default=str)
+    url_m = _URL_RE.search(text.replace('\\"', '"'))
+    if url_m is None:
+        return None
+    attributes = args.get("attributes")
+    body = {
+        "plan_item_id": args.get("planItemId"),
+        "tool": "external_site",
+        "query": dict(attributes) if isinstance(attributes, dict) else {},
+        "outcome": "partial",
+        "results_examined": 0,
+        "external_site": {
+            "site": args.get("site"),
+            "url_generated": url_m.group(1),
+            "capture_received": False,
+        },
+        "results_ref": None,
+    }
+    return {"section": "log", "op": "append", "entry": body}, result["ids"][0]
+
+
 def replay(
     tool_calls: list[dict],
     starting_research: dict | None = None,
@@ -415,6 +453,14 @@ def replay(
         if not isinstance(entry, dict):
             continue
         name = bare_tool_name(str(entry.get("tool") or ""))
+        # Its own branch, ahead of the generic writer path: that path would turn
+        # the builder's arguments into the entry and synthesise an id for every
+        # call, including the ones that wrote nothing.
+        if name == "build_external_search_url":
+            hand_off = _builder_hand_off(entry)
+            if hand_off is not None:
+                _apply_op(out.research, hand_off[0], hand_off[1], out)
+            continue
         if name not in RESEARCH_WRITERS:
             # Report it. The module docstring promises `unmodelled` names every
             # tool this replay could not apply, and `check_replay_fidelity`

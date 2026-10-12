@@ -36,7 +36,9 @@ run's: on paerai-teupooihi-spouse's 2026-09-21 log it equals the `main` rows of
 over main-thread calls only and a sub-thread gap is counted but not priced; its
 `iterations` array is a single entry in every run that carries it (138 of 163,
 measured 2026-09-11), not a per-call ledger; `subagents[].turns[]` carries
-`output_tokens` only. The orchestrator reads per-message usage off the stream
+`output_tokens` only; the full four-field total per subagent is
+`subagents[].usage` since 2026-10-02 (#2582), counted once per message id.
+The orchestrator reads per-message usage off the stream
 (`_accumulate_usage`) but, on runs written before `usage.message_usage`
 shipped, persisted only the sums. Runs carrying `message_usage` have real
 per-message window figures a future reader could use directly — **this module
@@ -47,7 +49,9 @@ calls that timeline yields.
 
 ## Model calls from the timeline
 
-`usage.timeline` is `[[elapsed_s, kind, tool_names?], ...]`, one row per SDK
+`usage.timeline` is `[[elapsed_s, kind, tool_names, wall_ts, message_id], ...]`
+since 2026-10-02 (#2582); rows written before that are 3- or 2-wide, so index
+rather than unpack, one row per SDK
 message. The SDK re-emits an assistant message once per content block, so one
 model call is a BURST of consecutive `assistant` rows on one thread, ended by
 that thread's `tool_result`. Subagent messages are interleaved into the same
@@ -130,6 +134,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e import pricing
+from e2e.result import result_message_covers_last_query_only
 from e2e.runlog_selection import (
     add_since_arg,
     all_result_jsons,
@@ -284,11 +289,20 @@ def _int(value: Any) -> int | None:
 
 
 def analyze_run(doc: dict, *, fixture: str, run: str) -> RunRow | str:
-    """A RunRow, or the exclusion reason: `no-timeline` or `no-cache-figures`."""
+    """A RunRow, or the exclusion reason: `no-timeline`, `multi-query` or
+    `no-cache-figures`.
+
+    `multi-query`: the run's `usage.usage` came from a ResultMessage that saw only
+    its last query (`result_message_covers_last_query_only`), so its cache figures
+    are a fraction of the run's and spreading them over the whole timeline would
+    price gaps against the wrong total.
+    """
     usage = doc.get("usage") or {}
     timeline = usage.get("timeline")
     if not isinstance(timeline, list) or not timeline:
         return "no-timeline"
+    if result_message_covers_last_query_only(usage):
+        return "multi-query"
     inner = usage.get("usage") if isinstance(usage.get("usage"), dict) else {}
     cache_read = _int(inner.get("cache_read_input_tokens"))
     if cache_read is None:

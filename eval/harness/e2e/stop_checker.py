@@ -113,12 +113,12 @@ def should_continue_run(
     return True
 
 
-# The hand-back form /research emits at a step boundary (lead ruling, 2026-09-07,
-# issue #2292). A fixed closing line, matched literally: free-prose matching was the
-# alternative the lead set aside, because the old ANNOUNCE_RE caught 15 of 41 real
-# yields. The shipped skill does NOT emit this yet — #2292 lands the prose — so `step`
-# is structurally 0 until then, and that is the correct result rather than a broken
-# classifier. Do not loosen these to make the count non-zero.
+# The retired hand-back literal (lead ruling 2026-09-07, retired by issue #2292 and
+# PR #2870, 2026-09-27: "the Stop hook is the mechanism"). No shipped prompt emits it,
+# so in an autonomous run a `step` is the agent asking the patron — the yield the veto
+# exists to refuse. Kept as telemetry only: `usage.hand_back_classes` and
+# `nudge_report` count it, the reply never depends on it (U17, handoff plan), and the
+# committed pre-retirement run logs still carry it. Matched literally; do not loosen.
 _HAND_BACK_STEP_TAIL = ". Continue?"
 _HAND_BACK_STEP_LEAD = "Next: "
 _HAND_BACK_COMPLETE = "Research complete."
@@ -127,10 +127,8 @@ _HAND_BACK_COMPLETE = "Research complete."
 def classify_hand_back(text: str | None) -> str:
     """Classify an agent's closing words: "step" | "silent" | "completion_claim".
 
-    Pure, stdlib-only, text in / class out, and deliberately takes NO `research`
-    argument — issue #1104's Half B lifts this verbatim into a plugin-shipped Stop
-    hook, which reads research.json itself. Keeping the status out of here is what
-    makes that lift possible.
+    Pure, stdlib-only, text in / class out, and takes NO `research` argument: whether
+    a completion claim is true is `hand_back_key`'s question, not this one's.
 
     Normalises its own input (`" ".join(text.split())`) so the two callers agree: the
     orchestrator passes a whole TextBlock, `nudge_report` passes narration text, and a
@@ -141,9 +139,8 @@ def classify_hand_back(text: str | None) -> str:
 
     NOTE the class is about FORM, not truth. A `completion_claim` is not by itself a
     false completion — the caller decides that by reading project.status. And a run
-    that stops on a genuine logged blocker (research/SKILL.md's third legitimate
-    autonomous stop) reads as `silent` here, because it names no next step; the
-    taxonomy has no separate blocker class today.
+    that stops on a genuine logged blocker reads as `silent` here, because it names no
+    next step; the taxonomy has no separate blocker class.
     """
     t = " ".join((text or "").split())
     if t.endswith(_HAND_BACK_COMPLETE):
@@ -184,26 +181,19 @@ def terminal_reason(
 COUNTED_TERMINAL_REASONS = frozenset({"budget", "no_progress"})
 
 
-def hand_back_outcome(hand_back_class: str, *, project_is_completed: bool) -> tuple[str, str | None]:
-    """Map a class to (counter key, reply) — the hook's branch table, made testable.
+def hand_back_key(hand_back_class: str, *, project_is_completed: bool) -> str:
+    """The `usage.hand_back_classes` key for one hand-back class — telemetry only.
 
-    `stop_hook` is a closure inside `run_agent` and no test drives it, so without this
-    the wiring from class to reply and counter is unverified. Returns the counter key
-    and the reply text, or None where the caller keeps its existing block reason.
+    Every vetoed stop gets the same reply, the worker's `CONTINUE_REASON` verbatim, so
+    the e2e grade and the prototype's runs see one Stop policy (U17);
+    `test_continue_policy_parity.py` pins that the hook has no other reply.
 
     A `completion_claim` on a project that IS completed is a TRUTHFUL completion, not a
-    false one — it counts as `step`-equivalent closure, never `false_completion`.
+    false one — `terminal_completed`, never `false_completion`.
     """
     if hand_back_class == "completion_claim":
-        if project_is_completed:
-            return "terminal_completed", None
-        return "false_completion", (
-            "research.json still reports project.status != 'completed', so the research "
-            "is not finished. Verify with research_query, then continue the loop."
-        )
-    if hand_back_class == "step":
-        return "step", "Yes."
-    return "silent", None
+        return "terminal_completed" if project_is_completed else "false_completion"
+    return hand_back_class
 
 
 def derive_stop_reason(

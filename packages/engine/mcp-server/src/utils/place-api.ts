@@ -10,7 +10,12 @@ import type {
   FSPlaceDescriptionResponse,
 } from "../types/place.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
-import { fetchWithTimeout } from "./http.js";
+import { fetchWithRetry } from "./http.js";
+
+/** Per-request timeout for a Places call; omitted, the http.ts default applies. */
+export interface PlaceFetchOptions {
+  timeoutMs?: number;
+}
 
 const FS_API_BASE = "https://api.familysearch.org/platform/places";
 // FamilySearch's place service (the one the research-places website uses). It
@@ -141,7 +146,7 @@ function sanitizeForNameQuery(name: string): string {
 
 export async function searchPlace(
   name: string,
-  opts: { date?: number } = {},
+  opts: { date?: number } & PlaceFetchOptions = {},
 ): Promise<SearchPlaceResult[]> {
   // Phrase-quote the value: an unquoted multi-word `name:` query is parsed by
   // FamilySearch's search as an OR of tokens, so a place literally named just
@@ -162,7 +167,7 @@ export async function searchPlace(
   if (!safeName) return [];
   const url = `${FS_API_BASE}/search?q=name:${encodeURIComponent(`"${safeName}"`)}${dateQualifier}`;
 
-  const response = await fetchWithTimeout(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       Accept: "application/x-gedcomx-atom+json",
       // Pins the LANGUAGE THE ANSWER IS RENDERED IN, not what matches. Measured
@@ -179,7 +184,7 @@ export async function searchPlace(
       // for it on reads; the resolver never got it.
       "Accept-Language": "en",
     },
-  });
+  }, opts.timeoutMs);
 
   if (!response.ok) {
     throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
@@ -217,10 +222,13 @@ export async function searchPlace(
  * The Primary ID is the canonical place ID (placeId) returned by the places tool.
  * Returns null for 404 (invalid ID), throws for other errors.
  */
-export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceResult | null> {
+export async function getPlaceByPrimaryId(
+  primaryId: string,
+  opts: PlaceFetchOptions = {},
+): Promise<GetPlaceResult | null> {
   const url = `${FS_API_BASE}/${primaryId}`;
 
-  const response = await fetchWithTimeout(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       Accept: "application/json",
       // Same reason as searchPlace: pins the language the answer is RENDERED
@@ -233,7 +241,7 @@ export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceRe
       // under Accept-Language: nl.
       "Accept-Language": "en",
     },
-  });
+  }, opts.timeoutMs);
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -268,10 +276,13 @@ export async function getPlaceByPrimaryId(primaryId: string): Promise<GetPlaceRe
  * Get place details by ID using FamilySearch API.
  * Returns null for 404 (invalid ID), throws for other errors.
  */
-export async function getPlaceById(id: string): Promise<GetPlaceResult | null> {
+export async function getPlaceById(
+  id: string,
+  opts: PlaceFetchOptions = {},
+): Promise<GetPlaceResult | null> {
   const url = `${FS_API_BASE}/description/${id}`;
 
-  const response = await fetchWithTimeout(url, {
+  const response = await fetchWithRetry(url, {
     headers: {
       Accept: "application/json",
       // Same reason as searchPlace: pins the language the answer is RENDERED
@@ -284,7 +295,7 @@ export async function getPlaceById(id: string): Promise<GetPlaceResult | null> {
       // under Accept-Language: nl.
       "Accept-Language": "en",
     },
-  });
+  }, opts.timeoutMs);
 
   if (!response.ok) {
     if (response.status === 404) {
@@ -334,11 +345,14 @@ interface FSPlaceAttributesResponse {
  * Note: places may also carry an `FS_WIKI_LINK` attribute (the FamilySearch
  * research wiki, a different thing); we take only `WIKIPEDIA_LINK`.
  */
-export async function getPlaceWikipediaUrl(repId: string): Promise<string | null> {
+export async function getPlaceWikipediaUrl(
+  repId: string,
+  opts: PlaceFetchOptions = {},
+): Promise<string | null> {
   const url = `${FS_PLACE_WS_UI_BASE}/${encodeURIComponent(repId)}/attributes/`;
 
   try {
-    const response = await fetchWithTimeout(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         Accept: "application/json",
         // Sent for consistency with the other place fetchers. Checked that it
@@ -350,7 +364,7 @@ export async function getPlaceWikipediaUrl(repId: string): Promise<string | null
         "User-Agent": BROWSER_USER_AGENT,
         "FS-User-Agent-Chain": "zion-user",
       },
-    });
+    }, opts.timeoutMs);
 
     if (!response.ok) {
       return null;
@@ -370,11 +384,14 @@ type PrimaryIdResponse = {
   places?: Array<{ id: string; names?: Array<{ lang: string; value: string }> }>;
 };
 
-async function fetchPrimaryIdResponse(primaryId: string): Promise<PrimaryIdResponse> {
+async function fetchPrimaryIdResponse(
+  primaryId: string,
+  opts: PlaceFetchOptions = {},
+): Promise<PrimaryIdResponse> {
   const url = `${FS_API_BASE}/${primaryId}`;
-  const response = await fetchWithTimeout(url, {
+  const response = await fetchWithRetry(url, {
     headers: { Accept: "application/json", "Accept-Language": "en" },
-  });
+  }, opts.timeoutMs);
   if (!response.ok) {
     if (response.status === 404) return {};
     throw new Error(`FamilySearch API error: ${response.status} ${response.statusText}`);
@@ -382,8 +399,11 @@ async function fetchPrimaryIdResponse(primaryId: string): Promise<PrimaryIdRespo
   return (await response.json()) as PrimaryIdResponse;
 }
 
-export async function getPlaceCandidateNames(primaryId: string): Promise<string[]> {
-  const data = await fetchPrimaryIdResponse(primaryId);
+export async function getPlaceCandidateNames(
+  primaryId: string,
+  opts: PlaceFetchOptions = {},
+): Promise<string[]> {
+  const data = await fetchPrimaryIdResponse(primaryId, opts);
   if (!data.places?.length) return [];
 
   const allNames = data.places[0].names ?? [];
@@ -419,12 +439,15 @@ export async function getPlaceCandidateNames(primaryId: string): Promise<string[
  *
  * Public (no auth) — the places endpoints accept anonymous requests.
  */
-export async function getPlaceRepIds(pid: string): Promise<string[]> {
+export async function getPlaceRepIds(
+  pid: string,
+  opts: PlaceFetchOptions = {},
+): Promise<string[]> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
 
-  const response = await fetchWithTimeout(url, {
+  const response = await fetchWithRetry(url, {
     headers: { Accept: "application/json", "Accept-Language": "en" },
-  });
+  }, opts.timeoutMs);
   if (!response.ok) {
     if (response.status === 404) return [];
     throw new Error(

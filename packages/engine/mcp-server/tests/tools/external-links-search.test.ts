@@ -213,47 +213,44 @@ describe("externalLinksSearchTool — fetches the full set", () => {
     mockFetch.mockReset();
   });
 
-  it("fetches every page until totalForPlace is exhausted", async () => {
-    const makePage = (offset: number, size: number) =>
-      Array.from({ length: size }, (_, i) => ({
-        url: `https://example.com/c${offset + i}`,
-        linkText: `Collection ${offset + i}`,
-        place: "France",
-        startYear: "1900",
-        endYear: "1900",
-      }));
+  it("fetches the whole list in ONE request (offset=0, count=1000) — never pages", async () => {
+    const rows = Array.from({ length: 250 }, (_, i) => ({
+      url: `https://example.com/c${i}`,
+      linkText: `Collection ${i}`,
+      place: "France",
+    }));
+    mockFetch.mockResolvedValueOnce(singlePage(rows));
 
-    mockFetch
-      .mockResolvedValueOnce(pageAt(makePage(0, 100), 0, 250))
-      .mockResolvedValueOnce(pageAt(makePage(100, 100), 100, 250))
-      .mockResolvedValueOnce(pageAt(makePage(200, 50), 200, 250));
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "France",
-      startYear: 1880,
-      endYear: 1950,
-    });
-
-    expect(mockFetch).toHaveBeenCalledTimes(3);
-    expect(result.totalForPlace).toBe(250);
-    expect(result.results).toHaveLength(250);
-    expect(result.results[0]?.url).toBe("https://example.com/c0");
-    expect(result.results.at(-1)?.url).toBe("https://example.com/c249");
-  });
-
-  it("stops looping when an empty page is returned (defensive)", async () => {
-    mockFetch.mockResolvedValueOnce(
-      jsonResponse({ count: 0, offset: 0, totalResults: 999, collections: [] })
-    );
-
-    const result = await externalLinksSearchTool({
-      standardPlace: "France",
-      startYear: 1880,
-      endYear: 1950,
-    });
+    const result = await externalLinksSearchTool({ standardPlace: "France" });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(result.results).toHaveLength(0);
+    const url = new URL(String(mockFetch.mock.calls[0][0]));
+    expect(url.searchParams.get("offset")).toBe("0");
+    expect(url.searchParams.get("count")).toBe("1000");
+    expect(result.totalForPlace).toBe(250);
+    expect(result.results).toHaveLength(200);
+    expect(result.inlineCapped).toBe(true);
+  });
+
+  it("refuses a response with no totalResults — completeness cannot be told", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse({ collections: [{ url: "https://example.com/a" }] }));
+    await expect(externalLinksSearchTool({ standardPlace: "France" })).rejects.toThrow(/no totalResults/);
+  });
+
+  it("refuses a partial list (totalResults above the rows returned)", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ totalResults: 999, collections: [{ url: "https://example.com/a" }] }),
+    );
+    await expect(externalLinksSearchTool({ standardPlace: "France" })).rejects.toThrow(/1 of the 999/);
+  });
+
+  it("refuses a place over the 1,000-row cap and names a smaller scope", async () => {
+    mockFetch.mockResolvedValueOnce(
+      jsonResponse({ totalResults: 1998, collections: [{ url: "https://example.com/a" }] }),
+    );
+    await expect(externalLinksSearchTool({ standardPlace: "United States" })).rejects.toThrow(
+      /1998 curated links.*state or county, not a whole country/s,
+    );
   });
 
   it("returns empty results cleanly for a place with no collections", async () => {
@@ -554,33 +551,32 @@ describe("externalLinksSearchTool — staging, host filter, and inline cap", () 
     expect(result.staged).toBeUndefined();
   });
 
-  it("caps the inline set to 50 only when staged; returns the full set un-staged", async () => {
-    const many = Array.from({ length: 120 }, (_, i) => ({
-      url: `https://example.com/c${i}`,
+  it("caps the inline set at 200 on every call and says so; the staged set stays full", async () => {
+    const many = Array.from({ length: 260 }, (_, i) => ({
+      url: `https://example.com/c${String(i).padStart(3, "0")}`,
       linkText: `Collection ${i}`,
     }));
 
-    // Un-staged: full set comes back (back-compat; nothing retained to recover).
     mockFetch.mockResolvedValueOnce(singlePage(many));
-    const unstaged = await externalLinksSearchTool({
-      standardPlace: "Pennsylvania, United States",
-    });
-    expect(unstaged.results).toHaveLength(120);
-    expect(unstaged.returned).toBe(120);
+    const unstaged = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
+    expect(unstaged.results).toHaveLength(200);
+    expect(unstaged.returned).toBe(200);
+    expect(unstaged.inlineCapped).toBe(true);
 
-    // Staged: inline capped at 50, full 120 staged to disk.
     mockFetch.mockResolvedValueOnce(singlePage(many));
-    mockedStage.mockResolvedValueOnce({
-      resultsRef: "results/.staging/def.json",
-      returnedCount: 120,
-    });
+    mockedStage.mockResolvedValueOnce({ resultsRef: "results/.staging/def.json", returnedCount: 260 });
     const staged = await externalLinksSearchTool({
       standardPlace: "Pennsylvania, United States",
       projectPath: "/tmp/project",
     });
-    expect(staged.results).toHaveLength(50);
-    expect(staged.returned).toBe(50);
-    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(120);
+    expect(staged.results).toHaveLength(200);
+    expect(mockedStage.mock.calls[0][0].response.results).toHaveLength(260);
+  });
+
+  it("does not flag inlineCapped when everything fits", async () => {
+    mockFetch.mockResolvedValueOnce(singlePage(twoHostCollections));
+    const r = await externalLinksSearchTool({ standardPlace: "Pennsylvania, United States" });
+    expect(r.inlineCapped).toBeUndefined();
   });
 
   it("never fails the search when staging throws", async () => {

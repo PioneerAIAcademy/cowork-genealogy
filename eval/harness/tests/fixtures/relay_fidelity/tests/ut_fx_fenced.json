@@ -1,0 +1,16 @@
+{
+  "test": {
+    "id": "ut_fx_fenced",
+    "skill": "alpha",
+    "name": "ut_fx_fenced",
+    "type": "positive",
+    "description": "relay-fidelity fixture",
+    "tags": []
+  },
+  "input": {
+    "delegation": "do the thing"
+  },
+  "judge_context": [
+    "fixture"
+  ]
+}
