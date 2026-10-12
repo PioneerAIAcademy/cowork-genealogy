@@ -153,6 +153,11 @@ LIVE_TOOLS: set[str] = {
     # whenever tool_calls is empty, so the defect switched off the dimension that
     # covers it. conflict-resolution declares it too. Issue #1654 (deep dive).
     "convert_calendar",
+    # Same rationale as convert_calendar: pure census arithmetic whose computed
+    # answer (how many children are missing, and each birth window) is exactly what
+    # its callers' unit tests will grade once check-warnings and question-selection
+    # are granted it. A canned fixture would grade a number the test author typed.
+    "census_children_gap",
     # Same rationale as convert_calendar: URL-templating with no network
     # dependency, so a canned fixture would supply the exact URL string
     # search-external-sites' eval exists to measure. Its one workspace write
@@ -180,7 +185,7 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
 # LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
 # `tree_forget`, `external_links_search`) have no handler to mirror. The drift lint in
-# tests/unit/test_mock_mcp.py pins that intersection, so a sixteenth tool added
+# tests/unit/test_mock_mcp.py pins that intersection, so a new tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
 # `merge_warnings` is deliberately absent: its `ok: false` is a dry-run verdict
@@ -204,6 +209,9 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     # ordinal out of range, or julianToGregorianDay before 1582-10-15) - a real
     # failure the agent must see as one, not a verdict like merge_warnings' dry run.
     "convert_calendar",
+    # Its `ok: false` means malformed input (a bad count, year or date). Impossible
+    # counts are an `ok: true` answer carrying `conflicts`, not a failure.
+    "census_children_gap",
     # Its `ok: false` means the requested URL could not be built (an unsupported
     # site, a missing baseUrl on digital_newspaper_archive, or no attributes at
     # all) - a real failure, not a verdict about the search's subject.
@@ -1398,6 +1406,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "research_query": ("research-query.js", "researchQuery"),
     "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
+    "census_children_gap": ("census-children-gap.js", "censusChildrenGap"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),

@@ -773,6 +773,45 @@ def test_sidecar_read_runs_live_against_the_workspace(tmp_path):
     assert missing.get("is_error") is True
 
 
+def test_census_children_gap_runs_live(tmp_path):
+    """The compiled tool computes the answer, not a canned fixture: the
+    check-warnings and question-selection tests grade exactly this arithmetic.
+    Also pins the module path / export symbol `_COMPILED_TOOLS` names, which the
+    OK_FALSE drift lint cannot see (a tool absent from both sets passes it)."""
+    if not (BUILD_TOOLS / "census-children-gap.js").exists():
+        pytest.skip("compiled MCP build absent")
+    server, call_log, tools_by_name = create_mock_server(
+        [], FIXTURES_DIR, workspace=tmp_path
+    )
+    mercer = {
+        "censuses": [
+            {"year": 1900, "childrenBorn": 6, "childrenLiving": 5},
+            {"year": 1910, "childrenBorn": 8, "childrenLiving": 7},
+        ],
+        "knownChildren": [
+            {"birthDate": y} for y in ("1886", "1888", "1891", "1894", "1897", "1906")
+        ],
+    }
+    result = _invoke(tools_by_name, "census_children_gap", mercer)
+    body = _extract_response_dict(result)
+    assert body.get("ok") is True, body
+    assert body["totalMissing"] == 2
+    assert {g["kind"] for g in body["missing"]} == {
+        "died_before_1900",
+        "born_between_living_1910",
+    }
+    assert "is_error" not in result
+    assert call_log[-1]["matched"] == {"kind": "live", "index": None}
+
+    malformed = _invoke(
+        tools_by_name,
+        "census_children_gap",
+        {"censuses": [{"year": 1890, "childrenBorn": 1, "childrenLiving": 1}]},
+    )
+    assert _extract_response_dict(malformed).get("ok") is False
+    assert malformed.get("is_error") is True
+
+
 def test_ok_false_gate_set_has_not_drifted_from_the_typescript_source():
     """The Python gate set must equal OK_FALSE_IS_FAILURE ∩ LIVE_TOOLS.
 
