@@ -1675,6 +1675,61 @@ describe("hasEventBeforeChristening predicate", () => {
     };
     expect(hasEventBeforeChristening(new Mob(tree, "I1"), 365 * 3)).toBe(false);
   });
+
+  // Knowing divergence from warnings.java:930 — see the predicate's docstring.
+  // The christening is in the event set too, so it must never fire against itself.
+  const fact = (id: string, type: string, date: string) => ({
+    id,
+    type,
+    date,
+    standard_date: date,
+  });
+  const onePerson = (facts: ReturnType<typeof fact>[]) =>
+    new Mob(
+      {
+        persons: [
+          {
+            id: "I1",
+            gender: "Male",
+            names: [{ id: "N", given: "Lone", surname: "Christening" }],
+            facts,
+          },
+        ],
+      },
+      "I1",
+    );
+
+  it.each(["Abt 1868", "Est 1868", "Bef 1868", "Bet 1860 and 1868", "1868"])(
+    "is silent when the only fact is an imprecise christening (%s)",
+    (date) => {
+      expect(hasEventBeforeChristening(onePerson([fact("F1", "Christening", date)]), 365 * 3)).toBe(false);
+    },
+  );
+
+  it("is silent on a christening and a baptism both dated Bet 1860 and 1868", () => {
+    const mob = onePerson([
+      fact("F1", "Christening", "Bet 1860 and 1868"),
+      fact("F2", "Baptism", "Bet 1860 and 1868"),
+    ]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(false);
+  });
+
+  it("still fires when imprecise dates are more than 3 years apart on every reading", () => {
+    // Census read as late as 1842-12-31 (1841-12-31 plus the fudge), christening
+    // as early as 1848-01-01 (1849-01-01 less the fudge).
+    const mob = onePerson([fact("F1", "Christening", "Abt 1850"), fact("F2", "Census", "Abt 1840")]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a residence 4 years before the christening fires", () => {
+    const mob = onePerson([fact("F1", "Christening", "1 Jan 1850"), fact("F2", "Residence", "1 Jan 1846")]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(true);
+  });
+
+  it("matches Java on exact dates: a residence 2 years before the christening is silent", () => {
+    const mob = onePerson([fact("F1", "Christening", "1 Jan 1850"), fact("F2", "Residence", "1 Jan 1848")]);
+    expect(hasEventBeforeChristening(mob, 365 * 3)).toBe(false);
+  });
 });
 
 // ────────────────────────────────────────────────────────────────────

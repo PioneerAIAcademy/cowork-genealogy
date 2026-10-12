@@ -38,7 +38,6 @@ import {
   earliestYearOfSelfFacts,
   factDaysCount,
   warningFactsOfPerson,
-  factDaysDiffEarliestLatest,
   factDaysDiffLatestEarliest,
   factDaysDiffLatestLatest,
   factYearsDiffEarliestEarliest,
@@ -750,18 +749,22 @@ export function hasChristeningBeforeBirth(mob: Mob): boolean {
  * 365-day imperfect-date fudge. Java calls this at days = 365 * 3 (3
  * years) under the tag `hasEventBeforeChristening365_3` — an event >3
  * years before a christening is implausible.
+ *
+ * KNOWING DIVERGENCE FROM THE JAVA PORT, the same one as
+ * `hasEventBeforeBirth`. The event set includes the christening itself, so
+ * Java's pairing (latest christening at its latest day, earliest event at its
+ * earliest day) fires a lone `Abt 1868` or `Bet 1860 and 1868` christening
+ * against itself, the 365-day fudge pushing `Abt` over the line. This reads
+ * the latest christening at its EARLIEST possible day and the earliest event
+ * at its LATEST, fudge included, so a fact paired with itself gives at most 0.
+ * Exact dates take no fudge and give Java's answer.
  */
 export function hasEventBeforeChristening(mob: Mob, days: number): boolean {
   const fudge = 365;
-  const diff = factDaysDiffEarliestLatest(
-    mob,
-    null,
-    BIRTH_AND_EVENT_REGISTRATION,
-    CHRISTENING_AND_BAPTISM,
-    null,
-    fudge,
-  );
-  return diff !== null && diff > days;
+  const latestChristeningRead = latestDayOfSelfFacts(mob, CHRISTENING_AND_BAPTISM, null, fudge, "min");
+  const earliestEventRead = earliestDayOfSelfFacts(mob, null, BIRTH_AND_EVENT_REGISTRATION, fudge, "max");
+  if (latestChristeningRead === null || earliestEventRead === null) return false;
+  return latestChristeningRead - earliestEventRead > days;
 }
 
 /**

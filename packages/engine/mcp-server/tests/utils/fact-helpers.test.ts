@@ -7,7 +7,6 @@ import {
   earliestYearOfSelfFacts,
   latestYearOfSelfFacts,
   earliestYearOfChildFacts,
-  factDaysDiffEarliestLatest,
   factDaysDiffLatestLatest,
 } from "../../src/utils/fact-helpers.js";
 import {
@@ -212,36 +211,8 @@ describe("earliestYearOfChildFacts — walks all children's facts", () => {
 });
 
 // ────────────────────────────────────────────────────────────────────
-// factDaysDiffEarliestLatest / factDaysDiffLatestLatest
+// factDaysDiffLatestLatest
 // ────────────────────────────────────────────────────────────────────
-
-describe("factDaysDiffEarliestLatest — used by hasEventBeforeChristening", () => {
-  it("returns a positive number when birth-like is later than the earliest event", () => {
-    // Set 1 = any event, Set 2 = birth-like.
-    // earliest any-event ≈ 1850, latest birth-like ≈ 1851 → diff ≈ ~365 days.
-    const diff = factDaysDiffEarliestLatest(
-      anchorMob,
-      null,
-      null,
-      BIRTHLIKE_FACT_TYPES,
-      null,
-    );
-    expect(diff).not.toBeNull();
-    expect(diff!).toBeGreaterThan(0);
-  });
-
-  it("returns null when either side is empty", () => {
-    expect(
-      factDaysDiffEarliestLatest(
-        anchorMob,
-        new Set(["NotARealType"]),
-        null,
-        BIRTHLIKE_FACT_TYPES,
-        null,
-      ),
-    ).toBeNull();
-  });
-});
 
 describe("factDaysDiffLatestLatest — used by W3 (hasEventAfterDeath)", () => {
   it("returns negative or near-zero when no event is after the latest deathlike", () => {

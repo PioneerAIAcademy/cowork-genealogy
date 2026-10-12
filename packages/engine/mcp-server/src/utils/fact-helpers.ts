@@ -428,43 +428,20 @@ export function earliestYearOfParentFacts(
 }
 
 // ─── Java's day-diff aggregators ──────────────────────────────────────────
-// All four (Earliest-Latest, Latest-Earliest, Earliest-Earliest, Latest-
-// Latest) are direct ports of warnings.java:975-997.
+// Ports of warnings.java:975-997, plus one conservative pairing Java lacks.
+// Java's Earliest-Latest pairing (latest(set 2) − earliest(set 1)) has no
+// helper: its two users, hasEventBeforeBirth and hasEventBeforeChristening,
+// read each date generously instead.
 //
 // Convention matches Java: the diff is always (side-2 quantity) − (side-1
 // quantity). null when either side has no matching dated fact.
-
-/** = latest(set 2) − earliest(set 1). Java warnings.java:975. Used by hasEventBeforeChristening. */
-export function factDaysDiffEarliestLatest(
-  mob: Mob,
-  factTypes1: ReadonlySet<string> | null,
-  antiFactTypes1: ReadonlySet<string> | null,
-  factTypes2: ReadonlySet<string> | null,
-  antiFactTypes2: ReadonlySet<string> | null,
-  imperfectDateFudgeDays = 0,
-): number | null {
-  const earliest1 = earliestDayOfSelfFacts(
-    mob,
-    factTypes1,
-    antiFactTypes1,
-    imperfectDateFudgeDays,
-  );
-  const latest2 = latestDayOfSelfFacts(
-    mob,
-    factTypes2,
-    antiFactTypes2,
-    imperfectDateFudgeDays,
-  );
-  if (earliest1 === null || latest2 === null) return null;
-  return latest2 - earliest1;
-}
 
 /**
  * = earliest(set 2) − latest(set 1). No Java counterpart: this is the
  * CONSERVATIVE pairing, taking the bounds that make a gap look as SMALL as
  * possible, so a warning built on it fires only when the violation holds under
- * every reading the recorded dates permit. `factDaysDiffEarliestLatest` is the
- * opposite pairing and is what the Java ports use. See
+ * every reading the recorded dates permit. Java's Earliest-Latest is the
+ * opposite pairing. See
  * `hasBurialAfterDeath` for why the conservative form exists;
  * `hasDelayedBurial` and `hasStillbirthConflict`'s age branch use it for the
  * same reason.
