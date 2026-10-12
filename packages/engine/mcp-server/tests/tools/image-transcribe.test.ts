@@ -527,7 +527,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
     ).rejects.toThrow(/rejected \(401\)/);
   });
 
-  it("sends the 401 to the config file, never to the chat", async () => {
+  it("sends the 401 to where the key is set, never to the chat", async () => {
     mockOpenRouterStatus(401);
     const message = await transcribe({
       imageId: "004884748_02613",
@@ -535,8 +535,10 @@ describe("imageTranscribeTool — key / auth errors", () => {
       () => "",
       (e: unknown) => (e instanceof Error ? e.message : String(e))
     );
-    // The rejected key is replaced in config.json, so the instruction must
-    // name that file and must not route a fresh key through a tool call.
+    // The rejected key is replaced in the extension's settings or config.json,
+    // so the instruction must name both and must not route a fresh key through
+    // a tool call.
+    expect(message).toContain("Settings → Extensions → Genealogy Research");
     expect(message).toContain("~/.familysearch-mcp/config.json");
     expect(message).not.toMatch(/configure_openrouter/i);
     expect(message).not.toMatch(/\b(?:ask|paste|send|share|enter)\b/i);

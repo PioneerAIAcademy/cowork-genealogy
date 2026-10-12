@@ -6,6 +6,7 @@
   },
   "prompts": {
     "CLAUDE.md": 57483,
+    "CLAUDE.md": 58231,
     "packages/engine/plugin/agents/check-warnings.md": 47535,
     "packages/engine/plugin/agents/citation.md": 44479,
     "packages/engine/plugin/agents/convert-dates.md": 11818,
