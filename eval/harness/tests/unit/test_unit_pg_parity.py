@@ -48,6 +48,7 @@ def roots(tmp_path):
         {"ok": False, "errors": ["'results/x.json' does not exist in project h-abc-123"]},
         {"ok": False, "errors": ["ref '/w/results/.staging/x.json' escapes the project: it is an absolute path"]},
         {"ok": False, "errors": ["connect ECONNREFUSED 127.0.0.1:5434"]},
+        {"ok": False, "errors": ["NoSuchKey: The specified key does not exist."]},
         "pg_store_prelude: PROTO_* store environment incomplete",
     ],
 )
@@ -67,7 +68,7 @@ def test_a_store_fault_in_a_live_response_fails_and_is_named(roots, capsys, resp
 def test_a_flip_with_no_fault_is_wobble_and_passes(roots, capsys):
     pg, fs = roots
     _write(pg, "scratch_2026-10-12_00-00-00.json", _log("2026-10-12_00-00-00", [
-        _test("t1", "fail", {"ok": True, "count": 1, "items": [{"place": "Sheffield, Yorkshire", "film": "S3TP-9"}]}), _test("t2", "pass", {"ok": True}),
+        _test("t1", "fail", {"ok": True, "persons": [{"id": "I1", "sourceRefs": ["S1", "S3"]}], "film": "S3TP-9"}), _test("t2", "pass", {"ok": True}),
     ]))
     rc = unit_pg_parity.main(["--pg-root", str(pg), "--fs-root", str(fs)])
     out = capsys.readouterr().out

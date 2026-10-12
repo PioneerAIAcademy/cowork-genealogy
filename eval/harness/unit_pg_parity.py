@@ -36,10 +36,12 @@ UNIT_PG_RUNLOGS = UNIT_RUNLOGS.parent / "unit-pg"
 
 #: What a live response says when the Postgres side, not the tool, failed:
 #: PgS3ProjectStore's own refusals and absent-ref text (which names the
-#: harness's `h-<run>-…` project id), the prelude's errors, and the transport.
+#: harness's `h-<run>-…` project id), the prelude's errors, the S3 SDK's error
+#: names, and the transport. Not a bare `S3`: GedcomX source ids are `S1`, `S3`…
 STORE_FAULT = re.compile(
     r"PgS3|pg_store_prelude|not this store's project|escapes the project|"
-    r"is a JSON document; |does not exist in project h-|\bS3\b|postgres|"
+    r"is a JSON document; |does not exist in project h-|postgres|"
+    r"NoSuchKey|NoSuchBucket|SignatureDoesNotMatch|RequestTimeTooSkewed|S3ServiceException|"
     r"ECONNREFUSED|ETIMEDOUT|connection terminated",
     re.IGNORECASE,
 )
