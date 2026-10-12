@@ -55,7 +55,7 @@
     "tool:image_transcribe": 3488,
     "tool:login": 246,
     "tool:logout": 136,
-    "tool:materialize_facts": 9369,
+    "tool:materialize_facts": 9562,
     "tool:merge_tree_persons": 1949,
     "tool:merge_warnings": 1914,
     "tool:person_ancestors": 1923,
