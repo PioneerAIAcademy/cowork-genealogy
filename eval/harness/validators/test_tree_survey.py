@@ -115,7 +115,9 @@ def test_no_call_is_made_twice(tool_calls, test):
 def test_no_identifier_after_the_summary_separator(agent_returns, text_response, test):
     if "survey" not in test.get("tags", []):
         pytest.skip("not a survey test")
-    prose = _split(_reply(agent_returns, text_response, test))[1]
+    reply = _reply(agent_returns, text_response, test)
+    assert re.search(r"(?m)^\s*---\s*$", reply), "the return has no `---` line before the user-facing prose"
+    prose = _split(reply)[1]
     found = _ID.findall(prose)
     assert not found, f"identifiers in the user-facing prose: {found}"
 
@@ -126,6 +128,7 @@ def test_suggestions_are_holes_at_most_five_and_distinct(tool_calls, agent_retur
     ids = _suggested_ids(_reply(agent_returns, text_response, test))
     holes = _hole_ids(tool_calls)
     assert holes, "no tree_gaps fixture was served, so no suggestion can be checked"
+    assert ids, "no suggestion line leads with a person's identifier"
     stray = [i for i in ids if i not in holes]
     assert not stray, f"suggested a person no hole names: {stray}"
     assert len(set(ids)) <= 5, f"more than 5 people suggested: {sorted(set(ids))}"

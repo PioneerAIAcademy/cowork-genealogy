@@ -108,6 +108,8 @@ def test_prose_fires_on_an_identifier_and_accepts_plain_words():
         check_prose(reply(GOOD.replace("Pick one.", "Pick TGAP-H3A.")), None, t)
     with pytest.raises(AssertionError):
         check_prose(reply(GOOD.replace("Pick one.", "Pick LZJW-C31.")), None, t)
+    with pytest.raises(AssertionError):
+        check_prose(reply(GOOD.replace("\n---\n", "\n")), None, t)  # no separator
 
 
 def test_a_year_range_in_the_prose_is_not_an_identifier():
@@ -126,6 +128,8 @@ def test_ids_pass_for_hole_people_and_fail_for_a_stray_or_a_sixth_or_a_repeat():
     six = "\n".join(f"{i}: q" for i in ("TGAP-H1A", "TGAP-H1B", "TGAP-H2A", "TGAP-H3A", "TGAP-H4A", "TGAP-H5B"))
     with pytest.raises(AssertionError):
         check_ids(calls, reply(six + "\n---\nprose"), None, t)  # six people
+    with pytest.raises(AssertionError):
+        check_ids(calls, reply("Samuel Weis (TGAP-H3A): q\n---\nprose"), None, t)  # no line leads with an id
     # A spouse of a couple hole is a legitimate suggested person.
     check_ids(calls, reply("TGAP-H5B: q\n---\nprose"), None, t)
 
