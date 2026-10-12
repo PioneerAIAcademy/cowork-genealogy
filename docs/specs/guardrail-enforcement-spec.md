@@ -2350,7 +2350,7 @@ this section before reopening one.
 - **A surname arm on `research_append`'s person_evidence invariants** — refuse a
   `confident` link when the project documents the person under another surname.
   Worked through and **set aside**. Three facts decided it, all re-measured at
-  891262244:
+  8296d1527:
 
   1. **It cannot reach the link it was written for.** The motivating case is the
      `jimmie-jewel-neal` fixture, where six committed runs attach Wood parents to
@@ -2376,11 +2376,11 @@ this section before reopening one.
      whose target are in the same fixture, and which hits only the noise, is not
      a guardrail for this case.
 
-  **Rate, for scale rather than as the reason.** Over 203 committed e2e final
+  **Rate, for scale rather than as the reason.** Over 204 committed e2e final
   states (`git ls-files`, not a glob — the glob picks up a gitignored
-  `scratch_*` run): 5,727 confident person_evidence links, 1,518 on a person
-  carrying more than one distinct surname, **858 of 5,727 (15.0%)** refused
-  after the escape, in 46 of 203 runs (22.7%), measured at 891262244. ADR-0011
+  `scratch_*` run): 5,752 confident person_evidence links, 1,518 on a person
+  carrying more than one distinct surname, **858 of 5,752 (14.9%)** refused
+  after the escape, in 46 of 204 runs (22.5%), measured at 8296d1527. ADR-0011
   limit 2 is explicit that *"a rate never substitutes for"* inspection, so this
   is context, not the argument — facts 1–3 are. The refusals collapse to **65**
   distinct (fixture, person) pairs across 31 fixtures, which is a tractable
