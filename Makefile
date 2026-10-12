@@ -1090,13 +1090,18 @@ judge-report: ## Non-discrimination scan of the UNIT judge over committed run lo
 	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: judge-regrade
-judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1
+judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
 	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
 	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
 	# `make harness-test` to prove the renderer reads from disk on every call.
 	# A log that is already skill-side stale (rule 2) is REFUSED, not regraded.
-	cd eval/harness && uv run python -m judge_regrade $(if $(SKILL),--skill $(SKILL),) $(if $(DRY),--dry-run,)
+	# SCRATCH=<dir> regrades COPIES of the latest logs into <dir> and never writes
+	# a committed one; it waives both refusals, so a judge-input change that
+	# stales the snapshot (a scenario brief, #2478) can be A/B'd. One fresh dir
+	# per pass, given as an absolute path (the recipe runs from eval/harness).
+	# SCENARIO and SLOT=readme require SCRATCH.
+	cd eval/harness && uv run python -m judge_regrade $(if $(SKILL),--skill $(SKILL),) $(if $(DRY),--dry-run,) $(if $(SCRATCH),--runlogs-root "$(SCRATCH)",) $(foreach s,$(SCENARIO),--scenario $(s)) $(if $(SLOT),--slot $(SLOT),)
 
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)

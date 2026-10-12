@@ -559,6 +559,7 @@ def _print_summary(rows: list[dict]) -> None:
     print()
     _print_outcome_counts(rows)
     _print_judge_warnings(rows)
+    _print_readme_fallbacks(rows)
 
 
 # Every outcome the harness can record, per unit-test-spec.md §7 and
@@ -619,6 +620,24 @@ def _print_judge_warnings(rows: list[dict]) -> None:
         more = len(tests) - 6
         print(f"  {kind}: {len(tests)} — {shown}{f' (+{more} more)' if more > 0 else ''}")
     print("  Full advisories are in each run log's output.warnings.")
+    print()
+
+
+def _print_readme_fallbacks(rows: list[dict]) -> None:
+    """Say how many tests the judge graded against a scenario README.
+
+    The README fallback exists until every referenced scenario has a
+    judge-brief.md (#2478). A fallback nobody can see becomes permanent, so
+    every run names the tests and scenarios still on it.
+    """
+    tests = [r for r in rows if r.get("readme_fallback_scenarios")]
+    if not tests:
+        return
+    scenarios = sorted({s for r in tests for s in r["readme_fallback_scenarios"]})
+    print(
+        f"{len(tests)} test(s) graded against a scenario README, not a judge "
+        f"brief ({len(scenarios)} scenario(s)): {', '.join(scenarios)}"
+    )
     print()
 
 
@@ -1276,6 +1295,14 @@ def main(argv: list[str] | None = None) -> int:
                     for w in iter_run_warnings(entry)
                     if w.get("kind") in _JUDGE_WARNING_KINDS
                 ],
+                # Scenarios the judge read a whole README for, because they
+                # have no judge-brief.md yet (#2478). Its own line, not the
+                # judge tally: a fixture advisory, not a grading rule.
+                "readme_fallback_scenarios": sorted({
+                    w.get("scenario") or ""
+                    for w in iter_run_warnings(entry)
+                    if w.get("kind") == "scenario_readme_fallback"
+                }),
             }
         )
 

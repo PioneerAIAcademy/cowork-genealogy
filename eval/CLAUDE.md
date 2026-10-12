@@ -42,7 +42,7 @@ eval/
     tests/               The harness's own unit + e2e tests
     run_tests.py         CLI entry point
   fixtures/
-    scenarios/           Shared project state fixtures (research.json + tree.gedcomx.json + README.md)
+    scenarios/           Shared project state fixtures (research.json + tree.gedcomx.json + README.md, optional judge-brief.md)
     mcp/                 Mocked MCP tool response fixtures
   tests/                 Test definitions (version-controlled source of truth)
     e2e/                 GPS proof statement tests (each in its own directory)
@@ -83,7 +83,7 @@ eval/
   supply a fallback. `GROUPS EXAMINED: 0` means the scan proves nothing. An
   unknown `--skill` is an error (exit 2), not an empty clean pass. Issue #1972 V7.
 - **`harness/validators/`** — Developer-written Python validators (one `test_*.py` file per skill). Run automatically by the harness after each test execution. Results visible in the CRUD UI.
-- **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`. Tests reference scenarios by directory name.
+- **`fixtures/scenarios/`** — Shared project state fixtures. Each scenario is a directory with `research.json`, `tree.gedcomx.json`, and `README.md`, plus an optional `judge-brief.md`: when present the judge reads it in place of the README, which then reaches no grader (`harness/scenario_brief.py`; `docs/specs/unit-test-spec.md` §3.1). A run graded against a README because no brief exists carries a `scenario_readme_fallback` warning and is counted at the end of the suite. Tests reference scenarios by directory name.
 - **`fixtures/mcp/`** — Mocked MCP tool response fixtures. Each fixture is a single JSON file with `tool`, `description`, `args` (a non-empty match predicate), and `response` fields. Tests reference fixtures by filename. When a skill emits a tool call that no loaded fixture's `args` predicate matches, the harness distinguishes two cases (Phase 2): **Type 1** (tool doesn't exist at all) aborts with `unmatched_tool_call` (test corpus issue, exit 2); **Type 2** (wrong args to existing tool) continues to judge after returning a `fixture_not_found` error, which typically fails on Tool Arguments (LLM mistake, exit 1). Warnings flag which fixtures need to be added or corrected. See `docs/specs/unit-test-spec.md` §15 "Uncovered tool calls". A fixture's `response` must be a shape its tool can actually return: the top-level fields are checked against the handler's declared return type by `packages/engine/mcp-server/tests/packaging/mcp-fixture-shape.test.ts`, so copy the envelope from a sibling fixture for the same tool rather than writing a short form.
 
 > **NEVER hand-write or edit *unit* `.ann.json` files (under `runlogs/unit/`) — and if

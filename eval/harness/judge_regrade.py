@@ -18,10 +18,18 @@ disagrees with disk). Those logs are governed by rule 2 — they owe a paid
 `make eval-skill` run, not a regrade — and quietly rewriting their scores
 against a prompt the skill never saw would produce an incoherent artifact.
 
+Scratch mode (`--runlogs-root <dir>`) is the exception, and it never writes a
+committed log: it regrades copies under `<dir>/<skill>/` with both refusals
+waived, so a judge-input change that stales the snapshot without moving the
+prompt hash (a scenario judge-brief.md, issue #2478) can be A/B'd.
+`--scenario` narrows the copies to tests on those scenarios and `--slot readme`
+forces each scenario's README into the judge slot. One fresh dir per pass.
+
 CLI (from eval/harness/):
   uv run python -m judge_regrade                      # live regrade every eligible
   uv run python -m judge_regrade --skill citation     # one skill only
   uv run python -m judge_regrade --dry-run            # render+hash, no model call
+  uv run python -m judge_regrade --runlogs-root <dir> --scenario <name> [--slot readme]
 """
 
 from __future__ import annotations
@@ -31,7 +39,9 @@ import copy
 import hashlib
 import inspect
 import json
+import shutil
 import sys
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import SimpleNamespace
@@ -47,11 +57,19 @@ from harness.judge import (
 )
 from harness.loader import InvalidTestError
 from harness.orchestrator import (
+    DEFAULT_SKILLS,
     _compute_outcome,
     _run_judge,
     build_judge_grade_kwargs,
     flag_routing_negative_judge_fail,
 )
+from harness.scenario_brief import (
+    ScenarioBrief,
+    load_scenario_brief,
+    readme_fallback_warning,
+)
+from harness.warning_kinds import validate_warning_kinds
+from harness.workspace import build_workspace, snapshot_files
 from harness.outcomes import aggregate_per_run_outcome
 from harness.runlog import _replace_with_retry, validate_run_log
 from harness.versioning import classify
@@ -85,6 +103,7 @@ class RegradeResult:
     runs_regraded: int = 0
     tests_scored_moved: list[str] = field(default_factory=list)
     tests_outcome_moved: list[tuple[str, str, str]] = field(default_factory=list)  # (test_id, old, new)
+    fallback_scenarios: set[str] = field(default_factory=set)
     error: str | None = None
 
 
@@ -127,8 +146,14 @@ def collect_regradeable_logs(
     root: Path = UNIT_RUNLOGS,
     *,
     only_skill: str | None = None,
+    scratch: bool = False,
 ) -> list[RegradeTarget]:
     """Enumerate every skill's latest full run log; classify each.
+
+    With `scratch=True` both filters are waived and every latest log is
+    returned unrefused. A scratch regrade writes copies outside the committed
+    tree, so it may measure a judge-input change (a scenario brief) that stales
+    the snapshot without moving the prompt hash; it never certifies anything.
 
     A log is **regradeable** iff:
       1. its `judge_prompt_hash` != the current judge prompt's hash, AND
@@ -152,11 +177,14 @@ def collect_regradeable_logs(
         if latest is None:
             continue
         filename, log = latest
+        path = skill_dir / filename
+        if scratch:
+            out.append(RegradeTarget(skill=skill, path=path, log=log))
+            continue
         stored_hash = log.get("judge_prompt_hash") or ""
         if stored_hash == current_hash:
             # Not stale on prompt — nothing to regrade.
             continue
-        path = skill_dir / filename
         if _skill_side_stale(log):
             out.append(
                 RegradeTarget(
@@ -182,8 +210,8 @@ def collect_regradeable_logs(
 # produces the drift this PR exists to prevent: a full rubric on a negative
 # test, empty `skills_invoked` on a direct test, "name: error" validator
 # strings where production sends bare names. Disk reads here are limited to
-# the three slots the run log does not carry (rubric, scenario README,
-# before-state) and the predicate-matched tool-response splice.
+# the three slots the run log does not carry (rubric, scenario brief or its
+# README fallback, before-state) and the predicate-matched tool-response splice.
 
 
 def _load_test_spec(skill: str, test_id: str) -> loader.TestSpec:
@@ -214,37 +242,52 @@ def _load_rubric(skill: str) -> rubric.Rubric:
     return rubric.parse_rubric_or_empty(skill, text)
 
 
-def _load_scenario_readme(scenario: str | None) -> str:
-    if not scenario:
-        return ""
-    path = SCENARIOS / scenario / "README.md"
-    return path.read_text(encoding="utf-8") if path.exists() else ""
+def _load_scenario_brief(
+    scenario: str | None, *, force_readme: bool = False
+) -> ScenarioBrief:
+    """The judge's scenario text, through the loader the live path uses."""
+    return load_scenario_brief(SCENARIOS, scenario, force_readme=force_readme)
 
 
 def _load_before_snapshot(scenario: str | None) -> dict[str, Any]:
-    """Rebuild the before-snapshot `_summarize_before_state` reads.
+    """Rebuild the before-snapshot exactly as a live run takes it.
 
-    It reads only two keys of the before-snapshot: the scenario's
-    `research.json` and its `tree.gedcomx.json`. Returns an empty dict for a
+    Stages the scenario with `workspace.build_workspace` and reads it back with
+    `workspace.snapshot_files`, the two calls the orchestrator makes before the
+    skill runs. A hand-built copy of that snapshot once used the file names as
+    keys (`"research.json"`) where `_summarize_before_state` reads
+    `"research_json"`, so every regraded prompt carried a `(none)` before-state
+    the live run never sent (issue #2478). Returns an empty dict for a
     scenario-less test (empty before-state renders as "(none)").
     """
     if not scenario:
         return {}
     sdir = SCENARIOS / scenario
-    out: dict[str, Any] = {}
-    research_path = sdir / "research.json"
-    tree_path = sdir / "tree.gedcomx.json"
-    if research_path.exists():
-        try:
-            out["research.json"] = json.loads(research_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            pass
-    if tree_path.exists():
-        try:
-            out["tree.gedcomx.json"] = json.loads(tree_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            pass
-    return out
+    stamp = tuple(
+        (f.as_posix(), f.stat().st_mtime_ns, f.stat().st_size)
+        for f in sorted(sdir.rglob("*")) if f.is_file()
+    ) if sdir.is_dir() else ()
+    key = (str(SCENARIOS), scenario, stamp)
+    if key not in _BEFORE_SNAPSHOT_CACHE:
+        _BEFORE_SNAPSHOT_CACHE[key] = _stage_before_snapshot(scenario)
+    return _BEFORE_SNAPSHOT_CACHE[key]
+
+
+#: One staging per scenario per process. Keyed on every file's mtime, so a
+#: fixture edited mid-process is staged again.
+_BEFORE_SNAPSHOT_CACHE: dict[tuple, dict[str, Any]] = {}
+
+
+def _stage_before_snapshot(scenario: str) -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="regrade-before-") as tmp:
+        build_workspace(
+            scenario_name=scenario,
+            scenarios_dir=SCENARIOS,
+            skills_dir=DEFAULT_SKILLS,
+            target_dir=Path(tmp),
+            stage_skills=False,
+        )
+        return snapshot_files(Path(tmp))
 
 
 def _splice_tool_responses(tool_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -413,6 +456,8 @@ def _build_grade_kwargs_for_run_entry(
     log: dict[str, Any],
     test_entry: dict[str, Any],
     run_entry: dict[str, Any],
+    *,
+    force_readme: bool = False,
 ) -> dict[str, Any]:
     """Return the kwargs a live `grade()` call would receive for this test run."""
     skill = log["skill"]
@@ -420,7 +465,7 @@ def _build_grade_kwargs_for_run_entry(
     spec = _load_test_spec(skill, test_id)
     rub = _load_rubric(skill)
     scenario = spec.scenario if hasattr(spec, "scenario") else None
-    scenario_readme = _load_scenario_readme(scenario)
+    scenario_readme = _load_scenario_brief(scenario, force_readme=force_readme).text
     before_snapshot = _load_before_snapshot(scenario)
 
     output = run_entry.get("output") or {}
@@ -454,6 +499,7 @@ def render_judge_prompt_for_test(
     run_entry: dict[str, Any],
     *,
     repo_root: Path = REPO_ROOT,
+    force_readme: bool = False,
 ) -> str:
     """Reconstruct the judge prompt for one test run — reads disk, bypasses cache.
 
@@ -476,7 +522,9 @@ def render_judge_prompt_for_test(
     # amortizes across tests within one grade() invocation.
     judge.judge_prompt_template.cache_clear()
 
-    kwargs = _build_grade_kwargs_for_run_entry(log, test_entry, run_entry)
+    kwargs = _build_grade_kwargs_for_run_entry(
+        log, test_entry, run_entry, force_readme=force_readme
+    )
     prefix, suffix = render_prompt_parts(**kwargs)
     return prefix + suffix
 
@@ -498,6 +546,23 @@ def _strip_prior_coerced_warnings(warnings: list[dict[str, Any]]) -> list[dict[s
     return [w for w in (warnings or []) if (w or {}).get("kind") != "coerced_routing_negative_to_na"]
 
 
+def _rederive_fallback_warning(
+    warnings: list[dict[str, Any]], brief: ScenarioBrief
+) -> list[dict[str, Any]]:
+    """Replace any `scenario_readme_fallback` entry with one from the current loader.
+
+    A regrade keeps each run's original warnings, so a log regraded after its
+    scenario gained a judge brief would otherwise still say the judge read the
+    README. The regraded prompt is what the entry describes, so it is derived
+    from the brief the regrade actually rendered.
+    """
+    out = [w for w in (warnings or []) if (w or {}).get("kind") != "scenario_readme_fallback"]
+    if (fallback := readme_fallback_warning(brief)) is not None:
+        out.append(fallback)
+    validate_warning_kinds(out)
+    return out
+
+
 def _judge_was_skipped(run_entry: dict[str, Any]) -> bool:
     """True iff the live run never produced judge dimensions.
 
@@ -511,8 +576,21 @@ def _judge_was_skipped(run_entry: dict[str, Any]) -> bool:
     return bool((run_entry.get("judge") or {}).get("skipped"))
 
 
-def regrade_run_log(path: Path) -> RegradeResult:
-    """Live regrade one run log in place; return a summary of what moved."""
+def regrade_run_log(
+    path: Path,
+    *,
+    force_readme: bool = False,
+    scratch_root: Path | None = None,
+) -> RegradeResult:
+    """Live regrade one run log in place; return a summary of what moved.
+
+    With `scratch_root`, `path` must be a scratch copy under it: the committed
+    log is never the file a scratch regrade writes.
+    """
+    if scratch_root is not None and not _is_under(path, scratch_root):
+        raise ValueError(
+            f"scratch regrade refused to write {path}: not under {scratch_root}"
+        )
     result = RegradeResult(skill="", path=path)
     try:
         log = json.loads(path.read_text(encoding="utf-8"))
@@ -532,8 +610,11 @@ def regrade_run_log(path: Path) -> RegradeResult:
             continue
         rub = _load_rubric(result.skill)
         scenario = spec.scenario if hasattr(spec, "scenario") else None
-        scenario_readme = _load_scenario_readme(scenario)
+        brief = _load_scenario_brief(scenario, force_readme=force_readme)
+        scenario_readme = brief.text
         before_snapshot = _load_before_snapshot(scenario)
+        if brief.is_readme_fallback:
+            result.fallback_scenarios.add(brief.scenario or "")
 
         old_outcome = test_entry.get("outcome")
         new_outcomes: list[str] = []
@@ -555,7 +636,9 @@ def regrade_run_log(path: Path) -> RegradeResult:
             file_changes = output.get("file_changes") or []
             activated = bool(output.get("activated"))
             builtin_tool_calls = output.get("builtin_tool_calls") or []
-            warnings = _strip_prior_coerced_warnings(output.get("warnings") or [])
+            warnings = _rederive_fallback_warning(
+                _strip_prior_coerced_warnings(output.get("warnings") or []), brief
+            )
             harness_observations, state_observations = (
                 _split_observations_from_warnings(warnings, result.skill)
             )
@@ -651,7 +734,11 @@ def regrade_run_log(path: Path) -> RegradeResult:
     # strip) must surface here, not get persisted. The project convention is
     # tempfile + os.replace for every run-log write (`runlog._replace_with_retry`)
     # so a crash mid-write cannot corrupt the committed artifact.
-    validate_run_log(log)
+    # Not on a scratch copy: it is never committed, and a stale log written
+    # before a later schema field (which only scratch mode reaches) cannot
+    # validate against today's schema for reasons unrelated to the regrade.
+    if scratch_root is None:
+        validate_run_log(log)
     tmp = path.parent / (path.name + ".tmp")
     tmp.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
     _replace_with_retry(tmp, path)
@@ -661,21 +748,135 @@ def regrade_run_log(path: Path) -> RegradeResult:
 # ---- Dry-run (no model call) ----------------------------------------------
 
 
-def dry_run(target: RegradeTarget) -> dict[str, str]:
+def dry_run(
+    target: RegradeTarget,
+    *,
+    force_readme: bool = False,
+    fallbacks: set[str] | None = None,
+    skipped: list[str] | None = None,
+) -> dict[str, str]:
     """Render every test's judge prompt and return `{test_id: sha256}`.
 
-    Pure disk reads — zero model calls, zero cost. Used by `make harness-test`
-    to prove the renderer reads from disk (edit a rubric → every hash moves).
+    Pure disk reads, zero model calls, zero cost. Used by `make harness-test`
+    to prove the renderer reads from disk (edit a rubric and every hash moves).
+    Scenarios whose prompt fell back to a README are added to `fallbacks`.
     """
     out: dict[str, str] = {}
+    scenarios = _scenario_index(target.skill) if fallbacks is not None else {}
     for test_entry in target.log.get("tests") or []:
         for run_entry in test_entry.get("runs") or []:
-            text = render_judge_prompt_for_test(target.log, test_entry, run_entry)
+            try:
+                text = render_judge_prompt_for_test(
+                    target.log, test_entry, run_entry, force_readme=force_readme
+                )
+            except FileNotFoundError:
+                # Test file deleted since the log was written: the live regrade
+                # skips it too. Only a stale log, which scratch mode reaches,
+                # can name one; outside scratch mode it still raises.
+                if skipped is None:
+                    raise
+                skipped.append(test_entry.get("test_id") or "?")
+                break
             key = f"{test_entry['test_id']}/{run_entry.get('run_index', 0)}"
             out[key] = hash_rendered_prompt(text)
-            # First run only — a test's runs render the same prompt by design.
+            if fallbacks is not None:
+                brief = _load_scenario_brief(
+                    scenarios.get(test_entry["test_id"]), force_readme=force_readme
+                )
+                if brief.is_readme_fallback:
+                    fallbacks.add(brief.scenario or "")
+            # First run only: a test's runs render the same prompt by design.
             break
     return out
+
+
+# ---- Scratch mode ---------------------------------------------------------
+#
+# An A/B on a judge input (issue #2478: README against judge brief) needs the
+# same committed runs graded twice under different inputs, with neither pass
+# touching the committed log and no pass regrading another's output.
+
+
+def _is_under(path: Path, root: Path) -> bool:
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+class ScratchDirNotEmpty(Exception):
+    pass
+
+
+def _scenario_index(skill: str) -> dict[str, str | None]:
+    """`{test_id: scenario}` for every test in the skill dir, each file loaded once.
+
+    `_load_test_spec` schema-validates every file in the dir per lookup, so
+    calling it per test is quadratic; the scratch filter and the fallback count
+    need only the scenario, so they read it from one pass.
+    """
+    out: dict[str, str | None] = {}
+    for p in (TESTS_UNIT / skill).glob("*.json"):
+        try:
+            spec = loader.load_test(p)
+        except InvalidTestError:
+            continue
+        out[spec.id] = spec.scenario
+    return out
+
+
+def filter_to_scenarios(
+    target: RegradeTarget, only_scenarios: set[str] | None
+) -> RegradeTarget | None:
+    """A deep copy of `target` keeping only tests on `only_scenarios` (all when
+    None); None when no test survives. Never writes."""
+    log = copy.deepcopy(target.log)
+    if only_scenarios is not None:
+        scenarios = _scenario_index(target.skill)
+        log["tests"] = [
+            t for t in log.get("tests") or []
+            if scenarios.get(t.get("test_id") or "") in only_scenarios
+        ]
+    if not log.get("tests"):
+        return None
+    return RegradeTarget(skill=target.skill, path=target.path, log=log)
+
+
+def copy_to_scratch(
+    target: RegradeTarget,
+    scratch_root: Path,
+    *,
+    only_scenarios: set[str] | None = None,
+) -> RegradeTarget | None:
+    """Copy one committed log under `scratch_root/<skill>/`, keeping only the
+    tests on `only_scenarios` when given. Returns the scratch target, or None
+    when no test survives the filter.
+
+    Always copies fresh from the committed log, and refuses a `<skill>/` dir
+    that already holds a log, so a pass can never regrade another pass's output.
+    """
+    dest_dir = scratch_root / target.skill
+    if dest_dir.is_dir() and any(dest_dir.glob("*.json")):
+        raise ScratchDirNotEmpty(
+            f"{dest_dir} already holds a run log; use a fresh --runlogs-root per pass"
+        )
+    filtered = filter_to_scenarios(target, only_scenarios)
+    if filtered is None:
+        return None
+    log = filtered.log
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / target.path.name
+    dest.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
+    return RegradeTarget(skill=target.skill, path=dest, log=log)
+
+
+def _print_fallback_summary(fallbacks: set[str]) -> None:
+    if fallbacks:
+        print(
+            f"  {len(fallbacks)} scenario(s) graded against a README, not a "
+            f"judge brief: {', '.join(sorted(fallbacks))}"
+        )
 
 
 # ---- CLI ------------------------------------------------------------------
@@ -696,7 +897,42 @@ def main(argv: list[str] | None = None) -> int:
         help="Render + hash every judge prompt; no model call. Used by make harness-test.",
     )
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument(
+        "--runlogs-root",
+        type=Path,
+        help=(
+            "Scratch mode: regrade COPIES of the latest committed logs under this "
+            "dir, waiving the stale-snapshot refusal and the current-hash skip. "
+            "Never writes a committed log. One fresh dir per pass."
+        ),
+    )
+    parser.add_argument(
+        "--scenario",
+        action="append",
+        help="Scratch mode only: keep only tests on this scenario (repeatable).",
+    )
+    parser.add_argument(
+        "--slot",
+        choices=("brief", "readme"),
+        default="brief",
+        help="Scratch mode only: 'readme' forces each scenario's README into the judge slot.",
+    )
     args = parser.parse_args(argv)
+    scratch_root: Path | None = args.runlogs_root
+    if scratch_root is None and (args.scenario or args.slot != "brief"):
+        parser.error("--scenario and --slot readme require --runlogs-root")
+    force_readme = args.slot == "readme"
+    only_scenarios = set(args.scenario) if args.scenario else None
+
+    if scratch_root is not None:
+        return _main_scratch(
+            scratch_root,
+            only_skill=args.skill,
+            only_scenarios=only_scenarios,
+            force_readme=force_readme,
+            dry=args.dry_run,
+            verbose=args.verbose,
+        )
 
     targets = collect_regradeable_logs(only_skill=args.skill)
     if not targets:
@@ -717,15 +953,18 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  REFUSED {t.skill}: {t.reason_refused}  ({t.path.name})", file=sys.stderr)
 
     if args.dry_run:
+        fallbacks: set[str] = set()
         for t in eligible:
-            hashes = dry_run(t)
+            hashes = dry_run(t, fallbacks=fallbacks)
             print(f"  {t.skill}: {len(hashes)} prompt(s) rendered, hashes computed")
             if args.verbose:
                 for k, h in sorted(hashes.items()):
                     print(f"    {k} -> {h[:12]}")
+        _print_fallback_summary(fallbacks)
         return 0
 
     exit_code = 0
+    fallbacks = set()
     for t in eligible:
         result = regrade_run_log(t.path)
         if result.error:
@@ -735,8 +974,97 @@ def main(argv: list[str] | None = None) -> int:
         moved = [f"{tid} ({old}->{new})" for tid, old, new in result.tests_outcome_moved]
         suffix = f"; outcomes moved: {', '.join(moved)}" if moved else ""
         print(f"  {t.skill}: {result.runs_regraded} run(s) regraded{suffix}")
+        fallbacks |= result.fallback_scenarios
+    _print_fallback_summary(fallbacks)
     return exit_code
 
+
+def _main_scratch(
+    scratch_root: Path,
+    *,
+    only_skill: str | None,
+    only_scenarios: set[str] | None,
+    force_readme: bool,
+    dry: bool,
+    verbose: bool,
+) -> int:
+    if not scratch_root.is_absolute():
+        print(
+            f"--runlogs-root must be an absolute path (got {scratch_root}); the "
+            "make recipe runs from eval/harness, so a relative path lands there.",
+            file=sys.stderr,
+        )
+        return 2
+    unknown = sorted(s for s in (only_scenarios or set()) if not (SCENARIOS / s).is_dir())
+    if unknown:
+        print(f"--scenario names no scenario directory: {', '.join(unknown)}", file=sys.stderr)
+        return 2
+    targets = collect_regradeable_logs(UNIT_RUNLOGS, only_skill=only_skill, scratch=True)
+    if not dry:
+        # Refuse a reused pass dir before the first paid judge call, not midway.
+        occupied = [
+            str(scratch_root / t.skill) for t in targets
+            if (scratch_root / t.skill).is_dir() and any((scratch_root / t.skill).glob("*.json"))
+        ]
+        if occupied:
+            print(
+                f"scratch dir already holds run logs: {', '.join(occupied)}; "
+                "use a fresh --runlogs-root per pass",
+                file=sys.stderr,
+            )
+            return 1
+    fallbacks: set[str] = set()
+    rendered = 0
+    regraded = 0
+    exit_code = 0
+    for t in targets:
+        if dry:
+            filtered = filter_to_scenarios(t, only_scenarios)
+            if filtered is None:
+                continue
+            gone: list[str] = []
+            hashes = dry_run(
+                filtered, force_readme=force_readme, fallbacks=fallbacks, skipped=gone
+            )
+            rendered += len(hashes)
+            note = f"; skipped {len(gone)} deleted test(s): {', '.join(gone)}" if gone else ""
+            print(f"  {t.skill}: {len(hashes)} prompt(s) rendered, hashes computed{note}")
+            if verbose:
+                for k, h in sorted(hashes.items()):
+                    print(f"    {k} -> {h[:12]}")
+            continue
+        copy = copy_to_scratch(t, scratch_root, only_scenarios=only_scenarios)
+        if copy is None:
+            continue
+        try:
+            result = regrade_run_log(
+                copy.path, force_readme=force_readme, scratch_root=scratch_root
+            )
+        except Exception:
+            copy.path.unlink(missing_ok=True)
+            raise
+        if result.error:
+            # The copy still holds the committed scores; leaving it would let a
+            # comparison read them as this pass's result.
+            copy.path.unlink(missing_ok=True)
+            print(f"  ERROR {t.skill}: {result.error} (scratch copy removed)", file=sys.stderr)
+            exit_code = 1
+            continue
+        regraded += result.runs_regraded
+        print(
+            f"  {t.skill}: {result.runs_regraded} run(s) regraded into "
+            f"{copy.path}"
+        )
+        fallbacks |= result.fallback_scenarios
+    if dry:
+        print(f"  {rendered} prompt(s) rendered in total")
+    else:
+        print(f"  {regraded} run(s) regraded in total")
+    _print_fallback_summary(fallbacks)
+    if (rendered if dry else regraded) == 0:
+        print("Nothing was rendered or regraded: no test matched.", file=sys.stderr)
+        return 1
+    return exit_code
 
 if __name__ == "__main__":
     sys.exit(main())
