@@ -4,7 +4,7 @@
     "skill": "extraction-append",
     "name": "Extract assertions from a multi-person 1850 census household",
     "type": "positive",
-    "description": "Converted from ut_record_extraction_003: the record the user pasted is now served as a record_read fixture (the 1850 census household of Patrick Flynn, Schuylkill County, dwelling 214), and extraction runs in code. Tests extraction from a multi-person 1850 U.S. census household provided in context (as search-records hands a found record to record-extraction). The 1850 census lists each person in a dwelling but states no relationships, so no relationship assertions may be written at all — the household links are left to downstream correlation (decided 2026-08-15, #1626).",
+    "description": "Converted from ut_record_extraction_003: the record the user pasted is now served as a record_read fixture (the 1850 census household of Patrick Flynn, Schuylkill County, dwelling 214), and extraction runs in code. Tests extraction from a multi-person 1850 U.S. census household provided in context (as search-records hands a found record to extraction). The 1850 census lists each person in a dwelling but states no relationships, so no relationship assertions may be written at all — the household links are left to downstream correlation (decided 2026-08-15, #1626).",
     "tags": [
       "extraction",
       "1850-census",

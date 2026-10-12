@@ -6,7 +6,7 @@
     "type": "positive",
     "description": "Converted from ut_record_extraction_032; extraction runs in code. Three records are handed over in one message. SKILL.md's per-record section requires the count stated once up front, then each record named with its position before its turn ('2 of 3: 1885 marriage'). A document costs roughly 136 seconds and most of that is silent, so the announcements are the only thing standing between a working run and a tester reading it as a hang. No test in the corpus exercised a multi-record batch at all, so the reporting validator report_a_multi_record_batch_announces_each_record_position could never fire — it needs a run with more than one record in it to have anything to check.",
     "tags": [
-      "record-extraction",
+      "record-structurer",
       "multi-record",
       "announcement",
       "batch",
