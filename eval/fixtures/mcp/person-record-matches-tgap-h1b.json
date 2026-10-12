@@ -1,0 +1,27 @@
+{
+  "tool": "person_record_matches",
+  "description": "CONSTRUCTED for the tree-survey ranking test -- one pending hint on TGAP-H1B. Its record type (United States Census, 1900) does NOT fit the hole on this person.",
+  "args": {
+    "id": "TGAP-H1B"
+  },
+  "response": {
+    "queryArk": "ark:/61903/4:1:TGAP-H1B",
+    "resultCount": 1,
+    "returned": 1,
+    "title": "Matches for ark:/61903/4:1:TGAP-H1B",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": [
+      {
+        "ark": "https://familysearch.org/ark:/61903/1:1:MHNT",
+        "pid": "MHNT",
+        "arkType": "1:1:",
+        "confidence": 4,
+        "score": 0.9,
+        "title": "United States Census, 1900",
+        "status": "pending",
+        "collection": "https://familysearch.org/platform/collections/records",
+        "published": "2024-03-15T12:00:00.000Z"
+      }
+    ]
+  }
+}
