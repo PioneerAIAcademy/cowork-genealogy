@@ -12,8 +12,8 @@ This file maps the two onto each other so you can see a whole run at once; where
 disagrees with either, they win.
 
 There are 7 skills and 27 agents. Besides the `research` orchestrator itself, its routing
-table names 13 of them, and 5 more are reached by delegation from a skill the table does
-name. The remaining 7 fire only when the user asks — see
+table names 14 of them, and 5 more are reached by delegation from a skill the table does
+name. The remaining 6 fire only when the user asks — see
 [Reachable only by asking](#reachable-only-by-asking), which is the part of this doc most
 likely to surprise you.
 
