@@ -499,7 +499,7 @@ What's shipped:
   summary of where the research stands), `locality-guide` (the records survey for one
   place and period), `historical-context` (narrative historical context for
   interpreting records — boundary changes, naming conventions, migration),
-  `image-reader` (page OCR), `project-status` (a read-only report of where the research stands) `survey-surname` (surname
+  `image-reader` (page OCR), `project-status` (a read-only report of where the research stands), `survey-surname` (surname
   household tabulation across censuses) and `tree-survey` (a tree-wide survey
   of holes, before any project exists).
 - **Researcher profile.** `init-project` asks only the research objective, in
