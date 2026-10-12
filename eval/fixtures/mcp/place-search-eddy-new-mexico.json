@@ -1,0 +1,47 @@
+{
+  "tool": "place_search",
+  "description": "Eddy County, New Mexico (where Jimmie Jewel Neal died, 1938). Captured live 2026-10-07 for ut_research_plan_wzk (issue #2251): a 2026-10-07 run called place_search('Eddy County, New Mexico') with no fixture and the judge scored Tool Arguments 2 for it. Response verbatim.",
+  "args": {
+    "placeName": "~Eddy"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Eddy, New Mexico, United States",
+        "type": "County",
+        "dateRange": "+1891/",
+        "latitude": 32.4675,
+        "longitude": -104.303,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Eddy&focusedId=395973",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Eddy_County,_New_Mexico"
+      },
+      {
+        "standardPlace": "Eddy, Eddy, New Mexico, United States",
+        "type": "City",
+        "dateRange": "+1888/+1899",
+        "latitude": 32.4206,
+        "longitude": -104.2283,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Eddy&focusedId=13636325",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Carlsbad,_New_Mexico"
+      },
+      {
+        "standardPlace": "Carlsbad, Eddy, New Mexico, United States",
+        "type": "City",
+        "dateRange": "+1899/",
+        "latitude": 32.4206,
+        "longitude": -104.2283,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Carlsbad&focusedId=4581190",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Carlsbad,_New_Mexico"
+      },
+      {
+        "standardPlace": "Lincoln, New Mexico, United States",
+        "type": "County",
+        "dateRange": "+1869/",
+        "latitude": 33.74,
+        "longitude": -105.454,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Lincoln&focusedId=395929",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Lincoln_County,_New_Mexico"
+      }
+    ]
+  }
+}

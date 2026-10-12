@@ -188,7 +188,8 @@ def _opts(tmp_path, worker_env, **kw):
     return options.build_worker_options(
         project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
         store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
-        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", **kw,
+        posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", turn_id="turn-1",
+        claim_epoch=1, **kw,
     )
 
 

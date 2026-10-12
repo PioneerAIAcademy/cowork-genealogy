@@ -143,6 +143,15 @@ is the failure. Deterministic, via the `attached-first` tag and
 `test_reads_attachments_before_searching`, which reads the MCP call log and the
 hand-off list so a turn that only narrates having checked cannot pass.
 
+`ut_research_c1k` (`compound-bounded-ask.json`) pins the COMPOUND direction: a
+message asking for two deliverables that are each on the list is still bounded.
+It grades with `delivers:<skill>` tags rather than `routes-to:`, and the reason is
+worth knowing before copying either. `routes-to:` asserts only the FIRST hand-off,
+so on a compound ask it passes a turn that delivers one and silently drops the
+other — which is precisely the pre-change behaviour. A blind review proved that by
+executing the validator against four synthetic run shapes. `delivers:` requires a
+hand-off for every tag, in any order, because the skill body imposes no ordering.
+
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock
 registers a tool outside that set *only* for a test that declares a fixture for it

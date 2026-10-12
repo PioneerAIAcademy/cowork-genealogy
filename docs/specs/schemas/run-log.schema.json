@@ -84,6 +84,10 @@
       },
       "description": "Which tests this run log's annotation must cover. Absent on every run log written before sampling shipped, and on partial/scratch writes; readers treat absence as 'every dimension of every test'. Written once by the final build_run_log on a releasable run — the targeted and mandatory slots need post-run scores across the whole suite, which do not exist mid-run. See eval/harness/harness/review_sample.py."
     },
+    "tool_search": {
+      "type": "boolean",
+      "description": "Whether the run deferred tool schemas (ENABLE_TOOL_SEARCH): true by default, false under run_tests.py --no-tool-search, which loads every schema up front and makes the run a non-releasable scratch log. Optional: absent on run logs written before the field existed, all of which ran with it on."
+    },
     "tests": {
       "type": "array",
       "items": { "$ref": "#/$defs/test_entry" }

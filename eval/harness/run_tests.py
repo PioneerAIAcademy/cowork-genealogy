@@ -204,6 +204,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "API spend.",
     )
     parser.add_argument(
+        "--tool-search",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Deferred tool loading (ENABLE_TOOL_SEARCH). ON by default, as "
+        "the committed corpus runs. --no-tool-search loads every tool schema "
+        "up front — experiment-only: the invocation is non-releasable (writes "
+        "scratch_<ts>.json) and the run log records `tool_search: false`.",
+    )
+    parser.add_argument(
         "--allow-missing-judge",
         action="store_true",
         help="Run even without ANTHROPIC_API_KEY. Positive tests will all "
@@ -829,6 +838,7 @@ def main(argv: list[str] | None = None) -> int:
         mode=mode,
         has_tag_filter=has_tag_filter,
         runs_per_test=resolved_runs_per_test,
+        tool_search=args.tool_search,
     )
     invocation_timestamp = now_utc_filename_timestamp()
     print(
@@ -836,6 +846,8 @@ def main(argv: list[str] | None = None) -> int:
         f"runs_per_test={resolved_runs_per_test}, "
         f"timestamp={invocation_timestamp}"
     )
+    if not args.tool_search:
+        print("tool search: OFF (scratch log)")
     print(f"Running {len(specs)} test(s)...")
     print()
 
@@ -963,6 +975,7 @@ def main(argv: list[str] | None = None) -> int:
                     judge_prompt_hash=judge_hash,
                     snapshot=_snapshot_for(skill),
                     tests=entries,
+                    tool_search=args.tool_search,
                 )
                 partial_paths[skill] = write_partial_runlog(
                     log,
@@ -1041,6 +1054,7 @@ def main(argv: list[str] | None = None) -> int:
                     auth=auth,
                     paths=paths,
                     timestamp=invocation_timestamp,
+                    tool_search=args.tool_search,
                 )
                 inflight[fut] = (idx, spec)
 
@@ -1344,6 +1358,7 @@ def main(argv: list[str] | None = None) -> int:
             snapshot=_snapshot_for(skill),
             tests=entries,
             review_sample=sample,
+            tool_search=args.tool_search,
         )
         path = write_run_log(
             log,

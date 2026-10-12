@@ -7,8 +7,9 @@ highest number is always the latest. Only the newest five are kept; the folder
 is gitignored.
 
 It compares what the run cost and how it spent it — cost, wall clock, turns,
-tool calls, the main researcher's busiest moment and squeezes, and each helper
-type's launches, cost, time and busiest moment. **The judge's verdict and
+tool calls, the main researcher's busiest moment and squeezes, ToolSearch calls
+split main/helpers, the first main call's context (the eager prefix), cache
+reads and writes, and each helper type's launches, cost, time and busiest moment. **The judge's verdict and
 recall appear only when both runs are graded**: a genealogist grades each run
 blind (spec §7.4), and a comparison file in the fixture folder would otherwise
 hand them the grade.
@@ -40,7 +41,7 @@ COMPARISON_DIRNAME = "comparison"
 _SETTINGS = (
     "agent_model", "subagent_model_override", "effort_level", "max_output_tokens",
     "caps", "betas", "deny_project_reads", "deny_shell", "person_evidence_guard",
-    "resume_on_stall", "cli_version",
+    "resume_on_stall", "cli_version", "tool_search", "tool_search_offered",
 )
 _NUMBERED = re.compile(r"^(\d+)_comparison\.txt$")
 
@@ -72,6 +73,22 @@ def _fmt(value: Any, kind: str) -> str:
 
 def _row(label: str, before: Any, after: Any, kind: str = "n", pct: bool = True) -> str:
     return f"  {label:<24} {_fmt(before, kind):>12} -> {_fmt(after, kind):<12} {_pct(before, after) if pct else '':>6}"
+
+
+def _dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _first_main_context(message_usage: Any) -> int | None:
+    """input + cache_read + cache_creation of the first `"main"` row — what the
+    main researcher's first call carried, i.e. the eager prefix."""
+    if not isinstance(message_usage, list):
+        return None
+    for row in message_usage:
+        if isinstance(row, list) and len(row) >= 4 and row[0] == "main":
+            parts = row[1:4]
+            return sum(parts) if all(_is_num(x) for x in parts) else None
+    return None
 
 
 def _facts(log: dict[str, Any], path: Path) -> dict[str, Any]:
@@ -108,6 +125,22 @@ def _facts(log: dict[str, Any], path: Path) -> dict[str, Any]:
             else None
         ),
         "helper_time": helper_time if seconds else None,
+        # tool_calls[] is all-thread; a helper's call carries its agent_id.
+        "tool_search_main": (
+            sum(1 for c in log["tool_calls"] if isinstance(c, dict)
+                and c.get("tool") == "ToolSearch" and not c.get("agent_id"))
+            if isinstance(log.get("tool_calls"), list) else None
+        ),
+        "tool_search_helpers": (
+            sum(1 for c in log["tool_calls"] if isinstance(c, dict)
+                and c.get("tool") == "ToolSearch" and c.get("agent_id"))
+            if isinstance(log.get("tool_calls"), list) else None
+        ),
+        "first_main_context": _first_main_context(usage.get("message_usage")),
+        "main_cache_read": _dict(usage.get("usage")).get("cache_read_input_tokens"),
+        "main_cache_write": _dict(usage.get("usage")).get("cache_creation_input_tokens"),
+        "run_cache_read": _dict(usage.get("whole_run_usage")).get("cache_read_input_tokens"),
+        "run_cache_write": _dict(usage.get("whole_run_usage")).get("cache_creation_input_tokens"),
         "per_agent": per_agent,
         "graded": (path.parent / f"{path.stem}.ann.json").exists(),
     }
@@ -170,6 +203,13 @@ def compare(before: dict[str, Any], b_path: Path, after: dict[str, Any], a_path:
     out.append(_row("helper launches", fb["launches"], fa["launches"]))
     out.append(_row("helper cost", fb["helper_cost"], fa["helper_cost"], "$"))
     out.append(_row("helper time (summed)", fb["helper_time"], fa["helper_time"], "min"))
+    out.append(_row("ToolSearch (main)", fb["tool_search_main"], fa["tool_search_main"]))
+    out.append(_row("ToolSearch (helpers)", fb["tool_search_helpers"], fa["tool_search_helpers"]))
+    out.append(_row("first main call context", fb["first_main_context"], fa["first_main_context"]))
+    out.append(_row("main cache read", fb["main_cache_read"], fa["main_cache_read"]))
+    out.append(_row("main cache write", fb["main_cache_write"], fa["main_cache_write"]))
+    out.append(_row("whole-run cache read", fb["run_cache_read"], fa["run_cache_read"]))
+    out.append(_row("whole-run cache write", fb["run_cache_write"], fa["run_cache_write"]))
     out.append("")
 
     out.append("BY HELPER TYPE")

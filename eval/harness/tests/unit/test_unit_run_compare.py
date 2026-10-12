@@ -101,3 +101,31 @@ def test_a_test_with_a_different_run_count_is_not_compared():
     text = compare(before, "b", after, "a")
     assert "not compared, different run counts (1): ut_1" in text
     assert "-67%" not in text
+
+
+def test_a_tool_search_switch_is_named_and_not_called_wobble():
+    """Same snapshot, one run with tool search off: the cost move has a cause,
+    so the "nothing changed — wobble" line must not appear."""
+    before = _log("t1", [_test("ut_1", 0.10)])
+    after = dict(_log("t2", [_test("ut_1", 0.14)]), tool_search=False)
+    text = compare(before, "b", after, "a")
+    assert "run settings that differ: tool_search True -> False" in text
+    assert "wobble" not in text.split("SUMMARY")[0]
+    assert "changed between them: no file — only the run settings above" in text
+
+
+def test_an_older_log_without_the_field_reads_as_on():
+    """Every log before the field existed ran with tool search on, so an absent
+    key against an explicit True is not a difference."""
+    before = _log("t1", [_test("ut_1", 0.10)])
+    after = dict(_log("t2", [_test("ut_1", 0.10)]), tool_search=True)
+    text = compare(before, "b", after, "a")
+    assert "run settings that differ: none" in text
+    assert "changed between them: nothing" in text
+
+
+def test_a_model_change_is_a_differing_setting_too():
+    before = _log("t1", [])
+    after = dict(_log("t2", []), model="claude-haiku-4-5-20251001")
+    text = compare(before, "b", after, "a")
+    assert "model 'claude-sonnet-4-6' -> 'claude-haiku-4-5-20251001'" in text
