@@ -34,9 +34,9 @@
     "packages/engine/plugin/skills/forget-and-rederive/SKILL.md": 13218,
     "packages/engine/plugin/skills/init-project/SKILL.md": 28159,
     "packages/engine/plugin/skills/record-extraction/SKILL.md": 16029,
-    "packages/engine/plugin/skills/research-plan/SKILL.md": 36212,
-    "packages/engine/plugin/skills/research/SKILL.md": 37835,
-    "packages/engine/plugin/skills/search-records/SKILL.md": 64492,
+    "packages/engine/plugin/skills/research-plan/SKILL.md": 36194,
+    "packages/engine/plugin/skills/research/SKILL.md": 37899,
+    "packages/engine/plugin/skills/search-records/SKILL.md": 64355,
     "packages/engine/plugin/skills/timeline/SKILL.md": 21833
   },
   "tools": {
