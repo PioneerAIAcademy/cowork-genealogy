@@ -4,7 +4,7 @@
     "skill": "tree-survey",
     "name": "Ranks six holes by fitting signal, suggests at most five",
     "type": "positive",
-    "description": "tree_gaps returns six holes. Only TGAP-H3A (generation 3) has a pending hint whose record type fits its hole; TGAP-H1B (generation 1) has a pending hint that does not fit (a census for a missing spouse). The agent must rank the fitting hint first, suggest at most five people, and repeat no person.",
+    "description": "tree_gaps returns six holes. Only TGAP-H3A (generation 3) has a pending hint whose record type fits its hole; TGAP-H1A (generation 1) has a pending hint that does not fit (a birth record for a missing death date). The agent must rank the fitting hint first, suggest at most five people, and repeat no person.",
     "tags": [
       "survey",
       "many-holes",
@@ -17,7 +17,7 @@
   "mcp_fixtures": [
     "tree-gaps-many-holes",
     "person-record-matches-tgap-h3a",
-    "person-record-matches-tgap-h1b",
+    "person-record-matches-tgap-h1a",
     "collections-search-any",
     "place-search-any",
     "record-search-any",
@@ -31,8 +31,8 @@
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation is relayed verbatim. No project exists in this test, so the agent must not look for research.json, create a project, or call any writer tool (it holds none).",
-    "tree_gaps returns SIX holes, nearest the root first: TGAP-H1A (no death date), TGAP-H1B (no spouse), TGAP-H2A and TGAP-H3A (missing parents), TGAP-H4A (no birth info), TGAP-H5A (missing surname). Only TGAP-H3A has a pending hint whose record type fits (a birth and christening collection for a missing-parents hole); TGAP-H1B has a pending census hint, which does not fit a missing spouse. The other checks return empty results.",
-    "The first suggestion must be TGAP-H3A's person. A hint that does not fit its hole must not lift TGAP-H1B above it. At most five people are suggested and no person is suggested twice; a deterministic validator checks all three, so do not re-grade the order yourself. Grade the questions: each must be a single fact, name the person, and scope place and years.",
+    "tree_gaps returns SIX holes, nearest the root first: TGAP-H1A (no death date), TGAP-H1B (no spouse), TGAP-H2A and TGAP-H3A (missing parents), TGAP-H4A (no birth info), TGAP-H5A (missing surname). Only TGAP-H3A has a pending hint whose record type fits (a birth and christening collection for a missing-parents hole); TGAP-H1A has a pending birth hint, which cannot give a death date and so does not fit. The other checks return empty results.",
+    "The first suggestion must be TGAP-H3A's person. A hint that does not fit its hole must not lift TGAP-H1A above it. At most five people are suggested and no person is suggested twice; a deterministic validator checks all three, so do not re-grade the order yourself. Grade the questions: each must be a single fact, name the person, and scope place and years.",
     "The agent's return should end with the summary_for_user block: a `---` line followed by plain prose with no label, and no identifiers, file names, tool names or field names in it."
   ]
 }
