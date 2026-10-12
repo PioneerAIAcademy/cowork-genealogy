@@ -10,9 +10,11 @@
  * request while the call ran to 10s. Measured with a hanging `fetch` on
  * 2026-09-30: 10,001ms over 2 requests uncapped, 6,001ms over 1 capped.
  *
- * Asserted on the REQUEST COUNT rather than elapsed time: the count is the
- * mechanism and is deterministic, where a wall-clock assertion on a retrying
- * call is the flaky shape this repo keeps having to diagnose.
+ * Asserted on the REQUEST COUNT rather than elapsed time.
+ *
+ * `fetchWithRetry` stops rather than sleep into its deadline, and the first
+ * backoff (at least 200ms) is longer than a 40ms budget ever has left, so
+ * both capped cases make exactly 1 request.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
@@ -61,9 +63,10 @@ describe("image_search retry budget", () => {
       ),
     ).rejects.toThrow();
 
-    // Without the budget cap this is 3 — `fetchWithRetry` keeps retrying inside
-    // its own 10s budget, so the call outlives the timeout the caller asked for
-    // and the §8 arithmetic understates this leg.
+    // Uncapped this is 3: `fetchWithRetry` keeps retrying inside its own 10s
+    // budget, so the call outlives the timeout the caller asked for and the §8
+    // arithmetic understates this leg. Capped, the budget expires during the
+    // first backoff, so no retry fits.
     expect(requests).toBe(1);
   });
 
@@ -80,20 +83,29 @@ describe("image_search retry budget", () => {
       imageSearchTool({ imageGroupNumber: "004516861_001_M9S4-SQB" }, LOCAL),
     ).rejects.toThrow();
 
-    expect(requests).toBeGreaterThan(1);
+    // The full attempt set, every time: 3 immediate rejections fit inside the
+    // default 10s budget whatever the jitter does.
+    expect(requests).toBe(3);
   });
 
   it("a lowered timeout narrows the budget even when requests fail fast", async () => {
     // Same fast-rejection path as above, capped: the budget is the caller's, so
     // the retries the default caller gets are the ones this one gives up.
     mode = "reject";
-    await expect(
-      imageSearchTool(
-        { imageGroupNumber: "004516861_001_M9S4-SQB" },
-        LOCAL,
-        { timeoutMs: 40 },
-      ),
-    ).rejects.toThrow();
+    vi.useFakeTimers({ toFake: ["setTimeout", "Date"] });
+    try {
+      const call = expect(
+        imageSearchTool(
+          { imageGroupNumber: "004516861_001_M9S4-SQB" },
+          LOCAL,
+          { timeoutMs: 40 },
+        ),
+      ).rejects.toThrow();
+      await vi.runAllTimersAsync();
+      await call;
+    } finally {
+      vi.useRealTimers();
+    }
 
     expect(requests).toBe(1);
   });

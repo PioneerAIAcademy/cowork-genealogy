@@ -178,6 +178,47 @@ def test_an_unstaged_nil_entry_falls_back_to_surname_position():
         check(BEFORE, after, calls)
 
 
+def test_one_unlogged_nil_does_not_shift_the_pairs_after_it():
+    """ut_search_records_026, v5_2026-10-12_12-15-56: ten unstaged Flynn nils,
+    nine logged, the third never. Every entry echoes its own call; positional
+    pairing reported the four after the gap as claiming filters never sent."""
+    argsets = [
+        {"surname": "Flynn", "givenName": "Patrick", "residencePlace": "Schuylkill County, Pennsylvania", "collectionId": "1401638"},
+        {"surname": "Flynn", "givenName": "Patrick", "collectionId": "1401638"},
+        {"surname": "Flynn", "givenName": "Patrick", "residencePlace": "Pennsylvania", "collectionId": "1401638"},
+        {"surname": "Flynn", "givenName": "Patrick", "recordCountry": "United States", "recordType": "census"},
+        {"surname": "Flynn", "collectionId": "1401638"},
+        {"surname": "Flynn", "recordCountry": "United States"},
+    ]
+    calls = [search(a) for a in argsets]
+    logged = [a for i, a in enumerate(argsets) if i != 2]
+    after = state(*(entry(f"log_{i:03d}", dict(a)) for i, a in enumerate(logged, 1)))
+    check(BEFORE, after, calls)
+
+
+def test_an_exact_trace_still_leaves_a_false_claim_reported():
+    """Exact pairing claims each call once, so an entry that matches no call
+    still meets the call left over and its false claim is reported."""
+    calls = [search({"surname": "Flynn"}), search({"surname": "Flynn", "recordType": "marriage"})]
+    after = state(
+        entry("log_001", {"surname": "Flynn", "recordType": "marriage"}),
+        entry("log_002", {"surname": "Flynn", "givenName": "Mary"}),
+    )
+    with pytest.raises(AssertionError, match=r"log_002 \(position 0 among unstaged 'Flynn' calls\) claims givenName='Mary'"):
+        check(BEFORE, after, calls)
+
+
+def test_a_bare_entry_does_not_steal_the_narrow_call_from_its_own_entry():
+    """Narrow call first, logged broad-first: the bare {surname} entry also traces
+    to the narrow call, and must not take it from the entry naming recordType."""
+    calls = [search({"surname": "Flynn", "recordType": "marriage"}), search({"surname": "Flynn"})]
+    after = state(
+        entry("log_001", {"surname": "Flynn"}),
+        entry("log_002", {"surname": "Flynn", "recordType": "marriage"}),
+    )
+    check(BEFORE, after, calls)
+
+
 def test_more_entries_than_calls_sharing_a_surname_leaves_the_extra_alone():
     calls = [search({"surname": "Flynn"})]
     after = state(

@@ -1,0 +1,536 @@
+{
+  "persons": [
+    {
+      "id": "GYGJ-D1C",
+      "ark": "ark:/61903/4:1:GYGJ-D1C",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8a9520e6-82db-4266-83b9-84c002ea96fd",
+          "preferred": true,
+          "given": "Nicolas",
+          "surname": "Uhres",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f44ce99d-741a-4d86-9bea-8737f40a0991",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "73JX-DYN"
+        },
+        {
+          "ref": "73JX-Q16"
+        },
+        {
+          "ref": "73JX-Q88"
+        }
+      ]
+    },
+    {
+      "id": "L6QP-WLF",
+      "ark": "ark:/61903/4:1:L6QP-WLF",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Josephine",
+          "surname": "Uhres",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "23 july 1885",
+          "standard_date": "23 Jul 1885",
+          "place": "Keispelt, Capellen, Luxembourg, Luxembourg",
+          "standard_place": "Keispelt, Kehlen, Capellen, Luxembourg"
+        },
+        {
+          "id": "f1e514fe-d22c-45c0-ae4b-c14cb21b15a0",
+          "type": "Death",
+          "date": "18 December 1958",
+          "standard_date": "18 Dec 1958",
+          "place": "Owatonna, Steele, Minnesota, United States",
+          "standard_place": "Owatonna, Steele, Minnesota, United States"
+        },
+        {
+          "id": "7db59759-603c-4606-b1d4-3f2d43b8953f",
+          "type": "Burial",
+          "place": "Resurrection Cemetery, Medford, Steele, Minnesota, United States",
+          "standard_place": "Resurrection Cemetery, Medford, Steele, Minnesota, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7DTL-XCR"
+        },
+        {
+          "ref": "7327-R46"
+        },
+        {
+          "ref": "7327-5D1"
+        },
+        {
+          "ref": "73JX-69Y"
+        },
+        {
+          "ref": "QKK5-PJB"
+        },
+        {
+          "ref": "3WP7-58Q"
+        },
+        {
+          "ref": "SWCC-6SS"
+        },
+        {
+          "ref": "SWWD-CM8"
+        },
+        {
+          "ref": "SWWD-WT9"
+        },
+        {
+          "ref": "SWWD-7G6"
+        },
+        {
+          "ref": "SWWD-S7M"
+        }
+      ]
+    },
+    {
+      "id": "GYGJ-KNG",
+      "ark": "ark:/61903/4:1:GYGJ-KNG",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "4c659350-10a0-435d-bd41-d59bd0c9285a",
+          "preferred": true,
+          "given": "Marguerite",
+          "surname": "Birchen",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9be8e75c-2ad2-46ed-a086-11829f14c28e",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7WY2-Z5Q"
+        },
+        {
+          "ref": "7327-R7J"
+        },
+        {
+          "ref": "7327-5ZW"
+        },
+        {
+          "ref": "7327-PBL"
+        },
+        {
+          "ref": "73JX-DRX"
+        },
+        {
+          "ref": "73JX-799"
+        },
+        {
+          "ref": "73JX-QFH"
+        }
+      ]
+    },
+    {
+      "id": "GYGJ-231",
+      "ark": "ark:/61903/4:1:GYGJ-231",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "38e60166-3633-4b99-b54a-e5278b06a58f",
+          "preferred": true,
+          "given": "Johann",
+          "surname": "Uhres",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e74a69b5-f6a0-45a7-941c-b7866d111a22",
+          "type": "Birth",
+          "date": "5 December 1883",
+          "standard_date": "5 Dec 1883",
+          "place": "Keispelt, Kehlen, Capellen, Luxembourg",
+          "standard_place": "Keispelt, Kehlen, Capellen, Luxembourg"
+        },
+        {
+          "id": "31458c0a-a62e-4a91-a570-349f28b9a96d",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7ZN2-NV3"
+        },
+        {
+          "ref": "7ZN2-XRS"
+        },
+        {
+          "ref": "7ZN2-6H7"
+        },
+        {
+          "ref": "7ZN2-8CX"
+        },
+        {
+          "ref": "7WY2-8YM"
+        },
+        {
+          "ref": "73JX-77J"
+        },
+        {
+          "ref": "73JX-QYR"
+        },
+        {
+          "ref": "73JX-Q22"
+        },
+        {
+          "ref": "73JX-QMX"
+        },
+        {
+          "ref": "73JX-33N"
+        },
+        {
+          "ref": "73JX-SGW"
+        },
+        {
+          "ref": "73JX-SSX"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "GYGJ-D1C",
+      "person2": "GYGJ-KNG",
+      "sources": [
+        {
+          "ref": "73JX-Q67"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "GYGJ-D1C",
+      "child": "GYGJ-231",
+      "sources": [
+        {
+          "ref": "73JX-Q67"
+        },
+        {
+          "ref": "73JX-QCY"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "GYGJ-KNG",
+      "child": "GYGJ-231",
+      "sources": [
+        {
+          "ref": "73JX-Q67"
+        },
+        {
+          "ref": "73JX-QCY"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "GYGJ-D1C",
+      "child": "L6QP-WLF",
+      "sources": [
+        {
+          "ref": "73JX-D1V"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "GYGJ-KNG",
+      "child": "L6QP-WLF",
+      "sources": [
+        {
+          "ref": "73JX-D1V"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_GYGJ-D1C",
+      "title": "Nicolas Uhres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Nicolas Uhres (PID GYGJ-D1C); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GYGJ-D1C"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_L6QP-WLF",
+      "title": "Josephine Uhres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Josephine Uhres (PID L6QP-WLF); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L6QP-WLF"
+    },
+    {
+      "id": "sd_person_GYGJ-KNG",
+      "title": "Marguerite Birchen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Marguerite Birchen (PID GYGJ-KNG); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GYGJ-KNG"
+    },
+    {
+      "id": "sd_person_GYGJ-231",
+      "title": "Johann Uhres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Johann Uhres (PID GYGJ-231); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GYGJ-231"
+    },
+    {
+      "id": "73JX-Q16",
+      "title": "Nicolas Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LY5-7MX2 : Sat Jan 03 03:59:42 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LY5-7MXL"
+    },
+    {
+      "id": "73JX-Q88",
+      "title": "Nicolas Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GVC-3N44 : Sat Jan 03 09:05:57 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GVC-3N4H"
+    },
+    {
+      "id": "73JX-DYN",
+      "title": "Nicolas Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GLH-DDZW : Sat Jan 03 09:06:59 UTC 2026), Entry for François Hentges and Nicolas Hentges, 8 Apr 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GLH-DDZZ"
+    },
+    {
+      "id": "7DTL-XCR",
+      "title": "Josephine Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GLD-QVJD : Sat Jan 03 09:07:51 UTC 2026), Entry for Irena Marie Hentges and Franz Hentges, 7 Jun 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GLD-QVJX"
+    },
+    {
+      "id": "7327-R46",
+      "title": "Josephine Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LY5-4JZJ : Sat Jan 03 04:00:38 UTC 2026), Entry for Josephine Uhres and Nicolas Uhres, 25. Juli 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LY5-4JZJ"
+    },
+    {
+      "id": "7327-5D1",
+      "title": "Josephine Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LV3-1575 : Mon Mar 04 23:03:30 UTC 2024), Entry for François Hentges and Nicolas Hentges, 1 Apr 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LV3-157Y"
+    },
+    {
+      "id": "73JX-69Y",
+      "title": "Josephine Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GLH-DDZW : Sat Jan 03 09:06:59 UTC 2026), Entry for François Hentges and Nicolas Hentges, 8 Apr 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GLH-DDZC"
+    },
+    {
+      "id": "QKK5-PJB",
+      "title": "Josephine Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LV3-C57C : Sat Jan 03 10:22:32 UTC 2026), Entry for François Hentges and Nicolas Hentges, 1. April 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LV3-C57D"
+    },
+    {
+      "id": "3WP7-58Q",
+      "title": "Josephine Hentges, \"United States, World War II Draft Registration Cards, 1942\"",
+      "citation": "\"United States, World War II Draft Registration Cards, 1942\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKCC-QS5R : Tue Apr 29 06:16:08 UTC 2025), Entry for Frank Hentges and Josephine Hentges, 27 Apr 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKCC-QS5T"
+    },
+    {
+      "id": "SWCC-6SS",
+      "title": "Keispilt, Luxembourg",
+      "citation": "Grand-Duche de Luxembourg Records",
+      "url": "https://www.familysearch.org/photos/artifacts/78370820"
+    },
+    {
+      "id": "SWWD-CM8",
+      "title": "Josephine Hentges, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XQVF-YNX : Tue Jan 21 02:30:53 UTC 2025), Entry for Frank Hentges and Josephine Hentges, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XQVF-YNF"
+    },
+    {
+      "id": "SWWD-WT9",
+      "title": "Josephine, \"Minnesota, County Deaths, 1850-2001\"",
+      "citation": "\"Minnesota, County Deaths, 1850-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGYZ-MZ3B : Sun Mar 10 20:33:48 UTC 2024), Entry for Frank Hentges and Nick, 17 July 1967.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGYZ-MZQ9"
+    },
+    {
+      "id": "SWWD-7G6",
+      "title": "Josephine Hentges, \"Minnesota, Death Index, 1908-2002\"",
+      "citation": "\"Minnesota, Death Index, 1908-2002\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V476-R5J : Tue Feb 18 22:02:43 UTC 2025), Entry for Josephine Hentges and Birchen, 18 Dec 1958.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V476-R5J"
+    },
+    {
+      "id": "SWWD-S7M",
+      "title": "Josephine Hentges, \"Minnesota, County Deaths, 1850-2001\"",
+      "citation": "\"Minnesota, County Deaths, 1850-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPHH-DGQV : Thu Mar 07 16:42:11 UTC 2024), Entry for Josephine Hentges and Nick Uhres, 18 December 1958.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPHH-DGQV"
+    },
+    {
+      "id": "7WY2-Z5Q",
+      "title": "Marguerite Beichen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFL-D6RP : Sat Jan 03 10:30:41 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18. Mai 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PFL-D6RR"
+    },
+    {
+      "id": "7327-R7J",
+      "title": "Marguerithe Birchen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LY5-4JZJ : Sat Jan 03 04:00:38 UTC 2026), Entry for Josephine Uhres and Nicolas Uhres, 25. Juli 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LY5-4JZK"
+    },
+    {
+      "id": "7327-5ZW",
+      "title": "Marguerite Birchen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LV3-1575 : Mon Mar 04 23:03:30 UTC 2024), Entry for François Hentges and Nicolas Hentges, 1 Apr 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LV3-1571"
+    },
+    {
+      "id": "7327-PBL",
+      "title": "Marguerite Birchen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LV3-C57C : Sat Jan 03 10:22:32 UTC 2026), Entry for François Hentges and Nicolas Hentges, 1. April 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LV3-C57X"
+    },
+    {
+      "id": "73JX-DRX",
+      "title": "Marguerite Birchen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GLH-DDZW : Sat Jan 03 09:06:59 UTC 2026), Entry for François Hentges and Nicolas Hentges, 8 Apr 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GLH-DDZ8"
+    },
+    {
+      "id": "73JX-799",
+      "title": "Margaretha Birchen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LY5-7MX2 : Sat Jan 03 03:59:42 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LY5-7MXG"
+    },
+    {
+      "id": "73JX-QFH",
+      "title": "Marguerite Beichen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GVC-3N44 : Sat Jan 03 09:05:57 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GVC-3N4C"
+    },
+    {
+      "id": "7ZN2-NV3",
+      "title": "John Uhres, \"South Dakota, School Records, 1879-1970\"",
+      "citation": "\"South Dakota, School Records, 1879-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK7Q-9NM5 : Wed Jan 22 14:30:18 UTC 2025), Entry for Clementine Uhres and John Uhres, 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK76-37QQ"
+    },
+    {
+      "id": "7ZN2-XRS",
+      "title": "John Uhres, \"South Dakota, School Records, 1879-1970\"",
+      "citation": "\"South Dakota, School Records, 1879-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK7Q-9XSD : Sun Jul 07 08:41:47 UTC 2024), Entry for Clementine Uhres and John Uhres, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK76-337L"
+    },
+    {
+      "id": "7ZN2-6H7",
+      "title": "John Uhres, \"South Dakota, School Records, 1879-1970\"",
+      "citation": "\"South Dakota, School Records, 1879-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK7Q-9LB8 : Sun Jan 12 08:11:20 UTC 2025), Entry for Clementine Uhres and John Uhres, 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK76-389L"
+    },
+    {
+      "id": "7ZN2-8CX",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFL-67HM : Sat Jan 03 10:30:37 UTC 2026), Entry for Clementine Catharina and Johann Uhres, 14. Mai 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PFL-67H9"
+    },
+    {
+      "id": "7WY2-8YM",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6PFL-D6RP : Sat Jan 03 10:30:41 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18. Mai 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6PFL-D6RP"
+    },
+    {
+      "id": "73JX-77J",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GV4-4B11 : Sat Jan 03 09:07:19 UTC 2026), Entry for Joséphine Uhres and Johann Uhres, 14 Jul 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GV4-ZNMM"
+    },
+    {
+      "id": "73JX-QYR",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6LY5-7MX2 : Sat Jan 03 03:59:42 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 1883.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6LY5-7MX2"
+    },
+    {
+      "id": "73JX-Q22",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GVC-QVVK : Sat Jan 03 09:06:26 UTC 2026), Entry for Margaretha Uhres and Johann Uhres, 21 Mar 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GVC-QVV2"
+    },
+    {
+      "id": "73JX-QMX",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GVC-3N44 : Sat Jan 03 09:05:57 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GVC-3N44"
+    },
+    {
+      "id": "73JX-33N",
+      "title": "Johann Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GV4-ZNKS : Sat Jan 03 09:06:53 UTC 2026), Entry for Clementine Catharina Uhres and Johann Uhres, 14 May 1916.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GV4-ZNK3"
+    },
+    {
+      "id": "73JX-SGW",
+      "title": "John Uhres, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5MP-7JKJ : Sat Jul 25 21:20:59 UTC 2026), Entry for Clementine Kathryn Kilian Uhres and Rev Charles Mangan, 24 Apr 1998.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q5MP-7JKK"
+    },
+    {
+      "id": "73JX-SSX",
+      "title": "John Uhres, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KWH-TDDF : Mon Jul 06 19:16:05 UTC 2026), Entry for Clementine Kathyrn Kilian and John Uhres.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KWH-TDDK"
+    },
+    {
+      "id": "73JX-Q67",
+      "title": "Marguerite Beichen, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GVC-3N44 : Sat Jan 03 09:05:57 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GVC-3N4C"
+    },
+    {
+      "id": "73JX-QCY",
+      "title": "Nicolas Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GVC-3N44 : Sat Jan 03 09:05:57 UTC 2026), Entry for Johann Uhres and Nicolas Uhres, 18 May 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GVC-3N4H"
+    },
+    {
+      "id": "73JX-D1V",
+      "title": "Josephine Uhres, \"Luxembourg, Church and Civil Registration, 1601-1923\"",
+      "citation": "\"Luxembourg, Church and Civil Registration, 1601-1923\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6GLH-DDZW : Sat Jan 03 09:06:59 UTC 2026), Entry for François Hentges and Nicolas Hentges, 8 Apr 1912.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6GLH-DDZC"
+    }
+  ]
+}

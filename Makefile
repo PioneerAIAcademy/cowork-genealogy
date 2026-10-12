@@ -1608,9 +1608,10 @@ eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim):
 # `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
 # exporting the stale lock.
 .PHONY: proto-requirements
-proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+proto-requirements: ## Export uv.lock's proto-web/proto-worker/sandbox groups to apps/server/{proto/web,proto/worker,sandbox}/requirements.txt (hashes; commit all three after any uv.lock change)
 	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
 	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group sandbox --no-emit-project --format requirements-txt -o sandbox/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for
@@ -1679,3 +1680,9 @@ DEPLOY_URL := https://genealogy-workbench.fly.dev
 .PHONY: deploy-status
 deploy-status: ## Health-check the deployed control plane (expect "db":"postgres")
 	curl -s $(DEPLOY_URL)/api/health | jq
+
+# Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
+# here. Reads turn_costs (apps/server/app/cost_report.py).
+.PHONY: alpha-costs
+alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

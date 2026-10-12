@@ -1,0 +1,19 @@
+{
+  "id": "hugh-mclachlan-marriage",
+  "name": "Hugh Mclachlan — marriage in 1845, Kilninian, Argyll, Scotland",
+  "genre": "record-hint",
+  "source_pid": "KCWN-N2T",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Hugh Mclachlan marry Catharine Muir, the parents of Neil (born 1850) and James (born 1852), both christened in Campbeltown, Argyll?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1840s",
+    "geography": "GB-SCT"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 23, hint-samples.csv row 792, flag adds_marriage, confidence 3). Draft transcribed from an 1845 Kilninian, Argyll parish marriage index entry; unverified."
+}

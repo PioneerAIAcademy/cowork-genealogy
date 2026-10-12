@@ -63,7 +63,7 @@ command checks for you and stops.
 Already done? Skip ahead.
 
 - Cowork installed with the genealogy plugin + MCP server. See the
-  "Installation" section of `README.md`.
+  "Install" section of `README.md`.
 - Claude Code installed and signed in.
 - FamilySearch tokens in `~/.familysearch-mcp/tokens.json`. If you've used the
   plugin from Cowork this exists already; otherwise run the `login` tool once.

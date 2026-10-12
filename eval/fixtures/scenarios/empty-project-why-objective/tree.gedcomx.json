@@ -1,0 +1,18 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Patrick",
+          "surname": "Flynn"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}
