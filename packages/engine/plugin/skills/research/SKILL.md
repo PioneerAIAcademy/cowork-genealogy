@@ -16,6 +16,7 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
+  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -136,6 +137,10 @@ Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
 not save: the record and the person it was for, not "an extraction did not
 finish". Then offer to take it further, and end. The offer is not
 something you wait for — their answer arrives as the next message.
+
+End it by calling `research_delivered` with a one-sentence summary of what you
+delivered. Call it last, after everything you want the researcher to read: the
+turn stops there.
 
 ## What to do
 

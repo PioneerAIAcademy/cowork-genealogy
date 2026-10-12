@@ -479,3 +479,44 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
         f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
         "path, which a bounded request must not enter."
     )
+
+
+_ENDS_WITH_DELIVERY_TAG = "ends-with-delivery"
+_DELIVERED_TOOL = "research_delivered"
+
+
+def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
+    """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
+
+    The skill body telling the model to "end your turn" is not what ends it. On the
+    hosted plane an SDK Stop hook VETOES a voluntary stop while the project objective
+    is incomplete and nudges the agent onward; the only arm that lets a bounded turn
+    stop is `delivered`, set when the model calls `research_delivered`
+    (`apps/server/app/agent/real_agent.py`, `should_continue_run`). A bounded turn that
+    ends without the call is answered and then nudged back into more research -- the
+    alpha report behind this test.
+
+    Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
+    and is the `--autonomous` carve-out, where the router must run the job and must NOT
+    deliver. One tag for "is bounded", another for "must end with the signal".
+
+    Nothing asserted this before, and the tool was advertised nowhere in this harness,
+    so every unit run graded the skill on prose it had no way to act on.
+    """
+    tags = test.get("tags") or []
+    if _ENDS_WITH_DELIVERY_TAG not in tags:
+        pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
+
+    called = [c for c in tool_calls if str(c.get("tool", "")).endswith(_DELIVERED_TOOL)]
+    assert called, (
+        f"a bounded turn must end by calling `{_DELIVERED_TOOL}`; it never did. "
+        f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls})}. "
+        "Without it the hosted Stop hook vetoes the stop and nudges the agent on into "
+        "more research, which is what the researcher reports as 'it would not stop'."
+    )
+    summary = (called[-1].get("args") or {}).get("summary")
+    assert isinstance(summary, str) and summary.strip(), (
+        f"`{_DELIVERED_TOOL}` needs a one-sentence summary naming what was delivered; "
+        f"got {summary!r}. The hosted plane puts it in front of the stop reason, so an "
+        "empty one is what the researcher reads."
+    )

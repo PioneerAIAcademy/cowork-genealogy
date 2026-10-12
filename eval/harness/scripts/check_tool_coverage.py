@@ -31,6 +31,8 @@ Run by .github/workflows/check-runlogs.yml. Self-contained: stdlib only
 
 from __future__ import annotations
 
+import ast
+
 import json
 import sys
 from pathlib import Path
@@ -198,11 +200,51 @@ def fixture_tool_refs(skill: str) -> dict[str, list[str]]:
     return refs
 
 
+#: Every LIVE_TOOL is exempt by construction: the mock registers it
+#: unconditionally and its handler calls the real compiled implementation, so
+#: there is no fixture to write and never will be. Six of them were hand-copied
+#: into EXEMPT_TOOLS above while LIVE_TOOLS held eighteen, so `research_query`
+#: was exempt and `validate_research_schema` -- equally live -- was warned about
+#: for as long as both have existed. Derived rather than copied a seventh time.
+#:
+#: Parsed with `ast`, not imported: this script is stdlib-only because the
+#: workflow installs no dependencies, and importing `harness.mock_mcp` would
+#: pull in its own. Parsed rather than grepped for the reason the encoding lint
+#: is: a grep over a multi-line set literal is wrong in both directions.
+def live_tools() -> set[str]:
+    """`LIVE_TOOLS` as mock_mcp.py declares it, or an empty set if unreadable.
+
+    Empty on failure is deliberate: this is a warn-only lint, and a parse error
+    should surface the underlying gaps rather than silently exempt everything.
+    """
+    source = REPO_ROOT / "eval/harness/harness/mock_mcp.py"
+    try:
+        tree = ast.parse(source.read_text(encoding="utf-8"))
+    except (OSError, SyntaxError):
+        return set()
+    for node in ast.walk(tree):
+        target = None
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            target = node.target.id
+        elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+            target = node.targets[0].id
+        if target != "LIVE_TOOLS" or node.value is None:
+            continue
+        try:
+            value = ast.literal_eval(node.value)
+        except ValueError:
+            return set()
+        if isinstance(value, (set, frozenset, list, tuple)):
+            return {v for v in value if isinstance(v, str)}
+    return set()
+
+
 def main() -> int:
     if not SKILLS_DIR.is_dir():
         print(f"No skills directory at {SKILLS_DIR}; nothing to check.")
         return 0
 
+    LIVE = live_tools()
     forward_gaps = 0
     reverse_gaps = 0
     tool_using_skills = 0
@@ -217,7 +259,7 @@ def main() -> int:
 
         # Forward: a declared tool that no fixture in the corpus covers —
         # no eval test can exercise that tool path.
-        missing = sorted(set(declared) - set(refs) - set(EXEMPT_TOOLS))
+        missing = sorted(set(declared) - set(refs) - set(EXEMPT_TOOLS) - LIVE)
         if missing:
             forward_gaps += 1
             plural = "these tools" if len(missing) > 1 else "this tool"

@@ -70,6 +70,12 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
   "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
+  // 0.7 KB, the smallest schema the server ships -- a third of record_read above.
+  // Deferred, it costs a ToolSearch round trip at the one moment that must not
+  // fail: a bounded turn ending. The hosted Stop hook allows that stop ONLY on
+  // this call, so a model that has not loaded the schema gets nudged onward
+  // instead (#2813 item 1).
+  "research_delivered",
 ]);
 
 export const allToolSchemas = [
