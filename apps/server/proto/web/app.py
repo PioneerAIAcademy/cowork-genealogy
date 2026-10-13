@@ -687,8 +687,28 @@ class PgStore:
 
     # LEFT JOIN: 001 declares no foreign keys, so a session whose project row is missing
     # must still load -- with owner_id NULL, which the route turns into a 404.
+    # The three `job_state` inputs are derived here, not stored. Without them `_row`'s
+    # `r.get(...)` returned None/False for every session, so `job_state` took its
+    # `latest_outcome is None` branch and EVERY session read "new" -- a list that cannot
+    # answer the one question a returning reader has, which is the whole reason the four
+    # states exist. The pure function was right and unit-tested all along; nothing fed it.
+    # Found by driving real turn rows in and watching the API keep saying "new".
+    #
+    # `latest_outcome` is the most recently COMPLETED turn's: an in-flight turn has no
+    # outcome yet, and `turn_in_flight` already outranks it in `job_state`.
+    # `project_completed` reads the newest research.json, matching
+    # `continue_policy.project_completed`'s `project.status == "completed"`.
     _SELECT = (
-        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, p.owner_id "
+        "SELECT s.session_id, s.project_id, s.title, s.model, s.created_at, s.updated_at, "
+        "p.owner_id, "
+        "(SELECT t.outcome FROM turns t "
+        " WHERE t.session_id = s.session_id AND t.completed_at IS NOT NULL "
+        " ORDER BY t.completed_at DESC LIMIT 1) AS latest_outcome, "
+        "EXISTS (SELECT 1 FROM turns t "
+        "        WHERE t.session_id = s.session_id AND t.completed_at IS NULL) AS turn_in_flight, "
+        "COALESCE((SELECT d.doc->'project'->>'status' = 'completed' FROM documents d "
+        "          WHERE d.project_id = s.project_id AND d.name = 'research.json' "
+        "          ORDER BY d.version DESC LIMIT 1), false) AS project_completed "
         "FROM sessions s LEFT JOIN projects p ON p.project_id = s.project_id"
     )
 
