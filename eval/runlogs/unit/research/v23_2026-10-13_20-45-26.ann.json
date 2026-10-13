@@ -169,6 +169,14 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The father was identified, but the mother still remain unknown."
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "The agent's reply invents the label “New York line” for James Tarrant Sr. and Jane Burch (I4/I5) and recommends searching New York deed/tax records for them, but nothing in the scenario places either person in New York—both were born in Virginia. Fabricated geographic characterization contradicting the source material overrides the correct routing decision. Per Edmond’s review."
     }
   ]
 }
