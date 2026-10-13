@@ -6,7 +6,7 @@ Grading dimensions for search-familysearch-wiki unit tests. Evaluated by the LLM
 
 Did the agent log the guidance as one research-log entry, with the filled template in its notes?
 
-The entry appears in the file changes summary as a new `log` entry (`tool: "wiki_search"`). One test (`ut_search_wiki_014`, tagged `no-project`) runs with no project: there nothing is logged, `(no file changes)` is correct, and the agent returns the filled template above its `---` line instead — grade that return as the deliverable.
+The entry appears in the file changes summary as a new `log` entry (`tool: "wiki_search"`). One test (`ut_search_wiki_014`, tagged `no-project`) runs with no project: there nothing is logged, `(no file changes)` is correct, and the agent returns the filled template above its `---` line instead — grade that return as the deliverable. Grade the agent's returned text, never the `notes` argument of its refused `research_log_append` call: a return carrying only the Sources bullets, without the `# FamilySearch Wiki:` heading and the summary, is a **fail** even when the refused call's notes held the full template.
 
 - **pass:** Exactly one new `wiki_search` log entry whose notes open with `# FamilySearch Wiki: ` and the question's core noun phrase (e.g. "Italian Birth Records"), followed by the summary and a Sources section; no loose file.
 - **partial:** The entry was logged but its notes deviate from the template — a missing heading, the whole question as the topic, or a second entry for the same search.

@@ -142,9 +142,14 @@ log with a **Sources** section citing the wiki pages used — nothing more. On
 empty results the line says no wiki guidance was found. On a hand-back the
 return is the two short sentences from the scope section and nothing else.
 
-**Everything you write outside the logged entry is about the search, never about
-the topic.** The guidance is already in the entry, so do not restate, summarize,
-list or quote it here.
+**No project (`reason: "no_project"`):** nothing was logged, so the return above
+the `---` line is the whole filled template, verbatim — the
+`# FamilySearch Wiki: {{topic}}` heading, the summary and the `## Sources`
+section — in place of the one line. Not only the sources.
+
+**Otherwise, everything you write outside the logged entry is about the search,
+never about the topic.** The guidance is already in the entry, so do not
+restate, summarize, list or quote it here.
 
 ### `summary_for_user`
 
