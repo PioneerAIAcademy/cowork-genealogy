@@ -225,7 +225,7 @@ Numbers are the handoff's; Richard routes them inside FamilySearch. "Sent" means
 
 Retention (U19): a session's delete takes its SDK transcript under both ids (PR #3356), and its
 project's rows only with the project's last session (U2); the S3 orphan sweep deletes the objects
-nothing points at once they pass its grace (PR #ORPHAN). Nothing yet expires `session_entries`,
+nothing points at once they pass its grace (PR #3394). Nothing yet expires `session_entries`,
 `session_events` or `tool_calls`: retention by session inactivity is drafted (PR #3369). The
 periods are F17's. Our own decisions: handoff U21, all made 2026-09-29.
 
