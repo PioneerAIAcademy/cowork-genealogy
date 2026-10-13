@@ -145,14 +145,6 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "Failed to run the searches. I agree with the score."
-    },
-    {
-      "test_id": "ut_research_h7w",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "The run summary states facts the project does not support: \"the New York–origin set\" (the tree has no New York); \"James Sr. died before 1840\" (I4 died 5 July 1840 at Elyton); and \"The South Carolina evidence … is a promising early signal for Candidate A\"."
     }
   ]
 }
