@@ -25,6 +25,7 @@ real tree. That is the pattern that makes assertion 3 safe to run in CI.
 from __future__ import annotations
 
 import json
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -33,6 +34,8 @@ import pytest
 from harness import judge
 from harness import orchestrator as _orchestrator
 from harness import validator_runner
+from harness.scenario_brief import load_scenario_brief
+from harness.workspace import build_workspace, snapshot_files
 import judge_regrade
 
 
@@ -552,6 +555,13 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
     spec_dict = spec_builder()
     test_path = disk_tree["tests_unit"] / f"{spec_dict['test']['id']}.json"
     test_path.write_text(json.dumps(spec_dict), encoding="utf-8")
+    # A source on file, so the before-state slot renders something to compare.
+    # With an empty research.json both sides render "(none)" and a regrade that
+    # built its before-snapshot under the wrong keys passed this test (#2478).
+    (disk_tree["scenarios"] / "research.json").write_text(
+        json.dumps({"sources": [{"id": "src_001", "citation": "Demo citation"}]}),
+        encoding="utf-8",
+    )
 
     run_entry = _run_entry_for(spec_dict["test"]["id"], direct=direct)
     log = _log_with("demo", spec_dict, run_entry)
@@ -616,8 +626,20 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
     # the real `TestSpec` object the live path reads from.
     live_spec = judge_regrade._load_test_spec("demo", spec_dict["test"]["id"])
     live_rubric = judge_regrade._load_rubric("demo")
-    live_scenario_readme = judge_regrade._load_scenario_readme(live_spec.scenario)
-    live_before_snapshot = judge_regrade._load_before_snapshot(live_spec.scenario)
+    # The live side builds both from the calls the orchestrator itself makes,
+    # never from a regrade helper, or a regrade bug agrees with itself here.
+    live_scenario_readme = load_scenario_brief(
+        disk_tree["repo"] / "eval" / "fixtures" / "scenarios", live_spec.scenario
+    ).text
+    with tempfile.TemporaryDirectory() as _ws:
+        build_workspace(
+            scenario_name=live_spec.scenario,
+            scenarios_dir=disk_tree["repo"] / "eval" / "fixtures" / "scenarios",
+            skills_dir=_orchestrator.DEFAULT_SKILLS,
+            target_dir=Path(_ws),
+            stage_skills=False,
+        )
+        live_before_snapshot = snapshot_files(Path(_ws))
     live_validator_failures = judge_regrade._gating_validator_failure_names(
         run_entry["validators"]
     )
@@ -678,8 +700,200 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
     # The kwargs must match byte-for-byte: same rubric, judge_context,
     # user_message, skills_invoked, text_response, tool_calls, validator_failures.
     # If any one differs, the regrade is sending a prompt the live run never would.
+    assert "src_001" in live_recorder.kwargs["before_state"], (
+        f"[{label}] live before-state did not render the on-file source"
+    )
     assert dry_recorder.kwargs == live_recorder.kwargs, (
         f"[{label}] regrade prompt kwargs diverged from live run.\n"
         f"dry  = {dry_recorder.kwargs}\n"
         f"live = {live_recorder.kwargs}"
     )
+
+
+# --- README fallback warning and scratch mode (issue #2478) -----------------
+
+
+def _write_log(disk_tree, log: dict) -> Path:
+    path = disk_tree["runlogs"] / "v1_2026-10-09_00-00-00.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(log), encoding="utf-8")
+    return path
+
+
+def test_rederive_fallback_warning_follows_the_current_brief(disk_tree):
+    stale = [
+        {"kind": "prose_observation", "observation": "keep"},
+        {"kind": "scenario_readme_fallback", "scenario": "demo-scenario", "advisory": "old"},
+    ]
+    fallback = judge_regrade._load_scenario_brief("demo-scenario")
+    out = judge_regrade._rederive_fallback_warning(stale, fallback)
+    assert [w["kind"] for w in out] == ["prose_observation", "scenario_readme_fallback"]
+    assert out[1]["advisory"] != "old"
+
+    (disk_tree["scenarios"] / "judge-brief.md").write_text("Mocked.\n", encoding="utf-8")
+    briefed = judge_regrade._load_scenario_brief("demo-scenario")
+    out = judge_regrade._rederive_fallback_warning(stale, briefed)
+    assert [w["kind"] for w in out] == ["prose_observation"]
+
+
+def test_rederive_replaces_a_readme_fallback_with_brief_missing(disk_tree):
+    stale = [{"kind": "scenario_readme_fallback", "scenario": "demo-scenario", "advisory": "old"}]
+    (disk_tree["scenarios"] / "README.md").unlink()
+    bare = judge_regrade._load_scenario_brief("demo-scenario")
+    out = judge_regrade._rederive_fallback_warning(stale, bare)
+    assert [w["kind"] for w in out] == ["scenario_brief_missing"]
+    # And back: a brief clears the missing entry too.
+    (disk_tree["scenarios"] / "judge-brief.md").write_text("Mocked.\n", encoding="utf-8")
+    briefed = judge_regrade._load_scenario_brief("demo-scenario")
+    assert judge_regrade._rederive_fallback_warning(out, briefed) == []
+
+
+def test_slot_readme_renders_the_readme_over_a_brief(disk_tree):
+    (disk_tree["scenarios"] / "judge-brief.md").write_text("BRIEF_SENTINEL\n", encoding="utf-8")
+    log = _minimal_run_log(scenario="demo-scenario")
+    test_entry, run_entry = log["tests"][0], log["tests"][0]["runs"][0]
+    brief = judge_regrade.render_judge_prompt_for_test(log, test_entry, run_entry)
+    readme = judge_regrade.render_judge_prompt_for_test(
+        log, test_entry, run_entry, force_readme=True
+    )
+    assert "BRIEF_SENTINEL" in brief and "Some prose." not in brief
+    assert "Some prose." in readme and "BRIEF_SENTINEL" not in readme
+
+
+def test_scratch_collect_waives_both_refusals(disk_tree):
+    log = _minimal_run_log(scenario="demo-scenario")
+    log["judge_prompt_hash"] = judge.judge_prompt_hash()
+    log["snapshot"] = {"eval/__no_such_file__/x.md": "deadbeef" * 8}
+    _write_log(disk_tree, log)
+    root = disk_tree["runlogs"].parent
+    assert judge_regrade.collect_regradeable_logs(root) == [] or all(
+        t.reason_refused for t in judge_regrade.collect_regradeable_logs(root)
+    )
+    targets = judge_regrade.collect_regradeable_logs(root, scratch=True)
+    assert [(t.skill, t.reason_refused) for t in targets] == [("demo", None)]
+
+
+def test_copy_to_scratch_filters_and_never_touches_the_committed_log(disk_tree, tmp_path):
+    committed = _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+    before = committed.read_bytes()
+    target = judge_regrade.collect_regradeable_logs(
+        disk_tree["runlogs"].parent, scratch=True
+    )[0]
+    scratch = tmp_path / "readme-1"
+
+    assert judge_regrade.copy_to_scratch(
+        target, scratch, only_scenarios={"other-scenario"}
+    ) is None
+    copy = judge_regrade.copy_to_scratch(
+        target, scratch, only_scenarios={"demo-scenario"}
+    )
+    assert copy is not None and copy.path.parent == scratch / "demo"
+    assert [t["test_id"] for t in copy.log["tests"]] == ["ut_demo_001"]
+    assert committed.read_bytes() == before
+
+    with pytest.raises(judge_regrade.ScratchDirNotEmpty):
+        judge_regrade.copy_to_scratch(target, scratch)
+
+
+def test_scratch_regrade_refuses_a_path_outside_its_root(disk_tree, tmp_path):
+    committed = _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+    with pytest.raises(ValueError, match="not under"):
+        judge_regrade.regrade_run_log(committed, scratch_root=tmp_path / "scratch")
+
+
+@pytest.mark.parametrize(
+    "argv", [["--scenario", "demo-scenario"], ["--slot", "readme"]]
+)
+def test_scratch_only_flags_require_runlogs_root(argv):
+    with pytest.raises(SystemExit) as exc:
+        judge_regrade.main(argv)
+    assert exc.value.code == 2
+
+
+def test_scratch_dry_run_counts_prompts_and_writes_nothing(disk_tree, tmp_path, capsys):
+    committed = _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+    before = committed.read_bytes()
+    scratch = tmp_path / "dry"
+    code = judge_regrade.main(
+        ["--dry-run", "--runlogs-root", str(scratch), "--scenario", "demo-scenario"]
+    )
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "1 prompt(s) rendered in total" in out
+    assert "1 scenario(s) graded without a judge brief (README or nothing): demo-scenario" in out
+    assert committed.read_bytes() == before
+    assert not scratch.exists()
+
+
+def test_scratch_dry_run_skips_a_test_deleted_since_the_log(disk_tree, tmp_path, capsys):
+    log = _minimal_run_log(scenario="demo-scenario")
+    gone = json.loads(json.dumps(log["tests"][0]))
+    gone["test_id"] = "ut_demo_deleted"
+    log["tests"].append(gone)
+    _write_log(disk_tree, log)
+    code = judge_regrade.main(["--dry-run", "--runlogs-root", str(tmp_path / "dry")])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "skipped 1 deleted test(s): ut_demo_deleted" in out
+    assert "1 prompt(s) rendered in total" in out
+
+
+def test_scratch_refuses_an_unknown_scenario_and_a_relative_root(disk_tree, tmp_path, capsys):
+    _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+    assert judge_regrade.main(
+        ["--runlogs-root", str(tmp_path / "x"), "--scenario", "demo-scenaro"]
+    ) == 2
+    assert "names no scenario directory: demo-scenaro" in capsys.readouterr().err
+    assert judge_regrade.main(["--runlogs-root", "relative/dir"]) == 2
+    assert "must be an absolute path" in capsys.readouterr().err
+
+
+def test_scratch_exits_non_zero_when_nothing_matched(disk_tree, tmp_path, capsys):
+    _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+    (disk_tree["repo"] / "eval" / "fixtures" / "scenarios" / "other").mkdir()
+    code = judge_regrade.main(
+        ["--dry-run", "--runlogs-root", str(tmp_path / "x"), "--scenario", "other"]
+    )
+    assert code == 1
+    assert "no test matched" in capsys.readouterr().err
+
+
+def test_scratch_refuses_an_occupied_pass_dir_before_any_regrade(disk_tree, tmp_path, monkeypatch, capsys):
+    _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+    occupied = tmp_path / "pass" / "demo"
+    occupied.mkdir(parents=True)
+    (occupied / "v1.json").write_text("{}", encoding="utf-8")
+    called = []
+    monkeypatch.setattr(judge_regrade, "regrade_run_log", lambda *a, **k: called.append(a))
+    assert judge_regrade.main(["--runlogs-root", str(tmp_path / "pass")]) == 1
+    assert called == []
+    assert "already holds run logs" in capsys.readouterr().err
+
+
+def test_scratch_removes_the_copy_when_the_regrade_fails(disk_tree, tmp_path, monkeypatch):
+    _write_log(disk_tree, _minimal_run_log(scenario="demo-scenario"))
+
+    def failing(path, **kwargs):
+        return judge_regrade.RegradeResult(skill="demo", path=path, error="judge failed")
+
+    monkeypatch.setattr(judge_regrade, "regrade_run_log", failing)
+    assert judge_regrade.main(["--runlogs-root", str(tmp_path / "pass")]) == 1
+    assert not any((tmp_path / "pass" / "demo").glob("*.json"))
+
+
+def test_before_snapshot_is_staged_once_per_scenario_and_again_after_an_edit(disk_tree, monkeypatch):
+    staged = []
+    real = judge_regrade._stage_before_snapshot
+    monkeypatch.setattr(judge_regrade, "_BEFORE_SNAPSHOT_CACHE", {})
+    monkeypatch.setattr(
+        judge_regrade, "_stage_before_snapshot", lambda s: staged.append(s) or real(s)
+    )
+    judge_regrade._load_before_snapshot("demo-scenario")
+    judge_regrade._load_before_snapshot("demo-scenario")
+    assert staged == ["demo-scenario"]
+    (disk_tree["scenarios"] / "research.json").write_text(
+        json.dumps({"sources": [{"id": "src_009"}]}), encoding="utf-8"
+    )
+    snap = judge_regrade._load_before_snapshot("demo-scenario")
+    assert staged == ["demo-scenario", "demo-scenario"]
+    assert snap["research_json"]["sources"][0]["id"] == "src_009"
