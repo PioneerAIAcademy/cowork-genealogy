@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes an uncovered independent part of the objective to question-selection instead of completing",
     "type": "positive",
-    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable, its mentor verdict is on record and its fact is in the tree, so every gate on the 'all questions resolved' row holds. The router must see that the objective still has an unframed part and hand off to question-selection, not proceed to the completion write or stop. Mined from a Cowork run that concluded the birthplace and left parentage unresearched.",
+    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. The router must see that the objective still has an unframed part and hand off to question-selection, not proceed to the completion write or stop. Mined from a Cowork run that concluded the birthplace and left parentage unresearched.",
     "tags": [
       "from-cowork",
       "compound-objective-part-unframed",

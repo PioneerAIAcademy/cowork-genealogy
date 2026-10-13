@@ -11,7 +11,7 @@ says England while the 1860-1880 censuses say Alabama. `q_001` (birthplace) is
 `c_001` by tracing "England" to a one-row shift in the 1850 index, and it
 carries a `looks_solid` `proof-critique` verdict (`ev_001`). The Alabama birth
 is in the tree, and `project.status` is still `active`. So every part of the
-objective has a resolved question with its proof critique on record, and the
+objective has a resolved question, the tree-encoding gate holds, and the
 correct next step is the completion write through `proof-conclusion`.
 
 Parentage is **not** in this objective. The project still mentions it: `q_001`'s

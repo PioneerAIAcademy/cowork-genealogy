@@ -24,8 +24,10 @@ decision point; it is not a snapshot of the project. Changes from the project as
 found:
 
 - **Added** `ev_001` and its sidecar under `evaluations/`, a `looks_solid`
-  `proof-critique` on `ps_001`. The real run never recorded one. Without it the
-  mentor gate fires first and the test could not tell the two failures apart.
+  `proof-critique` on `ps_001`. The real run never recorded one. It was added
+  while the completion row also required a mentor verdict; since #3040 no
+  routing row reads it. It stays so that this scenario and
+  `compound-objective-fully-covered` differ only in the objective and title.
 - **Dropped** `log_005` and `log_007`, positive reads that had no assertions, and
   `log_010` with its four FAN assertions (`a_017`–`a_020`, unlinked Turnbow men
   with no tree person). Each would trip an earlier routing row (record-extraction
