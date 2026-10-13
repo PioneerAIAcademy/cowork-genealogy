@@ -24,8 +24,10 @@ You need two things running side by side: **Cowork**, where you research, and
 the **Research Viewer**, where you watch the research happen and send us
 feedback. Cowork alone can't do the second part.
 
-Follow [Install](../README.md#install) in the README: download the MCP server,
-the plugin and the Research Viewer, and install all three. When we tell you
+Follow [What you need](../README.md#what-you-need) and
+[Install](../README.md#install) in the README: get an OpenRouter key, then
+download the MCP server, the plugin and the Research Viewer, and install all
+three. When we tell you
 there's an update to test, follow its [Updating](../README.md#updating) steps.
 
 ### Signing in to FamilySearch
