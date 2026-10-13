@@ -96,7 +96,7 @@ Run via `pnpm <script>` from this directory (the local `make` targets wrap these
 | `pnpm format` | Prettier formatting |
 | `pnpm build` | Typecheck + compile for production |
 | `pnpm build:win` | Build Windows installer (NSIS, x64) |
-| `pnpm build:mac` | Build macOS DMG (arm64 + x64) |
+| `pnpm build:mac` | Build macOS DMG (universal: Apple silicon + Intel) |
 | `pnpm build:linux` | Build Linux AppImage (x64) |
 
 ## Testing
@@ -161,57 +161,26 @@ src/
 
 ## Releasing (alpha — unsigned)
 
-Desktop builds ship from the **monorepo** workflow
-[`.github/workflows/electron-release.yml`](../../.github/workflows/electron-release.yml)
-(repo root — the old `apps/electron/.github/...` was nested where GitHub Actions
-never reads it, so it never ran). electron-builder config lives in
-[`electron-builder.yml`](./electron-builder.yml).
+Every push to `main` builds the installers and publishes them to the
+`cowork-latest` GitHub Release, beside the MCP server and plugin, through
+[`.github/workflows/electron-release.yml`](../../.github/workflows/electron-release.yml).
+There is no tag or version to bump. The repo README's Install section links to
+them by fixed name:
 
-Alpha builds are **unsigned**: mac and Windows installers are not code-signed or
-notarized, so testers must clear Gatekeeper/SmartScreen by hand (below). Signing
+| Platform | File | Arch |
+|----------|------|------|
+| macOS | `research-viewer-mac.dmg` | universal (Apple silicon + Intel) |
+| Windows | `research-viewer-windows-setup.exe` | x64 |
+
+A pull request that touches the viewer, `packages/viewer-ui` or
+`packages/schema` builds both without publishing. To build them from any branch
+without publishing, run **GitHub → Actions → "Electron release" → Run
+workflow**; the installers are attached to the run as artifacts.
+electron-builder config lives in [`electron-builder.yml`](./electron-builder.yml).
+
+The installers are **unsigned**: not code-signed or notarized, so testers clear
+Gatekeeper/SmartScreen by hand. The repo README's Install section says how. Signing
 is deferred — see [Adding code signing later](#adding-code-signing-later).
-
-### Dry run first (no publish)
-
-Before cutting a real tag, run the workflow manually to prove it: **GitHub →
-Actions → "Electron release" → Run workflow**. It builds the full mac/win/linux
-matrix with `--publish never` and uploads the installers as downloadable run
-artifacts you can smoke-test. (The sibling repo shipped this workflow but never
-once ran it — don't repeat that; dry-run before tagging.)
-
-### Cut a release
-
-1. Bump `version` in [`package.json`](./package.json) — electron-builder names the
-   artifacts **and the GitHub Release** from this, not from the git tag.
-2. Commit, then push a namespaced tag:
-   ```bash
-   git tag electron-v1.0.1 && git push origin electron-v1.0.1
-   ```
-   CI builds and publishes to a GitHub Release on `PioneerAIAcademy/cowork-genealogy`:
-
-   | Platform | Format | Arch |
-   |----------|--------|------|
-   | macOS | DMG + ZIP | arm64, x64 |
-   | Windows | NSIS installer | x64 |
-   | Linux | AppImage | x64 |
-
-The trigger is `electron-v*` (not the generic `v*.*.*`) so it never collides with
-`.mcpb`/plugin release tags in this monorepo. Note: electron-builder publishes the
-Release under tag `v<version>` (from `package.json`), distinct from the `electron-v*`
-trigger tag — cosmetic, worth aligning if it ever matters.
-
-### Installing an unsigned build (what to tell testers)
-
-- **macOS** — a downloaded `.dmg` is quarantined and shows *"…is damaged and can't
-  be opened."* That's Gatekeeper on an un-notarized app, not actual corruption.
-  After dragging the app to `/Applications`, clear the quarantine flag:
-  ```bash
-  xattr -dr com.apple.quarantine "/Applications/Research Viewer.app"
-  ```
-  The app is ad-hoc signed, so it launches once quarantine is cleared.
-- **Windows** — SmartScreen warns on the unsigned NSIS installer: click
-  **More info → Run anyway**.
-- **Linux** — `chmod +x Research-Viewer-*.AppImage` and run it.
 
 ### Adding code signing later
 
@@ -225,10 +194,10 @@ signs and notarizes automatically:
 1. Enrol in the Apple Developer Program ($99/yr; approval can take 1–2 days).
 2. Create a **Developer ID Application** certificate and export it as a `.p12`.
 3. Add these GitHub repo secrets, then in `electron-release.yml` **remove**
-   `CSC_IDENTITY_AUTO_DISCOVERY: false` from the mac step and add the env block:
+   `CSC_IDENTITY_AUTO_DISCOVERY: false` from the build job's `env` and add these
+   to the mac leg:
    ```yaml
    env:
-     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
      CSC_LINK: ${{ secrets.MAC_CERTS }}                       # base64 of the .p12
      CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}      # the .p12 password
      APPLE_ID: ${{ secrets.APPLE_ID }}                        # notarization
