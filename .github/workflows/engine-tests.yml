@@ -180,4 +180,4 @@ jobs:
           AWS_SHARED_CREDENTIALS_FILE: /nonexistent
           AWS_CONFIG_FILE: /nonexistent
           AWS_EC2_METADATA_DISABLED: 'true'
-        run: npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts
+        run: npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts tests/store/s3-orphan-sweep.test.ts
