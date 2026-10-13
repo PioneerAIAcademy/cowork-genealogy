@@ -81,9 +81,18 @@ DELIVERED_REASON = (
 # here, beside the tool name and the halt text, because a plane that wires the ARM
 # without the GUIDANCE ships a dead rule that looks identical to a working one.
 #
-# IT RIDES THE SYSTEM PROMPT, NOT THE SKILL BODIES. The hook that makes this tool end a
-# turn exists only on the two hosted planes, so a skill-body rule would teach every skill
-# to call a tool that is inert in Cowork and in the harness that grades them.
+# IT RIDES THE SYSTEM PROMPT, AND ONE SKILL BODY NAMES IT. The hook that makes this tool
+# end a turn exists only on the two hosted planes, which is why no skill body named it at
+# first: the rule would teach every skill to call a tool inert elsewhere.
+#
+# That held until the field showed the cost of the silence. `research/SKILL.md` already
+# spoke at the same moment -- "end your turn" -- and a model following the nearer, more
+# specific instruction ended the turn without the call, so the hosted arm never halted and
+# the nudge arm pushed it on into more research. The two instructions were competing, not
+# complementing. The router's bounded close now names the tool as well; the Cowork cost is
+# one inert call per bounded turn, and it is ONE body, not every skill. The harness half
+# of the original premise is also gone -- the tool is a LIVE_TOOL there now.
+# See docs/specs/research-delivered-tool-spec.md, "When the agent is told to call it".
 #
 # Both exclusions in the text are load-bearing. Calling it when the OBJECTIVE is finished
 # would report `delivered` where `completed` is true and the run ends on its own. Calling
@@ -99,8 +108,8 @@ DELIVERY_GUIDANCE = (
     "asked you to stop after, a single record or lookup, or a status question such as "
     "\"where are we?\". Do not call it when the project's research objective itself is "
     "finished -- that run ends on its own -- and do not call it in place of asking the "
-    "researcher a question, which waits for their answer. Its schema is deferred, so "
-    "search for it by name if you do not already hold it."
+    "researcher a question, which waits for their answer. If you do not already hold "
+    "its schema, search for it by name."
 )
 
 
