@@ -91,18 +91,24 @@ and why.
 
 ## Install
 
-You install two files in Claude Desktop:
+You install two files in Claude Desktop, and one app beside it:
 
 - **The MCP server** (`genealogy-mcp.mcpb`), a desktop extension. It does the
   searching and reading, so it runs on your computer, where it can reach the
   internet.
 - **The plugin** (`genealogy-plugin.zip`). It teaches Claude the research
   method and runs inside Cowork.
+- **The Research Viewer**, a separate app. It shows the research filling in as
+  it happens, and it's where you send us feedback; Cowork has no way to.
 
-### 1. Download both files
+### 1. Download the files
 
 - [genealogy-mcp.mcpb](https://github.com/PioneerAIAcademy/cowork-genealogy/releases/download/cowork-latest/genealogy-mcp.mcpb)
 - [genealogy-plugin.zip](https://github.com/PioneerAIAcademy/cowork-genealogy/releases/download/cowork-latest/genealogy-plugin.zip)
+- The Research Viewer for
+  [Mac](https://github.com/PioneerAIAcademy/cowork-genealogy/releases/download/cowork-latest/research-viewer-mac.dmg)
+  or
+  [Windows](https://github.com/PioneerAIAcademy/cowork-genealogy/releases/download/cowork-latest/research-viewer-windows-setup.exe)
 
 They are rebuilt every time the code changes. On a Mac, Safari may unzip the
 plugin into a folder. You need the `.zip`, so if that happens, turn off Safari
@@ -127,12 +133,28 @@ the two keep separate plugin lists.
 
 Quit Claude Desktop completely and reopen it. Closing the window isn't enough.
 
+### 5. Install the Research Viewer
+
+The Viewer isn't signed yet, so your computer warns you about it the first time.
+
+- **Mac:** open `research-viewer-mac.dmg` and drag **Research Viewer** into
+  **Applications**. When you open it, your Mac refuses, saying it's damaged or
+  can't be checked for malware. It's neither. Open **Terminal** (Applications →
+  Utilities) and run this once:
+
+  ```bash
+  xattr -dr com.apple.quarantine "/Applications/Research Viewer.app"
+  ```
+- **Windows:** run `research-viewer-windows-setup.exe`. When Windows says it
+  protected your PC, click **More info** → **Run anyway**.
+
 ### Updating
 
-Download both files again and install both. The MCP server installs over the
+Download the files again and install them. The MCP server installs over the
 old one. For the plugin, remove the old one in Cowork → Customize first, then
 upload the new zip; uploading on top of the old one can leave old skills
-behind. Then restart Claude Desktop.
+behind. Then restart Claude Desktop. Install the new Research Viewer over the
+old one; on a Mac, run the Terminal command again.
 
 ### Building from source
 
@@ -170,6 +192,11 @@ or later from <https://nodejs.org>.
 
 Then install the two files from the `releases` folder as in steps 2–4.
 
+The downloaded Research Viewer works with files built from any branch. To run
+the Viewer from your checkout instead: on macOS/Linux, run `corepack enable`
+once, then `make electron`; on Windows, double-click `eval\Setup.bat` once, then
+`eval\Viewer.bat`.
+
 ## Using it
 
 In Cowork, open a folder for the project and say who you want to research and
@@ -185,6 +212,10 @@ If you know the person's FamilySearch ID, give that instead. Then:
   it at that", "Translate this German baptism", "Are these hints right?",
   "Where are the records for Schuylkill County, Pennsylvania?"
 - **"Where are we?"** picks a project back up.
+
+Open the same folder in the Research Viewer (**Open Project Folder**) to watch
+the research log, sources and evidence fill in. When something goes wrong, or
+right, click **Send Feedback** there.
 
 ## A note on responsibility
 

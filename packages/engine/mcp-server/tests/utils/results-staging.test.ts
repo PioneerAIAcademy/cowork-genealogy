@@ -14,6 +14,8 @@ import {
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
+import { backingStore } from "../helpers/store-backend.js";
+import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { STAGING_CAPABLE_TOOLS, STAGING_SEARCH_TOOLS } from "../../src/utils/results-staging.js";
 
 describe("results-staging", () => {
@@ -46,6 +48,49 @@ describe("results-staging", () => {
       return [];
     }
   };
+
+  describe("an absolute staged handle reaches the store project-relative", () => {
+    // PgS3ProjectStore keys rows by ref and refuses an absolute one, where the
+    // file store resolves it; every reader must hand the store the relative
+    // spelling, or an absolute handle the guard accepted reads as "never staged".
+    const keyedStore = (): ProjectStore => {
+      const inner = backingStore();
+      const refuseAbsolute = (ref: string) => {
+        if (ref.startsWith("/")) throw new Error(`absolute ref '${ref}' reached the store`);
+      };
+      return new Proxy(inner, {
+        get(target, prop, receiver) {
+          const value = Reflect.get(target, prop, receiver);
+          if (typeof value !== "function") return value;
+          return (projectPath: string, ref: unknown, ...rest: unknown[]) => {
+            // As the Postgres store answers: `exists` says no, the rest throw.
+            if (prop === "exists" && typeof ref === "string" && ref.startsWith("/")) return Promise.resolve(false);
+            if (typeof ref === "string") refuseAbsolute(ref);
+            return value.call(target, projectPath, ref, ...rest);
+          };
+        },
+      });
+    };
+
+    it("finalize, the envelope query, readStagedResults and consume all accept it", async () => {
+      const response = { query: { surname: "Smith" }, results: [{ recordId: "R1" }] };
+      const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response });
+      const absolute = join(dir, handle!.resultsRef);
+      await runWithProjectStore(keyedStore(), async () => {
+        expect((await readStagedEnvelopeQuery(dir, absolute))?.tool).toBe("record_search");
+        expect(await readStagedResults(dir, absolute)).toHaveLength(1);
+        const fin = await finalizeStagedResults({
+          projectPath: dir,
+          stagedResultsRef: absolute,
+          logId: "log_001",
+          expectedTool: "record_search",
+        });
+        expect(fin.returnedCount).toBe(1);
+        await consumeStagedResults(dir, [absolute]);
+      });
+      expect(await stagingFiles()).toEqual([]);
+    });
+  });
 
   describe("stageSearchResults", () => {
     it("stages a hit and returns a handle", async () => {
