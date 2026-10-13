@@ -40,7 +40,12 @@ run on a laptop with `~/.aws` signs with the developer's profile); `GENEALOGY_S3
 (`true`/`false`, default `true` when an endpoint is set and `false` otherwise). A missing
 required variable, exactly one of the two keys, or a path-style value other than
 `true`/`false` is one stderr line and exit 2 before `listen`; otherwise one stderr line names
-the credential mode (`static keys` or `SDK default chain`), the region and the endpoint. The projectPath every call passes
+the credential mode (`static keys` or `SDK default chain`), the region and the endpoint. The
+same process runs the S3 orphan sweep (`src/store/s3-orphan-sweep.ts`, U19), which deletes an
+object no `blobs` or `staging` row points at once it is older than `GENEALOGY_ORPHAN_GRACE_S`
+(default 86400, at least 3600), every `GENEALOGY_ORPHAN_SWEEP_INTERVAL_S` (default 3600, `0` off, at most 2147483: Node's
+timer limit); either one not a whole number of seconds, a grace under 3600 or an interval over
+2147483 also exits 2. The projectPath every call passes
 is the anchor (`/project`). With the header **missing**, the request is bound to an
 `unboundProjectStore` whose every method rejects with an instruction naming the header:
 tools that take no `projectPath` (`convert_calendar`, the FamilySearch searches, …) still
