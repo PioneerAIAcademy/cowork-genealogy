@@ -90,8 +90,7 @@ reinstalling had no
 generated file and no path that would write one, so the Research Viewer opened
 on vite's `Failed to resolve import "./enums.generated.js"`. Each app's `dev`
 now chains the generator, which heals `make electron`, `eval\Viewer.bat`, and
-the raw `pnpm --filter @genealogy/electron dev` the alpha guide gives
-macOS/Linux users, all from the one script they share.
+the root `pnpm dev:electron`, all from the one script they share.
 
 Two mechanical constraints shape tier 2 and will bite anyone who ignores them:
 turbo `inputs` are package-relative, so the generator reads
