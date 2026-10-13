@@ -18,11 +18,25 @@ the three things that genuinely need a blob store and a queue.
 
 | Stack | Command | Covers | Needs Docker |
 |---|---|---|---|
-| **Alpha** | `make server` + `make web` (two terminals, :1837 + :5173) | §1–§5 — the whole reading experience, delivery, the decision exit, job state, tab-close | **No** |
+| **Alpha, mock** | `make server-mock` (:8000) + `make web-dev` (:5173) | §3 identifiers and collapsed identity, §5 off-plan group and the absence of the rail | **No** |
+| **Alpha, real** | `make server` + `make web` (:1837 + :5173) | §1, §2, §4, the tab-close note — anything needing a real agent turn | **No**, but needs FamilySearch sign-in |
 | **Prototype** | `make proto-up`, then `make proto-grant` once | §6–§8 — scans from the blob store, uploads, spend-resume | Yes |
 
 `make dev` prints the alpha pair. Start there: it is faster, free of compose, and it is
 the plane the hosted alpha actually runs.
+
+**Two corrections from the 2026-10-13 Playwright pass**, both found by running it:
+
+- **§5's four job states are prototype-only.** `job_state` is computed in
+  `proto/web/job_state.py` and emitted by the prototype's `session_out`. The alpha's
+  `/api/sessions` never sends it (`ProjectOut` has no such field) and the web client
+  types it optional, so the list falls back to the sandbox `status` — you will see
+  `active`, not `running`/`needs you`/`done`. That is the same plane split as
+  spend-resume in §7, not a bug. Test the four states on the prototype.
+- **§3's "chips sit where they happened" cannot be tested against `server-mock`.** The
+  mock agent emits exactly one chip block and one paragraph per turn, which is the
+  degenerate case: it looks identical whether chips are interleaved or stacked above.
+  Use a real agent turn, or read `ChatPane`'s unit tests.
 
 ### Pre-flight
 

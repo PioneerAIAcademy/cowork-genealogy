@@ -7,24 +7,44 @@
 // screen, and a run makes many: the reader has to open each one to find out which is
 // which. What distinguishes them is the QUERY — who was searched for, where, and when.
 
-/** Keys worth showing, in reading order: who, then where, then when, then in what.
+/** Keys worth showing, in priority order. Keys outside this list are deliberately
+ * dropped: a log row is an identity line, not a dump, and an unbounded join is how one
+ * row becomes three lines wide.
  *
- * Ordered rather than alphabetical because the reader scans for a person first. Keys
- * outside this list are deliberately dropped: a log row is an identity line, not a
- * dump, and an unbounded join is how one row becomes three lines wide. */
+ * SNAKE_CASE, because this reads `research.json`, and persisted project documents are
+ * snake_case throughout (CLAUDE.md, "Identifier casing"). The first cut of this list was
+ * camelCase -- MCP tool-parameter style -- so `birth_place`, `birth_year`, `death_place`,
+ * `death_year` and `person_id` never matched anything at all, and only the single-word
+ * keys worked by accident. Found by opening the sample project in a browser; the unit
+ * tests had encoded the same mistake, so they passed throughout.
+ *
+ * Order is by how DISCRIMINATING a key is, not by reading order, because three parts is
+ * the whole budget. A person's `birth_place`/`birth_year` are the subject's own
+ * attributes, repeated verbatim in every query about them, so they are nearly worthless
+ * for telling two of that person's searches apart and rank last. What the search was
+ * FOR -- the collection, the event type, the jurisdiction and period of the event --
+ * is what actually differs between rows, so it ranks directly after the name. */
 const IDENTITY_KEYS = [
+  // who
   'given',
   'surname',
   'name',
-  'personId',
-  'place',
-  'birthPlace',
-  'deathPlace',
-  'year',
-  'birthYear',
-  'deathYear',
+  'person_id',
+  // what was searched for
   'collection',
-  'title'
+  'event_type',
+  'title',
+  // where and when the EVENT was
+  'death_place',
+  'jurisdiction',
+  'place',
+  'death_year',
+  'date_range',
+  'death_year_range',
+  'year',
+  // the subject's own attributes -- least discriminating, so last
+  'birth_place',
+  'birth_year'
 ] as const
 
 /** At most this many parts, so one row stays one line. */
