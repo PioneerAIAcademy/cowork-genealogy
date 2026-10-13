@@ -85,8 +85,10 @@ conclusion's person gain any tree structure this session?"
    is a looser one, and `relationshipMatches` answers it: an untyped edge
    restates a typed one and matches it, while two different explicit subtypes
    never match. `add_relationship`'s corroboration and the import de-dup in
-   `person-read-tree.ts` use the matcher; tree-diff and the merge dedup's
-   bucketing use the key. Keying where a match was wanted lets an untyped
+   `person-read-tree.ts` use the matcher; tree-diff uses the key, and the merge
+   dedup buckets on type and endpoints alone, then matches within the bucket —
+   bucketing on the key would give an untyped edge a bucket of its own and
+   leave it beside the typed edge it restates. Keying where a match was wanted lets an untyped
    repeat through.
 3. **A `Marriage`/`Divorce` fact lives on the Couple relationship's `facts[]`,**
    not on a person. An added Couple carrying a Marriage fact is one added

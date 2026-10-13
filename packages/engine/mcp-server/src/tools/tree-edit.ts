@@ -58,6 +58,7 @@ export type TreeEditOperation =
   | "add_relationship"
   | "add_source"
   | "update_source"
+  | "update_relationship"
   | "remove";
 
 /** The additive ops — the only operations `tree_edit` accepts. */
@@ -75,6 +76,7 @@ export const CORRECT_OPERATIONS = [
   "update_name",
   "update_person",
   "update_source",
+  "update_relationship",
   "remove",
 ] as const;
 
@@ -108,6 +110,10 @@ export interface TreeEditOp {
   source?: SimplifiedSourceDescription;
   gender?: string;
   ark?: string;
+  /** update_relationship only: the edge's new subtype (e.g. "Biological",
+   *  "Step"). The type is its own claim and an edge can be retyped — a census
+   *  or an import lists a stepchild as "son" (plan Decision 11). */
+  subtype?: string;
   /** Auto-resolve standard_place when a place is set (default true). */
   resolveStandardPlace?: boolean;
   /** add_relationship only: resolve the edge's (and any inline Couple fact's)
@@ -762,9 +768,11 @@ async function applyOperation(
           }
           f.id = nextId(tree, "F");
           await maybeResolvePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts);
-          // Same primary swap add_fact performs: a new primary demotes the
-          // previous one of its type on the holder.
-          if (f.primary === true) clearPrimaryOfType(edge, f.type, f.id);
+          // Same primary swap add_fact performs, but only when corroborating:
+          // the plan scopes it to the matched edge, and `main` never swapped on
+          // a newly created one. `primary` is about to become load-bearing
+          // (Decision 34), so who sets it does not change by accident here.
+          if (matched && f.primary === true) clearPrimaryOfType(edge, f.type, f.id);
           if (matched) matched.facts = [...(matched.facts ?? []), f];
           factIds.push(f.id);
         }
@@ -790,6 +798,32 @@ async function applyOperation(
         if (k === "id") continue;
         (existing as any)[k] = v;
       }
+      break;
+    }
+    case "update_relationship": {
+      // Retyping, not re-pointing: the endpoints identify the relationship and
+      // changing those would make it a different edge. `add_relationship`'s
+      // corroboration deliberately never changes a matched edge's subtype and
+      // names this op instead, so that a subtype only ever moves on an explicit
+      // correction.
+      if (!input.relationshipId) throw new TreeEditError("update_relationship requires a `relationshipId`");
+      if (input.subtype === undefined) {
+        throw new TreeEditError("update_relationship requires a `subtype` — it is the only field it sets");
+      }
+      const rel = (tree.relationships ?? []).find((r) => r.id === input.relationshipId);
+      if (!rel) throw new TreeEditError(`relationship '${input.relationshipId}' not found in tree`);
+      // A retype that would collide with an edge already on the pair is refused
+      // rather than silently creating a duplicate the dedup would later fold.
+      const clash = (tree.relationships ?? []).find(
+        (r) => r.id !== rel.id && relationshipMatches(r, { ...rel, subtype: input.subtype }),
+      );
+      if (clash) {
+        throw new TreeEditError(
+          `update_relationship: retyping '${rel.id}' to '${input.subtype}' would duplicate '${clash.id}', ` +
+            "which already joins this pair — remove one of them instead",
+        );
+      }
+      rel.subtype = input.subtype;
       break;
     }
     case "remove": {

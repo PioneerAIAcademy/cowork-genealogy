@@ -195,7 +195,7 @@ interface StagedIndex {
  */
 function describeRelationship(r: Obj): string {
   const sub = typeof r.subtype === "string" ? ` ${r.subtype}` : "";
-  if (r.type === "Couple") return `Couple ${[r.person1, r.person2].map(String).sort().join(" ")}`;
+  if (r.type === "Couple") return `Couple${sub} ${[r.person1, r.person2].map(String).sort().join(" ")}`;
   return `${String(r.type)}${sub} ${String(r.parent)} ${String(r.child)}`;
 }
 

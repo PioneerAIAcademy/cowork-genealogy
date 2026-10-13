@@ -829,6 +829,67 @@ describe("tree_edit", () => {
     expect(tree.relationships[0].facts[0].standard_place).toBe("Schuylkill, Pennsylvania, United States");
   });
 
+  it("update_relationship retypes an edge", async () => {
+    // The op `add_relationship`'s corroboration warning names. Without it that
+    // warning tells the agent to call something tree_correct refuses.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir,
+      operation: "update_relationship",
+      relationshipId: "R1",
+      subtype: "Step",
+    } as any);
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0]).toMatchObject({ id: "R1", subtype: "Step" });
+  });
+
+  it("update_relationship refuses a retype that would duplicate an edge already on the pair", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+      { id: "R2", type: "ParentChild", parent: "I1", child: "I2", subtype: "Step", sources: [{ ref: "S2" }] },
+    ];
+    await writeProject(t);
+    const r = await treeCorrect({
+      projectPath: dir,
+      operation: "update_relationship",
+      relationshipId: "R2",
+      subtype: "Biological",
+    } as any);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/would duplicate 'R1'/);
+  });
+
+  it("must not fire: add_relationship does not swap primary on a newly created edge", async () => {
+    // The plan scopes the primary swap to the MATCHED edge, and main never
+    // swapped on a new one. Keeping both here is main's behaviour, and
+    // `primary` is about to become load-bearing (Decision 34).
+    await writeProject(twoPersons());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: {
+        type: "Couple",
+        person1: "I1",
+        person2: "I2",
+        sources: [{ ref: "S1" }],
+        facts: [
+          { type: "Marriage", date: "1850", primary: true, sources: [{ ref: "S1" }] },
+          { type: "Marriage", date: "1852", primary: true, sources: [{ ref: "S2" }] },
+        ],
+      },
+    });
+    expect(r.ok).toBe(true);
+    const tree: any = await readTree();
+    expect(tree.relationships[0].facts.filter((f: any) => f.primary === true)).toHaveLength(2);
+  });
+
   it("add_relationship: rejects a caller-supplied fact id", async () => {
     const tree = onePersonSourced();
     tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
