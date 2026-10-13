@@ -606,10 +606,12 @@ def build_run_log(
     harness_version: str,
     model: str,
     judge_prompt_hash: str,
+    judge_model: str | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
     review_sample: dict[str, Any] | None = None,
     tool_search: bool | None = None,
+    store: str | None = None,
 ) -> dict[str, Any]:
     """Wrap per-test entries in the run-log envelope.
 
@@ -626,6 +628,10 @@ def build_run_log(
     passes it on every write, the default `True` included, so a new log says
     which way it ran; None omits it, and absence (every log written before the
     field) means on — no unit run could turn it off until the flag existed.
+
+    `store` is `"pg"` under `--store pg` and omitted on the file store, so
+    every earlier log keeps its bytes. It also picks the directory the log is
+    written to (`unit_dir_name`).
     """
     totals = {k: 0 for k in _TOTALS_KEYS}
     for entry in tests:
@@ -654,11 +660,25 @@ def build_run_log(
         "tests": tests,
         "totals": totals,
     }
+    # judge_model is optional (issue #2479 PR 1) — absent on logs that pre-date
+    # the field. Omit the key entirely when unknown so historical logs stay
+    # byte-identical rather than gaining a stray `"judge_model": null`.
+    if judge_model:
+        envelope["judge_model"] = judge_model
     if review_sample is not None:
         envelope["review_sample"] = review_sample
     if tool_search is not None:
         envelope["tool_search"] = tool_search
+    if store is not None:
+        envelope["store"] = store
     return envelope
+
+
+def unit_dir_name(store: str | None) -> str:
+    """The run-log subdirectory under the runlogs root: `unit` for the file
+    store, `unit-pg` for a `--store pg` run (U15), so no Postgres log ever sits
+    in a skill's release lineage or reaches `check_runlogs`."""
+    return "unit-pg" if store == "pg" else "unit"
 
 
 # ---- Schema validation ----------------------------------------------------
@@ -695,7 +715,7 @@ def write_run_log(
     filename: str,
     on_prune: Callable[[list[Path]], None] | None = None,
 ) -> Path:
-    """Write `log` to `<runlogs_root>/unit/<skill>/<filename>`.
+    """Write `log` to `<runlogs_root>/<unit_dir_name(store)>/<skill>/<filename>`.
 
     Spills per-run `text_response` payloads >100KB to sidecar files
     under `runs/<run_id>.text.md` (replaces the string with `{"ref": ...}`).
@@ -706,7 +726,7 @@ def write_run_log(
     timestamp.
     """
     skill = log["skill"]
-    target_dir = Path(runlogs_root) / "unit" / skill
+    target_dir = Path(runlogs_root) / unit_dir_name(log.get("store")) / skill
     target_dir.mkdir(parents=True, exist_ok=True)
 
     for test in log.get("tests", []):
@@ -849,10 +869,15 @@ def _replace_with_retry(src: Path, dst: Path, *, attempts: int = 8) -> None:
 _PARTIAL_PREFIX = ".partial_"
 
 
-def partial_runlog_path(runlogs_root: Path, skill: str, timestamp: str) -> Path:
+def partial_runlog_path(
+    runlogs_root: Path, skill: str, timestamp: str, store: str | None = None
+) -> Path:
     """The dotfile path the in-progress partial envelope is written to."""
     return (
-        Path(runlogs_root) / "unit" / skill / f"{_PARTIAL_PREFIX}{timestamp}.json"
+        Path(runlogs_root)
+        / unit_dir_name(store)
+        / skill
+        / f"{_PARTIAL_PREFIX}{timestamp}.json"
     )
 
 
@@ -872,7 +897,7 @@ def write_partial_runlog(
     SIGKILL mid-write leaves the previous good partial intact. Validates
     against the v2 schema before writing.
     """
-    out = partial_runlog_path(runlogs_root, skill, timestamp)
+    out = partial_runlog_path(runlogs_root, skill, timestamp, log.get("store"))
     out.parent.mkdir(parents=True, exist_ok=True)
     validate_run_log(log)
     tmp = out.parent / (out.name + ".tmp")

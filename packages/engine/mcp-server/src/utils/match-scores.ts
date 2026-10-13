@@ -78,7 +78,7 @@ export interface RecordedMatchScore {
   tree_person_id: string;
   /** 0-1 from FamilySearch. The number a `match_score` is checked against. */
   score: number;
-  /** 1-10 bucket; absent when the API treats the pair as a non-match. */
+  /** 1-5 bucket; absent when the API treats the pair as a non-match. */
   confidence?: number;
   matched: boolean;
   /** The assertion the call was made for. Half the map key, with

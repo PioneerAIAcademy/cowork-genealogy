@@ -719,6 +719,19 @@ def test_unknown_test_id_returns_empty(tmp_path):
     assert specs == []
 
 
+def test_select_several_ids_in_order(tmp_path):
+    root = _make_tests_dir(tmp_path)
+    args = run_tests._build_parser().parse_args(["--test", "ut_b_001", "ut_a_002", "ut_b_001"])
+    assert [s.id for s in run_tests._select_tests(args, root)] == ["ut_b_001", "ut_a_002"]
+
+
+def test_one_unknown_id_among_several_selects_nothing(tmp_path, capsys):
+    root = _make_tests_dir(tmp_path)
+    args = run_tests._build_parser().parse_args(["--test", "ut_b_001", "ut_typo"])
+    assert run_tests._select_tests(args, root) == []
+    assert "ut_typo" in capsys.readouterr().err
+
+
 # --- concurrency -----------------------------------------------------------
 
 
@@ -1668,7 +1681,7 @@ def test_summary_ignores_non_judge_warning_kinds():
 #: EVERY harness file — closing the file-blindness of the retired two-file
 #: scan — without tripping on these. The guardrail-shadow kinds are built from
 #: constants (``"kind": SOME_KIND``), so the literal regex never sees them.
-_NON_WARNING_KIND_LITERALS = {"none", "predicate", "queue", "queue_reused", "live"}
+_NON_WARNING_KIND_LITERALS = {"none", "predicate", "queue", "queue_reused", "live", "staged_ref_refused"}
 
 
 def test_every_literal_warning_kind_in_the_harness_is_registered():

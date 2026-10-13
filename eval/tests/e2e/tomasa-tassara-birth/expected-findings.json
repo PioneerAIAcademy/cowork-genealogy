@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Tomasa Tassara was born about 1864 in Buenos Aires, Argentina, according to the 1895 national census, which lists her as a married woman in the rural first district (Cuartel 01) of Mercedes, Buenos Aires; the year is computed from her census age.",
+      "details": {
+        "subject_person": "Tomasa Tassara (GW82-2VP)",
+        "fact_type": "Birth",
+        "date": "about 1864",
+        "place": "Buenos Aires, Argentina"
+      },
+      "supporting_sources": [
+        "Argentina, National Census, 1895 — household entry for Tomasa Tassara, Cuartel 01 (Población rural), Mercedes, Buenos Aires, born 1864"
+      ],
+      "required": true
+    }
+  ]
+}

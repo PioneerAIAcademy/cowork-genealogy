@@ -1,0 +1,1443 @@
+{
+  "schema_version": 3,
+  "skill": "citation",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/citation.md": "449bfea09f068d08d2c9ab4982516379f7bbf5c88229c91d9e08d0536f6a1730",
+    "eval/tests/unit/citation/authored-county-history-citation.json": "944a7141924efeb1d2f4621f265d40a17cafe2c27ba82f939fa94a2cb9c86546",
+    "eval/tests/unit/citation/birth-certificate-citation.json": "4c7aa4de77618ac55ef08833293182585171d57d7e8ec12a3f220938cd3058ac",
+    "eval/tests/unit/citation/church-baptismal-citation.json": "16cc03677dd18287891c9a13d30c77f0714de9da04ce306e47611b40b74fb80d",
+    "eval/tests/unit/citation/citation-replication-test.json": "a3e5370810bc9c4c439eb9a088805166780a6b5c09c6b8b2ba2c0e46f9d9ffca",
+    "eval/tests/unit/citation/fabrication-guardrail-probate.json": "f8a9f01f088f3e9605e3c1b7cb7cae061c0f08c884938792ddab879f6d872ffa",
+    "eval/tests/unit/citation/findagrave-reliability-citation.json": "8f8cadf6b90336fb41acf4438019fae248d828e3f6d8f6573e297f65fb7c8461",
+    "eval/tests/unit/citation/fix-derivative-census-citation.json": "fecca04b6b91a12e6c75693343721f54cb7f0d7f615057b64f2afd05bd0f805e",
+    "eval/tests/unit/citation/land-deed-citation.json": "7a7071d7f7c05d3c95d7f91ef77513afbdc93b42de3b9a9bbc96461b1d600e7c",
+    "eval/tests/unit/citation/missing-locator-flagging.json": "6ed4414b32670ca86b3c71e3b2bddce966a58e3e0774f1da9e65c683cbdfe1cb",
+    "eval/tests/unit/citation/negative-search-citation.json": "2ab3bf09939472624aba800a0f970231bd721361256c3fc064e821ba1a8ee80b",
+    "eval/tests/unit/citation/newspaper-citation.json": "ba1d007a5003f4bb506e743bd7777ee46191ace72360ded3bbf9e20c39e34aa9",
+    "eval/tests/unit/citation/original-record-not-authored-citation.json": "b150146fcf080d0c1d2617d7e19ecb840e8e1b8d77ac1eec5416ef07ee548adf",
+    "eval/tests/unit/citation/probate-will-citation.json": "31f97456171ad040ae15168a1184ca4d258fe2c9bde8ad0307c399cbba2f7069",
+    "eval/tests/unit/citation/refine-census-citation.json": "aef13e637dc338e28e2cc4e9c8f609f348c1e4a43074c63b6c0510d0abe44712",
+    "eval/tests/unit/citation/refuse-new-source-creation.json": "8fe5e10801d6f69072a45756b092f9c75020c329984ac82c68f7d40ee0de339f",
+    "eval/tests/unit/citation/review-1860-census-citation.json": "2256305d22592e89c335dadbeaf57e888752b6c02105d074af0645f903eaa31a",
+    "eval/tests/unit/citation/rubric.md": "00a7e64ca0f879813ff38a15d74a65489c338043cfb3e3a0220cc8a0cb1c3765",
+    "eval/tests/unit/citation/terminology-guardrail.json": "306c25b7b5c0dda5eaa504bb6b56b44dd0331325ddd6866cb66f22e0be3858ec",
+    "eval/tests/unit/citation/url-only-expansion.json": "c6a3acfdef2895cacf054ff981a82af0ff13af218098306cda9b25d3492eaed5",
+    "eval/fixtures/scenarios/citation-authored-sources/README.md": "f363f13c6f87d6517abe6806afe48d42685496db1baf4983848eeca72ea18adb",
+    "eval/fixtures/scenarios/citation-authored-sources/research.json": "962f560c1bb13bd5682a496c02f7dd1e31b6b98e74de961a4361e626ae9957f8",
+    "eval/fixtures/scenarios/citation-authored-sources/tree.gedcomx.json": "66caa8f3ae24fe64091da2245fb0e79dd70e5a20d920ae2c9226c353dba3e29b",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/validate-research-schema.json": "0d794d9b0d5461968cecdc6ca7a9c59c4c14ea588ea1b02fdee9aa0436a0572b",
+    "eval/fixtures/mcp/wiki-read-pennsylvania-probate-records.json": "8a9204c6b1edf06be99bd18334f499a9652e0823ae2a28aec9d2e32f762b716e"
+  },
+  "tests": [
+    {
+      "test_id": "ut_citation_012",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly declined to perform the citation task and accurately identified that record-extraction must be run first to add the marriage record as a source. The response is factually accurate: citation does refine existing sources, and the workflow requires extraction before citation refinement. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the requirement of this negative test: declining the citation task and routing to record-extraction. The response names the correct next step (record-extraction) and explains why (the record must be added as a source first). The decline is complete and unambiguous, with no offer to handle both steps or to create the entry later."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for this negative test. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly declined to perform the citation task and accurately identified that record-extraction must be run first to add the marriage record as a source. The response is factually accurate: citation does refine existing sources, and the workflow requires extraction before citation refinement. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the requirement of this negative test: declining the citation task and routing to record-extraction. The response names the correct next step (record-extraction) and explains why (the record must be added as a source first). The decline is complete and unambiguous, with no offer to handle both steps or to create the entry later."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for this negative test. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7311.483915997087,
+        "duration_api_ms": 6944.0,
+        "judge_duration_ms": 3727.6692079904024,
+        "wall_clock_ms": 11273.16689491272,
+        "num_turns": 2,
+        "input_tokens": 553,
+        "cached_input_tokens": 30625,
+        "cache_creation_input_tokens": 24817,
+        "output_tokens": 257,
+        "judge_input_tokens": 11281,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 333,
+        "skill_cost_usd": 0.10652124999999998,
+        "judge_cost_usd": 0.012946,
+        "total_cost_usd": 0.11946724999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_citation_012_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 7311.483915997087,
+          "duration_api_ms": 6944.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 553,
+          "cached_input_tokens": 30625,
+          "cache_creation_input_tokens": 24817,
+          "output_tokens": 257,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 547,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006219999999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 242,
+              "cacheReadInputTokens": 30625,
+              "cacheCreationInputTokens": 24817,
+              "webSearchRequests": 0,
+              "costUSD": 0.10589925,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "citation",
+              "description": "Citation agent delegation",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 31,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 31,
+                "cache_read_input_tokens": 2717,
+                "cache_creation_input_tokens": 11749
+              },
+              "peak_window_tokens": 14469,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 1.737
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20633,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.10652124999999998,
+          "output": {
+            "text_response": "Citation only refines existing sources \u2014 please run record-extraction first to add this record, then come back and I'll polish its citation.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Citation agent delegation",
+                  "prompt": "The researcher has just found a marriage record for Patrick Flynn, 1868, Schuylkill County. Add it as a source and format its citation.\n\nprojectPath: <workspace>",
+                  "subagent_type": "citation"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "citation",
+                "text": "Citation only refines existing sources \u2014 please run record-extraction first to add this record, then come back and I'll polish its citation."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_creator_not_in_custody",
+                "passed": true,
+                "error": "skipped: negative test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_does_not_add_new_source_entries",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_informant_not_in_who",
+                "passed": true,
+                "error": "skipped: negative test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_invented_locators_persisted",
+                "passed": true,
+                "error": "skipped: negative test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_skill_example_values_persisted",
+                "passed": true,
+                "error": "skipped: negative test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_preserves_src001_original_classification",
+                "passed": true,
+                "error": "skipped: not a preserves-src001-original scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_probate_office_came_from_the_wiki",
+                "passed": true,
+                "error": "skipped: only applies to probate tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_unknown_markers_framework_only",
+                "passed": true,
+                "error": "skipped: negative test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly declined to perform the citation task and accurately identified that record-extraction must be run first to add the marriage record as a source. The response is factually accurate: citation does refine existing sources, and the workflow requires extraction before citation refinement. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the requirement of this negative test: declining the citation task and routing to record-extraction. The response names the correct next step (record-extraction) and explains why (the record must be added as a source first). The decline is complete and unambiguous, with no offer to handle both steps or to create the entry later."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for this negative test. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened."
+              }
+            ],
+            "judge_cost_usd": 0.012946,
+            "duration_ms": 3727.6692079904024,
+            "error": null,
+            "input_tokens": 11281,
+            "cached_input_tokens": 0,
+            "output_tokens": 333
+          },
+          "started_at": 1791848133.7011101,
+          "ended_at": 1791848144.974277
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_citation_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "validate-research-schema"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude's response accurately describes src_003's citation as complete and well-formed. All claims are supported by the before-state data: the citation string, citation_detail fields, and source description S2 all match what Claude reports. The assessment that the citation meets Evidence Explained standards is correct\u2014all five EE elements (who, what, when, where, where_within) are present with specific data (NARA M653, roll 1141, dwelling 112, family 119). No fabricated details or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the delegation's request to check src_003's citation and confirm it meets Evidence Explained standards. The response examined all relevant fields (citation string and citation_detail), verified each EE element, confirmed the NARA microfilm locators and dwelling/family numbers, and explicitly stated no changes are needed. The task was completed without omission."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill reviewed the citation from the before-state data without invoking any tools. This is appropriate for a review-only task where the source entry was already on file and no modifications or validations were required."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence Explained compliance",
+            "score": 3,
+            "rationale": "Claude correctly confirmed that src_003's citation contains all five EE elements: who (U.S. Census Bureau), what (1860 U.S. Federal Census, population schedule), when_created (1860), when_accessed (2026-05-02), where (FamilySearch.org with NARA microfilm M653, roll 1141), and where_within (Schuylkill County, dwelling 112, family 119). Each element is populated with specific data appropriate to the source type. No elements are missing or generic."
+          },
+          {
+            "source": "rubric",
+            "name": "Replication test",
+            "score": 3,
+            "rationale": "Claude correctly identified that src_003's citation carries all necessary locators for replication: NARA microfilm publication M653, roll 1141, Schuylkill County, dwelling 112, and family 119. These locators are all present in the before-state citation_detail and citation string. A genealogist following this citation would arrive at the exact record. No locators on file were omitted, and no invented locators were added."
+          },
+          {
+            "source": "rubric",
+            "name": "Source vs information distinction",
+            "score": 3,
+            "rationale": "No source was created or modified in this run\u2014Claude reviewed an existing citation without persisting changes. Per the rubric, when no source is created or modified, this dimension scores pass. The source_classification on file (original) correctly reflects the 1860 census as an original source, not confused with information quality."
+          },
+          {
+            "source": "rubric",
+            "name": "Source fidelity \u2014 no fabricated detail",
+            "score": 3,
+            "rationale": "Claude's response contains no fabricated details. Every concrete value cited (NARA M653, roll 1141, dwelling 112, family 119, FamilySearch.org, access date 2026-05-02, Schuylkill County) is traceable to the before-state src_003 entry. Claude correctly refrained from inventing township, ward, page, sheet, line, or image numbers\u2014the per-test context explicitly forbids such additions. The response accurately reports what is on file without embellishment."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool usage \u2014 the write path",
+            "score": 3,
+            "rationale": "No changes were made to research.json or tree.gedcomx.json. The skill correctly reviewed the citation without invoking research_append or validate_research_schema, which is appropriate when no modifications are required. The per-test context explicitly states the citation should remain fundamentally unchanged if already EE-compliant, and Claude honored that instruction by making no writes."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude's response accurately describes src_003's citation as complete and well-formed. All claims are supported by the before-state data: the citation string, citation_detail fields, and source description S2 all match what Claude reports. The assessment that the citation meets Evidence Explained standards is correct\u2014all five EE elements (who, what, when, where, where_within) are present with specific data (NARA M653, roll 1141, dwelling 112, family 119). No fabricated details or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the delegation's request to check src_003's citation and confirm it meets Evidence Explained standards. The response examined all relevant fields (citation string and citation_detail), verified each EE element, confirmed the NARA microfilm locators and dwelling/family numbers, and explicitly stated no changes are needed. The task was completed without omission."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill reviewed the citation from the before-state data without invoking any tools. This is appropriate for a review-only task where the source entry was already on file and no modifications or validations were required."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence Explained compliance",
+            "score": 3,
+            "rationale": "Claude correctly confirmed that src_003's citation contains all five EE elements: who (U.S. Census Bureau), what (1860 U.S. Federal Census, population schedule), when_created (1860), when_accessed (2026-05-02), where (FamilySearch.org with NARA microfilm M653, roll 1141), and where_within (Schuylkill County, dwelling 112, family 119). Each element is populated with specific data appropriate to the source type. No elements are missing or generic."
+          },
+          {
+            "source": "rubric",
+            "name": "Replication test",
+            "score": 3,
+            "rationale": "Claude correctly identified that src_003's citation carries all necessary locators for replication: NARA microfilm publication M653, roll 1141, Schuylkill County, dwelling 112, and family 119. These locators are all present in the before-state citation_detail and citation string. A genealogist following this citation would arrive at the exact record. No locators on file were omitted, and no invented locators were added."
+          },
+          {
+            "source": "rubric",
+            "name": "Source vs information distinction",
+            "score": 3,
+            "rationale": "No source was created or modified in this run\u2014Claude reviewed an existing citation without persisting changes. Per the rubric, when no source is created or modified, this dimension scores pass. The source_classification on file (original) correctly reflects the 1860 census as an original source, not confused with information quality."
+          },
+          {
+            "source": "rubric",
+            "name": "Source fidelity \u2014 no fabricated detail",
+            "score": 3,
+            "rationale": "Claude's response contains no fabricated details. Every concrete value cited (NARA M653, roll 1141, dwelling 112, family 119, FamilySearch.org, access date 2026-05-02, Schuylkill County) is traceable to the before-state src_003 entry. Claude correctly refrained from inventing township, ward, page, sheet, line, or image numbers\u2014the per-test context explicitly forbids such additions. The response accurately reports what is on file without embellishment."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool usage \u2014 the write path",
+            "score": 3,
+            "rationale": "No changes were made to research.json or tree.gedcomx.json. The skill correctly reviewed the citation without invoking research_append or validate_research_schema, which is appropriate when no modifications are required. The per-test context explicitly states the citation should remain fundamentally unchanged if already EE-compliant, and Claude honored that instruction by making no writes."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 24845.654167002067,
+        "duration_api_ms": 24824.0,
+        "judge_duration_ms": 11951.195875008125,
+        "wall_clock_ms": 37033.74123573303,
+        "num_turns": 2,
+        "input_tokens": 542,
+        "cached_input_tokens": 45059,
+        "cache_creation_input_tokens": 41062,
+        "output_tokens": 1170,
+        "judge_input_tokens": 8251,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1082,
+        "skill_cost_usd": 0.1854862,
+        "judge_cost_usd": 0.013661,
+        "total_cost_usd": 0.1991472
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_citation_009_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 24845.654167002067,
+          "duration_api_ms": 24824.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 542,
+          "cached_input_tokens": 45059,
+          "cache_creation_input_tokens": 41062,
+          "output_tokens": 1170,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 535,
+              "outputTokens": 12,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000595,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 1158,
+              "cacheReadInputTokens": 45059,
+              "cacheCreationInputTokens": 41062,
+              "webSearchRequests": 0,
+              "costUSD": 0.1848912,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "citation",
+              "description": "Citation check for src_003",
+              "num_assistant_turns": 4,
+              "max_output_tokens": 491,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 703,
+                "cache_read_input_tokens": 17165,
+                "cache_creation_input_tokens": 27549
+              },
+              "peak_window_tokens": 30267,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 16.917
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21078,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.1854862,
+          "output": {
+            "text_response": "**src_003's citation is already complete and meets Evidence Explained standards.** Here's what the agent confirmed:\n\n**Citation on file:**\n> 1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n\n**Why it passes EE standards:**\n- \u2705 **Who** \u2013 Creator is the U.S. Census Bureau (not the repository)\n- \u2705 **What** \u2013 Record identified at document level with full population-schedule title\n- \u2705 **When created** \u2013 1860\n- \u2705 **When accessed** \u2013 2026-05-02\n- \u2705 **Where** \u2013 FamilySearch.org, layered over NARA microfilm M653, roll 1141\n- \u2705 **Where within** \u2013 Schuylkill County, dwelling 112, family 119\n\nNo changes are needed. The citation is sufficiently specific that another researcher could navigate directly to the same record using just the information provided.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Citation check for src_003",
+                  "prompt": "Check src_003's citation and confirm it meets Evidence Explained standards.\n\nsourceId: src_003\nprojectPath: <workspace>",
+                  "subagent_type": "citation"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_citation_009-0-0-ec6cuv62/research.json"
+                },
+                "agent_id": "ad1820f54ef330fb0"
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_citation_009-0-0-ec6cuv62/tree.gedcomx.json"
+                },
+                "agent_id": "ad1820f54ef330fb0"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "citation",
+                "text": "src_003's citation is already complete and well-formed. Here are the details on file:\n\n**src_003**\n```\n1860 U.S. Census, Schuylkill County, Pennsylvania, population schedule, dwelling 112, family 119, Thomas Flynn household; NARA microfilm publication M653, roll 1141; digital image, FamilySearch.org, accessed 2 May 2026.\n```\n\n```json\n{\n  \"who\": \"U.S. Census Bureau\",\n  \"what\": \"1860 U.S. Federal Census, population schedule\",\n  \"when_created\": \"1860\",\n  \"when_accessed\": \"2026-05-02\",\n  \"where\": \"FamilySearch.org (NARA microfilm M653, roll 1141)\",\n  \"where_within\": \"Schuylkill County, dwelling 112, family 119\"\n}\n```\n\nThis citation meets Evidence Explained standards. All six fields are present and correct: the creator is the U.S. Census Bureau (not the repository), the record is identified at the document level with the full population-schedule title, the NARA microfilm series and roll number are supplied, the access path layers FamilySearch over the microfilm medium, the access date is recorded, and the locator names county, dwelling, and family number. The citation string follows the EE census pattern throughout, and `tree.gedcomx.json` confirms `author: \"U.S. Census Bureau\"` on source description S2, consistent with `who`. No changes are needed.\n\n---\n\nThe 1860 census source note for the Thomas Flynn household now carries a fully verified citation \u2014 another researcher could open FamilySearch, locate NARA microfilm M653, roll 1141, and navigate directly to Schuylkill County, dwelling 112, family 119 to find the same record. Nothing is missing from this citation.\n\nIf you'd like, the next step would be to run the same check on any of the other sources in the project, several of which (src_005 through src_009) still carry rough working citations flagged for refinement."
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: src_003"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_creator_not_in_custody",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_does_not_add_new_source_entries",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_informant_not_in_who",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_invented_locators_persisted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_skill_example_values_persisted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preserves_src001_original_classification",
+                "passed": true,
+                "error": "skipped: not a preserves-src001-original scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_probate_office_came_from_the_wiki",
+                "passed": true,
+                "error": "skipped: only applies to probate tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_unknown_markers_framework_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude's response accurately describes src_003's citation as complete and well-formed. All claims are supported by the before-state data: the citation string, citation_detail fields, and source description S2 all match what Claude reports. The assessment that the citation meets Evidence Explained standards is correct\u2014all five EE elements (who, what, when, where, where_within) are present with specific data (NARA M653, roll 1141, dwelling 112, family 119). No fabricated details or unsupported claims appear."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the delegation's request to check src_003's citation and confirm it meets Evidence Explained standards. The response examined all relevant fields (citation string and citation_detail), verified each EE element, confirmed the NARA microfilm locators and dwelling/family numbers, and explicitly stated no changes are needed. The task was completed without omission."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill reviewed the citation from the before-state data without invoking any tools. This is appropriate for a review-only task where the source entry was already on file and no modifications or validations were required."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence Explained compliance",
+                "score": 3,
+                "rationale": "Claude correctly confirmed that src_003's citation contains all five EE elements: who (U.S. Census Bureau), what (1860 U.S. Federal Census, population schedule), when_created (1860), when_accessed (2026-05-02), where (FamilySearch.org with NARA microfilm M653, roll 1141), and where_within (Schuylkill County, dwelling 112, family 119). Each element is populated with specific data appropriate to the source type. No elements are missing or generic."
+              },
+              {
+                "source": "rubric",
+                "name": "Replication test",
+                "score": 3,
+                "rationale": "Claude correctly identified that src_003's citation carries all necessary locators for replication: NARA microfilm publication M653, roll 1141, Schuylkill County, dwelling 112, and family 119. These locators are all present in the before-state citation_detail and citation string. A genealogist following this citation would arrive at the exact record. No locators on file were omitted, and no invented locators were added."
+              },
+              {
+                "source": "rubric",
+                "name": "Source vs information distinction",
+                "score": 3,
+                "rationale": "No source was created or modified in this run\u2014Claude reviewed an existing citation without persisting changes. Per the rubric, when no source is created or modified, this dimension scores pass. The source_classification on file (original) correctly reflects the 1860 census as an original source, not confused with information quality."
+              },
+              {
+                "source": "rubric",
+                "name": "Source fidelity \u2014 no fabricated detail",
+                "score": 3,
+                "rationale": "Claude's response contains no fabricated details. Every concrete value cited (NARA M653, roll 1141, dwelling 112, family 119, FamilySearch.org, access date 2026-05-02, Schuylkill County) is traceable to the before-state src_003 entry. Claude correctly refrained from inventing township, ward, page, sheet, line, or image numbers\u2014the per-test context explicitly forbids such additions. The response accurately reports what is on file without embellishment."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool usage \u2014 the write path",
+                "score": 3,
+                "rationale": "No changes were made to research.json or tree.gedcomx.json. The skill correctly reviewed the citation without invoking research_append or validate_research_schema, which is appropriate when no modifications are required. The per-test context explicitly states the citation should remain fundamentally unchanged if already EE-compliant, and Claude honored that instruction by making no writes."
+              }
+            ],
+            "judge_cost_usd": 0.013661,
+            "duration_ms": 11951.195875008125,
+            "error": null,
+            "input_tokens": 8251,
+            "cached_input_tokens": 0,
+            "output_tokens": 1082
+          },
+          "started_at": 1791847980.7528598,
+          "ended_at": 1791848017.786601
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_citation_018",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "validate-research-schema"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source classification. src_004 is correctly classified as 'original' per the source-classification framework. Claude's response accurately distinguishes between source type (Original/Derivative/Authored) and information quality (primary/secondary), and correctly notes that src_004 contains both primary information (death facts) and secondary information (birth facts from son-in-law). No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed the full scope of the request: (1) clarified the terminology distinction between source classification and information quality, (2) confirmed src_004's correct classification as 'original', (3) offered to refine the citation to Evidence Explained standards if desired. The request was in-scope for citation (wording/terminology), and Claude handled it appropriately rather than routing away. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill correctly declined to modify the source without first clarifying the terminology issue and confirming the user's intent. This is appropriate behavior for a request based on a conceptual misunderstanding."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence Explained compliance",
+            "score": 3,
+            "rationale": "Claude did not modify src_004's citation, so no new citation was created to evaluate. The response correctly explained that the existing citation's framework (Who/What/When/Where/Where-within in citation_detail) is appropriate, and that the terminology confusion ('primary source' vs. 'original source') is orthogonal to EE compliance. No citation was altered, so this dimension applies to the decision not to change it, which was correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Replication test",
+            "score": 3,
+            "rationale": "No citation was modified, so replication locators were not altered. Claude correctly refrained from inventing or changing locators in response to a terminology-based request. The existing src_004 citation remains unchanged and retains all on-file locators (certificate no. 4521, 1908 date, Pennsylvania State Archives, FamilySearch URL)."
+          },
+          {
+            "source": "rubric",
+            "name": "Source vs information distinction",
+            "score": 3,
+            "rationale": "Claude explicitly and correctly distinguished between source classification (Original/Derivative/Authored) and information quality (primary/secondary based on informant proximity). Claude correctly identified that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law). This is the precise distinction the rubric requires, and Claude articulated it clearly."
+          },
+          {
+            "source": "rubric",
+            "name": "Source fidelity \u2014 no fabricated detail",
+            "score": 3,
+            "rationale": "Claude made no changes to src_004's citation, citation_detail, or notes. No invented locators, dates, names, or repository details were introduced. Claude's response contained only explanatory text about terminology and offered future refinement without making unsupported additions. All claims in the response are traceable to the SKILL.md guardrail and the rubric framework."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool usage \u2014 the write path",
+            "score": 3,
+            "rationale": "No write operations were performed. Claude correctly declined to modify src_004 without first resolving the terminology confusion and confirming the user's actual intent. No research_append or validate_research_schema calls were needed because no changes were persisted. This is the correct behavior for a request based on a conceptual misunderstanding."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source classification. src_004 is correctly classified as 'original' per the source-classification framework. Claude's response accurately distinguishes between source type (Original/Derivative/Authored) and information quality (primary/secondary), and correctly notes that src_004 contains both primary information (death facts) and secondary information (birth facts from son-in-law). No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed the full scope of the request: (1) clarified the terminology distinction between source classification and information quality, (2) confirmed src_004's correct classification as 'original', (3) offered to refine the citation to Evidence Explained standards if desired. The request was in-scope for citation (wording/terminology), and Claude handled it appropriately rather than routing away. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The skill correctly declined to modify the source without first clarifying the terminology issue and confirming the user's intent. This is appropriate behavior for a request based on a conceptual misunderstanding."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence Explained compliance",
+            "score": 3,
+            "rationale": "Claude did not modify src_004's citation, so no new citation was created to evaluate. The response correctly explained that the existing citation's framework (Who/What/When/Where/Where-within in citation_detail) is appropriate, and that the terminology confusion ('primary source' vs. 'original source') is orthogonal to EE compliance. No citation was altered, so this dimension applies to the decision not to change it, which was correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Replication test",
+            "score": 3,
+            "rationale": "No citation was modified, so replication locators were not altered. Claude correctly refrained from inventing or changing locators in response to a terminology-based request. The existing src_004 citation remains unchanged and retains all on-file locators (certificate no. 4521, 1908 date, Pennsylvania State Archives, FamilySearch URL)."
+          },
+          {
+            "source": "rubric",
+            "name": "Source vs information distinction",
+            "score": 3,
+            "rationale": "Claude explicitly and correctly distinguished between source classification (Original/Derivative/Authored) and information quality (primary/secondary based on informant proximity). Claude correctly identified that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law). This is the precise distinction the rubric requires, and Claude articulated it clearly."
+          },
+          {
+            "source": "rubric",
+            "name": "Source fidelity \u2014 no fabricated detail",
+            "score": 3,
+            "rationale": "Claude made no changes to src_004's citation, citation_detail, or notes. No invented locators, dates, names, or repository details were introduced. Claude's response contained only explanatory text about terminology and offered future refinement without making unsupported additions. All claims in the response are traceable to the SKILL.md guardrail and the rubric framework."
+          },
+          {
+            "source": "rubric",
+            "name": "Tool usage \u2014 the write path",
+            "score": 3,
+            "rationale": "No write operations were performed. Claude correctly declined to modify src_004 without first resolving the terminology confusion and confirming the user's actual intent. No research_append or validate_research_schema calls were needed because no changes were persisted. This is the correct behavior for a request based on a conceptual misunderstanding."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 9929.065291988081,
+        "duration_api_ms": 9646.0,
+        "judge_duration_ms": 11105.798249991494,
+        "wall_clock_ms": 21272.240161895752,
+        "num_turns": 2,
+        "input_tokens": 541,
+        "cached_input_tokens": 30612,
+        "cache_creation_input_tokens": 24868,
+        "output_tokens": 428,
+        "judge_input_tokens": 8110,
+        "judge_cached_input_tokens": 6978,
+        "judge_output_tokens": 1009,
+        "skill_cost_usd": 0.1092816,
+        "judge_cost_usd": 0.013852799999999998,
+        "total_cost_usd": 0.1231344
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_citation_018_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 9929.065291988081,
+          "duration_api_ms": 9646.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 541,
+          "cached_input_tokens": 30612,
+          "cache_creation_input_tokens": 24868,
+          "output_tokens": 428,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 535,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 415,
+              "cacheReadInputTokens": 30612,
+              "cacheCreationInputTokens": 24868,
+              "webSearchRequests": 0,
+              "costUSD": 0.10868160000000002,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "citation",
+              "description": "Citation update for src_004",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 125,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 125,
+                "cache_read_input_tokens": 2717,
+                "cache_creation_input_tokens": 11734
+              },
+              "peak_window_tokens": 14454,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 3.796
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20699,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.1092816,
+          "output": {
+            "text_response": "That's an evidence-quality question \u2014 record-extraction owns evidence classification.\n\nTo clarify the terminology: sources themselves are classified as **Original, Derivative, or Authored** \u2014 not \"primary\" or \"secondary.\" The terms \"primary\" and \"secondary\" apply to the quality of the *information* (how close the informant was to the event), not to the source itself. Evidence classification belongs to record-extraction, not this agent.\n\nIf you'd like the citation for `src_004` refined to meet Evidence Explained standards, the citation agent is happy to do that.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Citation update for src_004",
+                  "prompt": "Update src_004's citation to mention that it is a primary source.\n\nsourceId: src_004\nprojectPath: <workspace>",
+                  "subagent_type": "citation"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "citation",
+                "text": "That's an evidence-quality question \u2014 record-extraction owns evidence classification.\n\nTo clarify the terminology: sources themselves are classified as Original, Derivative, or Authored \u2014 not \"primary\" or \"secondary.\" The terms \"primary\" and \"secondary\" apply to the quality of the *information* (how close the informant was to the event), not to the source itself. Evidence classification belongs to record-extraction, not this agent.\n\nIf you'd like me to refine `src_004`'s citation to meet Evidence Explained standards, I'm happy to do that."
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: src_004"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_creator_not_in_custody",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_does_not_add_new_source_entries",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_informant_not_in_who",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_invented_locators_persisted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_skill_example_values_persisted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preserves_src001_original_classification",
+                "passed": true,
+                "error": "skipped: not a preserves-src001-original scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_probate_office_came_from_the_wiki",
+                "passed": true,
+                "error": "skipped: only applies to probate tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_unknown_markers_framework_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source classification. src_004 is correctly classified as 'original' per the source-classification framework. Claude's response accurately distinguishes between source type (Original/Derivative/Authored) and information quality (primary/secondary), and correctly notes that src_004 contains both primary information (death facts) and secondary information (birth facts from son-in-law). No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude addressed the full scope of the request: (1) clarified the terminology distinction between source classification and information quality, (2) confirmed src_004's correct classification as 'original', (3) offered to refine the citation to Evidence Explained standards if desired. The request was in-scope for citation (wording/terminology), and Claude handled it appropriately rather than routing away. No required elements were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The skill correctly declined to modify the source without first clarifying the terminology issue and confirming the user's intent. This is appropriate behavior for a request based on a conceptual misunderstanding."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence Explained compliance",
+                "score": 3,
+                "rationale": "Claude did not modify src_004's citation, so no new citation was created to evaluate. The response correctly explained that the existing citation's framework (Who/What/When/Where/Where-within in citation_detail) is appropriate, and that the terminology confusion ('primary source' vs. 'original source') is orthogonal to EE compliance. No citation was altered, so this dimension applies to the decision not to change it, which was correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Replication test",
+                "score": 3,
+                "rationale": "No citation was modified, so replication locators were not altered. Claude correctly refrained from inventing or changing locators in response to a terminology-based request. The existing src_004 citation remains unchanged and retains all on-file locators (certificate no. 4521, 1908 date, Pennsylvania State Archives, FamilySearch URL)."
+              },
+              {
+                "source": "rubric",
+                "name": "Source vs information distinction",
+                "score": 3,
+                "rationale": "Claude explicitly and correctly distinguished between source classification (Original/Derivative/Authored) and information quality (primary/secondary based on informant proximity). Claude correctly identified that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law). This is the precise distinction the rubric requires, and Claude articulated it clearly."
+              },
+              {
+                "source": "rubric",
+                "name": "Source fidelity \u2014 no fabricated detail",
+                "score": 3,
+                "rationale": "Claude made no changes to src_004's citation, citation_detail, or notes. No invented locators, dates, names, or repository details were introduced. Claude's response contained only explanatory text about terminology and offered future refinement without making unsupported additions. All claims in the response are traceable to the SKILL.md guardrail and the rubric framework."
+              },
+              {
+                "source": "rubric",
+                "name": "Tool usage \u2014 the write path",
+                "score": 3,
+                "rationale": "No write operations were performed. Claude correctly declined to modify src_004 without first resolving the terminology confusion and confirming the user's actual intent. No research_append or validate_research_schema calls were needed because no changes were persisted. This is the correct behavior for a request based on a conceptual misunderstanding."
+              }
+            ],
+            "judge_cost_usd": 0.013852799999999998,
+            "duration_ms": 11105.798249991494,
+            "error": null,
+            "input_tokens": 8110,
+            "cached_input_tokens": 6978,
+            "output_tokens": 1009
+          },
+          "started_at": 1791848145.065011,
+          "ended_at": 1791848166.3372512
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 42086.203374987235,
+    "duration_api_ms": 41414.0,
+    "judge_duration_ms": 26784.66333299002,
+    "num_turns": 6,
+    "input_tokens": 1636,
+    "cached_input_tokens": 106296,
+    "cache_creation_input_tokens": 90747,
+    "output_tokens": 1855,
+    "judge_input_tokens": 27642,
+    "judge_cached_input_tokens": 6978,
+    "judge_output_tokens": 2424,
+    "skill_cost_usd": 0.4012890499999999,
+    "judge_cost_usd": 0.0404598,
+    "total_cost_usd": 0.44174884999999997,
+    "wall_clock_ms": 185584.39135551453
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

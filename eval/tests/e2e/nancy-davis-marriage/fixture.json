@@ -1,0 +1,19 @@
+{
+  "id": "nancy-davis-marriage",
+  "name": "Nancy Davis — marriage in May 1868, Newton County, Missouri",
+  "genre": "record-hint",
+  "source_pid": "LJK2-JBH",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Nancy Davis, born about 1837 in Bradley County, Tennessee, and living in Neosho, Newton County, Missouri in 1850, marry William James Brewer?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1860s",
+    "geography": "US-MO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 27, hint-samples.csv row 896, flag adds_marriage, confidence 3). Draft transcribed from an 1868 Newton County, Missouri marriage record; unverified."
+}

@@ -1,0 +1,35 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Elio María Méndez married Domitila Castro on 3 July 1924 in Santa Bárbara, Guaraque, Mérida, Venezuela; the civil registration names her parents as Vicente Castro and Rosalina Rosalez.",
+      "details": {
+        "subject_person": "Elio María Méndez (PQLG-9J4)",
+        "fact_type": "Marriage",
+        "date": "3 July 1924",
+        "place": "Santa Bárbara, Guaraque, Guaraque, Mérida, Venezuela"
+      },
+      "supporting_sources": [
+        "Venezuela, Registro Civil, 1843-2021 — marriage entry for Elio María Méndez and Domitila Castro, 3 de julio de 1924"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "relationship",
+      "description": "Elio María Méndez was the son of Ángel Méndez and Magdalena Luna, as named on his 1924 marriage registration.",
+      "details": {
+        "subject_person": "Elio María Méndez (PQLG-9J4)",
+        "relation": "parents",
+        "target_person": {
+          "name": "Ángel Méndez and Magdalena Luna"
+        }
+      },
+      "supporting_sources": [
+        "Venezuela, Registro Civil, 1843-2021 — marriage entry for Elio María Méndez and Domitila Castro, 3 de julio de 1924, naming his parents Ángel Méndez and Magdalena Luna"
+      ],
+      "required": true
+    }
+  ]
+}

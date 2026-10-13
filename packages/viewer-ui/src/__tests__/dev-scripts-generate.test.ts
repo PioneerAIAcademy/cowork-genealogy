@@ -15,10 +15,10 @@ import { fileURLToPath } from 'node:url'
  * generated file and no path that would write one, and vite died on
  * `Failed to resolve import "./enums.generated.js"`.
  *
- * That is the whole launch surface for the Research Viewer: `make electron`,
- * `eval\Viewer.bat`, and the raw `pnpm --filter @genealogy/electron dev` the
- * alpha guide gives macOS/Linux users all bottom out in this one script, so
- * chaining it here is what makes all three self-healing.
+ * That is the whole launch surface for running the Research Viewer from a
+ * checkout: `make electron`, `eval\Viewer.bat`, and the root
+ * `pnpm dev:electron` all bottom out in this one script, so chaining it here is
+ * what makes all three self-healing.
  *
  * Lives in viewer-ui for the same reason as gen-enums-guards.test.ts:
  * packages/schema has no test script and viewer-ui's vitest reaches it.
