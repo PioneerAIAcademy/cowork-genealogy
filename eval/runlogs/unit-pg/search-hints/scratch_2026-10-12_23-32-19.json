@@ -1,0 +1,447 @@
+{
+  "schema_version": 3,
+  "skill": "search-hints",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/search-hints.md": "fb1d607125ed102a52d64f7c4923e40f5a6c70ac59eb1d3dae0a50298acad026",
+    "eval/tests/unit/search-hints/extracted-not-linked-triaged.json": "c406a825f83c8e36cc400c9981d11e0e1a947f149fbd53ee0a743b99bae63e09",
+    "eval/tests/unit/search-hints/image-before-reject.json": "467d71d1dcece6e8e8c4b343b220014a5310e1cb081f3f031bc78bae87a3805c",
+    "eval/tests/unit/search-hints/negative-attached-records-hand-back.json": "19fa54d051064a552c06cc865132f50ddb05d7659cdf445aa12532209f84feeb",
+    "eval/tests/unit/search-hints/record-verdicts.json": "10d1553737250a3c6dac3ec54bc5fa2437aaeca58c1465ca6c0b0f29d0159213",
+    "eval/tests/unit/search-hints/rubric.md": "1f3ecfda960bead7b7fa7c66e11b15f34b6b04dd60fc8dc33a6ce86f36d91c37",
+    "eval/tests/unit/search-hints/thin-evidence-not-enough.json": "4122ef40887dcea50af2eb5ca2acfbf41152b3231640e6c65503db35dedeba67",
+    "eval/tests/unit/search-hints/triage-pending-only.json": "f6138702ef7dd1cb455f2f40daefdd025183b7be6fe3a2b28dc8b8c80cdd0a3f",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/mid-research-flynn-unlinked/README.md": "572ccb31711414869c14a78218520cc378d436d13df86f74416e3e3eb7df2ad3",
+    "eval/fixtures/scenarios/mid-research-flynn-unlinked/research.json": "55c034e013935d716fec9ecee00af7298014746a9b75d343a24fe4d8d3ce70ff",
+    "eval/fixtures/scenarios/mid-research-flynn-unlinked/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/image-transcribe-any.json": "6c676e904eff96d56d50684a36523b8ab5035b10be5755f9f483df5ad984da32",
+    "eval/fixtures/mcp/image-transcribe-flynn-1880-census-m80c.json": "3d3b821bcdd400254bca7dbf8cc3b7cf90ed2059a913913e1df7907d216439e3",
+    "eval/fixtures/mcp/person-read-flynn.json": "74b5707d7f0456f53a02bbbebde2f1084f29e8a31cecd617456cc7ac4b80eb58",
+    "eval/fixtures/mcp/person-read-flynn-thomas-tf1.json": "9f8364746d583df01247e982a14e5643c6abc7022cad7bb1a4d3ffa0740489e1",
+    "eval/fixtures/mcp/person-record-matches-flynn.json": "012df0808b1a1d34c9adfb2bcecc111406f46297cb08727e9c3d05606a24969d",
+    "eval/fixtures/mcp/person-record-matches-flynn-pending.json": "0ebe63fa6acd237a7a243b46cea3b63f41d1b7ec20c839625bbe9b995a590273",
+    "eval/fixtures/mcp/person-record-matches-flynn-thomas-thin-pending.json": "9805c3e30b49d052f91ffb125a02fb3264401726c4d912002a8814c503456451",
+    "eval/fixtures/mcp/record-read-flynn-hint-1860-census-mabc.json": "912df1977295e8d778e7a339fdb5b2b4a56595ca70b170e945ad8e16eec30f7a",
+    "eval/fixtures/mcp/record-read-flynn-hint-1870-census-m70c.json": "8e104b5ab0ca7c84f274c288a5d8c95f4968786dc4bf5a8394ac73e655395790",
+    "eval/fixtures/mcp/record-read-flynn-hint-1880-census-m80c.json": "8906508790af83b47637d2f7e58ecc9f5baa5c8412a64b6fec9fc63483220bd5",
+    "eval/fixtures/mcp/record-read-flynn-hint-death-cert-mdef.json": "5f62d8de8e2208136ee7cfe75e736631a935920720a0f87bbbad0422ebc7af09",
+    "eval/fixtures/mcp/record-read-flynn-hint-naturalization-mthn.json": "3ba321a5cd61632f2f6b8bfe679b87c402e88e4f712ed506c2a788ac682fa99c"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_hints_005",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "person-record-matches-flynn"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the request asks which records are currently attached to Patrick Flynn on FamilySearch, and correctly determined this falls under tree-edit work rather than search-hints. The response accurately declines the task and routes to the appropriate skill (tree-edit) with clear reasoning. No factual errors or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the negative test requirement: declined to perform search-hints's own task, clearly named tree-edit as the appropriate routing destination, and provided caller-facing explanation before the handoff line. All required elements of a proper decline/route are present."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools and instead routed the request to tree-edit. This is the correct behavior for a negative test \u2014 N/A."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the request asks which records are currently attached to Patrick Flynn on FamilySearch, and correctly determined this falls under tree-edit work rather than search-hints. The response accurately declines the task and routes to the appropriate skill (tree-edit) with clear reasoning. No factual errors or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the negative test requirement: declined to perform search-hints's own task, clearly named tree-edit as the appropriate routing destination, and provided caller-facing explanation before the handoff line. All required elements of a proper decline/route are present."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools and instead routed the request to tree-edit. This is the correct behavior for a negative test \u2014 N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 11287.441749998834,
+        "duration_api_ms": 11679.0,
+        "judge_duration_ms": 3507.93791700562,
+        "wall_clock_ms": 15164.01219367981,
+        "num_turns": 2,
+        "input_tokens": 556,
+        "cached_input_tokens": 27926,
+        "cache_creation_input_tokens": 20938,
+        "output_tokens": 431,
+        "judge_input_tokens": 11119,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 312,
+        "skill_cost_usd": 0.0937883,
+        "judge_cost_usd": 0.012679000000000001,
+        "total_cost_usd": 0.1064673
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_hints_005_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 11287.441749998834,
+          "duration_api_ms": 11679.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 556,
+          "cached_input_tokens": 27926,
+          "cache_creation_input_tokens": 20938,
+          "output_tokens": 431,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 550,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00062,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 417,
+              "cacheReadInputTokens": 27926,
+              "cacheCreationInputTokens": 20938,
+              "webSearchRequests": 0,
+              "costUSD": 0.0931683,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "search-hints",
+              "description": "Check attached records for Patrick Flynn",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 109,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 109,
+                "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 7778
+              },
+              "peak_window_tokens": 7781,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 3.64
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20725,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0937883,
+          "output": {
+            "text_response": "The search-hints agent has handed this back, noting that listing already-attached records falls under **tree-edit**, not hint triage.\n\n**Search-hints** is for reviewing *pending* (unreviewed) hints \u2014 triaging whether to accept or reject them. Viewing *all records currently attached* to a person is a **tree-edit** task.\n\nTo see the records already attached to Patrick Flynn (LZNY-BRF), you'd want to ask the tree-edit agent: \"What records are attached to LZNY-BRF?\" \u2014 it can list them for you.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Check attached records for Patrick Flynn",
+                  "prompt": "Which records are already attached to Patrick Flynn, FamilySearch ID LZNY-BRF?\n\npersonId: LZNY-BRF\nprojectPath: <workspace>",
+                  "subagent_type": "search-hints"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "search-hints",
+                "text": "Hand-back: tree-edit \u2014 show records already attached to Patrick Flynn (LZNY-BRF)\n\n---\n\nThis request asks which records are currently attached to Patrick Flynn on FamilySearch, which means viewing all record matches regardless of their status (accepted, pending, or rejected). That falls under tree-edit work, not hint triage.\n\nThe researcher decides what happens next by asking the tree-edit agent to retrieve the attached records for person LZNY-BRF."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_extracted_unlinked_hint_is_triaged",
+                "passed": true,
+                "error": "skipped: not an extracted-not-linked test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hint_already_in_the_project_is_named",
+                "passed": true,
+                "error": "skipped: not an already-in-project test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hint_list_asks_for_pending_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_image_read_before_reject",
+                "passed": true,
+                "error": "skipped: not an image-before-reject test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_record_mode_logs_each_verdict",
+                "passed": true,
+                "error": "skipped: not a record-mode test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_thin_hint_is_not_enough_information",
+                "passed": true,
+                "error": "skipped: not a thin-evidence test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_triage_writes_nothing",
+                "passed": true,
+                "error": "skipped: not a triage test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that the request asks which records are currently attached to Patrick Flynn on FamilySearch, and correctly determined this falls under tree-edit work rather than search-hints. The response accurately declines the task and routes to the appropriate skill (tree-edit) with clear reasoning. No factual errors or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the negative test requirement: declined to perform search-hints's own task, clearly named tree-edit as the appropriate routing destination, and provided caller-facing explanation before the handoff line. All required elements of a proper decline/route are present."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools and instead routed the request to tree-edit. This is the correct behavior for a negative test \u2014 N/A."
+              }
+            ],
+            "judge_cost_usd": 0.012679000000000001,
+            "duration_ms": 3507.93791700562,
+            "error": null,
+            "input_tokens": 11119,
+            "cached_input_tokens": 0,
+            "output_tokens": 312
+          },
+          "started_at": 1791848214.079736,
+          "ended_at": 1791848229.2437482
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    }
+  ],
+  "totals": {
+    "duration_ms": 11287.441749998834,
+    "duration_api_ms": 11679.0,
+    "judge_duration_ms": 3507.93791700562,
+    "num_turns": 2,
+    "input_tokens": 556,
+    "cached_input_tokens": 27926,
+    "cache_creation_input_tokens": 20938,
+    "output_tokens": 431,
+    "judge_input_tokens": 11119,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 312,
+    "skill_cost_usd": 0.0937883,
+    "judge_cost_usd": 0.012679000000000001,
+    "total_cost_usd": 0.1064673,
+    "wall_clock_ms": 15164.01219367981
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}
