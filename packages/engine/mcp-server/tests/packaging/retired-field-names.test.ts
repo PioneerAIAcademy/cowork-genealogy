@@ -123,8 +123,6 @@ const ALLOWED: Record<string, string> = {
     "dated findings from a run corpus that used the retired name",
   "docs/deep-dives/conflict-resolution-findings-2026-08-27.md":
     "dated findings from a run corpus that used the retired name",
-  "eval/fixtures/scenarios/research-competing-parent-sets-no-hypotheses/README.md":
-    "a dated 2026-10-06 carve note; the source Cowork run predated the evidence_type → record_basis rename, and the line documents that the assertions were migrated",
 };
 
 const git = (...args: string[]) =>

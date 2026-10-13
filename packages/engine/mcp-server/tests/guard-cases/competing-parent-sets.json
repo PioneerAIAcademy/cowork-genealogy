@@ -1,0 +1,127 @@
+{
+  "guard": "competing-parent-sets",
+  "description": "A proof_summaries write when a person in scope has more than two ParentChild parents in the pre-call tree and no hypothesis lists the question in related_question_ids. Replayed by the research_append precondition (competingParentSetsInvariants).",
+  "format": "expect: fire | silent, judged for the summary named by `write` in `research` (the live document the write produces). `tree` holds the pre-call tree.gedcomx.json state. Every fire case carries a `shape`; a guard needs at least two distinct fire shapes and at least one silent case.",
+  "cases": [
+    {
+      "id": "claims-child-three-parents",
+      "expect": "fire",
+      "shape": "claims-with-competing-parents",
+      "why": "A claims[] proof whose child (prs-001) has three ParentChild parents in the tree, with no hypothesis listing the question.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable",
+            "claims": [
+              {
+                "claim": "paternity",
+                "proof_tier": "probable",
+                "relationship": { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" }
+              }
+            ]
+          }
+        ],
+        "hypotheses": [],
+        "project": { "subject_person_ids": ["prs-001"] }
+      }
+    },
+    {
+      "id": "scalar-subject-three-parents",
+      "expect": "fire",
+      "shape": "scalar-with-competing-parents",
+      "why": "A scalar proof (no claims[]) whose subject person (prs-001) has three ParentChild parents in the tree, with no hypothesis listing the question.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          {
+            "id": "ps_001",
+            "question_id": "q_001",
+            "tier": "probable"
+          }
+        ],
+        "hypotheses": [],
+        "project": { "subject_person_ids": ["prs-001"] }
+      }
+    },
+    {
+      "id": "exactly-two-parents",
+      "expect": "silent",
+      "why": "The subject has exactly two parents — the normal case for a known biological couple. The gate must not fire.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          { "id": "ps_001", "question_id": "q_001", "tier": "probable" }
+        ],
+        "hypotheses": [],
+        "project": { "subject_person_ids": ["prs-001"] }
+      }
+    },
+    {
+      "id": "three-parents-hypothesis-linked",
+      "expect": "silent",
+      "why": "Three parents in the tree, but a hypothesis lists q_001 in related_question_ids — the candidates are already tracked.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          { "type": "ParentChild", "parent": "prs-101", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-102", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-103", "child": "prs-001" }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          { "id": "ps_001", "question_id": "q_001", "tier": "probable" }
+        ],
+        "hypotheses": [
+          { "id": "h_001", "related_question_ids": ["q_001"], "status": "active" }
+        ],
+        "project": { "subject_person_ids": ["prs-001"] }
+      }
+    },
+    {
+      "id": "three-parents-non-subject-person",
+      "expect": "silent",
+      "why": "The person with three parents (prs-999) is neither in subject_person_ids nor in claims[].relationship.child — out of scope for this proof.",
+      "write": "ps_001",
+      "tree": {
+        "relationships": [
+          { "type": "ParentChild", "parent": "prs-101", "child": "prs-999" },
+          { "type": "ParentChild", "parent": "prs-102", "child": "prs-999" },
+          { "type": "ParentChild", "parent": "prs-103", "child": "prs-999" },
+          { "type": "ParentChild", "parent": "prs-201", "child": "prs-001" },
+          { "type": "ParentChild", "parent": "prs-202", "child": "prs-001" }
+        ]
+      },
+      "research": {
+        "proof_summaries": [
+          { "id": "ps_001", "question_id": "q_001", "tier": "probable" }
+        ],
+        "hypotheses": [],
+        "project": { "subject_person_ids": ["prs-001"] }
+      }
+    }
+  ]
+}
