@@ -77,3 +77,20 @@ def test_an_exact_ref_is_answered_without_running_node(tmp_path, monkeypatch):
         out = _read(tmp_path, {"recordId": "~9XKD-R7M", "projectPath": str(tmp_path), "resultsRef": ref})
         assert "error" not in out
     assert calls == []
+
+
+def test_every_match_kind_the_mock_records_is_one_the_run_log_schema_allows():
+    """A kind the schema's closed enum lacks fails the run log's write, which
+    halts the whole harness run after the money is spent (U15's Postgres run
+    stopped at test 91 of 431 on `staged_ref_refused`). Read off the source, so
+    a new kind added to the mock fails here first."""
+    import re
+
+    source = (Path(__file__).resolve().parents[2] / "harness" / "mock_mcp.py").read_text(encoding="utf-8")
+    kinds = set(re.findall(r'"matched"\]?\s*[=:]\s*\{\s*"kind":\s*"([a-z_]+)"', source))
+    assert {"none", "predicate", "live", "staged_ref_refused"} <= kinds
+    repo = Path(__file__).resolve().parents[4]
+    for schema_path in ("docs/specs/schemas/run-log.schema.json", "packages/schema/schemas/run-log.schema.json"):
+        schema = json.loads((repo / schema_path).read_text(encoding="utf-8"))
+        allowed = set(schema["$defs"]["tool_call"]["properties"]["matched"]["properties"]["kind"]["enum"])
+        assert kinds <= allowed, f"{schema_path}: mock records {sorted(kinds - allowed)} the schema refuses"

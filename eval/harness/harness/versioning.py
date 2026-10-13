@@ -123,6 +123,7 @@ def is_releasable_invocation(
     has_tag_filter: bool,
     runs_per_test: int = 1,
     tool_search: bool = True,
+    store: str | None = None,
 ) -> bool:
     """A run is releasable iff `--skill <name>`, no tag filter, single run.
 
@@ -140,7 +141,8 @@ def is_releasable_invocation(
 
     `tool_search=False` (`--no-tool-search`, every tool schema loaded up
     front) is an experiment, not the configuration the corpus runs, so it is
-    scratch by the same mechanism.
+    scratch by the same mechanism. So is `store="pg"` (`--store pg`, U15):
+    a parity check of the Postgres backend, never a release.
     """
     if mode not in _VALID_MODES:
         raise ValueError(
@@ -152,6 +154,7 @@ def is_releasable_invocation(
         and not has_tag_filter
         and runs_per_test <= 1
         and tool_search
+        and store is None
     )
 
 

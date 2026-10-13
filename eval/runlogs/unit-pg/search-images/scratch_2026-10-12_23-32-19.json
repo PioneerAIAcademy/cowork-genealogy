@@ -1,0 +1,502 @@
+{
+  "schema_version": 3,
+  "skill": "search-images",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/search-images.md": "4ff644fff91a75ca9f3761ba5cccea276738374fb5a7e90e5e6e4deecab758af",
+    "eval/tests/unit/search-images/direct-boundary-indexed-volume.json": "e91ca8e7acb3a8083153e23503da258dd926866ebeea334c67c38f0464f70811",
+    "eval/tests/unit/search-images/direct-browse-unindexed-probate.json": "60edae9ba5d92314b9602e60d77f3c621fbbe1f3d9b4167b95076e0d3aedbc75",
+    "eval/tests/unit/search-images/direct-empty-image-group.json": "33d13b70b75e9562fd7edc0ddd8631f9775a2aeb4b58cb952a7cebb890be8723",
+    "eval/tests/unit/search-images/direct-happy-path-browse.json": "42d5da4482ec5c11a8c380355022ca2afad11ffe7b1da1370a5474ac94c91277",
+    "eval/tests/unit/search-images/direct-no-digitized-volume.json": "5b94c0fb72fad66d70ea69765ea6bb554df06dc3628d082a9a9b7361e00b94d0",
+    "eval/tests/unit/search-images/image-group-listing.json": "1d25728812504d1c16b6186f99891ef353817f7a40b7d803066905d75135d70e",
+    "eval/tests/unit/search-images/rubric.md": "a8640c096a1ba61393a8639d1e3b3d97876af48e59e311d153afd4a94d6c062d",
+    "eval/tests/unit/search-images/volume-mixed-item-sections.json": "0f1db1c27756e80eb48807b9f417344f190bde27ab3b174b8a3fe4d7075b47c8",
+    "eval/tests/unit/search-images/volume-selection-multi-candidate.json": "aa6b5f25f4f45bbda1289af03610cb760ed2df7c55ce2ab7ad50eaed8d80424b",
+    "eval/tests/unit/search-images/volume-split-across-films.json": "a09f1431437569bcf442f9d08f29c869a11e3943f4fe95eb54edb9e83c17380e",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/image-search-empty-group.json": "ce0e14f4a7774500941086b34f5ace6770ff5d07546df5c78f4d98ccbd18d839",
+    "eval/fixtures/mcp/image-search-schuylkill-mixed-items.json": "9f25b7c57814355b90f354395430318c4dbe7d1af9600ce17cfa92bade6e0230",
+    "eval/fixtures/mcp/image-search-schuylkill-probate.json": "5ef2f057968de60a8e2ef7d1340462967421df16c21e45af34043fc10cb8e773",
+    "eval/fixtures/mcp/image-search-schuylkill-probate-1891.json": "41df5506b8ad179f4e18ecc09efbb72d44a15f5c8991cbeb3c8e71a8c1b70359",
+    "eval/fixtures/mcp/image-transcribe-any.json": "6c676e904eff96d56d50684a36523b8ab5035b10be5755f9f483df5ad984da32",
+    "eval/fixtures/mcp/image-transcribe-schuylkill-probate-flynn-will.json": "c5b6f2fb4bbc51c46a5669993c6ea3718bfe5cdf6c1489165326e452d6229e37",
+    "eval/fixtures/mcp/volume-search-alabama-empty.json": "a9966b649b24a6767e9543d1a94d8a48fd8bce3eab345f5dc645d536a5abde1b",
+    "eval/fixtures/mcp/volume-search-schuylkill-indexed.json": "0d7362b1d28756380a971076034cd4bcafee4447fee0ebfd6f56c8ec7a44af86",
+    "eval/fixtures/mcp/volume-search-schuylkill-mixed-items.json": "4cf2685f76da47290578798abd29cc45617578cdace68be8dc1fb91b21cc1354",
+    "eval/fixtures/mcp/volume-search-schuylkill-multi-browse.json": "26dcb2aa2848ec17221eeca6632749ee3123f1cf231418e31b98729e765a11c0",
+    "eval/fixtures/mcp/volume-search-schuylkill-probate-only.json": "b03db81d854314864f9506d4ad9086aa78ba6b2f08160ea959c4f81ebbc51d03",
+    "eval/fixtures/mcp/volume-search-schuylkill-probate-split.json": "256b344a014e72211678fb583eb5ffd6981d25ce0ca4ae2a9a4344a5dc97909d"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_images_d4",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "volume-search-schuylkill-indexed"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that the marriage volume (imageGroupNumber 004221199) is 95% record-searchable via indexed search, not a browse-only film. The agent accurately reported the tool's finding (recordSearchablePercent: 95) and correctly declined to browse based on that evidence. The recommendation to use search-records instead is factually sound and supported by the volume_search response. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent fully addressed the delegation by making the correct decision: calling volume_search to discover the volume's searchability status, recognizing it is indexed, and declining to browse. The agent explained the reasoning clearly and recommended the appropriate alternative (search-records). No required actions were omitted. The per-test context confirms that declining to browse and recommending search-records is the complete, correct response."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The volume_search call passed correct arguments: standardPlace 'Schuylkill, Pennsylvania, United States' matches the expected ~Schuylkill pattern, and recordTypeGroups ['Marriage'] correctly targets marriage records. The call matched the predicate fixture (matched.kind: 'predicate'). No fixture_not_found errors occurred. Arguments were semantically appropriate and well-formed."
+          },
+          {
+            "source": "rubric",
+            "name": "Volume selection",
+            "score": 3,
+            "rationale": "The agent correctly called volume_search with the place (Schuylkill) and record type (Marriage) supplied in the delegation. It identified the matching volume (004221199, 1885\u20131950 marriage records). Critically, the agent recognized that this volume is 95% record-searchable and therefore NOT a browse-only target. Per the rubric, preferring an indexed volume and noting that a faster path (search-records) exists when the target is already searchable is a pass. The agent made the correct volume-selection decision."
+          },
+          {
+            "source": "rubric",
+            "name": "Browse execution",
+            "score": 3,
+            "rationale": "The agent correctly declined to browse. Per the per-test context and rubric, when volume_search reveals the target volume is already record-searchable, the correct execution is to NOT browse and to recommend search-records instead. The agent did exactly this: it called volume_search, received recordSearchablePercent: 95, and declined to call image_search. No fabricated image contents or false page readings occurred because no browse was attempted. This is a pass, not an abandonment."
+          },
+          {
+            "source": "rubric",
+            "name": "Browse audit trail",
+            "score": 3,
+            "rationale": "No browse log entry was written, which is correct: the agent did not browse. Per the rubric, when the skill correctly declines to browse an indexed/searchable volume and recommends search-records/search-full-text instead, no browse occurred and there is correctly nothing to log. The per-test context explicitly states judges MUST NOT penalize the agent for not writing a browse log entry when there is correctly no browse to perform or log."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that the marriage volume (imageGroupNumber 004221199) is 95% record-searchable via indexed search, not a browse-only film. The agent accurately reported the tool's finding (recordSearchablePercent: 95) and correctly declined to browse based on that evidence. The recommendation to use search-records instead is factually sound and supported by the volume_search response. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The agent fully addressed the delegation by making the correct decision: calling volume_search to discover the volume's searchability status, recognizing it is indexed, and declining to browse. The agent explained the reasoning clearly and recommended the appropriate alternative (search-records). No required actions were omitted. The per-test context confirms that declining to browse and recommending search-records is the complete, correct response."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The volume_search call passed correct arguments: standardPlace 'Schuylkill, Pennsylvania, United States' matches the expected ~Schuylkill pattern, and recordTypeGroups ['Marriage'] correctly targets marriage records. The call matched the predicate fixture (matched.kind: 'predicate'). No fixture_not_found errors occurred. Arguments were semantically appropriate and well-formed."
+          },
+          {
+            "source": "rubric",
+            "name": "Volume selection",
+            "score": 3,
+            "rationale": "The agent correctly called volume_search with the place (Schuylkill) and record type (Marriage) supplied in the delegation. It identified the matching volume (004221199, 1885\u20131950 marriage records). Critically, the agent recognized that this volume is 95% record-searchable and therefore NOT a browse-only target. Per the rubric, preferring an indexed volume and noting that a faster path (search-records) exists when the target is already searchable is a pass. The agent made the correct volume-selection decision."
+          },
+          {
+            "source": "rubric",
+            "name": "Browse execution",
+            "score": 3,
+            "rationale": "The agent correctly declined to browse. Per the per-test context and rubric, when volume_search reveals the target volume is already record-searchable, the correct execution is to NOT browse and to recommend search-records instead. The agent did exactly this: it called volume_search, received recordSearchablePercent: 95, and declined to call image_search. No fabricated image contents or false page readings occurred because no browse was attempted. This is a pass, not an abandonment."
+          },
+          {
+            "source": "rubric",
+            "name": "Browse audit trail",
+            "score": 3,
+            "rationale": "No browse log entry was written, which is correct: the agent did not browse. Per the rubric, when the skill correctly declines to browse an indexed/searchable volume and recommends search-records/search-full-text instead, no browse occurred and there is correctly nothing to log. The per-test context explicitly states judges MUST NOT penalize the agent for not writing a browse log entry when there is correctly no browse to perform or log."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 26021.68433299812,
+        "duration_api_ms": 25600.0,
+        "judge_duration_ms": 9989.826207995065,
+        "wall_clock_ms": 36918.61009597778,
+        "num_turns": 2,
+        "input_tokens": 596,
+        "cached_input_tokens": 56690,
+        "cache_creation_input_tokens": 46460,
+        "output_tokens": 1051,
+        "judge_input_tokens": 8479,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 848,
+        "skill_cost_usd": 0.20740899999999998,
+        "judge_cost_usd": 0.012719000000000001,
+        "total_cost_usd": 0.220128
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_images_d4_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 26021.68433299812,
+          "duration_api_ms": 25600.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 596,
+          "cached_input_tokens": 56690,
+          "cache_creation_input_tokens": 46460,
+          "output_tokens": 1051,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 588,
+              "outputTokens": 20,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000688,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 8,
+              "outputTokens": 1031,
+              "cacheReadInputTokens": 56690,
+              "cacheCreationInputTokens": 46460,
+              "webSearchRequests": 0,
+              "costUSD": 0.206721,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "search-images",
+              "description": "Browse Schuylkill County marriage record images",
+              "num_assistant_turns": 5,
+              "max_output_tokens": 323,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 5,
+                "output_tokens": 618,
+                "cache_read_input_tokens": 36293,
+                "cache_creation_input_tokens": 25437
+              },
+              "peak_window_tokens": 25438,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 16.63
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21024,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.20740899999999998,
+          "output": {
+            "text_response": "The **search-images** agent investigated but declined to browse, for a well-reasoned technical reason:\n\nThe Schuylkill County marriage record volume on FamilySearch (image group 004221199, covering 1885\u20131950) came back with a **recordSearchablePercent of 95%** \u2014 meaning it is 95% indexed. Since it's not an unindexed film, manually paging through the images is unnecessary and inefficient. The delegation's premise that the films are unindexed does not match what FamilySearch reports.\n\n**Recommended next step:** Use **search-records** to query the name index directly for Flynn marriages in Schuylkill County, Pennsylvania between 1885 and 1950. That will be faster, more thorough, and the appropriate tool for a highly-indexed collection.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__volume_search",
+                "args": {
+                  "standardPlace": "Schuylkill, Pennsylvania, United States",
+                  "recordTypeGroups": [
+                    "Marriage"
+                  ]
+                },
+                "expected_args": {
+                  "standardPlace": "~Schuylkill"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "volume-search-schuylkill-indexed"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Browse Schuylkill County marriage record images",
+                  "prompt": "Browse the Schuylkill County marriage record images and log the browse. The marriage films are unindexed, so paging through them is the only way to find the Flynn marriages \u2014 work through the volume and report what you find.\n\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Flynn marriages\nprojectPath: <workspace>",
+                  "subagent_type": "search-images"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_images_d4-0-0-_sqnfe6i/research.json"
+                },
+                "agent_id": "a2c70b65b6733526c"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "search-images",
+                "text": "The volume returned has `recordSearchablePercent: 95` \u2014 it is 95% indexed. That means this collection is substantially searchable via the indexed search tools, not a browse-only film. Per the step 2 rule, browsing a highly indexed volume is the wrong approach; search-records is the faster and more appropriate route.\n\nI will not browse this volume, and I will not log a browse that didn't happen. Declining is the correct completion of this delegation.\n\nThe one Schuylkill County marriage record volume on FamilySearch (imageGroupNumber 004221199, covering 1885\u20131950) is **95% indexed** \u2014 it is not an unindexed film requiring manual page-by-page browsing. The delegation's premise that \"the marriage films are unindexed\" does not match what the tool returned, and the tool's number governs.\n\n---\n\nThe county's marriage records on FamilySearch (covering 1885 to 1950) turned out to be almost fully indexed, meaning a computer-readable name index already covers 95% of the entries. That makes paging through the images by hand unnecessary and slower than just running a name search \u2014 it would be like reading a whole phone book when the index is right there.\n\nThe right next step is to hand this off to search-records, which can query the index directly for Flynn marriages in Schuylkill County between 1885 and 1950."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_result_log_shape",
+                "passed": true,
+                "error": "skipped: not a negative-result-log scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_results_sidecar_written",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_positive_appends_browse_log_entry",
+                "passed": true,
+                "error": "skipped: redirect-no-browse: the volume is indexed, so the skill correctly performs no browse and writes no log entry",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The agent correctly identified that the marriage volume (imageGroupNumber 004221199) is 95% record-searchable via indexed search, not a browse-only film. The agent accurately reported the tool's finding (recordSearchablePercent: 95) and correctly declined to browse based on that evidence. The recommendation to use search-records instead is factually sound and supported by the volume_search response. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The agent fully addressed the delegation by making the correct decision: calling volume_search to discover the volume's searchability status, recognizing it is indexed, and declining to browse. The agent explained the reasoning clearly and recommended the appropriate alternative (search-records). No required actions were omitted. The per-test context confirms that declining to browse and recommending search-records is the complete, correct response."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The volume_search call passed correct arguments: standardPlace 'Schuylkill, Pennsylvania, United States' matches the expected ~Schuylkill pattern, and recordTypeGroups ['Marriage'] correctly targets marriage records. The call matched the predicate fixture (matched.kind: 'predicate'). No fixture_not_found errors occurred. Arguments were semantically appropriate and well-formed."
+              },
+              {
+                "source": "rubric",
+                "name": "Volume selection",
+                "score": 3,
+                "rationale": "The agent correctly called volume_search with the place (Schuylkill) and record type (Marriage) supplied in the delegation. It identified the matching volume (004221199, 1885\u20131950 marriage records). Critically, the agent recognized that this volume is 95% record-searchable and therefore NOT a browse-only target. Per the rubric, preferring an indexed volume and noting that a faster path (search-records) exists when the target is already searchable is a pass. The agent made the correct volume-selection decision."
+              },
+              {
+                "source": "rubric",
+                "name": "Browse execution",
+                "score": 3,
+                "rationale": "The agent correctly declined to browse. Per the per-test context and rubric, when volume_search reveals the target volume is already record-searchable, the correct execution is to NOT browse and to recommend search-records instead. The agent did exactly this: it called volume_search, received recordSearchablePercent: 95, and declined to call image_search. No fabricated image contents or false page readings occurred because no browse was attempted. This is a pass, not an abandonment."
+              },
+              {
+                "source": "rubric",
+                "name": "Browse audit trail",
+                "score": 3,
+                "rationale": "No browse log entry was written, which is correct: the agent did not browse. Per the rubric, when the skill correctly declines to browse an indexed/searchable volume and recommends search-records/search-full-text instead, no browse occurred and there is correctly nothing to log. The per-test context explicitly states judges MUST NOT penalize the agent for not writing a browse log entry when there is correctly no browse to perform or log."
+              }
+            ],
+            "judge_cost_usd": 0.012719000000000001,
+            "duration_ms": 9989.826207995065,
+            "error": null,
+            "input_tokens": 8479,
+            "cached_input_tokens": 0,
+            "output_tokens": 848
+          },
+          "started_at": 1791847939.364249,
+          "ended_at": 1791847976.282859
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 26021.68433299812,
+    "duration_api_ms": 25600.0,
+    "judge_duration_ms": 9989.826207995065,
+    "num_turns": 2,
+    "input_tokens": 596,
+    "cached_input_tokens": 56690,
+    "cache_creation_input_tokens": 46460,
+    "output_tokens": 1051,
+    "judge_input_tokens": 8479,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 848,
+    "skill_cost_usd": 0.20740899999999998,
+    "judge_cost_usd": 0.012719000000000001,
+    "total_cost_usd": 0.220128,
+    "wall_clock_ms": 36918.61009597778
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

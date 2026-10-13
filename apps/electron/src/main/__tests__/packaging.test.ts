@@ -9,11 +9,10 @@
  * nothing, from a green build.
  *
  * `check-packaged-deps.mjs` catches that, but only once something has been
- * packaged, and `electron-release.yml` runs only on an `electron-v*` tag or a
- * manual dispatch. So if this line is dropped by a merge, a revert or a
- * Dependabot bump, nothing notices until someone cuts a release. This file runs
- * on every PR that touches `apps/electron/` (`js-tests.yml`), costs no build,
- * and closes that window.
+ * packaged: `electron-release.yml` does that on a PR touching the viewer, a
+ * multi-minute mac and Windows build that no branch rule requires. This file
+ * runs on every PR that touches `apps/electron/` (`js-tests.yml`) and costs no
+ * build.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -71,13 +70,13 @@ describe('electron packaging contract (#1070)', () => {
     // The assertions above guard the build:* scripts, and electron-release.yml
     // uses NONE of them — it calls `pnpm build && pnpm exec electron-builder`
     // directly, so it inherits none of that wiring. Its own verify step is the
-    // only thing standing between a tag push and an upload of an app carrying
+    // only thing standing between a push to main and a published app carrying
     // none of its dependencies, and nothing else asserts that step is still
     // there.
     const workflow = readFileSync(join(REPO_ROOT, '.github/workflows/electron-release.yml'), 'utf8')
     expect(
       workflow,
-      'electron-release.yml no longer runs check-packaged, so a tag push can upload an ' +
+      'electron-release.yml no longer runs check-packaged, so a push to main can publish an ' +
         'app carrying none of its dependencies (#1070)'
     ).toContain('npm run check-packaged')
   })
