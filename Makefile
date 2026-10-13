@@ -856,8 +856,14 @@ harness-test: $(ENGINE_BUILD) ## Eval harness tests — eval/harness (pytest; uv
 	cd eval/harness && uv run pytest -q
 
 .PHONY: harness-lint
-harness-lint: ## Undefined-name check for eval/harness (ruff F821 — catches a dangling reference left by a merge)
-	cd eval/harness && uv run ruff check . ../../.claude/skills
+harness-lint: ## Undefined-name check, repo-wide (ruff F821 — catches a dangling reference left by a merge)
+	# Repo-wide since 2026-10-13, not just eval/harness: the prototype web tier's three
+	# blob routes referenced `psycopg` and `PG_DSN` with neither defined, so each answered
+	# 500 on a running stack while every suite stayed green. Scope and enforcement were
+	# BOTH wrong -- no CI job and no scripts/test.sh entry ran this -- so the rule also
+	# lives in eval/harness/tests/unit/test_undefined_name_lint.py, which the required
+	# `pytest` job runs. Keep the two in step; this target is the fast manual form.
+	cd eval/harness && uv run ruff check --select F821 ../..
 
 .PHONY: replay-check
 replay-check: ## Acceptance check for the write-replay engine: reconstruct every committed e2e run and compare against its final-state sidecar

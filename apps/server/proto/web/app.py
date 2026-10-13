@@ -330,6 +330,19 @@ class Queue(Protocol):
 S3_ENDPOINT = os.environ.get("GENEALOGY_S3_ENDPOINT", "")
 S3_BUCKET = os.environ.get("GENEALOGY_S3_BUCKET", "projects")
 
+
+def _pg_dsn() -> str:
+    """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
+
+    The three blob routes below open their own SYNCHRONOUS connection -- `fetch_sidecar`,
+    `fetch_blob` and `put_blob` are sync, and `app.state.store` is an async pool -- so
+    they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
+    never defined, which made all three raise `NameError` and answer 500 on every call
+    that got past validation. Nothing caught it: the route tests stub the client, and
+    `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
+    """
+    return os.environ.get("PG_DSN") or DEFAULT_PG_DSN
+
 @lru_cache(maxsize=1)
 def _s3_client():
     """A blob-store client, or None where none is configured.
@@ -1690,7 +1703,9 @@ def create_app(
         s3 = _s3_client()
         if s3 is None:
             raise HTTPException(status_code=404, detail="no blob store configured")
-        with psycopg.connect(PG_DSN) as conn:
+        import psycopg
+
+        with psycopg.connect(_pg_dsn()) as conn:
             blob = fetch_sidecar(conn, s3, S3_BUCKET, row.project_id, log_id)
         payload = sidecar_payload(blob)
         if payload is None:
@@ -1730,7 +1745,9 @@ def create_app(
         s3 = _s3_client()
         if s3 is None:
             raise HTTPException(status_code=404, detail="no blob store configured")
-        with psycopg.connect(PG_DSN) as conn:
+        import psycopg
+
+        with psycopg.connect(_pg_dsn()) as conn:
             blob = fetch_blob(conn, s3, S3_BUCKET, row.project_id, filename)
         if blob is None:
             # 404 is a REAL state: most projects hold no scans.
@@ -1774,7 +1791,9 @@ def create_app(
         if s3 is None:
             raise HTTPException(status_code=503, detail="no blob store configured")
         key = upload_key(name)
-        with psycopg.connect(PG_DSN) as conn:
+        import psycopg
+
+        with psycopg.connect(_pg_dsn()) as conn:
             written = put_blob(conn, s3, S3_BUCKET, row.project_id, key, body)
             conn.commit()
         return {"path": key, "sizeBytes": written}
