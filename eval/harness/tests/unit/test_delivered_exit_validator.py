@@ -124,11 +124,21 @@ def test_the_bare_tool_name_is_matched_whatever_the_server_prefix():
         validator([_call(prefix + "research_delivered", summary="Done.")], TAGGED)
 
 
-def test_a_similarly_named_tool_does_not_satisfy_it():
-    """`endswith` must not be loosened to a substring match: a tool merely *mentioning*
-    the name is not the signal."""
+@pytest.mark.parametrize(
+    "lookalike",
+    [
+        "mcp__genealogy__research_delivered_summary",   # the name is a prefix of this
+        "mcp__genealogy__not_research_delivered",       # ...and a SUFFIX of this
+    ],
+)
+def test_a_similarly_named_tool_does_not_satisfy_it(lookalike):
+    """Matching must be on the BARE NAME, exactly.
+
+    The suffix form accepted `…__not_research_delivered`, which ends with the name and
+    is a different tool — caught by clack391 on #3372. `bare_tool_name` strips whichever
+    server spelling the run exposed and compares the rest."""
     with pytest.raises(AssertionError, match="must end by calling"):
-        validator([_call("mcp__genealogy__research_delivered_summary", summary="x")], TAGGED)
+        validator([_call(lookalike, summary="x")], TAGGED)
 
 
 # ── The validator is only satisfiable if the harness advertises the tool ─────────

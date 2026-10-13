@@ -103,8 +103,9 @@ and the hosted alpha alike). It is **also** named at the router's bounded close
 **What changed, and what did not.** The old rule was "not any skill body", because a
 skill-body rule "would teach every skill to call a tool that is inert in Cowork and in the
 harness that grades them". Half of that premise is gone: the tool is a `LIVE_TOOL` in the
-unit harness now, so it is neither inert nor unadvertised there, and a bounded turn can be
-graded on whether it calls it. The Cowork half still holds — there is no hook there and the
+unit harness now, so it is advertised there, though still inert, and a bounded turn can
+be graded on whether it calls it. Inertness was never the half that moved: what
+changed is that the call is visible to a validator. The Cowork half still holds — there is no hook there and the
 tool returns its harmless acknowledgement.
 
 **Why the reversal is still right.** The rule was written as though the choice were

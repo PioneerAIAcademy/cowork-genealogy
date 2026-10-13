@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import pytest
 
+from validators_lib import bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_exhaustive_declaration
 
@@ -507,9 +508,13 @@ def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
     if _ENDS_WITH_DELIVERY_TAG not in tags:
         pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
 
+    # `bare_tool_name(...) == `, not `.endswith(...)`: the suffix form accepts a
+    # LOOKALIKE -- `mcp__genealogy__not_research_delivered` ends with the name and
+    # satisfied this. The helper strips whichever of the three server spellings the
+    # run exposed, so all of them and the bare name still match (clack391, #3372).
     first = next(
         (i for i, c in enumerate(tool_calls)
-         if str(c.get("tool", "")).endswith(_DELIVERED_TOOL)),
+         if bare_tool_name(str(c.get("tool", ""))) == _DELIVERED_TOOL),
         None,
     )
     assert first is not None, (
@@ -520,7 +525,10 @@ def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
         "what the researcher reports as 'it would not stop'."
     )
 
-    # The FIRST call, and nothing after it. The hosted arm halts on the first MAIN-THREAD
+    # The FIRST call, and no MCP call after it. `tool_calls` is the mock's MCP dispatch
+    # log only, so a built-in `Skill`/`Agent` hand-off AFTER the delivery is invisible
+    # here -- seeing it needs a shared order across both lists, which neither carries.
+    # The hosted arm halts on the first MAIN-THREAD
     # call, so that is where the turn actually ends and whose summary the researcher
     # reads. Asserting only "called somewhere" accepted
     # research_delivered -> record_search -> research_append: deliver-then-keep-

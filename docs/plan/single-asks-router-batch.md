@@ -242,8 +242,9 @@ in fresh context**."* Every callee is stubbed — `route-no-questions.json` carr
 - item 6's "candidates with match strength" — the reporting happens downstream of a stub.
 - item 5's test goes with item 5.
 
-Also: `research_delivered` is **not advertised in the unit harness at all**
-(`eval/harness/harness/mock_mcp.py`, absent from `LIVE_TOOLS`), so "the turn ends
+**Superseded 2026-10-12:** the tool is a `LIVE_TOOL` in the unit harness now, so it is
+advertised and callable there. It remains inert — no hook binds — so what a unit test
+can grade is whether the model MADE the call, not what the call did.
 `delivered`" is unobservable here and must not appear in a unit-test description.
 
 **Keep in `eval/tests/unit/research/` — two tests:**

@@ -133,18 +133,17 @@ attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
-When a bounded request is met, **end your turn**. Say what you produced first:
-the turn ends where you stop, so anything you were going to add afterwards never
-reaches the researcher. Name what this turn saved and where — "Saved to Susan
-Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
-not save: the record and the person it was for, not "an extraction did not
-finish". Then offer to take it further, and end. The offer is not
-something you wait for — their answer arrives as the next message.
+When a bounded request is met, **end your turn by calling `research_delivered`**.
+Say what you produced first: the turn ends where you stop, so anything you were
+going to add afterwards never reaches the researcher. Name what this turn saved
+and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
+anything this turn found but did not save: the record and the person it was for,
+not "an extraction did not finish". Then offer to take it further. The offer is
+not something you wait for — their answer arrives as the next message.
 
-End it by calling `research_delivered` with a one-sentence summary of what you
-delivered. Call it last, after everything you want the researcher to read — where
-this run is managed, the turn stops there. If you do not already hold its schema,
-search for it by name.
+Call it last, with a one-sentence summary of what you delivered, after everything
+you want the researcher to read. If you do not already hold its schema, search for
+it by name.
 
 ## What to do
 
@@ -469,8 +468,8 @@ of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 **A bounded request has a fifth: its deliverable.** When everything the
 message asked for is produced — one deliverable or several — end the turn as
-§"Bounded request or job" says to;
-see §"Bounded request or job".
+§"Bounded request or job" says to.
+
 
 ### Candidates, not verdicts
 

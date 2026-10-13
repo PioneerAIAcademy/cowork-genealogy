@@ -142,3 +142,15 @@ def test_the_derived_exemption_is_printed(capsys):
     out = capsys.readouterr().out
     assert "derived from mock_mcp.LIVE_TOOLS" in out, "the derived exemptions are silent"
     assert "research_delivered" in out, "and must name what they cover"
+
+
+def test_an_unhashable_set_element_does_not_escape(monkeypatch, tmp_path):
+    """`ast.literal_eval` raises TypeError, not ValueError, on an unhashable element in
+    a set literal. Catching only ValueError let it escape a lint documented as
+    empty-on-failure, crashing a warn-only check (clack391, #3372)."""
+    (tmp_path / "eval/harness/harness").mkdir(parents=True)
+    (tmp_path / "eval/harness/harness/mock_mcp.py").write_text(
+        "LIVE_TOOLS = {[1, 2], 'a'}\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(check_tool_coverage, "REPO_ROOT", tmp_path)
+    assert check_tool_coverage.live_tools() == set()

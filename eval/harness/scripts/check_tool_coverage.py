@@ -182,7 +182,10 @@ def live_tools() -> set[str]:
             continue
         try:
             value = ast.literal_eval(node.value)
-        except ValueError:
+        except (ValueError, TypeError):
+            # TypeError too: an unhashable element in a set literal raises it, and this
+            # lint is documented as empty-on-failure -- letting one escape would crash a
+            # warn-only check instead of surfacing the gaps (clack391, #3372).
             return set()
         if isinstance(value, (set, frozenset, list, tuple)):
             return {v for v in value if isinstance(v, str)}
