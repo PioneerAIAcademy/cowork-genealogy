@@ -1,0 +1,1748 @@
+{
+  "schema_version": 3,
+  "skill": "person-evidence",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_14-10-14",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/person-evidence.md": "ed97a18ff6916e167ed23ac918ec843463e4c4a4a258289aae95cca9ed5a326d",
+    "eval/tests/unit/person-evidence/audit-surfaces-unlinked-role.json": "c97688f7080ee9b9fadc9d41e1016866786a43583c6458e9b6be233a11f5c67c",
+    "eval/tests/unit/person-evidence/autonomous-weak-match-no-link.json": "ef5771f2aac8013849ec5918f105ce610aa61b2f1a424a461034cb36a158e7b3",
+    "eval/tests/unit/person-evidence/baptism-parentage-links-only-defers-relationship.json": "b39d1af5cff48969fc3fcde421fe282ce048993a8ef48f3675fe838fb4fac63f",
+    "eval/tests/unit/person-evidence/corridor-move-links-confident.json": "6a119de69babc18c5e2353afaa7d76d8c56c42c38d3cc49322ec90e38a72256a",
+    "eval/tests/unit/person-evidence/degenerate-score-unresolvable-id-still-links.json": "38ca4e94f826548a734bd33aebf2ae7913473771d35d3bbcb0830c961d917002",
+    "eval/tests/unit/person-evidence/detect-absent-household-member.json": "0756b1d7048a1a3d8d08dd0da54ed459fc0ed582127b80edcbdd6fa76b8bb6a7",
+    "eval/tests/unit/person-evidence/detect-absent-spouse-who-died-later.json": "7ee9995b03b14dfe31ba97d4a2ef5077f580ed5bab004c043622326bb3fe872d",
+    "eval/tests/unit/person-evidence/fts-assertion-qualitative-fallback.json": "8a9aeda8cce86332087a926f2e423f436b2201c5e496728e2dee56fbca94c9b9",
+    "eval/tests/unit/person-evidence/high-score-conflict-not-auto-linked.json": "d9e77c2cde08eeaa9db4cfda92b4c16cad38d33e25988240f100ff7b9000023b",
+    "eval/tests/unit/person-evidence/household-skeleton-siblings.json": "30813e7efaa0f327ba3248b6fb3c60f8cfd295480e692642a15fef82b426cc67",
+    "eval/tests/unit/person-evidence/link-death-cert-to-patrick.json": "19198202465378468ab9d1f2a33f7563cd9c46f95aa1292c352436919ea138e8",
+    "eval/tests/unit/person-evidence/link-relationship-to-both-persons.json": "d23d0fabe5d96e9b55543a444bbff6b8e88dbf37edba7d4c4fa2d0b154290871",
+    "eval/tests/unit/person-evidence/low-score-strong-correlation-still-links.json": "00e94c6c20b1106555214b4e3935f0a85cb16bb8cd3572a8b5f314cf86921c5e",
+    "eval/tests/unit/person-evidence/marriage-assertion-links-only-defers-relationship.json": "b4675a7ee0d49222f90bc52a1c49d78538be42ce455a63233a7618eb3b0dafc1",
+    "eval/tests/unit/person-evidence/marriage-parent-persona-unscored.json": "7630184ac08bac8873623a98f9714f2fdf4e8e34d686b571de4b17085be49ba5",
+    "eval/tests/unit/person-evidence/match-score-persisted.json": "4ce36b01a4ab4406479e4485dc1ff5bfc1b3b9fbed5ed1a070b3ec9255be1393",
+    "eval/tests/unit/person-evidence/patronymic-mismatch-caps-confidence.json": "035e095caeaddaae47d8b434426e1acb47e87e0c44a3a4949b2a75507f8d8c5c",
+    "eval/tests/unit/person-evidence/research-query-cold-lookup.json": "313b4f3c7a9d9e848894c821bd2934bba5dcda03cd4ddd718f48407eca45f71a",
+    "eval/tests/unit/person-evidence/rubric.md": "755aa8c104b191324a82bed9ac3dd84c48a309bc84bbb8b4f5332b55b9932601",
+    "eval/tests/unit/person-evidence/single-person-record-materializes-onto-matched-person.json": "534e443d8c34882483a0468698b2220c228895ae9368ed8fe43bee4246a25ebb",
+    "eval/tests/unit/person-evidence/stub-creation-new-son.json": "c53725ca8719122498415d584e3fbab9ebda5651221fcefe0722e30316ca20c3",
+    "eval/tests/unit/person-evidence/unexplained-move-caps-at-probable.json": "266f231d7b28e7e3373448eebaad04625b828018a391b701ac70d0a3c35a2204",
+    "eval/fixtures/scenarios/bedfordshire-utah-corridor-move/README.md": "8902a08ec01b2b7f4979678fbe1c67c449528062c002a121e1857473b48bb095",
+    "eval/fixtures/scenarios/bedfordshire-utah-corridor-move/research.json": "8e6bfa1fb1a7b332ed0dc3ebe67303966292bca09130b0198f657336c2c9af41",
+    "eval/fixtures/scenarios/bedfordshire-utah-corridor-move/results/log_001.json": "05073fb8586fd9dcd0bfedd0dcb83c981e6f489198bd5ce87b3b97d8a926f60d",
+    "eval/fixtures/scenarios/bedfordshire-utah-corridor-move/results/log_002.json": "5a0c4e4cc3f34f97d2b8275717c249456a5ed54607e2c91dd97901234cde6e6e",
+    "eval/fixtures/scenarios/bedfordshire-utah-corridor-move/tree.gedcomx.json": "24371202789acc2f5e9f67da185ecc2539475e04d676a2ac6295cae3d53aa13b",
+    "eval/fixtures/scenarios/census-household-absent-spouse/README.md": "29bfce423c61b5fd07cd9ba2a3f4266d7c908c79af9bde3341f6ac0bb4af14e4",
+    "eval/fixtures/scenarios/census-household-absent-spouse/research.json": "100bf78f82cce8e034c9ebe6772057f75de139c5ba11ebf5afd3ff008733578f",
+    "eval/fixtures/scenarios/census-household-absent-spouse/tree.gedcomx.json": "54433192a02b3d61dad91d0db50a198e31841871a8177c227569cc73649370db",
+    "eval/fixtures/scenarios/census-household-spouse-died-later/README.md": "4e706ae09d2a77c1ef58e14ba3e4ebabb40ce7d079604593932c8bc1fed3fd6a",
+    "eval/fixtures/scenarios/census-household-spouse-died-later/research.json": "100bf78f82cce8e034c9ebe6772057f75de139c5ba11ebf5afd3ff008733578f",
+    "eval/fixtures/scenarios/census-household-spouse-died-later/tree.gedcomx.json": "f50ed1ab316ecc5b4b48079c0c7bd01220b9a4f90c4fe9a265caa300bbbbd1d1",
+    "eval/fixtures/scenarios/flynn-baptism-names-mother/README.md": "adde99743c07ef4ef41eb3c3dc46b92f4bd6d82caca9ad0d6a80dd532930ca68",
+    "eval/fixtures/scenarios/flynn-baptism-names-mother/research.json": "b3a62b730225f629f70ffc90f16484be49e2c9017d8fd7f7371c236a32cee26d",
+    "eval/fixtures/scenarios/flynn-baptism-names-mother/starting-tree.gedcomx.json": "3b12d3601cff5920aaffd5331af4bd585bda96eb69544d2056012e0763f7fdf5",
+    "eval/fixtures/scenarios/flynn-baptism-names-mother/tree.gedcomx.json": "3b12d3601cff5920aaffd5331af4bd585bda96eb69544d2056012e0763f7fdf5",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/README.md": "04d9c617e2a8da360e3f6ab6ba505a425c0c59a10dd189fb00323134999d1063",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/research.json": "b8da7b412331b4812cc13a2a935735a092a075c61fa165659d17872cf3d67361",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-birthplace-conflict-stated/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-household-skeleton/README.md": "b0401c54a714284b04e3f4a0aab003e6e7727f627c24cf553e9aef6b96a77f34",
+    "eval/fixtures/scenarios/flynn-household-skeleton/research.json": "86295496815a19fc887994da5cfdaada8bcaa4e6310941122923adeceed19d90",
+    "eval/fixtures/scenarios/flynn-household-skeleton/tree.gedcomx.json": "739d1bf1d926cb52d119f5ad6beae0f44b0e19f712f4e221bc1955bdb0d85d9d",
+    "eval/fixtures/scenarios/flynn-marriage-parent-match/README.md": "50ac3e8a52a6f76c31adb1c939c18aa74509e490ecd31d382bad81f2d72ce171",
+    "eval/fixtures/scenarios/flynn-marriage-parent-match/research.json": "2f63e40971e3f456021275a2c794c2c3544fccc819e8b0fa99b04e2b3bf9576c",
+    "eval/fixtures/scenarios/flynn-marriage-parent-match/results/log_001.json": "14b42d032bebf6880ae514def052cd1b31e9135bc1d7852db49a611d8b9c88bc",
+    "eval/fixtures/scenarios/flynn-marriage-parent-match/starting-tree.gedcomx.json": "99ce0440a13de43a75d2f4c5f07c047d8f01b8dba17db2dfa4d661a57ee90e30",
+    "eval/fixtures/scenarios/flynn-marriage-parent-match/tree.gedcomx.json": "99ce0440a13de43a75d2f4c5f07c047d8f01b8dba17db2dfa4d661a57ee90e30",
+    "eval/fixtures/scenarios/flynn-record-matching/README.md": "db3b206f5df2b627c7caef95c07bf3625573b265068a018ae597b66f6cc62c6a",
+    "eval/fixtures/scenarios/flynn-record-matching/research.json": "3f67b9bb97b80449895ed66866c2ce033dd40aa89b6a477873fbd58204e94ff1",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-record-matching/starting-tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-record-matching/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/README.md": "335665dda5bb46e0087d34aac0ba91ce062c61f49600f15f2c0bf9f2a28bf04e",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/research.json": "801c14a1bb4892b69895c9a3cdfa987ceaa3c7fb7f782f7f99e865a4e5f1d269",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/results/log_005.json": "ceebafa6de50b0a0ea03030a6834c9fc2cc9ac4a5c1d46d4010c02047081090c",
+    "eval/fixtures/scenarios/flynn-spouse-stub-marriage/tree.gedcomx.json": "4b2f891a5bb2b5c392461932feb57fd635fbe74a7155400f42f072b548334201",
+    "eval/fixtures/scenarios/flynn-stub-needed/README.md": "89f9f8304b9598538d3d338df35083df226b0ebf97b1e36b9527e12453761ec5",
+    "eval/fixtures/scenarios/flynn-stub-needed/research.json": "d0f18261477109e5887d361fd11fd4eabe1ac69dae06cc7f11e667caada97c21",
+    "eval/fixtures/scenarios/flynn-stub-needed/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-stub-needed/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-stub-needed/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-stub-needed/results/log_004.json": "a0f96a984b2e4b8a72a74c03029f7d99c7480c2470f1a70ad89f34ad3b771b18",
+    "eval/fixtures/scenarios/flynn-stub-needed/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/README.md": "be7fb144e9acfd8ddb9afd6648a29e511edb227350fbd890cc2222c36cd302e1",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/research.json": "eac67d58f12f39afc6885729fbc40e98a2f33a5441fc4d6b099ccf8caea1d6c6",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/results/log_001.json": "35a2a96f37417a55e7951693c7accecfba631912a7d11fccabe53bb6c461efdc",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/tree.gedcomx.json": "b06bb9229f0cb69e8ccff536da95086f305cbdb302e9ab1a2fd31f10385a846e",
+    "eval/fixtures/scenarios/sussex-tennessee-unexplained-move/README.md": "7a6e3d89a5926050ae77b15d581f91b8c9692aa0a21a407b842ed06c4178f0f7",
+    "eval/fixtures/scenarios/sussex-tennessee-unexplained-move/research.json": "44c0239912f5dbf8d9105529683e91e76a6aac968b201c13e7ce0afe15fc8f0e",
+    "eval/fixtures/scenarios/sussex-tennessee-unexplained-move/results/log_001.json": "f15a2e8ac7e1c771ca8bcd878b8ae5f35c8ef01f50b57a008322b0f64257875c",
+    "eval/fixtures/scenarios/sussex-tennessee-unexplained-move/results/log_002.json": "ec4699a59cfe2412de1fb9d06ed766a2037703a0cae4be05c0c3e78ab0c12ea8",
+    "eval/fixtures/scenarios/sussex-tennessee-unexplained-move/tree.gedcomx.json": "cccc2322f20bb75de2663ab0a371a1f0d153ac052a3d0497f8e07b9fb10dd947",
+    "eval/fixtures/mcp/place-distance-england-tennessee.json": "eddbb260ac1bd02f664ba4a0cee031afd5fdf7bc1412d9356e5fd9231eeaca42",
+    "eval/fixtures/mcp/place-distance-england-utah.json": "83c4819dd8c0c519d7af95f31b9142d8c4764c00d4e53e62a6334c1eb1a4ba4d",
+    "eval/fixtures/mcp/place-distance-tennessee-england.json": "1a8124de8e01ebac69f80715ef697b1b30831a0df6c68db4a76cd7b4cb041e57",
+    "eval/fixtures/mcp/place-distance-utah-england.json": "caa95e8335d065cc1b82316283f1cac52ce14b8d903824aaad17a2615795cae5",
+    "eval/fixtures/mcp/place-search-any.json": "cfab6ad1398f5fae3ffbd2615b10d9fde24645a64881b538bb0cc73aaa2c7333",
+    "eval/fixtures/mcp/place-search-bedfordshire.json": "43f00c4693ebced6f77944cddf2142009539a49795f9e2e7d71334f4c34dcf13",
+    "eval/fixtures/mcp/place-search-cranfield.json": "9377061914865105d4a661c639600d110b5fe75f7f889dbf42442e04017497f8",
+    "eval/fixtures/mcp/place-search-england.json": "5df2680077ec64bea722dcc8339898223df8ef11091134e98bbeb7cb99d0367e",
+    "eval/fixtures/mcp/place-search-horsham.json": "995450e5981792b21425da52c4d88046a9fefd4ee73f30507cdf93903cc32c8c",
+    "eval/fixtures/mcp/place-search-maury.json": "ab459b6a5001e730f00f1dd8c7f8d313d75ec4fa5ce89c33f85b6337b668d27f",
+    "eval/fixtures/mcp/place-search-salt-lake.json": "20843327d45bca783394dcf9e5871b1898c6eb0223a98f80c6e7e87f8ae076fe",
+    "eval/fixtures/mcp/place-search-sussex.json": "318f236cace656e37e6323ae1faa5468454704a46653ac08681bdd91e27e4415",
+    "eval/fixtures/mcp/place-search-tennessee.json": "c00f71c131b0d1228e791fe637e69ab032bbf539624a31c237f9f86e4add246b",
+    "eval/fixtures/mcp/place-search-utah.json": "d190abc83520fdccdec232c04c84df33862c0e91d61e96f8ab6519fed41ce715",
+    "eval/fixtures/mcp/record-read-flynn-baptism-bapt-k1q.json": "a924f34bfec02d215c09cab862fac02fdff6f38e0e02e0aab22af011917dcd85",
+    "eval/fixtures/mcp/same-person-flynn-1860-patrick.json": "d697410c286bda72c1d7bd6c4dd376619d069054b066314e47ab494bc7cc756f",
+    "eval/fixtures/mcp/same-person-flynn-1860-thomas.json": "5fd7898af156ec32f22260d610c27bec4dc6300ee7f33c461ee3787d27e12861",
+    "eval/fixtures/mcp/same-person-flynn-baptism-mother.json": "4c469eb7209556c7ed38c69244f2cb7a0ea3f289b09301e415e7e9158816b9b2",
+    "eval/fixtures/mcp/same-person-flynn-conflict.json": "54ff4c48a1c1b3e0cc90a759ab5ed31ca059c154b280e1331df76febd7d51c06",
+    "eval/fixtures/mcp/same-person-flynn-degenerate.json": "3b79aa3c52a3257e205948f29f513710e51f55fe8918743bac7ea7db2c556ca1",
+    "eval/fixtures/mcp/same-person-flynn-father-unindexed-surname.json": "8a8a33c5180e6e3d9da1af85ef7176e3efa09902f59aa1a9551d81850a8e669f",
+    "eval/fixtures/mcp/same-person-flynn-groom-circular.json": "35223174356b15bfd69196899916b368b20db5432890c27fd53a0a3e72737d5a",
+    "eval/fixtures/mcp/same-person-flynn-marriage-spouse.json": "5854d62bbd7c5e32d8f6b3cb718059c59ebe428e3701f585fc707c6168d6521c",
+    "eval/fixtures/mcp/same-person-flynn-mother-distinctive-surname.json": "713fa2734636e02ed5744b66c56188f4b2c3c93c4fc8b5d2bcc540a49f41949b",
+    "eval/fixtures/mcp/same-person-flynn-strong.json": "09678888f46421a12960f6fd6c5e8455abc1a6c0482f3a8fea536f1aa4a771de",
+    "eval/fixtures/mcp/same-person-flynn-variant.json": "33b06e7aab51727375b127292df5dc01c90bce255644459fdb8da4d7d9945ac4",
+    "eval/fixtures/mcp/same-person-flynn-weak.json": "1db02b538c0f3617388e5b2d8d8a3a78789e8340e9dc81641f011b1552ae3207",
+    "eval/fixtures/mcp/same-person-patronymic-conflict.json": "260bcd670f598a0b22a801a6d4d4d272a6a16e962818c5231775ccd9b22f999f",
+    "eval/fixtures/mcp/same-person-pratt-utah.json": "aec44529ff5dfadcef6f6476d9787c24a692521c70e04af6404e49268b785765",
+    "eval/fixtures/mcp/same-person-weller-tennessee.json": "eeb127b522175dca2f4715e724ee0736768df6914d5e1cdc45ef2fbb35d47154",
+    "eval/fixtures/mcp/wiki-read-any.json": "a1fe91696ce987b7897a4bc98256006ce02ac89903c0eaab62cdf923f30883df",
+    "eval/fixtures/mcp/wiki-read-norway-naming-customs.json": "e6ccc39c16675fd35a3e6fe99a49e07d054cd327a83cf9d32ab8651cb6b7be0e",
+    "eval/fixtures/mcp/wiki-read-tennessee-emigration-and-immigration.json": "bee2643654941c159ed5a9ab98b3358871680edca2790a60ca5214f80365b43e",
+    "eval/fixtures/mcp/wiki-read-utah-emigration-and-immigration.json": "32b5a36e336e7e04b79bbb8cddfa97c9112b32d2ed5d21234e36ebc86de09dd6"
+  },
+  "tests": [
+    {
+      "test_id": "ut_person_evidence_026",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "census-household-absent-spouse",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly minted Henry and Margaret Ackerman as new persons (I3, I4) via materialize_facts with sourced census facts (names, births with ~1851 and ~1854 dates, Pennsylvania locations). Parent-child edges (R2, R3) were written via tree_edit add_relationship with source-refs to the inferred relationship assertions (a_004, a_007). The skill correctly identified these as pre-1880 inferred relationships and applied lower ref quality. All person_evidence entries were created with appropriate confidence levels (probable for new stubs, confident for George as the already-linked head). The critical requirement\u2014flagging Catherine's unexplained absence from the 1860 household\u2014was explicitly surfaced in Claude's response: 'Catherine Ackerman (I2, wife, no diedByYear before 1860) \u2014 absent from the extracted record roles' and 'Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.' This demonstrates the skill derived the absence by comparing George's tree family (which includes Catherine via R1) against the record roster and identified it as an open research question without resolving it by renaming or fabricating. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required work: (1) minted both children (Henry and Margaret) with sourced census facts via materialize_facts; (2) linked all assertions to appropriate persons (a_002-a_007 to I3 and I4, a_004 and a_007 also to I1 as the parent); (3) wrote both parent-child edges via tree_edit add_relationship with source-refs; (4) created 8 person_evidence entries covering all assertions; (5) most critically, unprompted detection and flagging of Catherine's absence from the household. The skill did not skip any required step. The response explicitly states the household was 'built out' and names the two new children with their birth years, and dedicates a full section to the Catherine absence flag with possible explanations (died before 1860, enumerated elsewhere, omitted, or different family)."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/recordId/personId/assertionId parameters. materialize_facts was called with three ops (head_of_household linked to I1, child_1 and child_2 unminted) with correct recordId, recordRole, and personId where applicable. research_append appended 8 person_evidence entries with correct assertion_id, person_id, confidence, and rationale fields. tree_edit add_relationship was called twice with correct ParentChild relationships (I1\u2192I3, I1\u2192I4) and sourceAssertionId references (a_004, a_007). person_warnings was called for I1 and I2 to check for conflicts. No tool calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments align semantically with expected usage."
+          },
+          {
+            "source": "rubric",
+            "name": "Confidence calibration",
+            "score": 3,
+            "rationale": "Confidence tiers are correctly calibrated. Henry and Margaret are scored 'probable' (a_002, a_003, a_004 for Henry; a_005, a_006, a_007 for Margaret) because they are new stubs minted from a single census record with no independent corroboration\u2014exactly the 'single source, no corroboration' tier. George's parent-child links (a_004\u2192I1, a_007\u2192I1) are scored 'confident' because he is already linked to the same record via pe_001, making it an obvious same-record, same-household-head match with consistent Berks County residence. The rationales explicitly note the circular-scoring rule (new stubs minted from the persona cannot be scored against themselves, match_score null). No confidence is over-claimed; the single-record stubs are not marked confident, and the obvious same-record parent link is appropriately confident."
+          },
+          {
+            "source": "rubric",
+            "name": "Rationale quality",
+            "score": 3,
+            "rationale": "Each person_evidence rationale cites specific matching attributes. For Henry (a_002): 'Name 'Henry Ackerman' aligns with household surname. Age 9 (~b. 1851) is consistent with a child of George (~b. 1818). No existing tree person named Henry Ackerman.' For Margaret (a_005): 'Name 'Margaret Ackerman' aligns with household surname. Age 6 (~b. 1854) is consistent with a child of George (~b. 1818). No existing tree person named Margaret Ackerman.' For George as parent (a_004\u2192I1): 'same record, same household head, same person. Residence fully consistent.' Rationales address why competing candidates were ruled out (no existing tree persons with those names) and explain the circular-scoring rule for new stubs. The Catherine flag rationale explains the absence and offers multiple possible explanations (died, enumerated elsewhere, omitted, different family)."
+          },
+          {
+            "source": "rubric",
+            "name": "Multi-person awareness",
+            "score": 3,
+            "rationale": "The skill created person_evidence links for both sides of each relationship assertion. For a_004 (Henry as child of George): pe_004 links a_004\u2192I3 (Henry) and pe_005 links a_004\u2192I1 (George). For a_007 (Margaret as child of George): pe_008 links a_007\u2192I4 (Margaret) and pe_009 links a_007\u2192I1 (George). Both parent-child edges were written via tree_edit add_relationship (R2 and R3), establishing the relationships in the tree. The skill did not miss the other-side link for any relationship assertion."
+          },
+          {
+            "source": "rubric",
+            "name": "Person minting and connecting edges",
+            "score": 3,
+            "rationale": "The skill correctly minted Henry and Margaret via materialize_facts create-or-enrich (I3 and I4 created with sourced names and birth facts, each with 2 refs attached per the tool response). Both children arrived with resolved source-refs on their names and facts. Gender was correctly written as Unknown (the 1860 census carried no sex assertion for either child, and the tool response shows namesAdded: 1 and factsAdded: 1 for each, indicating proper sourced fact materialization). Parent-child edges (R2, R3) were written via tree_edit add_relationship with source-refs to the inferred relationship assertions (a_004, a_007), correctly classified as INDIRECT (pre-1880 census, inferred from household position, no relationship column). The critical requirement\u2014flagging Catherine's unexplained absence\u2014was met: the skill compared George's tree family (I2 via R1) against the record roster, derived that Catherine does not appear among the extracted personas, and surfaced this as an open identity/research question without renaming, overwriting, or fabricating. The flag explicitly states 'Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.' No merge_warnings dry-run was performed, but the per-test context notes this is a plus, not required (pre-extracted assertions, no candidate document available)."
+          },
+          {
+            "source": "rubric",
+            "name": "Score discipline",
+            "score": 3,
+            "rationale": "No same_person calls were made, which is correct: the head (George) was already linked via pe_001, and the two children are new stubs with no tree candidates to score against. The per-test context explicitly states 'no same_person call is required (the head is already linked and the children are new stubs, not identity matches).' The skill correctly reasoned from the tree + assertions without invoking same_person, which is the appropriate approach for this scenario. match_score is null for all entries, correctly reflecting that new stubs cannot be scored against themselves and the head's link was pre-existing."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly minted Henry and Margaret Ackerman as new persons (I3, I4) via materialize_facts with sourced census facts (names, births with ~1851 and ~1854 dates, Pennsylvania locations). Parent-child edges (R2, R3) were written via tree_edit add_relationship with source-refs to the inferred relationship assertions (a_004, a_007). The skill correctly identified these as pre-1880 inferred relationships and applied lower ref quality. All person_evidence entries were created with appropriate confidence levels (probable for new stubs, confident for George as the already-linked head). The critical requirement\u2014flagging Catherine's unexplained absence from the 1860 household\u2014was explicitly surfaced in Claude's response: 'Catherine Ackerman (I2, wife, no diedByYear before 1860) \u2014 absent from the extracted record roles' and 'Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.' This demonstrates the skill derived the absence by comparing George's tree family (which includes Catherine via R1) against the record roster and identified it as an open research question without resolving it by renaming or fabricating. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required work: (1) minted both children (Henry and Margaret) with sourced census facts via materialize_facts; (2) linked all assertions to appropriate persons (a_002-a_007 to I3 and I4, a_004 and a_007 also to I1 as the parent); (3) wrote both parent-child edges via tree_edit add_relationship with source-refs; (4) created 8 person_evidence entries covering all assertions; (5) most critically, unprompted detection and flagging of Catherine's absence from the household. The skill did not skip any required step. The response explicitly states the household was 'built out' and names the two new children with their birth years, and dedicates a full section to the Catherine absence flag with possible explanations (died before 1860, enumerated elsewhere, omitted, or different family)."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/recordId/personId/assertionId parameters. materialize_facts was called with three ops (head_of_household linked to I1, child_1 and child_2 unminted) with correct recordId, recordRole, and personId where applicable. research_append appended 8 person_evidence entries with correct assertion_id, person_id, confidence, and rationale fields. tree_edit add_relationship was called twice with correct ParentChild relationships (I1\u2192I3, I1\u2192I4) and sourceAssertionId references (a_004, a_007). person_warnings was called for I1 and I2 to check for conflicts. No tool calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments align semantically with expected usage."
+          },
+          {
+            "source": "rubric",
+            "name": "Confidence calibration",
+            "score": 3,
+            "rationale": "Confidence tiers are correctly calibrated. Henry and Margaret are scored 'probable' (a_002, a_003, a_004 for Henry; a_005, a_006, a_007 for Margaret) because they are new stubs minted from a single census record with no independent corroboration\u2014exactly the 'single source, no corroboration' tier. George's parent-child links (a_004\u2192I1, a_007\u2192I1) are scored 'confident' because he is already linked to the same record via pe_001, making it an obvious same-record, same-household-head match with consistent Berks County residence. The rationales explicitly note the circular-scoring rule (new stubs minted from the persona cannot be scored against themselves, match_score null). No confidence is over-claimed; the single-record stubs are not marked confident, and the obvious same-record parent link is appropriately confident."
+          },
+          {
+            "source": "rubric",
+            "name": "Rationale quality",
+            "score": 3,
+            "rationale": "Each person_evidence rationale cites specific matching attributes. For Henry (a_002): 'Name 'Henry Ackerman' aligns with household surname. Age 9 (~b. 1851) is consistent with a child of George (~b. 1818). No existing tree person named Henry Ackerman.' For Margaret (a_005): 'Name 'Margaret Ackerman' aligns with household surname. Age 6 (~b. 1854) is consistent with a child of George (~b. 1818). No existing tree person named Margaret Ackerman.' For George as parent (a_004\u2192I1): 'same record, same household head, same person. Residence fully consistent.' Rationales address why competing candidates were ruled out (no existing tree persons with those names) and explain the circular-scoring rule for new stubs. The Catherine flag rationale explains the absence and offers multiple possible explanations (died, enumerated elsewhere, omitted, different family)."
+          },
+          {
+            "source": "rubric",
+            "name": "Multi-person awareness",
+            "score": 3,
+            "rationale": "The skill created person_evidence links for both sides of each relationship assertion. For a_004 (Henry as child of George): pe_004 links a_004\u2192I3 (Henry) and pe_005 links a_004\u2192I1 (George). For a_007 (Margaret as child of George): pe_008 links a_007\u2192I4 (Margaret) and pe_009 links a_007\u2192I1 (George). Both parent-child edges were written via tree_edit add_relationship (R2 and R3), establishing the relationships in the tree. The skill did not miss the other-side link for any relationship assertion."
+          },
+          {
+            "source": "rubric",
+            "name": "Person minting and connecting edges",
+            "score": 3,
+            "rationale": "The skill correctly minted Henry and Margaret via materialize_facts create-or-enrich (I3 and I4 created with sourced names and birth facts, each with 2 refs attached per the tool response). Both children arrived with resolved source-refs on their names and facts. Gender was correctly written as Unknown (the 1860 census carried no sex assertion for either child, and the tool response shows namesAdded: 1 and factsAdded: 1 for each, indicating proper sourced fact materialization). Parent-child edges (R2, R3) were written via tree_edit add_relationship with source-refs to the inferred relationship assertions (a_004, a_007), correctly classified as INDIRECT (pre-1880 census, inferred from household position, no relationship column). The critical requirement\u2014flagging Catherine's unexplained absence\u2014was met: the skill compared George's tree family (I2 via R1) against the record roster, derived that Catherine does not appear among the extracted personas, and surfaced this as an open identity/research question without renaming, overwriting, or fabricating. The flag explicitly states 'Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.' No merge_warnings dry-run was performed, but the per-test context notes this is a plus, not required (pre-extracted assertions, no candidate document available)."
+          },
+          {
+            "source": "rubric",
+            "name": "Score discipline",
+            "score": 3,
+            "rationale": "No same_person calls were made, which is correct: the head (George) was already linked via pe_001, and the two children are new stubs with no tree candidates to score against. The per-test context explicitly states 'no same_person call is required (the head is already linked and the children are new stubs, not identity matches).' The skill correctly reasoned from the tree + assertions without invoking same_person, which is the appropriate approach for this scenario. match_score is null for all entries, correctly reflecting that new stubs cannot be scored against themselves and the head's link was pre-existing."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 129288.48616599862,
+        "duration_api_ms": 127900.0,
+        "judge_duration_ms": 22544.742334001057,
+        "wall_clock_ms": 152097.92494773865,
+        "num_turns": 2,
+        "input_tokens": 588,
+        "cached_input_tokens": 302190,
+        "cache_creation_input_tokens": 47996,
+        "output_tokens": 7542,
+        "judge_input_tokens": 14563,
+        "judge_cached_input_tokens": 5706,
+        "judge_output_tokens": 2106,
+        "skill_cost_usd": 0.38421,
+        "judge_cost_usd": 0.025663599999999998,
+        "total_cost_usd": 0.4098736
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_person_evidence_026_2026-10-12_14-10-14_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 129288.48616599862,
+          "duration_api_ms": 127900.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 588,
+          "cached_input_tokens": 302190,
+          "cache_creation_input_tokens": 47996,
+          "output_tokens": 7542,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 573,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006630000000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 15,
+              "outputTokens": 7524,
+              "cacheReadInputTokens": 302190,
+              "cacheCreationInputTokens": 47996,
+              "webSearchRequests": 0,
+              "costUSD": 0.383547,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "person-evidence",
+              "description": "Link census assertions to persons and build household skeleton",
+              "num_assistant_turns": 26,
+              "max_output_tokens": 1736,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 12,
+                "output_tokens": 6439,
+                "cache_read_input_tokens": 273081,
+                "cache_creation_input_tokens": 35188
+              },
+              "peak_window_tokens": 35189,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 113.659
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21546,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.38421,
+          "output": {
+            "text_response": "Here is the subagent's full response:\n\n---\n\n**Edges:** 1860 census household record \u2014 household record, write edges.\n\n**Household check:** Catherine Ackerman (I2, wife, no diedByYear before 1860) \u2014 absent from the extracted record roles. The extraction covered only head_of_household, child_1, and child_2; no wife persona was extracted. Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.\n\n**Links created:**\n\n| Assertion | Person | Confidence | Notes |\n|-----------|--------|-----------|-------|\n| a_002 (Henry name, child_1) | I3 (Henry Ackerman, new stub) | probable | Minted from persona |\n| a_003 (Henry birth ~1851, child_1) | I3 | probable | Minted from persona |\n| a_004 (Henry child_inferred, child_1) | I3 | probable | Minted from persona |\n| a_004 (Henry child_inferred, child_1) | I1 (George) | confident | Obvious \u2014 same record, head already linked; Berks County residence matches |\n| a_005 (Margaret name, child_2) | I4 (Margaret Ackerman, new stub) | probable | Minted from persona |\n| a_006 (Margaret birth ~1854, child_2) | I4 | probable | Minted from persona |\n| a_007 (Margaret child_inferred, child_2) | I4 | probable | Minted from persona |\n| a_007 (Margaret child_inferred, child_2) | I1 (George) | confident | Obvious \u2014 same record, head already linked; Berks County residence matches |\n\n**New stub persons:** I3 (Henry Ackerman, Male, b. ~1851 Pennsylvania), I4 (Margaret Ackerman, Female, b. ~1854 Pennsylvania)\n\n**Household edges written:** R2 (George I1 \u2192 Henry I3, ParentChild), R3 (George I1 \u2192 Margaret I4, ParentChild)\n\n**Person warnings:** None on I1 or I2.\n\n---\n\n**Flag \u2014 Catherine (I2) absent from extracted roles:** The 1860 census extraction covers only the head, child_1, and child_2. Catherine Ackerman is George's known spouse in the tree but has no extracted assertion and no pe_ link. She may have appeared on the census page but was not extracted, she may have died before 1860, or she may have been enumerated in a different entry. This should be investigated before concluding the household is complete.\n\n---\n\nThe 1860 census household for George Ackerman has been built out: two children \u2014 **Henry** (b. ~1851) and **Margaret** (b. ~1854), both from Pennsylvania \u2014 are now in the family tree as new stub persons (I3 and I4), each linked to the census record at **probable** confidence and connected to George via ParentChild relationships (R2 and R3). George (I1) is confirmed at **confident** confidence as head of household.\n\nOne item flagged for follow-up: George's wife **Catherine (I2)** does not appear in the extracted census assertions (a_001\u2013a_007). You should check whether she was on the same census page but not captured in this extraction, was temporarily absent, or had died before 1860. Reviewing the original census image or requesting a re-extraction of the wife role would clarify her status before the household is considered complete.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-10-12.0603a3e1.dirty",
+                  "projectStatus": "active",
+                  "objective": "Reconstruct the household and children of George Ackerman (b. ~1818, Pennsylvania; resident Berks County) via his 1860 census household record",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Who were the members of George Ackerman's household in the 1860 census?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "evidence-gathered",
+                      "nextStep": "research-exhaustiveness, then proof-conclusion",
+                      "openConflictIds": [],
+                      "storedStatus": "in_progress",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "George Ackerman",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [
+                        "I2"
+                      ],
+                      "parentIds": [],
+                      "childIds": [],
+                      "diedByYear": null
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Catherine Ackerman",
+                      "gender": "Female",
+                      "sourceRefs": [],
+                      "spouseIds": [
+                        "I1"
+                      ],
+                      "parentIds": [],
+                      "childIds": [],
+                      "diedByYear": null
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT"
+                      ],
+                      "assertionCount": 7
+                    }
+                  ],
+                  "localities": [],
+                  "awaitingUser": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "assertions",
+                  "recordId": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 7,
+                  "items": [
+                    {
+                      "id": "a_001",
+                      "value": "George Ackerman",
+                      "fact_type": "name",
+                      "informant": "Unknown informant (likely George Ackerman himself) reporting to the census enumerator",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "head_of_household",
+                      "log_entry_id": "log_001",
+                      "record_basis": "stated",
+                      "structured_value": {
+                        "given": "George",
+                        "surname": "Ackerman"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_002",
+                      "value": "Henry Ackerman",
+                      "fact_type": "name",
+                      "informant": "Unknown informant (most likely a household member) reporting to the census enumerator",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "child_1",
+                      "log_entry_id": "log_001",
+                      "record_basis": "stated",
+                      "structured_value": {
+                        "given": "Henry",
+                        "surname": "Ackerman"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_003",
+                      "date": "~1851",
+                      "place": "Pennsylvania",
+                      "value": "age 9",
+                      "fact_type": "birth",
+                      "informant": "Unknown \u2014 most likely a household member",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "child_1",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": "estimated",
+                      "structured_value": {
+                        "year": 1851,
+                        "place": "Pennsylvania"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_004",
+                      "date": "1860",
+                      "place": "Berks County, Pennsylvania",
+                      "value": "Listed in household of George Ackerman (head), position and age consistent with child",
+                      "fact_type": "relationship",
+                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in the 1860 census",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "child_1",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": "exact",
+                      "structured_value": {
+                        "relationship_type": "child_inferred",
+                        "related_person_role": "head_of_household"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "researcher",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "The 1860 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_005",
+                      "value": "Margaret Ackerman",
+                      "fact_type": "name",
+                      "informant": "Unknown informant (most likely a household member) reporting to the census enumerator",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "child_2",
+                      "log_entry_id": "log_001",
+                      "record_basis": "stated",
+                      "structured_value": {
+                        "given": "Margaret",
+                        "surname": "Ackerman"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_006",
+                      "date": "~1854",
+                      "place": "Pennsylvania",
+                      "value": "age 6",
+                      "fact_type": "birth",
+                      "informant": "Unknown \u2014 most likely a household member",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "child_2",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": "estimated",
+                      "structured_value": {
+                        "year": 1854,
+                        "place": "Pennsylvania"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_007",
+                      "date": "1860",
+                      "place": "Berks County, Pennsylvania",
+                      "value": "Listed in household of George Ackerman (head), position and age consistent with child",
+                      "fact_type": "relationship",
+                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in the 1860 census",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "child_2",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": "exact",
+                      "structured_value": {
+                        "relationship_type": "child_inferred",
+                        "related_person_role": "head_of_household"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "researcher",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "The 1860 census does not state relationships; this parent-child assertion is inferred by the researcher from household position and shared surname. The relationship column was not introduced until the 1880 census.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "personId": "I1"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "pe_001",
+                      "created": "2026-05-06",
+                      "person_id": "I1",
+                      "rationale": "The 1860 household head 'George Ackerman' matches the in-tree George Ackerman (I1) by name and Berks County residence, and his age (42, ~b. 1818) is consistent with the tree birth estimate. Matched as the household anchor.",
+                      "confidence": "probable",
+                      "match_score": null,
+                      "assertion_id": "a_001",
+                      "superseded_by": null
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "personId": "I2"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "assertionId": "a_002"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "assertionId": "a_003"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "assertionId": "a_004"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "assertionId": "a_005"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "assertionId": "a_006"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "person_evidence",
+                  "assertionId": "a_007"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "section": "assertions",
+                  "recordId": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                  "recordRole": "head_of_household"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "a_001",
+                      "value": "George Ackerman",
+                      "fact_type": "name",
+                      "informant": "Unknown informant (likely George Ackerman himself) reporting to the census enumerator",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "source_id": "src_001",
+                      "record_role": "head_of_household",
+                      "log_entry_id": "log_001",
+                      "record_basis": "stated",
+                      "structured_value": {
+                        "given": "George",
+                        "surname": "Ackerman"
+                      },
+                      "record_persona_id": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__materialize_facts",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "ops": [
+                    {
+                      "recordId": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "recordRole": "head_of_household",
+                      "personId": "I1"
+                    },
+                    {
+                      "recordId": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "recordRole": "child_1"
+                    },
+                    {
+                      "recordId": "https://www.familysearch.org/ark:/61903/1:1:M4QZ-7YT",
+                      "recordRole": "child_2"
+                    }
+                  ]
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:materialize_facts",
+                "response": {
+                  "ok": true,
+                  "results": [
+                    {
+                      "personId": "I1",
+                      "created": false,
+                      "factsAdded": 0,
+                      "factsEnriched": 0,
+                      "namesAdded": 0,
+                      "refsAttached": 1,
+                      "conflicts_surfaced": []
+                    },
+                    {
+                      "personId": "I3",
+                      "created": true,
+                      "factsAdded": 1,
+                      "factsEnriched": 0,
+                      "namesAdded": 1,
+                      "refsAttached": 2,
+                      "conflicts_surfaced": []
+                    },
+                    {
+                      "personId": "I4",
+                      "created": true,
+                      "factsAdded": 1,
+                      "factsEnriched": 0,
+                      "namesAdded": 1,
+                      "refsAttached": 2,
+                      "conflicts_surfaced": []
+                    }
+                  ],
+                  "filesWritten": [
+                    "tree.gedcomx.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "ops": [
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_002",
+                        "person_id": "I3",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "rationale": "Date check: child_1 birth ~1851 (age 9 in 1860) vs. new stub I3 (no prior year): minted from this persona, circular scoring not applicable \u2014 match_score null. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Henry Ackerman listed in the 1860 census of George Ackerman's Berks County, PA household as child_1. Name 'Henry Ackerman' aligns with household surname. Age 9 (~b. 1851) is consistent with a child of George (~b. 1818). No existing tree person named Henry Ackerman. New stub minted from this persona \u2014 pe_ link is probable at most per stub-person rules; single record, no independent corroboration yet."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_003",
+                        "person_id": "I3",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "rationale": "Date check: child_1 birth ~1851 vs. new stub I3 (minted from this record): circular, match_score null. Residence check: birth stated Pennsylvania \u2014 consistent with George's known Pennsylvania residence. Birth ~1851, Pennsylvania, age 9 in 1860 census of George Ackerman's Berks County household. Supports identification of child_1 as Henry Ackerman (I3), a new stub minted from this persona. Probable per stub-person rules."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_004",
+                        "person_id": "I3",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "rationale": "Date check: no birth year stated for child_1 in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Relationship assertion: Henry Ackerman (child_1) is inferred as a child of George Ackerman (head_of_household) from household position and shared surname in the 1860 census. Inferred by researcher \u2014 not explicitly stated in the 1860 census, which did not include a relationship column. Probable per stub-person rules; single record."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_004",
+                        "person_id": "I1",
+                        "confidence": "confident",
+                        "match_score": null,
+                        "rationale": "Date check: no birth year stated for the head_of_household in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. George Ackerman's attested residence Berks County, Pennsylvania (project objective, same locality): same. This relationship assertion names George Ackerman as the head_of_household (the related_person_role) and bears on I1 as the parent figure. George is already linked to this same record via pe_001 (a_001 \u2192 I1, probable). Obvious tier: same record, same household head, same person. Residence fully consistent. Confident."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_005",
+                        "person_id": "I4",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "rationale": "Date check: child_2 birth ~1854 (age 6 in 1860) vs. new stub I4 (no prior year): minted from this persona, circular scoring not applicable \u2014 match_score null. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Margaret Ackerman listed in the 1860 census of George Ackerman's Berks County, PA household as child_2. Name 'Margaret Ackerman' aligns with household surname. Age 6 (~b. 1854) is consistent with a child of George (~b. 1818). No existing tree person named Margaret Ackerman. New stub minted from this persona \u2014 probable per stub-person rules; single record, no independent corroboration yet."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_006",
+                        "person_id": "I4",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "rationale": "Date check: child_2 birth ~1854 vs. new stub I4 (minted from this record): circular, match_score null. Residence check: birth stated Pennsylvania \u2014 consistent with George's known Pennsylvania residence. Birth ~1854, Pennsylvania, age 6 in 1860 census of George Ackerman's Berks County household. Supports identification of child_2 as Margaret Ackerman (I4), a new stub minted from this persona. Probable per stub-person rules."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_007",
+                        "person_id": "I4",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "rationale": "Date check: no birth year stated for child_2 in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Relationship assertion: Margaret Ackerman (child_2) is inferred as a child of George Ackerman (head_of_household) from household position and shared surname in the 1860 census. Inferred by researcher \u2014 not explicitly stated in the 1860 census, which did not include a relationship column. Probable per stub-person rules; single record."
+                      }
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entry": {
+                        "assertion_id": "a_007",
+                        "person_id": "I1",
+                        "confidence": "confident",
+                        "match_score": null,
+                        "rationale": "Date check: no birth year stated for the head_of_household in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. George Ackerman's attested residence Berks County, Pennsylvania (project objective, same locality): same. This relationship assertion names George Ackerman as the head_of_household (the related_person_role) and bears on I1 as the parent figure. George is already linked to this same record via pe_001 (a_001 \u2192 I1, probable). Obvious tier: same record, same household head, same person. Residence fully consistent. Confident."
+                      }
+                    }
+                  ]
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "results": [
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_002"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_003"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_004"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_005"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_006"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_007"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_008"
+                    },
+                    {
+                      "section": "person_evidence",
+                      "op": "append",
+                      "entryId": "pe_009"
+                    }
+                  ],
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__tree_edit",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3",
+                  "ops": [
+                    {
+                      "operation": "add_relationship",
+                      "relationship": {
+                        "type": "ParentChild",
+                        "parent": "I1",
+                        "child": "I3"
+                      },
+                      "sourceAssertionId": "a_004"
+                    },
+                    {
+                      "operation": "add_relationship",
+                      "relationship": {
+                        "type": "ParentChild",
+                        "parent": "I1",
+                        "child": "I4"
+                      },
+                      "sourceAssertionId": "a_007"
+                    }
+                  ]
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:tree_edit",
+                "response": {
+                  "ok": true,
+                  "results": [
+                    {
+                      "operation": "add_relationship",
+                      "assignedIds": {
+                        "relationship": "R2"
+                      }
+                    },
+                    {
+                      "operation": "add_relationship",
+                      "assignedIds": {
+                        "relationship": "R3"
+                      }
+                    }
+                  ],
+                  "filesWritten": [
+                    "tree.gedcomx.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__person_warnings",
+                "args": {
+                  "personId": "I1",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:person_warnings",
+                "response": {
+                  "warningCount": 0,
+                  "warnings": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__person_warnings",
+                "args": {
+                  "personId": "I2",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_person_evidence_026-0-0-tkdz_kv3"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:person_warnings",
+                "response": {
+                  "warningCount": 0,
+                  "warnings": []
+                }
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Link census assertions to persons and build household skeleton",
+                  "prompt": "person-evidence: I've extracted George Ackerman's 1860 census household into research.json (assertions a_001-a_007). George is already in the tree (I1). Link these assertions to persons and build out this household skeleton in the tree.\n\nprojectPath: <workspace>",
+                  "subagent_type": "person-evidence"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "person-evidence",
+                "text": "No warnings. Here is the complete summary of work done.\n\n---\n\n**Edges:** 1860 census household record \u2014 household record, write edges.\n\n**Household check:** Catherine Ackerman (I2, wife, no diedByYear before 1860) \u2014 absent from the extracted record roles. The extraction covered only head_of_household, child_1, and child_2; no wife persona was extracted. Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.\n\n**Links created:**\n\n| Assertion | Person | Confidence | Notes |\n|-----------|--------|-----------|-------|\n| a_002 (Henry name, child_1) | I3 (Henry Ackerman, new stub) | probable | Minted from persona |\n| a_003 (Henry birth ~1851, child_1) | I3 | probable | Minted from persona |\n| a_004 (Henry child_inferred, child_1) | I3 | probable | Minted from persona |\n| a_004 (Henry child_inferred, child_1) | I1 (George) | confident | Obvious \u2014 same record, head already linked; Berks County residence matches |\n| a_005 (Margaret name, child_2) | I4 (Margaret Ackerman, new stub) | probable | Minted from persona |\n| a_006 (Margaret birth ~1854, child_2) | I4 | probable | Minted from persona |\n| a_007 (Margaret child_inferred, child_2) | I4 | probable | Minted from persona |\n| a_007 (Margaret child_inferred, child_2) | I1 (George) | confident | Obvious \u2014 same record, head already linked; Berks County residence matches |\n\n**New stub persons:** I3 (Henry Ackerman, Male, b. ~1851 Pennsylvania), I4 (Margaret Ackerman, Female, b. ~1854 Pennsylvania)\n\n**Household edges written:** R2 (George I1 \u2192 Henry I3, ParentChild), R3 (George I1 \u2192 Margaret I4, ParentChild)\n\n**Person warnings:** None on I1 or I2.\n\n**Flag \u2014 Catherine (I2) absent from extracted roles:** The 1860 census extraction covers only the head, child_1, and child_2. Catherine Ackerman is George's known spouse in the tree but has no extracted assertion and no pe_ link. She may have appeared on the census page but was not extracted, she may have died before 1860, or she may have been enumerated in a different entry. This should be investigated before concluding the household is complete.\n\n---\n\nThe 1860 census household for George Ackerman has been built out: two children \u2014 Henry (born about 1851) and Margaret (born about 1854), both from Pennsylvania \u2014 are now in the family tree as new persons, each linked to the census record with probable confidence, meaning they are the best current candidates based on household position and shared surname but have not yet been confirmed by a second independent record. George himself is confirmed as the head at confident confidence since he was already identified in the tree and the record's location (Berks County, Pennsylvania) matches exactly.\n\nOne thing to be aware of: George's wife Catherine does not appear in the extracted census assertions. This could mean she was on the same census page but not captured in this extraction, that she was temporarily absent, or in the worst case that she had died before 1860. Checking the original census image or requesting a re-extraction of the wife role would clarify her status before the household record is considered complete."
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "person_evidence"
+                ],
+                "diff": {
+                  "person_evidence": {
+                    "added": [
+                      {
+                        "id": "pe_002",
+                        "created": "2026-10-12",
+                        "person_id": "I3",
+                        "rationale": "Date check: child_1 birth ~1851 (age 9 in 1860) vs. new stub I3 (no prior year): minted from this persona, circular scoring not applicable \u2014 match_score null. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Henry Ackerman listed in the 1860 census of George Ackerman's Berks County, PA household as child_1. Name 'Henry Ackerman' aligns with household surname. Age 9 (~b. 1851) is consistent with a child of George (~b. 1818). No existing tree person named Henry Ackerman. New stub minted from this persona \u2014 pe_ link is probable at most per stub-person rules; single record, no independent corroboration yet.",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "assertion_id": "a_002"
+                      },
+                      {
+                        "id": "pe_003",
+                        "created": "2026-10-12",
+                        "person_id": "I3",
+                        "rationale": "Date check: child_1 birth ~1851 vs. new stub I3 (minted from this record): circular, match_score null. Residence check: birth stated Pennsylvania \u2014 consistent with George's known Pennsylvania residence. Birth ~1851, Pennsylvania, age 9 in 1860 census of George Ackerman's Berks County household. Supports identification of child_1 as Henry Ackerman (I3), a new stub minted from this persona. Probable per stub-person rules.",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "assertion_id": "a_003"
+                      },
+                      {
+                        "id": "pe_004",
+                        "created": "2026-10-12",
+                        "person_id": "I3",
+                        "rationale": "Date check: no birth year stated for child_1 in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Relationship assertion: Henry Ackerman (child_1) is inferred as a child of George Ackerman (head_of_household) from household position and shared surname in the 1860 census. Inferred by researcher \u2014 not explicitly stated in the 1860 census, which did not include a relationship column. Probable per stub-person rules; single record.",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "assertion_id": "a_004"
+                      },
+                      {
+                        "id": "pe_005",
+                        "created": "2026-10-12",
+                        "person_id": "I1",
+                        "rationale": "Date check: no birth year stated for the head_of_household in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. George Ackerman's attested residence Berks County, Pennsylvania (project objective, same locality): same. This relationship assertion names George Ackerman as the head_of_household (the related_person_role) and bears on I1 as the parent figure. George is already linked to this same record via pe_001 (a_001 \u2192 I1, probable). Obvious tier: same record, same household head, same person. Residence fully consistent. Confident.",
+                        "confidence": "confident",
+                        "match_score": null,
+                        "assertion_id": "a_004"
+                      },
+                      {
+                        "id": "pe_006",
+                        "created": "2026-10-12",
+                        "person_id": "I4",
+                        "rationale": "Date check: child_2 birth ~1854 (age 6 in 1860) vs. new stub I4 (no prior year): minted from this persona, circular scoring not applicable \u2014 match_score null. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Margaret Ackerman listed in the 1860 census of George Ackerman's Berks County, PA household as child_2. Name 'Margaret Ackerman' aligns with household surname. Age 6 (~b. 1854) is consistent with a child of George (~b. 1818). No existing tree person named Margaret Ackerman. New stub minted from this persona \u2014 probable per stub-person rules; single record, no independent corroboration yet.",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "assertion_id": "a_005"
+                      },
+                      {
+                        "id": "pe_007",
+                        "created": "2026-10-12",
+                        "person_id": "I4",
+                        "rationale": "Date check: child_2 birth ~1854 vs. new stub I4 (minted from this record): circular, match_score null. Residence check: birth stated Pennsylvania \u2014 consistent with George's known Pennsylvania residence. Birth ~1854, Pennsylvania, age 6 in 1860 census of George Ackerman's Berks County household. Supports identification of child_2 as Margaret Ackerman (I4), a new stub minted from this persona. Probable per stub-person rules.",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "assertion_id": "a_006"
+                      },
+                      {
+                        "id": "pe_008",
+                        "created": "2026-10-12",
+                        "person_id": "I4",
+                        "rationale": "Date check: no birth year stated for child_2 in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. none attested (new stub). Relationship assertion: Margaret Ackerman (child_2) is inferred as a child of George Ackerman (head_of_household) from household position and shared surname in the 1860 census. Inferred by researcher \u2014 not explicitly stated in the 1860 census, which did not include a relationship column. Probable per stub-person rules; single record.",
+                        "confidence": "probable",
+                        "match_score": null,
+                        "assertion_id": "a_007"
+                      },
+                      {
+                        "id": "pe_009",
+                        "created": "2026-10-12",
+                        "person_id": "I1",
+                        "rationale": "Date check: no birth year stated for the head_of_household in this relationship assertion \u2014 none stated. Residence check: Berks County, Pennsylvania 1860 vs. George Ackerman's attested residence Berks County, Pennsylvania (project objective, same locality): same. This relationship assertion names George Ackerman as the head_of_household (the related_person_role) and bears on I1 as the parent figure. George is already linked to this same record via pe_001 (a_001 \u2192 I1, probable). Obvious tier: same record, same household head, same person. Residence fully consistent. Confident.",
+                        "confidence": "confident",
+                        "match_score": null,
+                        "assertion_id": "a_007"
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              },
+              "tree.gedcomx.json": {
+                "sections_modified": [
+                  "persons",
+                  "relationships"
+                ],
+                "diff": {
+                  "persons": {
+                    "added": [
+                      {
+                        "id": "I3",
+                        "facts": [
+                          {
+                            "id": "F3",
+                            "date": "~1851",
+                            "type": "Birth",
+                            "place": "Pennsylvania",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 2
+                              }
+                            ],
+                            "assertion_id": "a_003"
+                          }
+                        ],
+                        "names": [
+                          {
+                            "id": "N3",
+                            "type": "BirthName",
+                            "given": "Henry",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 3
+                              }
+                            ],
+                            "surname": "Ackerman"
+                          }
+                        ],
+                        "gender": "Unknown"
+                      },
+                      {
+                        "id": "I4",
+                        "facts": [
+                          {
+                            "id": "F4",
+                            "date": "~1854",
+                            "type": "Birth",
+                            "place": "Pennsylvania",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 2
+                              }
+                            ],
+                            "assertion_id": "a_006"
+                          }
+                        ],
+                        "names": [
+                          {
+                            "id": "N4",
+                            "type": "BirthName",
+                            "given": "Margaret",
+                            "sources": [
+                              {
+                                "ref": "S1",
+                                "quality": 3
+                              }
+                            ],
+                            "surname": "Ackerman"
+                          }
+                        ],
+                        "gender": "Unknown"
+                      }
+                    ],
+                    "modified": [
+                      {
+                        "id": "I1",
+                        "changed_fields": {
+                          "names": {
+                            "before": [
+                              {
+                                "id": "N1",
+                                "preferred": true,
+                                "given": "George",
+                                "surname": "Ackerman",
+                                "type": "BirthName"
+                              }
+                            ],
+                            "after": [
+                              {
+                                "id": "N1",
+                                "type": "BirthName",
+                                "given": "George",
+                                "sources": [
+                                  {
+                                    "ref": "S1",
+                                    "quality": 3
+                                  }
+                                ],
+                                "surname": "Ackerman",
+                                "preferred": true
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    ],
+                    "deleted": []
+                  },
+                  "relationships": {
+                    "added": [
+                      {
+                        "id": "R2",
+                        "type": "ParentChild",
+                        "child": "I3",
+                        "parent": "I1",
+                        "sources": [
+                          {
+                            "ref": "S1",
+                            "quality": 2
+                          }
+                        ]
+                      },
+                      {
+                        "id": "R3",
+                        "type": "ParentChild",
+                        "child": "I4",
+                        "parent": "I1",
+                        "sources": [
+                          {
+                            "ref": "S1",
+                            "quality": 2
+                          }
+                        ]
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: a_001, a_002, a_003, a_004, a_005, a_006, a_007"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_a010_has_second_side_link",
+                "passed": true,
+                "error": "skipped: not a multi-person-awareness scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_audit_review_makes_no_writes",
+                "passed": true,
+                "error": "skipped: not an audit-review scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_corridor_move_links_confident",
+                "passed": true,
+                "error": "skipped: not a corridor-move-link test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_corridor_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a geography-from-tools test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fts_assertion_no_score",
+                "passed": true,
+                "error": "skipped: not a no-score-fallback scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_geography_measured_with_place_distance",
+                "passed": true,
+                "error": "skipped: not a geography-distance test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_high_score_conflict_not_confident",
+                "passed": true,
+                "error": "skipped: not a score-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_low_score_variant_still_links",
+                "passed": true,
+                "error": "skipped: not a score-variant scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_match_score_persisted",
+                "passed": true,
+                "error": "skipped: not a match-score scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_matched_persona_is_materialized_onto_its_person",
+                "passed": true,
+                "error": "skipped: not a materialization test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a naming-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_new_person_evidence_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_person_evidence_references_valid_assertion",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_unrelated_new_pe_in_focused_review",
+                "passed": true,
+                "error": "skipped: not a focused-review scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_pe004_unchanged_when_adding_second_side",
+                "passed": true,
+                "error": "skipped: not a multi-person-awareness scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_pe005_unchanged_when_review_confirms",
+                "passed": true,
+                "error": "skipped: not a pe_005 review scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_person_evidence_no_deletions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_query_called_for_coverage",
+                "passed": true,
+                "error": "skipped: not a research_query coverage test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_same_person_called_at_all_when_a_reachable_persona_was_linked",
+                "passed": true,
+                "error": "skipped: no new pe_ entry had a reachable record persona \u2014 nothing owed",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_same_person_called_when_persona_meets_existing_candidate",
+                "passed": true,
+                "error": "skipped: no new pe_ entry makes an identity claim this tier can verify \u2014 nothing to score",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_stub_person_created_and_linked",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_unexplained_move_not_confident",
+                "passed": true,
+                "error": "skipped: not an unexplained-move-cap test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly minted Henry and Margaret Ackerman as new persons (I3, I4) via materialize_facts with sourced census facts (names, births with ~1851 and ~1854 dates, Pennsylvania locations). Parent-child edges (R2, R3) were written via tree_edit add_relationship with source-refs to the inferred relationship assertions (a_004, a_007). The skill correctly identified these as pre-1880 inferred relationships and applied lower ref quality. All person_evidence entries were created with appropriate confidence levels (probable for new stubs, confident for George as the already-linked head). The critical requirement\u2014flagging Catherine's unexplained absence from the 1860 household\u2014was explicitly surfaced in Claude's response: 'Catherine Ackerman (I2, wife, no diedByYear before 1860) \u2014 absent from the extracted record roles' and 'Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.' This demonstrates the skill derived the absence by comparing George's tree family (which includes Catherine via R1) against the record roster and identified it as an open research question without resolving it by renaming or fabricating. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required work: (1) minted both children (Henry and Margaret) with sourced census facts via materialize_facts; (2) linked all assertions to appropriate persons (a_002-a_007 to I3 and I4, a_004 and a_007 also to I1 as the parent); (3) wrote both parent-child edges via tree_edit add_relationship with source-refs; (4) created 8 person_evidence entries covering all assertions; (5) most critically, unprompted detection and flagging of Catherine's absence from the household. The skill did not skip any required step. The response explicitly states the household was 'built out' and names the two new children with their birth years, and dedicates a full section to the Catherine absence flag with possible explanations (died before 1860, enumerated elsewhere, omitted, or different family)."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All MCP tool calls passed correct arguments. project_context and research_query calls used correct projectPath and section/recordId/personId/assertionId parameters. materialize_facts was called with three ops (head_of_household linked to I1, child_1 and child_2 unminted) with correct recordId, recordRole, and personId where applicable. research_append appended 8 person_evidence entries with correct assertion_id, person_id, confidence, and rationale fields. tree_edit add_relationship was called twice with correct ParentChild relationships (I1\u2192I3, I1\u2192I4) and sourceAssertionId references (a_004, a_007). person_warnings was called for I1 and I2 to check for conflicts. No tool calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments align semantically with expected usage."
+              },
+              {
+                "source": "rubric",
+                "name": "Confidence calibration",
+                "score": 3,
+                "rationale": "Confidence tiers are correctly calibrated. Henry and Margaret are scored 'probable' (a_002, a_003, a_004 for Henry; a_005, a_006, a_007 for Margaret) because they are new stubs minted from a single census record with no independent corroboration\u2014exactly the 'single source, no corroboration' tier. George's parent-child links (a_004\u2192I1, a_007\u2192I1) are scored 'confident' because he is already linked to the same record via pe_001, making it an obvious same-record, same-household-head match with consistent Berks County residence. The rationales explicitly note the circular-scoring rule (new stubs minted from the persona cannot be scored against themselves, match_score null). No confidence is over-claimed; the single-record stubs are not marked confident, and the obvious same-record parent link is appropriately confident."
+              },
+              {
+                "source": "rubric",
+                "name": "Rationale quality",
+                "score": 3,
+                "rationale": "Each person_evidence rationale cites specific matching attributes. For Henry (a_002): 'Name 'Henry Ackerman' aligns with household surname. Age 9 (~b. 1851) is consistent with a child of George (~b. 1818). No existing tree person named Henry Ackerman.' For Margaret (a_005): 'Name 'Margaret Ackerman' aligns with household surname. Age 6 (~b. 1854) is consistent with a child of George (~b. 1818). No existing tree person named Margaret Ackerman.' For George as parent (a_004\u2192I1): 'same record, same household head, same person. Residence fully consistent.' Rationales address why competing candidates were ruled out (no existing tree persons with those names) and explain the circular-scoring rule for new stubs. The Catherine flag rationale explains the absence and offers multiple possible explanations (died, enumerated elsewhere, omitted, different family)."
+              },
+              {
+                "source": "rubric",
+                "name": "Multi-person awareness",
+                "score": 3,
+                "rationale": "The skill created person_evidence links for both sides of each relationship assertion. For a_004 (Henry as child of George): pe_004 links a_004\u2192I3 (Henry) and pe_005 links a_004\u2192I1 (George). For a_007 (Margaret as child of George): pe_008 links a_007\u2192I4 (Margaret) and pe_009 links a_007\u2192I1 (George). Both parent-child edges were written via tree_edit add_relationship (R2 and R3), establishing the relationships in the tree. The skill did not miss the other-side link for any relationship assertion."
+              },
+              {
+                "source": "rubric",
+                "name": "Person minting and connecting edges",
+                "score": 3,
+                "rationale": "The skill correctly minted Henry and Margaret via materialize_facts create-or-enrich (I3 and I4 created with sourced names and birth facts, each with 2 refs attached per the tool response). Both children arrived with resolved source-refs on their names and facts. Gender was correctly written as Unknown (the 1860 census carried no sex assertion for either child, and the tool response shows namesAdded: 1 and factsAdded: 1 for each, indicating proper sourced fact materialization). Parent-child edges (R2, R3) were written via tree_edit add_relationship with source-refs to the inferred relationship assertions (a_004, a_007), correctly classified as INDIRECT (pre-1880 census, inferred from household position, no relationship column). The critical requirement\u2014flagging Catherine's unexplained absence\u2014was met: the skill compared George's tree family (I2 via R1) against the record roster, derived that Catherine does not appear among the extracted personas, and surfaced this as an open identity/research question without renaming, overwriting, or fabricating. The flag explicitly states 'Catherine may have been enumerated on the same page but was not extracted, or she may have been absent from the household (enumerated elsewhere, temporarily away, or the census page captured only a portion of the household). This is flagged for follow-up.' No merge_warnings dry-run was performed, but the per-test context notes this is a plus, not required (pre-extracted assertions, no candidate document available)."
+              },
+              {
+                "source": "rubric",
+                "name": "Score discipline",
+                "score": 3,
+                "rationale": "No same_person calls were made, which is correct: the head (George) was already linked via pe_001, and the two children are new stubs with no tree candidates to score against. The per-test context explicitly states 'no same_person call is required (the head is already linked and the children are new stubs, not identity matches).' The skill correctly reasoned from the tree + assertions without invoking same_person, which is the appropriate approach for this scenario. match_score is null for all entries, correctly reflecting that new stubs cannot be scored against themselves and the head's link was pre-existing."
+              }
+            ],
+            "judge_cost_usd": 0.025663599999999998,
+            "duration_ms": 22544.742334001057,
+            "error": null,
+            "input_tokens": 14563,
+            "cached_input_tokens": 5706,
+            "output_tokens": 2106
+          },
+          "started_at": 1791814536.919158,
+          "ended_at": 1791814689.017083
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 129288.48616599862,
+    "duration_api_ms": 127900.0,
+    "judge_duration_ms": 22544.742334001057,
+    "num_turns": 2,
+    "input_tokens": 588,
+    "cached_input_tokens": 302190,
+    "cache_creation_input_tokens": 47996,
+    "output_tokens": 7542,
+    "judge_input_tokens": 14563,
+    "judge_cached_input_tokens": 5706,
+    "judge_output_tokens": 2106,
+    "skill_cost_usd": 0.38421,
+    "judge_cost_usd": 0.025663599999999998,
+    "total_cost_usd": 0.4098736,
+    "wall_clock_ms": 152097.92494773865
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

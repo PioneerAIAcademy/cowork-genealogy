@@ -23,6 +23,7 @@ import { treeEdit } from "../../src/tools/tree-edit.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { researchQuery } from "../../src/tools/research-query.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 // ── minimal valid fixtures ────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ describe("research_append read failures", () => {
   });
 
   it("invalid research.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeTree();
     await writeBadJson("research.json");
     const r = await call();
@@ -90,6 +92,7 @@ describe("research_append read failures", () => {
   });
 
   it("invalid tree.gedcomx.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeResearch();
     await writeBadJson("tree.gedcomx.json");
     const r = await call();
@@ -116,6 +119,7 @@ describe("tree_edit read failures", () => {
   });
 
   it("invalid research.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeTree();
     await writeBadJson("research.json");
     const r = await call();
@@ -131,6 +135,7 @@ describe("tree_edit read failures", () => {
   });
 
   it("invalid tree.gedcomx.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeResearch();
     await writeBadJson("tree.gedcomx.json");
     const r = await call();
@@ -157,6 +162,7 @@ describe("materialize_facts read failures", () => {
   });
 
   it("invalid research.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeTree();
     await writeBadJson("research.json");
     const r = await call();
@@ -172,6 +178,7 @@ describe("materialize_facts read failures", () => {
   });
 
   it("invalid tree.gedcomx.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeResearch();
     await writeBadJson("tree.gedcomx.json");
     const r = await call();
@@ -211,6 +218,7 @@ describe("research_log_append read failures", () => {
   });
 
   it("invalid research.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeTree();
     await writeBadJson("research.json");
     const r = await call();
@@ -229,6 +237,7 @@ describe("research_log_append read failures", () => {
   });
 
   it("invalid tree.gedcomx.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeResearch();
     await writeBadJson("tree.gedcomx.json");
     const r = await call();
@@ -256,6 +265,7 @@ describe("research_query read failures", () => {
   });
 
   it("invalid research.json → ok:false", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeBadJson("research.json");
     const r = await call();
     expect(r.ok).toBe(false);

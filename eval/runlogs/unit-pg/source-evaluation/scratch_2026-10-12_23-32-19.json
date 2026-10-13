@@ -1,0 +1,475 @@
+{
+  "schema_version": 3,
+  "skill": "source-evaluation",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/source-evaluation.md": "fe9e599975543398564c3cb5659f2a4fd63c4380bc8b12edaeafb92eb451f525",
+    "eval/tests/unit/source-evaluation/ambiguous-kind-not-collapsed.json": "7785264eea17cc93febdddfebe63ef55d55f58f0e75afc204a9d9f8c2520d065",
+    "eval/tests/unit/source-evaluation/backend-metadata-not-a-todo.json": "0839bee827e127ef796f38a5579043c622818fd33d32e5454422536fd091d611",
+    "eval/tests/unit/source-evaluation/checklist-points-to-findings.json": "c6803a2103388d9c7cdbb477ab25df725bab409f51614ce9080a11411e0e6a0f",
+    "eval/tests/unit/source-evaluation/direct-handback-conflict-resolution.json": "3cac19ce0b53212bb27a81b9c46b0f81efcb13a39bac89b23dee6d186b55d1c7",
+    "eval/tests/unit/source-evaluation/index-error-recommends-reread.json": "b5a21045b5bfe359187d526243eabb6a5bd1b093992a3d3cadb79f6bfe4ebb7e",
+    "eval/tests/unit/source-evaluation/misattribution-detach-scoped.json": "39bf4ca2df33a0c523b3b2cf1499a9032ad6d13c029bd691413fb5b05e34840a",
+    "eval/tests/unit/source-evaluation/precision-refinement-not-a-finding.json": "5138158ed61e4515d1f95f4d2cba3be2bfbde6babe596ee15ff9069b40f4d69b",
+    "eval/tests/unit/source-evaluation/quality-detail-orders-by-category.json": "9aac97f5223dd864d7463abc869ef535bb0585f2373f69f2860cb7f2155b9589",
+    "eval/tests/unit/source-evaluation/rubric.md": "df4e6cd7c120ae9ef623942c2ad511863fa72b4b7c427d1d7b744c86a44baa3b",
+    "eval/tests/unit/source-evaluation/source-conflict-characterised-not-resolved.json": "7af7d08bcca0e224cf01a1dc609fe2abe4c9121074c84a720fb74d66c4cca41a",
+    "eval/tests/unit/source-evaluation/trigger-support-question.json": "7ec74eb7a8ef7f3ad65d36613426a579c68f189efc5122e365e2fd86866fc3a0",
+    "eval/tests/unit/source-evaluation/trigger-tester-phrasing.json": "88f8cdc2a60e8646197fa0c0118034e505a80b2d300b278c6f33eb4dd005c98a",
+    "eval/fixtures/scenarios/christian-hole-quality/README.md": "b5033938e69770e5500fb76f8f2f1cf3a244adec8a7a4c3d94df5462b423d18a",
+    "eval/fixtures/scenarios/christian-hole-quality/research.json": "1ba0176a7c46bc0b70a18fe5cead4a0c538db4943be3b18ad36b5f8b319fe36e",
+    "eval/fixtures/scenarios/christian-hole-quality/tree.gedcomx.json": "b0d8c7defc4b50ef1a7648c99febf6446c3d04babeed51d846dfded9cba45788",
+    "eval/fixtures/scenarios/driscoll-source-audit/README.md": "7662d9fbe2f59c4d1dd8b0b61456457b7f6435e9371e12d2d7adb57aaa31b2fb",
+    "eval/fixtures/scenarios/driscoll-source-audit/research.json": "af4040f02e11a63ce1fe328d8fee0ba8963f8cfbcc8f2c4828094f081fdf09c6",
+    "eval/fixtures/scenarios/driscoll-source-audit/tree.gedcomx.json": "13293641ac10968026735de9b1e311b9654b9e512eeb9f1bd05bc6a5785bb6a8",
+    "eval/fixtures/mcp/person-quality-driscoll-detail.json": "5ea6837277677cc1fa5e71469bbcfcf4d0a524f41dad9539286ebaf3fcde8399",
+    "eval/fixtures/mcp/person-quality-hole-detail.json": "3af2089abb5519b4dac448a423095a968d0eecbecbdf923758a7a9d5ef870824",
+    "eval/fixtures/mcp/person-quality-hole-detail-overlap.json": "8d8e6a631ba371b32f31eff40d6c080b685a56ab1b5375599d6e30cfc2468743",
+    "eval/fixtures/mcp/person-read-driscoll-attached-sources.json": "c4e377dc2453f7c31b7c795a653cbc7aec062e919ef9ef6569c3f27a5eef278f",
+    "eval/fixtures/mcp/person-read-hole-attached-sources.json": "e22bf1ec4a097895a9c9f7f629624ed848301980d8401fc7a38cc31202328af9",
+    "eval/fixtures/mcp/person-read-hole-wx7-otter-tail.json": "ca7bf2e7e522200c50d31e7cc03adee8be6c9222bc4c9e8b99880a6ddf788e04",
+    "eval/fixtures/mcp/record-read-driscoll-1851-census-index.json": "65eeca94322a9139a958c0d81cc1411bb4a87622b7e974f33341c44d85c0a64d",
+    "eval/fixtures/mcp/record-read-driscoll-1861-census.json": "36bdfdef95c5cb49aed840842666c687d03cec67194e2b540026275f7d21693f",
+    "eval/fixtures/mcp/record-read-driscoll-baptism-1814.json": "9b6bd7d2006446f76d0fce8770c02c676341db6bc757da42d04ffc6f0008c573",
+    "eval/fixtures/mcp/record-read-driscoll-burial-1878.json": "2b64c63a85f527dcb9fda9633b64b5b50a11af3b658370c079e547b5f4bac284",
+    "eval/fixtures/mcp/record-read-driscoll-death-1885.json": "a0780144b2fb3458075e23c0ca6f47723272773ff062e3f1e012052e1e50c16e",
+    "eval/fixtures/mcp/record-read-driscoll-marriage-register.json": "343354d23cb89452b387f07e4878b1cfa60fedbe7dec7aec88c21f01c6275de4",
+    "eval/fixtures/mcp/record-read-hole-1885-state-census.json": "50a26a9bd4e975382874edd96009e2a03ce4ef942ae86f5ac5160fa4a1a24833",
+    "eval/fixtures/mcp/record-read-hole-1900-census.json": "d904a4568c09226436d6705cd8dbd47d42f04dc648e46bab16fab9b4486bd647",
+    "eval/fixtures/mcp/record-read-hole-mn-death-index.json": "94edf52528e3aefc672206d13dbda4569a2b9622ca9e39eefa7a7100be06f43a",
+    "eval/fixtures/mcp/source-attachments-driscoll.json": "1b19b8450d3fb75b554853934d1c39f7eec3d22efdc3d4e6882711df2c9db3d0",
+    "eval/fixtures/mcp/source-attachments-hole-1885.json": "3f81ca6a8a403960061db8302fa4e1382e567282785a308adabb971469782973"
+  },
+  "tests": [
+    {
+      "test_id": "ut_source_evaluation_b6h",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "christian-hole-quality",
+      "mcp_fixtures": [
+        "person-read-hole-attached-sources",
+        "record-read-hole-1900-census",
+        "record-read-hole-mn-death-index",
+        "record-read-hole-1885-state-census",
+        "source-attachments-hole-1885",
+        "person-read-hole-wx7-otter-tail",
+        "person-quality-hole-detail"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that the user's question about conflicting birth year sources (1875 vs 1852) is a conflict-resolution task, not a source-evaluation task. The hand-back response accurately routes to the appropriate skill with a clear, accurate description of the conflict."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response fully addresses what was required: a clear decline of source-evaluation's task and an accurate hand-back to conflict-resolution. The one-line format is appropriate and complete for this routing decision, as specified in the per-test context."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The agent correctly declined to invoke tools and instead routed the request via hand-back, which is the correct behavior for this negative test. N/A applies."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The agent correctly identified that the user's question about conflicting birth year sources (1875 vs 1852) is a conflict-resolution task, not a source-evaluation task. The hand-back response accurately routes to the appropriate skill with a clear, accurate description of the conflict."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response fully addresses what was required: a clear decline of source-evaluation's task and an accurate hand-back to conflict-resolution. The one-line format is appropriate and complete for this routing decision, as specified in the per-test context."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. The agent correctly declined to invoke tools and instead routed the request via hand-back, which is the correct behavior for this negative test. N/A applies."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 15620.434500000556,
+        "duration_api_ms": 15281.0,
+        "judge_duration_ms": 3310.2849159913603,
+        "wall_clock_ms": 19318.18175315857,
+        "num_turns": 2,
+        "input_tokens": 556,
+        "cached_input_tokens": 27945,
+        "cache_creation_input_tokens": 21112,
+        "output_tokens": 406,
+        "judge_input_tokens": 7304,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 301,
+        "skill_cost_usd": 0.09406149999999999,
+        "judge_cost_usd": 0.008808999999999999,
+        "total_cost_usd": 0.10287049999999999
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_source_evaluation_b6h_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 15620.434500000556,
+          "duration_api_ms": 15281.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 556,
+          "cached_input_tokens": 27945,
+          "cache_creation_input_tokens": 21112,
+          "output_tokens": 406,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 550,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000625,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 391,
+              "cacheReadInputTokens": 27945,
+              "cacheCreationInputTokens": 21112,
+              "webSearchRequests": 0,
+              "costUSD": 0.09343649999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "source-evaluation",
+              "description": "Source evaluation for conflicting birth years",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 26,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 26,
+                "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 8020
+              },
+              "peak_window_tokens": 8023,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 5.761
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20657,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.09406149999999999,
+          "output": {
+            "text_response": "The source-evaluation agent has handed this question back, noting that this is a **conflict between two sources** about Christian's birth year \u2014 and that type of question belongs with the **conflict-resolution** agent rather than source-evaluation.\n\nSource-evaluation audits whether sources are correctly attached to a person's profile (mis-indexing, misattribution, transcription errors). Your question \u2014 *which of two sources to believe when they disagree about the same fact* \u2014 is a **source conflict**, handled by conflict-resolution.\n\nWould you like me to route this to the conflict-resolution agent? If so, it would help to have:\n- The **full name** of the individual (Christian's surname)\n- The **project path** if it's a specific research project folder\n- Any other known facts (place of birth, parents, etc.) that might help weigh the two records",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Source evaluation for conflicting birth years",
+                  "prompt": "The 1900 census says Christian was born in 1875 and the 1885 state census says 1852 -- which one should I believe?\n\nprojectPath: <workspace>",
+                  "subagent_type": "source-evaluation"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "source-evaluation",
+                "text": "Hand-back: conflict-resolution \u2014 two sources disagree about Christian's birth year, which source to credit."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_a_relatives_source_is_not_audited",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_checklist_does_not_restate_a_finding",
+                "passed": true,
+                "error": "skipped: test does not declare checklist-overlap",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_checklist_pointer_carries_no_action",
+                "passed": true,
+                "error": "skipped: test does not declare checklist-overlap",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_index_discrepancy_does_not_recommend_detaching",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_index_discrepancy_recommends_reread",
+                "passed": true,
+                "error": "skipped: test does not declare an index discrepancy",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_quality_detail_call_carries_detail_flag",
+                "passed": true,
+                "error": "skipped: test does not declare quality-detail",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_scope_handback_calls_no_tool",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": "skipped: negative tests don't run the skill body",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The agent correctly identified that the user's question about conflicting birth year sources (1875 vs 1852) is a conflict-resolution task, not a source-evaluation task. The hand-back response accurately routes to the appropriate skill with a clear, accurate description of the conflict."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response fully addresses what was required: a clear decline of source-evaluation's task and an accurate hand-back to conflict-resolution. The one-line format is appropriate and complete for this routing decision, as specified in the per-test context."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. The agent correctly declined to invoke tools and instead routed the request via hand-back, which is the correct behavior for this negative test. N/A applies."
+              }
+            ],
+            "judge_cost_usd": 0.008808999999999999,
+            "duration_ms": 3310.2849159913603,
+            "error": null,
+            "input_tokens": 7304,
+            "cached_input_tokens": 0,
+            "output_tokens": 301
+          },
+          "started_at": 1791848194.611562,
+          "ended_at": 1791848213.9297438
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    }
+  ],
+  "totals": {
+    "duration_ms": 15620.434500000556,
+    "duration_api_ms": 15281.0,
+    "judge_duration_ms": 3310.2849159913603,
+    "num_turns": 2,
+    "input_tokens": 556,
+    "cached_input_tokens": 27945,
+    "cache_creation_input_tokens": 21112,
+    "output_tokens": 406,
+    "judge_input_tokens": 7304,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 301,
+    "skill_cost_usd": 0.09406149999999999,
+    "judge_cost_usd": 0.008808999999999999,
+    "total_cost_usd": 0.10287049999999999,
+    "wall_clock_ms": 19318.18175315857
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

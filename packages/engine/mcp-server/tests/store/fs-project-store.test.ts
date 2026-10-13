@@ -7,6 +7,7 @@ import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { readProjectJson } from "../../src/utils/project-io.js";
 import { getProjectStore, setProjectStore } from "../../src/store/project-store.js";
 import { runProjectStoreConformance } from "./conformance.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 runProjectStoreConformance("FsProjectStore", async () => {
   const root = await mkdtemp(join(tmpdir(), "fs-store-"));
@@ -86,6 +87,7 @@ describe("FsProjectStore specifics", () => {
   it.skipIf(process.platform === "win32")(
     "readText refuses a symlink that leaves the project and follows one that stays",
     async () => {
+      fileStoreOnly("a symlink has no Postgres meaning");
       // assertInsideProject reasons about the ref string; a symlink placed in
       // the project resolves "inside" and readFile would follow it to any
       // host-readable file. readText re-checks on the real path.
