@@ -35,14 +35,9 @@ fields:
 | `license` | `"Apache-2.0"` (matches `LICENSE`) |
 | `keywords` | Includes `genealogy`, `familysearch`, `mcp` |
 | `server` | See below |
+| `user_config` | See below |
 | `tools` | Array of `{ name }` for every registered tool (see Tool list) |
 | `compatibility` | See below |
-
-The manifest MUST NOT declare a `user_config` block. Per-user settings
-(`wikiApiUrl`, `wikiMarkdownDir`) are read only from
-`~/.familysearch-mcp/config.json` (`src/auth/config.ts`); the project
-convention forbids env-var injection, which is the only channel
-`user_config` offers.
 
 ### `server`
 
@@ -52,13 +47,33 @@ convention forbids env-var injection, which is the only channel
   "entry_point": "build/index.js",
   "mcp_config": {
     "command": "node",
-    "args": ["${__dirname}/build/index.js"]
+    "args": ["${__dirname}/build/index.js"],
+    "env": {
+      "GENEALOGY_OPENROUTER_API_KEY": "${user_config.openrouter_api_key}"
+    }
   }
 }
 ```
 
 `${__dirname}` is the MCPB-substituted absolute path to the installed
 extension directory.
+
+### `user_config`
+
+Exactly one field, `openrouter_api_key`: `type` `"string"`, `sensitive`
+`true` (the input is masked), `required` `false`. Claude Desktop shows it in
+the extension's settings. Required would stop the extension starting for a
+user with no key.
+
+Its only channel to the server is the environment variable above, so
+`src/index.ts` reads `GENEALOGY_OPENROUTER_API_KEY` at start-up
+(`installConfigFromEnv`, `src/auth/config.ts`) and layers it over
+`~/.familysearch-mcp/config.json` for the local principal. A field left blank
+arrives empty or as the unsubstituted placeholder; both mean "not set", and
+`config.json`'s key, if any, applies. This is the one exception to the
+project's no-env-var rule (CLAUDE.md, "Secrets/config convention"). Every
+other per-user setting (`wikiApiUrl`, `popStatsUrl`, `openRouterModel`) is
+read only from `config.json`.
 
 ### `compatibility`
 
@@ -89,7 +104,7 @@ snapshot of it:
   `src/server.ts` — advertised-but-undispatchable is the failure the
   list-equality check alone cannot see.
 
-For the current set, read `allToolSchemas`, or `README.md`'s tables for the
+For the current set, read `allToolSchemas`, or `docs/catalog.md`'s tables for the
 user-facing catalog.
 
 ---
@@ -161,6 +176,17 @@ This proves the packed artifact — not just the source tree — boots and
 advertises its tools, which is the closest programmatic stand-in for an
 end-user install (the GUI "Install extension" step is a manual layer in
 `docs/testing-guides/mcpb-install-testing-guide.md`).
+
+---
+
+## Publishing
+
+`.github/workflows/cowork-release.yml` runs on every push to `main`: it builds
+and verifies both artifacts the same way the `vitest` check does (`make mcpb`,
+`scripts/verify-mcpb.sh`, `make plugin`), moves the `cowork-latest` tag to the
+built commit, and replaces the two files on that tag's GitHub Release. The
+README's download links name the tag, so they never change and always serve
+the latest `main`.
 
 ---
 

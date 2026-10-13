@@ -1,0 +1,204 @@
+import { describe, it, expect } from "vitest";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { allToolSchemas } from "../../src/tool-schemas.js";
+
+/**
+ * `docs/catalog.md` drift (issue #1137).
+ *
+ * `docs/catalog.md` is the catalog of tools, skills, and agents. It lived in
+ * `README.md` until the README became a short user page. Nothing read it, and
+ * it had rotted badly: **13 of 47 tools appeared nowhere in it** —
+ * the entire structured-persistence writer surface (`research_append`,
+ * `tree_edit`, `research_query`, …) plus both projection tools. A reader could
+ * not learn those existed. Two prose counts disagreed with each other *and*
+ * with the code (33 and 31, against 47 live).
+ *
+ * Skills and agents were clean at 27/27 and 4/4, so that half is preventive.
+ *
+ * **Presence, not description quality.** This asserts every live name appears
+ * somewhere in the catalog. It cannot tell whether the description is any good —
+ * that is review's job. Presence is the failure that shipped.
+ *
+ * The counterpart lint is `manifest.test.ts` (manifest ↔ `allToolSchemas` ↔
+ * dispatch). This extends the same idea to the catalog.
+ */
+
+const here = dirname(fileURLToPath(import.meta.url));
+const engineRoot = join(here, "..", "..", "..");
+const projectRoot = join(engineRoot, "..", "..");
+const pluginRoot = join(engineRoot, "plugin");
+
+const catalog = readFileSync(join(projectRoot, "docs/catalog.md"), "utf8");
+
+/**
+ * Identifiers the catalog *names*, as opposed to words it merely contains:
+ * backticked (`research_append`) or bolded (`**init-project**`, the skill
+ * tables' form). Substring matching is not good enough — `research`,
+ * `citation`, `timeline` and `translation` are all shipped skill names *and*
+ * ordinary English words that appear throughout the prose, so a
+ * `catalog.includes()` check on those can never fail.
+ */
+const named = new Set([
+  ...[...catalog.matchAll(/`([a-z0-9_-]+)`/g)].map((m) => m[1]),
+  ...[...catalog.matchAll(/\*\*([a-z0-9_-]+)\*\*/g)].map((m) => m[1]),
+]);
+
+function dirNames(path: string): string[] {
+  return readdirSync(path, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name)
+    .sort();
+}
+
+describe("docs/catalog.md", () => {
+  it("read a catalog with content (guards the reader itself)", () => {
+    expect(named.size).toBeGreaterThan(20);
+  });
+
+  it("names every registered MCP tool", () => {
+    const missing = allToolSchemas
+      .map((s) => s.name)
+      .filter((n) => !named.has(n))
+      .sort();
+    expect(
+      missing,
+      `these tools are registered but appear nowhere in docs/catalog.md, so a user ` +
+        `cannot discover them: ${missing.join(", ")}`,
+    ).toEqual([]);
+  });
+
+  // NO inverse check ("the catalog names a tool that no longer exists"). It was
+  // written and cut: distinguishing a stale tool name from a field name, an
+  // enum value, or a directory needs a heuristic, and the first run produced
+  // six false positives (`getting_started` and `online_records` are
+  // `wiki_place_page` section values; `exhaustive_declaration`,
+  // `narration_guidance` and `experience_level` are research.json fields;
+  // `node_modules` is a directory) against zero real finds. The forward
+  // direction — every live tool is named — is what caught the 13 real misses,
+  // and a lint that cries wolf is a lint someone disables. If a renamed tool
+  // ever survives in the catalog, that is a review miss, not a lint gap.
+
+  it("names every shipped skill", () => {
+    const skills = dirNames(join(pluginRoot, "skills"));
+    const missing = skills.filter((s) => !named.has(s));
+    expect(
+      missing,
+      `these skills ship in the plugin but appear nowhere in docs/catalog.md: ` +
+        missing.join(", "),
+    ).toEqual([]);
+  });
+
+  it("names every shipped plugin agent", () => {
+    const agents = readdirSync(join(pluginRoot, "agents"))
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => f.replace(/\.md$/, ""))
+      .sort();
+    const missing = agents.filter((a) => !named.has(a));
+    expect(
+      missing,
+      `these plugin agents ship but appear nowhere in docs/catalog.md: ` +
+        missing.join(", "),
+    ).toEqual([]);
+  });
+
+  it("states a tool count that matches reality, if it states one at all", () => {
+    // The two prose counts that drifted said 33 and 31 against 47 live. A
+    // count is optional; a *wrong* count is worse than none, because a reader
+    // uses it to decide whether the tables below are complete.
+    //
+    // `MCP` is optional in the pattern: the headline reads "The MCP server
+    // exposes 47 tools", with no `MCP` between the number and `tools`. A
+    // pattern that required it left the headline — the count that had actually
+    // rotted, to 33 — unguarded.
+    const claims = [...catalog.matchAll(/(\d+)\s+(?:MCP\s+)?tools?\b/g)].map(
+      (m) => Number(m[1]),
+    );
+    const wrong = claims.filter((n) => n !== allToolSchemas.length);
+    expect(
+      wrong,
+      `docs/catalog.md claims these MCP tool counts, but ${allToolSchemas.length} ` +
+        `are registered: ${wrong.join(", ")}. Update the number, or drop it ` +
+        `and point at the tables.`,
+    ).toEqual([]);
+  });
+
+  it("ADR-0002's headline counts match reality", () => {
+    // Third instance of the same class this file already guards for the catalog:
+    // a stated count rots because the PR that moves it edits code, not prose.
+    // ADR-0002 drifted TWICE in two days — one PR took tools 50->51 while
+    // another converted a skill to an agent, and neither touched the other's
+    // number. Nothing read the sentence, and this file reaches
+    // docs/catalog.md only.
+    //
+    // The sentence is required, not optional: CLAUDE.md and the architecture
+    // guide both cite this ADR for the decomposition, and a reword should be
+    // a deliberate edit here rather than a silently skipped assertion.
+    const adr = readFileSync(
+      join(projectRoot, "docs/adrs/ADR-0002-decompose-into-tools-skills-and-agents.md"),
+      "utf8",
+    );
+    const m = /Today that is (\d+) tools?, (\d+) skills?, and (\d+) agents?\./.exec(adr);
+    expect(
+      m,
+      "ADR-0002 no longer states its 'Today that is N tools, M skills, and " +
+        "K agents.' headline. If that is deliberate, update this test; if it " +
+        "was reworded by accident, restore it.",
+    ).not.toBeNull();
+
+    const skills = readdirSync(join(pluginRoot, "skills"), { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .filter((d) => existsSync(join(pluginRoot, "skills", d.name, "SKILL.md")));
+    const agents = readdirSync(join(pluginRoot, "agents")).filter((f) =>
+      f.endsWith(".md"),
+    );
+    expect({
+      tools: Number(m?.[1]),
+      skills: Number(m?.[2]),
+      agents: Number(m?.[3]),
+    }).toEqual({
+      tools: allToolSchemas.length,
+      skills: skills.length,
+      agents: agents.length,
+    });
+  });
+
+  it("states an agent count that matches reality, if it states one at all", () => {
+    // The skill-count test's twin: two PRs converting skills to agents each
+    // made the same 9->10 edit, so a merge kept "ten Cowork agents" while 11
+    // shipped, and nothing read that sentence.
+    const agents = readdirSync(join(pluginRoot, "agents")).filter((f) => f.endsWith(".md"));
+    // Every count word up to thirty: a fixed short list went blind the moment the
+    // count passed its last entry ("fifteen" was unseen).
+    const NAMES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+      "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen",
+      "eighteen", "nineteen", "twenty", "twenty-one", "twenty-two", "twenty-three", "twenty-four",
+      "twenty-five", "twenty-six", "twenty-seven", "twenty-eight", "twenty-nine", "thirty"];
+    const WORDS: Record<string, number> = Object.fromEntries(NAMES.map((w, n) => [w, n]));
+    const claims = [
+      ...catalog.matchAll(new RegExp(`\\b(\\d+|${[...NAMES].reverse().join("|")})\\s+(?:Cowork\\s+|plugin\\s+)?agents\\b`, "gi")),
+    ].map((m) => WORDS[m[1].toLowerCase()] ?? Number(m[1]));
+    const wrong = claims.filter((n) => n !== agents.length);
+    expect(
+      wrong,
+      `docs/catalog.md claims these agent counts, but ${agents.length} ship in ` +
+        `the plugin: ${wrong.join(", ")}.`,
+    ).toEqual([]);
+  });
+
+  it("states a skill count that matches reality, if it states one at all", () => {
+    // Same failure, one section down: "ships 27 skills" and "26 shipped
+    // skills" disagreed with each other in the same document.
+    const skills = dirNames(join(pluginRoot, "skills"));
+    const claims = [...catalog.matchAll(/(\d+)\s+(?:shipped\s+)?skills\b/g)].map(
+      (m) => Number(m[1]),
+    );
+    const wrong = claims.filter((n) => n !== skills.length);
+    expect(
+      wrong,
+      `docs/catalog.md claims these skill counts, but ${skills.length} ship in ` +
+        `the plugin: ${wrong.join(", ")}.`,
+    ).toEqual([]);
+  });
+});
