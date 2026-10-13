@@ -28,17 +28,16 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-3.csv` row 1, `hint-samples.csv` row 7,
-flags `adds_spouse,adds_death`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Argentina, Salta, Civil Registration, 1880-2000", a death entry for Nicolas Domenichelli (born 1897) who died 29 June 1981, registered 30 June 1981; the register image is from Rosario de la Frontera, Salta.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the June 1981 death, plus a `required` finding that the report documents
-the rejection.
+**Resolved: TRUE MATCH** — senior-genealogist sign-off by @mercyokum on PR #3397, on an **index-only** evidence route that does not rely on the uncalibrated death-act image. The June 1981 Rosario de la Frontera death entry is Nicola Domenichelli of the tree (`G2WX-HZ5`).
 
-A plausible candidate on context, thin on identifiers. The index gives only a name and a birth year one off the tree's 1898, but the shape fits: the tree's wife Esther Jimenez died in 1970, so a widower in 1981 is what the tree predicts, and Esther's own birth registration is in Rosario de la Frontera, the town whose register holds this entry. The tree's existing sources are the 1946 Salta marriage (`ark:/61903/1:1:6ZYD-6L8N`, indexed as Nicolás Domenicheli) and Esther's 1970 death entry; neither is a re-index of this one.
+**The identification rests on the index route (no image needed):**
 
-The `adds_spouse` flag is an indexing artefact: the second person on the entry is indexed as "Viudo Viudo", which is the word *viudo* (widower) read as a name. Nobody should add a spouse from this record. The discriminating check is the register image linked from the hint record: an Argentine death act normally names the parents and birthplace, and the tree gives his parents as Michele Domenichelli and Diletta Berardinelli, with siblings born 1887–1894 in Roccasicura, Molise. Parents or an Italian birthplace on the act that match would settle it; different parents would make this a different Nicolás.
+- **1946 Salta marriage index** (`ark:/61903/1:1:6ZYD-6L8N`): the tree's Nicolás Domenicheli (b. 1898, married Esther Gimenez) has parents indexed as **Miguel Domenicheli** and **Diletta Berardinelli**. Both parents named, from the index, no image.
+- **Italian birth index** (`ark:/61903/1:1:6NZZ-HLRL`): Nicolo Domenichelli, b. 23 Apr 1897 Roccasicura, Molise, parents **Michele Domenichelli** and **Diletta Berardinelli** — the **same parents**, tying the tree's Nicola to this birth record from the index alone.
+- **Death-hint index** (`ark:/61903/1:1:6ZB1-TVLX`): Nicolas Domenichelli, died 29 Jun 1981, registered 30 Jun 1981, Rosario de la Frontera register, birth year 1897, widower. These indexed facts — name, 1897 birth year, Rosario de la Frontera (Esther's birth-registration town), and widower status (Esther d. 1970) — tie the death record to that same Nicola.
+
+**Name variation (not an exact string match for the father):** the father is **Miguel** in the Spanish-language Argentine marriage index and **Michele** in the Italian records — Miguel is the Spanish form of the Italian Michele; the surname is spelled **Domenicheli** (one L) in the marriage index and **Domenichelli** (two L) elsewhere. The **mother, Diletta Berardinelli, matches exactly** across the marriage and birth indexes, and that distinctive name is the strong link.
+
+**The death-act image is corroborating only, not relied upon.** The image (`ark:/61903/3:1:3Q9M-C336-QQWY-K`, Acta 53) reads consistently — Italian, widower, aged 84, b. 23 Apr 1897 in "Rocasicure" (Roccasicura), death in Rosario de la Frontera, parent fields blank — but its reading is **uncalibrated and UNLICENSED** (single-act page: the only other entry is the margin header of Acta 54, Folio 107, on the next image, so fewer than two other indexed entries to calibrate against, per `docs/e2e-testing-guide.md` Step 1a). The accepted identity does **not** depend on it; `fixture.json` sets `image_basis: false`. The "Viudo Viudo" second person on the death entry is the word *viudo* (widower) read as a name; **no spouse is added**.
+
+**Retrieval:** read-only via the `packages/engine/mcp-server/dev/try-*.ts` scripts against live FamilySearch — `try-record-read` (hint `1:1:6ZB1-TVLX`, marriage `1:1:6ZYD-6L8N`, birth `1:1:6NZZ-HLRL`), `try-image-transcribe` (death-act image), and `try-record-search` for the Italian birth record. Retrieval only was tool-assisted; the identity judgement is the genealogist's (@mercyokum, #3397).

@@ -11,6 +11,12 @@ const PINNED = [
   "project_context",
   "record_read",
   "research_append",
+  // 802 B, under a third of record_read (2,363 B). Added for reachability, not
+  // frequency: the hosted Stop hook lets a bounded turn stop ONLY when the model
+  // calls this tool, so deferring it puts a ToolSearch round trip in front of the
+  // one moment that must not fail. A model that has not loaded the schema is
+  // nudged back into more research instead (#2813 item 1).
+  "research_delivered",
   "research_log_append",
   "research_query",
 ];

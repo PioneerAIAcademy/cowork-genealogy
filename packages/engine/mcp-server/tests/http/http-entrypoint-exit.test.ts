@@ -128,6 +128,19 @@ describe("build/http.js store environment", () => {
     expect(r.stderr).toMatch(/invalid value.*GENEALOGY_S3_FORCE_PATH_STYLE/);
   }, 20_000);
 
+  it("exits 2 naming an orphan sweep grace under its floor", async () => {
+    const r = await runHttp({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "60" });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/invalid value: GENEALOGY_ORPHAN_GRACE_S .*at least 3600/);
+  }, 20_000);
+
+  it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {
+    const on = await runHttp(BASE, /listening on .*\n/);
+    expect(on.stderr).toMatch(/orphan sweep: every 3600 s, grace 86400 s\n/);
+    const off = await runHttp({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "0" }, /listening on .*\n/);
+    expect(off.stderr).toMatch(/orphan sweep: off\n/);
+  }, 20_000);
+
   it("names the SDK default chain on start-up when neither S3 key is set", async () => {
     const r = await runHttp(BASE, /s3 credentials:.*\n/);
     expect(r.stderr).toMatch(/s3 credentials: SDK default chain; region us-east-1; endpoint AWS default/);
