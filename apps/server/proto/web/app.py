@@ -131,8 +131,8 @@ READY_CONNECT_TIMEOUT_S = 2
 READY_STATEMENT_TIMEOUT_MS = 1500
 # Every table and function this tier queries; a missing one fails `postgres`.
 WEB_TABLES = ("sessions", "projects", "turns", "session_events", "session_seq", "session_activity",
-              "session_entries", "tool_calls", "documents", "users", "allowed_emails",
-              "familysearch_tokens")
+              "session_entries", "tool_calls", "documents", "blobs", "staging", "users",
+              "allowed_emails", "familysearch_tokens")
 WEB_FUNCTIONS = ("next_session_seq(text)",)
 READY_SQL = (
     "SELECT t FROM unnest(%s::text[]) t WHERE to_regclass(t) IS NULL "
@@ -177,6 +177,26 @@ HAS_QUEUED_SQL = (
 CLEAR_STOP_SQL = "UPDATE sessions SET stop_requested_at = NULL WHERE session_id = %s"
 # U6: the web tier's one close of a turn a worker may have claimed (a send that landed after
 # its timeout). Epoch-less, like the sweep's: the bump fences the claimed attempt's writes.
+# delete_session's refusal: an open turn that may still have an attempt. Its backend is
+# connected (run_turn's `turn:<id>`, visible to every role in pg_stat_activity), or it was
+# claimed too recently for that connection to be open yet, or its message, never claimed,
+# is young enough to be still in the queue. Any other open turn is stranded -- nothing will
+# close it short of the RetentionPeriod backstop -- and the delete goes ahead: refusing it
+# would leave the patron no way out of the session. A crashed attempt's message comes back
+# only after VisibilityTimeout (hours), so a session deleted in between sends it to the DLQ.
+DELETE_CLAIM_GRACE_S = 120
+DELETE_UNCLAIMED_GRACE_S = 900
+TURN_LIVE_SQL = (
+    "SELECT EXISTS (SELECT 1 FROM turns t WHERE t.session_id = %s AND t.completed_at IS NULL "
+    "AND t.outcome IS DISTINCT FROM %s AND ("
+    "EXISTS (SELECT 1 FROM pg_stat_activity a WHERE a.application_name = 'turn:' || t.turn_id) "
+    "OR t.claimed_at > now() - make_interval(secs => %s) "
+    "OR (t.claimed_at IS NULL AND t.enqueued_at > now() - make_interval(secs => %s)))) AS live"
+)
+# Every table delete_session clears by the web session id. session_entries is keyed by
+# the SDK session id instead and is deleted separately; a pg test fails on any table with
+# a session_id column that is in neither.
+SESSION_TABLES = ("session_events", "session_seq", "session_activity", "turns", "tool_calls")
 FAIL_TURN_SQL = (
     "UPDATE turns SET outcome = %s, completed_at = now(), claim_epoch = claim_epoch + 1 "
     "WHERE turn_id = %s AND completed_at IS NULL"
@@ -210,6 +230,12 @@ class User:
 class ProjectNotOwned(Exception):
     """create_session was handed a project the caller may not open. The route answers
     404, the same as for a project that does not exist, so the answer leaks nothing."""
+
+
+class SessionBusy(Exception):
+    """delete_session found a turn that may still be running. Deleting under it lets the
+    attempt's unfenced writes (write_event, insert_tool_call) recreate rows for a session
+    that no longer exists, and its redelivery 400s into the DLQ; the route answers 409."""
 
 
 class GrantBusy(Exception):
@@ -658,17 +684,37 @@ class PgStore:
         return await self.get_session(session_id) if hit else None
 
     async def delete_session(self, session_id: str) -> bool:
+        """Delete a session and, with its last session, its project. Raises SessionBusy
+        while a turn may still be running (TURN_LIVE_SQL); a held message, or a stranded
+        turn nothing will close, does not count, and goes with it.
+
+        One transaction under the session's queue lock, which admit_message and the
+        worker's release take, so no turn is admitted or released between the check and
+        the deletes. S3 objects behind the project's blobs and staging rows are left to
+        the orphan sweep (U19)."""
         async with await self._connect() as conn:
             async with conn.transaction():
-                cur = await conn.execute("SELECT project_id FROM sessions WHERE session_id = %s", (session_id,))
+                await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                await conn.execute(grants.QUEUE_LOCK_SQL, (grants.QUEUE_LOCK_NS, session_id))
+                cur = await conn.execute(
+                    "SELECT project_id, sdk_session_id FROM sessions WHERE session_id = %s FOR UPDATE",
+                    (session_id,),
+                )
                 row = await cur.fetchone()
                 if row is None:
                     return False
-                # Every per-session table in 001_schema.sql, session_entries included: it is
-                # the SDK SessionStore's transcript once D9-10 lands, and a deleted session
-                # must not leave unreachable transcript rows behind.
-                for table in ("session_events", "session_seq", "session_activity", "session_entries", "turns", "tool_calls"):
+                cur = await conn.execute(
+                    TURN_LIVE_SQL, (session_id, QUEUED_OUTCOME, DELETE_CLAIM_GRACE_S, DELETE_UNCLAIMED_GRACE_S)
+                )
+                if (await cur.fetchone())["live"]:
+                    raise SessionBusy(session_id)
+                for table in SESSION_TABLES:
                     await conn.execute(f"DELETE FROM {table} WHERE session_id = %s", (session_id,))  # noqa: S608 - fixed names
+                # The transcript is keyed by the SDK session id (004), not this one, and a
+                # subagent's rows share it under a `subagents/...` subpath: this removes
+                # exactly what the spend meter (worker SESSION_USAGE_SQL) counts.
+                transcript_ids = [session_id] + ([row["sdk_session_id"]] if row["sdk_session_id"] else [])
+                await conn.execute("DELETE FROM session_entries WHERE session_id = ANY(%s)", (transcript_ids,))
                 await conn.execute("DELETE FROM sessions WHERE session_id = %s", (session_id,))
                 # The project goes only with its LAST session. A project another session
                 # still opens must keep its documents -- and must keep its projects row,
@@ -1537,7 +1583,14 @@ def create_app(
     @app.delete("/api/sessions/{session_id}")
     async def delete_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         await _session(request, session_id, user)
-        if not await _store(request).delete_session(session_id):
+        try:
+            deleted = await _store(request).delete_session(session_id)
+        except SessionBusy:
+            raise HTTPException(
+                status_code=409,
+                detail="A turn is still running on this session; press Stop, and try again once it has ended",
+            ) from None
+        if not deleted:
             raise HTTPException(status_code=404, detail="Session not found")
         return {"ok": True}
 
