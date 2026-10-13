@@ -77,11 +77,11 @@ apart.
 
 Nothing external blocks this branch. Four things are genuinely outstanding.
 
-### 1. Phase 2's own acceptance — three clauses unbuilt
+### 1. Phase 2's own acceptance — all seven met and verified
 
 Phase 2's *Acceptance* paragraph (`research-as-a-job-later-REVISED.md`, the reading-experience
-section) has seven clauses. Four are met. These three are not, and each is a **build task, not
-a verification**:
+section) has seven clauses. Four were met earlier. These three were the last to land, and each
+has now been exercised on a running stack rather than only unit-tested:
 
 | Clause | State |
 |---|---|
@@ -199,9 +199,21 @@ remaining step is asking for the secret to be unset. Recorded in
 
 ### 4. Eval-run debt
 
-Two stale snapshots: `research` (`v19.json`) and `init-project` (`v17.json`). Buy both **once,
-at un-draft, after the final main merge** — any merge touching a skill dir, test, fixture or
-agent re-stales them.
+Two stale snapshots, confirmed by running `check_runlogs.py` on 2026-10-13 rather than
+from memory: **`research` (`v21.json`, 2 files differ)** and **`init-project` (`v17.json`,
+6 files differ)**. Both are staled by this branch's own edits — `agents/init-project.md`,
+four `person-search-*` mcp fixtures, and two unit-test JSONs.
+
+Buy both **once, at un-draft, after the final main merge**. The ordering is not advice:
+#3372 cost a run twice by ignoring it. Its `research` log was bought, then PR #3243 landed
+on main touching `locality-guide.md` and research's own delegation line, which re-staled
+it before it could merge — and `main`'s ruleset sets
+`strict_required_status_checks_policy`, so a branch cannot merge while behind. **Merge main
+first, then run, then merge promptly.** The window between the run and the merge is the
+whole risk.
+
+Note `research` is at **v21**, not the v19 this file used to say: #3372 released v20 and
+then v21 when v20 staled, and both reached main.
 
 (A third violation, a hand-deleted `init-project` candidate, was restored 2026-10-12.)
 
