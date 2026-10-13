@@ -91,7 +91,6 @@ only.
 ## Stages
 
 Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
-- Every stage that changes a tool description, input schema or agent body regenerates `tests/packaging/prompt-sizes.json` with `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts`, or "matches the sizes computed at HEAD" fails.
 - Stage 1b may be built while 1a is in review, but merges after it (Decision 25) and rebases onto its `src/tools/tree-edit.ts` changes.
 - Stage 1a and PR #3207 both edit `tree-edit.ts`, `materialize-facts.ts`, `mob.ts`, `person-warnings.ts` and `introduced-warnings.ts`, so whichever lands second rebases.
 - Stage 1b starts after PR #3207, PR #3131 and PR #3040 merge. It changes PR #3207's check; it pays the proof-conclusion, research and tree-edit slots those PRs commit run logs for; and PR #3040 rewrites the completion gate in `research-append.ts` and `nextStep` in `question-state.ts`, both of which Stage 1b extends. PR #3131 also makes `computeTouchedPersonIds` read ParentChild endpoints through `relationshipEndpoints`; until it does, the write gate sees no person touched by a ParentChild retype or removal, so Stage 1b's `update_relationship` and import-removal warnings depend on it.
@@ -540,7 +539,7 @@ None of the three suites carries an xfail marker, so `rule10_no_xfail_markers` a
   - `packages/engine/plugin/agents/proof-conclusion.md`;
   - `packages/engine/plugin/agents/record-extractor.md`: intent records are labelled; the pre-1880 rule stays;
   - `eval/tests/unit/tree-edit/rubric.md` ("Evidence grounding") and `eval/tests/unit/proof-conclusion/rubric.md` (the tree-encoding dimension: evidence facts no longer sit on the tree, and the concluded edge is no longer "usually already present"), with the `eval/harness/scripts/check_rubric_tool_drift.py` SUPPRESSIONS quotes these edits remove (`test_every_suppression_quote_is_verbatim`);
-  - `README.md`'s `materialize_facts` row.
+  - `docs/catalog.md`'s `materialize_facts` row.
 - **Harness:**
   - `eval/harness/harness/skill_invocation.py`: `owning_skills` attributes edge and fact writes by claim, not to proof-conclusion; `find_effects_without_invocation` and `find_conclusions_without_tree_encoding` read claims; `find_citation_nulling_in_tree_sources` says "concluded" where it says "uploads";
   - `eval/harness/e2e/guardrail_shadow_report.py`'s "uploaded tree source(s)" labels, and `docs/specs/e2e-test-spec.md`'s paragraph on the citation-nulling check, say "concluded";

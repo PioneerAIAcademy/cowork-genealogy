@@ -14,11 +14,12 @@ only surfaces when someone runs `run_tests.py`. This test pins the same
 schema contract the runnability gate enforces, but as a fast,
 network-free unit test that runs in CI.
 
-A second lint here pins the counts a scenario README asserts against the
-`research.json` beside it. A README is pasted verbatim into the judge
-prompt as `{scenario_readme}` (`harness/orchestrator.py::_load_scenario_readme`
--> `eval/harness/judge/prompt.md`), so a README that restates the fixture's
-contents is a second source of truth the judge is told to believe. When it
+A second lint here pins the counts a scenario's `judge-brief.md` and
+`README.md` assert against the `research.json` beside them. The judge reads
+the brief whole as `{scenario_readme}`, or the README when no brief exists
+yet (`harness/scenario_brief.py::load_scenario_brief`, issue #2478), and the
+README is what a fixture author reads, so either restating the fixture's
+contents is a second source of truth. When it
 drifts the judge grades against a project state that does not exist:
 `mid-research-flynn`'s README claimed 4 sources against a fixture holding 9,
 and a judge duly failed a skill for "fabricating" `src_006` (issue #1333).
@@ -196,14 +197,20 @@ def _readme_count_claims(readme_text: str) -> list[tuple[str, str, int]]:
     return claims
 
 
+_PROSE_FILES = ("judge-brief.md", "README.md")
+
+
+@pytest.mark.parametrize("prose_file", _PROSE_FILES)
 @pytest.mark.parametrize("scenario", _scenario_dirs(), ids=lambda p: p.name)
-def test_scenario_readme_counts_match_research_json(scenario: Path) -> None:
-    readme = scenario / "README.md"
+def test_scenario_readme_counts_match_research_json(
+    scenario: Path, prose_file: str
+) -> None:
+    readme = scenario / prose_file
     if not readme.exists():
-        pytest.skip(f"{scenario.name} has no README.md")
+        pytest.skip(f"{scenario.name} has no {prose_file}")
     data = json.loads((scenario / "research.json").read_text(encoding="utf-8"))
     mismatches = [
-        f"{label}: README says {claimed}, research.json has "
+        f"{label}: {prose_file} says {claimed}, research.json has "
         f"{len(data.get(key) or [])}"
         for label, key, claimed in _readme_count_claims(
             readme.read_text(encoding="utf-8")
@@ -212,8 +219,9 @@ def test_scenario_readme_counts_match_research_json(scenario: Path) -> None:
     ]
     assert mismatches == [], (
         f"{readme.relative_to(REPO_ROOT)} states counts its research.json "
-        "contradicts. The judge reads this file verbatim, so correct the "
-        "README (or the fixture) before the next eval run:\n  - "
+        "contradicts. The judge reads the brief verbatim, and the README when "
+        "no brief exists, so correct the file (or the fixture) before the "
+        "next eval run:\n  - "
         + "\n  - ".join(mismatches)
     )
 

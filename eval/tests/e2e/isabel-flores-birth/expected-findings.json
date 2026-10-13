@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Isabel Flores was born on 7 July 1880 and baptized on 11 July 1880 in the parish of San Pablo, Laguna, Philippines, the daughter of Policronio Flores and Catalina Ortiz.",
+      "details": {
+        "subject_person": "Isabel Flores (GCNR-K3J)",
+        "fact_type": "Birth",
+        "date": "7 July 1880",
+        "place": "San Pablo City, Laguna, Philippines"
+      },
+      "supporting_sources": [
+        "Philippines, Catholic Church Records, 1520-2014 — baptism entry for Isabel Flores, daughter of Policronio Flores and Catalina Ortiz, 11 Jul 1880"
+      ],
+      "required": true
+    }
+  ]
+}

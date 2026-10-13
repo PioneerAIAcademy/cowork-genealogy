@@ -105,10 +105,8 @@ item must be covered this way, or `research_append` refuses the write.
 Gate new-question creation on **answered**, not **proved.** Once every
 *independent* part of the objective has a question whose `status` is
 `resolved` — not merely `in_progress` with a `proof_summary` already
-written at a defensible tier (`probable` or better); a proof_summary can
-exist, and sit at a defensible tier, before the mandatory GPS-mentor
-critique moves `status` to `resolved` — the objective is answered. That is
-the autonomous stop point. Do **NOT** spawn a new question to
+written at a defensible tier (`probable` or better) — the objective is
+answered. That is the autonomous stop point. Do **NOT** spawn a new question to
 **corroborate** or upgrade the tier of a part on a question already
 `resolved` (a second source to move `probable` → `proved`): that is optional
 corroboration, not required for autonomous completion, and chasing it after
@@ -139,6 +137,8 @@ it — record choice is `research-plan`'s. A single-fact objective **is** that
 question; restate it with identifying detail rather than narrowing it. Two
 parents are one fact, not two — never split such an objective into a father
 question and a mother question.
+A motivation objective ("why did they move?") is never restated: write the
+fact question it rests on (Appendix A, "Two Types of Genealogical Questions").
 
 **Exception — an explicitly unverified, load-bearing premise.** When the
 objective rests on a fact sourced only to compiled/unsourced data (an online
@@ -480,6 +480,15 @@ Every genealogical problem ultimately concerns one of two things:
 Identifying which type the question addresses guides you toward
 the right record categories.
 
+A **motivation** objective ("why did the family move to Texas?") is
+neither type and never becomes a question. Write ONE relationship or
+event question its answer rests on — when they arrived, or where they
+lived before, or who was already there; one fact, never two joined by
+"and". Paragraph 1 of `summary_for_user` must say the reason itself will
+be explained from the history of the time and place once those facts are
+established, not proved like a question. A stated date window bounds the
+questions, not the evidence that may answer them.
+
 ## Balancing Breadth and Focus
 
 A well-crafted question balances two competing requirements:
@@ -540,6 +549,7 @@ a name or date may not stand in for the fact the objective needs.)
 | Outside the objective | "When did Reuben's wife emigrate?" (objective is Reuben's parents) | Her facts are a different objective, not a sub-question of this one |
 | Built on unverified claim | "Find birth record for 1815" (1815 comes from an unsourced tree) | First verify the approximate birth year |
 | Premise test names no fact | "Was 'Curtis' her maiden or married name?" (objective is her parents) | Name the gating fact: "What was her maiden name?" — either branch then yields it |
+| Motivation as a question | "Why did the Morgans move to Texas between 1880 and 1900?" | Ask a fact the reason rests on: "When did the Morgan family arrive in Texas?" — and tell the user the reason is explained from historical context, not proved |
 | Characterizes the recorded value, not the missing one | "How did Eliza Warren come to have the surname Warren?" (objective is her parents) | Ask for the missing value directly: "What was her maiden name?" — the "by marriage" branch otherwise names no maiden name |
 
 ## Decomposing an Objective into Questions

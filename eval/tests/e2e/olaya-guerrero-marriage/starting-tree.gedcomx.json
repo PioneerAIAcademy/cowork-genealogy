@@ -1,0 +1,386 @@
+{
+  "persons": [
+    {
+      "id": "L17S-LBY",
+      "ark": "ark:/61903/4:1:L17S-LBY",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "80c944db-ea19-4b31-8bbc-69b70d4fa469",
+          "preferred": true,
+          "given": "Olaya",
+          "surname": "Guerrero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "5ce86ee5-4373-4bf9-b3e3-90358a675881",
+          "type": "Birth",
+          "date": "aproximadamente 1732",
+          "place": "Higüey, La Altagracia, República Dominicana",
+          "standard_place": "Higüey, La Altagracia, Dominican Republic"
+        },
+        {
+          "id": "ec412faa-93a3-46c6-b3ff-928c66797cbb",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8DJ-WR6"
+        },
+        {
+          "ref": "7WG1-WQY"
+        },
+        {
+          "ref": "77H3-LFY"
+        }
+      ]
+    },
+    {
+      "id": "L17S-2ZS",
+      "ark": "ark:/61903/4:1:L17S-2ZS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "e6b104e8-4415-4311-9516-0f2dcf928484",
+          "preferred": true,
+          "given": "Baltazar",
+          "surname": "Guerrero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "f20cd012-2d9b-42ff-828d-f776ea176ce2",
+          "type": "Birth",
+          "date": "aproximadamente 1730",
+          "place": "Higüey, La Altagracia, República Dominicana",
+          "standard_place": "Higüey, La Altagracia, Dominican Republic"
+        },
+        {
+          "id": "e7b9a241-d6a2-4ead-9a34-68f9478553f5",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8DJ-4WD"
+        },
+        {
+          "ref": "3DQN-B24"
+        }
+      ]
+    },
+    {
+      "id": "PX98-H9K",
+      "ark": "ark:/61903/4:1:PX98-H9K",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "84106b36-2a8d-49b6-8771-2253ebe9e00d",
+          "preferred": true,
+          "given": "Rosa",
+          "surname": "Guerrero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "cc4933bc-b631-42dd-8b1c-8b5ddb073f90",
+          "type": "Christening",
+          "date": "10 de septiembre de 1507",
+          "standard_date": "10 Sep 1507",
+          "place": "Higüey, La Altagracia, República Dominicana",
+          "standard_place": "Higüey, La Altagracia, Dominican Republic"
+        },
+        {
+          "id": "012e70be-93f6-406e-be1c-e216b832fae1",
+          "type": "Birth",
+          "date": "2 de septiembre de 1769",
+          "standard_date": "2 Sep 1769",
+          "place": "Higüey, La Altagracia, República Dominicana",
+          "standard_place": "Higüey, La Altagracia, Dominican Republic"
+        },
+        {
+          "id": "efcc54dd-21e7-44e3-b0d2-65eba25c3d2f",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "W8DJ-CD7"
+        }
+      ]
+    },
+    {
+      "id": "GB84-YZL",
+      "ark": "ark:/61903/4:1:GB84-YZL",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "8f8fc6bf-db18-45ea-928f-fd67b6f16634",
+          "preferred": true,
+          "given": "Patraiar",
+          "surname": "Guerrero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "a444eafd-88bc-4a28-923b-2e9190d3a21e",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7WG1-W98"
+        },
+        {
+          "ref": "77H3-LLN"
+        }
+      ]
+    },
+    {
+      "id": "9SDX-1PT",
+      "ark": "ark:/61903/4:1:9SDX-1PT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Maria",
+          "surname": "Guerrero Guerrero",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7G5L-DXG"
+        },
+        {
+          "ref": "7V9F-SHK"
+        },
+        {
+          "ref": "7WG1-WMW"
+        },
+        {
+          "ref": "77H3-LXR"
+        },
+        {
+          "ref": "QPF2-9QH"
+        },
+        {
+          "ref": "917K-QB7"
+        },
+        {
+          "ref": "MRCV-SHC"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L17S-2ZS",
+      "person2": "L17S-LBY"
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "GB84-YZL",
+      "person2": "L17S-LBY"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L17S-2ZS",
+      "child": "PX98-H9K",
+      "sources": [
+        {
+          "ref": "W8DJ-C3K"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "L17S-LBY",
+      "child": "PX98-H9K",
+      "sources": [
+        {
+          "ref": "W8DJ-C3K"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L17S-2ZS",
+      "child": "9SDX-1PT"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "L17S-LBY",
+      "child": "9SDX-1PT"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "GB84-YZL",
+      "child": "9SDX-1PT"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_L17S-LBY",
+      "title": "Olaya Guerrero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Olaya Guerrero (PID L17S-LBY); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L17S-LBY"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_L17S-2ZS",
+      "title": "Baltazar Guerrero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Baltazar Guerrero (PID L17S-2ZS); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L17S-2ZS"
+    },
+    {
+      "id": "sd_person_PX98-H9K",
+      "title": "Rosa Guerrero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Rosa Guerrero (PID PX98-H9K); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:PX98-H9K"
+    },
+    {
+      "id": "sd_person_GB84-YZL",
+      "title": "Patraiar Guerrero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Patraiar Guerrero (PID GB84-YZL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:GB84-YZL"
+    },
+    {
+      "id": "sd_person_9SDX-1PT",
+      "title": "Maria Guerrero Guerrero",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Maria Guerrero Guerrero (PID 9SDX-1PT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9SDX-1PT"
+    },
+    {
+      "id": "7WG1-WQY",
+      "title": "Olaya Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R89-C621 : Mon Oct 14 16:19:49 UTC 2024), Entry for Joséf Garrido and Pablo Garrido, 23 Aug 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R89-C6L3"
+    },
+    {
+      "id": "77H3-LFY",
+      "title": "Olaya Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R89-C621 : Mon Oct 14 16:19:49 UTC 2024), Entry for Joséf Garrido and Pablo Garrido, 23 Aug 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RLZ-HCVD"
+    },
+    {
+      "id": "W8DJ-WR6",
+      "title": "Guerrero, \"República Dominicana, registros parroquiales y diocesanos, 1590-2022\"",
+      "citation": "\"República Dominicana, registros parroquiales y diocesanos, 1590-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D5T-HK7Y : Wed Dec 31 14:42:50 UTC 2025), Entry for Rosa and Ignacio de Alarcón, 10 de septiembre de 1507.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D5T-HK71"
+    },
+    {
+      "id": "W8DJ-4WD",
+      "title": "Balthasar Guerrero, \"República Dominicana, registros parroquiales y diocesanos, 1590-2022\"",
+      "citation": "\"República Dominicana, registros parroquiales y diocesanos, 1590-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D5T-HK7Y : Wed Dec 31 14:42:50 UTC 2025), Entry for Rosa and Ignacio de Alarcón, 10 de septiembre de 1507.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D5T-HK7B"
+    },
+    {
+      "id": "3DQN-B24",
+      "title": "Baltasar Guerrero, \"Dominican Republic, Marriages, 1743-1929\"",
+      "citation": "\"República Dominicana, matrimonios, 1743-1929\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XLLN-5J3 : 13 February 2020), Baltasar Guerrero, 1768.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLLN-5J3"
+    },
+    {
+      "id": "W8DJ-CD7",
+      "title": "Rosa, \"República Dominicana, registros parroquiales y diocesanos, 1590-2022\"",
+      "citation": "\"República Dominicana, registros parroquiales y diocesanos, 1590-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D5T-HK7Y : Wed Dec 31 14:42:50 UTC 2025), Entry for Rosa and Ignacio de Alarcón, 10 de septiembre de 1507.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D5T-HK7Y"
+    },
+    {
+      "id": "7WG1-W98",
+      "title": "Patraiar Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R89-C621 : Mon Oct 14 16:19:49 UTC 2024), Entry for Joséf Garrido and Pablo Garrido, 23 Aug 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R89-C6LS"
+    },
+    {
+      "id": "77H3-LLN",
+      "title": "Patraiar Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R89-C621 : Mon Oct 14 16:19:49 UTC 2024), Entry for Joséf Garrido and Pablo Garrido, 23 Aug 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RLZ-HCVZ"
+    },
+    {
+      "id": "7G5L-DXG",
+      "title": "María Guerrero, \"República Dominicana, registros parroquiales y diocesanos, 1590-2022\"",
+      "citation": "\"República Dominicana, registros parroquiales y diocesanos, 1590-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZP6-4WS1 : Wed Dec 31 13:49:13 UTC 2025), Entry for Cecilio and Joseph Garrido, 14 de febrero de 1796.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZP6-4W39"
+    },
+    {
+      "id": "7V9F-SHK",
+      "title": "Ma Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R8M-2H7W : Mon Oct 20 19:26:51 UTC 2025), Entry for Baltazar Nuñez and Sebastian Nuñez, 18 de enero de 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R8M-2H7Z"
+    },
+    {
+      "id": "7WG1-WMW",
+      "title": "Maria Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R89-C621 : Mon Oct 14 16:19:49 UTC 2024), Entry for Joséf Garrido and Pablo Garrido, 23 Aug 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R89-C6LQ"
+    },
+    {
+      "id": "77H3-LXR",
+      "title": "Maria Guerrero, \"República Dominicana, Registro Civil, 1744-2019\"",
+      "citation": "\"República Dominicana, Registro Civil, 1744-2019\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R89-C621 : Mon Oct 14 16:19:49 UTC 2024), Entry for Joséf Garrido and Pablo Garrido, 23 Aug 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RLZ-HCVX"
+    },
+    {
+      "id": "QPF2-9QH",
+      "title": "María Guerrero, \"República Dominicana, registros parroquiales y diocesanos, 1590-2022\"",
+      "citation": "\"República Dominicana, registros parroquiales y diocesanos, 1590-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZP6-646B : Wed Dec 31 13:57:04 UTC 2025), Entry for Joseph Lino and Joseph Garrido, 9 de octubre de 1800.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZP6-64XM"
+    },
+    {
+      "id": "917K-QB7",
+      "title": "Maria Guerrero in entry for Pablo Garrido, \"Dominican Republic, Baptisms, 1726-1924\"",
+      "citation": "\"República Dominicana, bautismos, 1726-1924\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FL35-4JN : 17 December 2019), Maria Guerrero in entry for Pablo Garrido, 1804.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL35-4JN"
+    },
+    {
+      "id": "MRCV-SHC",
+      "title": "Maria Guerrero in entry for Josef Garrido, \"Dominican Republic, Marriages, 1743-1929\"",
+      "citation": "\"República Dominicana, matrimonios, 1743-1929\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:XLLZ-7XF : 13 February 2020), Maria Guerrero in entry for Josef Garrido, 1790.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLLZ-7XF"
+    },
+    {
+      "id": "W8DJ-C3K",
+      "title": "Rosa, \"República Dominicana, registros parroquiales y diocesanos, 1590-2022\"",
+      "citation": "\"República Dominicana, registros parroquiales y diocesanos, 1590-2022\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6D5T-HK7Y : Wed Dec 31 14:42:50 UTC 2025), Entry for Rosa and Ignacio de Alarcón, 10 de septiembre de 1507.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6D5T-HK7Y"
+    }
+  ]
+}

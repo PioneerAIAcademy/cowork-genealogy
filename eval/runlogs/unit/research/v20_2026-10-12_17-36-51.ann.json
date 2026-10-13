@@ -1,0 +1,150 @@
+{
+  "run_log": "v20_2026-10-12_17-36-51.json",
+  "annotator": "edenosas1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The router read state well (project_context plus seven research_query calls) and summarized the father evidence accurately, then delegated search-records for pli_006, research-plan to extend the plan for the mother, and search-records for the 1880 census. The reply, though, tells the user 'Plan extended', that it 'Searched FamilySearch 1880 and 1870 census', and that 'The searches are logged and pending result processing'. Every callee was a stub that changed nothing, and only one census delegation was made. The reply also exposes internal ids (ps_001, pli_006, q_001, q_002)."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge docked for 'no search-records calls', but the router did delegate search-records twice and research-plan once through Skill calls, which were stubbed. It covered both halves of the objective, the father at probable and the mother unidentified, and named the next sources to try (1880 census, probate, marriage records). Stopping after those delegations is reasonable given the stub responses."
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All eight MCP calls were read-only research_query/project_context calls with correct projectPath, section names and filters (questionId q_001/q_002, status active, sourceId src_004); all matched live."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read project_context once, saw q_001 in state framed with loc_001 on file, and invoked Skill('research-plan') with projectPath and questionId. Every locality fact it relayed (patronymic, levy rolls 1503265, church books 1476091, ~3% indexed) is in the project_context localities entry. It honestly says the plan 'has been handed off', not written. It names q_001/loc_001 in the reply, which is minor."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It derived the state, explained why locality-guide was skipped (a localities entry exists) and why research-plan is next, and stopped as the stub instructed. It closes by asking whether to continue, which the stub's stop instruction allows."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A single project_context call with the correct projectPath; it matched live."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It called project_context (q_001 planned, nextStep search-records), queried active plans for q_001, and invoked Skill('search-records') with planItemId=pli_001. The relayed item details (collection 1468080, Unna as principal, Hamre, 1770-1800) match the plan response, and it says only that 'The search has been handed off'. It exposes q_001/pli_001 ids in the reply, which is minor."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It covered the state derivation, the pending plan item, the hand-off and what follows, and stopped as the stub instructed. Nothing the input state required is missing."
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_context and research_query(section=plans, questionId=q_001) had correct args and matched live; the delegation args carried the right planItemId."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "After one project_context call showing openQuestions empty, it spawned the question-selection agent with the objective and projectPath. It did not shortcut to proof-conclusion despite the user's wording. Its narration 'Project has an objective but no registered questions. Routing to question-selection.' is accurate."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The run stops at the first hand-off by design (stop_at_stub). Up to that point it stated the missing precondition and routed. It did not mention that a conclusion can't be written yet, but that is optional."
+    },
+    {
+      "test_id": "ut_research_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A single project_context call with the correct projectPath; it matched live."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The research router never activated. The main thread read project_context and plans/log for q_001 and q_002, then called Skill('research-plan') with focus=unindexed-image-browsing. It made no volume_search/image_search call and wrote nothing. It produced no strategy inline, which is the ideal routing for this negative test."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It routed the planning request to research-plan, which is all this negative test requires. The only user-facing text is 'Let me now pull up the research plan skill to build you a targeted image-browsing strategy', and no strategy ever appears after the hand-off. That gap belongs to the callee, not to the routing decision."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Five read-only calls (project_context, research_query plans/log for q_001 and q_002) with correct section and questionId values; all matched live."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It treated the '--autonomous' completeness-shaped question as a job ('Since --autonomous makes this a job'). From project_context showing no questions, it spawned question-selection with a prompt carrying the objective and the user's Mary question. It accurately reports that the hand-off produced no state change rather than claiming a question was registered."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It framed the hand-off as the first step of continuing work and explained why registration must come before planning or searching. It stopped as the stub instructed. Its closing advice to re-invoke /research --autonomous is odd but harmless, and it uses some internal vocabulary ('research.json', 'routing table', 'orchestrator')."
+    },
+    {
+      "test_id": "ut_research_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A single project_context call with the correct projectPath; it matched live."
+    }
+  ]
+}

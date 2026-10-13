@@ -1,0 +1,1178 @@
+{
+  "schema_version": 3,
+  "skill": "conflict-resolution",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/skills/conflict-resolution/SKILL.md": "a34e4be065825053675438ea024934c63abf8b5a8b6270570afbad9e4c7010a3",
+    "packages/engine/plugin/skills/conflict-resolution/references/historical-contradictions.md": "3150a30c6b9834177c7447c7fc04fb6fbe6384fcf9abad6e4051a8ef29eb5755",
+    "packages/engine/plugin/skills/conflict-resolution/references/places-guidance.md": "89d780012fde12e10fa4fc2b171450e11dda31f0b61d66ab7e654f77c33284d8",
+    "packages/engine/plugin/skills/conflict-resolution/references/resolution-writing.md": "9fd8374e588a0e8bd005a3a00e2c2fda46299f6da2e6c44cc0c51e0eff3ac2f4",
+    "packages/engine/plugin/skills/conflict-resolution/references/weighing-evidence.md": "1cd9e15d5465b82e6404d4ef36a80c28843c727f87f38913749ebdd6413106fc",
+    "eval/tests/unit/conflict-resolution/birthplace-ireland-vs-pennsylvania.json": "070e5706895c6101abe9227238c1f791ce6553a8ca973fe361056a2ac80207d2",
+    "eval/tests/unit/conflict-resolution/calendar-artifact-date-conflict.json": "61b292aef5ac6f967630e16ba27413f3e2846c17856a07688f3687b3646663b5",
+    "eval/tests/unit/conflict-resolution/defer-insufficient-evidence.json": "7b71fc6b5e818a931b3d69fe6e9526d3d83fa086f71237a5a3e4e15e896a8f75",
+    "eval/tests/unit/conflict-resolution/geographic-identity-conflict.json": "88c4f9bb12dbc6050fda53e2f1d92ecd603a312fb22be518066c7f5c48b7ff1e",
+    "eval/tests/unit/conflict-resolution/historical-context-in-rationale.json": "44b85c6259b9d1a334d38e1ed06e3ba442d9fcf724b439b119d645eb8ba80ea8",
+    "eval/tests/unit/conflict-resolution/identity-conflict-analysis.json": "8e246c02eb09517c7642dc8a1929da366bfa300c8e295e2bbe0dafc358584d18",
+    "eval/tests/unit/conflict-resolution/multi-conflict-prioritization.json": "6e0f3dc7e85b9025c3624e5bf990fa040f52e40efcb9ce448bcefd3afc35d0e3",
+    "eval/tests/unit/conflict-resolution/negative-assertion-classification.json": "158f5a896e3b344eecfc85ee93241b3521e5209f4fda101f7f5576a47469de63",
+    "eval/tests/unit/conflict-resolution/negative-hypothesis-tracking.json": "61b7e37961caf3a9978e48d406ef5504f4a341081c40b4fd52f5a77dfb787974",
+    "eval/tests/unit/conflict-resolution/negative-search-request.json": "ffde60f48a523237c3a0d8c9fb7ebd53a061a49ea48af3282693d7274762a9fc",
+    "eval/tests/unit/conflict-resolution/negative-timeline-request.json": "5ef7f9050c854161464e1a30fd39b92d1986e00c02198d93c4cf02dd35abd4f5",
+    "eval/tests/unit/conflict-resolution/patronymic-identity-conflict-from-wiki.json": "c0d3b2e36408efa18ebcee0c2a1e14cfecb3412997cc069038efa9b73dde0090",
+    "eval/tests/unit/conflict-resolution/rubric.md": "912ecf0a25d73a0dbb8030dd33202eec2830a347e45381561f4d41d9603b1040",
+    "eval/tests/unit/conflict-resolution/three-conflict-prioritization.json": "24cc5acbdcc42787f40cf814772c536ada9d514158e4724807740c3224be85e9",
+    "eval/tests/unit/conflict-resolution/user-disputes-ocr-reading.json": "b0ca8619d2f16087e3fe5c4ffecf355635df93d34374a4065ae9dfc111467276",
+    "eval/fixtures/scenarios/dutch-mother-name-disputed/README.md": "fe3aea02873da18d2d37af52bbf062eeb8f9e45818a0a61e96be91f191a39ea2",
+    "eval/fixtures/scenarios/dutch-mother-name-disputed/research.json": "e0be61bcd8912b2130c56a796dfec5bbfb59f0cc39e13ee3204f445a2b68c6a6",
+    "eval/fixtures/scenarios/dutch-mother-name-disputed/tree.gedcomx.json": "6207499909b4fb5ff00c8b1ddb0caa7f2f32b1d87bf781c65848e8c0f5acf14c",
+    "eval/fixtures/scenarios/english-old-style-date-conflict/research.json": "5b79bc6792ec686e7b748e30b360a07d82982fd46e28e51011626a031faca5b3",
+    "eval/fixtures/scenarios/english-old-style-date-conflict/tree.gedcomx.json": "da5d29689e66d2d7c196b5a16387291042790b80b8b7427668c69c11e1cb2a16",
+    "eval/fixtures/scenarios/flynn-competing-fathers/README.md": "9f6da76c082c4ac56dccfbfa2ee35d3178961a3678197d5c711e239678db0bb0",
+    "eval/fixtures/scenarios/flynn-competing-fathers/research.json": "1bf62d5e610856037d2f17c11938326471694d47f6353f6af24d97f81f489194",
+    "eval/fixtures/scenarios/flynn-competing-fathers/tree.gedcomx.json": "38e1e530f3944c30625a5ed38c22c1d9ba4a866630598eff0714a43117aa5bca",
+    "eval/fixtures/scenarios/flynn-identity-geographic/README.md": "8597edc0eb5f0649357ba6b06960d0523ba7d151c612609c86ccef78a9cd4b88",
+    "eval/fixtures/scenarios/flynn-identity-geographic/research.json": "961a8ebdc473d4246bbbc16edb987f437775a20fecb56a6d63143514879608a7",
+    "eval/fixtures/scenarios/flynn-identity-geographic/tree.gedcomx.json": "c9e9ad33465eed0253222738f02a4882f85ff807e3a38ee02811a851fb801aa3",
+    "eval/fixtures/scenarios/flynn-identity-geographic-thin/README.md": "812dbffbb1bc529c9afcacb3167a1bf25a042f89b2bb6faac19a214ac3dc8196",
+    "eval/fixtures/scenarios/flynn-identity-geographic-thin/research.json": "c9d60561b1010a820670e7a0576759a5ef1e54428c3bf10d9fa73c40df39f901",
+    "eval/fixtures/scenarios/flynn-identity-geographic-thin/tree.gedcomx.json": "378ac4631a4a814a30dcc5e4c98962febf8016a8f9f2b1b3c527c795b09d06cd",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "9580980fdf960770fb2728177727b94551a264d89fa9c187cae8eef2bcd1f130",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "42d5b217fcf2735a8d116e790a55858c85c1e3e03537493f6b012d2b0718cd4a",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/README.md": "cc7de5fdc61afed0f6392ac72c201c3e48e362d3295178433f48a90f81a5a5e6",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/research.json": "dcfea73cfca5c8402597c6821dbf7899e501ec1b7d891910d9687e38d4f5052e",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/README.md": "be7fb144e9acfd8ddb9afd6648a29e511edb227350fbd890cc2222c36cd302e1",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/research.json": "eac67d58f12f39afc6885729fbc40e98a2f33a5441fc4d6b099ccf8caea1d6c6",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/results/log_001.json": "35a2a96f37417a55e7951693c7accecfba631912a7d11fccabe53bb6c461efdc",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/tree.gedcomx.json": "b06bb9229f0cb69e8ccff536da95086f305cbdb302e9ab1a2fd31f10385a846e",
+    "eval/fixtures/mcp/place-distance-allegheny-schuylkill.json": "8be011c8968732392af0d055deaf8778d1391d67ef2d9de2229ce52354b96146",
+    "eval/fixtures/mcp/place-distance-schuylkill-allegheny.json": "78b708c830cba21a2993734e4480a9785cbfce0e362b8fc0950cfb029923e259",
+    "eval/fixtures/mcp/place-search-allegheny.json": "4d80171683d8b2e2c94707c4bf3a245536c626a02f8b3619d78d4dea149b64ea",
+    "eval/fixtures/mcp/place-search-ireland.json": "cd31839e4d7aeed75a120a7e9d2a5b4d5bc67d6a60048a6b9d4055df39fe3c5b",
+    "eval/fixtures/mcp/place-search-pennsylvania.json": "4a4d6585cc9a9e4c2ff952aa3b55a172e0050689e772a9976022d95cdc0d45f2",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/wiki-read-ireland-naming-customs.json": "f1e9e2bd527594cdd1074b25d06d3a9ad8b36d55d6a2e417230d74ae3ff942f6",
+    "eval/fixtures/mcp/wiki-read-norway-naming-customs.json": "e6ccc39c16675fd35a3e6fe99a49e07d054cd327a83cf9d32ab8651cb6b7be0e",
+    "eval/fixtures/mcp/wiki-read-united-states-naming-customs.json": "fa574c1f10cb135faa18dba1fcdb00fbb4b2da8025b77d5fbf44f930184390f6"
+  },
+  "tests": [
+    {
+      "test_id": "ut_conflict_resolution_013",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-competing-fathers",
+      "mcp_fixtures": [
+        "wiki-read-ireland-naming-customs",
+        "wiki-read-united-states-naming-customs"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no output and made no tool calls. The user requested adding James Flynn of Carbon County as a third possible father and tracking supporting/contradicting evidence for all three candidates. This is a hypothesis-tracking task, not a conflict-resolution task. Per the per-test override, conflict-resolution should have declined and routed to hypothesis-tracking. The skill appears to have done neither \u2014 it produced no text response, no file changes, and no tool calls. This is incorrect behavior: the skill should have explicitly declined and routed the user to hypothesis-tracking with a clear explanation of why that skill is appropriate for maintaining multiple competing hypotheses."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request to add James Flynn as a third candidate and track supporting/contradicting evidence for all three candidates was not addressed. No hypothesis was added, no evidence tracking was performed, and no routing occurred. The skill produced no output whatsoever. Per the per-test override, the correct behavior would be a clear decline with routing to hypothesis-tracking, which did not happen. The complete absence of any response \u2014 decline, routing, or substantive work \u2014 represents a failure to address the user's request appropriately."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill. The skill produced no output and invoked no tools. Per the base rubric, Tool Arguments scores null only when a test made zero MCP tool calls, which is the case here. N/A."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no output and made no tool calls. The user requested adding James Flynn of Carbon County as a third possible father and tracking supporting/contradicting evidence for all three candidates. This is a hypothesis-tracking task, not a conflict-resolution task. Per the per-test override, conflict-resolution should have declined and routed to hypothesis-tracking. The skill appears to have done neither \u2014 it produced no text response, no file changes, and no tool calls. This is incorrect behavior: the skill should have explicitly declined and routed the user to hypothesis-tracking with a clear explanation of why that skill is appropriate for maintaining multiple competing hypotheses."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request to add James Flynn as a third candidate and track supporting/contradicting evidence for all three candidates was not addressed. No hypothesis was added, no evidence tracking was performed, and no routing occurred. The skill produced no output whatsoever. Per the per-test override, the correct behavior would be a clear decline with routing to hypothesis-tracking, which did not happen. The complete absence of any response \u2014 decline, routing, or substantive work \u2014 represents a failure to address the user's request appropriately."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill. The skill produced no output and invoked no tools. Per the base rubric, Tool Arguments scores null only when a test made zero MCP tool calls, which is the case here. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 12995.435917007853,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 5106.981000004453,
+        "wall_clock_ms": 18350.53777694702,
+        "num_turns": 2,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 10200,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 447,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.012435000000000002,
+        "total_cost_usd": 0.012435000000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_conflict_resolution_013_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 12995.435917007853,
+          "duration_api_ms": 0.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21233,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "hypothesis-tracking"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Add third father candidate and track evidence",
+                  "prompt": "The user is working on a genealogy research project and wants to:\n\n1. Add **James Flynn of Carbon County** as a **third candidate** for a person's father (two other candidates already exist in the project).\n2. Keep track of what supports and contradicts **each of the three candidates**.\n\nPlease:\n- Read the project's research.json to understand the existing hypotheses and candidates.\n- Add James Flynn of Carbon County as a third competing candidate for the father hypothesis.\n- Summarize what supporting and contradicting assertions are linked to each of the three candidates.\n- Persist the updated hypothesis state to research.json.\n\nThe project path is: /private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_013-0-0-rc2i01ob",
+                  "subagent_type": "hypothesis-tracking"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "hypothesis-tracking",
+                "text": "negative-test routing to agent 'hypothesis-tracking' observed; verdict decided, stopping",
+                "is_error": true
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Correctness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Correctness",
+                "score": 1,
+                "rationale": "The skill was invoked but produced no output and made no tool calls. The user requested adding James Flynn of Carbon County as a third possible father and tracking supporting/contradicting evidence for all three candidates. This is a hypothesis-tracking task, not a conflict-resolution task. Per the per-test override, conflict-resolution should have declined and routed to hypothesis-tracking. The skill appears to have done neither \u2014 it produced no text response, no file changes, and no tool calls. This is incorrect behavior: the skill should have explicitly declined and routed the user to hypothesis-tracking with a clear explanation of why that skill is appropriate for maintaining multiple competing hypotheses."
+              },
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Completeness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Completeness",
+                "score": 1,
+                "rationale": "The user's request to add James Flynn as a third candidate and track supporting/contradicting evidence for all three candidates was not addressed. No hypothesis was added, no evidence tracking was performed, and no routing occurred. The skill produced no output whatsoever. Per the per-test override, the correct behavior would be a clear decline with routing to hypothesis-tracking, which did not happen. The complete absence of any response \u2014 decline, routing, or substantive work \u2014 represents a failure to address the user's request appropriately."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_at_most_one_conflict_analysis_modified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_calendar_regime_read_from_tool",
+                "passed": true,
+                "error": "skipped: not a calendar-from-tool test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_competing_assertions_exist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_creates_no_new_conflict",
+                "passed": true,
+                "error": "skipped: not a no-new-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fact_conflicts_have_competing_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a naming-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_new_conflicts_without_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preferred_assertion_is_in_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_conflicts_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_flynn_birthplace",
+                "passed": true,
+                "error": "skipped: not a resolved-flynn-birthplace scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no output and made no tool calls. The user requested adding James Flynn of Carbon County as a third possible father and tracking supporting/contradicting evidence for all three candidates. This is a hypothesis-tracking task, not a conflict-resolution task. Per the per-test override, conflict-resolution should have declined and routed to hypothesis-tracking. The skill appears to have done neither \u2014 it produced no text response, no file changes, and no tool calls. This is incorrect behavior: the skill should have explicitly declined and routed the user to hypothesis-tracking with a clear explanation of why that skill is appropriate for maintaining multiple competing hypotheses."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request to add James Flynn as a third candidate and track supporting/contradicting evidence for all three candidates was not addressed. No hypothesis was added, no evidence tracking was performed, and no routing occurred. The skill produced no output whatsoever. Per the per-test override, the correct behavior would be a clear decline with routing to hypothesis-tracking, which did not happen. The complete absence of any response \u2014 decline, routing, or substantive work \u2014 represents a failure to address the user's request appropriately."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill. The skill produced no output and invoked no tools. Per the base rubric, Tool Arguments scores null only when a test made zero MCP tool calls, which is the case here. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.012435000000000002,
+            "duration_ms": 5106.981000004453,
+            "error": null,
+            "input_tokens": 10200,
+            "cached_input_tokens": 0,
+            "output_tokens": 447
+          },
+          "started_at": 1791848228.9519382,
+          "ended_at": 1791848247.302476
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_conflict_resolution_004",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-with-birthplace-conflict",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the skill should decline and route to search-records rather than perform conflict-resolution. Claude correctly produced no output and did not attempt to resolve the conflict, which is the correct behavior. The skill appropriately recognized that the user's request to search for more records should be handled by search-records, not by conflict-resolution."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly completed the required action for this negative test: declining to perform conflict-resolution and routing to search-records. No substantive output was produced, which is the correct and complete response. The skill did not attempt to analyze or resolve the existing birthplace conflict, which would have been incorrect."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test (conflict-resolution). The skill correctly declined to invoke tools and instead routed the request to search-records. N/A applies because zero tool calls were made."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test where the skill should decline and route to search-records rather than perform conflict-resolution. Claude correctly produced no output and did not attempt to resolve the conflict, which is the correct behavior. The skill appropriately recognized that the user's request to search for more records should be handled by search-records, not by conflict-resolution."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill correctly completed the required action for this negative test: declining to perform conflict-resolution and routing to search-records. No substantive output was produced, which is the correct and complete response. The skill did not attempt to analyze or resolve the existing birthplace conflict, which would have been incorrect."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test (conflict-resolution). The skill correctly declined to invoke tools and instead routed the request to search-records. N/A applies because zero tool calls were made."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 35192.02120800037,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3694.54387499718,
+        "wall_clock_ms": 39280.0772190094,
+        "num_turns": 2,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 8356,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 329,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.010001000000000001,
+        "total_cost_usd": 0.010001000000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_conflict_resolution_004_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 35192.02120800037,
+          "duration_api_ms": 0.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21218,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "search-records"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "search-records",
+                  "args": "Search for 1860 US census records for Patrick Flynn to help clarify his birthplace. Look for any additional records beyond what's already been found."
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_at_most_one_conflict_analysis_modified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_calendar_regime_read_from_tool",
+                "passed": true,
+                "error": "skipped: not a calendar-from-tool test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_competing_assertions_exist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_creates_no_new_conflict",
+                "passed": true,
+                "error": "skipped: not a no-new-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fact_conflicts_have_competing_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a naming-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_new_conflicts_without_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preferred_assertion_is_in_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_conflicts_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_flynn_birthplace",
+                "passed": true,
+                "error": "skipped: not a resolved-flynn-birthplace scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test where the skill should decline and route to search-records rather than perform conflict-resolution. Claude correctly produced no output and did not attempt to resolve the conflict, which is the correct behavior. The skill appropriately recognized that the user's request to search for more records should be handled by search-records, not by conflict-resolution."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill correctly completed the required action for this negative test: declining to perform conflict-resolution and routing to search-records. No substantive output was produced, which is the correct and complete response. The skill did not attempt to analyze or resolve the existing birthplace conflict, which would have been incorrect."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test (conflict-resolution). The skill correctly declined to invoke tools and instead routed the request to search-records. N/A applies because zero tool calls were made."
+              }
+            ],
+            "judge_cost_usd": 0.010001000000000001,
+            "duration_ms": 3694.54387499718,
+            "error": null,
+            "input_tokens": 8356,
+            "cached_input_tokens": 0,
+            "output_tokens": 329
+          },
+          "started_at": 1791848233.584739,
+          "ended_at": 1791848272.8648162
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_conflict_resolution_011",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-with-birthplace-conflict",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform conflict-resolution and routed to timeline instead. The user's request 'Build a timeline of Patrick Flynn's life based on all the evidence we have so far' is a compilation request, not a conflict-resolution request. The skill made the correct routing decision."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "This is a negative test. Correct behavior is to decline and route, not to produce timeline output. The skill did not perform its own task (conflict-resolution), which is the correct outcome. The routing decision itself is complete and accurate."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to timeline without invoking tools itself. N/A per the base rule that Tool Arguments may be null only when zero MCP tool calls occurred."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a negative test. The skill correctly declined to perform conflict-resolution and routed to timeline instead. The user's request 'Build a timeline of Patrick Flynn's life based on all the evidence we have so far' is a compilation request, not a conflict-resolution request. The skill made the correct routing decision."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "This is a negative test. Correct behavior is to decline and route, not to produce timeline output. The skill did not perform its own task (conflict-resolution), which is the correct outcome. The routing decision itself is complete and accurate."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to timeline without invoking tools itself. N/A per the base rule that Tool Arguments may be null only when zero MCP tool calls occurred."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 4823.903500000597,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3362.576875006198,
+        "wall_clock_ms": 8441.97416305542,
+        "num_turns": 2,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 8377,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 313,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.009942000000000001,
+        "total_cost_usd": 0.009942000000000001
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_conflict_resolution_011_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 4823.903500000597,
+          "duration_api_ms": 0.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21214,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "timeline"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "timeline",
+                  "args": "Patrick Flynn"
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_at_most_one_conflict_analysis_modified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_calendar_regime_read_from_tool",
+                "passed": true,
+                "error": "skipped: not a calendar-from-tool test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_competing_assertions_exist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_creates_no_new_conflict",
+                "passed": true,
+                "error": "skipped: not a no-new-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fact_conflicts_have_competing_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a naming-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_new_conflicts_without_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preferred_assertion_is_in_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_conflicts_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_flynn_birthplace",
+                "passed": true,
+                "error": "skipped: not a resolved-flynn-birthplace scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a negative test. The skill correctly declined to perform conflict-resolution and routed to timeline instead. The user's request 'Build a timeline of Patrick Flynn's life based on all the evidence we have so far' is a compilation request, not a conflict-resolution request. The skill made the correct routing decision."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "This is a negative test. Correct behavior is to decline and route, not to produce timeline output. The skill did not perform its own task (conflict-resolution), which is the correct outcome. The routing decision itself is complete and accurate."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to timeline without invoking tools itself. N/A per the base rule that Tool Arguments may be null only when zero MCP tool calls occurred."
+              }
+            ],
+            "judge_cost_usd": 0.009942000000000001,
+            "duration_ms": 3362.576875006198,
+            "error": null,
+            "input_tokens": 8377,
+            "cached_input_tokens": 0,
+            "output_tokens": 313
+          },
+          "started_at": 1791848229.373865,
+          "ended_at": 1791848237.815839
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    }
+  ],
+  "totals": {
+    "duration_ms": 53011.36062500882,
+    "duration_api_ms": 0,
+    "judge_duration_ms": 12164.10175000783,
+    "num_turns": 6,
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "output_tokens": 0,
+    "judge_input_tokens": 26933,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1089,
+    "skill_cost_usd": 0,
+    "judge_cost_usd": 0.032378000000000004,
+    "total_cost_usd": 0.032378000000000004,
+    "wall_clock_ms": 43912.87803649902
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

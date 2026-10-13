@@ -94,6 +94,26 @@ describe("PgS3ProjectStore without a stack", () => {
     }
   });
 
+  it("lets a missing projectPath reach the tool's own loud answer, and writes nothing, before touching the database", async () => {
+    const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+    const store = new PgS3ProjectStore(backend, { projectId: "p", anchorPath: ANCHOR });
+    try {
+      for (const missing of [undefined, null, "", "  ", 7]) {
+        // The body runs, unlocked, so the tool's read can answer it; a write in it refuses.
+        expect(await store.withTransaction(missing as never, async () => 1), String(missing)).toBe(1);
+        await expect(
+          store.withTransaction(missing as never, () => store.writeJson(missing as never, "research.json", {})),
+        ).rejects.toThrow(/^projectPath is required$/);
+        await expect(store.writeJson(missing as never, "research.json", {})).rejects.toThrow(
+          /^projectPath is required$/,
+        );
+      }
+      await expect(store.withTransaction(MISSING, async () => 1)).rejects.toThrow(/not this store's project/);
+    } finally {
+      await backend.close();
+    }
+  });
+
   it("exposes its projectId — the identity the image-store cap keys on for patron isolation (#2457 B2)", async () => {
     // The shared-process cap isolation (truncatedImageKey) keys on the bound
     // store's `projectId`. If an isolating backend omitted the optional field it
@@ -377,18 +397,21 @@ describe("PgS3ProjectStore without a stack", () => {
       const acceptedBefore = accepted;
       try {
         const t0 = Date.now();
-        // The 1 s metadata timeout, a v2 token request then the v1 fallback.
+        // The SDK's 1 s metadata timeout, a v2 token request then the v1
+        // fallback: about 2 s. The bound guards against a hang (the 90 s
+        // request timeout, or none), so it sits far above 2 s: at 4 s it failed
+        // 1 run in 10 on a CPU-saturated host, at 4.7-4.9 s.
         await expect(
           backend.s3.send(new HeadObjectCommand({ Bucket: "projects", Key: "p/x/y" })),
         ).rejects.toMatchObject({ name: "CredentialsProviderError" });
-        expect(Date.now() - t0).toBeLessThan(4000);
+        expect(Date.now() - t0).toBeLessThan(15_000);
         // The lookup reached the silent listener, not a real metadata service.
         expect(accepted).toBeGreaterThan(acceptedBefore);
       } finally {
         await backend.close();
         vi.unstubAllEnvs();
       }
-    }, 6000);
+    }, 20_000);
 
     /** A silent backend whose own timeouts are far longer than any readiness
      *  deadline, so only the probe's race can bound it. */
