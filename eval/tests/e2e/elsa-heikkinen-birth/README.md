@@ -96,6 +96,12 @@ entry to Anders Johan Heikkinen and Lisa Pardanen:
   farms in the same book: Kilpisaari, Kääriänsaari (`1:1:QLVK-Z4DR`) and
   `1:1:QLV2-X3B2`. That is the pattern of a young woman in service away from
   her parents.
+- The 1821-1839 children's book (lastenkirja) does show Elsa Brita in the
+  household of Anders Johan Heikkinen and Lisa Pardanen (image
+  `3:1:3Q9M-CS4S-92YR`), but only in an uncalibrated machine reading whose
+  two passes disagree on her birth date (1/4 1832 against 8/12 1831). The
+  page's index entry (`1:1:QLFF-CQPW`) names the father alone, so the link
+  stays unindexed and `image_basis` stays off.
 
 The genealogist judged that the missing parental link does not outweigh the
 name, month, parish, the 31 May day across the later books, and the absence of
