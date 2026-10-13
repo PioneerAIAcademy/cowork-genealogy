@@ -91,7 +91,6 @@ only.
 ## Stages
 
 Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
-- Every stage that changes a tool description, input schema or agent body regenerates `tests/packaging/prompt-sizes.json` with `UPDATE_PROMPT_SIZES=1 npx vitest run tests/packaging/prompt-budget.test.ts`, or "matches the sizes computed at HEAD" fails.
 - Stage 1b may be built while 1a is in review, but merges after it (Decision 25) and rebases onto its `src/tools/tree-edit.ts` changes.
 - Stage 1a and PR #3207 both edit `tree-edit.ts`, `materialize-facts.ts`, `mob.ts`, `person-warnings.ts` and `introduced-warnings.ts`, so whichever lands second rebases.
 - Stage 1b starts after PR #3207, PR #3131 and PR #3040 merge. It changes PR #3207's check; it pays the proof-conclusion, research and tree-edit slots those PRs commit run logs for; and PR #3040 rewrites the completion gate in `research-append.ts` and `nextStep` in `question-state.ts`, both of which Stage 1b extends. PR #3131 also makes `computeTouchedPersonIds` read ParentChild endpoints through `relationshipEndpoints`; until it does, the write gate sees no person touched by a ParentChild retype or removal, so Stage 1b's `update_relationship` and import-removal warnings depend on it.

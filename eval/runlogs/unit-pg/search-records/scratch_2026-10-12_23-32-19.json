@@ -1,0 +1,577 @@
+{
+  "schema_version": 3,
+  "skill": "search-records",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/skills/search-records/SKILL.md": "6f85c220c617b2e4759d8b3c90b2fbac71e0a04c0f6b03812bcc87d0361f58d8",
+    "packages/engine/plugin/skills/search-records/references/collection-quirks.md": "984d9371cf7de6ae465283fea4483df5dc4ef3098d967ff34e8044bb0b10952d",
+    "packages/engine/plugin/skills/search-records/references/name-search-mechanics.md": "82eb2939f06a8842740fc8908ff598a387681bb4fcb91550d8275862c3873539",
+    "packages/engine/plugin/skills/search-records/references/search-strategy-levers.md": "39896db7d748dc18c7f903ade4577371ea315f19e526e9244dd4000580fd9142",
+    "packages/engine/plugin/agents/search-external-sites.md": "3d261c01298befd903c6790c102d07404bfc200e6b1657a6d7f96b18e8455e1c",
+    "eval/tests/unit/search-records/adhoc-search-with-results.json": "f02a32aa801214815b1d2eb0a2d885e02b9441ceff8c4f673b804a9a7c1431e8",
+    "eval/tests/unit/search-records/attachment-triage.json": "f75496239d25089f94924cda227f947601b1681d6dd4ccc2b628003e0d163b4b",
+    "eval/tests/unit/search-records/child-middle-name-not-surname.json": "928831fa63a0def51621303b18c96b5fa381decd80fbaf31cbbaaf22909536ed",
+    "eval/tests/unit/search-records/escalate-to-external-after-fs-exhaustion.json": "9116a40c24049ee194668a49d16dc802702eb6c5e5dc3b569e057003ccf5a4aa",
+    "eval/tests/unit/search-records/execute-census-search.json": "53be98f407dc6ba942cb5981d2a16003b6a38e39462d47adf8ee0a4ab13ef94c",
+    "eval/tests/unit/search-records/given-name-variant-secondary-party.json": "80e6a1b260933b2145df136d4c167b96060a9bd04cfaff47f727a0112bff5f52",
+    "eval/tests/unit/search-records/live-callee-external-sites-escalation.json": "703647db70e255be3ad6de3471810aac61dd0b2cf6aa543472d63c3c49b116c3",
+    "eval/tests/unit/search-records/maiden-name-pre-marriage-search.json": "19fc78d9018387d890cf5f772c0f27ba58b29b110add755bc1de5cf124bab999",
+    "eval/tests/unit/search-records/maiden-to-married-name-shift-search.json": "8c5f3c9311ab24ca47a81c88fdb7ae936a011ec5fdcf18ffef68697574c2e025",
+    "eval/tests/unit/search-records/marriage-search-follows-jurisdiction-hint.json": "6efc8c03965a923742237ee92a421907bdd2ae258cd8fb4d0a17a5e720af5ae5",
+    "eval/tests/unit/search-records/modern-country-jurisdiction-change.json": "84dae2833fd31cd4f7de79c40a7593430a36426904ce77c94060f0dea304f604",
+    "eval/tests/unit/search-records/negative-extract-request.json": "923afb7922a85dd82c5a7509d782478e491e95c17618856a508b8fd82699b4f7",
+    "eval/tests/unit/search-records/negative-no-match-results.json": "3113c4183bfa436c7a4541bdd9baaa2ab79b95f42dc147c5969cefa56cf4eb60",
+    "eval/tests/unit/search-records/negative-research-plan-request.json": "cb6669fe1436605de85820503492be6b7b888ca508e83b23c16229d2fcaa64ed",
+    "eval/tests/unit/search-records/nil-search-no-sidecar.json": "fc5bd9cf68dac6ac584e19f33f5447da46d65fd504caf0542412d5c021f41b2c",
+    "eval/tests/unit/search-records/non-derivative-nickname-bitsie-in-record.json": "0a5b881e856dfe4ec085596b56dd3705ecff42e87cadea4ade893140280c01b0",
+    "eval/tests/unit/search-records/non-derivative-nickname-bitsie.json": "1dda15afbff6ee75fb7cdea465b65ac02cc6678ff54982bbd0e97c897c3c01ff",
+    "eval/tests/unit/search-records/patronymic-drop-farmname-anchor-on-parent.json": "764669d44e8f09bf731c404e6399b5658a604c7f065bbaaceaa9f699309f2d1a",
+    "eval/tests/unit/search-records/pivot-to-fulltext-on-lowindex-probate.json": "0399f186e43a31fb51b934875ef4f266bf76de9df2b59032e1a30ce99c1c7b53",
+    "eval/tests/unit/search-records/reject-same-name-birthyear-conflict.json": "200d58ed633fed56fc4947b0bc8b95eca74514ae94d6f0eeafb79391b99be657",
+    "eval/tests/unit/search-records/rubric.md": "7d9a6ad6f1ab8a2dec2e8e564d8bb4d0cd58505e34d368da9d0649164d19d0d2",
+    "eval/tests/unit/search-records/same-person-conflict-triage.json": "f01fa71ed827866336a5ca5589d44685f8efe99e7252446e272504779eab1f88",
+    "eval/tests/unit/search-records/same-person-near-match-triage.json": "11275c4881ff72e4b9cdd967705539c8be5f84bc06905cc89791439c4b3acce7",
+    "eval/tests/unit/search-records/search-continue-authorized-in-message.json": "f2085b23868ed04cfb799cbe53e6abefb8cc6e086fdf1b1b3a6a7f4ffc33c1b7",
+    "eval/tests/unit/search-records/spouse-absent-on-census-hit.json": "f8c187fb0a64ce90f163b207bd6a7bee6ba13d36f496c92f228fb66ac90d1b86",
+    "eval/tests/unit/search-records/whitfield-1850-household.json": "f24985ab1762f121124bcdb6af6677eee9532d3b60751e142dcfd59c872d92a9",
+    "eval/tests/unit/search-records/write-result-sidecar.json": "fffd77fead6a4a0882b5c8df0affdce8fe729bd82d80bc8761615fa9956bc6b7",
+    "eval/fixtures/scenarios/anders-unna-marriage-search/README.md": "eb0d9375ec7c884c655f6e656800373ce0f398b2d0077a301b1238c70ce1c4e9",
+    "eval/fixtures/scenarios/anders-unna-marriage-search/research.json": "180d103a25da3e6d9744c02bd61707178f5e39b1c4583adc430aa4c6315bed2f",
+    "eval/fixtures/scenarios/anders-unna-marriage-search/tree.gedcomx.json": "c6e1602c1331b356759a6dd9dd5354bf96033d0f3c66168e62818886e20cd8b4",
+    "eval/fixtures/scenarios/census-household-absent-spouse/README.md": "29bfce423c61b5fd07cd9ba2a3f4266d7c908c79af9bde3341f6ac0bb4af14e4",
+    "eval/fixtures/scenarios/census-household-absent-spouse/research.json": "100bf78f82cce8e034c9ebe6772057f75de139c5ba11ebf5afd3ff008733578f",
+    "eval/fixtures/scenarios/census-household-absent-spouse/tree.gedcomx.json": "54433192a02b3d61dad91d0db50a198e31841871a8177c227569cc73649370db",
+    "eval/fixtures/scenarios/flynn-census-nil/research.json": "654c349a6ff461b2f288bb9768fa2927e30949a69a9c7204b9dcd0fe3da833b3",
+    "eval/fixtures/scenarios/flynn-census-nil/tree.gedcomx.json": "e9cdbbfd573e63d9788dbe3b0ef5e68550684e96729434141fd65a53c44a1012",
+    "eval/fixtures/scenarios/flynn-record-matching/README.md": "db3b206f5df2b627c7caef95c07bf3625573b265068a018ae597b66f6cc62c6a",
+    "eval/fixtures/scenarios/flynn-record-matching/research.json": "3f67b9bb97b80449895ed66866c2ce033dd40aa89b6a477873fbd58204e94ff1",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-record-matching/starting-tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-record-matching/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/gallo-jurisdiction-change/README.md": "9779773736d35e4c86a0849625b1cb714de5db65586f452e1c94d92ee5d474a4",
+    "eval/fixtures/scenarios/gallo-jurisdiction-change/research.json": "9dd96eb776e3e0ed4c957fd38b515e3312384737b7343b1dabbad6b2435c9d11",
+    "eval/fixtures/scenarios/gallo-jurisdiction-change/tree.gedcomx.json": "5781343714cfea0f0f86f499ce57cee01525c855d44c3472810134d4173d6341",
+    "eval/fixtures/scenarios/jesse-neal-marriage-jurisdiction-hint/README.md": "2829b763c370b2360c1934a780dd4211ca0ad6f4480e112a28cfbe1b77e21d51",
+    "eval/fixtures/scenarios/jesse-neal-marriage-jurisdiction-hint/research.json": "be480989573128bb9ebb73908e761d4a4481d3bce30fc13f2e43639a5b27fb29",
+    "eval/fixtures/scenarios/jesse-neal-marriage-jurisdiction-hint/tree.gedcomx.json": "aa5ed455a0aa1f21a6f57ccf850a7282b46379c23486cac95088aa892bb304e5",
+    "eval/fixtures/scenarios/job-purnell-parents-identity/README.md": "5b5ed6fc8f8ceeead5f8430bcef2ea4967f7f357276d4ed037dad65fe69e116e",
+    "eval/fixtures/scenarios/job-purnell-parents-identity/research.json": "1aeb2f21917f7aee2dab59ffb9235284e0966533044fac2e3bea6d83c8eae9ce",
+    "eval/fixtures/scenarios/job-purnell-parents-identity/tree.gedcomx.json": "7b9fe7b717086164ce9d80fa303fc292cc723a2788a11cbe8f291f4f21360015",
+    "eval/fixtures/scenarios/maiden-to-married-name-shift/README.md": "9cc485366d2ca2d1b3d151173842987aa0dbea7259c4e23bd777e50a96260512",
+    "eval/fixtures/scenarios/maiden-to-married-name-shift/research.json": "72b1172c6e586330819d66772a9d8679a6e77447c2b6329c2bfaf0d349efbd97",
+    "eval/fixtures/scenarios/maiden-to-married-name-shift/results/log_001.json": "cdb80b746d885b95905b979ce9a0fc0eddfb6c4dd17fa0ee3a976c7b4c1b9fdb",
+    "eval/fixtures/scenarios/maiden-to-married-name-shift/tree.gedcomx.json": "0dafa2c302899627a908b0db277855c05cc48bddaceac4ff99a0b315a4afe79a",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/mid-research-jackson-nickname/README.md": "b5a75eee17a492b6d1cc6120cc2d236bfb2a5e5439c72ea4e57bbd9bb2bbe382",
+    "eval/fixtures/scenarios/mid-research-jackson-nickname/research.json": "d7f3453c391c0e2226a0c7c6cef64321589fdd69372f1b7e10deb7fdf3f36bb9",
+    "eval/fixtures/scenarios/mid-research-jackson-nickname/tree.gedcomx.json": "715459d43a825593f23403371a3b07c17991c084447771ea635d3f428f974787",
+    "eval/fixtures/scenarios/mullen-price-child-middle-name/README.md": "c528c8ba94b01e9620ecd603ac5f097387d618db6ae8fca41832d97ce35d59b7",
+    "eval/fixtures/scenarios/mullen-price-child-middle-name/research.json": "d483ba2e08603dcfdf74d80a1b7fd22b44228b41def366598c4ebbd5f2c368ba",
+    "eval/fixtures/scenarios/mullen-price-child-middle-name/tree.gedcomx.json": "20c8ae6022d7776bdba1b9aa15568d874d778582c2eb004465a7fdc2b69e99a6",
+    "eval/fixtures/scenarios/mullen-price-multiple-marriages/README.md": "845c58ac61d3043f2d3aa60b3b4faac9a496c55d05d5a4edf1ed5d9b5dca9d1f",
+    "eval/fixtures/scenarios/mullen-price-multiple-marriages/research.json": "2c2b739d9e6caf1ea5757794fe0d284d29e9536a44534477218fd144ac1fadad",
+    "eval/fixtures/scenarios/mullen-price-multiple-marriages/results/log_001.json": "e611ba7e065d3daef50e683e8f07904f6fd9a86efe4853083ac3b12e25a300ca",
+    "eval/fixtures/scenarios/mullen-price-multiple-marriages/tree.gedcomx.json": "8cf1d6df208323dba851a46a156101e4fab5a1c9b82b73b66bc99d68c0228f80",
+    "eval/fixtures/scenarios/norwegian-patronymic-nil-recovery/research.json": "586464d9ac417ee9cfe36258459c1f06aa09e382aa82d24ada3765e5fb98ce1c",
+    "eval/fixtures/scenarios/norwegian-patronymic-nil-recovery/tree.gedcomx.json": "0b72b947e6dd363d35f6d2e24e758d193e4a99e6c58431005f8001e1ff24096b",
+    "eval/fixtures/scenarios/search-continue-authorized-in-message/README.md": "a0ce9664c4e50a3361166553c51b2d094c31b78251daa04f927694d1fc5d6269",
+    "eval/fixtures/scenarios/search-continue-authorized-in-message/research.json": "a499605da4bb3c7d54ca50254a48b651b8ba3b6bfbb5cf4059ea078c4ed63634",
+    "eval/fixtures/scenarios/search-continue-authorized-in-message/tree.gedcomx.json": "c25cd746ae27f4640e35a29ea5a9eb3d629f28f06ae4c0235346e61d11b69361",
+    "eval/fixtures/scenarios/whitfield-1850-household/README.md": "9f7b4858d2a2e4710ac39d18db31dc9858030d59fa52f4c6e4774e0b524d8942",
+    "eval/fixtures/scenarios/whitfield-1850-household/research.json": "948d70078d41900c10de943e5c53c628caf9ef3b5fa87e4ebf06dccc2a8806d2",
+    "eval/fixtures/scenarios/whitfield-1850-household/tree.gedcomx.json": "e99928838099696fc0fad553d4a6e6072170abdaa76aca8f7555d16e97c57489",
+    "eval/fixtures/scenarios/wilkins-probate-nil/README.md": "202ff3f17673c05c8f79f538347a1084a2b30e3cec8b70f0ece81f602a515f2e",
+    "eval/fixtures/scenarios/wilkins-probate-nil/research.json": "fb6760e8f6273248e2cf149512c91e01d78a72ab2704ee53e379de1572b61bd5",
+    "eval/fixtures/scenarios/wilkins-probate-nil/tree.gedcomx.json": "2ea86d3552dca0cede844dd0468db7770252413c76988b0f4bf411fec3711e6b",
+    "eval/fixtures/mcp/catalog-search-empty.json": "f7410b8be742cf8049dd721f91e08d6d83a62e1ea646b1c333e150a178e9d5f6",
+    "eval/fixtures/mcp/catalog-search-empty-keywords.json": "dfefaf8e52d026fc6ff80f7978405799571273499b6dbad843f641d926f05b99",
+    "eval/fixtures/mcp/collections-search-schuylkill.json": "cf6416f44b792fe5f1c0bcae48e5ae1a26d4c4aa9f817ce16ffc7def770d04bb",
+    "eval/fixtures/mcp/external-links-search-pa-census.json": "891175d2a8d120f0bd6df61c637af59e0065ebcf3b678b45d67d5a55f2606cb1",
+    "eval/fixtures/mcp/fulltext-search-wilkins-probate-empty.json": "b99ec749d716fe2fdac685810b15e66dece26688af8a2c1df5b74e0c71efc0be",
+    "eval/fixtures/mcp/place-search-schuylkill-by-name.json": "9ef0e099326ccfc98288e19dbf7b07f4c3507542c609a1b6593f2c2c0ff8bfed",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/rank-search-matches-ackerman-1860-spouse-absent.json": "87ce07fdfa45d72d80c6cfc9e3ecf4c9a41b1911a47198248d517bff0a6c628e",
+    "eval/fixtures/mcp/rank-search-matches-anders-christening.json": "049a3a8b819295a22473a0e8928eea90a9ba656d168589bcceefb1b5ef208309",
+    "eval/fixtures/mcp/rank-search-matches-anders-unna-marriage.json": "e720a132d1d0dc0d0001c326918a47f80587cf6d6f834d0205a8c6c3093e2cb0",
+    "eval/fixtures/mcp/rank-search-matches-execute-census.json": "12550b6fa64c2bc410ec33db816362991b988efd5f1630f0a439d8e3254c9f11",
+    "eval/fixtures/mcp/rank-search-matches-flynn-census.json": "c00c0fc6f5fc409a1c5b75f5b6bc10a34a55498c98b80fcb985158b6bbdcd73f",
+    "eval/fixtures/mcp/rank-search-matches-flynn-collection-mismatch.json": "cd0f8aa2297078467a66f25fccc5d6f4b0befb99fc68f6fb89cb534715a75247",
+    "eval/fixtures/mcp/rank-search-matches-flynn-conflict.json": "3c06463f2ef2fac6bd6537584c80c2456a00be9167d13c2eb827cc85b3621fe9",
+    "eval/fixtures/mcp/rank-search-matches-flynn-near-match.json": "73b3e883fecc1defcf444c264e8559db3789d8977701bf7c7c71a6ce07ad723c",
+    "eval/fixtures/mcp/rank-search-matches-jackson-1880-mary.json": "abf79c59cef229036bef69d16e7cb82872ade420781e9a1a5282ef5a8a134896",
+    "eval/fixtures/mcp/rank-search-matches-jackson-bitsie.json": "7395250ff9294876d42af688411a4de086ffd5b1948519e21eed14256821aac0",
+    "eval/fixtures/mcp/rank-search-matches-mullen-1860.json": "1b37d9a75b306b8e21d98aea049bc9b150f4b77412b26b7dd55f98b4ce98c1f8",
+    "eval/fixtures/mcp/rank-search-matches-mullen-1860-census.json": "e531dadf7080c9cfa462719554c61d03534750116d55566d056b73c9ae4acc3e",
+    "eval/fixtures/mcp/rank-search-matches-price-child-middle-name.json": "d23f3ea6d5705ca5baf259bae2e68f897e30bacea5383f3879772c85c84f69c5",
+    "eval/fixtures/mcp/rank-search-matches-purnell-1821-decoy.json": "bcbe3aee79ef3164b6b962c184af486e2a712afb50a103982f0afb4083efed55",
+    "eval/fixtures/mcp/record-read-ackerman-1860-m7qz-8kd.json": "4c29f85c4cfdbdbbfaef94dc8dfce0b5d4b2051b4d8e42bbbba0de98ffbd8f34",
+    "eval/fixtures/mcp/record-read-anders-9xkt-m2p.json": "4d29bd21922f315b381ca4ab35bf2fb056418ef1086054c3232ad445c095a6e5",
+    "eval/fixtures/mcp/record-read-bitsie-jackson-bjkn-90a.json": "428fba1d9f205a1c0cb7e25faed27bedbe7d8ce778a7a75342f0d2ff593c7387",
+    "eval/fixtures/mcp/record-read-gallo-1893-baptism.json": "54ae7c2ac06a714744c4a6be20008eee4402a591e63d7b5759ec80a8a76cc4cd",
+    "eval/fixtures/mcp/record-read-job-purnell-6dsr-xd6y.json": "869e4b45244c51ade4a5d690480fa7f68b6e3293dd13a27e841620b7521042f6",
+    "eval/fixtures/mcp/record-read-mary-flynn-9xkd-r7m.json": "3f57001b4bd50ed975f3dbbece70b0e1fd3bce15740a2f1ecf93e83368d04ca7",
+    "eval/fixtures/mcp/record-read-mary-jackson-mjkn-bit.json": "6c5639a72f442a477c8aeea1d5c9709a726f79f1f45882d91397b79054d301a9",
+    "eval/fixtures/mcp/record-read-patrick-flyn-vrnt-7m3.json": "b6ebcb2d74b5824a9c5b27c6d7f960d24df4e2dd8ee3f8c202001353c3cb808d",
+    "eval/fixtures/mcp/record-read-patrick-flynn-cflt-9k2.json": "e5f3230d2567ebc188e2656ba99a045169be841e576e8093ef2f8307e40502eb",
+    "eval/fixtures/mcp/record-read-patrick-flynn-mxhy-tp4.json": "9621b2506f21c18992ae0e2714ea94eb24baf5038503ec5cad66b6e68d8dff1d",
+    "eval/fixtures/mcp/record-read-sarah-a-mullen-wicn-1860-m01.json": "9bf849da25157844b4d22c77881c6dc2d91f1d414e182e0da45b8ab1c50002bf",
+    "eval/fixtures/mcp/record-read-sarah-m-price-wicn-1880-p01.json": "3df252ba088c2fb31c35105f34b81c557abbe82db8d76e9249ee5a2019e30a93",
+    "eval/fixtures/mcp/record-read-sarah-price-wicn-1880-p02.json": "101bc035fa618b5d1d0e6d8b064a9b3f1aaa76a1d73be7b64c4f60420575ab7f",
+    "eval/fixtures/mcp/record-read-urna-anders-1786-marriage.json": "76a1b9c3efcb275173fb0387babcb6c830e23825ab32142039cb2e208c75ec6d",
+    "eval/fixtures/mcp/record-read-whitfield-1850-a1wf-dos.json": "0cdeb2236c2ac3eada169cb00a4bb973a9624a5549529b9dc308579f62c39917",
+    "eval/fixtures/mcp/record-search-1850-census-flynn.json": "1e74748e6769c6e2469c21fe8676a1e4f5e23f131e044d815869880330dc2b02",
+    "eval/fixtures/mcp/record-search-1860-census-mullen-sarah.json": "ad32f2dadce0d72c03849e1144c12b6193d264b365e08f5ff0d7314c9ee2a471",
+    "eval/fixtures/mcp/record-search-1880-census-price-sarah.json": "0e9ee8727bde3f65e001aad00748be8de0d56f33e91fa7a2ebbbe262d8dff80a",
+    "eval/fixtures/mcp/record-search-1880-census-sheahan.json": "9ffeffaf328cade20b4261df1972162e03256cbf270c54893ec0652c87810fff",
+    "eval/fixtures/mcp/record-search-ackerman-1860-spouse-absent.json": "745d9adc14fc053da72123c0de3c74c6c86480e28a8158ed31d78f8325e77adc",
+    "eval/fixtures/mcp/record-search-anders-parent-anchored-hit.json": "9c8e7d9af36001c502fdaf99733e529d27ad25e021dcf8d16bd5bad334e37218",
+    "eval/fixtures/mcp/record-search-anders-patronymic-hit.json": "1235a2875a53ec37b9b2aecaa7597dc933cf47891042630d7f9616e52cbea764",
+    "eval/fixtures/mcp/record-search-church-sheahan-anyplace.json": "f49f83e9249f6d149f57eab8bcfc608eb00927eda816944b3abec879f915b7ec",
+    "eval/fixtures/mcp/record-search-church-sheahan-collectionid.json": "f409d0446da2a043ef4ebb650d9fe48ddc4b1aa4233cab5b2a7aef7335353657",
+    "eval/fixtures/mcp/record-search-conflict-household-flynn.json": "946bb1d70d93d45e70fbef61f296858bee78f2e5c20e2cfd1e3779cf2eadf944",
+    "eval/fixtures/mcp/record-search-flinn-no-results.json": "77142f2cf10bfead1ee068a9b3be9661ad2d48727ca3dc2cb1b8129e8170ba6b",
+    "eval/fixtures/mcp/record-search-flyn-no-results.json": "f11a82a9da7e3b7639f25305d64aba0e1a85b8c6668a2afd3907eec984b50a70",
+    "eval/fixtures/mcp/record-search-flynn-any-variant-no-results.json": "e5bcd4d8f86bab38797668dbff432ec6a4976a78582c03ecf4349bd372b35950",
+    "eval/fixtures/mcp/record-search-flynn-no-results.json": "5bdac776b0e048e1a4041347a8313d8babea53529065d154c80edef32443accf",
+    "eval/fixtures/mcp/record-search-flynn-wildcard-no-results.json": "5c1af299062293bb0fbd5736312c080917a0d003231d55ce2b5a11f85d38b650",
+    "eval/fixtures/mcp/record-search-gallo-hungary-no-results.json": "c5ba0a5030950c638a02b207a25fb75580e392a26f8871701cc7dbe000ae639e",
+    "eval/fixtures/mcp/record-search-gallo-slovakia-hit.json": "1ac958932e6609611dc5522d128abb423965ba797ba778b15181d078c4d27f16",
+    "eval/fixtures/mcp/record-search-jackson-1880-mary.json": "394c545f0bc25943ad0a91418850248c6e5a74ca228d2dae3806bd376a6ae8e7",
+    "eval/fixtures/mcp/record-search-jackson-1900-bitsie-record.json": "83a10e5e7495d04fff03f6e1f3f3475c12b3e0d7ec03d536af4c633acde063f3",
+    "eval/fixtures/mcp/record-search-jackson-1900-mary-no-results.json": "9f2f08c91db5a180c66069bf5bbc27cd28295c9bdacf90279ca25b14f0edf37e",
+    "eval/fixtures/mcp/record-search-jackson-bitsie-no-results.json": "0c18fbb30132fed28663350c9a65ced910941b62652f53791ca8da96ca7e5cbd",
+    "eval/fixtures/mcp/record-search-mary-flynn-marriage-hit.json": "f952cce17164f893651eff3c2bea982bbd1642a3b8d96aea4127e8492fb87af4",
+    "eval/fixtures/mcp/record-search-mielke-no-results.json": "53ddb9f89dcfb0a0e800c09f37429b67ac801771e6aa6473dd25208bd452581a",
+    "eval/fixtures/mcp/record-search-moen-surname-nil.json": "84085fa5095e5facc5b992252d99b5e760e152e636a2da6bd19a58ab29d0524d",
+    "eval/fixtures/mcp/record-search-neal-marriage-arkansas-marriageplace.json": "d8ecdaf5716eee7b166184c01e39aa62125ea0aa77fc4369b732f4c5c14399aa",
+    "eval/fixtures/mcp/record-search-neal-marriage-arkansas-recordsubdivision.json": "b26678dba39932b39f954fa376906d0f8d622e55f3af76acd1fbbaf055e73d1a",
+    "eval/fixtures/mcp/record-search-neal-marriage-arkansas-residenceplace.json": "b905f95afa5d0e9e2b158d2a9e70b28af2a3c55a19c2de41504dd841e7ede69a",
+    "eval/fixtures/mcp/record-search-neal-marriage-nil-with-jurisdiction-hint.json": "e5b88f42f222b3a3671e05f9c7ed4d6926b6b780571e18fc558da4c47317caf2",
+    "eval/fixtures/mcp/record-search-near-match-age-off-flynn.json": "d1c9b8857a755c04a522d9396a80e418a3c0a51504d394c68db3aa6eafefe6a4",
+    "eval/fixtures/mcp/record-search-parnell-any-variant-no-results.json": "7543f9c9de3e9af60c53da593c988f6fd01653b318c8ae1174a5fb4aedec74f3",
+    "eval/fixtures/mcp/record-search-patrick-anysurname-no-results.json": "1c91ba661cbc7ec5ce3bd086991b4957c4bcca1d373b7eb1cf9b7620511217f2",
+    "eval/fixtures/mcp/record-search-patrick-flinn-no-results.json": "e3f62bc4c0305b61a3a54a4fbf7faeed000dd6679d64fe30aca00f8273a03e33",
+    "eval/fixtures/mcp/record-search-patrick-flyn-no-results.json": "45a602f21b586f745442f848ba85f5c4352460b2705b50f5d50a9caaec3435f7",
+    "eval/fixtures/mcp/record-search-patrick-flynn-no-results.json": "343983e2058a4b9b46c729da14381d92d191383bb81e13f90c0d12c81889a473",
+    "eval/fixtures/mcp/record-search-price-no-results.json": "f5c1119aeefa3860b9fafa0febef38deecc863589300281c979949cc7ecd4d1c",
+    "eval/fixtures/mcp/record-search-purnall-variant-no-results.json": "2c62c2ed5372c1dba3cbffb2ca4a9f54132be22d5b4ae4eb189316f735347681",
+    "eval/fixtures/mcp/record-search-purnell-1821-decoy.json": "c2f7c9166ec3a16022e590b755f1e3fb72713a5c0fdb043c3e8e2977595158f5",
+    "eval/fixtures/mcp/record-search-purnell-any-variant-no-results.json": "36388e980d9cb87bffd6992fe0097ba76b5fb09b7490efe0656cb52a5cab9562",
+    "eval/fixtures/mcp/record-search-unna-exact-zero-results.json": "bbe1a7be12c8a8268f928b35e03573b417f52057a69d7a5b20831e21b4002593",
+    "eval/fixtures/mcp/record-search-urna-variant-marriage-match.json": "6c0496c4e9d56ce283cde2ecfea597d4bca04126b49cd45a5db4b7b99ae0647e",
+    "eval/fixtures/mcp/record-search-variant-any-givenname-flynn-no-results.json": "771aead34e936fff0831fd59e0a07984a33dab6da4127ef17abcd02ec085e7a6",
+    "eval/fixtures/mcp/record-search-variant-father-name-no-results.json": "7c98ccb41ab6da33e1c36d36f78667132285b7795c7e7820a479c7a284759584",
+    "eval/fixtures/mcp/record-search-whitfield-1850-household.json": "2a9db4dd9622d03bb88cf3370a41dae78a7f927462b82006c0e64f6f5cee4063",
+    "eval/fixtures/mcp/record-search-wilkens-variant-no-results.json": "a3c79e2d0ebe04a9f02a69ffef75802f772c995808585656fb443fbaf843603d",
+    "eval/fixtures/mcp/record-search-wilkins-any-variant-no-results.json": "d6090dad92742b46847aaaf5f0c1e4e8036873890a2b07f76db379ea6c385750",
+    "eval/fixtures/mcp/record-search-wilkins-probate-no-results.json": "821535ee1d58f446f9a8f1dbac1ac7717186f7bd55c70ef4df3ed880b6ca45fc",
+    "eval/fixtures/mcp/validate-research-schema.json": "0d794d9b0d5461968cecdc6ca7a9c59c4c14ea588ea1b02fdee9aa0436a0572b",
+    "eval/fixtures/mcp/wiki-read-united-states-census.json": "792a04d69ab890369e742aabbf46b604c55bd336a95c02bc7641754dbde097b7"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_records_003",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a NEGATIVE test requiring the skill to decline and route to record-extraction. Claude correctly invoked Skill('record-extraction') and produced no substantive output of its own. The routing decision is correct: the user provided a census record and asked to extract facts, which is record-extraction's task, not search-records'. No forbidden analysis, commentary, or interpretation was added. The response meets the pass condition for a negative test."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the only task required of it on this negative test: routing to record-extraction. No additional work was required or expected. The routing was clean and unambiguous, with no omissions of the required decline/handoff behavior."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test (search-records). The skill correctly routed to record-extraction via Skill() invocation rather than making MCP calls. N/A per the base rule: Tool Arguments scores null only when a test made zero MCP tool calls."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "This is a NEGATIVE test requiring the skill to decline and route to record-extraction. Claude correctly invoked Skill('record-extraction') and produced no substantive output of its own. The routing decision is correct: the user provided a census record and asked to extract facts, which is record-extraction's task, not search-records'. No forbidden analysis, commentary, or interpretation was added. The response meets the pass condition for a negative test."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the only task required of it on this negative test: routing to record-extraction. No additional work was required or expected. The routing was clean and unambiguous, with no omissions of the required decline/handoff behavior."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test (search-records). The skill correctly routed to record-extraction via Skill() invocation rather than making MCP calls. N/A per the base rule: Tool Arguments scores null only when a test made zero MCP tool calls."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 23779.681250001886,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 3976.7972080007894,
+        "wall_clock_ms": 28030.72714805603,
+        "num_turns": 2,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 11099,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 354,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.012869,
+        "total_cost_usd": 0.012869
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_records_003_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 23779.681250001886,
+          "duration_api_ms": 0.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21256,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "record-extraction"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "record-extraction",
+                  "args": "Extract facts from this 1850 census record for the Thomas Flynn household: 'Thomas Flynn, age 32, male, born Ireland, miner; Mary Flynn, age 28, female, born Ireland; Patrick Flynn, age 5, male, born "
+                }
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_capture_pending_item_not_terminal",
+                "passed": true,
+                "error": "skipped: this run changed no plan-item status",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_wiki_fixture_actually_used",
+                "passed": true,
+                "error": "skipped: not a topical-fixture-required test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_escalates_to_external_sites_after_fs_exhaustion",
+                "passed": true,
+                "error": "skipped: only the FamilySearch-exhaustion escalation test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_jurisdiction_hints_followed",
+                "passed": true,
+                "error": "skipped: not a jurisdiction-hints scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_live_callee_used_its_own_tools",
+                "passed": true,
+                "error": "skipped: only the live-callee seam test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_outcome_honest_no_match",
+                "passed": true,
+                "error": "skipped: not a log-honest-no-match scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_outcome_positive_record_search",
+                "passed": true,
+                "error": "skipped: not a log-positive-record-search scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_permission_ask_before_mandated_lever",
+                "passed": true,
+                "error": "skipped: not an unconditional-next-variant scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_search_or_writes_on_planning_request",
+                "passed": true,
+                "error": "skipped: not a no-search-no-write scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_sidecar_for_nil_search",
+                "passed": true,
+                "error": "skipped: not a sidecar-nil scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_appends_log_entry",
+                "passed": true,
+                "error": "skipped: only positive tests record searches",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_pre1880_census_structure_marked_inferred",
+                "passed": true,
+                "error": "skipped: not a pre-1880 census household scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sidecar_written_for_positive_search",
+                "passed": true,
+                "error": "skipped: not a sidecar-write scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "This is a NEGATIVE test requiring the skill to decline and route to record-extraction. Claude correctly invoked Skill('record-extraction') and produced no substantive output of its own. The routing decision is correct: the user provided a census record and asked to extract facts, which is record-extraction's task, not search-records'. No forbidden analysis, commentary, or interpretation was added. The response meets the pass condition for a negative test."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed the only task required of it on this negative test: routing to record-extraction. No additional work was required or expected. The routing was clean and unambiguous, with no omissions of the required decline/handoff behavior."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test (search-records). The skill correctly routed to record-extraction via Skill() invocation rather than making MCP calls. N/A per the base rule: Tool Arguments scores null only when a test made zero MCP tool calls."
+              }
+            ],
+            "judge_cost_usd": 0.012869,
+            "duration_ms": 3976.7972080007894,
+            "error": null,
+            "input_tokens": 11099,
+            "cached_input_tokens": 0,
+            "output_tokens": 354
+          },
+          "started_at": 1791848189.440531,
+          "ended_at": 1791848217.4712582
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    }
+  ],
+  "totals": {
+    "duration_ms": 23779.681250001886,
+    "duration_api_ms": 0,
+    "judge_duration_ms": 3976.7972080007894,
+    "num_turns": 2,
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "output_tokens": 0,
+    "judge_input_tokens": 11099,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 354,
+    "skill_cost_usd": 0,
+    "judge_cost_usd": 0.012869,
+    "total_cost_usd": 0.012869,
+    "wall_clock_ms": 28030.72714805603
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}
