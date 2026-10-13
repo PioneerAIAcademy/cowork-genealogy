@@ -27,7 +27,7 @@
     "person-quality-hole-detail"
   ],
   "judge_context": [
-    "The findings list must contain only user-actionable items -- the death index's one-digit year difference and the misattributed 1885 state census",
+    "The findings list must contain only user-actionable items -- the death index's nine-year difference and the misattributed 1885 state census",
     "Repeated internal ids across records (F1, N1, P1, S1 recurring on unrelated persons and records) are FamilySearch storage artifacts; they must NOT appear as numbered findings or carry a recommended action",
     "Mentioning backend metadata once as closing context is acceptable; listing it as a problem to fix is the failure this test pins",
     "The stated count of findings must exclude backend metadata",

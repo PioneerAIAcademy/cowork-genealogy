@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "fact",
-      "description": "Nicola Domenichelli died on 29 June 1981; his death was registered the next day in the civil register of Rosario de la Frontera, Salta, Argentina, which records him as a widower born about 1897.",
+      "description": "Nicola Domenichelli died on 29 June 1981 in Rosario de la Frontera, Salta, Argentina; his death was registered there the next day. The identity is established on an index-only route accepted by a senior genealogist: the tree's Nicola and his Italian birth record share the same parents across two independent indexes, and the death record ties to that Nicola on indexed facts (name, 1897 birth year, Rosario de la Frontera, widower after his wife's 1970 death).",
       "details": {
         "subject_person": "Nicola Domenichelli (G2WX-HZ5)",
         "fact_type": "Death",
@@ -11,7 +11,10 @@
         "place": "Rosario de la Frontera, Salta, Argentina"
       },
       "supporting_sources": [
-        "Argentina, Salta, Civil Registration, 1880-2000 — death entry for Nicolas Domenichelli, registered 30 Jun 1981"
+        "ark:/61903/1:1:6ZB1-TVLX — deciding death record, INDEX (Argentina, Salta, Civil Registration, 1880-2000): Nicolas Domenichelli, died 29 Jun 1981, registered 30 Jun 1981, Rosario de la Frontera register; birth year 1897; widower (the 'Viudo Viudo' second person is the word viudo read as a name, not a spouse)",
+        "ark:/61903/1:1:6ZYD-6L8N — 1946 Salta marriage INDEX: groom Nicolás Domenicheli (b. 1898), parents Miguel Domenicheli and Diletta Berardinelli; this index names both of the tree Nicola's parents with no image reading",
+        "ark:/61903/1:1:6NZZ-HLRL — Italian birth INDEX (Italy, Isernia, Civil Registration 1809-1914): Nicolo Domenichelli, b. 23 Apr 1897 Roccasicura, Molise, parents Michele Domenichelli and Diletta Berardinelli; shares the parents named in the marriage index, tying the tree Nicola to this birth without the image",
+        "ark:/61903/3:1:3Q9M-C336-QQWY-K — death-act IMAGE (Acta 53): CORROBORATING ONLY — its reading (exact birth 23 Apr 1897, Roccasicura, Italian nationality, death in Rosario de la Frontera) is uncalibrated and UNLICENSED (single-act page, docs/e2e-testing-guide.md Step 1a) and is NOT relied on for the identity"
       ],
       "required": true
     }

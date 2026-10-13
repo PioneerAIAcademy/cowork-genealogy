@@ -124,6 +124,17 @@ LIVE_TOOLS: set[str] = {
     # allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
+    # The bounded-delivery signal. Live rather than fixture-backed because the
+    # tool IS inert by contract -- no network, no auth, no project write; it
+    # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
+    # real one is both free and more faithful than a canned answer.
+    #
+    # It was advertised NOWHERE in this harness until now, which is why #2813
+    # item 1 reached alpha untested: the hosted Stop hook only allows a bounded
+    # turn to stop when the model calls this tool, and a model that cannot see
+    # the tool cannot call it. Every unit eval therefore graded the skill on
+    # prose it had no way to act on.
+    "research_delivered",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
     # drift. Added when search-records / research were pointed at it in place of
@@ -1142,6 +1153,7 @@ def create_mock_server(
         if tool_name == "person_quality":
             continue  # served by _make_person_quality_handler below
         predicated = list(bucket["predicated"])
+        is_error_flags = list(bucket.get("is_error") or [False] * len(predicated))
         # Input schema precedence: the compiled production schema wins (the
         # single source of truth), so fixture-backed tools advertise exactly
         # what production does. A fixture-provided input_schema is honored only
@@ -1157,6 +1169,7 @@ def create_mock_server(
         async def handler(
             args,
             _predicated=predicated,
+            _is_error=is_error_flags,
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
@@ -1398,11 +1411,16 @@ def create_mock_server(
             entry["response"] = response
             entry["response_fixture"] = source_name
             call_log.append(entry)
-            return {
+            envelope: dict[str, Any] = {
                 "content": [
                     {"type": "text", "text": json.dumps(response)},
                 ],
             }
+            # A fixture marked `is_error` stands for a THROWN tool error, which
+            # production's catch arms return with `isError: true` beside `{error}`.
+            if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
+                envelope["is_error"] = True
+            return envelope
 
         # Prefer the production description; fall back to a generic stub
         # if the tool is not in the catalog (e.g., aspirational tools
@@ -1487,6 +1505,9 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
+    # Takes only `{summary}`; the handler's injected `projectPath` is the inert
+    # extra key convert_calendar already tolerates.
+    "research_delivered": ("research-delivered.js", "researchDelivered"),
 }
 
 #: Compiled tools whose `projectPath` is optional and changes what the call
