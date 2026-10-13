@@ -5,8 +5,8 @@ Provisioner, teardown, empty-proof, probe cases and the account-id leak check, i
 script that shells out to the ``aws`` CLI (no boto3). Usage and the rules it enforces:
 README.md beside this file; the plan is docs/plan/familysearch-handoff.md, section 3.
 
-Subcommands: plan, up --phase ..., status, probe --case ..., cpu, pause, resume, down, prove-empty,
-leak-check. Every AWS subcommand takes --dry-run, which calls nothing and prints pasteable
+Subcommands: plan, up --phase ..., status, probe --case ..., cpu, alarms, alarm-trip, pause, resume,
+down, prove-empty, leak-check. Every AWS subcommand takes --dry-run, which calls nothing and prints pasteable
 commands. Secret values and option settings reach the CLI only as 0600 ``file://`` paths
 under --work-dir, never as argv.
 """
@@ -75,6 +75,11 @@ RESOLVER_LOG_GROUP = f"/{PREFIX}/resolver"
 EB_LOG_PREFIX = f"/aws/elasticbeanstalk/{PREFIX}"
 STORAGE_PREFIX = f"{PREFIX}/"
 MIGRATE_POLICY = f"{PREFIX}-migrate"
+# U19: the alarm definitions FamilySearch ports; `up --phase alarms` applies them with every
+# alarm's actions off, so "fired" is StateValue ALARM and nothing is notified.
+ALARMS_FILE = PROTO / "alarms.json"
+ALARM_PREFIX = f"{PREFIX}-"
+TRIP_THRESHOLD_S = 60
 
 # Loopback sign-in: the dev key's registered callback.
 LOOPBACK_PUBLIC_URL = "http://127.0.0.1:1837"
@@ -139,10 +144,11 @@ SG_DELETE_ORDER = ("rds", "tools-alb", "web", "worker", "tools")
 
 PHASES = ("guard", "iam", "net", "stores", "secrets", "bastion", "versions", "tools", "worker",
           "queue", "web", "migrate")
-OPTIONAL_PHASES = ("signin", "resolver")
+OPTIONAL_PHASES = ("signin", "resolver", "alarms")
 # Every kind `up` records; `down` deletes each and `prove-empty` checks each.
 KINDS = ("budget", "iam-role", "instance-profile", "sg", "db-subnet-group", "db-param-group", "rds",
-         "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver", "acm")
+         "s3", "secret", "ec2", "app", "eb-storage", "env", "log-group", "resolver", "acm", "alarm",
+         "metric-filter")
 
 # Beanstalk answers a missing environment or application with InvalidParameterValue and
 # "No Environment found for EnvironmentName = '...'" / "No Application named '...' found."
@@ -499,6 +505,32 @@ def restore_options(snapshot: list[dict], touched: list[tuple[str, str]]) -> tup
         else:
             removes.append({"Namespace": namespace, "OptionName": name})
     return sets, removes
+
+
+# ── alarms.json ───────────────────────────────────────────────────────────────────────
+
+
+def load_alarms(path: Path | None = None) -> list[dict]:
+    """The alarms of alarms.json (read at call time, so a test can point ALARMS_FILE elsewhere)."""
+    data = json.loads((path or ALARMS_FILE).read_text(encoding="utf-8"))
+    alarms = data.get("alarms") or []
+    for alarm in alarms:
+        if alarm.get("kind") not in ("sqs", "log"):
+            raise Die(f"alarms.json: {alarm.get('name')}: kind {alarm.get('kind')!r} is neither sqs nor log")
+        for f in alarm.get("filters", []) if alarm["kind"] == "log" else []:
+            if f.get("tier") not in TIERS:
+                raise Die(f"alarms.json: {alarm['name']}: filter tier {f.get('tier')!r} is not one of {TIERS}")
+    return alarms
+
+
+def stdout_log_group(tier: str) -> str:
+    """The group Beanstalk streams a tier's /var/log/web.stdout.log to (StreamLogs: true)."""
+    return f"/aws/elasticbeanstalk/{ENV_NAMES[tier]}/var/log/web.stdout.log"
+
+
+def log_metrics(alarms: list[dict]) -> list[tuple[str, str]]:
+    """(namespace, metric) of every log alarm, once each."""
+    return sorted({(a["namespace"], a["metric"]) for a in alarms if a["kind"] == "log"})
 
 
 # ── the AWS session ───────────────────────────────────────────────────────────────────
@@ -1444,6 +1476,230 @@ U13PY
         self.aws("route53resolver", "associate-resolver-query-log-config", "--resolver-query-log-config-id",
                  config, "--resource-id", vpc, ok=ALREADY)
 
+    # alarms (U19)
+
+    def alarm_name(self, alarm: dict) -> str:
+        return f"{ALARM_PREFIX}{alarm['name']}"
+
+    def alarm_queues(self) -> dict:
+        """The worker queue's and its DLQ's names, the QueueName dimension of the sqs alarms.
+        The DLQ is looked for in describe-environment-resources first (whether Beanstalk lists
+        it there is unmeasured), then read from the worker queue's RedrivePolicy."""
+        res = self.aws("elasticbeanstalk", "describe-environment-resources", "--environment-name",
+                       ENV_NAMES["worker"], placeholder={"EnvironmentResources": {"Queues": [
+                           {"Name": "WorkerQueue", "URL": "<queue-url>"}]}})
+        queues = (res or {}).get("EnvironmentResources", {}).get("Queues", [])
+        worker = [q["URL"] for q in queues if q.get("Name") == "WorkerQueue"]
+        if not worker:
+            raise Die(f"{ENV_NAMES['worker']} has no WorkerQueue: the sqs alarms have no queue to watch", rc=1)
+        listed = [q for q in queues if q.get("Name") != "WorkerQueue" and re.search(r"dead", q.get("Name", ""), re.I)]
+        if listed:
+            dlq, source = listed[0]["URL"].rsplit("/", 1)[-1], f"describe-environment-resources ({listed[0]['Name']})"
+        else:
+            got = self.aws("sqs", "get-queue-attributes", "--queue-url", worker[0], "--attribute-names",
+                           "RedrivePolicy", placeholder={"Attributes": {"RedrivePolicy": json.dumps(
+                               {"deadLetterTargetArn": f"arn:aws:sqs:{REGION}:{self.account}:<dlq-name>",
+                                "maxReceiveCount": "10"})}})
+            policy = ((got or {}).get("Attributes") or {}).get("RedrivePolicy")
+            if not policy:
+                raise Die("the worker queue lists no DLQ and has no RedrivePolicy: dlq_depth has nothing to watch",
+                          rc=1)
+            dlq, source = json.loads(policy)["deadLetterTargetArn"].rsplit(":", 1)[-1], "the worker queue's RedrivePolicy"
+        self.note(f"worker queue {worker[0].rsplit('/', 1)[-1]}; DLQ {dlq}, from {source}")
+        found = {"worker": worker[0].rsplit("/", 1)[-1], "worker_url": worker[0], "dlq": dlq, "dlq_source": source}
+        self.state["alarms"] = found
+        self.save()
+        return found
+
+    def put_alarm(self, alarm: dict, queues: dict | None, *, threshold=None) -> None:
+        """put-metric-alarm from the file's definition, its actions always off."""
+        call = ["cloudwatch", "put-metric-alarm", "--alarm-name", self.alarm_name(alarm),
+                "--alarm-description", alarm["description"], "--namespace", alarm["namespace"],
+                "--metric-name", alarm["metric"], "--statistic", alarm["statistic"], "--period", alarm["period_s"],
+                "--evaluation-periods", alarm["evaluation_periods"],
+                "--threshold", alarm["threshold"] if threshold is None else threshold,
+                "--comparison-operator", alarm["comparison"], "--treat-missing-data", alarm["treat_missing"],
+                "--no-actions-enabled"]
+        if alarm["kind"] == "sqs":
+            if not queues or alarm.get("queue") not in ("worker", "dlq"):
+                raise Die(f"alarms.json: {alarm['name']}: queue {alarm.get('queue')!r} is neither worker nor dlq")
+            call += ["--dimensions", f"Name=QueueName,Value={queues[alarm['queue']]}"]
+        self.aws(*call, "--tags", *self.tags_kv())
+
+    def phase_alarms(self) -> None:
+        envs = self.state.get("envs", {})
+        missing = [t for t in ("worker", "web") if t not in envs]
+        if missing and not self.dry:
+            raise Die(f"run `up --phase {missing[0]}` first: the alarms watch the worker's queues and the "
+                      "web and worker logs")
+        alarms = load_alarms()
+        queues = self.alarm_queues()
+        for alarm in alarms:
+            if alarm["kind"] == "log":
+                for n, f in enumerate(alarm["filters"], 1):
+                    group, name = stdout_log_group(f["tier"]), f"{ALARM_PREFIX}{alarm['name']}-{n}"
+                    self.aws("logs", "put-metric-filter", "--log-group-name", group, "--filter-name", name,
+                             "--filter-pattern", f["pattern"], "--metric-transformations",
+                             f"metricName={alarm['metric']},metricNamespace={alarm['namespace']},metricValue=1")
+                    self.record("metric-filter", name, log_group=group)
+            self.put_alarm(alarm, queues)
+            self.record("alarm", self.alarm_name(alarm))
+        self.note("every alarm is created with its actions off (no SNS); `page` in alarms.json is for the port")
+
+    def prefixed_alarms(self, placeholder: list[str] | None = None) -> list[str]:
+        got = self.aws("cloudwatch", "describe-alarms", "--alarm-name-prefix", ALARM_PREFIX, "--alarm-types",
+                       "MetricAlarm", "CompositeAlarm", placeholder={
+                           "MetricAlarms": [{"AlarmName": n} for n in placeholder or []]}) or {}
+        return [a["AlarmName"] for a in got.get("MetricAlarms", []) + got.get("CompositeAlarms", [])]
+
+    def prefixed_filters(self, alarms: list[dict], *, dry_all: bool = False) -> list[tuple[str, str]]:
+        """(log group, filter name) of every metric filter named genealogy-u13-* that feeds a
+        metric of alarms.json. --filter-name-prefix binds only with --log-group-name, so this
+        asks by metric and filters the names here."""
+        out = []
+        for namespace, metric in log_metrics(alarms):
+            placeholder = {"metricFilters": [
+                {"logGroupName": stdout_log_group(f["tier"]), "filterName": f"{ALARM_PREFIX}{a['name']}-{n}"}
+                for a in alarms if a["kind"] == "log" and a["metric"] == metric
+                for n, f in enumerate(a["filters"], 1)] if dry_all else []}
+            got = self.aws("logs", "describe-metric-filters", "--metric-namespace", namespace, "--metric-name", metric,
+                           placeholder=placeholder) or {}
+            out += [(f["logGroupName"], f["filterName"]) for f in got.get("metricFilters", [])
+                    if f.get("filterName", "").startswith(ALARM_PREFIX)]
+        return out
+
+    def alarms_cmd(self) -> int:
+        """Read-only: --test-filters runs every filter of alarms.json against its samples with
+        test-metric-filter (no stack needed); --states prints each alarm's state and last change."""
+        if not (self.args.states or self.args.test_filters):
+            raise Die("alarms: pass --states, --test-filters, or both")
+        self.guard()
+        rc = self.test_filters() if self.args.test_filters else 0
+        if self.args.states:
+            self.alarm_states()
+        return rc
+
+    def alarm_states(self) -> None:
+        alarms = load_alarms()
+        names = sorted({r["id"] for r in self.recorded("alarm")}
+                       | set(self.prefixed_alarms([self.alarm_name(a) for a in alarms])))
+        if not names:
+            self.out("alarms=none")
+            return
+        got = self.aws("cloudwatch", "describe-alarms", "--alarm-names", *names, placeholder={
+            "MetricAlarms": [{"AlarmName": n, "StateValue": "<state>", "ActionsEnabled": False} for n in names]}) or {}
+        live = {a["AlarmName"]: a for a in got.get("MetricAlarms", []) + got.get("CompositeAlarms", [])}
+        for name in names:
+            alarm = live.get(name)
+            if alarm is None:
+                self.out(f"{name}.state=absent")
+                continue
+            self.out(f"{name}.state={alarm.get('StateValue')}")
+            self.out(f"{name}.actions_enabled={str(alarm.get('ActionsEnabled')).lower()}")
+            if alarm.get("StateUpdatedTimestamp"):
+                self.out(f"{name}.state_updated={alarm['StateUpdatedTimestamp']}")
+            hist = self.aws("cloudwatch", "describe-alarm-history", "--alarm-name", name, "--history-item-type",
+                            "StateUpdate", "--scan-by", "TimestampDescending", "--max-items", "1",
+                            placeholder={"AlarmHistoryItems": []}) or {}
+            items = hist.get("AlarmHistoryItems", [])
+            if not items:
+                self.out(f"{name}.history=none")
+                continue
+            self.out(f"{name}.history.timestamp={items[0].get('Timestamp')}")
+            self.out(f"{name}.history.type={items[0].get('HistoryItemType')}")
+            self.out(f"{name}.history.summary={items[0].get('HistorySummary')}")
+
+    def test_filters(self) -> int:
+        """Every log alarm's match sample must be matched by at least one of its filters, and
+        every no_match sample by none. The samples go through a file, never argv, since the
+        CLI's shorthand would split a list value on its commas."""
+        bad, total = 0, 0
+        for alarm in [a for a in load_alarms() if a["kind"] == "log"]:
+            samples = alarm.get("samples") or {}
+            match, no_match = list(samples.get("match") or []), list(samples.get("no_match") or [])
+            if not match or not no_match:
+                self.out(f"DISAGREE {alarm['name']}: alarms.json gives it no "
+                         f"{'match' if not match else 'no_match'} sample")
+                bad += 1
+            messages = match + no_match
+            total += len(messages)
+            hits: list[set[int]] = []
+            for n, f in enumerate(alarm["filters"], 1):
+                got = self.aws("logs", "test-metric-filter", "--cli-input-json", self.file(
+                    f"test-filter-{alarm['name']}-{n}.json", {"filterPattern": f["pattern"],
+                                                             "logEventMessages": messages}),
+                    placeholder={"matches": []}) or {}
+                matched = set()
+                for m in got.get("matches", []):
+                    if m.get("eventMessage") in messages:  # every copy: the same text matches the same
+                        matched |= {i for i, text in enumerate(messages) if text == m["eventMessage"]}
+                    elif m.get("eventNumber") is not None:
+                        matched.add(int(m["eventNumber"]) - 1)
+                hits.append(matched)
+            if self.dry:
+                continue
+            for i, sample in enumerate(messages):
+                by = [n for n, h in enumerate(hits, 1) if i in h]
+                if i < len(match) and not by:
+                    self.out(f"DISAGREE {alarm['name']}: match sample {i + 1} is matched by none of its filters: {sample}")
+                    bad += 1
+                elif i >= len(match) and by:
+                    patterns = "; ".join(alarm["filters"][n - 1]["pattern"] for n in by)
+                    self.out(f"DISAGREE {alarm['name']}: no_match sample {i - len(match) + 1} is matched by filter "
+                             f"{','.join(map(str, by))} ({patterns}): {sample}")
+                    bad += 1
+        self.out(f"test-filters: {bad} disagreement(s) over {total} sample(s)")
+        return 1 if bad else 0
+
+    def alarm_state(self, name: str) -> str | None:
+        got = self.aws("cloudwatch", "describe-alarms", "--alarm-names", name, placeholder={"MetricAlarms": []}) or {}
+        alarms = got.get("MetricAlarms", [])
+        return alarms[0].get("StateValue") if alarms else None
+
+    def alarm_trip(self) -> int:
+        """Do what the alarm's `trip` makes mechanical, then poll until it reads ALARM."""
+        alarms = {a["name"]: a for a in load_alarms()}
+        name = self.args.alarm
+        if name not in alarms:
+            raise Die(f"--alarm must name one of: {', '.join(alarms)}")
+        timeout = self.args.timeout
+        if timeout < 0:
+            raise Die(f"--timeout {timeout:g}: seconds, 0 or more")
+        self.require_billed()
+        self.guard()
+        alarm, full = alarms[name], self.alarm_name(alarms[name])
+        if not self.dry and self.alarm_state(full) is None:
+            raise Die(f"no alarm {full}: run `up --phase alarms` first")
+        self.out(f"== alarm-trip {name}")
+        self.note(f"recipe (alarms.json): {alarm['trip']}")
+        restore = None
+        try:
+            if name == "dlq_depth":
+                url = (self.state.get("alarms") or {}).get("worker_url") or self.state.get("queue_url") \
+                    or self.queue_url_of(ENV_NAMES["worker"])
+                body = json.dumps({"turn_id": f"u19-trip-{pysecrets.token_hex(4)}", "session_id": "u19-trip",
+                                   "project_id": "u19-trip", "text": "U19 dlq_depth trip: this turn has no row"})
+                self.aws("sqs", "send-message", "--queue-url", url, "--message-body", body)
+                self.note("the worker answers it 400 (no turn row); sqsd dead-letters it after MaxRetries receives "
+                          "(hold `probe --case maxretries_1`, with fast_errors, to make that one)")
+            elif name == "message_age":
+                queues = self.state.get("alarms") or self.alarm_queues()
+                restore = (alarm, queues)
+                self.note(f"threshold {TRIP_THRESHOLD_S} s while a message waits; the file's "
+                          f"{alarm['threshold']} is put back whatever happens")
+                self.put_alarm(alarm, queues, threshold=TRIP_THRESHOLD_S)
+            else:
+                self.note(f"{name} trips only by the recipe above, which the operator runs; this command polls")
+            self.poll(f"{full} StateValue=ALARM", lambda: self.alarm_state(full) == "ALARM", every_s=30,
+                      timeout_s=timeout)
+        finally:
+            if restore:
+                self.out("== restore")
+                self.put_alarm(*restore)
+        if not self.dry:
+            self.out(f"{full}.state=ALARM")
+        return 0
+
     def up(self) -> int:
         self.require_billed()
         self.guard()
@@ -1820,7 +2076,7 @@ U13PY
         self.require_billed()
         self.guard()
         steps = [
-            ("env", self.down_envs), ("ec2", self.down_bastion), ("rds", self.down_rds),
+            ("alarms", self.down_alarms), ("env", self.down_envs), ("ec2", self.down_bastion), ("rds", self.down_rds),
             ("app", self.down_app), ("secret", self.down_secrets), ("s3", self.down_data_bucket),
             ("acm", self.down_certificates), ("sg", self.down_security_groups), ("iam", self.down_iam),
             ("budget", self.down_budget), ("resolver", self.down_resolver), ("log-group", self.down_log_groups),
@@ -1830,6 +2086,20 @@ U13PY
             step()
         self.note("local: remove the /etc/hosts line for the RDS endpoint, then delete the work-dir")
         return 0
+
+    def down_alarms(self) -> None:
+        """Before the log groups go: the alarms, then each metric filter, recorded or found by
+        metric (a filter whose group is already gone is NOT_FOUND)."""
+        alarms = load_alarms()
+        names = {r["id"] for r in self.recorded("alarm")} | set(
+            self.prefixed_alarms([self.alarm_name(a) for a in alarms]))
+        for name in sorted(names):
+            self.aws("cloudwatch", "delete-alarms", "--alarm-names", name, ok=NOT_FOUND)
+        filters = {(r["log_group"], r["id"]) for r in self.recorded("metric-filter")}
+        filters |= set(self.prefixed_filters(alarms, dry_all=True))
+        for group, name in sorted(filters):
+            self.aws("logs", "delete-metric-filter", "--log-group-name", group, "--filter-name", name, ok=NOT_FOUND)
+        self.note("the custom metrics' data cannot be deleted; it ages out, at no cost once nothing publishes")
 
     def live_envs(self) -> dict[str, str]:
         """Name -> Status of every environment the application still has."""
@@ -2117,6 +2387,15 @@ U13PY
         configs = self.aws("route53resolver", "list-resolver-query-log-configs", "--filters",
                            f"Name=Name,Values={RESOLVER_NAME}", placeholder={"ResolverQueryLogConfigs": []})
         found("resolver", "query-log configs", [c["Id"] for c in configs.get("ResolverQueryLogConfigs", [])])
+        alarms = load_alarms()
+        found("alarm", f"alarms named {ALARM_PREFIX}*", self.prefixed_alarms())
+        filters = set(self.prefixed_filters(alarms))
+        for r in self.recorded("metric-filter"):
+            got = self.aws("logs", "describe-metric-filters", "--log-group-name", r["log_group"],
+                           "--filter-name-prefix", r["id"], ok=NOT_FOUND, placeholder=None) or {}
+            filters |= {(f["logGroupName"], f["filterName"]) for f in got.get("metricFilters", [])
+                        if f.get("filterName") == r["id"]}
+        found("metric-filter", f"metric filters named {ALARM_PREFIX}*", [f"{g}:{n}" for g, n in sorted(filters)])
         for prefix in (EB_LOG_PREFIX, f"/{PREFIX}/"):
             groups = self.aws("logs", "describe-log-groups", "--log-group-name-prefix", prefix,
                               placeholder={"logGroups": []})
@@ -2298,6 +2577,14 @@ def build_parser() -> argparse.ArgumentParser:
     cpu.add_argument("--end", help="window end (default now); exits 1 until the last whole 5-minute grid bucket "
                                    "inside the window has a worker CPU point")
     cpu.add_argument("--worker-instance", help="the worker instance id (a released worker_xlarge's stays readable)")
+    alarms = sub.add_parser("alarms", parents=[common], help="read-only: alarm states, and alarms.json's filters "
+                                                             "against its samples")
+    alarms.add_argument("--states", action="store_true", help="each alarm's StateValue and last state change, k=v")
+    alarms.add_argument("--test-filters", action="store_true",
+                        help="test-metric-filter over every sample; exit 1 on any disagreement (no stack needed)")
+    trip = sub.add_parser("alarm-trip", parents=[common, billed], help="trip one alarm, poll until it reads ALARM")
+    trip.add_argument("--alarm", required=True, help="an alarm name in alarms.json")
+    trip.add_argument("--timeout", type=float, default=900, help="seconds to poll for ALARM (default 900); exit 1 after")
     sub.add_parser("down", parents=[common, billed], help="tear everything down, in order")
     sub.add_parser("pause", parents=[common, billed], help="between sessions: tiers to 0/0, RDS and the bastion stopped")
     sub.add_parser("resume", parents=[common, billed], help="undo pause: RDS, the bastion, then the tiers to 1/1")
@@ -2322,7 +2609,7 @@ def main(argv: list[str] | None = None, *, runner=None, sleep=time.sleep, out=No
             return leak_check(args, local_dir=local_dir, repo=repo, out=printer)
         r = Rehearsal(args, runner=runner, sleep=sleep, out=printer, local_dir=local_dir, repo=repo)
         return {"plan": r.plan, "up": r.up, "status": r.status, "probe": r.probe, "cpu": r.cpu, "down": r.down,
-                "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
+                "alarms": r.alarms_cmd, "alarm-trip": r.alarm_trip, "pause": r.pause, "resume": r.resume, "prove-empty": r.prove_empty}[args.cmd]()
     except Die as exc:
         print(f"rehearse.py: {exc}", file=sys.stderr)
         return exc.rc

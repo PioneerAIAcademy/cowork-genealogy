@@ -2018,6 +2018,46 @@ def test_the_post_hook_never_raises_and_stamps_nothing_without_an_id():
     assert finished == []
 
 
+REAUTH_LOCAL = "Not signed in to FamilySearch. Call the login tool to authenticate."
+REAUTH_HOSTED = "Your FamilySearch session ended. Reconnect FamilySearch from the web app."
+
+
+@pytest.mark.parametrize("payload", [
+    {"tool_name": "mcp__genealogy__record_read", "tool_response": [{"type": "text", "text": REAUTH_LOCAL}]},
+    {"tool_name": "mcp__remote-devices__Genealogy_Research__person_read", "tool_response": {"content": REAUTH_HOSTED}},
+    {"tool_name": "mcp__genealogy__record_search", "error": REAUTH_HOSTED},  # PostToolUseFailure
+], ids=["local-response", "hosted-response", "failure-error"])
+def test_a_familysearch_tool_asking_for_a_sign_in_logs_a_reauth_hit(payload):
+    logged: list[dict] = []
+    post = options.make_posttool_hook(turn_id="t", finish=lambda _id: None, log=lambda **f: logged.append(f))
+    assert _call(post, {**payload, "tool_use_id": "toolu_1", "agent_id": "agent-a"}) == {}
+    assert [f for f in logged if f["ev"] == "reauth_hit"] == [
+        {"ev": "reauth_hit", "turn_id": "t", "tool_name": payload["tool_name"], "agent_id": "agent-a"}]
+
+
+@pytest.mark.parametrize("payload", [
+    {"tool_name": "mcp__genealogy__research_query", "tool_response": {"text": REAUTH_HOSTED}},  # an echo
+    {"tool_name": "Read", "tool_response": REAUTH_LOCAL},
+    {"tool_name": "mcp__genealogy__login", "tool_response": REAUTH_LOCAL},
+    {"tool_name": "mcp__genealogy__record_read", "tool_response": "401 Unauthorized; please login"},
+    {"tool_name": "mcp__genealogy__record_read", "tool_response": {"records": []}},
+], ids=["research_query-echo", "Read", "login", "401-text", "ordinary"])
+def test_anything_else_logs_no_reauth_hit(payload):
+    logged: list[dict] = []
+    post = options.make_posttool_hook(turn_id="t", finish=lambda _id: None, log=lambda **f: logged.append(f))
+    _call(post, {**payload, "tool_use_id": "toolu_1"})
+    assert not [f for f in logged if f["ev"] == "reauth_hit"]
+
+
+def test_the_reauth_signal_never_fails_the_call():
+    def exploding_log(**f):
+        raise RuntimeError("stdout is gone")
+
+    post = options.make_posttool_hook(turn_id="t", finish=lambda _id: None, log=exploding_log)
+    assert _call(post, {"tool_name": "mcp__genealogy__record_read", "tool_response": REAUTH_LOCAL,
+                        "tool_use_id": "toolu_1"}) == {}
+
+
 def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row():
     conn = FakeConn()
     worker.insert_tool_call(conn, {"turn_id": "t", "session_id": "s", "tool_name": "Read", "decision": "allow",
