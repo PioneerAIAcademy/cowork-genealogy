@@ -1,0 +1,19 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial",
+    "f3": "partial",
+    "f4": "partial",
+    "f5": "partial"
+  },
+  "notes": {
+    "f1": "The correct birth registration and the exact date and place are documented in research.json, but the tree's Birth fact still says “about 1910, near Nueva Italia, Michoacán” and has no source attached. The finding was researched but not recovered into the tree.",
+    "f2": "The correct father is linked to Mauro, and Coahuayutla is recorded as his birthplace. However, his birth date, 27 November 1882, is missing from the tree. The 1910 registration's age of 30 supports an approximate birth year, not the exact date.",
+    "f3": "The correct mother is linked to Mauro, and Coahuayutla is recorded as her birthplace. Her birth date is missing; age 25 in 1910 supports approximately 1885, not the expected circa 1881.",
+    "f4": "The tree contains Jesús Cruz, but the other person is recorded as Domiciana Castillo rather than Donaciana Basurto, and neither is linked as Sóstenes's parent. Their death dates also conflict with the registration, which says both were living on 6 December 1910.",
+    "f5": "The tree contains Miguel Corona and Jesús Mercado, but neither is linked as Apolinar's parent. Their recorded death dates conflict with the registration's statement that both were already deceased by 1910."
+  },
+  "annotator": "Ikennaya1",
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
+  "blind_bundle_digest": "56f5a3c756046aca1051625918330b4da0bbd32f33535c7186adf985fa15a931"
+}
