@@ -35,22 +35,42 @@ class Settings(BaseSettings):
     # with the experience-level user setting (PR #2649).
     auto_continue: bool = True
     auto_continue_max_steps: int = 30
-    # PR #2870 item 1d: the SDK Stop hook's veto cap per turn in the sandbox, which is
-    # what makes one user message run a whole research job. Sized on STEP count, not on
-    # the nudge histogram. 0 turns the hook off, and `auto_continue: false` turns it off
-    # too -- that flag already meant "one turn per message", and a new mechanism that
-    # ignored it would take an operator's kill switch away without saying so.
+    # PR #2870 item 1d: the SDK Stop hook's veto cap in the sandbox, which is what makes
+    # one user message run a whole research job. Sized on STEP count, not on the nudge
+    # histogram. 0 turns the hook off, and `auto_continue: false` turns it off too --
+    # that flag already meant "one turn per message", and a new mechanism that ignored
+    # it would take an operator's kill switch away without saying so.
     #
-    # LOWERED 60 -> 30, 2026-10-13, as the cost half of turning continuous work back on
-    # (it is off in alpha today). Re-measured over the 202 committed e2e runs: steps per
-    # run are median 15, p90 26, p99 51, max 76 -- the September figures the old comment
-    # cited over 189 runs, unmoved. A cap of 30 covers 94% of runs against 60's 99%, and
-    # halves the worst case.
+    # PER SESSION, NOT PER TURN -- this comment said "per turn" until 2026-10-13 and was
+    # wrong. `nudges_used` is created once in `make_stop_hook`, the hooks dict is built
+    # once per session because the SDK client is cached, and `_begin_turn_hook_state`
+    # resets `delivered` and `continuations` but NOT the nudge count. A normal Stop, a
+    # reconnect and a pause/resume all keep it, so a second job in one sitting starts
+    # with whatever the first left. That matters more at 30 than it did at 60. Pinned by
+    # `test_the_nudge_cap_is_per_session_not_per_turn` so the scope cannot drift
+    # unnoticed; whether it SHOULD reset per turn is a live question, not settled here,
+    # because resetting would multiply the bound by the number of turns in a session.
+    #
+    # LOWERED 60 -> 30 on 2026-10-13, as the cost half of turning continuous work back
+    # on. Re-derived on that date by `test_proto_config._steps_per_run`'s own method
+    # (the method matters: an earlier hand-count of this branch's got p99 wrong by 3):
+    # 203 committed e2e runs, Skill/Task/Agent steps per run median 15, p90 26, p99 48,
+    # max 76. A cap of 30 covers 93.6% of runs against 60's 99.0%, and halves the worst
+    # case. Dated rather than pinned to a run count, which moves every time the corpus
+    # grows.
     #
     # Exceeding it is not a kill: the cap is consulted only at a VOLUNTARY yield, so a
-    # run past it simply stops being nudged onward and ends where it chose to stop. That
-    # is also why it bounds nothing for the 31% of runs that never yield -- those are
-    # held only by SESSION_SPEND_CAP_USD, which is unchanged here.
+    # run past it simply stops being nudged onward and ends where it chose to stop.
+    #
+    # It therefore bounds nothing for the ~31% of runs that never yield, AND THERE IS NO
+    # SPEND METER BEHIND IT ON THIS PLANE. An earlier draft of this comment said those
+    # runs were "held only by SESSION_SPEND_CAP_USD"; that cap is read only by the
+    # search-agent prototype's worker (`app/agent/spend.py`), and the alpha deliberately
+    # carries no meter at all (lead ruling 2026-09-25, pinned by
+    # `test_the_alpha_carries_no_spend_meter`). Short of the researcher or the model
+    # ending such a run, its only automatic halt is the E2B sandbox pausing about an
+    # hour after `LIVE_WINDOW_S` (`sandbox_heartbeat.py`: 4 h since the browser last
+    # attached), and a reconnect restarts that clock.
     #
     # NOT the prototype's cap. `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the Beanstalk
     # template both stay at 60 on purpose: that is a separate deployment with its own
