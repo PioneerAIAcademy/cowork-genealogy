@@ -10,11 +10,12 @@
       "ocr-dispute",
       "uncertain-reading",
       "user-reading",
-      "second-record-corroboration"
+      "second-record-corroboration",
+      "direct-arm"
     ]
   },
   "input": {
-    "user_message": "The mother's name looks like Tannetje van Noord to me, not Jannetje. The handwriting on the birth act is hard to read. Can you check?",
+    "delegation": "The mother's name looks like Tannetje van Noord to me, not Jannetje. The handwriting on the birth act is hard to read. Can you check?\n\nprojectPath: <workspace>",
     "scenario": "dutch-mother-name-disputed"
   },
   "judge_context": [
