@@ -117,6 +117,27 @@ async def test_a_session_active_inside_the_period_is_untouched(pg_dsn, shape):
     assert session_rows(pg_dsn, row.session_id) == before and transcript(pg_dsn, sdk) == sorted(SUBPATHS)
 
 
+@pytest.mark.parametrize("shape", ["running turn", "held message"])
+def test_each_query_alone_spares_a_session_with_an_open_turn(pg_dsn, shape):
+    """The open-turn clause is in both queries, so through retention_once either one hides a
+    regression in the other (self-review, 2026-10-13). Each is asked here on its own."""
+    row = session(pg_dsn)
+    idle(pg_dsn, row.session_id)
+    outcome = "'queued'" if shape == "held message" else "NULL"
+    sql(pg_dsn, f"INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "  # noqa: S608
+                f"VALUES (%s, %s, %s, '{{}}', {OLD}, {outcome})",
+        ("turn_" + uuid.uuid4().hex[:10], row.session_id, row.project_id))
+    with psycopg.connect(pg_dsn) as conn:
+        candidates, skip = [], []
+        while (got := conn.execute(worker.RETENTION_CANDIDATE_SQL, {"idle": IDLE_S, "skip": skip}).fetchone()):
+            candidates.append(got[0])
+            skip.append(got[0])
+        assert row.session_id not in candidates, "the candidate scan offered a session with an open turn"
+        recheck = conn.execute(worker.RETENTION_RECHECK_SQL, {"sid": row.session_id, "idle": IDLE_S}).fetchone()
+        assert recheck is None, "the re-check under the lock passed a session with an open turn"
+        conn.rollback()
+
+
 async def test_a_session_in_use_keeps_every_tool_call_however_old(pg_dsn):
     """User ruling 2026-10-13: tool_calls is the session's change history, so it goes only
     with the session. A row far older than the period, on a session still in use, stays."""
