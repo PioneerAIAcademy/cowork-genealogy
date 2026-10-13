@@ -71,12 +71,20 @@ export function entryIdentity(query: unknown): string {
     seen.add('surname')
   }
 
+  // De-duplicated by VALUE, not just by key. Several of the keys above routinely carry
+  // the same string -- `place`, `jurisdiction` and `death_place` are all "where", and a
+  // `name` can repeat what `given` + `surname` already produced -- and repeating it
+  // reads as a rendering fault while spending one of only three slots.
+  const push = (value: string): void => {
+    if (!parts.includes(value)) parts.push(value)
+  }
+
   for (const key of IDENTITY_KEYS) {
     if (parts.length >= MAX_PARTS) break
     if (seen.has(key)) continue
     const value = q[key]
-    if (typeof value === 'string' && value.trim()) parts.push(value.trim())
-    else if (typeof value === 'number') parts.push(String(value))
+    if (typeof value === 'string' && value.trim()) push(value.trim())
+    else if (typeof value === 'number') push(String(value))
   }
   return parts.join(' · ')
 }

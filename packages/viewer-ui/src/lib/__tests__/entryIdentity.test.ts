@@ -58,6 +58,19 @@ describe('entryIdentity', () => {
     expect(entryIdentity({ personId: 'ABCD-123' })).toBe('')
   })
 
+  it('does not print the same value twice', () => {
+    // `place`, `jurisdiction` and `death_place` are all "where" and often carry the same
+    // string; so can `name` against `given` + `surname`. Repeating it reads as a bug and
+    // burns one of only three slots.
+    expect(entryIdentity({ death_place: 'Schuylkill County', jurisdiction: 'Schuylkill County' }))
+      .toBe('Schuylkill County')
+    expect(entryIdentity({ given: 'Patrick', surname: 'Flynn', name: 'Patrick Flynn' }))
+      .toBe('Patrick Flynn')
+    // ...but two genuinely different values still both show.
+    expect(entryIdentity({ death_place: 'Schuylkill County', jurisdiction: 'Pennsylvania' }))
+      .toBe('Schuylkill County · Pennsylvania')
+  })
+
   it('puts who before where before when', () => {
     expect(entryIdentity({ surname: 'Flynn', place: 'Pennsylvania', year: 1850 }))
       .toBe('Flynn · Pennsylvania · 1850')

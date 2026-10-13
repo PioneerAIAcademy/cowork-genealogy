@@ -48,6 +48,10 @@ services:
   minio:
     image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
     container_name: proto-minio
+    # `pgsty/minio` is an official-style image: its CMD is bare `minio`, so with no
+    # command it prints usage and exits 0, and compose reports only "dependency failed
+    # to start". Restored from main, which has had this right since the image moved.
+    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: proto
       MINIO_ROOT_PASSWORD: protoproto
@@ -55,9 +59,9 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - proto-minio:/bitnami/minio/data
+      - proto-minio:/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live || exit 1"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 2s
       timeout: 5s
       retries: 30
