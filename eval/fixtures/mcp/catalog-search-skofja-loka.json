@@ -1,0 +1,100 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for Škofja Loka, Slovenia — 36 hits (trimmed to 4 hydrated). Holdings under the parent jurisdiction: trade records, church affairs, house books, population censuses. No parish registers. Measured live 2026-10-07 with catalogSearchTool({ standardPlace: 'Škofja Loka, Slovenia', count: 8, hydrate: 4 }).",
+  "args": {
+    "standardPlace": "~Škofja Loka"
+  },
+  "response": {
+    "totalHits": 36,
+    "returned": 4,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 4,
+    "hits": [
+      {
+        "id": "koha:424978",
+        "title": "Handelssachen der Städte und Märkte in Lack (Bischoflack) 1739-1763",
+        "creator": "Bischoflack (Krain). Handelskammer",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library", "Online"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:424978",
+        "hydrated": true,
+        "notes": ["Commerce and financial accounts of the cities and towns in Bischoflack, Krain, Austria; now Škofja Loka, Slovenija. Left-side pages (l. S.) sometimes filmed separately from right-side pages (r. S.) Text in German and Latin."],
+        "authors": [],
+        "subjects": ["Slovenia, Škofja Loka, Škofja Loka - Business records and commerce"],
+        "filmNotes": [
+          {
+            "filmNumber": "1416754",
+            "imageGroupNumber": "8941965",
+            "shelf": "Film",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Städte & Märkte in Lack 1739-1746 (r. S.)"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:422727",
+        "title": "Kirchliche Angelegenheiten 1550-1747",
+        "creator": "Bischoflack (Krain). Kirchpropstamt",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library", "Online"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:422727",
+        "hydrated": true,
+        "notes": ["Church related documents for Bischoflack, Krain, Austria; now Vače, Slovenija. Text in German and Latin."],
+        "authors": [],
+        "subjects": ["Slovenia, Škofja Loka, Škofja Loka - Church history"],
+        "filmNotes": [
+          {
+            "filmNumber": "1416653",
+            "imageGroupNumber": "8942614",
+            "shelf": "Film",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Clarisserinnen, Kirchen & Kaplanen, Kapuziner, Benediktiner Orden, Brixenthaler Pfarreien in Tirol, Bruderschaft Christianer Defenses 1550-1747 (l. & r. S.)"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:502892",
+        "title": "Knjiga hiš v Škofji Loki/ France Štukl",
+        "creator": "Štukl, France",
+        "repositoryCalls": ["FamilySearch Library"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:502892",
+        "hydrated": true,
+        "notes": ["A discussion of the houses and their inhabitants in Škofja Loka, Slovenija; formerly Bischoflack, Krain, Austria."],
+        "authors": [],
+        "subjects": ["Slovenia, Škofja Loka, Škofja Loka - Buildings, dwellings, etc."],
+        "filmNotes": [
+          {
+            "filmNumber": "1183591",
+            "imageGroupNumber": "7962801",
+            "shelf": "B1 Floor Film",
+            "copyLocation": "FamilySearch Library",
+            "text": "Knjiga hiš v Škofji Loki"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:1216034",
+        "title": "Popis prebivalstva, 1870",
+        "creator": "Sveta Barbara (Zminec). Občina",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library", "Online"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:1216034",
+        "hydrated": true,
+        "notes": ["Population census for Sveta Barbara (Zminec), Slovenia; formerly St. Barbara (Sminz), Krain, Austria."],
+        "authors": [],
+        "subjects": ["Slovenia, Škofja Loka, Sv. Barbara - Census - 1870"],
+        "filmNotes": [
+          {
+            "filmNumber": "2269264",
+            "imageGroupNumber": "7788055",
+            "shelf": "Film",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Zapisnica 1870-1875"
+          }
+        ],
+        "availableOnline": true
+      }
+    ]
+  }
+}
