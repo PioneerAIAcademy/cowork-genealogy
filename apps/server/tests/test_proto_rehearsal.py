@@ -1240,6 +1240,29 @@ def test_up_accepts_a_plain_operator_override(env):
     assert options_file(env, rh.ENV_NAMES["tools"])[(rh.ENV_NS, "WIKI_API_URL")] == "https://wiki.example.invalid"
 
 
+def test_a_rerun_of_up_removes_an_override_it_no_longer_passes(env):
+    """U19 (2026-10-13, live): update-environment only sets, so `up --phase worker` without
+    the `--env` an earlier run passed left LONG_AGENT_CALL_S=60 on the worker."""
+    fake = FakeAws()
+    assert up_all(env, fake, "--env", "worker:LONG_AGENT_CALL_S=60")[0] == 0
+    worker = rh.ENV_NAMES["worker"]
+    assert fake.env_settings[worker][(rh.ENV_NS, "LONG_AGENT_CALL_S")] == "60"
+    phase = ("up", "--billed", "--phase", "worker", "--bundles-dir", str(env["bundles"]), "--env-file", str(env["env_file"]))
+
+    before = len(fake.calls_to("elasticbeanstalk", "update-environment"))
+    assert run(env, fake, *phase)[0] == 0
+    [call] = [a for a in fake.calls_to("elasticbeanstalk", "update-environment")[before:] if worker in a]
+    removed = json.loads(fake.files[_flag(call, "--options-to-remove")])
+    assert removed == [{"Namespace": rh.ENV_NS, "OptionName": "LONG_AGENT_CALL_S"}]
+    assert (rh.ENV_NS, "LONG_AGENT_CALL_S") not in fake.env_settings[worker]
+    assert (rh.ENV_NS, "QUEUE_URL") in fake.env_settings[worker], "only the dropped override goes"
+
+    before = len(fake.calls_to("elasticbeanstalk", "update-environment"))
+    assert run(env, fake, *phase)[0] == 0
+    [again] = [a for a in fake.calls_to("elasticbeanstalk", "update-environment")[before:] if worker in a]
+    assert "--options-to-remove" not in again, "an unchanged re-run removes nothing"
+
+
 def _worker_opts(**drop):
     sqsd = rh.sqsd_template()
     out = [rh.opt(rh.SQSD_NS, k, v) for k, v in sqsd[rh.SQSD_NS].items()]

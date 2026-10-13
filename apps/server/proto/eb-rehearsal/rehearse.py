@@ -1225,6 +1225,15 @@ class Rehearsal:
     def ensure_env(self, tier: str, name: str, label: str, options: list[dict], *, worker: bool = False,
                    throwaway: bool = False) -> dict:
         check_options(tier, options, signin=self.signin_active(tier, options), dry=self.dry)
+        # What the last `up` set and this one does not (an `--env` override left off the
+        # re-run, U19 2026-10-13): update-environment only sets, so it is removed by name.
+        previous = self.options_path(name)
+        dropped = []
+        if not throwaway and not self.dry and previous.exists():
+            keep = {(o["Namespace"], o["OptionName"]) for o in options}
+            dropped = [{"Namespace": o["Namespace"], "OptionName": o["OptionName"]}
+                       for o in json.loads(previous.read_text(encoding="utf-8"))
+                       if (o["Namespace"], o["OptionName"]) not in keep]
         settings = self.write_options(name, options) if not throwaway else self.file(f"options-{name}.json", options)
         existing = self.describe_env(name)
         if existing is None:
@@ -1233,8 +1242,9 @@ class Rehearsal:
                      name, "--solution-stack-name", self.stack(tier), "--version-label", label, *extra,
                      "--option-settings", settings, "--tags", *self.tags_kv())
         else:
+            removes = ["--options-to-remove", self.file(f"remove-{name}.json", dropped)] if dropped else []
             self.aws("elasticbeanstalk", "update-environment", "--environment-name", name, "--version-label",
-                     label, "--option-settings", settings)
+                     label, "--option-settings", settings, *removes)
         env = self.wait_env(name)
         env_id = env.get("EnvironmentId", f"<{name}-id>")
         res = self.aws("elasticbeanstalk", "describe-environment-resources", "--environment-name", name,

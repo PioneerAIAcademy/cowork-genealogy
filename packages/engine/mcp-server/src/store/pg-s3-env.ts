@@ -17,6 +17,17 @@ export const PG_S3_REQUIRED_ENV = ["GENEALOGY_PG_DSN", "GENEALOGY_S3_BUCKET"] as
 export const DEFAULT_ANCHOR_PATH = "/project";
 export const DEFAULT_S3_REGION = "us-east-1";
 
+/** The orphan sweep (s3-orphan-sweep.ts): hourly, deleting what has been
+ *  unreferenced for a day. The grace may not go under an hour, above the
+ *  worker's 1,800 s MCP call timeout, so a value meant in minutes cannot delete
+ *  the objects of a tool call still in flight. */
+export const DEFAULT_ORPHAN_SWEEP_INTERVAL_S = 3600;
+export const DEFAULT_ORPHAN_GRACE_S = 86_400;
+export const ORPHAN_GRACE_FLOOR_S = 3600;
+/** The longest interval `setTimeout` can wait: past 2^31 - 1 ms it fires after 1 ms, which
+ *  would run full-bucket passes back to back. */
+export const ORPHAN_SWEEP_INTERVAL_MAX_S = Math.floor((2 ** 31 - 1) / 1000);
+
 export interface PgS3Env {
   backendOptions: PgS3BackendOptions;
   /** The one `projectPath` the tools pass for a project (`GENEALOGY_ANCHOR_PATH`). */
@@ -25,10 +36,29 @@ export interface PgS3Env {
    *  exactly one of the two S3 keys is set. `backendOptions` is not usable
    *  unless this is empty; the caller decides how to report it. */
   missing: string[];
+  /** The orphan sweep's schedule (s3-orphan-sweep.ts): `intervalS` 0 is off. */
+  orphanSweep: { intervalS: number; graceS: number };
   /** Variables that are set to a value they may not take
-   *  (`GENEALOGY_S3_FORCE_PATH_STYLE` other than `true`/`false`). Unusable
-   *  unless empty, like `missing`. */
+   *  (`GENEALOGY_S3_FORCE_PATH_STYLE` other than `true`/`false`; an orphan
+   *  sweep variable that is not a whole number of seconds, a grace under
+   *  `ORPHAN_GRACE_FLOOR_S`, or an interval over `ORPHAN_SWEEP_INTERVAL_MAX_S`). Unusable unless empty, like `missing`. */
   invalid: string[];
+}
+
+/** A whole number of seconds at or above `floor`, the default when unset or
+ *  empty, or null. `Number.isInteger`, not `parseInt`: "1e3", "3600.5", "abc"
+ *  and "NaN" are refused rather than read as something else, and a NaN never
+ *  reaches a comparison that is false for it. */
+function seconds(
+  raw: string | undefined,
+  fallback: number,
+  floor: number,
+  ceiling = Number.MAX_SAFE_INTEGER,
+): number | null {
+  if (raw === undefined || raw.trim() === "") return fallback;
+  if (!/^\s*\d+\s*$/.test(raw)) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= floor && n <= ceiling ? n : null;
 }
 
 export function readPgS3Env(env: NodeJS.ProcessEnv): PgS3Env {
@@ -51,6 +81,17 @@ export function readPgS3Env(env: NodeJS.ProcessEnv): PgS3Env {
   else if (pathStyle === "false") forcePathStyle = false;
   else if (pathStyle) invalid.push("GENEALOGY_S3_FORCE_PATH_STYLE");
 
+  // 0 turns the sweep off; the grace has no off, only its floor.
+  const intervalS = seconds(
+    env.GENEALOGY_ORPHAN_SWEEP_INTERVAL_S,
+    DEFAULT_ORPHAN_SWEEP_INTERVAL_S,
+    0,
+    ORPHAN_SWEEP_INTERVAL_MAX_S,
+  );
+  if (intervalS === null) invalid.push("GENEALOGY_ORPHAN_SWEEP_INTERVAL_S");
+  const graceS = seconds(env.GENEALOGY_ORPHAN_GRACE_S, DEFAULT_ORPHAN_GRACE_S, ORPHAN_GRACE_FLOOR_S);
+  if (graceS === null) invalid.push("GENEALOGY_ORPHAN_GRACE_S");
+
   return {
     backendOptions: {
       dsn: env.GENEALOGY_PG_DSN ?? "",
@@ -63,6 +104,7 @@ export function readPgS3Env(env: NodeJS.ProcessEnv): PgS3Env {
       },
     },
     anchorPath: env.GENEALOGY_ANCHOR_PATH || DEFAULT_ANCHOR_PATH,
+    orphanSweep: { intervalS: intervalS ?? 0, graceS: graceS ?? DEFAULT_ORPHAN_GRACE_S },
     missing,
     invalid,
   };
