@@ -1,9 +1,9 @@
 {
-  "run_log": "v20_2026-10-13_10-54-24.json",
+  "run_log": "v4_2026-10-12_18-39-29.json",
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_021",
+      "test_id": "ut_question_selection_d02",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_021",
+      "test_id": "ut_question_selection_d02",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_021",
+      "test_id": "ut_question_selection_d02",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,23 +27,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_020",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_020",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "test_id": "ut_question_selection_d02",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_020",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -51,15 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_017",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,31 +51,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_017",
+      "test_id": "ut_question_selection_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_018",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_018",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -99,31 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_h7w",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_h7w",
+      "test_id": "ut_question_selection_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -131,41 +83,81 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_h7w",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "the AI did its own inline elimination of one parent set instead of handing the competing hypotheses to hypothesis-tracking; the test explicitly forbids that."
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "routed the father question but left the mother entirely unaddressed; half the objective."
-    },
-    {
-      "test_id": "ut_research_015",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_015",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_015",
+      "test_id": "ut_question_selection_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

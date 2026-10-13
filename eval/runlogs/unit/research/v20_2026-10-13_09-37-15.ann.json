@@ -1,0 +1,313 @@
+{
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+  "run_log": "v20_2026-10-13_10-54-24.json",
+  "annotator": "mercybocumy2000@gmail.com",
+========
+  "run_log": "v20_2026-10-13_09-37-15.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+========
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_020",
+========
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. User asked to investigate Irish origin AND immigration records. Claude identified existing evidence for father but did not execute\n  searches for immigration/naturalization records, ending with a question rather than continuing."
+    },
+    {
+      "test_id": "ut_research_017",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "test_id": "ut_research_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+========
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+========
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+========
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Father identification claims are accurate, but Claude narrated \"extended the research plan\" and \"dispatched searches\" for 1870/1880\n  censuses while no research.json changes persisted. Narration contradicts actual state."
+    },
+    {
+      "test_id": "ut_research_001",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h7w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "the AI did its own inline elimination of one parent set instead of handing the competing hypotheses to hypothesis-tracking; the test explicitly forbids that."
+========
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "comment": "routed the father question but left the mother entirely unaddressed; half the objective."
+    },
+    {
+      "test_id": "ut_research_015",
+========
+      "comment": "Agree. User requested identification of both father and mother. Father summarized from existing evidence but mother gap only identified, not\n  acted on. Claude ended with a question rather than proceeding."
+    },
+    {
+      "test_id": "ut_research_zfp",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "test_id": "ut_research_015",
+========
+      "test_id": "ut_research_zfp",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+<<<<<<<< HEAD:eval/runlogs/unit/research/v20_2026-10-13_10-54-24.ann.json
+      "test_id": "ut_research_015",
+========
+      "test_id": "ut_research_zfp",
+>>>>>>>> origin/main:eval/runlogs/unit/research/v20_2026-10-13_09-37-15.ann.json
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree. Claude routed to research-plan and explained reasoning but stopped at narrating what the plan \"will\" do without showing evidence the\n  plan was created or its contents."
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}
