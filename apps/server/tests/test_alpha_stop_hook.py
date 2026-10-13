@@ -27,7 +27,7 @@ class FakeMatcher:
 #: The compiled-in default, read from the module rather than retyped. The cases below
 #: that expect it are about "a bad value falls back", not about what the default IS --
 #: the VALUE is pinned once, in test_both_providers_... , so changing it is a one-line
-#: edit there rather than a sweep through ten parametrize entries.
+#: edit there rather than a sweep through the six parametrize entries that expect it.
 _DEFAULT = real_agent._DEFAULT_MAX_NUDGES
 
 
