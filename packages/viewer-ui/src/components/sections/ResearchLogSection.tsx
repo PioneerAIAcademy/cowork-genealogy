@@ -8,6 +8,7 @@ import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
 import { splitOffPlan } from '../../lib/offPlan'
 import { entryIdentity } from '../../lib/entryIdentity'
+import { splitLogTimestamp } from '../../lib/logTimestamp'
 import styles from './ResearchLogSection.module.css'
 
 type SortKey = 'performed' | 'tool' | 'outcome' | 'results_examined'
@@ -76,18 +77,25 @@ export default function ResearchLogSection(): React.JSX.Element {
   // the two drift.
   const renderEntry = (entry: LogEntry): React.JSX.Element => {
             const isExpanded = expandedId === entry.id
+            const when = splitLogTimestamp(entry.performed)
             const capturedSources = sourcesByLogEntry.get(entry.id) ?? []
             const producedAssertions = assertionsByLogEntry.get(entry.id) ?? []
             return (
               <tr key={entry.id} id={entry.id}>
                 <td colSpan={6} style={{ padding: 0 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <table className={styles.table}>
                     <tbody>
                       <tr
                         className={styles.clickableRow}
                         onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                       >
-                        <td>{entry.performed}</td>
+                        <td className={styles.whenCell}>
+                          {/* Date over time, not a raw `2026-05-01T10:15:00Z`. The date is what a
+                              reader scans; the time of day is kept because it is sometimes all that
+                              separates two searches on one day. */}
+                          <span className={styles.whenDate}>{when.date}</span>
+                          {when.time && <span className={styles.whenTime}>{when.time}</span>}
+                        </td>
                         <td>
                           {entry.tool}
                           {/* The identity the collapsed row lacked: two searches of the
@@ -257,7 +265,11 @@ export default function ResearchLogSection(): React.JSX.Element {
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Research Log</h2>
-      <table className={styles.table}>
+      {/* Scrolls sideways INSIDE its own box rather than dragging the whole pane,
+          and only once the pane is narrower than the table can usefully compress --
+          which on a desktop means zoomed in, not at rest. */}
+      <div className={styles.tableScroll}>
+        <table className={styles.table}>
         <thead>
           <tr>
             <th onClick={() => handleSort('performed')}>Date{renderSortIndicator('performed')}</th>
@@ -282,7 +294,8 @@ export default function ResearchLogSection(): React.JSX.Element {
           )}
           {offPlan.map(renderEntry)}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   )
 }

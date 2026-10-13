@@ -164,8 +164,20 @@ describe('ResearchLogSection — default sort order', () => {
     mockResearch()
     render(<ResearchLogSection />)
     // patrick-flynn fixture: log_001 (2026-05-01) ... log_005 (2026-05-03).
-    const earliest = screen.getByText('2026-05-01T10:15:00Z')
-    const latest = screen.getByText('2026-05-03T10:00:00Z')
+    // Matched on date AND time of day: three entries share 2026-05-01, so a date-only
+    // lookup is ambiguous. The cell renders the two on separate lines now, so this reads
+    // the ROW rather than one text node -- which keeps the assertion about ORDERING
+    // rather than about markup. Pinning the raw `2026-05-01T10:15:00Z` is what made this
+    // test fail when that wire format stopped being shown to readers.
+    const rowFor = (date: string, time: string): HTMLElement => {
+      const row = screen.getAllByRole('row').find(
+        (r) => r.textContent?.includes(date) && r.textContent?.includes(time)
+      )
+      if (!row) throw new Error(`no row for ${date} ${time}`)
+      return row
+    }
+    const earliest = rowFor('2026-05-01', '10:15')
+    const latest = rowFor('2026-05-03', '10:00')
     // The earliest entry must render before the latest one.
     expect(
       earliest.compareDocumentPosition(latest) & Node.DOCUMENT_POSITION_FOLLOWING
