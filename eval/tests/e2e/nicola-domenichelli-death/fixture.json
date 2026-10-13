@@ -15,5 +15,6 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 1, hint-samples.csv row 7, flags adds_spouse/adds_death, confidence 3). Draft transcribed from a 1981 Salta civil death registration; unverified."
+  "image_basis": true,
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 1, hint-samples.csv row 7, flags adds_spouse/adds_death, confidence 3). Resolved TRUE MATCH: the 1981 Rosario de la Frontera death act (image) and Nicola's own Italian birth record (ark:/61903/1:1:6NZZ-HLRL, indexed parents Michele Domenichelli and Diletta Berardinelli, b. 23 Apr 1897 Roccasicura) correlate on birth date and birthplace, and the birth record's indexed parents match the tree. image_basis true: the death act's birth date/birthplace are image-derived and the page's same-page calibration was unavailable (single-act page); the parent match comes from the birth-record index, not the image."
 }
