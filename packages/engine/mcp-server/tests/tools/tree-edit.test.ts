@@ -866,6 +866,25 @@ describe("tree_edit", () => {
     if (!r.ok) expect(JSON.stringify(r)).toMatch(/would duplicate 'R1'/);
   });
 
+  it("update_relationship refuses an empty subtype", async () => {
+    // `relationshipMatches` reads any DEFINED subtype as explicit, so "" would
+    // match an absent subtype but never match 'Biological' — an edge that pairs
+    // with nothing. Measured: matches({}, {subtype:""}) is true and
+    // matches({subtype:""}, {Biological}) is false.
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    for (const subtype of ["", "   "]) {
+      const r = await treeCorrect({ projectPath: dir, operation: "update_relationship", relationshipId: "R1", subtype } as any);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(JSON.stringify(r)).toMatch(/`subtype` must not be empty/);
+    }
+    // and the edge is untouched
+    expect((await readTree() as any).relationships[0].subtype).toBe("Biological");
+  });
+
   it("must not fire: add_relationship does not swap primary on a newly created edge", async () => {
     // The plan scopes the primary swap to the MATCHED edge, and main never
     // swapped on a new one. Keeping both here is main's behaviour, and

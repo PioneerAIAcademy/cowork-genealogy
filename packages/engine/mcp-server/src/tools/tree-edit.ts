@@ -810,6 +810,17 @@ async function applyOperation(
       if (input.subtype === undefined) {
         throw new TreeEditError("update_relationship requires a `subtype` — it is the only field it sets");
       }
+      // An empty string is not "clear the subtype": `relationshipMatches` reads
+      // any defined subtype as an explicit one, so `""` would match an absent
+      // subtype but never match 'Biological' — a phantom type that pairs with
+      // nothing. Clearing a subtype is not specified; refuse rather than store
+      // a value that behaves like neither.
+      if (input.subtype.trim() === "") {
+        throw new TreeEditError(
+          "update_relationship: `subtype` must not be empty — an empty subtype matches no other edge. " +
+            "Pass a real subtype (e.g. 'Biological', 'Step')",
+        );
+      }
       const rel = (tree.relationships ?? []).find((r) => r.id === input.relationshipId);
       if (!rel) throw new TreeEditError(`relationship '${input.relationshipId}' not found in tree`);
       // A retype that would collide with an edge already on the pair is refused
