@@ -20,7 +20,9 @@ import {
   type ToolChip,
   clearQueued,
   turnOutcomeLabel,
-  COMPACTING_LABEL
+  COMPACTING_LABEL,
+  CONNECT_SLOW_MS,
+  CONNECT_LOST_NOTE
 } from './chatEvents'
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
@@ -298,6 +300,13 @@ export default function ChatPane({
   const [uploadError, setUploadError] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [ready, setReady] = useState(false)
+  // Whether we have waited long enough to say the connection may be gone. `ready` alone
+  // cannot tell "still connecting" from "the thing I was connected to no longer exists",
+  // and both rendered as the connecting line forever, with no timeout and nothing for the
+  // reader to do. There IS an error path, but it needs the server to SEND `chat_error`; a
+  // sandbox that vanished under a restart sends nothing at all, which is exactly what a
+  // tester hits after the dev server reloads.
+  const [connectSlow, setConnectSlow] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const startedRef = useRef(false)
   const [elapsed, setElapsed] = useState(0)
@@ -308,6 +317,23 @@ export default function ChatPane({
   // event being folded, not as of the last render. See trackLiveTask.
   const liveTasksRef = useRef<ReadonlySet<string>>(new Set())
   const [connState, setConnState] = useState<'open' | 'reconnecting'>('open')
+
+  // Re-armed whenever `ready` changes, so a connection that arrives late clears the notice
+  // and one that drops later re-arms it.
+  //
+  // The `setConnectSlow(false)` reset is deliberate but NOT separately observable: the
+  // render checks `ready` first, so a stale `true` here can never reach the screen.
+  // Deleting it passes every test. It stays because leaving a timer armed and a flag
+  // wrong is how the next person's change to that render order becomes a bug, but do not
+  // read it as covered.
+  useEffect(() => {
+    if (ready) {
+      setConnectSlow(false)
+      return
+    }
+    const timer = setTimeout(() => setConnectSlow(true), CONNECT_SLOW_MS)
+    return () => clearTimeout(timer)
+  }, [ready])
   const [connAttempt, setConnAttempt] = useState<{ attempt: number; max: number } | null>(null)
   // 1c: the label for how the last turn ended, or null for an ordinary finish.
   const [outcome, setOutcome] = useState<string | null>(null)
@@ -521,7 +547,9 @@ export default function ChatPane({
               <p className="muted small">
                 {ready
                   ? 'Say who you want to research and what you want to find out.'
-                  : 'Connecting to the agent…'}
+                  : connectSlow
+                    ? CONNECT_LOST_NOTE
+                    : 'Connecting to the agent…'}
               </p>
             </div>
           )}

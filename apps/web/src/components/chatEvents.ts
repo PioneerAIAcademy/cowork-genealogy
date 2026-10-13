@@ -68,6 +68,28 @@ export interface ChatMessage {
 export const KEEPS_RUNNING_NOTE =
   'This keeps running if you close the tab — come back any time.'
 
+/** How long the chat waits before admitting the connection may be gone.
+ *
+ * A JUDGEMENT, not a measurement: it only has to clear a healthy connect by enough that a
+ * slow-but-fine start never shows the notice. Locally that is sub-second; a cold sandbox
+ * is a few seconds. 15s leaves plenty of room and is still short enough to be useful to
+ * someone staring at a stuck screen. Lower it only against a measurement of real connect
+ * times, or testers will be told the connection is lost while it is still arriving.
+ */
+export const CONNECT_SLOW_MS = 15_000
+
+/** Shown once CONNECT_SLOW_MS has passed with no `chat_ready`.
+ *
+ * Says what we actually know -- that nothing has arrived -- rather than asserting the
+ * connection is dead, because it may still be coming. Names the one action that fixes the
+ * common cause: the sandbox went away (a server restart, a long sleep) and the page is
+ * waiting on something that no longer exists. Reloading gets a new one; waiting never
+ * does, which is the trap this replaces.
+ */
+export const CONNECT_LOST_NOTE =
+  'Still waiting for the agent. If this does not clear, the connection was probably ' +
+  'lost — reload the page to start a new one.'
+
 export const TURN_OUTCOME_LABELS: Record<string, string> = {
   completed: 'Research complete.',
   stopped: 'Stopped — send a message to carry on.',
