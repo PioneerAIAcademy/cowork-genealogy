@@ -1,0 +1,28 @@
+{
+  "tool": "place_search_all",
+  "description": "place_search_all — all historical representations of Pulaski County, Kentucky, trimmed from live response 2026-10-10",
+  "args": {
+    "placeName": "~Pulaski"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Pulaski, Kentucky, United States",
+        "type": "County",
+        "dateRange": "+1798/",
+        "latitude": 37.116669,
+        "longitude": -84.599998,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Pulaski&focusedId=394372",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Pulaski_County,_Kentucky",
+        "representations": [
+          {
+            "repId": "394372",
+            "partOf": "Kentucky, United States",
+            "dateRange": "+1798/",
+            "notes": "Formed 1798 from Lincoln and Green counties"
+          }
+        ]
+      }
+    ]
+  }
+}
