@@ -33,7 +33,17 @@ from harness.judge import (
     grade,
 )
 from harness.loader import TestSpec
-from harness.mock_mcp import NODE_EVAL_TIMEOUT_LONG, NODE_EVAL_TIMEOUT_PATTERN
+from harness.scenario_brief import (
+    ScenarioBrief,
+    load_scenario_brief,
+    readme_fallback_warning,
+)
+from harness.mock_mcp import (
+    NODE_EVAL_TIMEOUT_LONG,
+    NODE_EVAL_TIMEOUT_PATTERN,
+    pg_store_faults,
+    seed_pg_workspace,
+)
 from harness.warning_kinds import validate_warning_kinds
 from harness.rubric import Rubric, empty_rubric, parse_rubric_or_empty
 from harness.runlog import (
@@ -247,7 +257,9 @@ async def _run_one_test_async(
     skill_model = skill_frontmatter.get("model")
     if isinstance(skill_model, str) and skill_model.strip():
         model = skill_model.strip()
-    scenario_readme = _load_scenario_readme(paths.scenarios_dir, spec.scenario)
+    # The judge reads the scenario's judge-brief.md, falling back to its whole
+    # README.md until one is written; each fallback is reported (issue #2478).
+    scenario_brief = load_scenario_brief(paths.scenarios_dir, spec.scenario)
 
     # Sub-skills this test declares it will really run (`execution.run_skills`).
     # Their tools join the allowlist; every other `Skill()` callee named in the
@@ -310,7 +322,7 @@ async def _run_one_test_async(
             paths=paths,
             rubric=rubric,
             skill_frontmatter=skill_frontmatter,
-            scenario_readme=scenario_readme,
+            scenario_brief=scenario_brief,
             skill_baseline=skill_baseline,
             auth=auth,
             model=model,
@@ -517,7 +529,7 @@ async def _execute_single_run(
     paths: OrchestratorPaths,
     rubric,
     skill_frontmatter: dict[str, Any],
-    scenario_readme: str,
+    scenario_brief: ScenarioBrief,
     skill_baseline: list[str],
     auth: AuthConfig,
     model: str,
@@ -744,7 +756,7 @@ async def _execute_single_run(
                 state_observations=state_observations,
                 spec=spec,
                 rubric=rubric,
-                scenario_readme=scenario_readme,
+                scenario_readme=scenario_brief.text,
                 result=result,
                 file_changes=file_changes,
                 before_snapshot=before_snapshot,
@@ -895,6 +907,8 @@ async def _execute_single_run(
                     unread_skill_calls=result.unread_skill_calls,
                     judge_warnings=judge_dimension_warnings,
                     harness_observations=_harness_observation_pairs,
+                    scenario_brief=scenario_brief,
+                    pg_faults=getattr(result, "pg_store_faults", None),
                 ))
                 else {}
             ),
@@ -1064,6 +1078,7 @@ async def _execute_skill_with_retry(
                         # conversion doc's acceptance check, made literal.
                         stage_skills=not spec.is_direct,
                     )
+                    seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
                         user_message=_prompt_for(spec),
@@ -1099,6 +1114,7 @@ async def _execute_skill_with_retry(
                     )
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)
+                    result.pg_store_faults = pg_store_faults(workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
@@ -1162,6 +1178,8 @@ def _build_warnings(
     unread_skill_calls: list[list[str]] | None = None,
     judge_warnings: list[dict[str, Any]] | None = None,
     harness_observations: list[tuple[str, str]] | None = None,
+    scenario_brief: ScenarioBrief | None = None,
+    pg_faults: list[dict[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -1278,6 +1296,27 @@ def _build_warnings(
                 f"recovery as a skill error. Tools: {timed_out_tools}."
             ),
             "tools": timed_out_tools,
+        })
+
+    # The judge read a whole scenario README because no judge-brief.md exists.
+    if scenario_brief is not None and (
+        fallback := readme_fallback_warning(scenario_brief)
+    ):
+        warnings.append(fallback)
+
+    # --store pg (U15): a call the Postgres store failed, from any node process
+    # this test spawned (mock_mcp.pg_store_faults). The mock-side pipelines
+    # swallow their own failures, so without this the fault surfaces a step
+    # later as "nothing staged", which unit_pg_parity would read as wobble.
+    if pg_faults:
+        warnings.append({
+            "kind": "pg_store_fault",
+            "advisory": (
+                f"{len(pg_faults)} call(s) failed in the Postgres store under --store pg — "
+                "a harness/store fault, not a skill defect. Do not grade the "
+                "recovery as a skill error."
+            ),
+            "faults": pg_faults[:20],
         })
 
     # Single chokepoint: every output.warnings entry — this function's own, the
@@ -1968,6 +2007,9 @@ def build_judge_grade_kwargs(
     `grade()` ends up called with a full rubric on a negative test, an empty
     `skills_invoked` on a direct test, and "name: error" validator-failure
     strings where the live path sends bare names.
+
+    `scenario_readme` carries the scenario's judge-brief.md, or its README
+    while no brief exists (`harness/scenario_brief.py`, issue #2478).
     """
     # Negative tests: the skill correctly declines, so there is no craft
     # output to grade against the skill's rubric. Spec §7 — "negative
@@ -2384,9 +2426,102 @@ def _detail_ids(summary: dict[str, Any]) -> list[str]:
     return out
 
 
+#: Said once per project-state block, inside the rendered value. The prompt's
+#: heading names only sources and conflicts, and editing it moves
+#: `judge_prompt_hash` (rule 2b), so each block states what it is instead.
+_STATE_BLOCK_NOTE = "Project state for context; not a statement of what the skill should do."
+
+_NO_SOURCES_OR_CONFLICTS = (
+    "No research.json sources, tree.gedcomx.json source descriptions or "
+    "conflicts were on file before this run."
+)
+
+
+def _preferred_name(person: dict[str, Any]) -> str:
+    names = [n for n in person.get("names") or [] if isinstance(n, dict)]
+    if not names:
+        return ""
+    name = next((n for n in names if n.get("preferred")), names[0])
+    if name.get("full_text"):
+        return str(name["full_text"])
+    return " ".join(str(name[k]) for k in ("given", "surname") if name.get(k))
+
+
+def _summarize_before_state_entries(
+    items: Any, project, *, detail: bool = True
+) -> dict[str, Any]:
+    """`{count, all_ids, detail}` for one project-state array.
+
+    `project` maps an entry to the few fields the judge needs; the rest of the
+    entry is not rendered. Same shape as a sources block, so it flows through the
+    id-section (never clipped) and the shared detail budget unchanged. With
+    `detail=False` only the count and ids render (the research log, whose entries
+    are long and whose ids are what a "logged that search" claim turns on).
+    """
+    entries = [e for e in (items if isinstance(items, list) else []) if isinstance(e, dict)]
+    return {
+        "count": len(entries),
+        "all_ids": [e["id"] for e in entries if e.get("id")],
+        "detail": [project(e) for e in entries] if detail else [],
+    }
+
+
+def _project_state_blocks(
+    research: Any, tree: Any
+) -> list[tuple[str, dict[str, Any]]]:
+    """The machine-rendered project state a scenario README used to paraphrase.
+
+    Questions, plans, hypotheses, the research log, and the tree's persons and
+    relationships, read from the fixture itself, so a judge brief need carry
+    only what the JSON cannot say (issue #2478). A rendered field cannot state
+    a verdict; a paraphrase of it can.
+    """
+    research = research if isinstance(research, dict) else {}
+    tree = tree if isinstance(tree, dict) else {}
+
+    def pick(*keys: str):
+        return lambda e: {k: e[k] for k in keys if k in e}
+
+    def plan(e: dict[str, Any]) -> dict[str, Any]:
+        out = pick("id", "question_id", "status")(e)
+        out["item_count"] = len(e.get("items") or [])
+        return out
+
+    def person(e: dict[str, Any]) -> dict[str, Any]:
+        out = {"id": e.get("id"), "name": _preferred_name(e)}
+        if "gender" in e:
+            out["gender"] = e["gender"]
+        return out
+
+    specs = [
+        ("research.json questions", "q_ ids", research.get("questions"),
+         pick("id", "question", "status"), True),
+        ("research.json plans", "pl_ ids", research.get("plans"), plan, True),
+        ("research.json hypotheses", "h_ ids", research.get("hypotheses"),
+         pick("id", "status"), True),
+        ("research.json log entries", "ids only", research.get("log"), None, False),
+        ("tree.gedcomx.json persons", "I ids", tree.get("persons"), person, True),
+        ("tree.gedcomx.json relationships", "R ids", tree.get("relationships"),
+         pick("id", "type", "subtype", "parent", "child", "person1", "person2"), True),
+    ]
+    blocks: list[tuple[str, dict[str, Any]]] = []
+    for name, ids, items, project, detail in specs:
+        if not items:
+            continue
+        blocks.append((
+            f"{name} on file before this run ({ids}). {_STATE_BLOCK_NOTE}",
+            _summarize_before_state_entries(items, project, detail=detail),
+        ))
+    return blocks
+
+
 def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
-    """Render the sources and conflicts that existed BEFORE the skill ran, so
-    the judge can mechanically check "not on file" / "fabricated" claims.
+    """Render the project state that existed BEFORE the skill ran, so the judge
+    can mechanically check "not on file" / "fabricated" claims.
+
+    Conflicts and sources first, then the rest of the project state
+    (`_project_state_blocks`): questions, plans, hypotheses, log ids, and the
+    tree's persons and relationships.
 
     The judge has produced fabrication-class citation failures — asserting
     that on-file source text was absent or invented — when it had no view of
@@ -2446,6 +2581,12 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
                 _summarize_before_state_sources(tree_sources),
             )
         )
+    # The rest of the project state goes after the source blocks, and its ids
+    # are charged to the budget only after conflict and source detail is
+    # placed, so a project with hundreds of log entries cannot crowd out the
+    # values a "not on file" claim turns on. Its ids are never clipped either.
+    core_count = len(labelled)
+    labelled.extend(_project_state_blocks(research, tree))
     if not labelled:
         return "(none)"
 
@@ -2459,7 +2600,12 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
         )
         for label, summary in labelled
     ]
+    if core_count == 0:
+        # `(none)` used to say "no sources or conflicts"; with other state on
+        # file, say it in words rather than leave it to a missing heading.
+        id_blocks.insert(0, _NO_SOURCES_OR_CONFLICTS)
     id_section = "\n\n".join(id_blocks)
+    core_ids_len = len("\n\n".join(id_blocks[: core_count or 1]))
 
     # heavy per-entry detail after — this is what the prompt-size cap trims.
     #
@@ -2481,11 +2627,15 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
     # list. Deliberate: the note is what stops the judge reading an omission as
     # a fabrication, and dropping it to stay under a soft prompt-size cap would
     # reintroduce the bug the cap is not there to cause.
-    budget = _BEFORE_STATE_MAX_CHARS - len(id_section)
+    budget = _BEFORE_STATE_MAX_CHARS - core_ids_len
     detail_blocks: list[str] = []
     dropped: list[str] = []
     remaining = budget
-    for label, summary in labelled:
+    for index, (label, summary) in enumerate(labelled):
+        if index == core_count:
+            remaining -= len(id_section) - core_ids_len
+        if not summary["detail"]:
+            continue
         header = f"{label} — per-entry detail (heavy fields truncated):\n"
         kept: list[Any] = []
         for entry, sid in zip(summary["detail"], _detail_ids(summary)):
@@ -2508,14 +2658,6 @@ def _summarize_before_state(before_snapshot: dict[str, Any] | None) -> str:
         )
     return id_section + "\n\n" + detail_section
 
-
-def _load_scenario_readme(scenarios_dir: Path, scenario: str | None) -> str:
-    if not scenario:
-        return ""
-    readme = scenarios_dir / scenario / "README.md"
-    if not readme.exists():
-        return ""
-    return readme.read_text(encoding="utf-8")
 
 
 def _aborted_entry(

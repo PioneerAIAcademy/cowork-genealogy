@@ -1,0 +1,383 @@
+{
+  "schema_version": 3,
+  "skill": "search-full-text",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_14-10-14",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/search-full-text.md": "6dd1d148074d2da5a8e97c9590373d0ed8bd6b79b51a17b77a26ac69e1b56165",
+    "eval/tests/unit/search-full-text/attachment-triage-witnesses.json": "fef4b17f22502e062b47673a766fd8572dd041bd155c6494c3e02468aae2f17a",
+    "eval/tests/unit/search-full-text/keywords-first-name-field-retry.json": "c5ca55e775fa1dab94e85d4d16ebd52f35ced84e7e1d5217f26eca1866dda994",
+    "eval/tests/unit/search-full-text/latin-american-notarial.json": "8e1be2cf6995c7a1600adb91237d3938a4726edda074205cbe851b1d88bac53e",
+    "eval/tests/unit/search-full-text/lucene-operator-construction.json": "e25ff75ff8e2b9455e7199199a376bb6ec5b3c54f0964ac09fc914753550af7e",
+    "eval/tests/unit/search-full-text/name-field-nil-keywords-retry.json": "ce208efa837fa757f2f10bb6271616b44dfb2675569ac6aa6d50f3ebdaf29c93",
+    "eval/tests/unit/search-full-text/negative-result-with-detail.json": "71792606236f59dca8332c17f70372a98a8393c373b9d6f191397b9d684b8d25",
+    "eval/tests/unit/search-full-text/nlquery-tree-person.json": "cc0fdc79eff6acfa72464eb85524f11e1068cd1ec263ab3e8662abde902a1cf0",
+    "eval/tests/unit/search-full-text/no-boosting-clean-small-result.json": "4106d7126a74342698052b394b5232cd1139ac292abf7807261a3ce6198ae7ad",
+    "eval/tests/unit/search-full-text/no-redundant-second-field-query.json": "3001778cbb9ab27aa2b1e1aa4af81e5f207314c45ac4c95a5b84f0b8ed911cc1",
+    "eval/tests/unit/search-full-text/parentage-compound-surname-cooccurrence.json": "4042994e46bebe84e726cf6ad7ce4a3d45ee9328e410188a640c6c519a84aa5b",
+    "eval/tests/unit/search-full-text/principal-in-unindexed-record.json": "e272421ecf8aa24ca1d21b21360ddf6c221ac97214cd1dc7b3ab0120adad8fb3",
+    "eval/tests/unit/search-full-text/rubric.md": "c861081a4de76aadadaa52c78b2b39ac2d4ccbfa1a2c14aea056c0d85a7bec0e",
+    "eval/tests/unit/search-full-text/search-for-flynn-witnesses.json": "965fc383fec6e76d48a3d4b9d0e30c800d98235d1ca5aba8ff02e0dd66ce3c67",
+    "eval/tests/unit/search-full-text/too-many-results-boosting.json": "00e75ddb4959d5c58aee1daa1860a866a569552f2a8feb42d04543fad46747cc",
+    "eval/tests/unit/search-full-text/too-many-results-probable-word-boosting.json": "3ab9dae13ca60a4a61fb2f297620f777f6e91a711c2c54ec57c0ea7ae5999a19",
+    "eval/tests/unit/search-full-text/transcription-quirk-variant.json": "20ab2e38a60dc5f1a32e09c510a869d03981353b33bfb7d4ae71a838903520ed",
+    "eval/tests/unit/search-full-text/write-result-sidecar.json": "0061da05ec6b8de398d17a0b46e22d1cd9f550124a7a14cf7c92655a8e1437b1",
+    "eval/fixtures/scenarios/flynn-record-matching/README.md": "db3b206f5df2b627c7caef95c07bf3625573b265068a018ae597b66f6cc62c6a",
+    "eval/fixtures/scenarios/flynn-record-matching/research.json": "3f67b9bb97b80449895ed66866c2ce033dd40aa89b6a477873fbd58204e94ff1",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-record-matching/starting-tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-record-matching/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/naveda-fts-parents/README.md": "19827a706f62e32030902afc5446eef25124825afd607803ba380df217ba2f46",
+    "eval/fixtures/scenarios/naveda-fts-parents/research.json": "e123c0e806ca4938b307b49c49a819eb1b36bb37f8e3d1d3ea9a5eee758c07f8",
+    "eval/fixtures/scenarios/naveda-fts-parents/tree.gedcomx.json": "123222da1503da92ab7d7e26a0a4868f473001fa3d9e19d931f2c21a0174c0c1",
+    "eval/fixtures/mcp/fulltext-search-cuban-notarial.json": "97770417177815a14c7136c3f5197e2f7dae7d0a6f458a27862094d3b2869145",
+    "eval/fixtures/mcp/fulltext-search-cuban-notarial-by-name.json": "800e25a2cd31db79ef629b0e12fc34dd8643e9faf37558d3f34f640bd5074fe1",
+    "eval/fixtures/mcp/fulltext-search-flinn-variant-zero.json": "dc7c51b45ad14e073508a7222035e37eb94d1c03913ceb153e869bcb5b8239e7",
+    "eval/fixtures/mcp/fulltext-search-flinn-witnesses-by-name.json": "8186dcf0e69546210ee363ebfe8cc168452247b9f67450db3ada2558f01bfa73",
+    "eval/fixtures/mcp/fulltext-search-flynn-broad-with-facets.json": "f0c2bcf421a7df19bd38703e498b637186c2c496b5c0a424e62c697a0ed231de",
+    "eval/fixtures/mcp/fulltext-search-flynn-collection-scoped.json": "3000ca22eec39238164fb98c7d8c494b7d802e09a8183c1fb5a015931df89c91",
+    "eval/fixtures/mcp/fulltext-search-flynn-estate-by-name.json": "5301146bc59957a02e27d7b13dafb79344a5af7df00c47ee3885b1f5480a7f41",
+    "eval/fixtures/mcp/fulltext-search-flynn-flinn-variant.json": "6e3ad015a0902fd9fb0d429ba74c367ae16c2f566cd29aa7b453486fb8a70582",
+    "eval/fixtures/mcp/fulltext-search-flynn-flunn-ocr.json": "94f4b0e66bf5ab3ff1ad923fd96acb31dad0880506735bbcb0daa54ac4ce3df1",
+    "eval/fixtures/mcp/fulltext-search-flynn-operator-construction.json": "315171ab90438c8b4afe0e4818cbbdc8f82891682e97b33706dc6bd596443ab6",
+    "eval/fixtures/mcp/fulltext-search-flynn-prefix-wildcard-variant.json": "d97bc260899d6260758e8bf65e1a5900e4585de8c17bd20b6c7339989c12347f",
+    "eval/fixtures/mcp/fulltext-search-flynn-principal-deed.json": "eba11478a2b9c789b75c6347ce393d6c5eab813b04b2755f07c8b0355ba2f550",
+    "eval/fixtures/mcp/fulltext-search-flynn-principal-deed-by-name.json": "db06579895694c35bbb21f6c7e66a810e90c6adabe410886a6dc92e86b43ed02",
+    "eval/fixtures/mcp/fulltext-search-flynn-probate-empty.json": "edd6a09db38421f5a420ddc48b32c42ec9e5a75e583888a5aca90d26912c9c84",
+    "eval/fixtures/mcp/fulltext-search-flynn-probate-empty-by-name.json": "093610c835df9c9799e68d28d02468228b503998b55c65a9625c265f795aae93",
+    "eval/fixtures/mcp/fulltext-search-flynn-wildcard-variant.json": "c426209fe1c29bada1beb91f76a5e75dbea1e7386d7e4b3dbefd4dce2dc1199a",
+    "eval/fixtures/mcp/fulltext-search-flynn-witnesses.json": "e77fe341ee06f3cd06d2335ee347b5c32b71fa9df5ed41a97f9fdec5125896ab",
+    "eval/fixtures/mcp/fulltext-search-flynn-witnesses-by-name.json": "4eb4a585fbbddf3439e1a6d1a5fc9be478cb35db63daea2f79ed3fa29be5d80c",
+    "eval/fixtures/mcp/fulltext-search-naveda-parents-cooccurrence.json": "7fdd4a33f08533b8c25ad9045bec0262d2d2bb23815b87881cfcd76893e80a89",
+    "eval/fixtures/mcp/fulltext-search-naveda-parents-phrase.json": "cdaba10717047288679b0119f6d4b34e6ef167be0e91fdebd45ec2345599720d",
+    "eval/fixtures/mcp/fulltext-search-nlquery-tree-person.json": "bbd06efd8a6594e82114385a8e5b269f8b3ff8d7240aff33b79bece88ed1518c",
+    "eval/fixtures/mcp/record-attachments-flynn-witnesses.json": "67603456b9c3ac5d7a0e52e0cb217f47d1a8e0eb3912a2eccee27f30b62d9a37",
+    "eval/fixtures/mcp/wiki-read-any.json": "a1fe91696ce987b7897a4bc98256006ce02ac89903c0eaab62cdf923f30883df",
+    "eval/fixtures/mcp/wiki-read-cuba-naming-customs-not-found.json": "0765f171da79b2864e5dc14f053cae9fa176ec428fc109980f7d7ae49aa6fda6",
+    "eval/fixtures/mcp/wiki-read-spain-naming-customs.json": "0f89806bd385efdeffbbf1971f7bf4688305a23b4a3cf959c798be36c62a49c9",
+    "eval/fixtures/mcp/wiki-read-spanish-word-list.json": "ce5bda46e66ed39b3fc94ba0a7c471c9f68254b0436ac20b3b13dfd9bce7f1bb",
+    "eval/fixtures/mcp/wiki-search-any.json": "8fd7473b3f7841ef91a284cdf6c3ee5f4d603dc66b6ff759a3f235d1333fa87f"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_full_text_020",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "fulltext-search-flynn-witnesses",
+        "wiki-read-any",
+        "wiki-search-any"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1224.3522909993771,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7010.541915893555,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_full_text_020_2026-10-12_14-10-14_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1224.3522909993771,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the full-text index for Thomas Flynn in Pennsylvania land records.\n\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-full-text', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_filtered_nil_is_followed_by_unfiltered_retry",
+                "passed": true,
+                "error": "skipped: no fulltext_search calls this turn",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fulltext_search_never_scopes_to_collection_id",
+                "passed": true,
+                "error": "skipped: no fulltext_search calls this turn",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_query_traces_to_fulltext_search_call",
+                "passed": true,
+                "error": "skipped: no new fulltext_search log entries this turn",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_negative_result_log_shape",
+                "passed": true,
+                "error": "skipped: not a negative-result-log scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_plan_item_completion_matches_its_own_record_type",
+                "passed": true,
+                "error": "skipped: no plan item completed this turn",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_appends_log_entry",
+                "passed": false,
+                "error": "expected at least one new log entry recording the search",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_record_place_filters_use_facet_form",
+                "passed": true,
+                "error": "skipped: no fulltext_search calls this turn",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sidecar_written_for_positive_fts",
+                "passed": true,
+                "error": "skipped: not a sidecar-write scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_topical_fixture_actually_used",
+                "passed": true,
+                "error": "skipped: not a topical-fixture-required test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wiki_prework_fetch_runs_when_required",
+                "passed": true,
+                "error": "skipped: not a wiki-prework test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791815070.373675,
+          "ended_at": 1791815077.384217
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 1224.3522909993771,
+    "duration_api_ms": 0,
+    "judge_duration_ms": 0,
+    "num_turns": 1,
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "output_tokens": 0,
+    "judge_input_tokens": 0,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 0,
+    "skill_cost_usd": 0,
+    "judge_cost_usd": 0,
+    "total_cost_usd": 0,
+    "wall_clock_ms": 7010.541915893555
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

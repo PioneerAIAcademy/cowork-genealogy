@@ -7,8 +7,8 @@ import { fileURLToPath } from "url";
 import { tmpdir } from "os";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-staging.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
+import { backingStore } from "../helpers/store-backend.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 function baseResearch(log: any[] = []) {
@@ -936,7 +936,7 @@ describe("research_log_append", () => {
   /** The file store, recording every writeJson ref; optionally failing the
    *  research.json write, which stands in for a commit that throws. */
   function recordingStore(opts: { failResearchWrite?: boolean } = {}) {
-    const inner = new FsProjectStore();
+    const inner = backingStore();
     const writes: string[] = [];
     const store = new Proxy(inner, {
       get(target, prop, receiver) {
@@ -1053,7 +1053,7 @@ describe("research_log_append", () => {
   it("a staged file that exists but cannot be read is not told it was already logged", async () => {
     await writeProject(baseResearch());
     const handle = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { results: [{ recordId: "A" }] } });
-    const inner = new FsProjectStore();
+    const inner = backingStore();
     const store = new Proxy(inner, {
       get(target, prop, receiver) {
         if (prop === "readText") {
