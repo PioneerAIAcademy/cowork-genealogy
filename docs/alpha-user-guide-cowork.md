@@ -22,127 +22,11 @@ you can find**, because those are what would quietly corrupt a real tree.
 
 You need two things running side by side: **Cowork**, where you research, and
 the **Research Viewer**, where you watch the research happen and send us
-feedback. Cowork alone can't do the second part. Both are built from the same
-repo checkout, so you set both up in one pass.
+feedback. Cowork alone can't do the second part.
 
-### 1. Clone the repo
-
-**Windows:** install [GitHub Desktop](https://desktop.github.com/) — you
-don't need to know git from the command line. Sign in, then **File → Clone
-Repository**, choose **URL**, and paste:
-
-```
-https://github.com/pioneeraiacademy/cowork-genealogy
-```
-
-Set **Local path** to `C:\src\cowork-genealogy` — not Documents or Desktop, which sync to
-OneDrive and break the build — and click **Clone**. GitHub Desktop remembers the location —
-when we tell you there's an update to test, come back to this same window
-and click **Fetch origin** then **Pull origin** to pick it up, then repeat
-steps 3 and 4 below to rebuild and reinstall.
-
-**macOS/Linux:** if you're comfortable in a terminal, plain
-[git](https://git-scm.com/downloads) is simplest:
-
-```bash
-git clone https://github.com/pioneeraiacademy/cowork-genealogy
-cd cowork-genealogy
-```
-
-GitHub Desktop also has a macOS build if you'd rather use the GUI there too.
-
-### 2. One-time dependency setup
-
-**First, on both:** install Node.js 22.9 or later from
-[nodejs.org](https://nodejs.org/) (pick the LTS installer) if you don't
-already have it. The build also needs npm 11.12, newer than the npm that comes
-with Node, so run this once — on Windows in Command Prompt (Start → type
-`cmd`), not PowerShell; on macOS, put `sudo` in front if it fails with a
-permissions error:
-
-```
-npm install -g npm@11.12.1
-```
-
-**Windows:** double-click **`eval\Setup.bat`** in the repo folder. It
-installs the rest of what these steps need (pnpm, uv and the build
-dependencies) — one-time, and safe to re-run later if something looks broken.
-Its two API-key prompts are for the test harness, not Cowork; you can leave
-them blank.
-
-**macOS/Linux:** from the repo folder:
-
-```bash
-corepack enable
-```
-
-**Then, on both: the OpenRouter key.** Reading page scans needs an OpenRouter
-API key. Get one at <https://openrouter.ai/keys>; you paste it in during step 4.
-
-That's it for one-time setup.
-
-### 3. Build the MCP server and the Cowork plugin
-
-**Windows:** double-click **`eval\CoworkInstall.bat`** in the repo folder.
-It builds both `releases\genealogy-mcp.mcpb` (the MCP server) and
-`releases\genealogy-plugin.zip` (the skills), then prints where to install
-each one.
-
-**macOS/Linux:** from the repo folder:
-
-```bash
-node scripts/build-mcpb.mjs && node scripts/package-plugin.mjs
-```
-
-Both build the two files. If the build stops with `EBADENGINE`, npm is too
-old: redo the `npm install -g npm@11.12.1` line in step 2.
-
-**After every update, rebuild and reinstall both.** Each time you pull (GitHub
-Desktop's **Fetch origin** / **Pull origin**, or `git pull` from a terminal),
-run this step again and then all of step 4. Updating only one of the two, or
-building without reinstalling, leaves Cowork running old code.
-
-### 4. Install both in Claude Desktop
-
-1. **The MCP server** — Claude Desktop → Settings → Extensions → Advanced
-   Settings → Install extension → select `releases\genealogy-mcp.mcpb`.
-   Paste your OpenRouter key into its **OpenRouter API key** field. (A key
-   already in `~/.familysearch-mcp/config.json` also works; leave the field
-   blank then.)
-2. **The Cowork plugin** — Claude Desktop → **Cowork tab** → Customize → Add
-   → Upload Plugin → select `releases\genealogy-plugin.zip`. (Claude Code and
-   Cowork keep separate plugin lists — make sure you're uploading from the
-   Cowork tab, not the Code tab.)
-3. **Fully quit and reopen Claude Desktop** after installing either one.
-
-If you rebuild a newer plugin later, remove the old one in Cowork →
-Customize first, then upload the new `.zip` — that's the reliable way to be
-sure you're running the new skills.
-
-### 5. Launch the Research Viewer
-
-**Windows:** double-click **`eval\Viewer.bat`** whenever you want to
-research.
-
-**macOS/Linux:** from the repo folder:
-
-```bash
-pnpm install                              # first time only
-pnpm --filter @genealogy/electron dev
-```
-
-The first `pnpm install` fetches the Viewer's own dependencies (a few
-minutes, one-time); after that, just re-run the second line whenever you
-want to research. If it fails with something like `Error: Electron
-uninstall`, run this once and try again:
-
-```bash
-pnpm --filter @genealogy/electron rebuild electron
-```
-
-Either way, it's a separate desktop app from Claude Desktop, so leave its
-window open alongside Cowork. Use its **Open Project** button to point it at
-the same project folder you're using in Cowork.
+Follow [Install](../README.md#install) in the README: download the MCP server,
+the plugin and the Research Viewer, and install all three. When we tell you
+there's an update to test, follow its [Updating](../README.md#updating) steps.
 
 ### Signing in to FamilySearch
 
@@ -161,8 +45,8 @@ In **Cowork**, open a project folder (a new or existing folder) and tell the
 agent what you'd like to research. The first time, it'll ask a couple of
 quick setup questions before it starts.
 
-Open that same folder in the **Research Viewer** too — via **Open Project**
-— so you can watch it fill in live as you go (see "Watching it work" below).
+Open that same folder in the **Research Viewer** too — via **Open Project
+Folder** — so you can watch it fill in live as you go (see "Watching it work" below).
 
 ### Choosing what to work on
 
@@ -323,17 +207,15 @@ Being straight with you, so you don't waste time:
 
 | What you see | What's happening |
 |---|---|
-| Build/launch step fails or can't find a tool (Windows) | Install Node.js from nodejs.org and upgrade npm (step 2), then run `eval\Setup.bat`. |
-| Build/launch step fails or can't find a tool (macOS/Linux) | Confirm `node -v` shows 22.9 or higher and `npm -v` shows 11.12 or higher (step 2). |
-| Viewer fails with `Error: Electron uninstall` (macOS/Linux) | Run `pnpm --filter @genealogy/electron rebuild electron` from the repo folder, then retry. |
+| Your Mac says the Research Viewer is damaged, or can't be checked for malware | It isn't signed yet. Run the Terminal command in step 5 of the README's [Install](../README.md#install), then open it again. Run it again after every update. |
 | Plugin doesn't appear after uploading the `.zip` | Confirm you uploaded from the **Cowork** tab, not the Code tab — they keep separate plugin lists. Fully quit and reopen Claude Desktop after installing. |
 | The agent says it can't reach FamilySearch | Ask it to log in again ("log me in to FamilySearch") — tokens may have expired or never been created on this machine. |
 | The Research Viewer won't open your project folder | It needs a `research.json` in the folder to recognize it as a project — make sure the agent has run at least once (it creates this on your first message). |
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |
 | It's slow | Real research is genuinely slow — it reads records one at a time. Minutes is normal. |
 | It asks who you want to research after you already said | It missed your first message. Repeat it with the details. |
-| The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Pull the latest code (`git pull` or GitHub Desktop's **Fetch origin** / **Pull origin**), rebuild both (step 3), and reinstall both (step 4). |
-| The agent loses connection to its tools mid-session, or you see a tool `timed out after 60s` | Cowork's link between your computer and the tools — not anything you did. Say "continue"; it usually picks up on its own. If it keeps interrupting, fully quit and reopen Claude Desktop, then say "continue". If instead the **same** tool is missing every single time, that is the stale-extension case in the row above and rebuilding is the fix. But if the same tool keeps *timing out* on one large image or page, that scan may be too slow for the current limit — ask the agent to skip it and note it rather than rebuild. **The interrupted step's result is thrown away**, so a record or image the agent was reading when it dropped may not have been retried, whether it said so or just moved on to indexed records — name that record or image and ask it to try again. Please report it whenever it happens, and say what it was doing at the time. |
+| The agent says a tool isn't available, or improvises a workaround for a missing tool | Your MCP extension is older than the plugin. Download and reinstall both ([Updating](../README.md#updating) in the README). |
+| The agent loses connection to its tools mid-session, or you see a tool `timed out after 60s` | Cowork's link between your computer and the tools — not anything you did. Say "continue"; it usually picks up on its own. If it keeps interrupting, fully quit and reopen Claude Desktop, then say "continue". If instead the **same** tool is missing every single time, that is the stale-extension case in the row above and reinstalling is the fix. But if the same tool keeps *timing out* on one large image or page, that scan may be too slow for the current limit — ask the agent to skip it and note it rather than reinstall. **The interrupted step's result is thrown away**, so a record or image the agent was reading when it dropped may not have been retried, whether it said so or just moved on to indexed records — name that record or image and ask it to try again. Please report it whenever it happens, and say what it was doing at the time. |
 | Something looks wrong genealogically | **That's the point — submit feedback.** |
 
 Anything else, or anything alarming: send feedback and describe it. There is no
