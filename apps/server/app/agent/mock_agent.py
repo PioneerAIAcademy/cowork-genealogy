@@ -60,8 +60,43 @@ class MockAgent:
                 pass
         # Pre-seeded (sample) project: skip onboarding.
         if (self.dir / "research.json").is_file():
-            return {"phase": "active", "objective": None, "log_seq": 1}
+            return {"phase": "active", "objective": None, "log_seq": self._seeded_seq()}
         return {"phase": "greet", "objective": None, "log_seq": 0}
+
+    def _seeded_seq(self) -> int:
+        """The highest id number already in the project, across every family this mock
+        mints into.
+
+        Was a hardcoded 1, which meant the first turn on the SAMPLE project minted
+        `log_002`/`src_002`/`a_002` -- all three of which the sample already contains.
+        React then logged "Encountered two children with the same key" and warns that
+        rows may be "duplicated and/or omitted", so the viewer could silently drop a
+        real row. Found by sending two messages to the mock agent in a browser.
+
+        One counter covers all three families because `_search` mints `log_{seq}`,
+        `src_{seq}` and `a_{seq}` from the SAME seq: a counter clear of the log but not
+        of the assertions would still collide. The sample has 7 log entries and 15
+        assertions, so this returns 15, not 7.
+
+        Never raises: this runs at agent start-up, and a mock that cannot read a
+        malformed project should still greet rather than 500. Falling back to 0 can
+        collide, which is strictly better than not starting.
+        """
+        import re
+
+        try:
+            doc = json.loads((self.dir / "research.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return 0
+        highest = 0
+        for section in ("log", "sources", "assertions"):
+            for row in (doc.get(section) or []):
+                if not isinstance(row, dict):
+                    continue
+                m = re.search(r"(\d+)$", str(row.get("id") or ""))
+                if m:
+                    highest = max(highest, int(m.group(1)))
+        return highest
 
     def _save_state(self) -> None:
         (self.dir / STATE_FILE).write_text(json.dumps(self.state, indent=2), encoding="utf-8")
