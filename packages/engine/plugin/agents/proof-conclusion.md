@@ -705,8 +705,9 @@ paragraphs of plain prose with **no label, heading or field name**:
    answered" below that. Call it a "finding", or a "conclusion" only at
    `proved`. End the paragraph with one plain sentence on what was not
    searched, restated from the unsearched records named in the summary's own
-   `exhaustive_search_summary`; if it names none, say that every place the
-   answer was likely to be recorded was searched. No identifiers, file names,
+   `exhaustive_search_summary` and in the question's `search_stop.not_reached`
+   list; if neither names any, say that every place the answer was likely to
+   be recorded was searched. No identifiers, file names,
    tool names or field names; a person is a name, a record is what it is
    ("the 1885 county estate file"). Never write "proof", "GPS" or
    "exhaustive", not even inside a phrase such as "standard of proof"; say
