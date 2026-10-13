@@ -279,7 +279,7 @@ it by name.
    `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
-   `@plugin:search-hints`. A `@plugin:tree-survey` spawn takes no `projectPath`: none exists yet. The agent runs in fresh context and reads the
+   `@plugin:search-hints`. A `@plugin:tree-survey` spawn takes no `projectPath`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
