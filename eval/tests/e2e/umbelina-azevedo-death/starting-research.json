@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_umbelina_azevedo_death",
+    "objective": "When and where did Umbelina Maria Azevedo die? She was the wife of Francisco Antônio Pariz and the mother of Alice Umbelina, Antônio Francisco, Maria Glória, Florita Umbelina and Maura Umbelina, born between about 1902 and 1918, several of them in Espírito Santo.",
+    "subject_person_ids": [
+      "GXSQ-V3L"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

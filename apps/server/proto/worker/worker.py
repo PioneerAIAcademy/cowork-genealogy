@@ -31,8 +31,8 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the twenty-five bare agent names
-(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 8
+``options.py``; ``get_server_info()`` checked for the twenty-seven bare agent names
+(``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 7
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
 is a 500; the CLI's ``system/init`` must arrive and declare the chosen id, or the
@@ -107,8 +107,9 @@ kernel keeps it out of other turns' dirs and the worker's /proc; ``none`` only w
 root; proto/worker/turn_users.py),
 FS_GRANT_MAX_START_AGE_S (26400) and FS_GRANT_WAIT_S (300) (U3, below);
 SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
-SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off) and
-SHUTDOWN_GRACE_S (20). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
+SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off),
+SHUTDOWN_GRACE_S (20) and LONG_AGENT_CALL_S (1500; 0 = off: U19's long-Agent alarm signal,
+checked in flight by the sweep). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
 GENEALOGY_SQS_SECRET_KEY (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the QUEUE_URL
 host's region).
@@ -196,6 +197,7 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from proto.worker.options import (  # noqa: E402
+    DELEGATION_TOOLS,
     PRICE_PER_MTOK,
     SPEND_CAP_USD,
     env_float,
@@ -273,6 +275,7 @@ EXPECTED_AGENTS = frozenset({
     "historical-context",
     "hypothesis-tracking",
     "image-reader",
+    "init-project",
     "locality-guide",
     "person-evidence",
     "project-status",
@@ -290,12 +293,13 @@ EXPECTED_AGENTS = frozenset({
     "survey-surname",
     "translation",
     "tree-edit",
+    "tree-survey",
     "validate-schema",
 })
 # The other half of the same precondition, a literal for the same reason: a count of
-# the directory the SDK loads the plugin from shrinks with it -- an image shipping 8
-# skills registers 8 and passes. test_proto_worker pins this against the repo.
-EXPECTED_SKILLS = 8
+# the directory the SDK loads the plugin from shrinks with it -- an image shipping 7
+# skills registers 7 and passes. test_proto_worker pins this against the repo.
+EXPECTED_SKILLS = 7
 
 _stdout_lock = threading.Lock()
 
@@ -460,6 +464,10 @@ SQSD_MAX_RETRIES = env_int("SQSD_MAX_RETRIES", 0)
 SQSD_VISIBILITY_TIMEOUT_S = env_int("SQSD_VISIBILITY_TIMEOUT_S", 0)
 SQSD_RETENTION_PERIOD_S = env_int("SQSD_RETENTION_PERIOD_S", 0)
 SWEEP_INTERVAL_S = env_int("SWEEP_INTERVAL_S", 300)
+# U19's long-Agent alarm: a delegation this long logs ev=long_tool_call, at its end and, from
+# the sweep, while it still runs. PLACEHOLDER: above the corpus p99 segment (1,488 s), below
+# U26's 1,800 s run limit. 0 = off.
+LONG_AGENT_CALL_S = env_int("LONG_AGENT_CALL_S", 1500)
 SHUTDOWN_GRACE_S = _env_float("SHUTDOWN_GRACE_S", 20.0)
 # The deferred last-receive releases run after the grace, inside their own budget: a
 # release starts only if its connect, queue-lock wait and SendMessage, each capped below, can finish
@@ -1174,14 +1182,56 @@ def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
 def finish_tool_call(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> None:
     """Stamp the call's row with its wall time (Postgres clock, PreToolUse insert to
     PostToolUse update); the first stamp wins, so a redelivery's repeated id cannot
-    overwrite a completed call."""
+    overwrite a completed call. U19: a delegation that ran LONG_AGENT_CALL_S or more logs
+    ``ev=long_tool_call``, the long-Agent alarm's signal."""
     with conn.cursor() as cur:
         cur.execute(
             "UPDATE tool_calls SET duration_ms = (EXTRACT(EPOCH FROM (now() - ts)) * 1000)::int "
-            "WHERE turn_id = %s AND tool_use_id = %s AND duration_ms IS NULL",
+            "WHERE turn_id = %s AND tool_use_id = %s AND duration_ms IS NULL "
+            "RETURNING tool_name, agent_type, duration_ms",
             (turn_id, tool_use_id),
         )
+        row = cur.fetchone()
     conn.commit()
+    if row is not None and LONG_AGENT_CALL_S > 0:
+        tool_name, agent_type, duration_ms = row
+        if tool_name in DELEGATION_TOOLS and (duration_ms or 0) >= LONG_AGENT_CALL_S * 1000:
+            log(ev="long_tool_call", turn_id=turn_id, tool_use_id=tool_use_id, tool_name=tool_name,
+                agent_type=agent_type, duration_ms=duration_ms, in_flight=False)
+
+
+# U19: a delegation of THIS process's open turns still running past LONG_AGENT_CALL_S. A
+# stuck call never reaches PostToolUse, so the sweep asks. ``ts >= claimed_at`` leaves out a
+# killed earlier attempt's row, which keeps a NULL duration for good.
+LONG_INFLIGHT_SQL = (
+    "SELECT tc.turn_id, tc.tool_use_id, tc.tool_name, tc.agent_type, "
+    "(EXTRACT(EPOCH FROM (now() - tc.ts)) * 1000)::int "
+    "FROM tool_calls tc JOIN turns t ON t.turn_id = tc.turn_id "
+    "WHERE t.completed_at IS NULL AND tc.duration_ms IS NULL AND tc.tool_name = ANY(%s) "
+    "AND tc.ts >= t.claimed_at AND tc.ts < now() - make_interval(secs => %s) "
+    "AND tc.turn_id = ANY(%s)"
+)
+_LONG_LOGGED: set[tuple[str, str]] = set()
+
+
+def long_inflight_calls(conn: psycopg.Connection, turn_ids: list[str], threshold_s: int | None = None) -> list[str]:
+    """Log ``ev=long_tool_call in_flight=true`` once per call; returns the tool_use_ids logged."""
+    threshold_s = LONG_AGENT_CALL_S if threshold_s is None else threshold_s
+    if threshold_s <= 0 or not turn_ids:
+        return []
+    with conn.cursor() as cur:
+        cur.execute(LONG_INFLIGHT_SQL, (sorted(DELEGATION_TOOLS), threshold_s, turn_ids))
+        rows = cur.fetchall()
+    conn.commit()
+    logged = []
+    for turn_id, tool_use_id, tool_name, agent_type, duration_ms in rows:
+        if (turn_id, tool_use_id) in _LONG_LOGGED:
+            continue
+        _LONG_LOGGED.add((turn_id, tool_use_id))
+        log(ev="long_tool_call", turn_id=turn_id, tool_use_id=tool_use_id, tool_name=tool_name,
+            agent_type=agent_type, duration_ms=duration_ms, in_flight=True)
+        logged.append(tool_use_id)
+    return logged
 
 
 def route_event(event: dict[str, Any], transient_kinds: frozenset[str]) -> tuple[str, str, dict[str, Any]]:
@@ -2965,6 +3015,12 @@ def start_sweep(
                 sweep_once(max_retries=max_retries, retention_s=retention_s)
             except Exception as exc:  # noqa: BLE001 - the next pass tries again
                 log(ev="sweep_failed", error=f"{type(exc).__name__}: {exc}")
+            try:
+                if LONG_AGENT_CALL_S > 0 and (turn_ids := inflight_turn_ids()):
+                    with pg_connect(PG_DSN) as conn:
+                        long_inflight_calls(conn, turn_ids)
+            except Exception as exc:  # noqa: BLE001 - the next pass tries again
+                log(ev="long_call_check_failed", error=f"{type(exc).__name__}: {exc}")
 
     thread = threading.Thread(target=loop, daemon=True, name="sweep")
     thread.start()

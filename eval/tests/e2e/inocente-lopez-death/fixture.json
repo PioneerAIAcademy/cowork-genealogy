@@ -1,0 +1,19 @@
+{
+  "id": "inocente-lopez-death",
+  "name": "Inocente Lopez — death in January 1906, Suchitoto, El Salvador",
+  "genre": "record-hint",
+  "source_pid": "L8GW-R6Y",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Inocente Lopez, born 11 June 1860 in Oratorio de Concepción, Cuscatlán, El Salvador, and married to Virginia Mendoza in 1885, die?",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1900s",
+    "geography": "SV"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 8, hint-samples.csv row 331, flags adds_mother/adds_death, confidence 3). Draft transcribed from a 1906 Suchitoto civil death registration; unverified."
+}

@@ -5,12 +5,12 @@ Same reason as `test_init_project_validator.py`: `pyproject.toml` sets
 `make harness-test`, and a validator's real pass/fail set otherwise appears
 only inside a paid per-skill run.
 
-What it guards: SKILL.md Step 4's rule that 1850/1860/1870 US censuses carry no
-"relationship to head" column, so a log note describing such a household must
-mark the family structure inferred rather than stated. Every `notes` string
-below is quoted from a committed `search-records` run log, so these tests pin
-the validator to phrasing the skill has actually produced rather than to
-phrasing invented to suit it (issue #1284).
+What it guards now (issue #3054): `research_log_append` refuses a note that
+states a pre-1880 census household's structure as fact, and that rule lives
+only in the tool (its tests: `tests/tools/pre1880-census-hedge.test.ts`; that
+the eval write path applies it: `test_mock_mcp.py`). The validator checks the
+part the model can still get wrong, the recovery: every refused search is
+logged afterwards.
 """
 
 import sys
@@ -18,7 +18,6 @@ from pathlib import Path
 
 import pytest
 
-# validators/ is not a package on the import path by default.
 _VALIDATORS_DIR = Path(__file__).resolve().parents[2] / "validators"
 sys.path.insert(0, str(_VALIDATORS_DIR))
 
@@ -26,422 +25,96 @@ from test_search_records import (  # noqa: E402
     test_pre1880_census_structure_marked_inferred as check,
 )
 
+TAGGED = {"tags": ["search", "census", "pre-1880-census-household"]}
+UNTAGGED = {"tags": ["search", "census"]}
 
-TAGGED = {"tags": ["search", "census", "1850", "pre-1880-census-household"]}
-UNTAGGED = {"tags": ["search", "census", "1880"]}
-
-EMPTY_BEFORE = {"research_json": {"log": []}}
-
-
-def after(*entries):
-    return {"research_json": {"log": list(entries)}}
-
-
-def entry(notes, outcome="positive", tool="record_search", eid="log_005"):
-    return {"id": eid, "tool": tool, "outcome": outcome, "notes": notes}
-
-
-# --- Notes the rule accepts (from runs that carried the marker) -------
-
-# ut_search_records_001, run v1_2026-08-17_18-06-27.
-COMPLIANT_HEDGED = (
-    "Fresh search - Flynn spelling, Schuylkill County residence, 1850 census "
-    "year. One strong match: Patrick Flynn (MXHY-TP4), born 1845 Ireland, "
-    "residing Branch Township, Schuylkill Co., PA in a household alongside "
-    "Thomas Flynn and Mary Flynn. matchScore 0.9481. Not yet attached to "
-    "subject. Pre-1880 census - head/parent relationships are indexer "
-    "inferences from surname, age, and listing order, not a stated column in "
-    "the record."
-)
-
-# ut_search_records_010, same run - "inferred, not stated" rather than
-# "inferences".
-COMPLIANT_INFERRED = (
-    "Top-ranked match: Patrick Flynn (MXHY-TP4) ... Household includes Thomas "
-    "Flynn (male) and Mary Flynn (female) with indexer-inferred ParentChild "
-    "relationships - pre-1880 census has no relationship column, so family "
-    "structure is inferred, not stated."
-)
-
-# ut_search_records_014, same run. Asserts the role in the quoted form,
-# 'Indexed as "Head"', and hedges it - this is what the quote tolerance in
-# _ROLE_ASSERTIONS exists for.
-COMPLIANT_QUOTED_ROLE = (
-    '1 result: Patrick Flynn, born 1845, Ireland, residing Branch Township, '
-    'Schuylkill, PA in 1850. matchScore 0.85. Indexed as "Head" - but subject '
-    "born ~1845 would be ~5 in 1850; role assignment is the indexer's "
-    "inference in this pre-1880 census (no relationship column), likely an "
-    "indexing error."
-)
-
-# ut_search_records_010, run v1_2026-08-24_16-32-45. Present-tense "infers" --
-# single r -- which the old "inferr" (double-r only) pattern missed and
-# false-failed. Pins the regression (issue #1642).
-COMPLIANT_PRESENT_TENSE_INFERS = (
-    "Top match (MXHY-TP4, matchScore 0.9481) is Patrick Flynn b. 1845 "
-    "Ireland in household of Thomas Flynn + Mary Flynn, Branch Township, "
-    "Schuylkill, PA -- already attached to subject I1 -- indexer infers "
-    "ParentChild relationships."
-)
-
-# ut_search_records_010, run v1_2026-08-28_15-20-05. "relationships indexed"
-# with no inference/infer/presum word at all -- the old markers missed this
-# entirely, false-failing a note that already says the record's own
-# relationship edges came from indexing. Pins the "index near a role word"
-# marker (issue #1642).
-COMPLIANT_RELATIONSHIPS_INDEXED = (
-    "Rank-1 match (MXHY-TP4, matchScore 0.948) is Patrick Flynn b. 1845 "
-    "Ireland, residing Branch Township, Schuylkill, PA 1850, in household "
-    "of Thomas Flynn and Mary Flynn -- ParentChild relationships indexed; "
-    "already attached to subject I1 (src_001)."
-)
-
-# ut_search_records_014, run v1_2026-08-28_15-20-05. "Indexed as Head of
-# Household" -- functionally the same claim as "the indexer's inference",
-# just without the word "infer". Pins the same marker from the other word
-# order (index-word before the role word, rather than after).
-COMPLIANT_INDEXED_AS_HEAD = (
-    "One result: Patrick Flynn, born 1845, Ireland, residing Branch "
-    "Township, Schuylkill, PA, 1850. Indexed as Head of Household -- "
-    "NEEDS-REVIEW: a birth year of 1845 makes the subject 5 years old in "
-    "1850, incompatible with Head role."
-)
-
-# ut_search_records_027, run v1_2026-08-28_15-20-05. "co-residents indexed".
-COMPLIANT_CORESIDENTS_INDEXED = (
-    "One result: George Ackerman, Bucks Co., PA, born ~1818 PA. Household "
-    "co-residents indexed: Henry Ackerman (~1851) and Margaret Ackerman "
-    "(~1854). Spouse Catherine is absent from the index entry."
-)
-
-# ut_search_records_017, run v1_2026-08-24_12-28-26. "presumably her mother"
-# -- the old "presumed" (exact word only) pattern missed the adverb form.
-COMPLIANT_PRESUMABLY_HER_MOTHER = (
-    "Found Sarah A. Mullen (b. 1852, Wisconsin) in household of William "
-    "Mullen, Dodge County, Wisconsin. Household also includes Margaret "
-    "Mullen (b. 1830, Ireland), presumably her mother."
-)
-
-# ut_search_records_013, run v1_2026-08-28_15-20-05. Contains "indexed" --
-# but only about the surname SPELLING and the birth YEAR, never near the
-# role/relationship word it asserts flat ("Household head matches I2"). The
-# "index near a role word" marker must NOT accept this: the note never says
-# the household relationship itself is an inference, only that unrelated
-# fields were indexed. Pins the false-accept boundary the scoped marker
-# exists to draw (issue #1642).
-OFFENDER_INDEXED_SPELLING_FLAT_HEAD = (
-    "Found 1 result: Patrick Flyn (indexed spelling) in household of Thomas "
-    "Flyn, Branch Township, Schuylkill, PA, 1850 census. Birth year indexed "
-    "as 1842 vs. subject's approximate ~1845 -- 3-year discrepancy warrants "
-    "needs-review. Household head matches I2 (Thomas Flynn) already in "
-    "tree. Record already extracted as src_003."
-)
-
-
-# --- Notes the rule rejects (from runs that carried no marker) --------
-
-# ut_search_records_015, all four committed run logs. The prohibited form
-# outright: roles asserted flat off an 1860 census, then used to corroborate
-# tree parents.
-OFFENDER_AS_FATHER_AS_MOTHER = (
-    'Strong match (score 0.93): "Sarah A. Mullen in household of William '
-    'Mullen," 1860 census, Dodge County, Wisconsin. Household includes '
-    "William Mullen (b. 1825, Ireland) as father and Margaret Mullen (b. "
-    "1830, Ireland) as mother - directly corroborates tree stubs I4 and I5."
-)
-
-# ut_search_records_013, run v1_2026-08-17_18-06-27.
-OFFENDER_HOUSEHOLD_HEAD = (
-    "Found 1 result: Patrick Flyn (indexed spelling) in household of Thomas "
-    "Flyn, Branch Township, Schuylkill, Pennsylvania. Household head Thomas "
-    "Flyn aligns with known father I2. matchScore 0.52, matchConfidence 4."
-)
-
-# ut_search_records_012, run v1_2026-08-17_18-06-27. Carries no role word at
-# all - but it lists the household, which is the thing the rule asks to be
-# qualified.
-OFFENDER_BARE_LISTING = (
-    "Top match MXHY-TP4 scores 0.948 against I1 and is already attached to "
-    "subject. Record: Patrick Flynn, born 1845, Ireland, residing Branch "
-    "Township, Schuylkill, Pennsylvania, 1850, in household of Thomas Flynn "
-    "and Mary Flynn."
-)
-
-# From the alpha-feedback report behind issue #1912, scrubbed, with
-# "household" replaced by "return ... filed under" so this case depends
-# solely on _PLURAL_KINSHIP_INTRODUCING_NAME rather than falling back to
-# _HOUSEHOLD_MENTIONS -- PR #1946 round 2 review: the original wording
-# still said "household", so deleting the new claim patterns entirely left
-# every pinned test green. Real production text: a plural kinship noun
-# bare-introduces two newly-found co-residents with no hedge anywhere in
-# the note. Neither "as ROLE" nor a possessive claim -- this is the shape
-# that motivated _PLURAL_KINSHIP_INTRODUCING_NAME, and the shape this rule
-# actually needs to catch (contrast with COMPLIANT_POSSESSIVE_KINSHIP_HEDGED
-# below).
-OFFENDER_PLURAL_KINSHIP_BARE_NOUN = (
-    "James M McElwee (b. 1817 Louisiana) plus sons Thos T McElwee (b. 1839 "
-    "Louisiana) and Stephen McElwee (b. 1842 Louisiana), 1850 US Census "
-    "return filed under Amelia Jackson, Amite County MS."
-)
-
-# PR #1946 round 2, second pass: the same shape with a comma between the
-# noun and the name -- "\s+" alone required literal whitespace there, so
-# this slipped past the gate entirely before the [\s,:;--]+ fix.
-OFFENDER_PLURAL_KINSHIP_COMMA_SEPARATED = (
-    "James M McElwee (b. 1817 Louisiana) plus sons, Thos T McElwee (b. 1839 "
-    "Louisiana) and Stephen McElwee (b. 1842 Louisiana), 1850 US Census "
-    "return filed under Amelia Jackson, Amite County MS."
-)
-
-# Same shape as above but for the possessive-kinship pattern specifically --
-# no prior fixture isolated it from the household fallback either. No
-# "household", no hedge anywhere: caught only by
-# _POSSESSIVE_KINSHIP_ASSERTIONS.
-OFFENDER_POSSESSIVE_KINSHIP_NO_HEDGE = (
-    "Amos Whitfield (b. 1817, Georgia), 1850 census entry filed under Nancy "
-    "Doss, Pike County, Kentucky. Ezra and Noah Whitfield, also in that "
-    "entry, are Amos's children."
-)
-
-# ut_search_records_h4k's mined-test output (issue #1912's regression test).
-# A possessive kinship claim ("likely Amos's children") followed, two
-# sentences later, by the SKILL.md-prescribed hedge. PR #1946 review: a
-# per-sentence check was tried to require the hedge sit with the claim, and
-# was withdrawn -- see the "PR #1946 review" paragraph on
-# `test_pre1880_census_structure_marked_inferred` for why (the identical
-# shape appears in ut_search_records_015's own committed, correctly-hedged
-# output, and no mechanical signal tells the two apart). Pinned here as
-# compliant: the note-wide rule this validator can actually make reliable
-# only asks for the hedge somewhere in the note, which this has.
-COMPLIANT_POSSESSIVE_KINSHIP_HEDGED = (
-    "Found Amos Whitfield (b. 1817, Georgia) enumerated in Pike, Kentucky in "
-    "the 1850 US Federal Census, entry filed under Nancy Doss. Also present "
-    "in that entry: Ezra Whitfield (b. 1839, Georgia) and Noah Whitfield "
-    "(b. 1842, Georgia), likely Amos's children. Pre-1880 census -- no "
-    "relationship column; family structure inferred from surname, ages, "
-    "and listing order."
-)
-
-# The same possessive claim, hedged in the same sentence rather than a
-# following one -- proves the new possessive-kinship pattern does not
-# over-trigger once the claim itself carries the marker.
-COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER = (
-    "Found Amos Whitfield (b. 1817, Georgia), 1850 census entry filed under "
-    "Nancy Doss, Pike County, Kentucky. Ezra and Noah Whitfield, also in "
-    "that entry, are likely Amos's children, but this is an inference from "
-    "surname and age -- the record states no relationship."
-)
-
-# PR #1946 round 2 review: [A-Z] under re.IGNORECASE matches any letter, so
-# the "must be a capitalized proper noun" scoping both new patterns' own
-# comments promise was not actually implemented. Fixed with (?-i:[A-Z]);
-# these three constructed probes (not from a real run) pin that fix.
-COMPLIANT_LOWERCASE_POSSESSIVE_IS_NOT_A_CLAIM = (
-    "1850 census entry, Amite County, Mississippi. Two more names appear "
-    "beside the subject in this entry; the family's children are not "
-    "otherwise identified in the record."
-)
-COMPLIANT_PLURAL_LOWERCASE_FOLLOWER_IS_NOT_A_CLAIM = (
-    "1850 census return, Pike County. The index lists several daughters in "
-    "the index under this surname, unrelated to the subject's search."
-)
-COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM = (
-    "1850 census entry for the subject's surname. Multiple minors appear in "
-    "the same entry; children cannot be distinguished from boarders on this "
-    "record alone."
-)
-
-
-@pytest.mark.parametrize(
-    "notes",
-    [
-        COMPLIANT_HEDGED,
-        COMPLIANT_INFERRED,
-        COMPLIANT_QUOTED_ROLE,
-        COMPLIANT_PRESENT_TENSE_INFERS,
-        COMPLIANT_RELATIONSHIPS_INDEXED,
-        COMPLIANT_INDEXED_AS_HEAD,
-        COMPLIANT_CORESIDENTS_INDEXED,
-        COMPLIANT_PRESUMABLY_HER_MOTHER,
-        COMPLIANT_POSSESSIVE_KINSHIP_LOCAL_MARKER,
-        COMPLIANT_POSSESSIVE_KINSHIP_HEDGED,
-        COMPLIANT_LOWERCASE_POSSESSIVE_IS_NOT_A_CLAIM,
-        COMPLIANT_PLURAL_LOWERCASE_FOLLOWER_IS_NOT_A_CLAIM,
-        COMPLIANT_PLURAL_REJECTING_A_CLAIM_IS_NOT_A_CLAIM,
+REFUSAL = {
+    "ok": False,
+    "errors": [
+        "This note describes a pre-1880 US census household but states the family structure "
+        "as fact. 1850/1860/1870 censuses have NO relationship-to-head column, ..."
     ],
-    ids=[
-        "inferences-not-stated",
-        "inferred-no-column",
-        "quoted-role",
-        "present-tense-infers",
-        "relationships-indexed",
-        "indexed-as-head",
-        "coresidents-indexed",
-        "presumably-her-mother",
-        "possessive-kinship-local-marker",
-        "possessive-kinship-hedged-later-sentence",
-        "lowercase-possessive-not-a-claim",
-        "plural-lowercase-follower-not-a-claim",
-        "plural-rejecting-a-claim-not-a-claim",
-    ],
+}
+OK = {"ok": True, "logId": "log_002"}
+
+
+def append(args, response):
+    return {"tool": "mcp__genealogy__research_log_append", "args": args, "response": response}
+
+
+def op(ref="results/.staging/a.json", notes="note", **extra):
+    return {"tool": "record_search", "outcome": "positive", "stagedResultsRef": ref, "notes": notes, **extra}
+
+
+# ut_search_records_027 (scratch 2026-10-12_11-55-22, run 3), verbatim: refused,
+# then re-sent hedged with the same staged handle.
+REAL_REFUSED = op(
+    "results/.staging/f0316543.json",
+    "1 result: George Ackerman, Bucks County, PA — household contains Henry and Margaret "
+    "Ackerman only; no Catherine indexed.",
 )
-def test_a_hedged_household_passes(notes):
-    check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
-
-
-def test_indexed_spelling_alone_does_not_excuse_a_flat_role_assertion():
-    """The scoped 'index near a role word' marker must not accept an
-    unrelated 'indexed spelling'/'indexed as <year>' mention while the note
-    still asserts the household role flat elsewhere."""
-    with pytest.raises(AssertionError) as e:
-        check(EMPTY_BEFORE, after(entry(OFFENDER_INDEXED_SPELLING_FLAT_HEAD)), TAGGED)
-    assert "log_005" in str(e.value)
-
-
-# chesworthrm review (issue #1642): the original 50-char/period-only window
-# reached across a semicolon from an indexed NAME or DATE to a flat role
-# assertion in the next clause -- exactly the shape the comment on the
-# pattern already said it rejected. Both offenders below satisfied the
-# marker before the window was narrowed to 20 chars stopping at ./;/, --
-# and the fix was verified against all 299 log notes in the run logs this
-# PR shipped: nothing that passed kept passing, nothing that failed kept
-# failing, and these two start failing correctly.
-OFFENDER_INDEXED_NAME_THEN_FLAT_ROLE_ACROSS_SEMICOLON = (
-    "1860 census, Yell Co. Arkansas: surname indexed as Flyn; household "
-    "head Thomas Flynn, wife Mary, son John."
-)
-OFFENDER_INDEXED_DATE_THEN_FLAT_ROLE_ACROSS_SEMICOLON = (
-    "Match on Thomas Flynn. Birth year indexed as 1822; head of household "
-    "Thomas, plus sons John and Amos."
+REAL_RELOGGED = op(
+    "results/.staging/f0316543.json",
+    "1 result: George Ackerman in one dwelling with Henry and Margaret Ackerman in Bucks "
+    "County, PA; family structure inferred from surname, ages and listing order, not stated.",
 )
 
 
-@pytest.mark.parametrize(
-    "notes",
-    [
-        OFFENDER_INDEXED_NAME_THEN_FLAT_ROLE_ACROSS_SEMICOLON,
-        OFFENDER_INDEXED_DATE_THEN_FLAT_ROLE_ACROSS_SEMICOLON,
-    ],
-    ids=["indexed-name-then-flat-role", "indexed-date-then-flat-role"],
-)
-def test_indexed_marker_does_not_reach_across_a_semicolon(notes):
-    with pytest.raises(AssertionError) as e:
-        check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
-    assert "log_005" in str(e.value)
-
-
-@pytest.mark.parametrize(
-    "notes",
-    [
-        OFFENDER_AS_FATHER_AS_MOTHER,
-        OFFENDER_HOUSEHOLD_HEAD,
-        OFFENDER_BARE_LISTING,
-        OFFENDER_PLURAL_KINSHIP_BARE_NOUN,
-        OFFENDER_PLURAL_KINSHIP_COMMA_SEPARATED,
-        OFFENDER_POSSESSIVE_KINSHIP_NO_HEDGE,
-    ],
-    ids=[
-        "as-father-as-mother",
-        "household-head",
-        "bare-listing",
-        "plural-kinship-bare-noun",
-        "plural-kinship-comma-separated",
-        "possessive-kinship-no-hedge",
-    ],
-)
-def test_an_unqualified_household_fails(notes):
-    """The whole point. Each of these passed its test on the run log it came
-    from, because no dimension and no validator read the phrasing."""
-    with pytest.raises(AssertionError) as e:
-        check(EMPTY_BEFORE, after(entry(notes)), TAGGED)
-    assert "log_005" in str(e.value)
-
-
-
-
-def test_the_untagged_rest_of_the_suite_is_untouched():
-    """Gated on the tag, not on the word "census": ut_search_records_016 is an
-    1880 search, where the relationship column does exist."""
+def test_untagged_skips():
     with pytest.raises(pytest.skip.Exception):
-        check(EMPTY_BEFORE, after(entry(OFFENDER_BARE_LISTING)), UNTAGGED)
+        check([append(REAL_REFUSED, REFUSAL)], UNTAGGED)
 
 
-def test_a_nil_search_has_no_household_to_qualify():
-    """ut_search_records_015's Price and Mielke arms: a nil explains why
-    nothing was found, and must not be asked to hedge a household it never
-    saw."""
-    nil = entry(
-        "Expected nil - Price is Sarah's first married name (married 1872); "
-        "she would have been 8 years old in 1860 and still carried the Mullen "
-        "birth surname. No index entry found under Price in the 1860 census.",
-        outcome="negative",
-    )
-    check(EMPTY_BEFORE, after(nil), TAGGED)
+def test_no_census_refusal_skips():
+    with pytest.raises(pytest.skip.Exception):
+        check([append(REAL_RELOGGED, OK)], TAGGED)
 
 
-def test_a_note_that_describes_no_household_passes():
-    """The requirement fires on describing the household, not on the test
-    carrying the tag - a note about the focus person alone asserts no
-    structure."""
-    check(
-        EMPTY_BEFORE,
-        after(entry(
-            "1 result: Patrick Flyn, born 1842, Ireland, Branch Township, "
-            "Schuylkill, Pennsylvania. matchScore 0.52. Birth year 3 years "
-            "off the tree estimate."
-        )),
-        TAGGED,
-    )
+def test_a_refusal_for_another_reason_is_not_this_check():
+    other = {"ok": False, "errors": ["stagedResultsRef does not exist"]}
+    with pytest.raises(pytest.skip.Exception):
+        check([append(op(), other)], TAGGED)
 
 
-def test_a_tree_side_relative_is_not_a_record_side_role_claim():
-    """ut_search_records_027's search anchor. Naming the spouse the search was
-    built around - and saying she is absent from the record - is not a claim
-    about what the census stated, so the bare role word must not trigger on
-    its own. (027's real note fails anyway, on "Household persons"; this pins
-    the reason to the household listing, not to "wife Catherine".)"""
-    check(
-        EMPTY_BEFORE,
-        after(entry(
-            "Ad-hoc spouse-anchored search: 1860 US Census, George Ackerman + "
-            "wife Catherine, Pennsylvania. One result (matchScore 0.9412). "
-            "relativeTerms.spouse.status = absent: Catherine is NOT named as "
-            "spouse in this indexed record."
-        )),
-        TAGGED,
-    )
+def test_the_real_027_recovery_passes():
+    check([append(REAL_REFUSED, REFUSAL), append(REAL_RELOGGED, OK)], TAGGED)
 
 
-def test_only_record_search_entries_are_checked():
-    """A log entry from another tool has no census household behind it."""
-    check(
-        EMPTY_BEFORE,
-        after(entry(OFFENDER_BARE_LISTING, tool="fulltext_search")),
-        TAGGED,
-    )
+def test_a_refused_search_never_relogged_fails():
+    with pytest.raises(AssertionError, match="f0316543"):
+        check([append(REAL_REFUSED, REFUSAL)], TAGGED)
 
 
-def test_a_missing_notes_field_does_not_crash():
-    check(EMPTY_BEFORE, after(entry(None)), TAGGED)
+def test_a_relog_that_also_fails_does_not_count():
+    with pytest.raises(AssertionError):
+        check([append(REAL_REFUSED, REFUSAL), append(REAL_REFUSED, REFUSAL)], TAGGED)
 
 
-def test_a_pre_existing_entry_is_not_re_judged():
-    """Only the entries this run added are the run's responsibility."""
-    old = entry(OFFENDER_BARE_LISTING, eid="log_001")
-    check({"research_json": {"log": [old]}}, {"research_json": {"log": [old]}}, TAGGED)
+def test_a_log_before_the_refusal_does_not_count():
+    with pytest.raises(AssertionError):
+        check([append(REAL_RELOGGED, OK), append(REAL_REFUSED, REFUSAL)], TAGGED)
 
 
-def test_every_offending_entry_is_named_not_just_the_first():
-    """The message is what a genealogist reads to fix the run, so it carries
-    each offender rather than stopping at the first."""
-    with pytest.raises(AssertionError) as e:
-        check(
-            EMPTY_BEFORE,
-            after(
-                entry(OFFENDER_BARE_LISTING, eid="log_005"),
-                entry(OFFENDER_HOUSEHOLD_HEAD, eid="log_006"),
-            ),
-            TAGGED,
-        )
-    assert "log_005" in str(e.value)
-    assert "log_006" in str(e.value)
+def test_every_op_of_a_refused_batch_must_be_relogged():
+    """A batch is all-or-nothing, so the refusal dropped both ops."""
+    batch = {"ops": [op("results/.staging/a.json"), op("results/.staging/b.json")]}
+    calls = [append(batch, REFUSAL), append(op("results/.staging/a.json"), OK)]
+    with pytest.raises(AssertionError, match="b.json"):
+        check(calls, TAGGED)
+    calls.append(append({"ops": [op("results/.staging/b.json")]}, {"ok": True, "results": []}))
+    check(calls, TAGGED)
+
+
+def test_an_unstaged_op_matches_on_tool_and_query():
+    q = {"surname": "Flynn", "residencePlace": "Pennsylvania"}
+    refused = {"tool": "record_search", "outcome": "positive", "query": q, "notes": "x"}
+    check([append(refused, REFUSAL), append(dict(refused, notes="hedged"), OK)], TAGGED)
+    with pytest.raises(AssertionError):
+        check([append(refused, REFUSAL), append(dict(refused, query={"surname": "Flinn"}), OK)], TAGGED)
+
+
+def test_a_stringified_ops_list_is_read():
+    import json
+
+    batch = {"ops": json.dumps([op("results/.staging/a.json")])}
+    check([append(batch, REFUSAL), append(op("results/.staging/a.json"), OK)], TAGGED)

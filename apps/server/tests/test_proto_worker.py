@@ -109,7 +109,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "image-reader", "init-project", "locality-guide", "person-evidence", "project-status", "proof-conclusion", "question-selection", "record-extractor", "research-exhaustiveness", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "translation", "tree-edit", "tree-survey", "validate-schema"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -920,27 +920,27 @@ def _info(agents: set[str], skills: int, extra_agents: tuple[str, ...] = ()) -> 
 
 
 def test_registration_passes_with_every_bare_agent_and_every_skill():
-    assert options.check_registration(_info(AGENTS, 8, ("general-purpose", "genealogy-research:gps-mentor")),
-                                      expected_agents=AGENTS, expected_skills=8) == []
+    assert options.check_registration(_info(AGENTS, 7, ("general-purpose", "genealogy-research:gps-mentor")),
+                                      expected_agents=AGENTS, expected_skills=7) == []
 
 
 def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
-    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 8, ("genealogy-research:gps-mentor",)),
-                                          expected_agents=AGENTS, expected_skills=8)
+    problems = options.check_registration(_info(AGENTS - {"gps-mentor"}, 7, ("genealogy-research:gps-mentor",)),
+                                          expected_agents=AGENTS, expected_skills=7)
     assert problems and "gps-mentor" in problems[0] and "bare" in problems[0]
-    problems = options.check_registration(_info(AGENTS, 7), expected_agents=AGENTS, expected_skills=8)
-    assert problems == ["7 genealogy-research:* commands registered, expected 8"]
-    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=8)
+    problems = options.check_registration(_info(AGENTS, 6), expected_agents=AGENTS, expected_skills=7)
+    assert problems == ["6 genealogy-research:* commands registered, expected 7"]
+    assert options.check_registration(None, expected_agents=AGENTS, expected_skills=7)
 
 
-def test_the_plugin_ships_twenty_five_agents_and_eight_skills():
+def test_the_plugin_ships_twenty_seven_agents_and_seven_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
-    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 8
+    assert worker.count_skills(str(PLUGIN_DIR)) == worker.EXPECTED_SKILLS == 7
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
-    assert "\nEXPECTED_SKILLS = 8\n" in Path(worker.__file__).read_text(encoding="utf-8")
+    assert "\nEXPECTED_SKILLS = 7\n" in Path(worker.__file__).read_text(encoding="utf-8")
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -963,7 +963,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-four agents must not become the expectation"
+    assert agents is None, "twenty-five agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -975,24 +975,24 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-five agents and 8 skills registered: clean. Twenty-four, or 7: the miss, whatever loaded --
+    # Twenty-seven agents and 7 skills registered: clean. Twenty-six, or 6: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
-    assert worker.registration_problems(_info(AGENTS, 8)) == []
-    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 8, ("genealogy-research:gps-mentor",)))
+    assert worker.registration_problems(_info(AGENTS, 7)) == []
+    problems = worker.registration_problems(_info(AGENTS - {"gps-mentor"}, 7, ("genealogy-research:gps-mentor",)))
     assert problems == ["agents not registered under their bare names: ['gps-mentor']"]
-    assert worker.registration_problems(_info(AGENTS, 7)) == ["7 genealogy-research:* commands registered, expected 8"]
+    assert worker.registration_problems(_info(AGENTS, 6)) == ["6 genealogy-research:* commands registered, expected 7"]
     import inspect
 
     assert list(inspect.signature(worker.registration_problems).parameters) == ["info"]
     # The mutation the first build let through: a plugin copy short one skill folder
-    # registers 7, and a count of that same copy would have expected 7.
+    # registers 6, and a count of that same copy would have expected 6.
     copy = tmp_path / "plugin"
     shutil.copytree(PLUGIN_DIR / "skills", copy / "skills")
     shutil.rmtree(next(d for d in sorted((copy / "skills").iterdir()) if (d / "SKILL.md").is_file()))
-    assert worker.count_skills(str(copy)) == 7
+    assert worker.count_skills(str(copy)) == 6
     assert worker.registration_problems(_info(AGENTS, worker.count_skills(str(copy)))) == [
-        "7 genealogy-research:* commands registered, expected 8"
+        "6 genealogy-research:* commands registered, expected 7"
     ]
 
 
@@ -2016,6 +2016,46 @@ def test_the_post_hook_never_raises_and_stamps_nothing_without_an_id():
     assert _call(post, "garbage") == {}  # type: ignore[arg-type]
     assert _call(post, {"tool_name": "x"}) == {}
     assert finished == []
+
+
+REAUTH_LOCAL = "Not signed in to FamilySearch. Call the login tool to authenticate."
+REAUTH_HOSTED = "Your FamilySearch session ended. Reconnect FamilySearch from the web app."
+
+
+@pytest.mark.parametrize("payload", [
+    {"tool_name": "mcp__genealogy__record_read", "tool_response": [{"type": "text", "text": REAUTH_LOCAL}]},
+    {"tool_name": "mcp__remote-devices__Genealogy_Research__person_read", "tool_response": {"content": REAUTH_HOSTED}},
+    {"tool_name": "mcp__genealogy__record_search", "error": REAUTH_HOSTED},  # PostToolUseFailure
+], ids=["local-response", "hosted-response", "failure-error"])
+def test_a_familysearch_tool_asking_for_a_sign_in_logs_a_reauth_hit(payload):
+    logged: list[dict] = []
+    post = options.make_posttool_hook(turn_id="t", finish=lambda _id: None, log=lambda **f: logged.append(f))
+    assert _call(post, {**payload, "tool_use_id": "toolu_1", "agent_id": "agent-a"}) == {}
+    assert [f for f in logged if f["ev"] == "reauth_hit"] == [
+        {"ev": "reauth_hit", "turn_id": "t", "tool_name": payload["tool_name"], "agent_id": "agent-a"}]
+
+
+@pytest.mark.parametrize("payload", [
+    {"tool_name": "mcp__genealogy__research_query", "tool_response": {"text": REAUTH_HOSTED}},  # an echo
+    {"tool_name": "Read", "tool_response": REAUTH_LOCAL},
+    {"tool_name": "mcp__genealogy__login", "tool_response": REAUTH_LOCAL},
+    {"tool_name": "mcp__genealogy__record_read", "tool_response": "401 Unauthorized; please login"},
+    {"tool_name": "mcp__genealogy__record_read", "tool_response": {"records": []}},
+], ids=["research_query-echo", "Read", "login", "401-text", "ordinary"])
+def test_anything_else_logs_no_reauth_hit(payload):
+    logged: list[dict] = []
+    post = options.make_posttool_hook(turn_id="t", finish=lambda _id: None, log=lambda **f: logged.append(f))
+    _call(post, {**payload, "tool_use_id": "toolu_1"})
+    assert not [f for f in logged if f["ev"] == "reauth_hit"]
+
+
+def test_the_reauth_signal_never_fails_the_call():
+    def exploding_log(**f):
+        raise RuntimeError("stdout is gone")
+
+    post = options.make_posttool_hook(turn_id="t", finish=lambda _id: None, log=exploding_log)
+    assert _call(post, {"tool_name": "mcp__genealogy__record_read", "tool_response": REAUTH_LOCAL,
+                        "tool_use_id": "toolu_1"}) == {}
 
 
 def test_insert_tool_call_writes_the_tool_use_id_and_finish_stamps_the_open_row():
@@ -3663,6 +3703,31 @@ def test_sweep_is_off_unless_configured():
         assert thread is not None and thread.daemon
         thread.join(2)
         assert not thread.is_alive(), "the sweep stops on SHUTDOWN"
+
+
+def test_each_sweep_pass_asks_for_this_processs_long_running_delegations(monkeypatch):
+    """U19: a stuck delegation never reaches PostToolUse, so the sweep's loop asks, for the
+    turns this process serves only, and an error there never stops the sweep."""
+    waits = iter([False, False, True])
+    monkeypatch.setattr(worker.SHUTDOWN, "wait", lambda _s: next(waits))
+    monkeypatch.setattr(worker, "sweep_once", lambda **_kw: [])
+    monkeypatch.setattr(worker, "inflight_turn_ids", lambda: ["turn-a"])
+    monkeypatch.setattr(worker, "pg_connect", lambda *_a, **_k: contextlib.nullcontext("conn"))
+    asked, logged = [], []
+    outcomes = iter([RuntimeError("pg down"), None])
+
+    def check(conn, turn_ids):
+        asked.append((conn, turn_ids))
+        if (err := next(outcomes)) is not None:
+            raise err
+
+    monkeypatch.setattr(worker, "long_inflight_calls", check)
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    thread = worker.start_sweep(interval=1, max_retries=5, retention_s=0)
+    thread.join(5)
+    assert not thread.is_alive()
+    assert asked == [("conn", ["turn-a"])] * 2, "the second pass ran after the first failed"
+    assert [f["ev"] for f in logged] == ["long_call_check_failed"]
 
 
 class FakeServer:

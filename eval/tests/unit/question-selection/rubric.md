@@ -18,6 +18,23 @@ their scores from this skill's weighted-mean denominator with no behaviour
 change behind the move. See
 `docs/deep-dives/question-selection-findings-2026-08-25.md`.
 
+**Why a "why" objective is converted rather than researched** (issue #2003,
+ruled 2026-09-17; graded by `ut_question_selection_d05` and
+`test_motivation_objective_decomposed`). The agent's typology closes at two
+types, relationships and events, and a motivation is neither: no record states
+it to a tier, so a "why" question cannot be resolved. The agent therefore
+writes a relationship or event question the reason rests on, and tells the user
+the reason is explained from historical context instead of proved. A
+first-class motivation type was rejected. It would need a `question_kind` field,
+a closed-enum change across eight schema sites, and its enforcing rule joins a
+question to its plan items, which no writer-tool precondition can do (issue
+#2475), so it would still degrade to prose. The stated date window bounds the
+questions, not the evidence cited in answering them. The tester's report also
+had a planning half, that a date window was treated as a cap on what to
+search; that moved to issue #1830's `research-plan` block and is not graded
+here. No e2e fixture poses a "why" question (0 of 136, measured 2026-09-14), so
+a green unit run shows the rule fires in fresh context and nothing more.
+
 ## Question specificity
 
 Is the research question specific and answerable? "Learn more about Patrick" is not a research question. "What is Patrick Flynn's birthplace?" is.
