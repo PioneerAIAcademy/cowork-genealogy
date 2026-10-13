@@ -159,3 +159,32 @@ export function imageViewerUrl(
   }
   return undefined;
 }
+
+/** The FamilySearch tree PID an `ark` names: a tree-person ark
+ *  (4:1:) in any spelling, or a tree person URL. A record or image ark names
+ *  no tree person. */
+export function treePidOfArk(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  // Each %XX on its own, so one stray `%` does not switch decoding off.
+  const text = value
+    .trim()
+    .replace(/%([0-9A-Fa-f]{2})/g, (_m, hex: string) => String.fromCharCode(parseInt(hex, 16)));
+  // A FamilySearch tree person URL names the PID in a path segment after
+  // /tree/person/ (details, sources, memories, a language prefix before it).
+  // Read first, so a query string cannot override the path.
+  const url = text.match(
+    /^https?:\/\/(?:www\.)?familysearch\.org(?::\d+)?\/(?:[a-z]{2}(?:-[a-z]{2,4})?\/)?tree\/(?:person|pedigree)\/([^?#]*)/i,
+  );
+  if (url) {
+    for (const seg of url[1].split("/")) {
+      const pid = seg.match(/^([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})(?![A-Za-z0-9-])/);
+      if (pid) return pid[1];
+    }
+    return undefined;
+  }
+  // Otherwise an ark: `ark:/61903/4:1:<PID>` in the path of a resolver URL, or
+  // a bare `4:1:<PID>`. Never from a query string: a record URL can carry a
+  // tree ark there without naming that person.
+  const path = text.replace(/[?#].*$/, "");
+  return path.match(/(?:ark:\/61903\/|^)4:1:([A-Za-z0-9]{4}-[A-Za-z0-9]{3,4})(?![A-Za-z0-9])/i)?.[1];
+}

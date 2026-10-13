@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Father name is correct and R7 is sourced to the 1884 death record. However, I1 carries the 15 Dec 1825 marriage to Lois Bullard, and David Bagley Jr. (b. 7 Mar 1801, Topsham) is present in the run's own log_016 data — fits that marriage at 24. The proof claims no competing David Bagley in Topsham, which is wrong. Identity is not pinned; Jr. vs Sr. is never weighed."
+  },
+  "annotator": "mercyokum",
+  "findings_hash": "679a8f9acedcfd4aa2b25276012b0efbfd855d0eec05a99a8688f0697ab99077",
+  "blind_bundle_digest": "41727a48872dd9d333522c1f5c38401a15a66c6a8da8043d9305de1cc48aa2ee"
+}
