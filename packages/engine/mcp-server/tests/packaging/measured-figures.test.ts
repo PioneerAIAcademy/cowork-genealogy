@@ -149,10 +149,24 @@ function descriptionsOf(node: unknown, out: string[] = []): string[] {
  * under a reflow. `record_search` is skipped: its file is an EVIDENCE surface.
  * Comments in a tool file are not scanned; only what is advertised.
  */
+const TOOLS_DIR = "packages/engine/mcp-server/src/tools";
+const TOOL_FILE_TEXT = readdirSync(join(projectRoot, TOOLS_DIR))
+  .filter((f) => f.endsWith(".ts"))
+  .map((f) => ({ f, text: readFileSync(join(projectRoot, TOOLS_DIR, f), "utf8") }));
+
+/** The one file under src/tools/ declaring the tool; eight do not match by name. */
+function toolFileOf(name: string): string {
+  const hits = TOOL_FILE_TEXT.filter(({ text }) => new RegExp(`name:\\s*"${name}"`).test(text));
+  if (hits.length !== 1) {
+    throw new Error(`${name}: expected one file in ${TOOLS_DIR} declaring it, found ${hits.length}`);
+  }
+  return `${TOOLS_DIR}/${hits[0].f}`;
+}
+
 const TOOL_DESCRIPTION_SURFACES = allToolSchemas
   .filter((s) => s.name !== "record_search")
   .map((s) => ({
-    rel: `packages/engine/mcp-server/src/tools/${s.name.replace(/_/g, "-")}.ts`,
+    rel: toolFileOf(s.name),
     name: s.name,
     text: descriptionsOf(s).join("\n"),
   }));
@@ -727,12 +741,12 @@ describe("measured figures stay traceable to the probe artifact", () => {
       // metadata only. Guard against prose that claims it searches transcripts.
       // The [^.,;] clause boundary is a proxy for negation awareness — it stops
       // the pattern before a semicoloned contrast or a comma-not clause can
-      // match; the gap after the verb also stops at "not"/"only", because a
-      // dash contrast ("metadata only — NOT transcript") has no comma to stop it.
+      // match. An em or en dash is a clause boundary like `,` and `;`
+      // ("metadata only — NOT transcript"), so the gap after the verb stops there too.
       verdict: "J.verdict:q.recordPlace searches",
       activeWhen: /^metadata only$/,
       mustNotSay:
-        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)(?:(?!\bnot\b|\bonly\b)[^.,;]){0,40}(?:transcript|full[- ]?text|document text)|place[^.,;]{0,40}(?:searches|matches)(?:(?!\bnot\b|\bonly\b)[^.,;]){0,40}(?:transcript|both)/i,
+        /q\.recordPlace[^.]{0,60}(?:searches|matches|reaches|covers|includes)[^.,;—–]{0,40}(?:transcript|full[- ]?text|document text)|place[^.,;]{0,40}(?:searches|matches)[^.,;—–]{0,40}(?:transcript|both)/i,
       why: "section J measured q.recordPlace as metadata-only; these phrasings assert it reaches transcripts",
     },
     {
@@ -816,8 +830,8 @@ describe("measured figures stay traceable to the probe artifact", () => {
   for (const [label, sentence] of [
     ["contrast with semicolon", "q.recordPlace matches against collection metadata only; the transcript is reached by q.text."],
     ["contrast with comma-not", "q.recordPlace matches collection metadata, not the transcript."],
-    // A dash, unlike a comma or semicolon, does not stop the gap, so the negation
-    // has to: agents/search-full-text.md's Place row reads exactly this way.
+    // A dash is a clause boundary like a comma or semicolon:
+    // agents/search-full-text.md's Place row reads exactly this way.
     ["contrast with dash-NOT", "| Place | Place name | Matches collection metadata only — NOT transcript text. |"],
     ["plain metadata-only", "q.recordPlace matches against collection metadata only."],
     ["generic advice", "Place qualifiers search metadata; use q.text for transcript terms."],
@@ -825,6 +839,19 @@ describe("measured figures stay traceable to the probe artifact", () => {
     it(`section J q.recordPlace guard accepts correct prose: ${label}`, () => {
       const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
       expect(rule.mustNotSay.test(sentence)).toBe(false);
+    });
+  }
+
+  // Reject direction for the same rule: false claims that carry "not"/"only"
+  // and must still be caught, so a boundary change cannot silently lose them.
+  for (const [label, sentence] of [
+    ["not only ... but also", "Place matches not only metadata but also transcript content."],
+    ["only the transcript", "q.recordPlace searches only the transcript text."],
+    ["not just ... but", "q.recordPlace covers not just metadata but transcript text too."],
+  ] as const) {
+    it(`section J q.recordPlace guard rejects a false claim: ${label}`, () => {
+      const rule = FORBIDDEN_WHEN.find((r) => r.verdict === "J.verdict:q.recordPlace searches")!;
+      expect(rule.mustNotSay.test(sentence)).toBe(true);
     });
   }
 
