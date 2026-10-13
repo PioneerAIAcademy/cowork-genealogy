@@ -91,8 +91,11 @@ and each carries a `coverage` count: collections that exist for that place and
 period. That is a floor, not evidence about this person. For each hole, gather
 what applies:
 
-- **Pending hints.** `person_record_matches({ id: personId, status: ["pending"] })`. Count the
-  matches. For a couple, check both people.
+- **Pending hints.** `person_record_matches({ id: personId, status: ["pending"] })`. A pending
+  match counts for a hole only when its record type fits it: a birth or baptism for
+  `missing_parents` or `no_birth_info`, a marriage for `no_spouse` or `missing_surname`, a
+  census or baptism for `no_children`, `child_gap` or `early_last_child`, a death or burial
+  for `no_death_date`. For a couple, check both people.
 - **Missing census.** `person_quality({ personId })`; note an issue saying an
   expected census is missing.
 - **A search on the hole.** `record_search` with the hole's `yearRange` and `place`:
@@ -104,25 +107,24 @@ what applies:
   - `missing_surname`: the husband's name plus `spouseGivenName` set to her given name, with the year range as the marriage range.
   - `no_birth_info`: the person's name, with the year range as the birth range. No year range, no search.
   - `no_death_date`: the person's name, with the year range as the death range.
-  - `missing_surname`: her given name with her husband's surname as `spouseSurname`, the year range as the marriage range.
-  - `no_birth_info`: the person's name, with the year range as the birth range (the death range when the hole gives a death window).
 
-  Count the results the search reports. If the place is ambiguous, call
-  `place_search` first.
-- **Collections floor.** `collections_search({ standardPlace, startYear, endYear })`
-  when `coverage` is null and the hole has a place and a year range. A non-empty
-  `coverage.censusYears` means a census search is possible for that window; ignore 1890 in
-  it, since almost all of that census was destroyed.
+  A search is signal only when a top result fits the hole's name, place and years; the
+  number of results is not signal. If the place is ambiguous, call `place_search` first.
+- **Collections floor.** `collections_search({ standardPlace, startYear, endYear })`, once per
+  hole that has a place and a year range. A non-empty `coverage.censusYears` means a census
+  search is possible for that window; ignore 1890 in it.
 
 Make each call once. A search that returns nothing is a result, not a reason to
 retry.
 
 ### 3. Rank
 
-Rank by the coverage signal first: pending hints, then search results, then the
-census issue, then the collections floor. Break ties by the hole's closeness to
-the root (`generation`, then smaller absolute value first). Drop a hole with no
-signal at all unless fewer than three remain.
+Rank by the strongest signal: a search whose top result fits the hole, then a pending
+hint whose type fits it, then the census issue or a non-empty `coverage.censusYears`, then
+the collections floor. A hole with a search or hint signal comes before every hole without
+one, however far from the root. Break ties by the hole's closeness to the root
+(`generation`, then smaller absolute value first). Drop a hole with no signal at all unless
+fewer than three remain.
 
 ### 4. Suggest 3-5
 
@@ -132,8 +134,9 @@ stronger. Each suggestion gives:
 - the person
 - the hole in plain words
 - what FamilySearch has that could fill it
-- **one research question** that meets all three of: a single fact, a named
-  person, and a testable scope (place and years). "Who were the parents of Hannah
+- **one research question** that meets all three of: a single fact (one parentage, one
+  spouse, or one date or place of one event, never several events), a named person, and a
+  testable scope (place and years). "Who were the parents of Hannah
   Pruitt, born about 1862 in Lancaster, Pennsylvania?", not "research the Pruitt
   family".
 

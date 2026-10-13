@@ -25,7 +25,7 @@ Did the agent check what FamilySearch holds for the holes it kept, without retry
 Is each suggestion a person and one research question that `init-project` and `question-selection` can take as is?
 
 - **pass:** Each suggestion names one person, the hole in plain words, what FamilySearch has that could fill it, and one question that is a single fact, names the person, and scopes place and years. There are 3-5 when that many holes were returned, fewer when fewer were, and one person per suggestion. No living person is suggested.
-- **partial:** A question bundles two facts, omits the place or the years, or two suggestions fall on the same person.
+- **partial:** A question bundles two facts or several events (birth, baptism and death date and place are four facts, not one), omits the place or the years, or two suggestions fall on the same person.
 - **fail:** A question names no person, asks for a whole family or line, or the agent invents a suggestion from a tree with no holes.
 
 ## Hand-off and prose

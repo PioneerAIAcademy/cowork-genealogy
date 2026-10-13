@@ -1,0 +1,32 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "Sarah Maud Henderson died on 21 March 1928; the grave index entry names her Sarah Maude Henderson Coleman, born 15 February 1886, and gives no death place.",
+      "details": {
+        "subject_person": "Sarah Maud Henderson (GF6Z-JC8)",
+        "fact_type": "Death",
+        "date": "21 March 1928"
+      },
+      "supporting_sources": [
+        "BillionGraves Index — grave entry for Sarah Maude Henderson Coleman, died 21 Mar 1928"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Sarah Maud Henderson was buried in Toronto, Ontario, Canada; the grave index entry gives no cemetery name or burial date.",
+      "details": {
+        "subject_person": "Sarah Maud Henderson (GF6Z-JC8)",
+        "fact_type": "Burial",
+        "place": "Toronto, York, Ontario, Canada"
+      },
+      "supporting_sources": [
+        "BillionGraves Index — grave entry for Sarah Maude Henderson Coleman, died 21 Mar 1928"
+      ],
+      "required": false
+    }
+  ]
+}

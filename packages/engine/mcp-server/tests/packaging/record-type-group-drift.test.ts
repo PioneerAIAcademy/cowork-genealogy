@@ -174,7 +174,7 @@ describe("the spec's group tables and the shipped vocabulary agree", () => {
 
 describe("the tool's advertised descriptions match the spec's schema block", () => {
   // No other check covers description text: manifest.json carries names only,
-  // readme-catalog.test.ts is presence-only by design, and prompt-budget.test.ts
+  // catalog.test.ts is presence-only by design, and prompt-budget.test.ts
   // reads SKILL.md/agent bodies. That gap is why three of these descriptions
   // drifted into disagreement with each other before this PR.
   // Bounded at the next `## ` heading rather than running to the end of the file.

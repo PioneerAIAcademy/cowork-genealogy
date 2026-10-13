@@ -35,8 +35,9 @@ from unit_run_report import run_logs
 
 SHOW_CHANGED_FILES = 12
 #: Envelope settings compared, with the value an older log that lacks the key
-#: ran with. `tool_search` could not be turned off before it was recorded.
-_SETTING_DEFAULTS: dict[str, Any] = {"model": None, "tool_search": True}
+#: ran with. `tool_search` could not be turned off before it was recorded, and a
+#: log with no `store` ran on the file store.
+_SETTING_DEFAULTS: dict[str, Any] = {"model": None, "tool_search": True, "store": None}
 
 
 def _load(path: Path) -> dict[str, Any] | None:
