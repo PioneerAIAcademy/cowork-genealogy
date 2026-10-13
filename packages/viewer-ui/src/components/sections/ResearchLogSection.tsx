@@ -7,6 +7,7 @@ import { openExternal } from '../../lib/external'
 import type { LogEntry, Source, Assertion } from '../../lib/schema'
 import { indexByLogEntry } from '../../lib/index-by-log-entry'
 import { splitOffPlan } from '../../lib/offPlan'
+import { entryIdentity } from '../../lib/entryIdentity'
 import styles from './ResearchLogSection.module.css'
 
 type SortKey = 'performed' | 'tool' | 'outcome' | 'results_examined'
@@ -87,7 +88,17 @@ export default function ResearchLogSection(): React.JSX.Element {
                         onClick={() => setExpandedId(isExpanded ? null : entry.id)}
                       >
                         <td>{entry.performed}</td>
-                        <td>{entry.tool}</td>
+                        <td>
+                          {entry.tool}
+                          {/* The identity the collapsed row lacked: two searches of the
+                              same tool on the same day were identical on screen, so the
+                              reader had to open each to tell them apart. */}
+                          {entryIdentity(entry.query) && (
+                            <span className={styles.entryIdentity}>
+                              {entryIdentity(entry.query)}
+                            </span>
+                          )}
+                        </td>
                         <td>
                           <StatusBadge value={entry.outcome} />
                         </td>

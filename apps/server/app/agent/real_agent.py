@@ -1411,6 +1411,30 @@ class RealAgent:
         await self._client.interrupt()
         return True
 
+    def _compaction_events(self, message) -> list[dict]:
+        """Zero or one notice that the agent is compacting its context.
+
+        Measured on the committed corpus: every long run compacts, a median THREE
+        times at roughly two minutes each — about six minutes per run during which
+        the screen showed nothing at all. A researcher watching that cannot tell
+        "busy tidying up" from "crashed", which is the single most likely way a
+        working run reads as a broken one.
+
+        The CLI announces it as `system`/`compact_boundary`
+        (`compactMetadata: {trigger, preTokens, postTokens}`), the same record the
+        eval harness counts in `summarize_transcript`. Defensive throughout, like
+        the init reader beside it: this parses another process's payload, and a
+        detector that raises would break the sessions it exists to inform.
+        """
+        if getattr(message, "subtype", None) != "compact_boundary":
+            return []
+        data = getattr(message, "data", None)
+        meta = data.get("compactMetadata") if isinstance(data, dict) else None
+        trigger = meta.get("trigger") if isinstance(meta, dict) else None
+        # `manual` means the researcher asked for it and already knows; only the
+        # automatic one arrives unexplained.
+        return [_event("compaction", trigger=trigger or "auto")]
+
     def _mcp_health_events(self, message) -> list[dict]:
         """Zero or one warning that this session has no genealogy tools.
 
@@ -1510,6 +1534,8 @@ class RealAgent:
                     # such a run; there is no run to abort here, so we warn once
                     # and let the turn proceed.
                     for ev in self._mcp_health_events(message):
+                        yield ev
+                    for ev in self._compaction_events(message):
                         yield ev
                 if isinstance(message, ResultMessage):
                     # #1126 — the silent path. `receive_response()` YIELDS the

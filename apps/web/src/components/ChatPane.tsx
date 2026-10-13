@@ -19,7 +19,8 @@ import {
   type ChatBlock,
   type ToolChip,
   clearQueued,
-  turnOutcomeLabel
+  turnOutcomeLabel,
+  COMPACTING_LABEL
 } from './chatEvents'
 
 // How close to the bottom still counts as "at the bottom". Deliberately not an
@@ -238,6 +239,9 @@ export default function ChatPane({
   // The spend bound is only knowable HERE. The session list folds `budget`, a user
   // stop and `no_progress` all into `stopped`, so it cannot tell this case apart.
   const [spendStopped, setSpendStopped] = useState(false)
+  // The agent is compacting its context. Cleared by the next thing that happens,
+  // because the CLI announces the START of a compaction and never its end.
+  const [compacting, setCompacting] = useState(false)
   const [continuing, setContinuing] = useState(false)
   const [input, setInput] = useState('')
   // Phase 2 item 1: schema ids in chat prose become links into the viewer.
@@ -332,6 +336,7 @@ export default function ChatPane({
       setMessages(clearQueued)
       // 1c: say WHY the run ended. Without this a budget-capped or stalled run is
       // indistinguishable from a finished one.
+      setCompacting(false)
       setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
       setSpendStopped(ev.outcome === 'budget' && ev.limit === 'spend')
       // A task killed via TaskUpdated emits no task_done on the wire, so the
@@ -344,6 +349,18 @@ export default function ChatPane({
     // through to foldChatEvent, which appends an empty assistant bubble. That
     // is invisible whenever the reply fills it, and stays on screen when a turn
     // ends with no content: a Stop taken before the first token.
+    if (kind === 'compaction') {
+      setCompacting(true)
+      return
+    }
+    // Anything else arriving means the agent is working again. The CLI announces the
+    // START of a compaction and never its end, so the notice has to be cleared by
+    // evidence of progress rather than by an event that never comes.
+    //
+    // UNCONDITIONAL, not `if (compacting)`: this handler closes over the value as of
+    // its own render, so the guarded form read a stale `false` and never cleared.
+    // Setting the same value is a no-op in React, so the guard bought nothing anyway.
+    setCompacting(false)
     if (kind === 'turn_start') return
     // Subagent lifecycle. Not chat content — this drives the status line, so a
     // long delegation reads as "record-extractor · person_read · 12 tools"
@@ -569,6 +586,12 @@ export default function ChatPane({
               ●●● Reconnecting
               {connAttempt ? ` (attempt ${connAttempt.attempt} of ${connAttempt.max})` : ''}…
             </div>
+          ) : compacting ? (
+            // Ranked BELOW reconnecting and above everything else, for the same reason
+            // the comment above gives: a lost connection outranks a working pause, and
+            // a working pause outranks "working", which is what six minutes of silence
+            // used to render as.
+            <div className="typing">●●● {COMPACTING_LABEL}</div>
           ) : m0Decision && !busy ? (
             // Phase 3 item 1: a turn that ended `decision` gets the CARD, not the
             // one-line "Waiting on you" label. Answering sends the reader's choice

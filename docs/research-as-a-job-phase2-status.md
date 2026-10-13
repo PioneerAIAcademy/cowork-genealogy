@@ -100,14 +100,26 @@ The four that ARE met: paragraphs anchored to their step, identifiers linked, no
 or bare collection numbers in chips, a deferred search not rendering as a negative result.
 Sidecar bodies are served (`f2b98b957`); a 404 now means a log genuinely has none.
 
-### 2. Three items deferred with no ruling
+### 2. The three "deferred" items — RULED and BUILT 2026-10-13
 
-`collapsed-card identity`, `compaction state` and `retry state` are recorded here as "Still
-deferred". **`docs/research-as-a-job-decisions.md` contains no ruling on any of them** — zero
-mentions of compaction, retry or collapsed. The same is true of images and uploads above.
+They had no ruling anywhere: zero mentions of compaction, retry or collapsed in
+`research-as-a-job-decisions.md`. A deferral nobody ruled is not a deferral; it is work
+that fell off the list. Put to the lead, who ruled build-it on both of the two that were
+real.
 
-A deferral nobody ruled is not a deferral; it is work that fell off the list. Either get a
-ruling or treat them as open.
+- **Retry state was never deferred at all.** The chat has shown
+  "●●● Reconnecting (attempt N of M)…" since PR #765. This row was simply wrong.
+- **Compaction state — BUILT.** Every long run compacts, a median three times at about
+  two minutes each: roughly six minutes per run during which the screen showed nothing,
+  so a working pause was indistinguishable from a crash. The CLI announces it as
+  `system`/`compact_boundary`; `real_agent` forwards it and the chat shows
+  *"Still here — organising what I have found so far…"*. It ranks below reconnecting
+  (a lost connection outranks a working pause) and is cleared by the next event,
+  because the CLI announces a compaction's START and never its end.
+- **Collapsed-card identity — BUILT.** A collapsed research-log row showed date, tool,
+  outcome and a count, so two searches of the same tool on the same day were identical
+  on screen. The row now carries a one-line identity from the query — who, then where,
+  then when, capped at three parts so a row stays one line.
 
 ### 3. R2's activation measurement — the one acceptance for *Before phase 2*
 

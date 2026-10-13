@@ -209,3 +209,30 @@ describe('off-plan group', () => {
     expect(screen.getByTestId('off-plan-group').textContent).toMatch(/1 entry/)
   })
 })
+
+describe('collapsed-row identity', () => {
+  // The helper has its own suite. This tests the WIRING, which is the half that was
+  // missing when `splitOffPlan` shipped tested and uncalled on this same branch.
+
+  it('shows what each search was for, without expanding it', () => {
+    const entry = (id: string, collection: string): LogEntry =>
+      ({
+        ...patrickFlynnResearch.log[0],
+        id,
+        tool: 'record_search',
+        query: { given: 'Patrick', surname: 'Flynn', collection }
+      }) as LogEntry
+    mockResearch({ log: [entry('log_a', 'United States Census, 1850'),
+                         entry('log_b', 'United States Census, 1860')] })
+    render(<ResearchLogSection />)
+    // Both rows are collapsed, same tool, same day — and tell apart.
+    expect(screen.getByText(/United States Census, 1850/)).toBeTruthy()
+    expect(screen.getByText(/United States Census, 1860/)).toBeTruthy()
+  })
+
+  it('adds nothing to a row whose query says nothing', () => {
+    mockResearch({ log: [{ ...patrickFlynnResearch.log[0], id: 'log_x', query: {} } as LogEntry] })
+    render(<ResearchLogSection />)
+    expect(screen.queryByText(' · ')).toBeNull()
+  })
+})

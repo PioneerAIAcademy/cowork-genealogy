@@ -104,3 +104,22 @@ rule in a skill body is a rule the model may not follow.
 - **Test rule (standing).** Editing a skill means every test for it passes, including ones that
   were already failing.
 - **gps-mentor** is out of `/research` and requested by the researcher afterwards.
+
+## 2026-10-13 — the three "deferred" reading-experience items (lead)
+
+Raised because all three were recorded in the phase-2 status log as "Still deferred"
+with **no ruling in this file**, which reads as a decision while being an omission.
+
+**Compaction state: BUILD.** Measured at a median three compactions per long run, about
+two minutes each — roughly six minutes of a still screen with no explanation. The lead's
+reasoning: a researcher cannot tell that from a crash, and it is the most likely way a
+working run reads as a broken one. Wording left to the implementer with the brief "say
+we are still here and still working"; shipped as *"Still here — organising what I have
+found so far…"* — no "compaction", no "context", no token figures, and no promised
+duration, because we cannot predict one.
+
+**Collapsed-card identity: BUILD.** Two results that share a title are indistinguishable
+folded up. Ruled worth fixing even though it is the smaller of the two.
+
+**Retry state: not a decision.** It has been built since PR #765; the status log row was
+stale.

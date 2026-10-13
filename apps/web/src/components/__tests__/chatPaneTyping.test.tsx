@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
 import ChatPane from '../ChatPane'
 import type { SessionConnection, Listener, WsMessage } from '../../transport/SessionConnection'
-import { TURN_OUTCOME_LABELS, SPEND_CAP_LABEL } from '../chatEvents'
+import { TURN_OUTCOME_LABELS, SPEND_CAP_LABEL, COMPACTING_LABEL } from '../chatEvents'
 
 // PR #2870 items 1b and 1c, through the real component.
 //
@@ -331,5 +331,55 @@ describe('continuing on the same project after a spend stop', () => {
     startTurn(conn)
     conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'budget', limit: 'spend' } })
     expect(continueButton()).toBeNull()
+  })
+})
+
+describe('the agent compacting its context', () => {
+  // Measured on the committed corpus: every long run compacts, a median three times at
+  // about two minutes each — roughly six minutes per run with NOTHING on screen. A
+  // researcher cannot tell a working pause from a crash, which is the most likely way a
+  // working run reads as a broken one. Ruled build-it by the lead, 2026-10-13.
+
+  function mounted(): FakeConn {
+    const conn = new FakeConn()
+    render(<ChatPane conn={conn} sessionId="sess_1" isNew={false} />)
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    return conn
+  }
+
+  it('says it is still there while compacting', () => {
+    const conn = mounted()
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'compaction', trigger: 'auto' } })
+    expect(screen.getByText(COMPACTING_LABEL, { exact: false })).toBeTruthy()
+  })
+
+  it('clears the notice as soon as anything else happens', () => {
+    // The CLI announces the START of a compaction and never its end, so the notice has
+    // to be cleared by evidence of progress. Without that it would sit there for the
+    // rest of the turn.
+    const conn = mounted()
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'compaction', trigger: 'auto' } })
+    expect(screen.getByText(COMPACTING_LABEL, { exact: false })).toBeTruthy()
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'Back to work.' } })
+    expect(screen.queryByText(COMPACTING_LABEL, { exact: false })).toBeNull()
+  })
+
+  it('says nothing when no compaction happened', () => {
+    const conn = mounted()
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'text', text: 'Searching.' } })
+    expect(screen.queryByText(COMPACTING_LABEL, { exact: false })).toBeNull()
+  })
+
+  it('a lost connection outranks a working pause', () => {
+    // Both are "the screen is not moving"; only one of them is a problem.
+    const conn = mounted()
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'compaction', trigger: 'auto' } })
+    conn.emit({ type: 'conn_state', state: 'reconnecting' })
+    expect(screen.getByText(/Reconnecting/)).toBeTruthy()
+    expect(screen.queryByText(COMPACTING_LABEL, { exact: false })).toBeNull()
   })
 })

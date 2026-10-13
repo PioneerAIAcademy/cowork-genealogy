@@ -192,3 +192,11 @@
   background: var(--color-surface-subtle, #f6f6f6);
   border-top: 1px solid var(--color-border, #ddd);
 }
+
+/* The collapsed row's identity line — who/where/when the search was for. Quiet and
+   secondary to the tool name: it disambiguates, it does not compete. */
+.entryIdentity {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #666);
+}

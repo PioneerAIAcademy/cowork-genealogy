@@ -90,6 +90,18 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
 // ends a turn but not the sitting, so another message carries on where it left off. The
 // SPEND cap ends the sitting: the only way on is a new session on the same project, and a
 // run that stops at $35 looking finished is worse than no cap at all.
+/** Shown while the agent compacts its context.
+ *
+ * Measured: every long run compacts, a median three times at about two minutes each —
+ * roughly six minutes per run with nothing on screen. The researcher cannot tell a
+ * working pause from a crash, so this says which it is.
+ *
+ * Worded for a genealogist, not an engineer: no "compaction", no "context", no token
+ * figures. It says the agent is still there, says what it is doing in terms of the
+ * work, and does not promise a duration we cannot predict.
+ */
+export const COMPACTING_LABEL = 'Still here — organising what I have found so far…'
+
 export const SPEND_CAP_LABEL =
   'Stopped: this session reached its spend limit. Everything found so far is saved — ' +
   'start a new session on this project to carry on.'
