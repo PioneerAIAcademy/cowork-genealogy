@@ -266,16 +266,21 @@ const ALLOWED2: Record<string, string> = {
     "_has_stop_gate() and _resolution_claimed() fall back to the legacy exhaustive_declaration.declared=true shape for pre-#2539 run logs",
 
   // ── Dated attribution comments — editing them falsifies the attribution ──
+  "packages/engine/mcp-server/tests/packaging/catalog.test.ts":
+    "a dated 2026-10 comment: lists exhaustive_declaration as an example of inverse-check false positives",
   "packages/engine/mcp-server/tests/packaging/doc-links.test.ts":
     "a dated 2026-10 attribution: the line-number-cite ban grew from a drifted exhaustive_declaration cite",
-  "packages/engine/mcp-server/tests/packaging/readme-catalog.test.ts":
-    "a dated 2026-10 attribution: lists exhaustive_declaration as an example of inverse-check false positives",
   "packages/engine/mcp-server/tests/packaging/repo-paths.ts":
     "a dated 2026-10 attribution: explains why the line-number cite style is banned",
   "packages/viewer-ui/src/components/ErrorBoundary.tsx":
     "a dated comment recording that a question missing exhaustive_declaration previously caused a render throw",
   "packages/engine/mcp-server/tests/packaging/retired-field-names.test.ts":
     "this file — it names the retired field in order to ban it",
+
+  // ── Test fixtures that mirror the legacy shape ──
+  "eval/harness/tests/unit/test_e2e_corpus_report.py":
+    "test fixture _EXHAUSTIVENESS_GAP_RESEARCH mirrors the legacy exhaustive_declaration shape " +
+    "to prove the gap detector fires on pre-#2539 research.json documents",
 
   // ── Test function names — renaming would break CI attribution and coverage ──
   "eval/harness/tests/unit/test_skill_invocation.py":

@@ -376,7 +376,7 @@
           "if": {
             "properties": {
               "stopped_because": {
-                "enum": ["resources_spent", "blocked_by_conflict"]
+                "$ref": "enums.schema.json#/$defs/stopped_because_non_gate"
               }
             },
             "required": ["stopped_because"]

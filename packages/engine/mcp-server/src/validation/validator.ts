@@ -65,6 +65,9 @@ const CLOSED_ENUMS = {
   stopped_because_gate: new Set([
     "question_answered", "record_exhausted", "nothing_further_reachable",
   ]),
+  stopped_because_non_gate: new Set([
+    "resources_spent", "blocked_by_conflict",
+  ]),
   not_reached_kind: new Set([
     "nil_search", "browse_only", "over_transport_cap", "paywalled",
     "handed_to_user", "privacy_sealed", "skipped_plan_item", "wiki_named_untouched",
