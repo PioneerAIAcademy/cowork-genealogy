@@ -215,6 +215,63 @@ describe("mergeGedcomx — mode 1 relationships / sources / carry-over", () => {
     assertIntegrity(out);
   });
 
+  // ── Relationship identity carries the subtype (plan Decision 11) ──────────
+  //
+  // `relationshipKey` keys on type, endpoints AND subtype, so a Step and a
+  // Biological edge on one pair stay two relationships. `dedupRelationships`
+  // folds by the looser `relationshipMatches`, where an absent subtype is a
+  // less specific statement of the same edge.
+
+  const pair = (over: Partial<SimplifiedRelationship>): SimplifiedRelationship =>
+    ({ type: "ParentChild", parent: "I1", child: "I2", ...over }) as SimplifiedRelationship;
+
+  it("a Step and a Biological edge on one pair both survive dedup", () => {
+    const target: SimplifiedGedcomX = { persons: [{ id: "I1" }, { id: "I2" }] };
+    const candidate: SimplifiedGedcomX = {
+      persons: [{ id: "I1" }, { id: "I2" }],
+      relationships: [
+        pair({ id: "R1", subtype: "Biological" }),
+        pair({ id: "R2", subtype: "Step" }),
+      ],
+    };
+    const out = mergeGedcomx(target, candidate, [["I1", "I1"], ["I2", "I2"]]);
+    expect(out.relationships).toHaveLength(2);
+    expect((out.relationships ?? []).map((r) => r.subtype).sort()).toEqual(["Biological", "Step"]);
+  });
+
+  it("an untyped edge folds into a typed edge on the same pair, whichever comes first, and keeps the subtype", () => {
+    for (const order of [["Biological", undefined], [undefined, "Biological"]] as const) {
+      const candidate: SimplifiedGedcomX = {
+        persons: [{ id: "I1" }, { id: "I2" }],
+        relationships: [
+          pair({ id: "R1", subtype: order[0] }),
+          pair({ id: "R2", subtype: order[1] }),
+        ],
+      };
+      const out = mergeGedcomx({ persons: [{ id: "I1" }, { id: "I2" }] }, candidate, [["I1", "I1"], ["I2", "I2"]]);
+      expect(out.relationships).toHaveLength(1);
+      // The surviving edge takes the more specific statement either way round,
+      // so two merges of the same facts in a different order agree.
+      expect(out.relationships![0].subtype).toBe("Biological");
+    }
+  });
+
+  it("notes survive dedup", () => {
+    const candidate: SimplifiedGedcomX = {
+      persons: [{ id: "I1" }, { id: "I2" }],
+      relationships: [
+        pair({ id: "R1", notes: ["from the 1850 census"] }),
+        pair({ id: "R2", subtype: "Biological", notes: ["from the 1860 census"] }),
+      ],
+    };
+    const out = mergeGedcomx({ persons: [{ id: "I1" }, { id: "I2" }] }, candidate, [["I1", "I1"], ["I2", "I2"]]);
+    expect(out.relationships).toHaveLength(1);
+    expect((out.relationships![0].notes ?? []).sort()).toEqual([
+      "from the 1850 census",
+      "from the 1860 census",
+    ]);
+  });
+
   it("dedups sources by title and rewrites every source ref to the surviving id", () => {
     const target: SimplifiedGedcomX = {
       persons: [{ id: "I1", sources: [{ ref: "S1" }] }],

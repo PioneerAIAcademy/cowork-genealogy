@@ -308,12 +308,17 @@ function buildSourceIdMap(
 function dedupRelationships(
   rels: SimplifiedRelationship[],
 ): SimplifiedRelationship[] {
-  const byKey = new Map<string, SimplifiedRelationship>();
+  // Bucket on endpoints so the match scan stays cheap, then scan the bucket in
+  // tree order: an untyped edge matches every typed edge on the pair, and the
+  // first one wins. Keying the map on the exact `relationshipKey` instead would
+  // make an untyped edge its own bucket and leave it beside the typed edge it
+  // restates.
+  const buckets = new Map<string, SimplifiedRelationship[]>();
   const out: SimplifiedRelationship[] = [];
   for (const r of rels) {
     if (isSelfRelationship(r)) continue;
-    const key = relationshipKey(r);
-    const kept = byKey.get(key);
+    const bucket = buckets.get(endpointKey(r)) ?? [];
+    const kept = bucket.find((k) => relationshipMatches(k, r));
     if (kept) {
       if (r.facts?.length) {
         kept.facts = mergeFacts([...(kept.facts ?? []), ...r.facts]);
@@ -321,9 +326,19 @@ function dedupRelationships(
       if (r.sources?.length) {
         kept.sources = dedupSourceRefs([...(kept.sources ?? []), ...r.sources]);
       }
+      if (r.notes?.length) {
+        kept.notes = [...new Set([...(kept.notes ?? []), ...r.notes])];
+      }
+      // The surviving edge takes the more specific statement: an untyped edge
+      // kept first adopts the subtype of the typed edge folding into it, so the
+      // result is the same whichever order the two arrived in.
+      if (kept.subtype === undefined && r.subtype !== undefined) {
+        kept.subtype = r.subtype;
+      }
       continue;
     }
-    byKey.set(key, r);
+    bucket.push(r);
+    buckets.set(endpointKey(r), bucket);
     out.push(r);
   }
   return out;
@@ -335,14 +350,61 @@ function isSelfRelationship(r: SimplifiedRelationship): boolean {
   return false;
 }
 
+/**
+ * A relationship's exact identity: type, endpoints AND subtype.
+ *
+ * The subtype is part of the key because a Step and a Biological edge on one
+ * pair are two different relationships, not one recorded twice (plan Decision
+ * 11: "edges can be retyped"). `tree-diff.ts` maps relationships by this key,
+ * so without the subtype a retype read as unchanged and a Step edge added
+ * beside a Biological one vanished from the delta.
+ *
+ * This is NOT the test for "does this new edge belong on an existing one" —
+ * that is `relationshipMatches`, which treats an absent subtype as compatible
+ * with any. Keep the two apart: an exact key cannot express "either is absent".
+ */
 export function relationshipKey(r: SimplifiedRelationship): string {
   const type = r.type ?? "?";
+  const sub = r.subtype ?? "";
   // Couple endpoints are unordered; ParentChild is directional.
+  if (r.person1 !== undefined || r.person2 !== undefined) {
+    const ends = [r.person1 ?? "", r.person2 ?? ""].sort();
+    return `${type}|couple|${ends[0]}|${ends[1]}|${sub}`;
+  }
+  return `${type}|pc|${r.parent ?? ""}|${r.child ?? ""}|${sub}`;
+}
+
+/** Type and endpoints only — the pair an edge joins, ignoring its subtype. */
+function endpointKey(r: SimplifiedRelationship): string {
+  const type = r.type ?? "?";
   if (r.person1 !== undefined || r.person2 !== undefined) {
     const ends = [r.person1 ?? "", r.person2 ?? ""].sort();
     return `${type}|couple|${ends[0]}|${ends[1]}`;
   }
   return `${type}|pc|${r.parent ?? ""}|${r.child ?? ""}`;
+}
+
+/**
+ * Do these two edges describe the same relationship?
+ *
+ * Same type and endpoints (a Couple's two persons in either order), and their
+ * subtypes agree OR either is absent. An untyped edge is a less specific
+ * statement of the same relationship, so it matches a typed one; two different
+ * explicit subtypes are two relationships and never match.
+ *
+ * One predicate, two callers: `add_relationship` corroborates into the first
+ * match rather than writing a second edge (plan Decision 37), and
+ * `dedupRelationships` folds by the same rule, so a tree merged from two
+ * documents and a tree built by two `add_relationship` calls end up the same
+ * shape.
+ */
+export function relationshipMatches(
+  a: SimplifiedRelationship,
+  b: SimplifiedRelationship,
+): boolean {
+  if (endpointKey(a) !== endpointKey(b)) return false;
+  if (a.subtype === undefined || b.subtype === undefined) return true;
+  return a.subtype === b.subtype;
 }
 
 // ─── Name equivalence (spec §7.1) ───────────────────────────────────────────
@@ -436,7 +498,7 @@ function scoreName(n: SimplifiedName): number {
   return letters * 10 + diacritics;
 }
 
-function dedupSourceRefs(
+export function dedupSourceRefs(
   refs: SimplifiedSourceReference[],
 ): SimplifiedSourceReference[] {
   const seen = new Set<string>();

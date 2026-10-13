@@ -304,7 +304,12 @@ describe("tree_edit", () => {
     it("rejects a caller-supplied assertion_id on add_person and add_relationship inline facts", async () => {
       // requireFactShape runs on all four fact write paths; the two above cover
       // add_fact/update_fact, these are the other two.
-      await writeProject(onePersonSourced());
+      const tree = onePersonSourced();
+      // A real second person: the edge's endpoints must differ, or the
+      // self-Couple refusal answers first and this case proves nothing about
+      // `assertion_id`.
+      tree.persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] } as any);
+      await writeProject(tree);
       const person = await treeEdit({
         projectPath: dir,
         operation: "add_person",
@@ -323,7 +328,7 @@ describe("tree_edit", () => {
         relationship: {
           type: "Couple",
           person1: "I1",
-          person2: "I1",
+          person2: "I2",
           // The edge's own mandatory-ref check runs BEFORE requireFactShape, so
           // without this the call is refused for the wrong reason and the case
           // proves nothing.
@@ -592,6 +597,148 @@ describe("tree_edit", () => {
     expect(single(r).assignedIds?.facts).toEqual(["F2"]);
     const rel = (await readTree()).relationships[0];
     expect(rel.facts[0]).toMatchObject({ id: "F2", type: "Marriage", date: "12 May 1843" });
+  });
+
+  // ── Decision 37: a matching edge is corroborated, not duplicated ──────────
+  //
+  // A refusal would leave the writer to re-route the same evidence by hand
+  // through `add_fact`, dropping the new edge's own sources on the way. These
+  // pin that one edge survives and the new sources land on it.
+
+  const twoPersons = () => {
+    const t = onePersonSourced();
+    (t as any).persons.push({ id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Smith", preferred: true }], facts: [] });
+    (t as any).sources.push({ id: "S2", title: "1860 U.S. Federal Census" });
+    return t;
+  };
+
+  it("add_relationship refuses a Couple whose two persons are the same", async () => {
+    await writeProject(twoPersons());
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "Couple", person1: "I1", person2: "I1", sources: [{ ref: "S1" }] },
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(JSON.stringify(r)).toMatch(/a Couple cannot join 'I1' to themselves/);
+  });
+
+  it("an untyped add_relationship on a pair with a Biological edge corroborates into that edge, which stays Biological", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(single(r).assignedIds?.relationship).toBe("R1");
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].subtype).toBe("Biological");
+    // The point of corroborating rather than refusing: the new record's ref lands.
+    expect(tree.relationships[0].sources.map((s: any) => s.ref).sort()).toEqual(["S1", "S2"]);
+  });
+
+  it("a Biological add_relationship on an untyped edge corroborates into it, leaves it untyped and says so", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(single(r).assignedIds?.relationship).toBe("R1");
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    // Retyping is update_relationship's job: silently adopting the subtype would
+    // turn an untyped import into a biological claim with nothing behind it.
+    expect(tree.relationships[0].subtype).toBeUndefined();
+    if (r.ok) expect(r.validation.warnings.join(" ")).toMatch(/update_relationship to retype it to 'Biological'/);
+  });
+
+  it("a Step edge added beside a Biological edge creates a second edge", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "ParentChild", parent: "I1", child: "I2", subtype: "Biological", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2", subtype: "Step", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(2);
+    expect(tree.relationships.map((x: any) => x.subtype).sort()).toEqual(["Biological", "Step"]);
+  });
+
+  it("a second Couple on a pair that already has one, given in either order, corroborates into it and returns its id", async () => {
+    const t = twoPersons();
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      // Endpoints reversed: a Couple is unordered.
+      relationship: { type: "Couple", person1: "I2", person2: "I1", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(single(r).assignedIds?.relationship).toBe("R1");
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    expect(tree.relationships[0].sources.map((s: any) => s.ref).sort()).toEqual(["S1", "S2"]);
+  });
+
+  it("must not fire: a Couple on a different pair creates a new edge", async () => {
+    const t = twoPersons();
+    (t as any).persons.push({ id: "I3", gender: "Male", names: [{ id: "N3", given: "John", surname: "Doe", preferred: true }], facts: [] });
+    (t as any).relationships = [
+      { id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] },
+    ];
+    await writeProject(t);
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "Couple", person1: "I1", person2: "I3", sources: [{ ref: "S2" }] },
+    });
+    expect(r.ok).toBe(true);
+    expect((await readTree()).relationships).toHaveLength(2);
+  });
+
+  it("a retried add_relationship carrying the same Marriage fact leaves one edge and one Marriage fact", async () => {
+    await writeProject(twoPersons());
+    const call = () =>
+      treeEdit({
+        projectPath: dir,
+        operation: "add_relationship",
+        relationship: {
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          sources: [{ ref: "S1" }],
+          facts: [{ type: "Marriage", date: "1850", sources: [{ ref: "S1" }] }],
+        },
+      });
+    const first = await call();
+    expect(first.ok).toBe(true);
+    const second = await call();
+    expect(second.ok).toBe(true);
+    const tree = await readTree();
+    expect(tree.relationships).toHaveLength(1);
+    // The identical fact is not added twice — its sources merge into the one there.
+    expect(tree.relationships[0].facts).toHaveLength(1);
+    expect(tree.relationships[0].facts[0].type).toBe("Marriage");
   });
 
   it("add_relationship: rejects a caller-supplied fact id", async () => {
