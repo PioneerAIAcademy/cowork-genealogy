@@ -478,11 +478,54 @@ const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
 // Decennial Census" each capture nothing (the adjacent word is excluded)
 // and fall through to arm 3, which fires on this timeline's own US event
 // regardless of the entry actually naming Essex, Cork, Denmark, or Sweden.
-// The trailing `(?:\s(?:Federal|Population|Decennial|Eleventh|County))*`
-// lets the same exclusion words sit as descriptors AFTER a real jurisdiction
-// word rather than only ruling out that word itself, so the jurisdiction is
+// The trailing `(?:\s(?:Population|Decennial|Eleventh|County))*` lets the
+// same exclusion words sit as descriptors AFTER a real jurisdiction word
+// rather than only ruling out that word itself, so the jurisdiction is
 // found wherever it sits relative to the descriptive filler, not just when
 // nothing else sits between it and "census".
+//
+// "Federal" is excluded from the filler list, not just the capture-start
+// list: round-6 review found it let an ORDINARY capitalized word that
+// starts the entry get captured as a fake jurisdiction whenever "Federal"
+// sat between it and "Census" -- "The Federal Census 1890", "Missing
+// Federal Census 1890" each captured "The"/"Missing" as the jurisdiction,
+// which isn't in usPlaceWords, so both were wrongly silenced on the
+// Schuylkill timeline despite naming no country at all. No foreign census
+// this arm exists to allow is ever called a "federal census" in English
+// usage -- that phrasing names the US bureau specifically -- so "Federal"
+// never needs to bridge a real jurisdiction to "census" the way
+// "Population"/"Decennial"/"County" legitimately do, and dropping it from
+// the filler set (while keeping it in the capture-start exclusion, since
+// "1890 Federal Population Census" must still fall through entirely) costs
+// nothing on a real foreign-jurisdiction phrasing.
+//
+// That alone does not close every such phrasing: "The Population Census of
+// 1890" has the exact same shape as "Danish Population Census" (a
+// capitalized word, "Population", "Census", in that order) and
+// "Population" must stay in the filler set for the Danish/Swedish cases to
+// keep matching, so adjacency repair alone cannot tell "The" from
+// "Danish" here. The two are different grammatically, not just
+// semantically: "The"/"A"/"An"/"This"/"That"/"These"/"Those" are English
+// articles and demonstrative determiners -- a fixed, closed class of
+// function words, not a per-country table in different clothing -- and
+// none of them can themselves be a jurisdiction's name. Added to the same
+// capture-start exclusion as "Census"/"Federal"/etc., which makes "The
+// Population Census of 1890" fall through entirely (no other word in the
+// string is a valid capture start either), exactly like the bureau-name
+// phrasings above.
+//
+// What this still lets through: a jurisdiction name that happens to BE one
+// of the excluded determiners or census-descriptive words is not
+// constructible in English (there is no country or county named "The" or
+// "Population"), so no real phrasing is newly silenced by this exclusion.
+// A capitalized ordinary adjective that isn't an article or one of the
+// census-descriptive words ("Missing Population Census 1890") is not
+// addressed by this round's fix and is still wrongly treated as a foreign
+// jurisdiction (captures "Missing"); closing that fully would require
+// either enumerating ordinary English adjectives (unbounded, unlike the
+// closed article/descriptor sets above) or a real word list of
+// jurisdiction names, which ADR-0012 forbids. ADR-0011 limit 1 prefers
+// this direction of error (a false allow) over a false refusal.
 //
 // Captured so the caller can check it against the timeline's own recorded
 // US places. "[Cc]ensus" deliberately, not a trailing /i flag -- an /i flag
@@ -493,7 +536,7 @@ const TIMELINE_NAMES_US_ABBREV_RE = /\bUS\b|\bUSA\b/;
 // through to arm 3's fallback -- the exact silencing this arm exists to
 // provide, lost on nothing but a capitalization choice.
 const TIMELINE_NAMES_OTHER_JURISDICTION_RE =
-  /\b(?!Census\b|Federal\b|United\b|States\b|Population\b|Decennial\b|Eleventh\b|County\b)([A-Z][a-z]+)(?:\s(?:Federal|Population|Decennial|Eleventh|County))*\s[Cc]ensus\b/;
+  /\b(?!Census\b|Federal\b|United\b|States\b|Population\b|Decennial\b|Eleventh\b|County\b|The\b|A\b|An\b|This\b|That\b|These\b|Those\b)([A-Z][a-z]+)(?:\s(?:Population|Decennial|Eleventh|County))*\s[Cc]ensus\b/;
 
 export function timelineCensus1890Invariants(entry: any): string[] {
   const gaps: any[] = Array.isArray(entry.gaps) ? entry.gaps : [];

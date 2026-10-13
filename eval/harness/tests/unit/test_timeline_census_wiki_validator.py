@@ -22,6 +22,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 # collect the imported validator as a test of this module and error on its
 # harness-supplied fixtures. Same pattern as the sibling validator tests.
 from test_timeline import (  # noqa: E402
+    _census_year_of_entry,
     test_census_years_read_from_wiki as check_census_from_wiki,
     test_us_1890_never_expected as check_us_1890_backstop,
 )
@@ -234,6 +235,24 @@ def test_passes_on_a_vital_event_marker_outside_the_old_hand_written_list():
             ],
             "severity": "high"}]
     check_census_from_wiki(BEFORE, _after(gap), [_wiki_call()], TAGGED)
+
+
+def test_a_capitalized_marker_paired_with_its_own_date_reads_as_the_census_year():
+    """Round 6 review corrected a wrong claim in the code comment: a
+    vital-event marker is NOT "always written lowercase in this corpus" --
+    capitalized markers do appear, just never paired with their own date in
+    the real corpus (73 capitalized vs. 5,349 lowercase marker-plus-year
+    instances, measured). This is the accepted residual gap that follows
+    from checking only the opening letter's case: a capitalized marker
+    immediately followed by a year reads as naming the census year, exactly
+    as a real jurisdiction name would. Pins the current, accepted behavior
+    rather than leaving it an undocumented gap -- this is NOT a case the
+    rule is expected to get right, and nothing in the committed corpus
+    exercises it."""
+    assert _census_year_of_entry("census (Married 1859)") == 1859
+    assert _census_year_of_entry("census (M. 1859)") == 1859
+    assert _census_year_of_entry("census (Bapt. 1814)") == 1814
+    assert _census_year_of_entry("census (Born 1861)") == 1861
 
 
 def test_fires_on_cross_country_page_contamination():

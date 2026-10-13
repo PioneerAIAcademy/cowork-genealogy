@@ -2277,6 +2277,23 @@ describe("research_append (Phase 3)", () => {
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
+    // Round-6 review: the filler mechanism above let an ORDINARY capitalized
+    // word that starts the entry -- not a jurisdiction at all -- get
+    // captured as the "foreign jurisdiction" whenever a filler word sat
+    // between it and "census". None of these name a country, so all three
+    // must still fire via arm 3 on the mixed timeline, exactly like the
+    // round-4 stray-capital block below, but reached through the filler
+    // path the round-5 fix added rather than direct adjacency.
+    it.each([
+      ["a determiner bridged to 'census' by the now-removed Federal filler", "The Federal Census 1890"],
+      ["an ordinary adjective bridged by the now-removed Federal filler", "Missing Federal Census 1890"],
+      ["a determiner bridged by the Population filler, same shape as the Danish case", "The Population Census of 1890"],
+    ])("still refuses on the mixed timeline despite a filler-bridged stray capital: %s", async (_label, entry) => {
+      await writeProject();
+      const r = await appendWithGap([entry], mixedEvents);
+      expect(r.ok).toBe(false);
+    });
+
     // Round-4 review: arm 2's first cut matched ANY capitalized word anywhere
     // in the entry, which wrongly silenced every one of these on the exact
     // immigrant timeline this guard exists for -- none names a jurisdiction
