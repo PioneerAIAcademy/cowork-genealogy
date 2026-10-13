@@ -414,12 +414,12 @@ const STAGING_DIR = "results/.staging";
 const STAGING_PREFIX = `${STAGING_DIR}/`;
 const BLOB_DIRS = new Set(["results", "images", "uploads"]);
 
-type Route =
+export type Route =
   | { kind: "staging"; stagingId: string }
   | { kind: "blob" }
   | { kind: "document" };
 
-function routeRef(ref: string): Route {
+export function routeRef(ref: string): Route {
   if (ref.startsWith(STAGING_PREFIX)) {
     return { kind: "staging", stagingId: ref.slice(STAGING_PREFIX.length) };
   }
@@ -525,6 +525,11 @@ export class PgS3ProjectStore implements ProjectStore {
   /** For writes and the transaction: a wrong projectPath is an error, never a
    *  silent write somewhere else. */
   private assertAnchor(projectPath: unknown): void {
+    // A missing one gets the answer the tools give it (project-io.ts's
+    // MISSING_PROJECT_PATH_MESSAGE), as the file backend lets it reach them.
+    if (typeof projectPath !== "string" || projectPath.trim() === "") {
+      throw new Error("projectPath is required");
+    }
     if (!this.isAnchor(projectPath)) {
       throw new Error(
         `projectPath '${String(projectPath)}' is not this store's project (${this.anchorPath})`,
@@ -613,6 +618,11 @@ export class PgS3ProjectStore implements ProjectStore {
   // ── ProjectStore ─────────────────────────────────────────────────────────
 
   async withTransaction<T>(projectPath: string, fn: () => Promise<T>): Promise<T> {
+    // A missing projectPath runs the body unlocked, as the file backend does, so
+    // the tool's own read answers it loudly (ok:false, "projectPath is
+    // required") instead of the lock throwing first. Every write it attempts
+    // still refuses: there is no anchor to write to.
+    if (typeof projectPath !== "string" || projectPath.trim() === "") return fn();
     this.assertAnchor(projectPath);
     if (this.tx()) {
       throw new Error(
@@ -682,9 +692,31 @@ export class PgS3ProjectStore implements ProjectStore {
       if (r.rowCount === 0) throw enoent(this.projectId, rel);
       return JSON.stringify(r.rows[0].doc, null, 2);
     }
-    const row = await this.indexRow(rel);
-    if (!row) throw enoent(this.projectId, rel);
-    return this.getObject(row.s3_key, rel);
+    const bytes = await this.readObject(rel);
+    if (!bytes) throw enoent(this.projectId, rel);
+    return bytes;
+  }
+
+  /**
+   * A blob or staged ref's bytes, or `null` when no row names it. A read can
+   * lose a race with an overwrite that takes no lock of the reader's, which
+   * points the row at a new object and deletes the old one between the lookup
+   * and the GET. A missing object under a key the row no longer names is that
+   * race, so follow the row; one it still names is a genuinely absent ref.
+   */
+  private async readObject(rel: string): Promise<Uint8Array | null> {
+    let row = await this.indexRow(rel);
+    for (let attempt = 0; ; attempt++) {
+      if (!row) return null;
+      try {
+        return await this.getObject(row.s3_key, rel);
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== "ENOENT" || attempt >= 4) throw e;
+        const now: { s3_key: string } | null = await this.indexRow(rel);
+        if (now?.s3_key === row.s3_key) throw e;
+        row = now;
+      }
+    }
   }
 
   async list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {
@@ -785,8 +817,7 @@ export class PgS3ProjectStore implements ProjectStore {
     // lock already serialises it.
     const body = async (): Promise<void> => {
       await this.touchProject();
-      const existing = await this.indexRow(rel);
-      const head = existing ? await this.getObject(existing.s3_key, rel) : new Uint8Array();
+      const head = (await this.readObject(rel)) ?? new Uint8Array();
       await this.putObjectIndexed(rel, route, Buffer.concat([head, Buffer.from(text, "utf-8")]));
     };
     if (this.tx()) return body();

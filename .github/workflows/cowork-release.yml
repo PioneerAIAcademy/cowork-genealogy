@@ -3,6 +3,7 @@
 # Release, tag `cowork-latest`, on every push to main. README.md's download links
 # name that tag, so they never change and always serve main: a user gets what
 # cloning main and building would give them, minus the build.
+# electron-release.yml adds the Research Viewer installers to the same release.
 #
 # The build and its checks are the last step of the required `vitest` job
 # (engine-tests.yml), run again on the merged commit, so a bundle that does not
@@ -70,4 +71,4 @@ jobs:
           fi
           # $ASSETS unquoted on purpose: it is two paths.
           gh release upload "$TAG" $ASSETS --clobber
-          gh release edit "$TAG" --notes "Built from ${GITHUB_SHA::7} on $(date -u +%Y-%m-%d). Download both files below, then follow the install steps: https://github.com/${GITHUB_REPOSITORY}#install"
+          gh release edit "$TAG" --notes "Built from ${GITHUB_SHA::7} on $(date -u +%Y-%m-%d). Download the MCP server, the plugin and the Research Viewer for your computer below, then follow the install steps: https://github.com/${GITHUB_REPOSITORY}#install"
