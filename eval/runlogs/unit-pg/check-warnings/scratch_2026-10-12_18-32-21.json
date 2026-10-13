@@ -1,0 +1,3214 @@
+{
+  "schema_version": 3,
+  "skill": "check-warnings",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_18-32-21",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/check-warnings.md": "19749a8c2ed9f174a08ce3119ee3024781e9a4604445b70d17d496b02318365b",
+    "eval/tests/unit/check-warnings/check-flynn-assertions.json": "a62e35305e71b247fc004f3ac0cb3ea7a76d05cdc0d481b5e48ad356dc8acc49",
+    "eval/tests/unit/check-warnings/check-resolved-project.json": "115076e8f4636138658e58428472ac2843e149bf6af1cb1500f4c6021be05d4c",
+    "eval/tests/unit/check-warnings/cluster-no-shared-cause.json": "8772e4365eea687d1be4b90e11fd602619c858ad7850e847773710a14f16a75b",
+    "eval/tests/unit/check-warnings/detect-cluster.json": "06b54602b631fccf64be304c73d5bdb577ad950a54cb4f32466b8fbd83fe0ff1",
+    "eval/tests/unit/check-warnings/detect-early-marriage.json": "6cb8f7881e21ffdfa3220514bde99a91b0afd7829a1a9374352ed8da4b854f30",
+    "eval/tests/unit/check-warnings/detect-empty-stub.json": "df975344286dbc483ed385f002f396330ef507440e485f802fc3943884abf6f7",
+    "eval/tests/unit/check-warnings/detect-event-after-death.json": "e7e6370544f410d2a8a4254e5198da018761fae57b5df54efd474d30ba99f00d",
+    "eval/tests/unit/check-warnings/detect-father-died-before-child.json": "98f5316997d2432d74b913dc0583637ebf889d0794330b17096df69bc187f08e",
+    "eval/tests/unit/check-warnings/detect-impossible-lifespan.json": "de43f3321539b3ef5c692dfa547b9e4b2d195aa8108b48f3eb354dab3c6aba2e",
+    "eval/tests/unit/check-warnings/detect-posthumous-residence.json": "64f6b79a1465449e3547438744921e39423cd9465d8f9d2b7f28ea6068daa186",
+    "eval/tests/unit/check-warnings/detect-relative-warning.json": "65749855cc6b98a58dc15b765d6338ad0ebff86ae142b9469d80f0b460f15ccf",
+    "eval/tests/unit/check-warnings/direct-cluster-hostile-delegation.json": "49f409e259995e774f2b11479f7ac07b4559dc04c640c477f7327a5a07585602",
+    "eval/tests/unit/check-warnings/negative-source-conflict.json": "0cfc68f277c300ebd7f223533c8dfca27dd2b24d29cc04b4d40f55f81a9f16f7",
+    "eval/tests/unit/check-warnings/rubric.md": "c908de91e6111eff94c4a58988e6669ff70eb59364197d92202faf88f3ff4688",
+    "eval/fixtures/scenarios/brady-multiple-warnings/README.md": "0fecfc25883df6b1d5d04d749ed960c24c29ac05c3e3897a177f6e98f5241c55",
+    "eval/fixtures/scenarios/brady-multiple-warnings/research.json": "c5033a9f9dd22286e90633cb901b8d9a07c565a7452745b8dfdf3eb379de919f",
+    "eval/fixtures/scenarios/brady-multiple-warnings/tree.gedcomx.json": "f7196a506786f50063b1270ff31690d5e785075174d45caaf80f70fa34f1a742",
+    "eval/fixtures/scenarios/empty-project-just-created/README.md": "1eaade55626961964ad31d03c770c2285ee400834dd6f03d21a0518f477f9346",
+    "eval/fixtures/scenarios/empty-project-just-created/research.json": "e4e30a5994357264b24ab099dca321d438ecdf7244b738182e7ca65e386fe049",
+    "eval/fixtures/scenarios/empty-project-just-created/tree.gedcomx.json": "2f78821d8cee590a01ff5aed4483aa8037c07fa92f6fcedab6a8ec205ee9ca98",
+    "eval/fixtures/scenarios/flynn-posthumous-residence/README.md": "588567c894874e3d9f43f7c4dbfb7dfb8c90e06dbc2e5b4e75c365f328022db9",
+    "eval/fixtures/scenarios/flynn-posthumous-residence/research.json": "6325a4084fd1e5230573cf8cc69c989667ca0f2fd1991702881985999fe188a5",
+    "eval/fixtures/scenarios/flynn-posthumous-residence/tree.gedcomx.json": "c2070ca4100b3b8d6bca5dc0408cc07befc66e738a2006b0ad26108cf07c9d28",
+    "eval/fixtures/scenarios/flynn-resolved/README.md": "ac925a6fc1693e61f8b3238313289aa0c1227df574179a8b44bdd58bff3a622b",
+    "eval/fixtures/scenarios/flynn-resolved/research.json": "0990e86f1870708062229e51dba30fb4b23f0ed917f6d9c61ec668f1c1d8de76",
+    "eval/fixtures/scenarios/flynn-resolved/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/keane-impossible-lifespan/README.md": "fc574589185f898f4c8c45b5182dff65eeec410f54aa5b21f719d6a368fa3ac4",
+    "eval/fixtures/scenarios/keane-impossible-lifespan/research.json": "9e6490eb5e6694e32bece944211e2e64971158d527943c7d42e817f93098344e",
+    "eval/fixtures/scenarios/keane-impossible-lifespan/tree.gedcomx.json": "47e4627dd5b13d712086a7f77647ccede2402c0c6941171c8ffe5f848038fbf9",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/person-warnings-cluster.json": "ebd2e3b91fb92e982b9ac87d4a92c6fa92966268c91f3ac22c43e00bdfee8a7e",
+    "eval/fixtures/mcp/person-warnings-cluster-disjoint.json": "f58d4353b18059cbcdee45ff8b3077e4d9180a98bc2da34866fe5f88b13eea2d",
+    "eval/fixtures/mcp/person-warnings-early-marriage.json": "51da73f532a7bb47036a886394c1f3924b9a39221520022a1cc3d87efee7001a",
+    "eval/fixtures/mcp/person-warnings-empty-stub.json": "ff9df1e873dba8fb95dcc503d264ca07963a84829644b3eeb53cb5e412d298fa",
+    "eval/fixtures/mcp/person-warnings-event-after-death.json": "2e52b1dfb340258eba480737f62f0bbd5cd2525070512e05b2101a7995170449",
+    "eval/fixtures/mcp/person-warnings-father-died-before-child.json": "d46a5246466660a9171fcff02b731ebd5c3264aedf7b760350135687d1da12d1",
+    "eval/fixtures/mcp/person-warnings-impossible-lifespan.json": "b2f0c347f42a442b3d7126ccda73d210c07eed477232dd46ef7922ec89ff5ae8",
+    "eval/fixtures/mcp/person-warnings-no-warnings.json": "22a943d24c216340847f31752a4012ea562c8d2ff2d7c3de39d71d4c1e17ffee",
+    "eval/fixtures/mcp/person-warnings-posthumous-residence.json": "3f99be9c41925d467b85530b41507ce7bb8f47220596ba28929c83cc983ad253",
+    "eval/fixtures/mcp/person-warnings-relative-warning.json": "4e47b8642a090f46769c84646012660f5a75ad6e3d1a19ba85603f967b875003"
+  },
+  "tests": [
+    {
+      "test_id": "ut_check_warnings_019",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "brady-multiple-warnings",
+      "mcp_fixtures": [
+        "person-warnings-cluster-disjoint"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reported both contradictions returned by person_warnings with accurate fact citations (F5/F1 for christening-before-birth, F6/F2 for burial-before-death). The analysis that these fact sets are disjoint and therefore no single wrong fact explains both is factually sound and grounded in the tool response. The merged-profile conclusion follows logically from this disjoint-facts observation. All claims are supported by the tool response or valid logical inference from it."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: called person_warnings with the correct personId (I1), reported both contradictions the tool returned, analyzed them as a cluster, tested the shared-cause hypothesis, concluded it does not apply, identified the merged-profile reading as stronger, and recommended the chronological timeline rebuild and split-point search as a research action. No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The person_warnings call passed personId 'I1' as expected. The expected_args specified only personId, and the actual args matched that requirement. The projectPath was included but is a reasonable addition for tool context and does not constitute noise or a defect."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "Both real impossibilities were flagged: christening dated 1843 before birth ~1845, and burial dated 1905 before death 1908-03-12. These are genuine date impossibilities, not false positives on valid edge cases. The skill correctly identified both as contradictions without over-flagging or missing any of the warnings the tool returned."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "Both warnings were correctly classified as Contradiction, matching the severity: 'contradiction' returned by the tool. The skill labeled them as '[Fundamental: a christening cannot precede a birth]' and '[Fundamental: a burial cannot precede a death]', correctly mapping the tool's 'contradiction' severity to the Fundamental assumption category per Appendix C of the agent body. No warnings were misclassified as Implausible or Valid."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning names the specific facts involved (F5 and F1 for christening-before-birth; F6 and F2 for burial-before-death) with their dates, and suggests concrete next steps: verify both dates against original source documents, check the original records, and if both dates hold up, consider whether records belong to different individuals. The summary recommends rebuilding a chronological timeline and identifying the split point\u2014a clear research action the genealogist can take. Warnings are not generic but tied to specific records and actionable investigation steps."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reported both contradictions returned by person_warnings with accurate fact citations (F5/F1 for christening-before-birth, F6/F2 for burial-before-death). The analysis that these fact sets are disjoint and therefore no single wrong fact explains both is factually sound and grounded in the tool response. The merged-profile conclusion follows logically from this disjoint-facts observation. All claims are supported by the tool response or valid logical inference from it."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: called person_warnings with the correct personId (I1), reported both contradictions the tool returned, analyzed them as a cluster, tested the shared-cause hypothesis, concluded it does not apply, identified the merged-profile reading as stronger, and recommended the chronological timeline rebuild and split-point search as a research action. No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The person_warnings call passed personId 'I1' as expected. The expected_args specified only personId, and the actual args matched that requirement. The projectPath was included but is a reasonable addition for tool context and does not constitute noise or a defect."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "Both real impossibilities were flagged: christening dated 1843 before birth ~1845, and burial dated 1905 before death 1908-03-12. These are genuine date impossibilities, not false positives on valid edge cases. The skill correctly identified both as contradictions without over-flagging or missing any of the warnings the tool returned."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "Both warnings were correctly classified as Contradiction, matching the severity: 'contradiction' returned by the tool. The skill labeled them as '[Fundamental: a christening cannot precede a birth]' and '[Fundamental: a burial cannot precede a death]', correctly mapping the tool's 'contradiction' severity to the Fundamental assumption category per Appendix C of the agent body. No warnings were misclassified as Implausible or Valid."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning names the specific facts involved (F5 and F1 for christening-before-birth; F6 and F2 for burial-before-death) with their dates, and suggests concrete next steps: verify both dates against original source documents, check the original records, and if both dates hold up, consider whether records belong to different individuals. The summary recommends rebuilding a chronological timeline and identifying the split point\u2014a clear research action the genealogist can take. Warnings are not generic but tied to specific records and actionable investigation steps."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 31245.66479200439,
+        "duration_api_ms": 31620.0,
+        "judge_duration_ms": 9048.56741700496,
+        "wall_clock_ms": 40528.00679206848,
+        "num_turns": 2,
+        "input_tokens": 540,
+        "cached_input_tokens": 40882,
+        "cache_creation_input_tokens": 27168,
+        "output_tokens": 1521,
+        "judge_input_tokens": 6460,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 803,
+        "skill_cost_usd": 0.1373336,
+        "judge_cost_usd": 0.010475,
+        "total_cost_usd": 0.1478086
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_019_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 31245.66479200439,
+          "duration_api_ms": 31620.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 540,
+          "cached_input_tokens": 40882,
+          "cache_creation_input_tokens": 27168,
+          "output_tokens": 1521,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 533,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006230000000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 1503,
+              "cacheReadInputTokens": 40882,
+              "cacheCreationInputTokens": 27168,
+              "webSearchRequests": 0,
+              "costUSD": 0.13671060000000002,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "check-warnings",
+              "description": "Check warnings for Cornelius Brady",
+              "num_assistant_turns": 2,
+              "max_output_tokens": 768,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 899,
+                "cache_read_input_tokens": 12987,
+                "cache_creation_input_tokens": 13384
+              },
+              "peak_window_tokens": 13385,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 18.959
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21349,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.1373336,
+          "output": {
+            "text_response": "## Warnings Check for Cornelius Brady (I1)\n\nThe check found **2 contradictions** \u2014 both serious impossibilities, and notably, they involve completely separate sets of facts, meaning no single data error could explain both at once.\n\n---\n\n### \u26a0\ufe0f Contradiction 1 \u2014 Christening Before Birth [`hasChristeningBeforeBirth`]\n> *A christening cannot precede a birth.*\n\n| Fact | Date |\n|------|------|\n| Christening (F5) | 1843 |\n| Birth (F1) | ~1845 |\n\n**Next step:** Verify both dates against original source documents. If both hold up, the christening record likely belongs to a *different* Cornelius Brady.\n\n---\n\n### \u26a0\ufe0f Contradiction 2 \u2014 Burial Before Death [`hasBurialBeforeDeath`]\n> *A burial cannot precede a death.*\n\n| Fact | Date |\n|------|------|\n| Burial (F6) | 1905 |\n| Death (F2) | 1908-03-12 |\n\n**Next step:** Check the original burial register and death record. A 3-year gap is too large for a simple transcription error. If both dates survive scrutiny, this strongly suggests two individuals have been conflated.\n\n---\n\n### Overall Assessment\n\nBecause the two contradictions involve **completely disjoint fact families** (Christening/Birth vs. Burial/Death), no single correction resolves both. This pattern is a strong indicator that **records from two different individuals named Cornelius Brady have been merged** into one profile. The recommended course of action is to:\n\n1. Build a full chronological timeline of every recorded event.\n2. Identify where one person's records end and another's begin.\n3. Reassign the misattributed records to the correct individual.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_warnings",
+                "args": {
+                  "personId": "I1",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_check_warnings_019-0-0-9kfyr8kg"
+                },
+                "expected_args": {
+                  "personId": "I1"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-warnings-cluster-disjoint"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Check warnings for Cornelius Brady",
+                  "prompt": "Run a thorough warnings check on Cornelius Brady.\n\npersonId: I1\n\nprojectPath: <workspace>",
+                  "subagent_type": "check-warnings"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "check-warnings",
+                "text": "WARNINGS FOR: Cornelius Brady (I1)\n\n2 contradictions on this one person. Before listing them individually, I need to check whether one wrong fact could explain both.\n\nThe two contradictions cite entirely different fact families: `hasChristeningBeforeBirth` cites Christening (F5) and Birth (F1); `hasBurialBeforeDeath` cites Burial (F6) and Death (F2). These fact sets are completely disjoint -- no single wrong fact appears in both. That means no single correction would resolve both contradictions at once. This is a strong signal that records from two different individuals have been merged into one profile for Cornelius Brady.\n\n---\n\n[!] Contradiction -- Christening before birth  [hasChristeningBeforeBirth]\n    [Fundamental: a christening cannot precede a birth.]\n    This person's Christening is dated before their Birth -- a date impossibility.\n\n    Facts involved:\n    - Cornelius's Christening, 1843 (F5)\n    - Cornelius's Birth, ~1845 (F1)\n\n    Next step: verify both dates against their original source documents. The christening record and the birth record should each be examined -- one or both dates may have been mis-transcribed. If both dates hold up against the originals, this is a strong indicator that the christening record belongs to a different Cornelius Brady.\n\n[!] Contradiction -- Burial before death  [hasBurialBeforeDeath]\n    [Fundamental: a burial cannot precede a death.]\n    This person's Burial is dated before their Death -- a date impossibility.\n\n    Facts involved:\n    - Cornelius's Burial, 1905 (F6)\n    - Cornelius's Death, 1908-03-12 (F2)\n\n    Next step: verify both dates against their original source documents. Check the original burial register and the death record -- one date is almost certainly wrong. A three-year gap between burial (1905) and death (1908-03-12) is too large to attribute to a simple transcription slip on just one record; if both dates survive scrutiny, this strengthens the case that these events belong to two different individuals.\n\n---\n\n(2 warnings total -- both contradictions, disjoint fact families)\n\n**Summary:** Two contradictions that no single wrong fact can explain is a strong signal that records from two different individuals have been merged into Cornelius Brady's profile. I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once the split point is found, the records belonging to the other individual can be reassigned.\n\n---\n\nThe records checked for Cornelius Brady turned up two serious impossibilities: his christening is recorded as happening before he was born, and his burial is recorded as happening three years before he died. These aren't borderline cases -- both are physically impossible as recorded, and the two problems involve completely separate events with no overlap, meaning no single date error could fix both at once. This pattern strongly suggests that records belonging to two different people named Cornelius Brady have been combined into one profile.\n\nThe next step is to go through every event recorded for Cornelius Brady one by one, in date order, and determine which records genuinely belong to him and which may belong to a different person of the same name."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly reported both contradictions returned by person_warnings with accurate fact citations (F5/F1 for christening-before-birth, F6/F2 for burial-before-death). The analysis that these fact sets are disjoint and therefore no single wrong fact explains both is factually sound and grounded in the tool response. The merged-profile conclusion follows logically from this disjoint-facts observation. All claims are supported by the tool response or valid logical inference from it."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: called person_warnings with the correct personId (I1), reported both contradictions the tool returned, analyzed them as a cluster, tested the shared-cause hypothesis, concluded it does not apply, identified the merged-profile reading as stronger, and recommended the chronological timeline rebuild and split-point search as a research action. No required work was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The person_warnings call passed personId 'I1' as expected. The expected_args specified only personId, and the actual args matched that requirement. The projectPath was included but is a reasonable addition for tool context and does not constitute noise or a defect."
+              },
+              {
+                "source": "rubric",
+                "name": "Detection accuracy",
+                "score": 3,
+                "rationale": "Both real impossibilities were flagged: christening dated 1843 before birth ~1845, and burial dated 1905 before death 1908-03-12. These are genuine date impossibilities, not false positives on valid edge cases. The skill correctly identified both as contradictions without over-flagging or missing any of the warnings the tool returned."
+              },
+              {
+                "source": "rubric",
+                "name": "Severity classification",
+                "score": 3,
+                "rationale": "Both warnings were correctly classified as Contradiction, matching the severity: 'contradiction' returned by the tool. The skill labeled them as '[Fundamental: a christening cannot precede a birth]' and '[Fundamental: a burial cannot precede a death]', correctly mapping the tool's 'contradiction' severity to the Fundamental assumption category per Appendix C of the agent body. No warnings were misclassified as Implausible or Valid."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "Each warning names the specific facts involved (F5 and F1 for christening-before-birth; F6 and F2 for burial-before-death) with their dates, and suggests concrete next steps: verify both dates against original source documents, check the original records, and if both dates hold up, consider whether records belong to different individuals. The summary recommends rebuilding a chronological timeline and identifying the split point\u2014a clear research action the genealogist can take. Warnings are not generic but tied to specific records and actionable investigation steps."
+              }
+            ],
+            "judge_cost_usd": 0.010475,
+            "duration_ms": 9048.56741700496,
+            "error": null,
+            "input_tokens": 6460,
+            "cached_input_tokens": 0,
+            "output_tokens": 803
+          },
+          "started_at": 1791831893.5110831,
+          "ended_at": 1791831934.03909
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "keane-impossible-lifespan",
+      "mcp_fixtures": [
+        "person-warnings-cluster"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reported all four warnings returned by person_warnings, with accurate fact citations (F1-F7), correct dates, and proper attribution to the tool response. The analysis accurately identifies the cluster of three warnings on Ambrose (I1) sharing the death fact F2, correctly distinguishes this from the relative warning on Michael (I2), and appropriately frames both data-entry error and identity-confusion as live explanations without prematurely closing on either. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: called person_warnings on I1, reported all four warnings the tool returned, recognized the three-warning cluster on Ambrose as a cluster, treated the relative warning separately per the rubric rule, and recommended verifying the shared death fact (F2) as the discriminator between data-entry error and identity confusion. No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The person_warnings call passed personId 'I1' and projectPath, matching the expected_args. The call matched predicate index 0 with kind 'predicate', indicating correct tool invocation. No fixture_not_found errors occurred. Arguments were semantically correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "All four warnings returned by the tool were detected and reported: hasEventAfterDeath1 (residence 17 years after death), hasAgeRangeGreaterThan120 (123-year lifespan), tooManyDeathDates2 (two deaths 20 months apart), and relativesHasAgeRangeGreaterThan120 (Michael's impossible lifespan). No false positives on valid edge cases. The skill correctly identified these as genuine impossibilities without flagging implausible but valid scenarios."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "All warnings carry the correct severity tier from the tool response: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 are all classified as 'Contradiction' (matching tool severity 'contradiction'); tooManyDeathDates2 is classified as 'Implausible' (matching tool severity 'implausible'). No inversions or misclassifications."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning names specific records involved and suggests concrete investigative steps. For hasEventAfterDeath1, the skill recommends examining the 1925 source directly to determine if it describes active residence or posthumous mention. For hasAgeRangeGreaterThan120, it recommends verifying both vital dates against originals. For tooManyDeathDates2, it recommends verifying both death facts and determining which is genuine. For the relative warning, it recommends first confirming the parent-child relationship before fixing Michael's dates. All recommendations are grounded in specific facts and actionable by a genealogist."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reported all four warnings returned by person_warnings, with accurate fact citations (F1-F7), correct dates, and proper attribution to the tool response. The analysis accurately identifies the cluster of three warnings on Ambrose (I1) sharing the death fact F2, correctly distinguishes this from the relative warning on Michael (I2), and appropriately frames both data-entry error and identity-confusion as live explanations without prematurely closing on either. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: called person_warnings on I1, reported all four warnings the tool returned, recognized the three-warning cluster on Ambrose as a cluster, treated the relative warning separately per the rubric rule, and recommended verifying the shared death fact (F2) as the discriminator between data-entry error and identity confusion. No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The person_warnings call passed personId 'I1' and projectPath, matching the expected_args. The call matched predicate index 0 with kind 'predicate', indicating correct tool invocation. No fixture_not_found errors occurred. Arguments were semantically correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "All four warnings returned by the tool were detected and reported: hasEventAfterDeath1 (residence 17 years after death), hasAgeRangeGreaterThan120 (123-year lifespan), tooManyDeathDates2 (two deaths 20 months apart), and relativesHasAgeRangeGreaterThan120 (Michael's impossible lifespan). No false positives on valid edge cases. The skill correctly identified these as genuine impossibilities without flagging implausible but valid scenarios."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "All warnings carry the correct severity tier from the tool response: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 are all classified as 'Contradiction' (matching tool severity 'contradiction'); tooManyDeathDates2 is classified as 'Implausible' (matching tool severity 'implausible'). No inversions or misclassifications."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning names specific records involved and suggests concrete investigative steps. For hasEventAfterDeath1, the skill recommends examining the 1925 source directly to determine if it describes active residence or posthumous mention. For hasAgeRangeGreaterThan120, it recommends verifying both vital dates against originals. For tooManyDeathDates2, it recommends verifying both death facts and determining which is genuine. For the relative warning, it recommends first confirming the parent-child relationship before fixing Michael's dates. All recommendations are grounded in specific facts and actionable by a genealogist."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 59134.34904199676,
+        "duration_api_ms": 58919.0,
+        "judge_duration_ms": 9372.524459002307,
+        "wall_clock_ms": 68732.70082473755,
+        "num_turns": 2,
+        "input_tokens": 542,
+        "cached_input_tokens": 40890,
+        "cache_creation_input_tokens": 28518,
+        "output_tokens": 2854,
+        "judge_input_tokens": 7508,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 878,
+        "skill_cost_usd": 0.16239550000000003,
+        "judge_cost_usd": 0.011897999999999999,
+        "total_cost_usd": 0.17429350000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_009_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 59134.34904199676,
+          "duration_api_ms": 58919.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 542,
+          "cached_input_tokens": 40890,
+          "cache_creation_input_tokens": 28518,
+          "output_tokens": 2854,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 535,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000625,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 2836,
+              "cacheReadInputTokens": 40890,
+              "cacheCreationInputTokens": 28518,
+              "webSearchRequests": 0,
+              "costUSD": 0.1617705,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "check-warnings",
+              "description": "Check warnings for Ambrose Keane",
+              "num_assistant_turns": 2,
+              "max_output_tokens": 1796,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 1928,
+                "cache_read_input_tokens": 12992,
+                "cache_creation_input_tokens": 13681
+              },
+              "peak_window_tokens": 13682,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 40.468
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 22402,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.16239550000000003,
+          "output": {
+            "text_response": "## Warnings for Ambrose Keane (I1)\n\nThe check identified **4 warnings total: 3 contradictions and 1 implausible pattern**. These warnings cluster around a shared root cause \u2014 the recorded birth and death dates are deeply inconsistent with each other and with other facts on the profile.\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Event After Death [`hasEventAfterDeath1`]\n- **Facts involved:** Birth ~1785 (F1), Death 1908-03-12 (F2), Residence 1925 (F4)\n- A **Residence in 1925** falls **17+ years after** the recorded death in 1908.\n- Possible causes: wrong death date, identity confusion (merged records), or a posthumous document (obituary, probate, estate) misattached as a Residence event.\n- **Next step:** Examine the 1925 source behind F4 \u2014 what kind of record is it, and does it describe Ambrose as actively living there?\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Long Lifespan [`hasAgeRangeGreaterThan120`]\n- **Facts involved:** Birth ~1785 (F1), Death 1908-03-12 (F2)\n- The recorded lifespan **exceeds 120 years**, which is biologically implausible.\n- Most likely cause: the birth year (~1785) is a transcription error or estimate, or records from two different individuals have been merged.\n- **Next step:** Verify both the birth (~1785) and death (1908-03-12) against original source documents.\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Multiple Death Dates [`tooManyDeathDates2`]\n- **Facts involved:** Death 1908-03-12 (F2) and Death 1909-11-02 (F7)\n- Two distinct death dates are recorded nearly **20 months apart**, suggesting unreconciled death records or a same-name individual's record merged in.\n- **Next step:** Verify both death facts against original sources and determine which (if either) genuinely documents Ambrose's death.\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Relative's Long Lifespan [`relativesHasAgeRangeGreaterThan120`]\n- **Relative flagged:** Michael Keane (I2), Birth ~1818 (F3)\n- Michael's recorded lifespan also exceeds 120 years.\n- **Next step:** First confirm the relationship between Ambrose and Michael is correctly recorded, then verify Michael's vital dates against original sources.\n\n---\n\n### Summary\n\nAmbrose's profile shows a birth around 1785, two conflicting death dates (1908 and 1909), and a residence record from 1925 \u2014 a constellation of contradictions most commonly caused by either **incorrect dates** or **merged records** from two different individuals. The most urgent action is to return to the original source documents for all three vital facts (birth, and both deaths) to determine which dates the records actually support.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_warnings",
+                "args": {
+                  "personId": "I1",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_check_warnings_009-0-0-uw4y6ijc"
+                },
+                "expected_args": {
+                  "personId": "I1"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-warnings-cluster"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Check warnings for Ambrose Keane",
+                  "prompt": "Run a thorough warnings check on Ambrose Keane.\n\npersonId: I1\n\nprojectPath: <workspace>",
+                  "subagent_type": "check-warnings"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "check-warnings",
+                "text": "WARNINGS FOR: Ambrose Keane (I1)\n\nBefore listing individual warnings, note the cluster: Ambrose has 2 contradictions and 1 implausible warning on his own profile. Two of the contradictions (`hasEventAfterDeath1` and `hasAgeRangeGreaterThan120`) both cite his Birth (F1, ~1785) and Death (F2, 1908-03-12), meaning they share the same facts. There is also a third implausible warning (`tooManyDeathDates2`) that adds a second Death fact (F7, 1909-11-02) into the picture. Together, these three warnings may share a single cause -- the recorded death and/or birth dates are inconsistent with each other and with the residence record. However, the combination of a suspicious lifespan, a post-death residence, and two conflicting death dates is also consistent with records from two different individuals having been merged into one profile. Verifying each of the vital dates against their original sources is the right first step to distinguish these explanations.\n\n---\n\n**[!] Contradiction -- Event after death [hasEventAfterDeath1]**\nAssumption violated: Fundamental (people cannot act after their death -- but a posthumous mention can also be misattached to a profile).\n\nAn event is dated more than 1 year after Ambrose's latest death-like fact.\n\nFacts cited by the tool:\n- Ambrose's Birth, ~1785 (F1)\n- Ambrose's Death, 1908-03-12 (F2)\n- Ambrose's Residence, 1925 (F4)\n\nThe Residence dated 1925 (F4) falls more than 17 years after the Death dated 1908-03-12 (F2). This warning has three candidate causes:\n\n(a) **Wrong death date** -- the recorded death date is too early and the 1925 residence actually belongs to this person.\n(b) **Identity confusion** -- the 1925 residence record belongs to a same-name individual whose records were merged in with Ambrose's.\n(c) **Posthumous mention** -- the 1925 record is a document such as an obituary, probate file, estate record, or descendant's death certificate that merely references Ambrose without describing actions performed by him, and was attached to his profile as a Residence event in error.\n\nNext step: examine the 1925 source behind the Residence fact (F4) directly -- what kind of record is it, and does it describe Ambrose as actively residing somewhere, or does it merely mention him? The right corrective action depends on what you find. Given that there is also a second death date on this profile (see `tooManyDeathDates2` below), resolving which death date is correct is equally urgent.\n\n---\n\n**[!] Contradiction -- Long lifespan [hasAgeRangeGreaterThan120]**\nAssumption violated: Fundamental (a recorded lifespan cannot exceed plausible biological limits of approximately 120 years).\n\nThis person's lifespan is greater than 120 years, which is implausible.\n\nFacts cited by the tool:\n- Ambrose's Birth, ~1785 (F1)\n- Ambrose's Death, 1908-03-12 (F2)\n\nA lifespan spanning from ~1785 to 1908-03-12 exceeds 120 years. Two common causes apply here: one of the vital dates is wrong (most likely the birth year of ~1785 is a transcription error or estimate), or records from two different individuals have been merged into one profile -- one born around 1785 and another who died in 1908.\n\nNext step: verify both the birth date (~1785, F1) and the death date (1908-03-12, F2) against their original source documents. If the originals confirm both, the identity-confusion reading becomes the stronger candidate and rebuilding a chronological timeline of every recorded event would be the recommended path forward.\n\n---\n\n**[!] Implausible -- Multiple death dates [tooManyDeathDates2]**\nAssumption violated: Valid (a person has one death; two distinct perfect-DMY death dates spaced more than 14 days apart suggest unreconciled records).\n\nTwo or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records.\n\nFacts cited by the tool:\n- Ambrose's Death, 1908-03-12 (F2)\n- Ambrose's Death, 1909-11-02 (F7)\n\nTwo death dates are recorded for Ambrose: 1908-03-12 (F2) and 1909-11-02 (F7). These are nearly 20 months apart, which is a significant discrepancy. This may mean two different death records have been attached -- one possibly belonging to a same-name individual -- or one date was entered in error.\n\nNext step: verify both death facts (F2 and F7) against their original source records. Determine which record genuinely documents Ambrose's death, and evaluate whether one of the records might belong to a different individual. Also note that one of these death dates may be interacting with the `hasEventAfterDeath1` warning above -- resolving the correct death date could change which events appear to fall \"after death.\"\n\n---\n\n**[!] Contradiction -- Relative's long lifespan [relativesHasAgeRangeGreaterThan120]**\nAssumption violated: Fundamental (a recorded lifespan cannot exceed approximately 120 years) -- flagged on a relative of Ambrose.\n\nThis relative's lifespan is greater than 120 years, which is implausible.\n\nRelative flagged: Michael Keane (I2)\n\nFacts cited by the tool:\n- Michael's Birth, ~1818 (F3)\n\nNote: this warning fired on Ambrose's relative Michael Keane (I2), not on Ambrose directly. Michael's birth (~1818, F3) in combination with his latest death-like fact produces a lifespan exceeding 120 years. As always with relative warnings, the first thing to confirm is that Michael Keane is actually Ambrose's relative and not a same-name individual linked here by mistake. Once the relationship is confirmed, then verify Michael's vital dates against their original sources.\n\nNext step: first confirm that the relationship between Ambrose (I1) and Michael Keane (I2) is correctly recorded. Then examine Michael's birth (~1818, F3) and death date against their original source documents to determine whether a date is wrong or whether Michael's profile may also contain merged records.\n\n---\n\n(4 warnings total: 3 contradictions, 1 implausible)\n\n---\n\nAmbrose Keane's records contain some serious inconsistencies. His profile shows a birth around 1785 and a death in early 1908, which would make him well over 120 years old -- something no person has reliably achieved. On top of that, a second death date in late 1909 is also recorded, nearly two years after the first, and a residence record from 1925 is attached to his profile despite him supposedly having died years earlier. His relative Michael Keane has a similar problem, with a lifespan that also stretches beyond 120 years. These kinds of contradictions most commonly arise either from an incorrect date that throws off the whole timeline, or from records belonging to two different people having been accidentally combined into one profile.\n\nThe most important next step is to go back to the original source documents for Ambrose's birth and both death dates to find out which figures, if any, the records actually support -- that will clarify whether this is a data entry problem or a situation where records need to be separated into two distinct individuals."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly reported all four warnings returned by person_warnings, with accurate fact citations (F1-F7), correct dates, and proper attribution to the tool response. The analysis accurately identifies the cluster of three warnings on Ambrose (I1) sharing the death fact F2, correctly distinguishes this from the relative warning on Michael (I2), and appropriately frames both data-entry error and identity-confusion as live explanations without prematurely closing on either. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: called person_warnings on I1, reported all four warnings the tool returned, recognized the three-warning cluster on Ambrose as a cluster, treated the relative warning separately per the rubric rule, and recommended verifying the shared death fact (F2) as the discriminator between data-entry error and identity confusion. No required work was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The person_warnings call passed personId 'I1' and projectPath, matching the expected_args. The call matched predicate index 0 with kind 'predicate', indicating correct tool invocation. No fixture_not_found errors occurred. Arguments were semantically correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Detection accuracy",
+                "score": 3,
+                "rationale": "All four warnings returned by the tool were detected and reported: hasEventAfterDeath1 (residence 17 years after death), hasAgeRangeGreaterThan120 (123-year lifespan), tooManyDeathDates2 (two deaths 20 months apart), and relativesHasAgeRangeGreaterThan120 (Michael's impossible lifespan). No false positives on valid edge cases. The skill correctly identified these as genuine impossibilities without flagging implausible but valid scenarios."
+              },
+              {
+                "source": "rubric",
+                "name": "Severity classification",
+                "score": 3,
+                "rationale": "All warnings carry the correct severity tier from the tool response: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 are all classified as 'Contradiction' (matching tool severity 'contradiction'); tooManyDeathDates2 is classified as 'Implausible' (matching tool severity 'implausible'). No inversions or misclassifications."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "Each warning names specific records involved and suggests concrete investigative steps. For hasEventAfterDeath1, the skill recommends examining the 1925 source directly to determine if it describes active residence or posthumous mention. For hasAgeRangeGreaterThan120, it recommends verifying both vital dates against originals. For tooManyDeathDates2, it recommends verifying both death facts and determining which is genuine. For the relative warning, it recommends first confirming the parent-child relationship before fixing Michael's dates. All recommendations are grounded in specific facts and actionable by a genealogist."
+              }
+            ],
+            "judge_cost_usd": 0.011897999999999999,
+            "duration_ms": 9372.524459002307,
+            "error": null,
+            "input_tokens": 7508,
+            "cached_input_tokens": 0,
+            "output_tokens": 878
+          },
+          "started_at": 1791831058.220531,
+          "ended_at": 1791831126.9532318
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_007",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "brady-multiple-warnings",
+      "mcp_fixtures": [
+        "person-warnings-early-marriage"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1246.848750000936,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7747.036933898926,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_007_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1246.848750000936,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nCheck Cornelius for warnings.\n\npersonId: I1\n\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'check-warnings', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832020.673358,
+          "ended_at": 1791832028.420395
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "empty-project-just-created",
+      "mcp_fixtures": [
+        "person-warnings-empty-stub"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1233.936333010206,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7581.182956695557,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_010_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1233.936333010206,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nCheck Patrick for warnings.\n\npersonId: I1\n\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'check-warnings', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832030.822989,
+          "ended_at": 1791832038.404172
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_004",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "brady-multiple-warnings",
+      "mcp_fixtures": [
+        "person-warnings-event-after-death"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reported the hasEventAfterDeath1 warning returned by the tool. It accurately cited the three facts involved (Birth ~1845, Death 1908-03-12, Residence 1925), correctly identified the contradiction (residence 17 years after death), and provided three legitimate causes: wrong death date, identity confusion, and posthumous mention. The response did not fabricate facts or contradict the tool response. The skill appropriately acknowledged posthumous mention as a valid possibility rather than dismissing it, aligning with the per-test requirement."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything required: it called person_warnings with the correct personId (I1), reported the single warning that the tool returned, classified it correctly as a Contradiction, named the specific records involved (F1, F2, F4), and provided actionable next steps (examine the 1925 source document to determine its nature). The skill did not skip any required element or stop early."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed personId 'I1' as expected. The projectPath was included (a reasonable addition not declared in expected_args but not noise). The call matched the fixture's expected_args semantically. No critical identifiers were wrong, and the call did not land in fixture_not_found."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "The skill correctly detected the genuine impossibility: a residence event dated 1925 occurring 17 years after the death in 1908. This is a real contradiction flagged by the tool. The skill did not flag false positives on valid edge cases. The detection was accurate to what the tool returned."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "The skill correctly classified the warning as 'Contradiction' (labeled as '[!] Contradiction -- Event after death'), which matches the tool's returned severity of 'contradiction'. The skill properly mapped the tool's severity value to the correct tier without inversion."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning is highly actionable. The skill named the specific records involved (F1 Birth, F2 Death, F4 Residence), identified the exact conflict (1925 residence vs. 1908 death), and provided three concrete investigative paths: check if the death date is wrong, check if the 1925 record belongs to a different person, or check if the 1925 document is a posthumous mention. The skill explicitly directed the genealogist to examine the source document directly to determine what kind of record it is, which is a clear, specific next step."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly reported the hasEventAfterDeath1 warning returned by the tool. It accurately cited the three facts involved (Birth ~1845, Death 1908-03-12, Residence 1925), correctly identified the contradiction (residence 17 years after death), and provided three legitimate causes: wrong death date, identity confusion, and posthumous mention. The response did not fabricate facts or contradict the tool response. The skill appropriately acknowledged posthumous mention as a valid possibility rather than dismissing it, aligning with the per-test requirement."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything required: it called person_warnings with the correct personId (I1), reported the single warning that the tool returned, classified it correctly as a Contradiction, named the specific records involved (F1, F2, F4), and provided actionable next steps (examine the 1925 source document to determine its nature). The skill did not skip any required element or stop early."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed personId 'I1' as expected. The projectPath was included (a reasonable addition not declared in expected_args but not noise). The call matched the fixture's expected_args semantically. No critical identifiers were wrong, and the call did not land in fixture_not_found."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "The skill correctly detected the genuine impossibility: a residence event dated 1925 occurring 17 years after the death in 1908. This is a real contradiction flagged by the tool. The skill did not flag false positives on valid edge cases. The detection was accurate to what the tool returned."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "The skill correctly classified the warning as 'Contradiction' (labeled as '[!] Contradiction -- Event after death'), which matches the tool's returned severity of 'contradiction'. The skill properly mapped the tool's severity value to the correct tier without inversion."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning is highly actionable. The skill named the specific records involved (F1 Birth, F2 Death, F4 Residence), identified the exact conflict (1925 residence vs. 1908 death), and provided three concrete investigative paths: check if the death date is wrong, check if the 1925 record belongs to a different person, or check if the 1925 document is a posthumous mention. The skill explicitly directed the genealogist to examine the source document directly to determine what kind of record it is, which is a clear, specific next step."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 29203.372082993155,
+        "duration_api_ms": 29094.0,
+        "judge_duration_ms": 8810.738416999811,
+        "wall_clock_ms": 38251.004695892334,
+        "num_turns": 2,
+        "input_tokens": 537,
+        "cached_input_tokens": 40876,
+        "cache_creation_input_tokens": 26969,
+        "output_tokens": 1306,
+        "judge_input_tokens": 6087,
+        "judge_cached_input_tokens": 4236,
+        "judge_output_tokens": 781,
+        "skill_cost_usd": 0.13338755,
+        "judge_cost_usd": 0.0104156,
+        "total_cost_usd": 0.14380315
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_004_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 29203.372082993155,
+          "duration_api_ms": 29094.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 537,
+          "cached_input_tokens": 40876,
+          "cache_creation_input_tokens": 26969,
+          "output_tokens": 1306,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 530,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000605,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 1291,
+              "cacheReadInputTokens": 40876,
+              "cacheCreationInputTokens": 26969,
+              "webSearchRequests": 0,
+              "costUSD": 0.13278255,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "check-warnings",
+              "description": "Check warnings for Cornelius Brady",
+              "num_assistant_turns": 2,
+              "max_output_tokens": 665,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 796,
+                "cache_read_input_tokens": 12984,
+                "cache_creation_input_tokens": 13286
+              },
+              "peak_window_tokens": 13287,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 19.067
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21248,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.13338755,
+          "output": {
+            "text_response": "## Warnings for Cornelius Brady (I1)\n\n**\u26a0\ufe0f 1 Warning Found: Event After Death**\n\nA **Residence fact dated 1925** (F4) is attached to Cornelius Brady's profile, yet his **Death fact is dated 1908-03-12** (F2) \u2014 placing the residence event more than 17 years after his death.\n\n### Possible Causes:\n1. **Wrong death date** \u2014 The 1908 death date may be incorrect, and Cornelius may have actually lived into 1925 or later.\n2. **Identity confusion** \u2014 The 1925 residence record may belong to a *different* Cornelius Brady (e.g., a son or nephew) whose records were incorrectly merged into this profile.\n3. **Posthumous mention** \u2014 The 1925 record may simply *reference* Cornelius (e.g., a probate file or estate document) without describing him as actively living, but was incorrectly filed as a Residence fact.\n\n### Recommended Next Step:\nExamine the source behind the 1925 Residence fact (F4) directly to determine what kind of document it is \u2014 does it show Cornelius actively residing somewhere, or is it just a posthumous reference to him? The answer will determine whether to correct the death date, split the profile, or relink the record appropriately.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_warnings",
+                "args": {
+                  "personId": "I1",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_check_warnings_004-0-0-9rw0xrue"
+                },
+                "expected_args": {
+                  "personId": "I1"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-warnings-event-after-death"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Check warnings for Cornelius Brady",
+                  "prompt": "Check Cornelius Brady for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>",
+                  "subagent_type": "check-warnings"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "check-warnings",
+                "text": "WARNINGS FOR: Cornelius Brady (I1)\n\n[!] Contradiction -- Event after death [hasEventAfterDeath1]\n[Fundamental: people cannot act after their death -- but a posthumous mention can be misattached to their profile.]\n\nAn event is dated more than 1 year after this person's latest death-like fact.\n\nFacts involved:\n- Cornelius's Death, 1908-03-12 (F2)\n- Cornelius's Residence, 1925 (F4)\n- Cornelius's Birth, ~1845 (F1)\n\nA Residence fact dated 1925 sits more than 1 year after the Death fact dated 1908-03-12. This warning has three common causes:\n\n(a) **Wrong death date** -- the 1908-03-12 death date is too early, and Cornelius actually survived into 1925 or later. Cue: a single inconsistent death record that conflicts with everything else.\n\n(b) **Identity confusion** -- the 1925 Residence record actually belongs to a same-name individual (perhaps a son or nephew named Cornelius Brady) whose records were incorrectly merged into this profile. Cue: the source appears to describe Cornelius performing actions -- living at an address, heading a household -- long after the death record.\n\n(c) **Posthumous mention** -- the 1925 record is a document that merely references Cornelius (for example, a probate or estate file, a city directory at the old family address, or a descendant's record naming him as a parent) but does not describe actions by him. It was attached as a Residence fact, which caused the tool to flag it.\n\nNext step: look at the source behind the 1925 Residence fact (F4) directly. What kind of document is it, and does it describe Cornelius as actively living and residing, or does it simply name him in passing? The right corrective action -- correcting the death date, splitting the profile, or relinking the record as a reference -- depends entirely on what that document shows.\n\n(1 warning total)\n\n---\n\nThe records for Cornelius Brady were checked, and one issue was found: a residence record from 1925 is attached to his profile, yet another record shows he died in March 1908 -- more than seventeen years earlier. A living person cannot have a residence record dated after their death, so something is off. This could mean the death date is wrong and he actually lived longer, that the 1925 record belongs to a different person named Cornelius Brady whose records got mixed in with his, or that the 1925 document simply mentions him by name without describing him as alive -- in which case it was attached to his profile incorrectly.\n\nThe next step is to look at the actual 1925 document and determine what kind of record it is and whether it genuinely describes Cornelius as living and residing somewhere at that time."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly reported the hasEventAfterDeath1 warning returned by the tool. It accurately cited the three facts involved (Birth ~1845, Death 1908-03-12, Residence 1925), correctly identified the contradiction (residence 17 years after death), and provided three legitimate causes: wrong death date, identity confusion, and posthumous mention. The response did not fabricate facts or contradict the tool response. The skill appropriately acknowledged posthumous mention as a valid possibility rather than dismissing it, aligning with the per-test requirement."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed everything required: it called person_warnings with the correct personId (I1), reported the single warning that the tool returned, classified it correctly as a Contradiction, named the specific records involved (F1, F2, F4), and provided actionable next steps (examine the 1925 source document to determine its nature). The skill did not skip any required element or stop early."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed personId 'I1' as expected. The projectPath was included (a reasonable addition not declared in expected_args but not noise). The call matched the fixture's expected_args semantically. No critical identifiers were wrong, and the call did not land in fixture_not_found."
+              },
+              {
+                "source": "rubric",
+                "name": "Detection accuracy",
+                "score": 3,
+                "rationale": "The skill correctly detected the genuine impossibility: a residence event dated 1925 occurring 17 years after the death in 1908. This is a real contradiction flagged by the tool. The skill did not flag false positives on valid edge cases. The detection was accurate to what the tool returned."
+              },
+              {
+                "source": "rubric",
+                "name": "Severity classification",
+                "score": 3,
+                "rationale": "The skill correctly classified the warning as 'Contradiction' (labeled as '[!] Contradiction -- Event after death'), which matches the tool's returned severity of 'contradiction'. The skill properly mapped the tool's severity value to the correct tier without inversion."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "Each warning is highly actionable. The skill named the specific records involved (F1 Birth, F2 Death, F4 Residence), identified the exact conflict (1925 residence vs. 1908 death), and provided three concrete investigative paths: check if the death date is wrong, check if the 1925 record belongs to a different person, or check if the 1925 document is a posthumous mention. The skill explicitly directed the genealogist to examine the source document directly to determine what kind of record it is, which is a clear, specific next step."
+              }
+            ],
+            "judge_cost_usd": 0.0104156,
+            "duration_ms": 8810.738416999811,
+            "error": null,
+            "input_tokens": 6087,
+            "cached_input_tokens": 4236,
+            "output_tokens": 781
+          },
+          "started_at": 1791831921.976468,
+          "ended_at": 1791831960.2274728
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "brady-multiple-warnings",
+      "mcp_fixtures": [
+        "person-warnings-father-died-before-child"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1303.2534169906285,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8136.761903762817,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_005_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1303.2534169906285,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nCheck Owen Brady for any warnings.\n\npersonId: I2\n\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'check-warnings', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832024.980078,
+          "ended_at": 1791832033.11684
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "keane-impossible-lifespan",
+      "mcp_fixtures": [
+        "person-warnings-impossible-lifespan"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1227.6162499911152,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8110.368013381958,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_006_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1227.6162499911152,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nRun a warnings check on Ambrose Keane.\n\npersonId: I1\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'check-warnings', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832016.583416,
+          "ended_at": 1791832024.693784
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-posthumous-residence",
+      "mcp_fixtures": [
+        "person-warnings-posthumous-residence"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1263.1043750006938,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8105.196714401245,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_013_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1263.1043750006938,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nCheck Patrick Flynn for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'check-warnings', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831977.6317272,
+          "ended_at": 1791831985.736924
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "person-warnings-relative-warning"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1307.4644169973908,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7992.74206161499,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_008_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1307.4644169973908,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nCheck Patrick Flynn for any warnings.\n\npersonId: I1\n\nprojectPath: <workspace>\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'check-warnings', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832019.533118,
+          "ended_at": 1791832027.52586
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "keane-impossible-lifespan",
+      "mcp_fixtures": [
+        "person-warnings-cluster"
+      ],
+      "outcome": "partial",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "partial"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The response correctly reports all four warnings the tool returned and accurately cites the facts and severity levels from the tool response. However, the response includes a hypothetical example ('A birth estimated as ~1785 that is actually ~1855') that is not grounded in any tool response or project data. The harness flagged the year '1855' as absent from all tool responses and the user message. This is a fabricated example used to illustrate a point, which violates the skill's phrasing rule against citing figures the tool never returned. The core analysis is sound and correctly follows the gated cluster rule, but this unsupported example is a concrete correctness defect."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses everything required: it called person_warnings on Ambrose (I1), reported all four warnings, recognized the cluster of three warnings on Ambrose as sharing the same death fact (F2), correctly identified that one wrong fact is a live explanation, treated Michael's relative warning separately per the relative-warning rule, and recommended verifying the shared death date against its original source as the first move. The response appropriately kept the identity reading open rather than confirming a merge, consistent with the gated cluster rule."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The single MCP call to person_warnings passed personId 'I1' and projectPath, matching the expected_args. The call matched the predicate at index 0 and returned successfully with no fixture_not_found errors. The arguments were correct and appropriate."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "The response correctly detected all four genuine impossibilities and anomalies returned by the tool: birth after death (implicitly in the >120 year span), two death dates more than a year apart, an event (residence) dated after death, and a relative with an impossible lifespan. No false positives were flagged. The response accurately represents what the tool returned without adding spurious warnings."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "Every warning is classified with the correct tier the tool returned: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 are all labeled as 'Contradiction' (matching severity: 'contradiction' from the tool); tooManyDeathDates2 is labeled as 'Implausible' (matching severity: 'implausible'). The response uses the current tier names and does not employ the retired 'Critical' or 'Note' labels."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning is actionable and names specific records and next steps. For hasEventAfterDeath1, the response identifies three candidate causes and directs the user to examine the Residence record (F4) first. For hasAgeRangeGreaterThan120, it recommends verifying both the birth date (F1) and death date (F2) against original sources. For tooManyDeathDates2, it directs the user to examine the original documents behind F2 and F7 to confirm which death date is genuine. For relativesHasAgeRangeGreaterThan120, it recommends first confirming the parent-child relationship before examining Michael's death date. All recommendations are grounded in specific facts and records."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 2,
+            "rationale": "The response correctly reports all four warnings the tool returned and accurately cites the facts and severity levels from the tool response. However, the response includes a hypothetical example ('A birth estimated as ~1785 that is actually ~1855') that is not grounded in any tool response or project data. The harness flagged the year '1855' as absent from all tool responses and the user message. This is a fabricated example used to illustrate a point, which violates the skill's phrasing rule against citing figures the tool never returned. The core analysis is sound and correctly follows the gated cluster rule, but this unsupported example is a concrete correctness defect."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses everything required: it called person_warnings on Ambrose (I1), reported all four warnings, recognized the cluster of three warnings on Ambrose as sharing the same death fact (F2), correctly identified that one wrong fact is a live explanation, treated Michael's relative warning separately per the relative-warning rule, and recommended verifying the shared death date against its original source as the first move. The response appropriately kept the identity reading open rather than confirming a merge, consistent with the gated cluster rule."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The single MCP call to person_warnings passed personId 'I1' and projectPath, matching the expected_args. The call matched the predicate at index 0 and returned successfully with no fixture_not_found errors. The arguments were correct and appropriate."
+          },
+          {
+            "source": "rubric",
+            "name": "Detection accuracy",
+            "score": 3,
+            "rationale": "The response correctly detected all four genuine impossibilities and anomalies returned by the tool: birth after death (implicitly in the >120 year span), two death dates more than a year apart, an event (residence) dated after death, and a relative with an impossible lifespan. No false positives were flagged. The response accurately represents what the tool returned without adding spurious warnings."
+          },
+          {
+            "source": "rubric",
+            "name": "Severity classification",
+            "score": 3,
+            "rationale": "Every warning is classified with the correct tier the tool returned: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 are all labeled as 'Contradiction' (matching severity: 'contradiction' from the tool); tooManyDeathDates2 is labeled as 'Implausible' (matching severity: 'implausible'). The response uses the current tier names and does not employ the retired 'Critical' or 'Note' labels."
+          },
+          {
+            "source": "rubric",
+            "name": "Actionability",
+            "score": 3,
+            "rationale": "Each warning is actionable and names specific records and next steps. For hasEventAfterDeath1, the response identifies three candidate causes and directs the user to examine the Residence record (F4) first. For hasAgeRangeGreaterThan120, it recommends verifying both the birth date (F1) and death date (F2) against original sources. For tooManyDeathDates2, it directs the user to examine the original documents behind F2 and F7 to confirm which death date is genuine. For relativesHasAgeRangeGreaterThan120, it recommends first confirming the parent-child relationship before examining Michael's death date. All recommendations are grounded in specific facts and records."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 57379.64816699969,
+        "duration_api_ms": 57122.0,
+        "judge_duration_ms": 11031.606083997758,
+        "wall_clock_ms": 68754.65393066406,
+        "num_turns": 2,
+        "input_tokens": 553,
+        "cached_input_tokens": 40904,
+        "cache_creation_input_tokens": 28457,
+        "output_tokens": 2609,
+        "judge_input_tokens": 7579,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 949,
+        "skill_cost_usd": 0.15853694999999998,
+        "judge_cost_usd": 0.012324,
+        "total_cost_usd": 0.17086094999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_check_warnings_020_2026-10-12_18-32-21_0",
+          "outcome": "partial",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 57379.64816699969,
+          "duration_api_ms": 57122.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 553,
+          "cached_input_tokens": 40904,
+          "cache_creation_input_tokens": 28457,
+          "output_tokens": 2609,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 546,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000621,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 2594,
+              "cacheReadInputTokens": 40904,
+              "cacheCreationInputTokens": 28457,
+              "webSearchRequests": 0,
+              "costUSD": 0.15791595,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "check-warnings",
+              "description": "Check warnings for Ambrose Keane profile",
+              "num_assistant_turns": 3,
+              "max_output_tokens": 1713,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 1867,
+                "cache_read_input_tokens": 12997,
+                "cache_creation_input_tokens": 13708
+              },
+              "peak_window_tokens": 13709,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 41.718
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 22314,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.15853694999999998,
+          "output": {
+            "text_response": "Here is what the **check-warnings** agent found for Ambrose Keane (I1):\n\n---\n\n**4 warnings total \u2014 2 contradictions, 1 implausible, 1 on a relative**\n\n### Key findings\n\n1. **[!] Lifespan > 120 years** \u2014 Birth ~1785 (F1) + Death 1908-03-12 (F2) = ~123 years. Biologically impossible.\n\n2. **[!] Event after death** \u2014 A Residence fact dated **1925** (F4) falls 17 years after the recorded death of 1908.\n\n3. **[!] Two death dates, 14+ months apart** \u2014 Death 1908-03-12 (F2) and Death 1909-11-02 (F7). Two distinct death dates more than a year apart is the single strongest red flag for a merged profile.\n\n4. **[!] Relative Michael Keane (I2)** also has a lifespan > 120 years \u2014 possibly a related data problem.\n\n---\n\n### On your specific question: confirmed merge, or just bad dates?\n\nThe agent cannot confirm the merge from warnings alone \u2014 a single wrong date could explain the lifespan and post-death residence contradictions. **However, the two distinct death dates (F2 vs. F7) are the hardest to explain away as a transcription error.** That is your most likely split point.\n\n**Recommended next steps to find the split:**\n1. **Compare the original records behind F2 (death 1908) and F7 (death 1909)** \u2014 if they show incompatible details or name different individuals, you have confirmed the merge and identified which record belongs to which man.\n2. **Examine the Residence record (F4, 1925)** \u2014 if it shows a living Ambrose Keane active in 1925, and both death dates are genuine, a merge is the only remaining explanation.\n3. **Check the birth estimate (F1, ~1785)** \u2014 if that calculation is wrong (perhaps should be ~1855), the lifespan issue could dissolve without any split needed.\n\nThe split point, if confirmed, falls between the two death dates: one death record belongs to one Ambrose Keane, and the post-death records (F4, and possibly F7) belong to the other.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__person_warnings",
+                "args": {
+                  "personId": "I1",
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_check_warnings_020-0-0-ap85nd8p"
+                },
+                "expected_args": {
+                  "personId": "I1"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "person-warnings-cluster"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Check warnings for Ambrose Keane profile",
+                  "prompt": "Ambrose Keane's profile is two different men merged into one -- confirm that and give me the split point.\n\npersonId: I1\nprojectPath: <workspace>",
+                  "subagent_type": "check-warnings"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "check-warnings",
+                "text": "Here is what the tool found and how to read it honestly.\n\n---\n\nWARNINGS FOR: Ambrose Keane (I1)\n\nBefore listing individual warnings: there are 2 contradictions on this one person. Checking whether one wrong fact would explain both -- `hasEventAfterDeath1` cites Birth (~1785, F1), Death (1908-03-12, F2), and Residence (1925, F4); `hasAgeRangeGreaterThan120` cites Birth (~1785, F1) and Death (1908-03-12, F2). Both contradictions share F1 and F2 -- the same two facts appear in both. That means one wrong vital date is a live explanation for the whole cluster. **The warnings do not confirm a merge; they may reflect a single wrong date.** Verifying the birth or death date against its original source would distinguish the two readings.\n\n---\n\n[!] Contradiction -- Event after death [hasEventAfterDeath1]\n[Fundamental: people cannot act after their death -- but a posthumous mention can be misattached to their profile.]\nAn event is dated more than 1 year after this person's latest death-like fact.\n\nFacts cited: Birth, ~1785 (F1); Death, 1908-03-12 (F2); Residence (F4, no date returned for that fact in the response -- the tool named it as part of the constellation but the date field is 1925).\n\nThis warning has three candidate causes:\n- (a) The recorded death date is wrong -- the death date is too early and the Residence (F4) actually fits a living person. Verify the death record against its original source.\n- (b) The Residence record actually belongs to a same-name individual who outlived Ambrose -- the late-dated Residence is someone else's record merged in.\n- (c) The Residence record is a posthumous mention -- an estate, probate, city directory, or similar document that names Ambrose without describing actions by him, mis-attached as a Residence fact rather than a reference.\n\nNext step: look at the record behind the Residence (F4) first -- what kind of document is it, and does it describe Ambrose performing an action or merely name him? The right corrective action depends on what you find.\n\n---\n\n[!] Contradiction -- Long lifespan [hasAgeRangeGreaterThan120]\n[Fundamental: a recorded lifespan cannot exceed plausible biological limits (~120 years).]\nThis person's lifespan is greater than 120 years, which is implausible.\n\nFacts cited: Birth, ~1785 (F1); Death, 1908-03-12 (F2).\n\nTwo common causes: a wrong vital date, or two individuals' records merged into one profile. Next step: verify the birth date (~1785, F1) and the death date (1908-03-12, F2) against their original source documents -- a census record may be mis-transcribed, or the birth estimate may have been calculated from a wrong age.\n\n---\n\n[!] Implausible -- Multiple death dates [tooManyDeathDates2]\n[Valid: a person has one death.]\nTwo or more distinct perfect-DMY death dates spaced more than 14 days apart, suggesting unreconciled death records.\n\nFacts cited: Death, 1908-03-12 (F2); Death, 1909-11-02 (F7).\n\nTwo separately recorded death dates more than a year apart is a significant red flag -- it suggests either two different records for two different people have been consolidated here, or one of the two dates was transcribed from the wrong record. Next step: go back to the original documents behind F2 and F7 and confirm which one (if either) genuinely records Ambrose Keane's death.\n\n---\n\n[!] Contradiction -- Relative's long lifespan [relativesHasAgeRangeGreaterThan120]\n[Valid: a relative's recorded lifespan cannot exceed plausible biological limits.]\nRelative Michael Keane (I2) has a lifespan greater than 120 years, which is implausible.\n\nFacts cited: Birth, ~1818 (F3) on Michael Keane (I2). The tool flagged his lifespan but the death end of that span was not returned in the facts array -- only the birth is named. This warning is about Michael Keane's own data, not Ambrose's directly. Next step: first confirm whether Michael Keane (I2) is genuinely Ambrose's relative and the relationship link is correct, then examine Michael's death date against its source.\n\n---\n\n(4 warnings total: 2 contradictions on Ambrose, 1 implausible on Ambrose, 1 contradiction on relative Michael Keane)\n\n---\n\n**On your specific question -- is this definitely two men merged, and where is the split point?**\n\nThe warnings cannot confirm that. Here is why:\n\nThe two contradictions (`hasEventAfterDeath1` and `hasAgeRangeGreaterThan120`) both cite the same facts -- F1 (Birth, ~1785) and F2 (Death, 1908-03-12). When two contradictions share the same facts, one wrong fact is an equally valid explanation as a merge. A birth estimated as ~1785 that is actually ~1855, for example, would collapse both contradictions at once without any identity split at all.\n\nThe `tooManyDeathDates2` warning (F2 vs. F7, two death dates more than a year apart) is the detail that most strengthens the merge reading -- two separate death dates for one person is harder to explain as a single transcription error. But it is still possible that one date is a mis-indexed record belonging to someone else that was attached to Ambrose by mistake.\n\n**What the data supports right now:** a strong warrant to investigate, not a confirmed split. The recommended path:\n\n1. Examine the original record behind each death fact (F2, 1908-03-12 and F7, 1909-11-02) -- if they name different individuals or show incompatible details, that is the most direct evidence of a merge.\n2. Examine the Residence record (F4) -- if it is a first-person record of a living Ambrose Keane active in 1925, and the death dates are both genuine, then a merge is the strongest remaining explanation.\n3. Verify the birth estimate (F1, ~1785) against whatever calculation produced it -- if that year is wrong, the lifespan contradiction may dissolve without any split needed.\n\nThe split point, if there is one, will be revealed by steps 1 and 2 -- whichever death record is genuine marks the end of one man's records; the surviving post-death records belong to the other.\n\n---\n\nThe records attached to Ambrose Keane's profile contain several impossible or highly unlikely patterns: his lifespan as recorded exceeds 120 years, he appears to have been active years after his death, and two separate death dates more than a year apart are recorded for him. These are serious red flags, but the data alone cannot confirm whether this is one person with wrong dates or two people whose records were mixed together. The next step is to go back to the original documents behind his two death records and the late-dated residence record to determine which one actually belongs to Ambrose and whether any of them describe someone else entirely."
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_unsourced_year_in_response",
+                "observation": "the response contains ['1855'] \u2014 4-digit year(s) absent from every tool response this run received and from the user's message; SKILL.md forbids citing figures the tool never returned"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_unmodified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 2,
+                "rationale": "The response correctly reports all four warnings the tool returned and accurately cites the facts and severity levels from the tool response. However, the response includes a hypothetical example ('A birth estimated as ~1785 that is actually ~1855') that is not grounded in any tool response or project data. The harness flagged the year '1855' as absent from all tool responses and the user message. This is a fabricated example used to illustrate a point, which violates the skill's phrasing rule against citing figures the tool never returned. The core analysis is sound and correctly follows the gated cluster rule, but this unsupported example is a concrete correctness defect."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses everything required: it called person_warnings on Ambrose (I1), reported all four warnings, recognized the cluster of three warnings on Ambrose as sharing the same death fact (F2), correctly identified that one wrong fact is a live explanation, treated Michael's relative warning separately per the relative-warning rule, and recommended verifying the shared death date against its original source as the first move. The response appropriately kept the identity reading open rather than confirming a merge, consistent with the gated cluster rule."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The single MCP call to person_warnings passed personId 'I1' and projectPath, matching the expected_args. The call matched the predicate at index 0 and returned successfully with no fixture_not_found errors. The arguments were correct and appropriate."
+              },
+              {
+                "source": "rubric",
+                "name": "Detection accuracy",
+                "score": 3,
+                "rationale": "The response correctly detected all four genuine impossibilities and anomalies returned by the tool: birth after death (implicitly in the >120 year span), two death dates more than a year apart, an event (residence) dated after death, and a relative with an impossible lifespan. No false positives were flagged. The response accurately represents what the tool returned without adding spurious warnings."
+              },
+              {
+                "source": "rubric",
+                "name": "Severity classification",
+                "score": 3,
+                "rationale": "Every warning is classified with the correct tier the tool returned: hasEventAfterDeath1, hasAgeRangeGreaterThan120, and relativesHasAgeRangeGreaterThan120 are all labeled as 'Contradiction' (matching severity: 'contradiction' from the tool); tooManyDeathDates2 is labeled as 'Implausible' (matching severity: 'implausible'). The response uses the current tier names and does not employ the retired 'Critical' or 'Note' labels."
+              },
+              {
+                "source": "rubric",
+                "name": "Actionability",
+                "score": 3,
+                "rationale": "Each warning is actionable and names specific records and next steps. For hasEventAfterDeath1, the response identifies three candidate causes and directs the user to examine the Residence record (F4) first. For hasAgeRangeGreaterThan120, it recommends verifying both the birth date (F1) and death date (F2) against original sources. For tooManyDeathDates2, it directs the user to examine the original documents behind F2 and F7 to confirm which death date is genuine. For relativesHasAgeRangeGreaterThan120, it recommends first confirming the parent-child relationship before examining Michael's death date. All recommendations are grounded in specific facts and records."
+              }
+            ],
+            "judge_cost_usd": 0.012324,
+            "duration_ms": 11031.606083997758,
+            "error": null,
+            "input_tokens": 7579,
+            "cached_input_tokens": 0,
+            "output_tokens": 949
+          },
+          "started_at": 1791831398.179753,
+          "ended_at": 1791831466.934407
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 184545.25762598496,
+    "duration_api_ms": 176755.0,
+    "judge_duration_ms": 38263.43637700484,
+    "num_turns": 14,
+    "input_tokens": 2172,
+    "cached_input_tokens": 163552,
+    "cache_creation_input_tokens": 111112,
+    "output_tokens": 8290,
+    "judge_input_tokens": 27634,
+    "judge_cached_input_tokens": 4236,
+    "judge_output_tokens": 3411,
+    "skill_cost_usd": 0.5916536,
+    "judge_cost_usd": 0.0451126,
+    "total_cost_usd": 0.6367662000000001,
+    "wall_clock_ms": 980183.6409568787
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

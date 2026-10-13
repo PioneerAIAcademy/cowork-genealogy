@@ -1,5 +1,9 @@
 import { defineConfig } from "vitest/config";
 
+// `PROTO_STORE=pg` (U15, `make engine-test-pg`): the same suite with every
+// tool's project I/O on PgS3ProjectStore, and a skipped test is a failure.
+const PG = process.env.PROTO_STORE === "pg";
+
 export default defineConfig({
   test: {
     globals: true,
@@ -14,6 +18,13 @@ export default defineConfig({
     // four such failures, all between 5154ms and 7194ms.
     testTimeout: 30_000,
     hookTimeout: 30_000,
+    ...(PG
+      ? {
+          setupFiles: ["tests/setup/proto-store.ts"],
+          globalSetup: ["tests/setup/proto-store-global.ts"],
+          reporters: ["default", "./tests/setup/proto-store-reporter.ts"],
+        }
+      : {}),
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

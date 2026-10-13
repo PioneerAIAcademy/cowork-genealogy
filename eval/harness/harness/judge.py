@@ -282,6 +282,9 @@ def render_prompt_parts(
 
     Varying suffix: per-test context, scenario, user message, skill
     output, tool calls. Naturally cache-cold.
+
+    `scenario_readme` carries the scenario's judge-brief.md, or its README
+    while no brief exists (`harness/scenario_brief.py`, issue #2478).
     """
     if rubric.dimensions:
         rubric_text = rubric.raw
@@ -477,7 +480,11 @@ def grade(
     harness_observations: list[str] | None = None,
     state_observations: list[str] | None = None,
 ) -> JudgeOutput:
-    """Run the judge and return structured dimensions + cost."""
+    """Run the judge and return structured dimensions + cost.
+
+    `scenario_readme` carries the scenario's judge-brief.md, or its README
+    while no brief exists (`harness/scenario_brief.py`, issue #2478).
+    """
     prefix, suffix = render_prompt_parts(
         rubric=rubric,
         judge_context=judge_context,

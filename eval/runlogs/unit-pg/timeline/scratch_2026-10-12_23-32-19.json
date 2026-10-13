@@ -1,0 +1,1714 @@
+{
+  "schema_version": 3,
+  "skill": "timeline",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/skills/timeline/SKILL.md": "2b896fe35fcd6acfad98100a2e711e979b9d6d53a3eb7880e0c92e11793ba747",
+    "packages/engine/plugin/skills/timeline/references/places-guidance.md": "89d780012fde12e10fa4fc2b171450e11dda31f0b61d66ab7e654f77c33284d8",
+    "packages/engine/plugin/skills/timeline/references/timeline-analysis-guide.md": "c73643ad216ca0ce2bcf56a46d70983b7f514f90f3ba06a23348f93ff8061cfc",
+    "eval/tests/unit/timeline/build-patrick-timeline.json": "adf3005beec0d1af1394243c604e69ac1310854acd25fe8459e34618365a5107",
+    "eval/tests/unit/timeline/england-census-timeline.json": "3cb2ad2f679d2a400e87842a84d44ac2c8bc24cc77065bd9170ac57e0a5137df",
+    "eval/tests/unit/timeline/geographic-infeasibility.json": "33ee44f3a167f8d21cc97b45fd0756479400ad2a9eec5bb89d2947ad3f6e771f",
+    "eval/tests/unit/timeline/identity-one-life.json": "52e399347013f3b1c851fc98392b36f09f760ff3c8df1fdcb2a05c489169e7b4",
+    "eval/tests/unit/timeline/identity-two-lives.json": "929b5c062d50117545fdcbc885ea0b85c66bd31c408d7ab6baf4ab3af22cbb1d",
+    "eval/tests/unit/timeline/impossibility-after-death.json": "346bd248a830ee261c585a3c1af603da1edfdcb53774e1481ed5112e6a9f39d1",
+    "eval/tests/unit/timeline/negative-conflict-resolution.json": "973a1d4844f26f91e18a7dd22fe019f7770415dd2a3c17e153b2245c457f0de0",
+    "eval/tests/unit/timeline/negative-hypothesis-tracking.json": "903c724bb613a49206c310a1e6e4de010da03a3136e1ca7e1dd293960477380d",
+    "eval/tests/unit/timeline/negative-person-evidence.json": "f8f1feea1418bd453c2f79dcf3d431f2811ac64a47a84af26b20e5e4fc0f1142",
+    "eval/tests/unit/timeline/negative-proof-conclusion.json": "b7adf30daf85d5c30d40c0f3c49ac028acdf71b74ccc45396a8b801d465a1a23",
+    "eval/tests/unit/timeline/rubric.md": "df9936b1e28fa86a0d431f3c284b831ef260029da297b728aedf03981796000d",
+    "eval/tests/unit/timeline/timeline-with-multi-conflict.json": "6a665a4672c62a2b4f942a85aacbf8292b146b4022ce206ce9523b15cedacf0f",
+    "eval/fixtures/scenarios/england-census-timeline/README.md": "65650a3d1227d414cb63f3a9ef497829bf6d4d0a3f9ed2564f70d127c53e956c",
+    "eval/fixtures/scenarios/england-census-timeline/research.json": "198c3dea13448b0dfbf77d6b037f42f54d08592c2e8d8e2fbf829ec443c4cdb3",
+    "eval/fixtures/scenarios/england-census-timeline/tree.gedcomx.json": "49d3b0b28f70003074d1efae102359cb3396f5bc33c9c507cadd7edee6802dfe",
+    "eval/fixtures/scenarios/flynn-competing-fathers/README.md": "9f6da76c082c4ac56dccfbfa2ee35d3178961a3678197d5c711e239678db0bb0",
+    "eval/fixtures/scenarios/flynn-competing-fathers/research.json": "1bf62d5e610856037d2f17c11938326471694d47f6353f6af24d97f81f489194",
+    "eval/fixtures/scenarios/flynn-competing-fathers/tree.gedcomx.json": "38e1e530f3944c30625a5ed38c22c1d9ba4a866630598eff0714a43117aa5bca",
+    "eval/fixtures/scenarios/flynn-distant-events/README.md": "a5a37bfe7071605b5a93daa1f6def12e8468f27ac7e95a516442c0e306a45785",
+    "eval/fixtures/scenarios/flynn-distant-events/research.json": "152d86c15f246aed099ac9d9d0fb3b04af8112a925218b9101b96d5201411995",
+    "eval/fixtures/scenarios/flynn-distant-events/tree.gedcomx.json": "8bf1255fea312aedd77bab3f7d22e25b0c692a522f813460714d929409d4cc55",
+    "eval/fixtures/scenarios/flynn-impossibility/README.md": "78feb55fd15f3914f3c329b1b0644e5dc709e939eeb44719a54458ecbcdc346b",
+    "eval/fixtures/scenarios/flynn-impossibility/research.json": "bc5ea04e9e5cbccb412635c79911b49907f3f03e25729b6cc917c09d5a09edbe",
+    "eval/fixtures/scenarios/flynn-impossibility/tree.gedcomx.json": "f375d753a86743b4661e439398dc0ce37ea87850fbc8c596fe970fdef994eead",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "9580980fdf960770fb2728177727b94551a264d89fa9c187cae8eef2bcd1f130",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "42d5b217fcf2735a8d116e790a55858c85c1e3e03537493f6b012d2b0718cd4a",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-one-life/README.md": "f0869b56440d0f9f317bf2e0151a0ec461599a0a8b3ffb2aad0ab09f909bdea2",
+    "eval/fixtures/scenarios/flynn-one-life/research.json": "e32f9d985e918e688432cd027d0a7009c1124acf62ca87700e38e0f6988a0fa4",
+    "eval/fixtures/scenarios/flynn-one-life/tree.gedcomx.json": "fa661e8477a268ac502b1769ec40e2d3cc04b4273dab9fdd2b91434b13b12c2e",
+    "eval/fixtures/scenarios/flynn-record-matching/README.md": "db3b206f5df2b627c7caef95c07bf3625573b265068a018ae597b66f6cc62c6a",
+    "eval/fixtures/scenarios/flynn-record-matching/research.json": "3f67b9bb97b80449895ed66866c2ce033dd40aa89b6a477873fbd58204e94ff1",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_001.json": "f9e9fb76e1e752d1433b751cc4eba64dd035ac398dee587b201df97cf5f87187",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_002.json": "4e2547a62e95fdc9048c3de7b86a830ec075c258eddb68dc835ae80982278438",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_003.json": "3ec9c885548960deb30dfbc79c54cab88316247f76aedc6f1fe30b3410fe9d85",
+    "eval/fixtures/scenarios/flynn-record-matching/results/log_004.json": "9001fc2e90f3d655562b3e73e2671434a812e8d54b794333cc6ae0e17b97b7f3",
+    "eval/fixtures/scenarios/flynn-record-matching/starting-tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-record-matching/tree.gedcomx.json": "7767bb99f02a48a85ab0c3b10ad17e76f5c57e70adbef46cdc3e65c36d735f18",
+    "eval/fixtures/scenarios/flynn-two-lives/README.md": "70a7d5c8f7c37a37055d9a7fbf1566dd3dd412b4d84701b7c75180efea69c1aa",
+    "eval/fixtures/scenarios/flynn-two-lives/research.json": "b792147c9a93da82978104cf6f49cfe9d353560419659c3dba001cbd4a97e7de",
+    "eval/fixtures/scenarios/flynn-two-lives/tree.gedcomx.json": "85e11f802e98f3282840e63a3818154e780de6efdf22652fdf420474d46766f3",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/README.md": "cc7de5fdc61afed0f6392ac72c201c3e48e362d3295178433f48a90f81a5a5e6",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/research.json": "dcfea73cfca5c8402597c6821dbf7899e501ec1b7d891910d9687e38d4f5052e",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/place-distance-canterbury.json": "05dd1aa8ad44856772641d943bb3a68b04aaf41f46067faf83aa5aaa3af5d129",
+    "eval/fixtures/mcp/place-distance-ireland-pennsylvania.json": "db32490deab11674ae4e028586282c66378fa26b50045e28d8ca6aa7cfb66648",
+    "eval/fixtures/mcp/place-distance-pennsylvania-ireland.json": "fb11f75ee2a6798ab1c8958fda78529f83935f059e943ba55cad69ad233dd4d0",
+    "eval/fixtures/mcp/place-distance-within-pennsylvania.json": "82178b5b72b67707a5c2c1aa809b62cf11b4eb97bfce963d9ab57cab2124f0f2",
+    "eval/fixtures/mcp/place-search-canterbury.json": "a6d500684d3078c74559d0d9db4091ee4e02c4903efcec3f28d9697b76c8c46e",
+    "eval/fixtures/mcp/place-search-ireland.json": "cd31839e4d7aeed75a120a7e9d2a5b4d5bc67d6a60048a6b9d4055df39fe3c5b",
+    "eval/fixtures/mcp/place-search-ireland-by-name.json": "e23ca058076cb57ea1fd719e0b1a5c9a4bb6afdfefb11e88ee93498ecd1e2ed5",
+    "eval/fixtures/mcp/place-search-ireland-by-place.json": "5439c5df4b13aa66a5e50e49b439812c8db08164d46cc7731e8d815e48f3a6cf",
+    "eval/fixtures/mcp/place-search-pennsylvania.json": "4a4d6585cc9a9e4c2ff952aa3b55a172e0050689e772a9976022d95cdc0d45f2",
+    "eval/fixtures/mcp/place-search-pennsylvania-by-name.json": "bb72d4d15a8f6cde1688cb46393b9eeb931245cb0e7a7a7df8e027e66d03a35e",
+    "eval/fixtures/mcp/place-search-pennsylvania-by-place.json": "23c100903edd6c0dd69992a64539820e9c5f811f88fd2fd2e0fbf551e14457bc",
+    "eval/fixtures/mcp/place-search-schuylkill-by-name.json": "9ef0e099326ccfc98288e19dbf7b07f4c3507542c609a1b6593f2c2c0ff8bfed",
+    "eval/fixtures/mcp/place-search-schuylkill-by-place.json": "9c9c9d0721e2fdb7f2011283c8e401221791dc47668fb3431742daa017aa4479",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/wiki-read-any.json": "a1fe91696ce987b7897a4bc98256006ce02ac89903c0eaab62cdf923f30883df",
+    "eval/fixtures/mcp/wiki-read-england-census.json": "fe1bd4a40265ba53cf9ab0178be8ba5c2b13decdf4071246a09a623c226c6e2c",
+    "eval/fixtures/mcp/wiki-read-ireland-census.json": "63bf2c7db9deffb89e7fc6e746777a60c668897dec66574e4b6696e937c83e48",
+    "eval/fixtures/mcp/wiki-read-united-states-census.json": "792a04d69ab890369e742aabbf46b604c55bd336a95c02bc7641754dbde097b7"
+  },
+  "tests": [
+    {
+      "test_id": "ut_timeline_003",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-with-birthplace-conflict",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no output and made no tool calls. The user explicitly asked to resolve a birthplace conflict, but the skill took no action. This is a negative test where the skill should have routed to conflict-resolution, but instead it produced nothing at all\u2014neither a decline message nor a routing action. The absence of any response or tool invocation means the task was not performed and no routing occurred."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill did not address the user's request to resolve the birthplace conflict. No conflict resolution analysis was performed, no assertions were evaluated, no preferred assertion was selected, and no resolution rationale was written. The file changes summary shows zero changes to research.json or tree.gedcomx.json, confirming that the conflict remains unresolved. The skill should have either routed to conflict-resolution or declined with clear explanation; instead it produced nothing."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill, so this dimension is not applicable."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no output and made no tool calls. The user explicitly asked to resolve a birthplace conflict, but the skill took no action. This is a negative test where the skill should have routed to conflict-resolution, but instead it produced nothing at all\u2014neither a decline message nor a routing action. The absence of any response or tool invocation means the task was not performed and no routing occurred."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill did not address the user's request to resolve the birthplace conflict. No conflict resolution analysis was performed, no assertions were evaluated, no preferred assertion was selected, and no resolution rationale was written. The file changes summary shows zero changes to research.json or tree.gedcomx.json, confirming that the conflict remains unresolved. The skill should have either routed to conflict-resolution or declined with clear explanation; instead it produced nothing."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill, so this dimension is not applicable."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 37871.4608750015,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4052.6734580053017,
+        "wall_clock_ms": 42243.5519695282,
+        "num_turns": 2,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 8365,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 345,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.010089999999999998,
+        "total_cost_usd": 0.010089999999999998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_timeline_003_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 37871.4608750015,
+          "duration_api_ms": 0.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21223,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "conflict-resolution"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "conflict-resolution",
+                  "args": "Resolve a birthplace conflict: the 1850 and 1860 US federal censuses record Ireland as the birthplace, but the death certificate records Pennsylvania as the birthplace."
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Correctness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Correctness",
+                "score": 1,
+                "rationale": "The skill produced no output and made no tool calls. The user explicitly asked to resolve a birthplace conflict, but the skill took no action. This is a negative test where the skill should have routed to conflict-resolution, but instead it produced nothing at all\u2014neither a decline message nor a routing action. The absence of any response or tool invocation means the task was not performed and no routing occurred."
+              },
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Completeness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Completeness",
+                "score": 1,
+                "rationale": "The skill did not address the user's request to resolve the birthplace conflict. No conflict resolution analysis was performed, no assertions were evaluated, no preferred assertion was selected, and no resolution rationale was written. The file changes summary shows zero changes to research.json or tree.gedcomx.json, confirming that the conflict remains unresolved. The skill should have either routed to conflict-resolution or declined with clear explanation; instead it produced nothing."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_years_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a census-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_event_assertion_ids_resolve",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_chronologically_ordered",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_have_non_empty_assertion_ids",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_rejected_assertion_in_events",
+                "passed": true,
+                "error": "skipped: no rejected-assertion-id-<id> tag",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_produces_timeline",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_us_1890_never_expected",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no output and made no tool calls. The user explicitly asked to resolve a birthplace conflict, but the skill took no action. This is a negative test where the skill should have routed to conflict-resolution, but instead it produced nothing at all\u2014neither a decline message nor a routing action. The absence of any response or tool invocation means the task was not performed and no routing occurred."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill did not address the user's request to resolve the birthplace conflict. No conflict resolution analysis was performed, no assertions were evaluated, no preferred assertion was selected, and no resolution rationale was written. The file changes summary shows zero changes to research.json or tree.gedcomx.json, confirming that the conflict remains unresolved. The skill should have either routed to conflict-resolution or declined with clear explanation; instead it produced nothing."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill, so this dimension is not applicable."
+              }
+            ],
+            "judge_cost_usd": 0.010089999999999998,
+            "duration_ms": 4052.6734580053017,
+            "error": null,
+            "input_tokens": 8365,
+            "cached_input_tokens": 0,
+            "output_tokens": 345
+          },
+          "started_at": 1791848234.6644201,
+          "ended_at": 1791848276.907972
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_timeline_010",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-competing-fathers",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly declined to perform timeline's task and routed to hypothesis-tracking, which is the appropriate skill for ruling out a hypothesis candidate. The user's message requested elimination of h_002 (Thomas of Luzerne) based on chronological impossibility (died 1840, Patrick born ~1845), which is a hypothesis-tracking decision, not a timeline construction task. The routing decision is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the correct action for this negative test: it declined to build or amend a timeline and routed the user to hypothesis-tracking. The per-test context explicitly states that chronological reasoning in the user's message is not a request for a chronology\u2014the requested artifact is the ruled-out hypothesis. The skill appropriately recognized this and did not attempt timeline work."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to hypothesis-tracking without invoking tools itself, which is appropriate for a decline/routing decision. N/A per base rules."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill correctly declined to perform timeline's task and routed to hypothesis-tracking, which is the appropriate skill for ruling out a hypothesis candidate. The user's message requested elimination of h_002 (Thomas of Luzerne) based on chronological impossibility (died 1840, Patrick born ~1845), which is a hypothesis-tracking decision, not a timeline construction task. The routing decision is correct."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill completed the correct action for this negative test: it declined to build or amend a timeline and routed the user to hypothesis-tracking. The per-test context explicitly states that chronological reasoning in the user's message is not a request for a chronology\u2014the requested artifact is the ruled-out hypothesis. The skill appropriately recognized this and did not attempt timeline work."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to hypothesis-tracking without invoking tools itself, which is appropriate for a decline/routing decision. N/A per base rules."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 15855.727083006059,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4144.269166994491,
+        "wall_clock_ms": 20333.733320236206,
+        "num_turns": 3,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 10203,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 359,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.011998,
+        "total_cost_usd": 0.011998
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_timeline_010_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 15855.727083006059,
+          "duration_api_ms": 0.0,
+          "num_turns": 3,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21539,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "hypothesis-tracking"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/research.json"
+                }
+              },
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Rule out Thomas of Luzerne as candidate father",
+                  "prompt": "Rule out Thomas of Luzerne as a candidate father for Patrick. The reason: Thomas died in 1840, five years before Patrick was born (circa 1845). Death before the child's birth is a decisive contradiction \u2014 Thomas cannot be the father.\n\nUpdate the hypothesis status to `ruled_out` and record the rationale (Thomas of Luzerne died 1840; Patrick born ~1845; death precedes birth by ~5 years, making paternity impossible).\n\nProject path: /private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_timeline_010-0-0-ctcpc1b8",
+                  "subagent_type": "hypothesis-tracking"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "hypothesis-tracking",
+                "text": "negative-test routing to agent 'hypothesis-tracking' observed; verdict decided, stopping",
+                "is_error": true
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_years_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a census-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_event_assertion_ids_resolve",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_chronologically_ordered",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_have_non_empty_assertion_ids",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_rejected_assertion_in_events",
+                "passed": true,
+                "error": "skipped: no rejected-assertion-id-<id> tag",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_produces_timeline",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_us_1890_never_expected",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill correctly declined to perform timeline's task and routed to hypothesis-tracking, which is the appropriate skill for ruling out a hypothesis candidate. The user's message requested elimination of h_002 (Thomas of Luzerne) based on chronological impossibility (died 1840, Patrick born ~1845), which is a hypothesis-tracking decision, not a timeline construction task. The routing decision is correct."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill completed the correct action for this negative test: it declined to build or amend a timeline and routed the user to hypothesis-tracking. The per-test context explicitly states that chronological reasoning in the user's message is not a request for a chronology\u2014the requested artifact is the ruled-out hypothesis. The skill appropriately recognized this and did not attempt timeline work."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill under test. The skill correctly routed to hypothesis-tracking without invoking tools itself, which is appropriate for a decline/routing decision. N/A per base rules."
+              }
+            ],
+            "judge_cost_usd": 0.011998,
+            "duration_ms": 4144.269166994491,
+            "error": null,
+            "input_tokens": 10203,
+            "cached_input_tokens": 0,
+            "output_tokens": 359
+          },
+          "started_at": 1791848216.9466398,
+          "ended_at": 1791848237.280373
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_timeline_008",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-record-matching",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no output and made no tool calls. The user asked for evaluation and linking of a 1850 census record to Patrick Flynn (I1), which is precisely what the person-evidence skill should do. The skill was correctly invoked but failed to execute its task. No research.json or tree.gedcomx.json changes were made, and no analysis was performed. This is a failure to carry out the required work."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request required: (1) evaluation of whether the 1850 census record (src_001, log_001) matches Patrick Flynn (I1) on identifiers, (2) analysis of the match quality, and (3) linking the record to the person. None of these were addressed. The skill made zero tool calls and produced no text response, leaving the entire task incomplete."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill, so this dimension is not applicable."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no output and made no tool calls. The user asked for evaluation and linking of a 1850 census record to Patrick Flynn (I1), which is precisely what the person-evidence skill should do. The skill was correctly invoked but failed to execute its task. No research.json or tree.gedcomx.json changes were made, and no analysis was performed. This is a failure to carry out the required work."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request required: (1) evaluation of whether the 1850 census record (src_001, log_001) matches Patrick Flynn (I1) on identifiers, (2) analysis of the match quality, and (3) linking the record to the person. None of these were addressed. The skill made zero tool calls and produced no text response, leaving the entire task incomplete."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made by the skill, so this dimension is not applicable."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 14063.113583004451,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 4141.574084002059,
+        "wall_clock_ms": 18475.91805458069,
+        "num_turns": 2,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 8571,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 342,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.010281,
+        "total_cost_usd": 0.010281
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_timeline_008_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 14063.113583004451,
+          "duration_api_ms": 0.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21242,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "person-evidence"
+            ],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Evaluate record-person match and link Patrick Flynn",
+                  "prompt": "The user has a genealogy research project and wants to evaluate whether the Patrick Flynn recorded in the 1850 census (source ID: src_001) \u2014 listed as age 5 in Thomas Flynn's household \u2014 is the same person as their subject Patrick Flynn in the tree. If it's a match, create the person_evidence entry linking that record assertion to the tree person.\n\nPlease:\n1. Read the project context (research.json and tree.gedcomx.json) to understand what is known about the subject Patrick Flynn (birth year, parents, relationships, etc.).\n2. Examine the assertions already extracted from src_001 to see what the census record says about this Patrick Flynn (age 5, in Thomas Flynn's household, and any other identifiers).\n3. Evaluate the match \u2014 do the identifiers align? What is your confidence level and rationale?\n4. If it is a match, create or confirm the person_evidence entry linking the assertion(s) from src_001 to the correct tree person.\n\nThe project is in the current working directory. The user states the 1850 census record matches \"on every identifier.\"",
+                  "subagent_type": "person-evidence"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "person-evidence",
+                "text": "negative-test routing to agent 'person-evidence' observed; verdict decided, stopping",
+                "is_error": true
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Correctness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Correctness",
+                "score": 1,
+                "rationale": "The skill produced no output and made no tool calls. The user asked for evaluation and linking of a 1850 census record to Patrick Flynn (I1), which is precisely what the person-evidence skill should do. The skill was correctly invoked but failed to execute its task. No research.json or tree.gedcomx.json changes were made, and no analysis was performed. This is a failure to carry out the required work."
+              },
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Completeness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Completeness",
+                "score": 1,
+                "rationale": "The user's request required: (1) evaluation of whether the 1850 census record (src_001, log_001) matches Patrick Flynn (I1) on identifiers, (2) analysis of the match quality, and (3) linking the record to the person. None of these were addressed. The skill made zero tool calls and produced no text response, leaving the entire task incomplete."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_years_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a census-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_event_assertion_ids_resolve",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_chronologically_ordered",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_have_non_empty_assertion_ids",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_rejected_assertion_in_events",
+                "passed": true,
+                "error": "skipped: no rejected-assertion-id-<id> tag",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_produces_timeline",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_us_1890_never_expected",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no output and made no tool calls. The user asked for evaluation and linking of a 1850 census record to Patrick Flynn (I1), which is precisely what the person-evidence skill should do. The skill was correctly invoked but failed to execute its task. No research.json or tree.gedcomx.json changes were made, and no analysis was performed. This is a failure to carry out the required work."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request required: (1) evaluation of whether the 1850 census record (src_001, log_001) matches Patrick Flynn (I1) on identifiers, (2) analysis of the match quality, and (3) linking the record to the person. None of these were addressed. The skill made zero tool calls and produced no text response, leaving the entire task incomplete."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made by the skill, so this dimension is not applicable."
+              }
+            ],
+            "judge_cost_usd": 0.010281,
+            "duration_ms": 4141.574084002059,
+            "error": null,
+            "input_tokens": 8571,
+            "cached_input_tokens": 0,
+            "output_tokens": 342
+          },
+          "started_at": 1791848220.472917,
+          "ended_at": 1791848238.9488351
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_timeline_009",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no text response and made no changes to the project files. The user explicitly requested a proof argument showing Thomas Flynn was Patrick Flynn's father, using census and death records. The skill failed to deliver any substantive output\u2014no proof argument was written, no citations were provided, and no reasoning was articulated. The project context tool was called successfully, confirming the data was available, but the skill did not use that information to construct the requested proof."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request was explicit and unambiguous: write a proof argument demonstrating Thomas Flynn's paternity of Patrick Flynn using census and death records. The skill addressed none of this. No proof argument was written, no evidence was marshaled, no citations were provided, and no conclusion was drawn. The entire task the user requested was left undone. This is a major omission, not a partial gap."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The single MCP tool call (project_context) was invoked with correct arguments: the projectPath parameter matched the expected fixture path. The call succeeded (matched.kind == 'live', ok: true) and returned the full project context including persons, sources, assertions, and conflicts needed to construct a proof. No tool call errors occurred. The tool was used correctly; the failure was in what Claude did with the returned information."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no text response and made no changes to the project files. The user explicitly requested a proof argument showing Thomas Flynn was Patrick Flynn's father, using census and death records. The skill failed to deliver any substantive output\u2014no proof argument was written, no citations were provided, and no reasoning was articulated. The project context tool was called successfully, confirming the data was available, but the skill did not use that information to construct the requested proof."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": null,
+            "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request was explicit and unambiguous: write a proof argument demonstrating Thomas Flynn's paternity of Patrick Flynn using census and death records. The skill addressed none of this. No proof argument was written, no evidence was marshaled, no citations were provided, and no conclusion was drawn. The entire task the user requested was left undone. This is a major omission, not a partial gap."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The single MCP tool call (project_context) was invoked with correct arguments: the projectPath parameter matched the expected fixture path. The call succeeded (matched.kind == 'live', ok: true) and returned the full project context including persons, sources, assertions, and conflicts needed to construct a proof. No tool call errors occurred. The tool was used correctly; the failure was in what Claude did with the returned information."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 52291.011499997694,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 5435.655958004645,
+        "wall_clock_ms": 57993.07584762573,
+        "num_turns": 7,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 12280,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 422,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.01439,
+        "total_cost_usd": 0.01439
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_timeline_009_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 52291.011499997694,
+          "duration_api_ms": 0.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": true,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 23739,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "",
+            "activated": false,
+            "skills_invoked": [
+              "proof-conclusion"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_timeline_009-0-0-thz50wzl"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-10-12.0603a3e1.dirty",
+                  "projectStatus": "active",
+                  "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "concluded",
+                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "openConflictIds": [],
+                      "storedStatus": "in_progress",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    },
+                    {
+                      "id": "q_002",
+                      "state": "evidence-gathered",
+                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "openConflictIds": [],
+                      "storedStatus": "resolved",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Patrick Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [
+                        "S1",
+                        "S3"
+                      ],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": 1908
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Thomas Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [],
+                      "childIds": [
+                        "I1",
+                        "I3",
+                        "I4"
+                      ],
+                      "diedByYear": null
+                    },
+                    {
+                      "id": "I3",
+                      "name": "Mary Flynn",
+                      "gender": "Female",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": null
+                    },
+                    {
+                      "id": "I4",
+                      "name": "James Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": null
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ark:/61903/1:1:MXYZ"
+                      ],
+                      "assertionCount": 5
+                    },
+                    {
+                      "id": "src_002",
+                      "repository": "Ancestry",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ancestry:8054:patrick-flynn-1850"
+                      ],
+                      "assertionCount": 2
+                    },
+                    {
+                      "id": "src_003",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_004",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S3",
+                      "recordIds": [
+                        "ark:/61903/1:1:MDEF"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_005",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S5",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_006",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S4",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_007",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S6",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_008",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S7",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_009",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S8",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    }
+                  ],
+                  "localities": [],
+                  "awaitingUser": []
+                }
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__project_context",
+                  "max_results": "1"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/research.json"
+                }
+              },
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Write proof argument \u2014 Thomas Flynn as Patrick Flynn's father",
+                  "prompt": "Write a GPS-conformant proof argument (not a mere statement) demonstrating that Thomas Flynn was the father of Patrick Flynn (b. ~1845, PA, d. 1908, Schuylkill County, PA). \n\nProject path: /private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_timeline_009-0-0-thz50wzl\n\nThe relevant research question is q_001: \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\"\n\nUse all census records and death records that are in research.json (sources src_001 through src_009 as applicable). Read the project's research.json carefully to find every assertion tied to Thomas Flynn as Patrick's father, then write the proof argument, persist it as a proof_summary (ps_001 if creating new, or update in place if one exists), and encode the paternal relationship in tree.gedcomx.json.\n\nThe proof argument form is required \u2014 write a narrative that:\n1. States the research question.\n2. Surveys the sources used (citing each by Evidence Explained standards).\n3. Correlates and analyzes the evidence, including GPS three-layer classification where relevant.\n4. Resolves any conflicts.\n5. States a reasoned conclusion with a GPS tier (Proved / Probable / Possible / Not Proved / Disproved).",
+                  "subagent_type": "proof-conclusion"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "proof-conclusion",
+                "text": "negative-test routing to agent 'proof-conclusion' observed; verdict decided, stopping",
+                "is_error": true
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Correctness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Correctness",
+                "score": 1,
+                "rationale": "The skill was invoked but produced no text response and made no changes to the project files. The user explicitly requested a proof argument showing Thomas Flynn was Patrick Flynn's father, using census and death records. The skill failed to deliver any substantive output\u2014no proof argument was written, no citations were provided, and no reasoning was articulated. The project context tool was called successfully, confirming the data was available, but the skill did not use that information to construct the requested proof."
+              },
+              {
+                "kind": "coerced_routing_negative_to_na",
+                "advisory": "judge scored Completeness 1 on a negative test whose outcome is decided by routing alone; coerced to null. Across the committed corpus a human confirmed this 1 in 20 of 24 such cells, so read it before confirming the N/A: if the skill under test carried out its own task inline, the 1 is right and the routing pass is hiding a real defect. The coercion does NOT check whether the run produced output, and on 4 of the 47 runs it fires on in the committed corpus it did (ut_timeline_008 wrote 11 assertions via extraction_append; ut_person_evidence_003's 1 is human-confirmed).",
+                "name": "Completeness",
+                "score": 1,
+                "rationale": "The user's request was explicit and unambiguous: write a proof argument demonstrating Thomas Flynn's paternity of Patrick Flynn using census and death records. The skill addressed none of this. No proof argument was written, no evidence was marshaled, no citations were provided, and no conclusion was drawn. The entire task the user requested was left undone. This is a major omission, not a partial gap."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_years_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a census-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_event_assertion_ids_resolve",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_chronologically_ordered",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_events_have_non_empty_assertion_ids",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_rejected_assertion_in_events",
+                "passed": true,
+                "error": "skipped: no rejected-assertion-id-<id> tag",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_produces_timeline",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_us_1890_never_expected",
+                "passed": true,
+                "error": "skipped: only positive tests produce timelines",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no text response and made no changes to the project files. The user explicitly requested a proof argument showing Thomas Flynn was Patrick Flynn's father, using census and death records. The skill failed to deliver any substantive output\u2014no proof argument was written, no citations were provided, and no reasoning was articulated. The project context tool was called successfully, confirming the data was available, but the skill did not use that information to construct the requested proof."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": null,
+                "rationale": "[coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by routing alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The user's request was explicit and unambiguous: write a proof argument demonstrating Thomas Flynn's paternity of Patrick Flynn using census and death records. The skill addressed none of this. No proof argument was written, no evidence was marshaled, no citations were provided, and no conclusion was drawn. The entire task the user requested was left undone. This is a major omission, not a partial gap."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The single MCP tool call (project_context) was invoked with correct arguments: the projectPath parameter matched the expected fixture path. The call succeeded (matched.kind == 'live', ok: true) and returned the full project context including persons, sources, assertions, and conflicts needed to construct a proof. No tool call errors occurred. The tool was used correctly; the failure was in what Claude did with the returned information."
+              }
+            ],
+            "judge_cost_usd": 0.01439,
+            "duration_ms": 5435.655958004645,
+            "error": null,
+            "input_tokens": 12280,
+            "cached_input_tokens": 0,
+            "output_tokens": 422
+          },
+          "started_at": 1791848227.494365,
+          "ended_at": 1791848285.4874408
+        }
+      ],
+      "grading_mode": "routing",
+      "dimensions_gate_outcome": false
+    }
+  ],
+  "totals": {
+    "duration_ms": 120081.31304100971,
+    "duration_api_ms": 0,
+    "judge_duration_ms": 17774.172667006496,
+    "num_turns": 14,
+    "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "output_tokens": 0,
+    "judge_input_tokens": 39419,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1468,
+    "skill_cost_usd": 0,
+    "judge_cost_usd": 0.046758999999999995,
+    "total_cost_usd": 0.046758999999999995,
+    "wall_clock_ms": 68540.80104827881
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}
