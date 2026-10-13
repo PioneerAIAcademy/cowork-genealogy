@@ -1898,8 +1898,42 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
     `question '${qid}' already has a proof summary (${ids.join(", ")}), and a question may ` +
       "carry only one. Re-concluding is an UPDATE of that entry, not a second append: retry " +
       `with { section: "proof_summaries", op: "update", entryId: "${ids[0]}", fields: { … } }, ` +
-      "passing only the fields that changed. Appending here would leave two contradictory " +
+      "passing only the fields that changed — `narrative_markdown` and `exhaustive_search_summary` " +
+      "count as one, so pass both or neither. Appending here would leave two contradictory " +
       "conclusions on one question, with nothing to say which is current.",
+  ];
+}
+
+/** A summary's narrative and its `exhaustive_search_summary` are rewritten
+ *  together or not at all.
+ *
+ *  Both say what was searched and what could still resolve the question, so a
+ *  later search that changes one changes the other. Observed 2026-10-09 (issue
+ *  #3177, G9GJ-959): after three more searches, `ps_002`'s summary was rewritten
+ *  to report them and its narrative's "What could resolve it" was left
+ *  recommending all three, while `ps_001` got the reverse — a new narrative over
+ *  a summary still calling the same images "Not completed". The re-invocation
+ *  rule said to pass only the fields that changed, and each update did.
+ *
+ *  Update-only: an append already requires both. Passing a field's current
+ *  text again satisfies it — the point is that the caller re-checked it. */
+function narrativeAndSearchSummaryTogether(op: any): string[] {
+  if (op?.op !== "update") return [];
+  const fields = op.fields ?? {};
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
+  const narrative = has("narrative_markdown");
+  const summary = has("exhaustive_search_summary");
+  if (narrative === summary) return [];
+  const [set, missing] = narrative
+    ? ["narrative_markdown", "exhaustive_search_summary"]
+    : ["exhaustive_search_summary", "narrative_markdown"];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sets \`${set}\` without ` +
+      `\`${missing}\`. Both say what was searched and what could still resolve the question, so ` +
+      "a change to one is a change to the other: re-read the log, rewrite both, and pass both " +
+      `in this one update. If \`${missing}\` is still accurate after you check it against every ` +
+      "log entry made since the summary was written, pass its current text unchanged. Leaving " +
+      "one stale is how a narrative ends up recommending records its own summary says were searched.",
   ];
 }
 
@@ -4043,6 +4077,7 @@ function applyOne(
     // update walked past it. `oneSummaryPerQuestion` excludes the entry by id,
     // so an ordinary update of an existing summary still passes.
     invariantErrors.push(...oneSummaryPerQuestion(resultEntry, research, resultEntry?.id));
+    invariantErrors.push(...narrativeAndSearchSummaryTogether(op));
   }
   if (invariantErrors.length > 0) {
     throw new ResearchAppendError(invariantErrors);

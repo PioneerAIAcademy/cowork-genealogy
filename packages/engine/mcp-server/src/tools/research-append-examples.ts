@@ -374,6 +374,22 @@ export function exampleFor(
   }
 })`;
     }
+    // A summary's narrative and search summary are refused one without the
+    // other (`narrativeAndSearchSummaryTogether`), so the generic placeholder
+    // would contradict the refusal it is attached to.
+    if (section === "proof_summaries") {
+      return `research_append({
+  projectPath: "<absolute-path-to-project-directory>",
+  section: "proof_summaries",
+  op: "update",
+  entryId: "<existing-ps_-id>",
+  fields: {
+    /* only the fields you are changing, but these two always together: */
+    narrative_markdown: "## Parents of Patrick Flynn\\n\\n... **What could resolve it:** the 1885 county estate file.",
+    exhaustive_search_summary: "Searched ... and the 1850-1880 censuses. Not yet examined: the 1885 county estate file."
+  }
+})`;
+    }
     return `research_append({
   projectPath: "<absolute-path-to-project-directory>",
   section: "${section}",

@@ -2893,7 +2893,11 @@ describe("research_append (Phase 3)", () => {
         section: "proof_summaries",
         op: "update",
         entryId: "ps_001",
-        fields: { tier: "not_proved", narrative_markdown: "## Conclusion\nidentity unsettled" },
+        fields: {
+          tier: "not_proved",
+          narrative_markdown: "## Conclusion\nidentity unsettled",
+          exhaustive_search_summary: "census + vitals",
+        },
       });
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
@@ -3078,6 +3082,78 @@ describe("research_append (Phase 3)", () => {
       if (r.ok) return;
       expect(r.errors.join(" ")).toContain("ps_001");
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    // ── narrative and search summary move together ──
+    //
+    // Observed 2026-10-09 (issue #3177, G9GJ-959): each re-concluded summary was
+    // updated one field at a time, so one proof's narrative recommended records
+    // its own summary said were searched, and the other's summary called images
+    // "Not completed" that its narrative quoted.
+    for (const [set, missing] of [
+      ["narrative_markdown", "exhaustive_search_summary"],
+      ["exhaustive_search_summary", "narrative_markdown"],
+    ] as const) {
+      it(`refuses an update that sets ${set} without ${missing}`, async () => {
+        await writeProject(withSummary());
+        const before = await readFile(join(dir, "research.json"), "utf-8");
+        const r = await researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "update",
+          entryId: "ps_001",
+          fields: { [set]: "rewritten after the 1855 image was read" },
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toContain("ps_001");
+        expect(msg).toContain(missing);
+        expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+      });
+    }
+
+    it("refuses a one-field update even when it also changes the tier", async () => {
+      await writeProject(withSummary());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { tier: "not_proved", narrative_markdown: "## Not proved\n..." },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toContain("exhaustive_search_summary");
+    });
+
+    it("allows an update that rewrites both fields together", async () => {
+      await writeProject(withSummary());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: {
+          narrative_markdown: "## Conclusion\nNow cites the 1855 image.",
+          exhaustive_search_summary: "census; 1855 image read",
+        },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+      const ps = (await readResearch()).proof_summaries[0];
+      expect(ps.exhaustive_search_summary).toBe("census; 1855 image read");
+    });
+
+    it("allows re-passing one field's current text beside a rewritten other", async () => {
+      await writeProject(withSummary());
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "update",
+        entryId: "ps_001",
+        fields: { narrative_markdown: "## Conclusion\nreworded", exhaustive_search_summary: "census" },
+      });
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
     });
 
     it("allows updating the existing summary", async () => {
@@ -3267,7 +3343,10 @@ describe("research_append (Phase 3)", () => {
       section: "proof_summaries",
       op: "update",
       entryId: "ps_001",
-      fields: { narrative_markdown: "## Conclusion\nRevised wording." },
+      fields: {
+        narrative_markdown: "## Conclusion\nRevised wording.",
+        exhaustive_search_summary: "Searched census + vitals",
+      },
     });
     expect(r.ok).toBe(true);
   });
