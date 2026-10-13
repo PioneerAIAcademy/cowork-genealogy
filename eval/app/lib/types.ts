@@ -462,6 +462,8 @@ export interface McpFixtureFile {
    */
   args: Record<string, string | number | boolean | null>;
   input_schema?: unknown;
+  /** A thrown-error fixture: answered with `is_error`, as production sets `isError`. */
+  is_error?: boolean;
   response: unknown;
   [key: string]: unknown;
 }
