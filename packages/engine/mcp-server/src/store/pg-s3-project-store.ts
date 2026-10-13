@@ -31,6 +31,11 @@
 // back with `StaleClaimError`, so its writes are no-ops. An unfenced store (a
 // request with no fence headers, the test suites) autocommits as it always did.
 //
+// The HTTP server admits a project request only through `authorizeAttempt`
+// (U4): the request's bearer, hashed, must be the `turns.bearer_sha256` the
+// worker stamped on that project's open turn. Readiness therefore also requires
+// that column.
+//
 // S3 objects are immutable per write. Every write puts a NEW object under
 // `<projectId>/<ref>/<uuid>` and points the index row at it; the object the row
 // pointed at before is deleted only once the row change is durable — after
@@ -99,6 +104,9 @@ export const READY_TIMEOUT_MS = 1_500;
 /** The tables every store method queries; a missing one fails readiness.
  *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
 export const STORE_TABLES = ["documents", "blobs", "staging", "projects", "turns"] as const;
+/** The `turns` column the tool server's door reads (U4, migration 014); a
+ *  database without it fails readiness. */
+const STAMP_COLUMN = "bearer_sha256";
 
 /** Whether a fenced store's claim is still the turn's current one. Run right
  *  after BEGIN, unlocked: a stale attempt fails fast, before its tool body runs
@@ -124,6 +132,40 @@ export class StaleClaimError extends Error {
     );
     this.name = "StaleClaimError";
   }
+}
+
+/** The tool server's door (U4): the request's bearer is the grant the worker
+ *  stamped on this project's open turn. `$3` is the bearer's sha256 in hex.
+ *  No `claim_epoch` term on purpose: supersession stays with the store fence
+ *  above, so a superseded attempt still open and stamped gets StaleClaimError
+ *  in-band rather than a 403. A re-claim clears the stamp until the new
+ *  attempt stamps its own. */
+export const ATTEMPT_DOOR_SQL =
+  "SELECT 1 FROM turns WHERE turn_id = $1 AND project_id = $2 AND bearer_sha256 = $3 AND completed_at IS NULL";
+
+/** What one project request presents at the door. */
+export interface AttemptAuthorizationRequest {
+  projectId: string;
+  fence?: ClaimFence;
+  bearer: string;
+}
+
+export type AttemptAuthorization =
+  | { ok: true }
+  | { ok: false; reason: "no_fence" | "empty_bearer" | "no_match" };
+
+/** Whether `bearer` is the grant of an open attempt on `projectId`. A request
+ *  with no fence or an empty bearer is refused without a query; a query that
+ *  fails rejects (the caller answers 503, never admits). */
+export async function authorizeAttempt(
+  backend: PgS3Backend,
+  req: AttemptAuthorizationRequest,
+): Promise<AttemptAuthorization> {
+  if (!req.fence) return { ok: false, reason: "no_fence" };
+  if (!req.bearer) return { ok: false, reason: "empty_bearer" };
+  const hash = createHash("sha256").update(req.bearer, "utf8").digest("hex");
+  const rows = await backend.pool.query(ATTEMPT_DOOR_SQL, [req.fence.turnId, req.projectId, hash]);
+  return rows.rows.length > 0 ? { ok: true } : { ok: false, reason: "no_match" };
 }
 
 /** One store check's outcome. `error` is a short label (an error code or name),
@@ -342,6 +384,14 @@ export class PgS3Backend {
       if (missing.rows.length > 0) {
         const names = missing.rows.map((r) => r.t).join(",");
         throw new ReadyCheckError(`schema: missing ${names}`, `store tables missing: ${names}`);
+      }
+      // The door (authorizeAttempt) reads the worker's stamp: without the
+      // column every project request would pass healthz and then 503.
+      try {
+        await client.query(`SELECT ${STAMP_COLUMN} FROM turns LIMIT 0`);
+      } catch (e) {
+        if ((e as { code?: unknown })?.code !== "42703") throw e;
+        throw new ReadyCheckError(`schema: missing turns.${STAMP_COLUMN}`, `turns.${STAMP_COLUMN} missing`);
       }
     } finally {
       // end() waits on a goodbye a silent host never acknowledges.

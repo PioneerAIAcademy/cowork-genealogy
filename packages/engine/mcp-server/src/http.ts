@@ -6,10 +6,17 @@
 //   Authorization: Bearer <token>   → the principal (http-server.ts, never LOCAL)
 //   X-Genealogy-Project-Id: <id>    → a PgS3ProjectStore for that project, bound
 //                                     for the request through runWithProjectStore
-// plus an optional claim-fence pair (U6), both or neither (400 otherwise):
+// plus a claim-fence pair (U6), both or neither (400 otherwise):
 //   X-Genealogy-Turn-Id: <turn>     → that store commits a write only while
 //   X-Genealogy-Claim-Epoch: <n>      `turns.claim_epoch` is still n, so an
 //                                     attempt a newer claim superseded writes nothing
+// A request that names a project is admitted only when its bearer is the grant
+// of an open attempt on it (U4, `authorizeAttempt`): the sha256 of the bearer
+// must be the `turns.bearer_sha256` the worker stamped on the fence's turn,
+// that turn must belong to the project, and it must not be completed. So the
+// fence is required with a project; anything else is a 403 before any store
+// exists, and a failed lookup is a 503. There is no opt-out. A request with no
+// project header is not checked and runs store-less tools only.
 // The process store is an `unboundProjectStore`, so a code path that runs
 // outside a request binding fails instead of reaching the file backend. The
 // Pg/S3 configuration is the one process-wide thing, read from the
@@ -34,7 +41,7 @@ import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
-import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
+import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
@@ -107,6 +114,7 @@ const server = await startHttpServer({
   baseConfig,
   bindStore: (projectId, signal, fence) =>
     new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal, fence }),
+  authorize: (req) => authorizeAttempt(backend, req),
   checkReady: () => backend.checkReady(),
 });
 

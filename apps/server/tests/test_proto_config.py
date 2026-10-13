@@ -1212,6 +1212,18 @@ def test_011_is_idempotent_and_not_unique():
                     r"\(project_key, session_id, subpath, \(entry->>'uuid'\)\)$", statements[0]), statements[0]
 
 
+
+# ── U4: the tool server's door ───────────────────────────────────────────────────
+
+
+def test_014_is_idempotent_and_nullable():
+    """014 re-runs on an unledgered database (U9), so its one statement is an IF NOT EXISTS
+    add; nullable with no default, so the ADD is metadata-only and an unstamped turn -- a
+    fresh claim, or every row from before 014 -- matches no bearer at the tool server's door."""
+    statements = _statements(SQL_DIR / "014_turn_bearer.sql")
+    assert len(statements) == 1, statements
+    assert re.match(r"ALTER TABLE turns ADD COLUMN IF NOT EXISTS bearer_sha256 text$", statements[0]), statements[0]
+
 def _proto_imports(source: str, *, packaged: bool) -> set[str]:
     """The proto/<name>.py modules a source imports. ``packaged`` (the worker's layout):
     ``from proto import X``, ``from proto.X import ...`` and ``import proto.X``; otherwise

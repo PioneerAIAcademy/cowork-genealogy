@@ -264,6 +264,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
             extracted_for_question_ids: [],
           },
         },
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            record_id: "SMOKE-1",
+            record_role: "principal",
+            fact_type: "name",
+            value: "Smoke Person",
+            information_quality: "primary",
+            informant: "self",
+            informant_proximity: "self",
+            record_basis: "stated",
+            extracted_for_question_ids: [],
+          },
+        },
       ],
     }),
     expect: okTrue,
@@ -271,9 +286,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     tool: "materialize_facts",
     offline: true,
+    // A person not yet in the tree: onto an existing one it needs a probable
+    // person_evidence link, which needs a same_person score behind it.
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      personId: "P1",
+      personId: "P9",
       recordId: "SMOKE-1",
       recordRole: "principal",
     }),

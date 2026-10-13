@@ -800,9 +800,12 @@ engine-smoke-stdio: $(ENGINE_BUILD) ## Drive the built engine over stdio and cal
 # the duration of the run, killed by the trap on every exit path, with the compose store's
 # GENEALOGY_* values; its base config is this host's config.json, hence
 # --host-config. BASE=http://127.0.0.1:8787 runs the same smoke against the compose `tools`
-# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. Both
-# arms print the per-table psql counts for the project id, even when the smoke fails; the
-# target's exit status is the smoke's.
+# service instead (proto-drive's BASE= switch), whose config.json is {"hosted": true}. The
+# tool server admits a project request only for the bearer stamped on an open turn of that
+# project (U4), so both arms pass --pg-dsn and the smoke seeds (then deletes) a stamped
+# turns row there: PROTO_PG_DSN, or NODE_PG_DSN (URL form, for node-postgres) on the BASE= arm. Both arms print the per-table
+# psql counts for the project id, even when the smoke fails; the target's exit status is
+# the smoke's.
 SMOKE_PROJECT_ID ?=
 # One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
 # uuid would be fixed for the whole invocation, including `make -n`.
@@ -811,7 +814,8 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT 'projects' AS tbl, count(*) FROM projects WHERE project_id = '$$id' \
 	     UNION ALL SELECT 'documents', count(*) FROM documents WHERE project_id = '$$id' \
 	     UNION ALL SELECT 'blobs', count(*) FROM blobs WHERE project_id = '$$id' \
-	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id'"; \
+	     UNION ALL SELECT 'staging', count(*) FROM staging WHERE project_id = '$$id' \
+	     UNION ALL SELECT 'turns (0: seeded row deleted)', count(*) FROM turns WHERE project_id = '$$id'"; \
 	  docker exec proto-postgres psql -U postgres proto -c \
 	    "SELECT name, version, updated_at FROM documents WHERE project_id = '$$id' ORDER BY name"
 
@@ -819,7 +823,7 @@ smoke_http_pg_counts = docker exec proto-postgres psql -U postgres proto -c \
 engine-smoke-http: $(ENGINE_BUILD) proto-up-store ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
-	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project ) || status=$$?; \
+	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 else
@@ -833,7 +837,7 @@ else
 	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
 	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
 	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
-	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config || status=$$?; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 endif

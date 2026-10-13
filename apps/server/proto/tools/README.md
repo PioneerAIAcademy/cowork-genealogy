@@ -14,9 +14,10 @@ Postgres/S3, selected by the `X-Genealogy-Project-Id` header.
 |---|---|
 | `POST /mcp` | Stateless Streamable HTTP, JSON responses (`sessionIdGenerator: undefined`, `enableJsonResponse: true`). One `Server` + transport per request, closed after the response. |
 | `GET` / `DELETE` / anything else on `/mcp` | `405`, `Allow: POST`, `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}` — answered by the entrypoint before any transport exists, so a client's post-initialize `GET` never gets a held-open SSE stream. The SDK client and the Claude Code CLI treat that 405 as "no server-push stream" and continue. |
-| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`, and `turns`, which the claim fence reads) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, or `schema: missing <tables>`), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
+| `GET /healthz` | Readiness: a fresh Postgres connection that sees the store tables (`documents`, `blobs`, `staging`, `projects`, and `turns`, which the claim fence and the project check read, with its `bearer_sha256` column from `014_turn_bearer.sql`) and `HeadBucket` on the bucket, under one 1.5 s deadline. `200` when both pass, `503` when either fails, same body either way: `{"ok":<bool>,"tools":<allToolSchemas.length>,"checks":{"postgres":{"ok":<bool>,"error"?:<label>},"s3":{…}}}`. `error` is a label only (an error code such as `ECONNREFUSED`, a name such as `TimeoutError`, `schema: missing <tables>`, or `schema: missing turns.bearer_sha256` on a database without 014), never a message; the message goes to stderr once per state change. A probe that rejects or outlives 2 s is `503` with no `checks`. A failing store never exits the process. The compose healthcheck and `make engine-smoke-http`'s readiness wait. |
 | `X-Genealogy-Project-Id` (request header) | The project the request's tools run against, matched against `PROJECT_ID_RE` (`src/store/project-id.ts`). Exactly one value; malformed or duplicated → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid X-Genealogy-Project-Id header."},"id":null}` before any transport exists. |
-| `X-Genealogy-Turn-Id` + `X-Genealogy-Claim-Epoch` (request headers, optional) | The claim fence (U6): the worker attempt's turn id (the `PROJECT_ID_RE` shape) and its `claim_epoch` (`[1-9][0-9]{0,17}`), both or neither. Exactly one of the two, a duplicated value, one that misses its pattern after trimming, or a fence without `X-Genealogy-Project-Id` → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, once each, with X-Genealogy-Project-Id."},"id":null}` before any transport exists. |
+| `X-Genealogy-Turn-Id` + `X-Genealogy-Claim-Epoch` (request headers; required with a project, U4) | The claim fence (U6): the worker attempt's turn id (the `PROJECT_ID_RE` shape) and its `claim_epoch` (`[1-9][0-9]{0,17}`), both or neither. Exactly one of the two, a duplicated value, one that misses its pattern after trimming, or a fence without `X-Genealogy-Project-Id` → `400 {"jsonrpc":"2.0","error":{"code":-32600,"message":"Invalid claim fence: send X-Genealogy-Turn-Id and X-Genealogy-Claim-Epoch together, once each, with X-Genealogy-Project-Id."},"id":null}` before any transport exists. A project request without the pair passes the 400 checks and is refused `403` below: the turn id is the project check's key. |
+| Project check (U4, every request with `X-Genealogy-Project-Id`) | After the `400` checks and before any store or transport, `authorizeAttempt` (`src/store/pg-s3-project-store.ts`) admits the request only if an **open** `turns` row with this turn id and project carries `bearer_sha256` equal to the sha256 (hex) of the request's bearer: `SELECT 1 FROM turns WHERE turn_id = $1 AND project_id = $2 AND bearer_sha256 = $3 AND completed_at IS NULL`. It does not test `claim_epoch`; supersession stays with the fence's in-band `StaleClaimError`. Refused (no fence, an empty bearer, or no such row) → `403 {"jsonrpc":"2.0","error":{"code":-32600,"message":"This bearer is not the grant of an open attempt on this project."},"id":null}`, the same body for every reason, and one stderr line `ev=tool_refused reason=<no_fence\|empty_bearer\|no_match> project_id=… turn_id=…` that never carries the bearer or its hash. The check itself failing (Postgres down) → `503 {"jsonrpc":"2.0","error":{"code":-32603,"message":"Project authorization is unavailable."},"id":null}` and `ev=tool_authorize_failed error=<code> project_id=…`, never an admission. A request with no project header is not checked. |
 | any other path | `404` JSON. |
 
 **Header → principal.** `Authorization: Bearer <token>` becomes
@@ -78,10 +79,16 @@ environment, not as a file in an image. One shared process, so these are per-sta
 than per patron — which is what a one-patron prototype wants; per-patron config would have
 to ride the request, as the bearer and the project id do.
 
-**There is no auth on this service** beyond header → principal, and no check that the
-bearer may reach the project id it names: identity is the web tier's problem and out of the
-prototype's scope, so the service publishes on **loopback only** (`127.0.0.1:8787`), the
-same rule as `../web`. Inside the compose network it is `tools:8787`.
+**Owner check (U4).** The service has no identity of its own: it checks only that the
+bearer is the one the worker stamped on the open turn it names, of the project it names. The
+worker writes that stamp (`STAMP_BEARER_SQL`, the sha256 of the grant token it hands the
+CLI) after `acquire_grant` and before the CLI exists, and every claim of an open turn clears
+it in the same `UPDATE` that mints the epoch, so an older attempt's token stops passing once
+a newer claim exists. The turn row is the web tier's and the grant the project owner's (U4's
+worker half), so the stamp is the owner's token by construction; a NULL-owner project is
+never stamped and matches nobody. There is no opt-out. The service still publishes on
+**loopback only** (`127.0.0.1:8787`), the same rule as `../web`. Inside the compose network
+it is `tools:8787`.
 
 Not built here (cut with the ledger, 2026-09-10): the `turn_id` header, the HTTP re-run of
 the D15 ledger exercise. The three auth tools — `login`, `logout`,
@@ -121,18 +128,26 @@ smoke names all three.
   bundle both run Node 24.
 - **The transport smoke** — every advertised tool but the three exclusions, in
   `no-bearer` mode by default (`--bearer <token>`, or an unexpired
-  `~/.familysearch-mcp/tokens.json`, switches to `bearer`):
+  `~/.familysearch-mcp/tokens.json`, switches to `bearer`). It needs the database the
+  server reads (`--pg-dsn`, else `GENEALOGY_PG_DSN`; exit 2 without either), because the
+  project rows must pass the owner check:
 
   ```
   make engine-smoke-http                                  # builds, starts build/http.js on the compose store on a free port, kills it after
   BASE=http://127.0.0.1:8787 make engine-smoke-http       # against the compose service
-  node smoke/dev/smoke-http.js --base URL [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]   # from an unzipped eb-tools.zip: Node >= 22, no checkout, npm or registry
+  node smoke/dev/smoke-http.js --base URL --pg-dsn DSN [--project-id ID] [--project-path /project] [--host-config] [--bearer TOKEN]   # from an unzipped eb-tools.zip: Node >= 22, no checkout, npm or registry
   ```
 
-  Every request carries `X-Genealogy-Project-Id: <--project-id>` — a fresh `smoke-<uuid>`
-  by default, `SMOKE_PROJECT_ID=…` to override — and every call passes `--project-path`
-  (the anchor, `/project`) as its `projectPath`; the Makefile prints the per-table psql
-  counts under that id after the run. `--host-config` says the server's `baseConfig` is
+  Two clients. The first sends no project header and the real bearer when there is one; it
+  lists the tools and runs every row that passes no `projectPath` (the FamilySearch and
+  store-less tools). The second runs every row that passes `--project-path` (the anchor,
+  `/project`) as its `projectPath`: it sends `X-Genealogy-Project-Id: <--project-id>` — a
+  fresh `smoke-<uuid>` by default, `SMOKE_PROJECT_ID=…` to override — and the fence of a
+  `turns` row the smoke seeds open at epoch 1 and stamped with a synthetic random bearer's
+  sha256, which it deletes on every exit path (SIGINT and SIGTERM included). Both Makefile
+  arms pass `--pg-dsn` (`PROTO_PG_DSN`, or `NODE_PG_DSN`, the URL form node-postgres parses, on the `BASE=` arm), and the Makefile
+  prints the per-table psql counts under that id after the run, `turns` 0 once the seeded
+  row is gone. `--host-config` says the server's `baseConfig` is
   this host's `~/.familysearch-mcp/config.json` (the default arm; not the `BASE=` arm,
   whose compose `config.json` is `{"hosted": true}`). The smoke fails if any advertised
   tool is neither called nor a named exclusion, or if a named exclusion is not advertised.
@@ -152,7 +167,8 @@ mcp_servers={"genealogy": {"type": "http", "url": "http://tools:8787/mcp",
 The URL is the worker's `TOOL_SERVER_URL`, required with no default (U11); compose sets
 the value above. Both headers are per turn (`proto/worker/options.py`, `tool_server_headers`): the bearer
 from the patron's row, the project id from the turn. The project header is always sent; the
-bearer only when there is a token. Nothing on this service caches either. This is the
+bearer only when there is a token. The fence pair (U6) rides with them, and the attempt stamps
+its bearer's sha256 on the turn before the CLI starts, so its requests pass the owner check. Nothing on this service caches either. This is the
 worker's only tool server; the worker itself carries no Node, no engine and no S3
 credentials.
 
@@ -168,7 +184,13 @@ and `minio` `service_healthy` and on `migrate` completing
 `apps/server/tests/test_proto_worker.py` pins the consumer's two headers.
 `packages/engine/mcp-server/tests/http/` covers the server itself (405 guard, `/healthz` 200/503 from the readiness report and the spawned server's 503 with both stores unreachable,
 no-`LOCAL`, per-request bearers, per-request stores that cannot read each other, the
-missing-header instruction, the malformed-header 400); `http-server-pg.test.ts` runs the
-isolation case and a healthy `/healthz` on the real Pg store under `make proto-store-test`.
+missing-header instruction, the malformed-header 400, the owner check's 403 and 503 and its
+log line); `http-server-pg.test.ts` runs the isolation case, every owner-check outcome
+(another patron's project, turn or bearer, no bearer, no fence, a NULL-owner project, a
+completed turn, a re-claim not yet stamped, a refresh between attempts) with the refused
+project's rows unchanged, a healthy `/healthz`, and `/healthz` 503 on a database without
+`bearer_sha256`, on the real Pg store under `make proto-store-test`.
+`apps/server/tests/test_proto_fencing_pg.py` drives the worker's stamp through two real
+tool-server processes.
 `tests/store/pg-s3-project-store.test.ts` covers the probe itself (deadline, single flight,
 no S3 retry, label-only errors, the missing-schema and saturated-pool cases).
