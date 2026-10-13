@@ -216,7 +216,8 @@ tree_edit({
   validation. This is pure shape normalization (the object already matches a
   `names[]` element; no name content is parsed or invented). Supplying **both**
   `name` and `names` is rejected as ambiguous.
-- **`add_relationship`** `{ relationship }` — append, assign next `R`. Facts
+- **`add_relationship`** `{ relationship }` — append, assign next `R`, **or
+  corroborate an edge that already says this.** Facts
   supplied on a new **Couple** relationship (e.g. its Marriage) get the same
   treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
   `standard_place` resolution, `assignedIds.facts`. Facts on a `ParentChild` are an
@@ -226,6 +227,31 @@ tree_edit({
   `person1` on a `ParentChild`) are enforced by the final whole-tree validation pass
   (§4.3, §5), not by an inline check in the apply step — so within a batch an endpoint
   added by an earlier op is accepted.
+  - **A matching edge is corroborated, not duplicated.** When the tree already
+    holds an edge `relationshipMatches` accepts — same `type` and endpoints (a
+    Couple's two persons in either order), and subtypes that agree or either
+    absent — the new `sources` and any inline Couple facts land on **that** edge
+    and `assignedIds.relationship` returns **its** id. The first match in tree
+    order wins. A refusal was considered and rejected: it leaves the writer to
+    re-route the same evidence by hand through `add_fact` with a
+    `relationshipId`, which drops the new edge's own sources, and a retried call
+    would leave two edges.
+    - An inline Couple fact **equal to one already on the edge** in type, date,
+      place and value is not added again; its sources merge into the fact
+      already there, so a retried call is idempotent. Equality here is strict,
+      not the merge tool's `factsEquivalent` compatibility test — folding by
+      that would silently discard the date a new record supplied.
+    - **The matched edge's subtype never changes.** Retyping is
+      `update_relationship`'s job. When the new edge carries a subtype the
+      matched one does not share, the result warns and names
+      `update_relationship`; silently adopting it would turn an untyped import
+      into a biological claim with nothing behind it.
+    - A **Step** edge added beside a **Biological** one on the same pair is a
+      second edge, not a corroboration: two different explicit subtypes are two
+      relationships.
+  - **A self-Couple is refused** — a person cannot be their own spouse, and the
+    pair would survive every downstream rule that reads the two endpoints as
+    different people.
   - **`sourceAssertionId` (source-ref resolution).** The edge requires a
     non-null source-ref (§6/§8 of `tree-materialization-spec.md`). Rather than
     the caller hand-walking `assertion.source_id → research source → tree
