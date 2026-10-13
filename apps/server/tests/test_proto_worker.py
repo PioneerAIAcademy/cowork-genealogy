@@ -2082,7 +2082,12 @@ def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
 
 # ── 1b / 1c: Stop, the held message, and what a turn's ending is called ───────────
 
-_STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_count_at_last_nudge=-1)
+# An INCOMPLETE project, not None. With no research.json the policy allows every stop
+# (issue #3274), so None cannot be the baseline a flag is tested against: the flag would
+# be unable to change the answer. A literal because `_INCOMPLETE` is defined further down
+# and this line runs at import.
+_STOP_KW = dict(research={"project": {"status": "in_progress"}}, nudges_used=0, max_nudges=5,
+                tool_count=0, tool_count_at_last_nudge=-1)
 
 
 @pytest.mark.parametrize("flag, reason", [
@@ -2093,6 +2098,8 @@ _STOP_KW = dict(research=None, nudges_used=0, max_nudges=5, tool_count=0, tool_c
 ])
 def test_each_new_clause_allows_the_stop_and_names_itself(flag, reason):
     assert options.should_continue_run(**{**_STOP_KW, flag: True}) is False
+    # research=None on purpose: every flag outranks the no-research.json clause, so a
+    # project-less session that ended for one of these reasons still names it, not `ok`.
     assert options.terminal_reason(
         research=None, nudges_used=0, max_nudges=5, **{flag: True}
     ) == reason
@@ -2118,8 +2125,11 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
     import itertools
 
     flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision")
+    # None (no research.json: a terminal reason of its own), an unfinished project (the
+    # only one that can keep going) and a finished one.
     for bits in itertools.product((False, True), repeat=len(flags)):
-        for research in (None, {"project": {"status": "completed"}}):
+        for research in (None, {"project": {"status": "in_progress"}},
+                         {"project": {"status": "completed"}}):
             for nudges, cap in ((0, 5), (5, 5)):
                 kw = dict(zip(flags, bits))
                 cont = options.should_continue_run(
@@ -2129,8 +2139,7 @@ def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
                     research=research, nudges_used=nudges, max_nudges=cap, **kw)
                 # continue == True happens only when NOTHING is terminal, and the only
                 # reason left is the fall-through.
-                assert cont is (reason == "no_progress" and not any(bits)
-                                and research is None and nudges < cap), (kw, research, nudges, cap, cont, reason)
+                assert cont is (reason == "no_progress"), (kw, research, nudges, cap, cont, reason)
 
 
 def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
@@ -2219,14 +2228,16 @@ def test_the_stop_hook_seeds_its_counter_from_the_row_on_a_redelivery():
     TURN, and 0b made resume the normal path -- median two attempts, longest six. An
     unseeded cap of 60 is 60 per attempt."""
     seen: list[str] = []
+    # An unfinished project: with no research.json neither hook below would veto anything,
+    # and `budget` would read `ok` (issue #3274).
     spent = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: None, tool_count=lambda: 3,
+        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
         on_nudge=lambda n: None, on_allow=seen.append, nudges_used=5,
     )
     assert asyncio.run(spent({}, None, None)) == {}, "the budget was already spent on an earlier attempt"
     assert seen == ["budget"]
     fresh = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: None, tool_count=lambda: 3,
+        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
         on_nudge=lambda n: None, on_allow=seen.append,
     )
     assert asyncio.run(fresh({}, None, None))["decision"] == "block", "an unseeded hook has its whole budget"
@@ -2234,8 +2245,9 @@ def test_the_stop_hook_seeds_its_counter_from_the_row_on_a_redelivery():
 
 def test_a_held_message_allows_the_stop_so_the_patron_is_not_made_to_wait_out_the_job():
     seen: list[str] = []
+    # An unfinished project, so the held message is the only reason the stop is allowed.
     hook = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: None, tool_count=lambda: 3,
+        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
         on_nudge=lambda n: None, on_allow=seen.append, pending_user_message=lambda: True,
     )
     assert asyncio.run(hook({}, None, None)) == {}
@@ -2884,6 +2896,8 @@ def test_the_nudge_count_is_persisted_as_it_happens_not_only_at_the_close(turn_e
     NOT close. `complete()`'s write alone would leave every attempt reading NULL and
     starting a fresh budget: the per-attempt cap 1c exists to remove, six times over on
     the longest run in the corpus."""
+    # A project exists, so the Stop is vetoed; with no research.json it is allowed (issue #3274).
+    turn_env["conn"].research = _INCOMPLETE
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
     _run(turn_env, [_init(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=2)])
@@ -3068,7 +3082,7 @@ def test_a_stop_dispatch_after_a_halt_cannot_veto_the_halt(turn_env, monkeypatch
     assert captured["stopped"]() is True, \
         "a Stop dispatched after a spend-cap halt would be vetoed and the run would continue"
     assert options.should_continue_run(
-        research=None, nudges_used=0, max_nudges=40, tool_count=1,
+        research=_INCOMPLETE, nudges_used=0, max_nudges=40, tool_count=1,
         tool_count_at_last_nudge=-1, stopped=captured["stopped"]()) is False
 
     assert captured["on_allow"] is not None
@@ -3081,6 +3095,9 @@ def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env
     overwrote the reason, a turn that hit the patron's spend cap would be recorded and
     rendered as "you pressed Stop", and the sentence telling them to start a new session
     would never appear."""
+    # An unfinished project, the one the control below vetoes on. With no research.json the
+    # Stop is allowed anyway (issue #3274), so the halt flag would no longer be what this proves.
+    turn_env["conn"].research = _INCOMPLETE
     _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
@@ -3096,6 +3113,7 @@ def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env
 def test_a_stop_dispatch_with_nothing_wrong_vetoes_and_keeps_the_run_going(turn_env, monkeypatch):
     """The control: the same dispatch, no halt. The hook must BLOCK -- otherwise the two
     tests above would pass with a Stop hook that simply never vetoes anything."""
+    turn_env["conn"].research = _INCOMPLETE  # the same project the halt tests above run on
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
@@ -3189,8 +3207,9 @@ _DONE = {"project": {"status": "completed"}}
           mcp_unavailable=True), False),
     (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8,
           mcp_unavailable=False), True),
-    # The worker's own edge: no research.json at all is not "completed".
-    (dict(research=None, nudges_used=0, max_nudges=1, tool_count=0, tool_count_at_last_nudge=-1), True),
+    # The worker's own edge: no research.json at all is not nudged, since there is no
+    # project to resume (issue #3274).
+    (dict(research=None, nudges_used=0, max_nudges=1, tool_count=0, tool_count_at_last_nudge=-1), False),
 ], ids=["progressing", "completed", "budget-spent", "no-progress", "first-nudge-equal-counts",
         "mcp-unavailable", "mcp-available-default", "no-research"])
 def test_should_continue_run_mirrors_the_harness_truth_table(kw, expected):
@@ -4773,18 +4792,27 @@ def test_the_main_thread_still_delivers_with_agent_type_present():
     assert halted == ["x"]
 
 
-def test_the_guidance_says_to_search_for_the_deferred_schema():
-    """ENABLE_TOOL_SEARCH is on and `research_delivered` is not in ALWAYS_LOAD, so its
-    schema is deferred. The one tool the system prompt names has to be findable, and
-    the short bounded turns this feature exists for are the ones holding the fewest
-    schemas."""
+def test_the_guidance_tells_the_model_how_to_find_the_schema_without_claiming_it_is_deferred():
+    """The one tool the system prompt names has to be findable, and the short bounded
+    turns this feature exists for are the ones holding the fewest schemas -- so the
+    find-it clause stays.
+
+    What changed: `research_delivered` IS in ALWAYS_LOAD now, so on a hosted turn the
+    schema is already held and "its schema is deferred" is simply false. The clause is
+    conditional instead. It is not deleted, because ALWAYS_LOAD is a `_meta` hint the
+    CLIENT honours -- the unit harness's mock drops `_meta` entirely, so the schema is
+    still deferred there, and a model that has to search must still be told how."""
     # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
     # "researcher" and "research_delivered", so that assertion can never fail. This is
     # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
     # break-testing this very test, which stayed green with the clause deleted.
     lowered = options.DELIVERY_GUIDANCE.lower()
-    assert "deferred" in lowered, "the guidance must say the schema is deferred"
-    assert "search for it" in lowered, "and must tell the model to search for it"
+    assert "search for it by name" in lowered, "must tell the model how to find it"
+    assert "if you do not already hold" in lowered, "and must make that conditional"
+    assert "schema is deferred" not in lowered, (
+        "the schema is in ALWAYS_LOAD now, so stating it is deferred is false on every "
+        "hosted turn -- the plane this guidance is written for"
+    )
 
 
 def test_the_delivery_summary_reaches_a_human():
@@ -5128,6 +5156,9 @@ def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, 
 
     Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
     that delivered would be recorded and rendered as "you pressed Stop"."""
+    # An unfinished project. With no research.json the Stop is allowed anyway (issue #3274),
+    # so without this the deleted line above would leave the test green.
+    turn_env["conn"].research = _INCOMPLETE
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
     monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     summary = _run(turn_env, [
