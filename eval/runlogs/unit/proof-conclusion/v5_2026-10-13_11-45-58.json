@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "proof-conclusion",
   "version": 5,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-10-13_11-45-58",
