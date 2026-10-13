@@ -633,6 +633,36 @@ describe("project_create — personReadRef (#2944 Stage B)", () => {
     expect(await exists("research.json")).toBe(false);
   });
 
+  it("accepts a Step parent beside a staged Biological one on the same pair", async () => {
+    // The repeat refusal above asks "is this relationship already here", which
+    // `relationshipMatches` answers: an untyped edge restating a staged
+    // Biological one IS a repeat, a Step edge beside it is a second
+    // relationship. Before the shared predicate replaced this file's private
+    // type-and-endpoints key, the two collided and this threw "repeats a
+    // relationship already in the tree".
+    const ref = await stageFamily();
+    const result: any = await projectCreate({
+      projectPath: dir,
+      objective: "x",
+      personReadRef: ref,
+      tree: {
+        relationships: [
+          { type: "ParentChild", parent: "LZNY-BRF", child: "LZNY-P7Q", subtype: "Step" },
+        ],
+      } as any,
+    });
+    expect(result.ok).toBe(true);
+    const tree: any = await readJson("tree.gedcomx.json");
+    // Endpoints are remapped to tree-local ids during the build, so find the
+    // Step edge and check its own pair, rather than naming FamilySearch PIDs.
+    const step = tree.relationships.find((r: any) => r.subtype === "Step");
+    expect(step).toBeDefined();
+    const onThePair = tree.relationships.filter(
+      (r: any) => r.type === "ParentChild" && r.parent === step.parent && r.child === step.child,
+    );
+    expect(onThePair.map((r: any) => r.subtype).sort()).toEqual(["Biological", "Step"]);
+  });
+
   it.each([
     ["a fact citation given as a bare string", { persons: [{ ...STUB, facts: [{ type: "Birth", sources: ["228755097"] }] }] }, /sources must be an array of objects/],
     ["a fact citation given as one object, not an array", { persons: [{ ...STUB, facts: [{ type: "Birth", sources: { ref: "228755097" } }] }] }, /sources must be an array of objects/],
