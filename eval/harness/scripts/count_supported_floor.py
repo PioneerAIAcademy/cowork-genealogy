@@ -40,6 +40,10 @@ op walk picks it up — which is how the two figures came to be measured over
 two different corpora. Pass `--include-quarantine` to report it, as a
 separately labelled block rather than pooled into the calibration totals.
 
+**`eval/runlogs/unit-pg/` is never read.** Those are `run_tests.py --store pg`
+re-runs of the same unit tests on the Postgres store (U15): pooling them would
+count each of their promote ops a second time.
+
 CLI (from the repo root):
 
     python eval/harness/scripts/count_supported_floor.py
@@ -137,6 +141,11 @@ def is_quarantined(path: Path) -> bool:
     return QUARANTINE_MARKER in path.as_posix()
 
 
+def is_store_rerun(path: Path) -> bool:
+    """A `--store pg` re-run of unit tests the corpus already holds."""
+    return "unit-pg" in path.relative_to(RUNLOGS).parts[:1] if path.is_relative_to(RUNLOGS) else False
+
+
 def load(path: Path) -> object | None:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -230,7 +239,7 @@ def run_ops(include_quarantine: bool) -> int:
     scanned = 0
 
     for path in sorted(RUNLOGS.rglob("*.json")):
-        if path.name.endswith(".ann.json"):
+        if path.name.endswith(".ann.json") or is_store_rerun(path):
             continue
         if is_quarantined(path) and not include_quarantine:
             continue

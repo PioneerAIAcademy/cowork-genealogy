@@ -1,6 +1,6 @@
 name: Engine tests
 
-# Runs the MCP server's vitest suite (`packages/engine/mcp-server`, ~6,550 tests)
+# Runs the MCP server's vitest suite (`packages/engine/mcp-server`)
 # on every pull request. Nothing ran this suite in CI before, so a red test
 # could sit on main indefinitely — the places-guidance drift lint
 # (tests/packaging/skill-guidance.test.ts) did, for three days, after 8bf43be2
