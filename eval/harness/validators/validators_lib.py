@@ -520,7 +520,7 @@ def _questions_by_id(state: dict) -> dict[str, dict]:
     return {q.get("id"): q for q in (state or {}).get("questions") or [] if q.get("id")}
 
 
-def check_no_exhaustive_declaration(before_state: dict, after_state: dict) -> list[str]:
+def check_no_gate_stop(before_state: dict, after_state: dict) -> list[str]:
     """Return a list of violation messages when a test tagged
     ``no-exhaustive-declaration`` writes a declaration it should not.
 
@@ -538,15 +538,19 @@ def check_no_exhaustive_declaration(before_state: dict, after_state: dict) -> li
     after = after_state.get("research_json")
     if before is None or after is None:
         return []
+    _STOP_GATE_VALUES = frozenset(
+        {"question_answered", "record_exhausted", "nothing_further_reachable"}
+    )
     before_by_id = _questions_by_id(before)
     bad: list[str] = []
     for q in (after.get("questions") or []):
         qid = q.get("id")
         prev = before_by_id.get(qid, {})
-        prev_decl = (prev.get("exhaustive_declaration") or {}).get("declared")
-        new_decl = (q.get("exhaustive_declaration") or {}).get("declared")
-        if prev_decl is not True and new_decl is True:
-            bad.append(f"{qid}: flipped declared false→true when decline expected")
+        prev_gate = (prev.get("search_stop") or {}).get("stopped_because") in _STOP_GATE_VALUES
+        new_sb = (q.get("search_stop") or {}).get("stopped_because")
+        new_gate = new_sb in _STOP_GATE_VALUES
+        if not prev_gate and new_gate:
+            bad.append(f"{qid}: set stop-gate stopped_because={new_sb!r} when decline expected")
         if prev.get("status") != "exhaustive_declared" and q.get("status") == "exhaustive_declared":
             bad.append(f"{qid}: status set to exhaustive_declared when decline expected")
     return bad

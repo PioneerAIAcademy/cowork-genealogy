@@ -2,12 +2,13 @@
   "project": {
     "id": "rp_001",
     "objective": "Locate records for Sarah Ann Mullen Price (b. 1875, Dodge County, WI) to confirm she is the daughter of James Price and Sarah Ann (Mullen) Price, not a daughter of a Mullen family",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-06-01",
     "updated": "2026-06-01"
   },
-
   "questions": [
     {
       "id": "q_001",
@@ -21,15 +22,15 @@
       "created": "2026-06-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
-
   "plans": [
     {
       "id": "pl_001",
@@ -62,9 +63,7 @@
       ]
     }
   ],
-
   "log": [],
-
   "sources": [
     {
       "id": "src_001",
@@ -88,9 +87,7 @@
       "log_entry_id": null
     }
   ],
-
   "assertions": [],
-
   "person_evidence": [],
   "conflicts": [],
   "hypotheses": [],
