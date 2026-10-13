@@ -1111,9 +1111,11 @@ def build_workspace(
     # NOT (it's output-only — verified). This is *a* working effort lever, not
     # the only one: `ClaudeAgentOptions.effort` also works and always has —
     # the SDK's subprocess transport emits `--effort` unconditionally when the
-    # option is set, at every version this repo has pinned. The settings-file
-    # route is kept because it is the one that provably reaches subagents; the
-    # SDK option's subagent propagation is unverified. Do not restate this as
+    # option is set, at every version this repo has pinned. Both reach
+    # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
+    # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
+    # 2.1.220, 2026-10-12, issue #3263). This harness runs CLI 2.1.139, where subagent
+    # reach is unprobed for either lever. Do not restate this as
     # "the only lever" — that claim shaped a spend decision before it was
     # checked. Session-wide (parent + every subagent that does not pin its own
     # `effort:` — agent frontmatter overrides this, verified live in Cowork and

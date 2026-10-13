@@ -1,0 +1,954 @@
+{
+  "schema_version": 3,
+  "skill": "hypothesis-tracking",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/hypothesis-tracking.md": "47d2b5f20f4cd34a8d74c66a22c87c68eb053f47bc16c3875b2ab730638219ec",
+    "eval/tests/unit/hypothesis-tracking/direct-handback-conflict-resolution.json": "2c27d6fd560c1b12d032754fee640af79a0e0d9328f0a645b48851129a07d883",
+    "eval/tests/unit/hypothesis-tracking/link-supporting-assertions.json": "f395c9d6b9b4befae9231a8c04432e09d760e474ea6adf67595b7b10fe444b06",
+    "eval/tests/unit/hypothesis-tracking/new-hypothesis-from-conflict.json": "d56f0226bc1f5f3f1b2944b90170a26ddc4b1a54eced9aedab11488d1b844491",
+    "eval/tests/unit/hypothesis-tracking/review-parentage-hypothesis.json": "12789eeeec2421dbcfd73a5588bc9bfaa217aabbae567e851b21e57e26ac84d1",
+    "eval/tests/unit/hypothesis-tracking/rubric.md": "e80c1a460145c5e9e148d2bb12757d3461983a57048955c41f5359f3523acbab",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_004.json": "d83ee35eb86cebfd4ff821bd8e85c02db2efdeda3fa5637a981ed83a56787248",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_005.json": "520f15eb18c8e0a34f8bfb4a8c9331724d15c017f8e6f614165e5b7a6486f9c5",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_006.json": "1a0f605423922414c35b9a4844e544c6958d888d39380405bcbee377f85be215",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_007.json": "e565df05d206bd82069ca09a6c0a2f5f28dcf19036bc92ec1e5a15c5da56d052",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_008.json": "da0d46ab5a7eb575eebc4063b384c24a8f8605edf17ebfa9911b77047e61aa17",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_009.json": "d7cac7ff41a1e7d029207af8453b9bbfb739af76df1204de579f163743e4a4ac",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_010.json": "43fd09cb54b049369ff959a3a8d8cc2ad0f2a850e284ef93d144ebe6ed24e059",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_011.json": "9d80ae65a7def03050205d6ce2b775b434f664b88257e8680c56725875a4f9de",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_012.json": "169cbe0f2c3a70c46d4430afbed0ef13af994f2d344146337750ecdf7acf525a",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_013.json": "f84792d0ff2bd91a05985964bc63df97547162e8ef990a35cdc3bb4ca174769d",
+    "eval/tests/unit/hypothesis-tracking/ut_hypothesis_tracking_017.json": "5683288a41bf630304418a64497b364c335f7d19a303404bd5701ed1d145982b",
+    "eval/fixtures/scenarios/empty-project-just-created/README.md": "1eaade55626961964ad31d03c770c2285ee400834dd6f03d21a0518f477f9346",
+    "eval/fixtures/scenarios/empty-project-just-created/research.json": "e4e30a5994357264b24ab099dca321d438ecdf7244b738182e7ca65e386fe049",
+    "eval/fixtures/scenarios/empty-project-just-created/tree.gedcomx.json": "2f78821d8cee590a01ff5aed4483aa8037c07fa92f6fcedab6a8ec205ee9ca98",
+    "eval/fixtures/scenarios/flynn-competing-fathers/README.md": "9f6da76c082c4ac56dccfbfa2ee35d3178961a3678197d5c711e239678db0bb0",
+    "eval/fixtures/scenarios/flynn-competing-fathers/research.json": "1bf62d5e610856037d2f17c11938326471694d47f6353f6af24d97f81f489194",
+    "eval/fixtures/scenarios/flynn-competing-fathers/tree.gedcomx.json": "38e1e530f3944c30625a5ed38c22c1d9ba4a866630598eff0714a43117aa5bca",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "9580980fdf960770fb2728177727b94551a264d89fa9c187cae8eef2bcd1f130",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "42d5b217fcf2735a8d116e790a55858c85c1e3e03537493f6b012d2b0718cd4a",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-plan-in-progress/README.md": "f8c71aa71f752cbe886bd8f7bb6e11254f8d787032b5bdadda09a1884edc0cb3",
+    "eval/fixtures/scenarios/flynn-plan-in-progress/research.json": "1825b96e56d7765d42cf91ed13a7dc4d4581b51854565ae3540608cb488c1ffc",
+    "eval/fixtures/scenarios/flynn-plan-in-progress/tree.gedcomx.json": "e59c3cdc882d3717f6c89d16ae70e435c4ac32f4b6bd34584f078c28c291b3e7",
+    "eval/fixtures/scenarios/flynn-young-candidate/README.md": "93f9a425dcf46267c16f0074e215a9ea7f3feaa2fa2cff2f265ee5ecafc40f79",
+    "eval/fixtures/scenarios/flynn-young-candidate/research.json": "e17f3a16b49938b55cc3533fe8db00050927589a27f4791efa7afc2ea8c08d7e",
+    "eval/fixtures/scenarios/flynn-young-candidate/tree.gedcomx.json": "c45ffd80713ea6660d9d9c81c25e0009940de8ca895c92b93525a9e038187565",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/mcp/validate-research-schema.json": "0d794d9b0d5461968cecdc6ca7a9c59c4c14ea588ea1b02fdee9aa0436a0572b"
+  },
+  "tests": [
+    {
+      "test_id": "ut_hypothesis_tracking_018",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "validate-research-schema"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that weighing two assertions to decide which fact is correct is conflict-resolution's work, not hypothesis-tracking's. The hand-back response accurately routes the task to the appropriate skill with a clear, accurate explanation of why the routing is necessary."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude provided the complete, correct response for this negative test: a one-line hand-back naming conflict-resolution with an explanatory clause. The response fully addresses what was required\u2014declining the task and routing it to the correct skill\u2014with no extraneous analysis or file operations."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke tools and instead routed the request via hand-back, which is the appropriate behavior for this negative test. N/A applies."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that weighing two assertions to decide which fact is correct is conflict-resolution's work, not hypothesis-tracking's. The hand-back response accurately routes the task to the appropriate skill with a clear, accurate explanation of why the routing is necessary."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude provided the complete, correct response for this negative test: a one-line hand-back naming conflict-resolution with an explanatory clause. The response fully addresses what was required\u2014declining the task and routing it to the correct skill\u2014with no extraneous analysis or file operations."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke tools and instead routed the request via hand-back, which is the appropriate behavior for this negative test. N/A applies."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 11256.207625003299,
+        "duration_api_ms": 11033.0,
+        "judge_duration_ms": 3255.407791992184,
+        "wall_clock_ms": 14734.021186828613,
+        "num_turns": 2,
+        "input_tokens": 556,
+        "cached_input_tokens": 30630,
+        "cache_creation_input_tokens": 19439,
+        "output_tokens": 367,
+        "judge_input_tokens": 11164,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 301,
+        "skill_cost_usd": 0.08801825,
+        "judge_cost_usd": 0.012669,
+        "total_cost_usd": 0.10068725
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_hypothesis_tracking_018_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 11256.207625003299,
+          "duration_api_ms": 11033.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 556,
+          "cached_input_tokens": 30630,
+          "cache_creation_input_tokens": 19439,
+          "output_tokens": 367,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 550,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00062,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 353,
+              "cacheReadInputTokens": 30630,
+              "cacheCreationInputTokens": 19439,
+              "webSearchRequests": 0,
+              "costUSD": 0.08739825,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "hypothesis-tracking",
+              "description": "Hypothesis tracking for Patrick Flynn birthplace",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 22,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 22,
+                "cache_read_input_tokens": 2717,
+                "cache_creation_input_tokens": 6356
+              },
+              "peak_window_tokens": 9076,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 1.512
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20648,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.08801825,
+          "output": {
+            "text_response": "The hypothesis-tracking agent has reviewed the request and determined it falls outside its scope. Here's its response:\n\n**Hand-back: conflict-resolution** \u2014 this weighs a fact conflict, not a hypothesis.\n\nThe agent explains that comparing assertions **a_002** and **a_009** to decide which birthplace is correct for Patrick Flynn is a **fact conflict** (two sources disagreeing about the same fact), not a hypothesis-tracking task. To resolve this, the appropriate agent is **conflict-resolution**, which is designed to weigh competing evidence and reconcile disagreements between sources about a specific fact.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Hypothesis tracking for Patrick Flynn birthplace",
+                  "prompt": "Weigh a_002 against a_009 and decide which birthplace is correct for Patrick Flynn.\n\nassertionIds: a_002, a_009\nprojectPath: <workspace>",
+                  "subagent_type": "hypothesis-tracking"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "hypothesis-tracking",
+                "text": "Hand-back: conflict-resolution \u2014 this weighs a fact conflict, not a hypothesis."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_h001_not_ruled_out_when_adding_identity_hypotheses",
+                "passed": true,
+                "error": "skipped: not a c_002 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_h001_status_unchanged_when_review",
+                "passed": true,
+                "error": "skipped: not an h_001 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hypotheses_assertion_refs_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hypotheses_no_deletions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_hypotheses_have_claim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_hypothesis_added_for_c002",
+                "passed": true,
+                "error": "skipped: not a c_002 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_ruled_out_requires_reason",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_scope_handback_writes_nothing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_supported_requires_evidence_floor",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that weighing two assertions to decide which fact is correct is conflict-resolution's work, not hypothesis-tracking's. The hand-back response accurately routes the task to the appropriate skill with a clear, accurate explanation of why the routing is necessary."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude provided the complete, correct response for this negative test: a one-line hand-back naming conflict-resolution with an explanatory clause. The response fully addresses what was required\u2014declining the task and routing it to the correct skill\u2014with no extraneous analysis or file operations."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke tools and instead routed the request via hand-back, which is the appropriate behavior for this negative test. N/A applies."
+              }
+            ],
+            "judge_cost_usd": 0.012669,
+            "duration_ms": 3255.407791992184,
+            "error": null,
+            "input_tokens": 11164,
+            "cached_input_tokens": 0,
+            "output_tokens": 301
+          },
+          "started_at": 1791848179.7628238,
+          "ended_at": 1791848194.496845
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_hypothesis_tracking_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "validate-research-schema"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude's response accurately reports the hypothesis status as SUPPORTED and correctly identifies the three supporting assertions (a_004, a_010, a_013) with accurate characterizations of their evidence types. The death certificate is correctly identified as secondary informant evidence. The proof tier is correctly stated as PROBABLE per ps_001. No contradicting evidence is correctly noted as absent. The response accurately reflects the before-state: h_001 exists and is marked supported, the three assertions are correctly drawn from the logged sources, and the conflict c_001 is resolved. No fabricated material or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed all required elements: cited the three supporting assertions with their evidence types (1850 co-residence, 1860 household co-residence, death certificate statement), noted that contradicting_assertion_ids is empty, identified probate records (pli_006 in_progress) as the most likely next source for corroborating evidence, and explained why the hypothesis is rated PROBABLE rather than PROVED. The response also correctly noted that 1870, 1880, and 1900 censuses remain unsearched. No required element from the per-test context was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "Claude made one MCP tool call: mcp__genealogy__validate_research_schema with projectPath matching the expected_args pattern (~). The call was appropriate for a read-only review to confirm file validity. The tool returned valid: true with no errors or warnings, confirming the project state is sound. No fixture_not_found errors occurred. The tool call arguments are correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Claim clarity",
+            "score": 3,
+            "rationale": "The hypothesis is stated with high specificity: 'Thomas Flynn was Patrick Flynn's father' names both specific persons (Thomas Flynn, Patrick Flynn), specifies the relationship (father), and includes place/time detail (Schuylkill County, Pennsylvania; Patrick b. ~1845, d. 1908). The claim is testable and falsifiable \u2014 it could be refuted by evidence of a different father or by absence of relationship evidence. The claim is neither vague nor overly broad."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence linkage",
+            "score": 3,
+            "rationale": "All three supporting assertions are directly relevant to the parentage hypothesis: a_004 (1850 census co-residence) and a_010 (1860 census co-residence) both establish household membership consistent with a father-son relationship; a_013 (death certificate naming Thomas as father) is direct evidence of the claimed relationship. No tangential assertions are included. The absence of contradicting assertions is correctly noted. Each linked assertion genuinely bears on whether Thomas was Patrick's father."
+          },
+          {
+            "source": "rubric",
+            "name": "Status transitions",
+            "score": 3,
+            "rationale": "The hypothesis status of SUPPORTED is correctly maintained. Per research-schema-spec.md rules, SUPPORTED requires either one direct supporting assertion or two indirect assertions from two distinct sources. Here: a_004 and a_010 are indirect (inferred relationships from census co-residence) from two distinct sources (src_001/src_002 for 1850, src_003 for 1860); a_013 is direct (stated on death certificate). The conflict c_001 is resolved, so no unresolved conflicts block the status. The proof tier PROBABLE is correctly identified as the limiting factor \u2014 the hypothesis is supported but not yet proved due to secondary informant status and incomplete census search. No status transition error is present."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude's response accurately reports the hypothesis status as SUPPORTED and correctly identifies the three supporting assertions (a_004, a_010, a_013) with accurate characterizations of their evidence types. The death certificate is correctly identified as secondary informant evidence. The proof tier is correctly stated as PROBABLE per ps_001. No contradicting evidence is correctly noted as absent. The response accurately reflects the before-state: h_001 exists and is marked supported, the three assertions are correctly drawn from the logged sources, and the conflict c_001 is resolved. No fabricated material or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed all required elements: cited the three supporting assertions with their evidence types (1850 co-residence, 1860 household co-residence, death certificate statement), noted that contradicting_assertion_ids is empty, identified probate records (pli_006 in_progress) as the most likely next source for corroborating evidence, and explained why the hypothesis is rated PROBABLE rather than PROVED. The response also correctly noted that 1870, 1880, and 1900 censuses remain unsearched. No required element from the per-test context was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "Claude made one MCP tool call: mcp__genealogy__validate_research_schema with projectPath matching the expected_args pattern (~). The call was appropriate for a read-only review to confirm file validity. The tool returned valid: true with no errors or warnings, confirming the project state is sound. No fixture_not_found errors occurred. The tool call arguments are correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Claim clarity",
+            "score": 3,
+            "rationale": "The hypothesis is stated with high specificity: 'Thomas Flynn was Patrick Flynn's father' names both specific persons (Thomas Flynn, Patrick Flynn), specifies the relationship (father), and includes place/time detail (Schuylkill County, Pennsylvania; Patrick b. ~1845, d. 1908). The claim is testable and falsifiable \u2014 it could be refuted by evidence of a different father or by absence of relationship evidence. The claim is neither vague nor overly broad."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence linkage",
+            "score": 3,
+            "rationale": "All three supporting assertions are directly relevant to the parentage hypothesis: a_004 (1850 census co-residence) and a_010 (1860 census co-residence) both establish household membership consistent with a father-son relationship; a_013 (death certificate naming Thomas as father) is direct evidence of the claimed relationship. No tangential assertions are included. The absence of contradicting assertions is correctly noted. Each linked assertion genuinely bears on whether Thomas was Patrick's father."
+          },
+          {
+            "source": "rubric",
+            "name": "Status transitions",
+            "score": 3,
+            "rationale": "The hypothesis status of SUPPORTED is correctly maintained. Per research-schema-spec.md rules, SUPPORTED requires either one direct supporting assertion or two indirect assertions from two distinct sources. Here: a_004 and a_010 are indirect (inferred relationships from census co-residence) from two distinct sources (src_001/src_002 for 1850, src_003 for 1860); a_013 is direct (stated on death certificate). The conflict c_001 is resolved, so no unresolved conflicts block the status. The proof tier PROBABLE is correctly identified as the limiting factor \u2014 the hypothesis is supported but not yet proved due to secondary informant status and incomplete census search. No status transition error is present."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 28828.2935419993,
+        "duration_api_ms": 27995.0,
+        "judge_duration_ms": 11596.447375006392,
+        "wall_clock_ms": 41327.42500305176,
+        "num_turns": 2,
+        "input_tokens": 538,
+        "cached_input_tokens": 52402,
+        "cache_creation_input_tokens": 44266,
+        "output_tokens": 1273,
+        "judge_input_tokens": 12224,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 970,
+        "skill_cost_usd": 0.2012171,
+        "judge_cost_usd": 0.017074,
+        "total_cost_usd": 0.21829110000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_hypothesis_tracking_001_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 28828.2935419993,
+          "duration_api_ms": 27995.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 538,
+          "cached_input_tokens": 52402,
+          "cache_creation_input_tokens": 44266,
+          "output_tokens": 1273,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 530,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000605,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 8,
+              "outputTokens": 1258,
+              "cacheReadInputTokens": 52402,
+              "cacheCreationInputTokens": 44266,
+              "webSearchRequests": 0,
+              "costUSD": 0.2006121,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "hypothesis-tracking",
+              "description": "Hypothesis status check for Thomas Flynn",
+              "num_assistant_turns": 5,
+              "max_output_tokens": 518,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 5,
+                "output_tokens": 771,
+                "cache_read_input_tokens": 32073,
+                "cache_creation_input_tokens": 23187
+              },
+              "peak_window_tokens": 23188,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 19.134
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21080,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.2012171,
+          "output": {
+            "text_response": "Here's the current status of your hypothesis:\n\n---\n\n**Hypothesis h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: SUPPORTED**\n\n**Supporting evidence (3):**\n- **a_004** \u2014 1850 census: Patrick listed in Thomas Flynn's household, position consistent with a child (inferred relationship)\n- **a_010** \u2014 1860 census: Patrick listed in Thomas Flynn's household, age and position consistent with a son (inferred relationship)\n- **a_013** \u2014 1908 death certificate: \"Father: Thomas Flynn\" \u2014 stated by son-in-law James Brown (secondary informant)\n\n**Contradicting evidence:** None on record\n\n**Competing hypotheses:** None on record\n\n---\n\n**Proof tier (ps_001): PROBABLE** \u2014 not yet *proved*. The census sources only imply the relationship (it's not explicitly stated in 1850/1860), the death certificate informant is secondary, and research is not yet exhaustive:\n- The 1870, 1880, and 1900 censuses have **not** been searched\n- Thomas Flynn's **probate records** are still in progress (pli_006)\n\n**Recommended next step:** Finishing the search of Thomas Flynn's probate records is the most promising path \u2014 a will explicitly naming Patrick as a son would be strong direct evidence capable of moving the conclusion from *probable* to *proved*.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__validate_research_schema",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_hypothesis_tracking_001-0-0-d_7qbpgg"
+                },
+                "expected_args": {
+                  "projectPath": "~"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "validate-research-schema"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Hypothesis status check for Thomas Flynn",
+                  "prompt": "What's the status of our hypothesis that Thomas Flynn was Patrick's father?\n\nprojectPath: <workspace>",
+                  "subagent_type": "hypothesis-tracking"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_hypothesis_tracking_001-0-0-d_7qbpgg/research.json"
+                },
+                "agent_id": "a906c7ae2e678fbfc"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "hypothesis-tracking",
+                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     SUPPORTED\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick listed in Thomas Flynn's household, position consistent with child (inferred)\n  + a_010  1860 census: Patrick listed in Thomas Flynn's household, age and position consistent with son (inferred)\n  + a_013  1908 death certificate: \"Father: Thomas Flynn\" \u2014 stated by son-in-law James Brown (stated, secondary informant)\n\nContradicting evidence (0):  (none)\n\nCompeting hypotheses:  (none on record)\n\nProof tier (ps_001): PROBABLE \u2014 the existing proof summary rates this as probable, not yet proved. Both census sources provide only indirect evidence (relationships not stated in 1850/1860), the death certificate informant is secondary, and research is not exhaustive: the 1870, 1880, and 1900 censuses have not been searched, and Thomas Flynn's probate records are still in progress (pli_006: in_progress).\n\nNo changes were made \u2014 this is a read-only review.\n\nValidator result: both files pass all validation checks (no errors, no warnings).\n\n---\n\nThe question being investigated is whether a man named Thomas Flynn, who lived in Schuylkill County, Pennsylvania, was the father of Patrick Flynn, born around 1845. Three pieces of evidence currently point toward \"yes\": Patrick appeared in Thomas's household in both the 1850 and 1860 censuses, and Patrick's death certificate \u2014 filled out in 1908 by his son-in-law \u2014 names Thomas Flynn as his father. No evidence has been found that argues against this. The hypothesis is officially marked as supported, but the overall conclusion is rated \"probably true\" rather than \"definitely proved,\" because the census records don't explicitly state the relationship and the death certificate informant only knew the parentage secondhand.\n\nThe next step is to finish searching Thomas Flynn's probate records \u2014 his will, if found, naming Patrick as a son would be strong direct evidence and could move the conclusion from probable to proved; the 1870, 1880, and 1900 censuses are also still unsearched and should be consulted."
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "prose_observation",
+                "check": "report_no_gps_jargon_in_response",
+                "observation": "GPS vocabulary in the reply: exhaustive, proof, proved"
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: a_004, a_010, a_013, h_001, pli_006, ps_001"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_h001_not_ruled_out_when_adding_identity_hypotheses",
+                "passed": true,
+                "error": "skipped: not a c_002 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_h001_status_unchanged_when_review",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hypotheses_assertion_refs_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hypotheses_no_deletions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_hypotheses_have_claim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_hypothesis_added_for_c002",
+                "passed": true,
+                "error": "skipped: not a c_002 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_ruled_out_requires_reason",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_scope_handback_writes_nothing",
+                "passed": true,
+                "error": "skipped: not a scope-handback scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_supported_requires_evidence_floor",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude's response accurately reports the hypothesis status as SUPPORTED and correctly identifies the three supporting assertions (a_004, a_010, a_013) with accurate characterizations of their evidence types. The death certificate is correctly identified as secondary informant evidence. The proof tier is correctly stated as PROBABLE per ps_001. No contradicting evidence is correctly noted as absent. The response accurately reflects the before-state: h_001 exists and is marked supported, the three assertions are correctly drawn from the logged sources, and the conflict c_001 is resolved. No fabricated material or unsupported claims appear."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude addressed all required elements: cited the three supporting assertions with their evidence types (1850 co-residence, 1860 household co-residence, death certificate statement), noted that contradicting_assertion_ids is empty, identified probate records (pli_006 in_progress) as the most likely next source for corroborating evidence, and explained why the hypothesis is rated PROBABLE rather than PROVED. The response also correctly noted that 1870, 1880, and 1900 censuses remain unsearched. No required element from the per-test context was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "Claude made one MCP tool call: mcp__genealogy__validate_research_schema with projectPath matching the expected_args pattern (~). The call was appropriate for a read-only review to confirm file validity. The tool returned valid: true with no errors or warnings, confirming the project state is sound. No fixture_not_found errors occurred. The tool call arguments are correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Claim clarity",
+                "score": 3,
+                "rationale": "The hypothesis is stated with high specificity: 'Thomas Flynn was Patrick Flynn's father' names both specific persons (Thomas Flynn, Patrick Flynn), specifies the relationship (father), and includes place/time detail (Schuylkill County, Pennsylvania; Patrick b. ~1845, d. 1908). The claim is testable and falsifiable \u2014 it could be refuted by evidence of a different father or by absence of relationship evidence. The claim is neither vague nor overly broad."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence linkage",
+                "score": 3,
+                "rationale": "All three supporting assertions are directly relevant to the parentage hypothesis: a_004 (1850 census co-residence) and a_010 (1860 census co-residence) both establish household membership consistent with a father-son relationship; a_013 (death certificate naming Thomas as father) is direct evidence of the claimed relationship. No tangential assertions are included. The absence of contradicting assertions is correctly noted. Each linked assertion genuinely bears on whether Thomas was Patrick's father."
+              },
+              {
+                "source": "rubric",
+                "name": "Status transitions",
+                "score": 3,
+                "rationale": "The hypothesis status of SUPPORTED is correctly maintained. Per research-schema-spec.md rules, SUPPORTED requires either one direct supporting assertion or two indirect assertions from two distinct sources. Here: a_004 and a_010 are indirect (inferred relationships from census co-residence) from two distinct sources (src_001/src_002 for 1850, src_003 for 1860); a_013 is direct (stated on death certificate). The conflict c_001 is resolved, so no unresolved conflicts block the status. The proof tier PROBABLE is correctly identified as the limiting factor \u2014 the hypothesis is supported but not yet proved due to secondary informant status and incomplete census search. No status transition error is present."
+              }
+            ],
+            "judge_cost_usd": 0.017074,
+            "duration_ms": 11596.447375006392,
+            "error": null,
+            "input_tokens": 12224,
+            "cached_input_tokens": 0,
+            "output_tokens": 970
+          },
+          "started_at": 1791847939.364068,
+          "ended_at": 1791847980.691493
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 40084.5011670026,
+    "duration_api_ms": 39028.0,
+    "judge_duration_ms": 14851.855166998575,
+    "num_turns": 4,
+    "input_tokens": 1094,
+    "cached_input_tokens": 83032,
+    "cache_creation_input_tokens": 63705,
+    "output_tokens": 1640,
+    "judge_input_tokens": 23388,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1271,
+    "skill_cost_usd": 0.28923535,
+    "judge_cost_usd": 0.029743,
+    "total_cost_usd": 0.31897835,
+    "wall_clock_ms": 255132.7769756317
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

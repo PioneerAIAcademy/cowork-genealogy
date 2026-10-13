@@ -1,0 +1,494 @@
+{
+  "schema_version": 3,
+  "skill": "translation",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/translation.md": "27410b0da0db0cfaf114dafb91a31b9d809972d68b07ac43fe6e90af4501e4b2",
+    "eval/tests/unit/translation/damaged-kurrent-uncertainty.json": "fc3c5362ce4b42e35126e5435b5577490c71d77e0a949c8c86bd4af9944597c6",
+    "eval/tests/unit/translation/dutch-reformed-baptism-patronymics.json": "c357aadff88868d205c571490f67df95160f89c26d409cc83d799b73856e1ac1",
+    "eval/tests/unit/translation/french-civil-birth.json": "c9767527b43e838202a3b65ce90e5ee70e492dcb9c4e88341560351cafe366c3",
+    "eval/tests/unit/translation/german-family-register-abbreviations.json": "ff105cb859b0bcee70be4f1967b102572bc15b6e7471b91a3a03fba1cbf80794",
+    "eval/tests/unit/translation/german-kurrent-baptism.json": "70d189bf9d0d08b2e690bf248c27cac6dcbe9132fc9d417082c533acefa5cea8",
+    "eval/tests/unit/translation/italian-mixed-latin-burial.json": "3073b21def392d050a9c0a71c10d99f976dd761964cf57016c01e54317c90cdd",
+    "eval/tests/unit/translation/latin-marriage-record.json": "5572bb7f711ec86025d559481a3518fe1c816eac435dac63735047cfdde2f3fd",
+    "eval/tests/unit/translation/latin-parish-abbreviations.json": "99a71a1fefaf2c176e16f54f2c5ab18a58a6ed505e8301b1b738719353274710",
+    "eval/tests/unit/translation/latin-will-ambiguous-nepos.json": "14cf563ce061dcc7f0477bd0ab8d30a052c2a3e3bafa8f64d0737851214a381f",
+    "eval/tests/unit/translation/portuguese-brazilian-marriage.json": "26624845cd4d6485e9a91007b4839588bd1f425c11034f9340870a0b022a48a1",
+    "eval/tests/unit/translation/rubric.md": "8e39d1fa8031dafa6a6f502c05a93c57a9f9cd16d90399122913e5443e91a9a0",
+    "eval/tests/unit/translation/single-term-lookup.json": "0187cc6a3830fb5dfd79b67312bccce387e2b0a801ba0b62991b027aa17607e1",
+    "eval/tests/unit/translation/spanish-colonial-baptism.json": "cbbe0cda148148318c5016e079f144e1b7fdd9d0a80104772393e0aa331ccd6c"
+  },
+  "tests": [
+    {
+      "test_id": "ut_translation_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is accurate: 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer' correctly renders as 'On 3 April 1748, Maria, widow of Joannes Hofer, was buried.' All factual claims are supported: relicta means widow, the genitive Joannis identifies the deceased husband, sepulta est marks burial not death, and the date is correctly formatted. No fabricated material or unsupported assertions."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: translates the entry faithfully, explains relicta as widow with genealogical significance, notes the husband predeceased the burial, identifies the genitive case of Joannis, distinguishes burial from death date, and notes Maria's maiden name is absent. The response is proportionate to a one-line entry and does not over-elaborate into unnecessary workflow steps."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The agent provided a direct translation and explanation without invoking any tools, which is appropriate for a straightforward Latin translation task. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Translation is faithful and preserves genealogical precision. Relicta is correctly identified as widow with its literal meaning ('she who was left behind'). Joannis is correctly recognized as genitive form identifying the deceased husband. Sepulta est is correctly distinguished as burial, not death. All relationship and ecclesiastical terminology is accurate."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The response appropriately flags ambiguities and uncertainties: notes that Maria's maiden name is not recorded in this entry, explains that death likely preceded burial by one to several days (not treating burial as death date), and indicates that a marriage record or earlier entry may supply additional information. No ambiguous terms are silently resolved."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogical significance is thoroughly explained. The response identifies relicta as the standard ecclesiastical term for widow, explains its literal meaning, notes the masculine form relictus for widower recognition, establishes that Joannes Hofer predeceased Maria, provides a terminus ante quem for his death, and explains the research implications (where to look for his death/burial record and confirmation of prior marriage)."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "Date is accurately rendered: 3 April 1748 (1748-04-03) in both prose and ISO format. The record is from 1748, well after Gregorian adoption in Catholic regions, so no calendar flag is needed. The dating formula 'Die 3 Aprilis 1748' is correctly identified as standard ecclesiastical format. Date is complete (day, month, year all present and accurate)."
+          },
+          {
+            "source": "rubric",
+            "name": "Abbreviation expansion",
+            "score": null,
+            "rationale": "The original Latin entry contains no abbreviations to expand. All terms are written out in full: 'Die', 'Aprilis', 'sepulta', 'est', 'relicta', 'Joannis', 'Hofer'. This dimension does not apply when the record has no abbreviations."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The translation is accurate: 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer' correctly renders as 'On 3 April 1748, Maria, widow of Joannes Hofer, was buried.' All factual claims are supported: relicta means widow, the genitive Joannis identifies the deceased husband, sepulta est marks burial not death, and the date is correctly formatted. No fabricated material or unsupported assertions."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The response addresses all required elements: translates the entry faithfully, explains relicta as widow with genealogical significance, notes the husband predeceased the burial, identifies the genitive case of Joannis, distinguishes burial from death date, and notes Maria's maiden name is absent. The response is proportionate to a one-line entry and does not over-elaborate into unnecessary workflow steps."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made in this response. The agent provided a direct translation and explanation without invoking any tools, which is appropriate for a straightforward Latin translation task. N/A."
+          },
+          {
+            "source": "rubric",
+            "name": "Accuracy",
+            "score": 3,
+            "rationale": "Translation is faithful and preserves genealogical precision. Relicta is correctly identified as widow with its literal meaning ('she who was left behind'). Joannis is correctly recognized as genitive form identifying the deceased husband. Sepulta est is correctly distinguished as burial, not death. All relationship and ecclesiastical terminology is accurate."
+          },
+          {
+            "source": "rubric",
+            "name": "Notation of uncertainty",
+            "score": 3,
+            "rationale": "The response appropriately flags ambiguities and uncertainties: notes that Maria's maiden name is not recorded in this entry, explains that death likely preceded burial by one to several days (not treating burial as death date), and indicates that a marriage record or earlier entry may supply additional information. No ambiguous terms are silently resolved."
+          },
+          {
+            "source": "rubric",
+            "name": "Genealogical context",
+            "score": 3,
+            "rationale": "Genealogical significance is thoroughly explained. The response identifies relicta as the standard ecclesiastical term for widow, explains its literal meaning, notes the masculine form relictus for widower recognition, establishes that Joannes Hofer predeceased Maria, provides a terminus ante quem for his death, and explains the research implications (where to look for his death/burial record and confirmation of prior marriage)."
+          },
+          {
+            "source": "rubric",
+            "name": "Date formatting",
+            "score": 3,
+            "rationale": "Date is accurately rendered: 3 April 1748 (1748-04-03) in both prose and ISO format. The record is from 1748, well after Gregorian adoption in Catholic regions, so no calendar flag is needed. The dating formula 'Die 3 Aprilis 1748' is correctly identified as standard ecclesiastical format. Date is complete (day, month, year all present and accurate)."
+          },
+          {
+            "source": "rubric",
+            "name": "Abbreviation expansion",
+            "score": null,
+            "rationale": "The original Latin entry contains no abbreviations to expand. All terms are written out in full: 'Die', 'Aprilis', 'sepulta', 'est', 'relicta', 'Joannis', 'Hofer'. This dimension does not apply when the record has no abbreviations."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 26638.345375002245,
+        "duration_api_ms": 26558.0,
+        "judge_duration_ms": 10824.112957998295,
+        "wall_clock_ms": 37739.38608169556,
+        "num_turns": 2,
+        "input_tokens": 570,
+        "cached_input_tokens": 34403,
+        "cache_creation_input_tokens": 20308,
+        "output_tokens": 1304,
+        "judge_input_tokens": 3611,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 982,
+        "skill_cost_usd": 0.1064899,
+        "judge_cost_usd": 0.008521,
+        "total_cost_usd": 0.1150109
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_translation_008_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 26638.345375002245,
+          "duration_api_ms": 26558.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 570,
+          "cached_input_tokens": 34403,
+          "cache_creation_input_tokens": 20308,
+          "output_tokens": 1304,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 563,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000628,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 7,
+              "outputTokens": 1291,
+              "cacheReadInputTokens": 34403,
+              "cacheCreationInputTokens": 20308,
+              "webSearchRequests": 0,
+              "costUSD": 0.10586190000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "translation",
+              "description": "Latin burial entry translation",
+              "num_assistant_turns": 3,
+              "max_output_tokens": 561,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 4,
+                "output_tokens": 688,
+                "cache_read_input_tokens": 6480,
+                "cache_creation_input_tokens": 6691
+              },
+              "peak_window_tokens": 6692,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 15.577
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 21182,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.1064899,
+          "output": {
+            "text_response": "Here is the translation and explanation from the specialist:\n\n---\n\n**Original:** *Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.*\n\n**Translation:** On 3 April 1748, Maria, widow of Joannes Hofer, was buried.\n\n---\n\n**Breaking it down \u2014 especially *relicta*:**\n\n- **relicta** \u2014 *widow*; literally \"she who was left behind.\" This is the standard Latin ecclesiastical term for a woman whose husband predeceased her. The genitive *Joannis Hofer* (\"of Joannes Hofer\") names her deceased husband. The masculine equivalent would be *relictus*.\n- **sepulta est** \u2014 \"was buried.\" This is the **burial** date, not the death date. Death likely preceded burial by one to several days; don't treat 3 April 1748 as her date of death.\n- **Joannis** \u2014 genitive case of *Joannes*; nominative form is Joannes Hofer. Latin grammar requires this form to express \"of.\"\n- **Die 3 Aprilis 1748** \u2014 standard ecclesiastical dating: \"on the 3rd day of April 1748,\" Gregorian calendar.\n\n---\n\n**Genealogical takeaways:**\n\n1. **Joannes Hofer died before 3 April 1748** \u2014 Maria is identified as his widow, so his death is a terminus ante quem for that date.\n2. This is a **burial record**, not a death record \u2014 the actual death date is unknown but was likely a few days earlier.\n3. **Maria's maiden name is not given here** \u2014 she is identified only by her married name. You'd need a marriage record or earlier register entry to find her maiden name.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Latin burial entry translation",
+                  "prompt": "Can you read this Latin burial entry and tell me what it says? I'm especially stuck on the word 'relicta': 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.'",
+                  "subagent_type": "translation"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_translation_008-0-0-eca1t5ea/research.json"
+                },
+                "agent_id": "a47c7ab53adab83a5"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "translation",
+                "text": "No `research.json` found, so I will apply the default one-line preamble per action.\n\n---\n\n*Original (as written):* Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer.\n\n*Translation (derivative \u2014 the original governs):* On 3 April 1748 (1748-04-03), Maria, widow of Joannes Hofer, was buried.\n\n*What matters genealogically:*\n\n- **relicta** \u2014 *widow*; literally \"she who was left behind.\" This is the standard Latin ecclesiastical term for a woman whose husband predeceased her. The masculine form is *relictus*. The genitive *Joannis Hofer* (\"of Joannes Hofer\") identifies her deceased husband by name.\n- **sepulta est** \u2014 \"was buried.\" This is the **burial** date (1748-04-03), not the death date. Death likely preceded it by one to several days; do not treat this as the date of death.\n- **Joannis** \u2014 genitive form of *Joannes*; normalized to nominative: Joannes Hofer. This is not a scribal error; Latin requires the genitive case to express \"of\" or \"belonging to.\"\n- **Die 3 Aprilis 1748** \u2014 a standard ecclesiastical dating formula: *die* (\"on the day\") + ordinal + month in genitive. The date is 3 April 1748 (1748-04-03), Gregorian.\n- The record establishes that **Joannes Hofer died before 3 April 1748 (1748-04-03)** \u2014 Maria is identified as his widow, placing his death prior to this entry. That gives you a terminus ante quem for his death.\n- **Maria** is recorded without a maiden name or further patronymic here. The record names her only by her married identity. A marriage record or earlier register entry may supply her maiden name.\n\n---\n\nThis Latin burial entry records that Maria, widow of Joannes Hofer, was buried on 3 April 1748 (1748-04-03). The key term *relicta* confirms she outlived her husband Joannes Hofer, meaning his death occurred before that date. The entry gives a burial date, not a death date, and does not record Maria's maiden name."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_mcp_tools_called",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The translation is accurate: 'Die 3 Aprilis 1748 sepulta est Maria, relicta Joannis Hofer' correctly renders as 'On 3 April 1748, Maria, widow of Joannes Hofer, was buried.' All factual claims are supported: relicta means widow, the genitive Joannis identifies the deceased husband, sepulta est marks burial not death, and the date is correctly formatted. No fabricated material or unsupported assertions."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The response addresses all required elements: translates the entry faithfully, explains relicta as widow with genealogical significance, notes the husband predeceased the burial, identifies the genitive case of Joannis, distinguishes burial from death date, and notes Maria's maiden name is absent. The response is proportionate to a one-line entry and does not over-elaborate into unnecessary workflow steps."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made in this response. The agent provided a direct translation and explanation without invoking any tools, which is appropriate for a straightforward Latin translation task. N/A."
+              },
+              {
+                "source": "rubric",
+                "name": "Accuracy",
+                "score": 3,
+                "rationale": "Translation is faithful and preserves genealogical precision. Relicta is correctly identified as widow with its literal meaning ('she who was left behind'). Joannis is correctly recognized as genitive form identifying the deceased husband. Sepulta est is correctly distinguished as burial, not death. All relationship and ecclesiastical terminology is accurate."
+              },
+              {
+                "source": "rubric",
+                "name": "Notation of uncertainty",
+                "score": 3,
+                "rationale": "The response appropriately flags ambiguities and uncertainties: notes that Maria's maiden name is not recorded in this entry, explains that death likely preceded burial by one to several days (not treating burial as death date), and indicates that a marriage record or earlier entry may supply additional information. No ambiguous terms are silently resolved."
+              },
+              {
+                "source": "rubric",
+                "name": "Genealogical context",
+                "score": 3,
+                "rationale": "Genealogical significance is thoroughly explained. The response identifies relicta as the standard ecclesiastical term for widow, explains its literal meaning, notes the masculine form relictus for widower recognition, establishes that Joannes Hofer predeceased Maria, provides a terminus ante quem for his death, and explains the research implications (where to look for his death/burial record and confirmation of prior marriage)."
+              },
+              {
+                "source": "rubric",
+                "name": "Date formatting",
+                "score": 3,
+                "rationale": "Date is accurately rendered: 3 April 1748 (1748-04-03) in both prose and ISO format. The record is from 1748, well after Gregorian adoption in Catholic regions, so no calendar flag is needed. The dating formula 'Die 3 Aprilis 1748' is correctly identified as standard ecclesiastical format. Date is complete (day, month, year all present and accurate)."
+              },
+              {
+                "source": "rubric",
+                "name": "Abbreviation expansion",
+                "score": null,
+                "rationale": "The original Latin entry contains no abbreviations to expand. All terms are written out in full: 'Die', 'Aprilis', 'sepulta', 'est', 'relicta', 'Joannis', 'Hofer'. This dimension does not apply when the record has no abbreviations."
+              }
+            ],
+            "judge_cost_usd": 0.008521,
+            "duration_ms": 10824.112957998295,
+            "error": null,
+            "input_tokens": 3611,
+            "cached_input_tokens": 0,
+            "output_tokens": 982
+          },
+          "started_at": 1791848064.970449,
+          "ended_at": 1791848102.709835
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 26638.345375002245,
+    "duration_api_ms": 26558.0,
+    "judge_duration_ms": 10824.112957998295,
+    "num_turns": 2,
+    "input_tokens": 570,
+    "cached_input_tokens": 34403,
+    "cache_creation_input_tokens": 20308,
+    "output_tokens": 1304,
+    "judge_input_tokens": 3611,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 982,
+    "skill_cost_usd": 0.1064899,
+    "judge_cost_usd": 0.008521,
+    "total_cost_usd": 0.1150109,
+    "wall_clock_ms": 37739.38608169556
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}
