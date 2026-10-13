@@ -59,6 +59,7 @@ WARNING_KIND_SIDES: dict[str, str] = {
     "uncovered_tool_call": "harness",
     "prose_observation": "harness",
     "harness_node_timeout": "harness",  # a node-subprocess flake, not the judge (#2025)
+    "pg_store_fault": "harness",  # --store pg: the Postgres store failed a call (U15)
 }
 
 _VALID_SIDES = frozenset({"judge", "harness"})

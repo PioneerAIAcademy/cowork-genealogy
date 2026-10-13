@@ -44,6 +44,7 @@ import {
   type MatchScoreFile,
 } from "../utils/match-scores.js";
 import { compatiblePlace } from "../utils/date-comparison.js";
+import { normalizeString } from "../utils/string-similarity.js";
 import { getDayRange, isABeforeB } from "../utils/date-helpers.js";
 import { placeSegments, canonicalCountry } from "../utils/place-resolver.js";
 import { exampleHints } from "./research-append-examples.js";
@@ -720,10 +721,9 @@ function yearOf(value: unknown): number | null {
  *  omitted while the higher tier was written anyway (measured 2026-09-23 —
  *  `_012` wrote `probable` with the field present and null).
  *
- *  Place uses `compatiblePlace` + `placeSegments`, the SAME comparator
- *  `placeContainmentErrors` uses, for the reason its docstring gives: equality
- *  and containment are both compatible, so only an outright disagreement counts.
- *  A place-less assertion states nothing and is skipped.
+ *  Place uses `birthPlacesAgree`: equality and containment are both
+ *  compatible, so only an outright disagreement counts. A place-less assertion
+ *  states nothing and is skipped.
  *
  *  Scope is deliberately narrow: only the record's own assertions, only against
  *  the tree person's BIRTH fact, and only where both sides actually state a
@@ -737,6 +737,42 @@ function yearOf(value: unknown): number | null {
  *  contradiction. The DATE arm is the other way round -- a christening follows
  *  birth closely, so its date IS comparable. */
 const BIRTH_PLACE_FACT_TYPES: ReadonlySet<string> = new Set(["birth"]);
+
+/** Whether a record's birth place and the tree's agree, on their text or, when
+ *  both carry one, on their resolved `standard_place` -- either agreeing is
+ *  enough, since two resolutions of the same text can differ. Two places agree
+ *  when one is `compatiblePlace` with the other, or when the top level one of
+ *  them names appears in the other and every level below it matches. That second
+ *  test is what lets "Staffordshire, England" agree with "West Bromwich,
+ *  Staffordshire, England, United Kingdom" and "Georgia" with "Georgia, United
+ *  States": `compatiblePlace` lines the two up from the country, so a place
+ *  written without its country, or with an extra level above it, read as a
+ *  different place. Over the committed fixture and e2e documents that refused
+ *  1,067 confident/probable links on place, almost all of them that shape. */
+function birthPlacesAgree(assertion: any, birth: any): boolean {
+  const agree = (a: string, b: string): boolean =>
+    compatiblePlace(a, b) || alignedBelowTop(a, b) || alignedBelowTop(b, a);
+  if (agree(String(assertion.place), String(birth.place))) return true;
+  const sa = assertion?.standard_place;
+  const sb = birth?.standard_place;
+  return (
+    typeof sa === "string" && placeSegments(sa).length > 0 &&
+    typeof sb === "string" && placeSegments(sb).length > 0 &&
+    agree(sa, sb)
+  );
+}
+
+/** True when `x`'s least-specific level appears in `y` and each level of `x`
+ *  below it matches the level of `y` at the same depth. */
+function alignedBelowTop(x: string, y: string): boolean {
+  const xs = placeSegments(x).map(normalizeString).reverse();
+  const ys = placeSegments(y).map(normalizeString).reverse();
+  const at = ys.indexOf(xs[0]);
+  if (at < 0) return false;
+  const n = Math.min(xs.length, ys.length - at);
+  for (let k = 0; k < n; k++) if (xs[k] !== ys[at + k]) return false;
+  return true;
+}
 
 /** An informant with no proximity to the birth cannot contradict it. Senior
  *  genealogist ruling 2026-09-23 (John Mark Peter-Brown): "A baptismal record
@@ -935,7 +971,7 @@ export function coreIdentifierContradictionInvariants(
       if (!BIRTH_PLACE_FACT_TYPES.has(String(a.fact_type ?? "").toLowerCase())) continue;
       if (!contradictionIsCredible(a)) continue;
       if (typeof a.place !== "string" || placeSegments(a.place).length === 0) continue;
-      if (!compatiblePlace(a.place, birth.place)) {
+      if (!birthPlacesAgree(a, birth)) {
         findings.push(
           `the record states '${a.place}' (assertion '${a.id}') where the tree person ` +
             `attests '${birth.place}'`,

@@ -94,6 +94,26 @@ describe("PgS3ProjectStore without a stack", () => {
     }
   });
 
+  it("lets a missing projectPath reach the tool's own loud answer, and writes nothing, before touching the database", async () => {
+    const backend = createPgS3Backend({ dsn: "postgresql://x:y@127.0.0.1:1/z", s3 });
+    const store = new PgS3ProjectStore(backend, { projectId: "p", anchorPath: ANCHOR });
+    try {
+      for (const missing of [undefined, null, "", "  ", 7]) {
+        // The body runs, unlocked, so the tool's read can answer it; a write in it refuses.
+        expect(await store.withTransaction(missing as never, async () => 1), String(missing)).toBe(1);
+        await expect(
+          store.withTransaction(missing as never, () => store.writeJson(missing as never, "research.json", {})),
+        ).rejects.toThrow(/^projectPath is required$/);
+        await expect(store.writeJson(missing as never, "research.json", {})).rejects.toThrow(
+          /^projectPath is required$/,
+        );
+      }
+      await expect(store.withTransaction(MISSING, async () => 1)).rejects.toThrow(/not this store's project/);
+    } finally {
+      await backend.close();
+    }
+  });
+
   it("exposes its projectId — the identity the image-store cap keys on for patron isolation (#2457 B2)", async () => {
     // The shared-process cap isolation (truncatedImageKey) keys on the bound
     // store's `projectId`. If an isolating backend omitted the optional field it
