@@ -221,14 +221,24 @@ export default function ChatPane({
   conn,
   sessionId,
   isNew,
-  onUsage
+  onUsage,
+  projectId,
+  onContinueOnProject
 }: {
   conn: SessionConnection
   sessionId: string
   isNew: boolean
   onUsage?: (delta: UsageDelta) => void
+  /** The project this session runs on, so a spend-bound stop can open a new session
+   *  on the SAME project rather than a fresh one. */
+  projectId?: string
+  onContinueOnProject?: (newSessionId: string) => void
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  // The spend bound is only knowable HERE. The session list folds `budget`, a user
+  // stop and `no_progress` all into `stopped`, so it cannot tell this case apart.
+  const [spendStopped, setSpendStopped] = useState(false)
+  const [continuing, setContinuing] = useState(false)
   const [input, setInput] = useState('')
   // Phase 2 item 1: schema ids in chat prose become links into the viewer.
   //
@@ -323,6 +333,7 @@ export default function ChatPane({
       // 1c: say WHY the run ended. Without this a budget-capped or stalled run is
       // indistinguishable from a finished one.
       setOutcome(turnOutcomeLabel(ev.outcome, ev.limit))
+      setSpendStopped(ev.outcome === 'budget' && ev.limit === 'spend')
       // A task killed via TaskUpdated emits no task_done on the wire, so the
       // set is reset at turn end rather than trusted to drain itself.
       liveTasksRef.current = new Set()
@@ -571,7 +582,24 @@ export default function ChatPane({
               }}
             />
           ) : outcome && !busy ? (
-            <div className="turnOutcome">{outcome}</div>
+            <div className="turnOutcome">
+              {outcome}
+              {spendStopped && projectId && onContinueOnProject && (
+                <button
+                  className="btnGhost"
+                  disabled={continuing}
+                  onClick={() => {
+                    setContinuing(true)
+                    void api
+                      .createSession({ project_id: projectId })
+                      .then((s) => onContinueOnProject(s.id))
+                      .finally(() => setContinuing(false))
+                  }}
+                >
+                  {continuing ? 'Continuing…' : 'Continue on this project'}
+                </button>
+              )}
+            </div>
           ) : queuedOnServer && !messages.some((m) => m.queued) ? (
             // The server is holding a message this tab did not send — another tab, or
             // this one before a reload. Without this the feed looks idle while a message

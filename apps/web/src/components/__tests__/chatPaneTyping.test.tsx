@@ -267,3 +267,69 @@ describe('[R8] Reconnecting shows the attempt number', () => {
     expect(screen.getByText(/20 attempts/)).toBeTruthy()
   })
 })
+
+describe('continuing on the same project after a spend stop', () => {
+  // Phase 2's acceptance: "a session stopped at the spend bound continues on the same
+  // project in one action". The session LIST cannot offer this — job_state folds
+  // `budget`, a user stop and `no_progress` all into `stopped`, so it cannot tell a
+  // spend stop apart. ChatPane sees the `turn_done` outcome, so the action lives here.
+
+  function mountWith(props: { projectId?: string }): FakeConn {
+    const conn = new FakeConn()
+    render(
+      <ChatPane
+        conn={conn}
+        sessionId="sess_1"
+        isNew={false}
+        projectId={props.projectId}
+        onContinueOnProject={() => {}}
+      />
+    )
+    conn.emit({ type: 'status', state: 'chat_ready' })
+    return conn
+  }
+
+  // The real wire shape, learned the hard way: a `turn_done` arrives NESTED in an
+  // `agent_event` envelope, and only after a turn has started. My first two versions
+  // emitted a bare frame, so nothing reached the component — and the two negative
+  // cases passed vacuously, because no outcome was ever set. Only the positive case
+  // noticed. `startTurn` and the envelope are what the existing outcome tests use.
+  const continueButton = (): HTMLElement | null =>
+    screen.queryByRole('button', { name: /continue on this project/i })
+
+  it('offers nothing on an ordinary stop', () => {
+    const conn = mountWith({ projectId: 'proj_1' })
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'stopped' } })
+    expect(continueButton()).toBeNull()
+  })
+
+  it('offers the continue action on a spend stop', () => {
+    const conn = mountWith({ projectId: 'proj_1' })
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'budget', limit: 'spend' } })
+    // Label first: if the frame never reached the component, that is a different
+    // failure from the button not rendering.
+    expect(screen.getByText(SPEND_CAP_LABEL, { exact: false })).toBeTruthy()
+    expect(continueButton()).not.toBeNull()
+  })
+
+  it('offers nothing on a budget stop that is NOT the spend bound', () => {
+    // `budget` without `limit: 'spend'` is a different bound, and the clause is about
+    // the spend one. Dropping `&& ev.limit === 'spend'` reds this and nothing else —
+    // the ordinary-stop case above uses `stopped` and never exercised it.
+    const conn = mountWith({ projectId: 'proj_1' })
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'budget' } })
+    expect(continueButton()).toBeNull()
+  })
+
+  it('offers nothing when the project id is unknown', () => {
+    // An older server omits project_id. Offering the button then would open a session
+    // on a NEW project, which is the opposite of what the clause asks for.
+    const conn = mountWith({})
+    startTurn(conn)
+    conn.emit({ type: 'agent_event', event: { kind: 'turn_done', outcome: 'budget', limit: 'spend' } })
+    expect(continueButton()).toBeNull()
+  })
+})

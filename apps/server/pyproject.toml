@@ -58,6 +58,11 @@ proto-web = [
     "itsdangerous>=2.2",
     "cryptography>=48.0.1",
     "httpx>=0.27",
+    # FastAPI's `UploadFile = File(...)` needs it, and the upload route is the only
+    # path bytes have into a project. Absent here, the pytest suite still passes --
+    # it runs in the full `[project]` venv, which has it -- and only the deployed
+    # image fails.
+    "python-multipart>=0.0.9",
     "botocore>=1.40",
     # The web tier fetches sidecar bodies (`results/<log_id>.json`) from the blob
     # store; proto/web/sidecar.py needs a client. Imported lazily, so a deployment

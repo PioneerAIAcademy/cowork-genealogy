@@ -74,11 +74,27 @@ Phase 2's *Acceptance* paragraph (`research-as-a-job-later-REVISED.md`, the read
 section) has seven clauses. Four are met. These three are not, and each is a **build task, not
 a verification**:
 
-| Clause | State | Evidence |
-|---|---|---|
-| "a census page opens from the feed" | **unbuilt** | `proto/web/app.py`'s route map — `.../image`, `.../logs` and `.../files` all answer 501 |
-| "a PDF attached mid-run reaches the project" | **unbuilt** | no upload route exists in the proto web tier |
-| "a session stopped at the spend bound continues on the same project in one action" | **unbuilt** | `apps/web/src/api.ts`'s `createSession` takes `{title, model, sample}` and carries no project id, so a new session cannot open ON an existing project. `61c1c8941`, the only commit on this item, added a ChatPane notice and nothing else |
+| Clause | State |
+|---|---|
+| "a census page opens from the feed" | **BUILT 2026-10-13** — `GET .../image` serves `images/<key>.jpg` from the blob store |
+| "a PDF attached mid-run reaches the project" | **BUILT 2026-10-13** — `POST .../files` writes `uploads/<name>`, which the worker's deny hook routes to `sidecar_read` and a binary to `image_transcribe` |
+| "a session stopped at the spend bound continues on the same project in one action" | **BUILT 2026-10-13** — `project_id` on `session_out`/`SessionSummary`/`createSession`, and a continue action in ChatPane, which is the only surface that can see a spend stop |
+
+All seven clauses are now met. Three notes on how, because each was a near-miss:
+
+- **The web tier had no S3 WRITE path at all**, only `fetch_sidecar`'s read, so the
+  upload was not the port it looked like. `project_blobs.put_blob` mirrors the engine's
+  own `indexObject`: fresh object key, upsert the row, delete the superseded object
+  only after the row is durable.
+- **`python-multipart` was missing from the `proto-web` group.** `UploadFile` needs it,
+  the pytest suite runs in the full `[project]` venv which has it, so the tests would
+  have passed while the deployed image failed.
+- **Ownership had to precede validation on both routes.** A required query param or
+  body field is rejected 422 by FastAPI *before* the handler runs, so a foreign session
+  learned the route exists and what it takes. The existing ownership suite caught it.
+
+Still 501, deliberately: `.../logs`. The acceptance names images, uploads and
+spend-resume and not sandbox logs, which are an operator debug surface.
 
 The four that ARE met: paragraphs anchored to their step, identifiers linked, no wire names
 or bare collection numbers in chips, a deferred search not rendering as a negative result.

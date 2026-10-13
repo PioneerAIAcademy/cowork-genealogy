@@ -92,7 +92,7 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
@@ -111,6 +111,14 @@ import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
+from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
+    IMAGE_REF_RE,
+    UPLOAD_MAX_BYTES,
+    fetch_blob,
+    put_blob,
+    safe_upload_name,
+    upload_key,
+)
 from web.sidecar import (  # noqa: E402  (search-result chip bodies, from the blob store)
     fetch_sidecar,
     sidecar_key,
@@ -388,6 +396,9 @@ def session_out(row: SessionRow) -> dict[str, Any]:
     """Every key of api.ts's SessionSummary; SessionList dereferences model/last_active."""
     return {
         "id": row.session_id,
+        # The client cannot open a new session ON this project without it, which is
+        # what "continues on the same project in one action" needs.
+        "project_id": row.project_id,
         "title": row.title,
         "model": row.model,
         "status": "active",
@@ -1635,21 +1646,85 @@ def create_app(
         return payload
 
     _NOT_IN_PROTOTYPE = {
-        "image": "Source images are not served by the prototype web tier (D6-8 blobs)",
+        # Sandbox logs stay unserved on purpose: phase 2's acceptance names images,
+        # uploads and spend-resume, and not this. It is an operator debug surface.
         "logs": "There are no sandbox logs on this backend; read the worker's stdout",
-        "files": "Uploads have no path into the project on this backend (plan: 'the first unserved class')",
     }
 
-    @app.get("/api/sessions/{session_id}/image")
     @app.get("/api/sessions/{session_id}/logs")
     async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
         await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
+    @app.get("/api/sessions/{session_id}/image")
+    async def session_image(
+        session_id: str, request: Request, filename: str | None = None,
+        user: User = Depends(current_user),
+    ) -> Response:
+        """A persisted source page scan, so the viewer can show it beside a transcription.
+
+        The alpha reads the sandbox filesystem; this tier reads the blob store. `filename`
+        is pinned to the `images/<key>.jpg` shape, and a name outside it is a 400 rather
+        than a 404 -- a 404 would tell a prober the path shape was accepted.
+        """
+        # Ownership BEFORE validation, and `filename` optional in the signature for that
+        # reason: a required query param is rejected 422 by FastAPI before the handler
+        # runs, so a foreign session learned the route exists and what it takes. The
+        # ownership suite caught it.
+        row = await _session(request, session_id, user)
+        if not filename or ".." in filename or not IMAGE_REF_RE.match(filename):
+            raise HTTPException(status_code=400, detail="not an image reference")
+        s3 = _s3_client()
+        if s3 is None:
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        with psycopg.connect(PG_DSN) as conn:
+            blob = fetch_blob(conn, s3, S3_BUCKET, row.project_id, filename)
+        if blob is None:
+            # 404 is a REAL state: most projects hold no scans.
+            raise HTTPException(status_code=404, detail="image not found")
+        # `image/jpeg` verbatim from the alpha. The regex admits only `.jpg` names while
+        # `image_transcribe` retains any `image/*` under one, so both planes can mislabel
+        # PNG bytes; browsers sniff, and matching the alpha beats a third behaviour.
+        return Response(content=blob.body, media_type="image/jpeg")
+
     @app.post("/api/sessions/{session_id}/files")
-    async def not_in_prototype_post(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
-        await _session(request, session_id, user)
-        raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
+    async def upload_session_file(
+        session_id: str,
+        request: Request,
+        file: UploadFile | None = File(default=None),
+        user: User = Depends(current_user),
+    ) -> dict:
+        """Write a researcher-supplied document or image into `<project>/uploads/`.
+
+        The only path bytes have into a project: the FamilySearch tools reach FS-hosted
+        images, but a scan from another site, a county PDF or a photo of a family bible
+        has none without this. The agent reads the result at `uploads/<name>` -- the
+        worker's deny hook routes that prefix to `sidecar_read`, and a binary falls
+        through to `image_transcribe`, which takes PDFs by magic bytes.
+        """
+        # Ownership first, for the same reason as the image route above.
+        row = await _session(request, session_id, user)
+        if file is None:
+            raise HTTPException(status_code=400, detail="no file in the request")
+        name = safe_upload_name(file.filename)
+        if name is None:
+            raise HTTPException(
+                status_code=400,
+                detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+            )
+        body = await file.read()
+        if not body:
+            raise HTTPException(status_code=400, detail="the file is empty")
+        if len(body) > UPLOAD_MAX_BYTES:
+            raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
+        s3 = _s3_client()
+        if s3 is None:
+            raise HTTPException(status_code=503, detail="no blob store configured")
+        key = upload_key(name)
+        with psycopg.connect(PG_DSN) as conn:
+            written = put_blob(conn, s3, S3_BUCKET, row.project_id, key, body)
+            conn.commit()
+        return {"path": key, "sizeBytes": written}
 
     @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
     async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:

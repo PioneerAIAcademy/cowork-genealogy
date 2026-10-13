@@ -353,6 +353,7 @@ proto-web = [
     { name = "httpx" },
     { name = "itsdangerous" },
     { name = "psycopg", extra = ["binary"] },
+    { name = "python-multipart" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 proto-worker = [
@@ -398,6 +399,7 @@ proto-web = [
     { name = "httpx", specifier = ">=0.27" },
     { name = "itsdangerous", specifier = ">=2.2" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.4" },
+    { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.51.0" },
 ]
 proto-worker = [

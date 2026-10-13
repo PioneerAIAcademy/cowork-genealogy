@@ -62,6 +62,10 @@ SESSION_SUMMARY_KEYS = {
     # The session list's four job states. `status` above is the legacy field every
     # existing client reads; this is additive beside it.
     "job_state",
+    # The project this session runs on. Without it the client cannot open a NEW
+    # session on the SAME project, which is what a spend-bound stop needs to
+    # continue "in one action".
+    "project_id",
 }
 
 
@@ -400,9 +404,20 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         state = (await c.get(f"/api/sessions/{row.session_id}/state")).json()
         assert state == {"label": DEFAULT_TITLE, "research": {"project": {"title": "X"}}, "gedcomx": None, "sidecars": []}
         assert (await c.get(f"/api/sessions/{row.session_id}/sidecar/q_001")).status_code == 404
-        for path in ("image?filename=images/a.jpg", "logs"):
-            assert (await c.get(f"/api/sessions/{row.session_id}/{path}")).status_code == 501
-        assert (await c.post(f"/api/sessions/{row.session_id}/files")).status_code == 501
+        # `logs` is the only route still unserved, and deliberately: phase 2's acceptance
+        # names images, uploads and spend-resume, not sandbox logs, which are an operator
+        # debug surface.
+        assert (await c.get(f"/api/sessions/{row.session_id}/logs")).status_code == 501
+        # image and files are SERVED now. With no blob store configured in this fixture,
+        # a scan reads as absent (404) rather than unimplemented, and an upload says the
+        # store is unavailable (503) rather than refusing the feature.
+        img = await c.get(f"/api/sessions/{row.session_id}/image?filename=images/a.jpg")
+        assert img.status_code == 404, img.text[:200]
+        up = await c.post(
+            f"/api/sessions/{row.session_id}/files",
+            files={"file": ("a.pdf", b"%PDF-1.4 x", "application/pdf")},
+        )
+        assert up.status_code == 503, up.text[:200]
         # 1c: interrupt used to be on that list. It is the control surface the whole
         # design rests on, so a 501 here is the feature missing, not a gap in the tier.
         assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202

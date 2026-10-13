@@ -18,11 +18,16 @@ import ThemeToggle from './ThemeToggle'
 export default function SessionView({
   sessionId,
   isNew,
-  onBack
+  onBack,
+  onOpenSession
 }: {
   sessionId: string
   isNew: boolean
   onBack: () => void
+  /** Open another session. `isNew` is FALSE at the call site: a continue-on-project
+   *  session runs on a project that already exists, and a new one would be prefixed
+   *  with OPENING_TURN and re-run init-project on it. */
+  onOpenSession?: (sessionId: string) => void
 }): React.JSX.Element {
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [conn, setConn] = useState<SessionConnection | null>(null)
@@ -173,7 +178,14 @@ export default function SessionView({
           <ThemeToggle />
         </header>
         {conn ? (
-          <ChatPane conn={conn} sessionId={sessionId} isNew={isNew} onUsage={onUsage} />
+          <ChatPane
+            conn={conn}
+            sessionId={sessionId}
+            isNew={isNew}
+            onUsage={onUsage}
+            projectId={session?.project_id}
+            onContinueOnProject={(id) => onOpenSession?.(id)}
+          />
         ) : (
           <div className="chatBody">
             <div className="chatPlaceholder muted">Connecting…</div>

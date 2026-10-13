@@ -9,6 +9,10 @@ export interface SessionSummary {
    *  never run. Optional so an older server that omits it degrades to no badge. */
   job_state?: JobState
   id: string
+  /** The project this session runs on. Needed to open a NEW session on the SAME
+   *  project when one stops at the spend bound — the client cannot send an id it
+   *  never receives. Optional so an older server that omits it degrades. */
+  project_id?: string
   title: string
   model: string
   status: string
@@ -63,7 +67,7 @@ export const api = {
   logout: () => req<{ ok: true }>('/auth/logout', { method: 'POST' }),
 
   listSessions: () => req<SessionSummary[]>('/api/sessions'),
-  createSession: (body: { title?: string; model?: string; sample?: boolean }) =>
+  createSession: (body: { title?: string; model?: string; sample?: boolean; project_id?: string }) =>
     req<SessionSummary>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
   resumeSession: (id: string) =>
     req<SessionSummary>(`/api/sessions/${id}/resume`, { method: 'POST' }),
