@@ -1,0 +1,2261 @@
+{
+  "schema_version": 3,
+  "skill": "research-plan",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_18-32-21",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/skills/research-plan/SKILL.md": "c74398adad1e8204ede854098fcb62d5c4774cbf235443c29f0d7ef11e188d4d",
+    "packages/engine/plugin/skills/research-plan/references/planning-standards.md": "505d9c1396d18eac03b60c26ae2b577c8c3fa4116111718e2ced1c56324643df",
+    "packages/engine/plugin/skills/research-plan/references/record-type-guide.md": "a4c918165ba4b18dd3e835c0cac4d30dd9ed617252041722e058f171d5c4f7bc",
+    "packages/engine/plugin/agents/search-external-sites.md": "3d261c01298befd903c6790c102d07404bfc200e6b1657a6d7f96b18e8455e1c",
+    "eval/tests/unit/research-plan/caroline-probate-creator-lifespan.json": "f1de0a91ebde779a80ff9ec4405a0e6bd59e2a1221e97d73c8a2911d3efd1d10",
+    "eval/tests/unit/research-plan/external-archive-handoff.json": "23b4930e85b132450e453fafce0b0c9eb41d8e17e827fe9a544ed0ac10ed7235",
+    "eval/tests/unit/research-plan/fallback-sequencing-plan.json": "17eb86a2545fa7d25bcf27f1afe77890bea2a229fe726abfee2e0e59a96a74ef",
+    "eval/tests/unit/research-plan/fan-pivot-plan.json": "61ebfb2d5c0007df514d8a814777e9557955ae15fec8dc665d53dfea717669fa",
+    "eval/tests/unit/research-plan/feliciana-parish-boundary-split.json": "16911af70d031025a80ab9a34e0315f59a10f0355a2b8c20034cf17ecb4c54e5",
+    "eval/tests/unit/research-plan/first-plan-fan-already-sourced.json": "278fe5a5613d1494363a4b0a2b63e8330480b63cd3b79aae4f97134962f81a18",
+    "eval/tests/unit/research-plan/first-plan-migration-hypothesis.json": "5dc7b03d4f52aa396d4bb9263f01c369891c674466cab644a3dea6df6ec99120",
+    "eval/tests/unit/research-plan/free-before-paid-census-sequencing.json": "c470d3590699a660247be89eaf25a9e1f5ad5f62384ecc64ace8c51650d0dd39",
+    "eval/tests/unit/research-plan/handle-negative-probate-result.json": "0b2b559f07592bcd9c22894f9b1db8816f87d8ec4cf5dbfea103b597522859dd",
+    "eval/tests/unit/research-plan/locality-survey-first-plan.json": "eedff0ba19dba1fdc63a84b59904c41808bb7112f5937462264495b46ec39c6c",
+    "eval/tests/unit/research-plan/martha-remarriage-surname-plan.json": "b953307d60c3b2325edf82e621bd756464775f62d7eb5800d6c83d9d5b9a9af2",
+    "eval/tests/unit/research-plan/negative-execute-search-request.json": "eebee3f353486e6b353cede13a67a3c35870496bce0072bf4ee57a902ca5fdee",
+    "eval/tests/unit/research-plan/negative-record-extraction-request.json": "1830d2fae8d90dce29bcbcf5d646ebe2aa6d8796b9082e9b9a5e3e1ed90f3f26",
+    "eval/tests/unit/research-plan/new-plan-after-census-exhausted.json": "c08f80cc51df955576ce1070b132a51e1c035b053f97ed217eeca2757ec5a918",
+    "eval/tests/unit/research-plan/plan-compound-surname-fetches-naming-customs.json": "95eee9d2211c47cd96795c08e706d3417c51e4307ce9d8591714f5ad7321791c",
+    "eval/tests/unit/research-plan/plan-continue-authorized-in-message.json": "b7554008bb2d65ab12224d0fd4a4af98780c8e73533eb4be220aac016c01e15c",
+    "eval/tests/unit/research-plan/plan-danish-parentage-includes-levy-rolls.json": "183d1a4f9e69ca659f69bfd0465c869ead538ec4c94e6b613f70f9d7e4f85dd5",
+    "eval/tests/unit/research-plan/plan-death-premise-includes-probate.json": "a0a40c03906000e678a21bdd7146644876c80286441cb3e6c93318e07981fa00",
+    "eval/tests/unit/research-plan/plan-for-parentage-question.json": "d9a1eb8db39590173e79540f4a71cf5f0881646a8c3c4eb42c8d7e20aa1e1bea",
+    "eval/tests/unit/research-plan/plan-parentage-includes-marriage.json": "b4452e82fd093f48f68552db8bbf5efc8d8ea47bda64a6c6aac2f38bafbdebaf",
+    "eval/tests/unit/research-plan/plan-pre-register-birth-death-route.json": "a79714cdc649775ac31bc49a4b1de138cce5f2caa18aa50b4baf2c0cc5af04e5",
+    "eval/tests/unit/research-plan/review-mode-ambiguous-prompt.json": "e27af03b8081280c26e2fb2647abaa2e6eede9471490b8f07df2d97a43212102",
+    "eval/tests/unit/research-plan/rubric.md": "d9186f29fec471fb92f017d3826f1a478a64274f03db5e57b361b9012cee179a",
+    "eval/tests/unit/research-plan/supersede-mode-new-date-range.json": "b4a4810c68876c780e4639e76c0e176c2a7e57615ac55212ea25df9aedf27d57",
+    "eval/fixtures/scenarios/archion-baiersbronn-unplanned/README.md": "1d11ebd428c3a6b1c5ee59d6fb88efee3c7ea972f3cfb25d797a1180ae2736f0",
+    "eval/fixtures/scenarios/archion-baiersbronn-unplanned/research.json": "2b99b547f89c05f2cee1aecdf8dde62a9a31623268f97d0a88dd8c57eeab8800",
+    "eval/fixtures/scenarios/archion-baiersbronn-unplanned/tree.gedcomx.json": "a207bd01978663de389aa7af6089133601aba30b2de2945484c1f461539a7600",
+    "eval/fixtures/scenarios/blyeberg-first-plan/README.md": "cd02df5af5264ad5277c2ad1b211de26e6cc648fe4efd96ddf1b164f682d380f",
+    "eval/fixtures/scenarios/blyeberg-first-plan/research.json": "30d8d2fd4abae88eadb83cbed56c7e02342674d205aca86af3aed55aa5cc435b",
+    "eval/fixtures/scenarios/blyeberg-first-plan/tree.gedcomx.json": "c656011cc2b7098f4c1404ed176c541704226e1215ed1cd244085467b566ec27",
+    "eval/fixtures/scenarios/caroline-probate-creator-lifespan/README.md": "476dca77c307881f128f4ff523bc015b1fdb0159893d2859863b7ce5eaf9d315",
+    "eval/fixtures/scenarios/caroline-probate-creator-lifespan/research.json": "292e54ce40755deff78babf25ccfc905ea8615121cd945ddffab6a4b013c25eb",
+    "eval/fixtures/scenarios/caroline-probate-creator-lifespan/tree.gedcomx.json": "2bb5884e0483a56f4425b8af21327bef33835d5166effb1230340c0f6cf06d31",
+    "eval/fixtures/scenarios/elena-pre-register-birth/README.md": "eaacc07d84b89cafc88959249a11be7f755cb55f4d56f497c151d3e24aa5a0ad",
+    "eval/fixtures/scenarios/elena-pre-register-birth/research.json": "aae0337f9637fabc3d88a619e918b359b6649c222eedb8969316f502bff9f4e7",
+    "eval/fixtures/scenarios/elena-pre-register-birth/tree.gedcomx.json": "c79178633ee6f62d68a8878140ef4f8a2f82ed9235b3202a1105a6f45ee4b3aa",
+    "eval/fixtures/scenarios/feliciana-parish-boundary-split/README.md": "a14207483bbb40298289d41e7cf7e7680b88719dfc26b33fa951bea8f7d0c465",
+    "eval/fixtures/scenarios/feliciana-parish-boundary-split/research.json": "32a6753f4cec6c465dd03854d5a71470ae39e63651e23e78851834a0bbc14ef3",
+    "eval/fixtures/scenarios/feliciana-parish-boundary-split/tree.gedcomx.json": "9bf78f51aa065bebb025f82336cdd05ca32e6333dee224bb127ecc5a78cfbdf4",
+    "eval/fixtures/scenarios/first-plan-fan-already-sourced/README.md": "8cbc4d777f3aaaac7fa4547793faec9c3aa22b69a1d6846733417c325630068f",
+    "eval/fixtures/scenarios/first-plan-fan-already-sourced/research.json": "afbf2f2a4fd8a2c1088f2a9fc57f2695e6a9a374fa43378209d091a8cd1621a0",
+    "eval/fixtures/scenarios/first-plan-fan-already-sourced/tree.gedcomx.json": "7d90e8a684b1cc0664747ae1046d4c6ead9073e31802db169b0e9185fc84d2ba",
+    "eval/fixtures/scenarios/first-plan-migration-hypothesis/README.md": "49b06153776575b0acd96c8e790a637a407d5d9e3729b0713dbd0e58663ee3aa",
+    "eval/fixtures/scenarios/first-plan-migration-hypothesis/research.json": "a718f8dc460ce16568a738da874e7416692e8a4b39f3a92da7bb780951616a40",
+    "eval/fixtures/scenarios/first-plan-migration-hypothesis/tree.gedcomx.json": "ad3849875015dcb920cee138c65adb61e08d7be4a43786adac840b1c766c19f4",
+    "eval/fixtures/scenarios/flynn-census-exhausted/README.md": "99884e9b80f1deea24d51e0329c91aeeea6f51565eee3d766aae4495732aa1dd",
+    "eval/fixtures/scenarios/flynn-census-exhausted/research.json": "cd4b5effd92d5a21373a834c61aa13962541e53cc7b60391b3ce12ecf4016f81",
+    "eval/fixtures/scenarios/flynn-census-exhausted/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-census-exhausted-surveyed/README.md": "3dcbeba16e6b407da77117ec8e04edc9ed8eaab38ef4b866ad47e023e897b960",
+    "eval/fixtures/scenarios/flynn-census-exhausted-surveyed/research.json": "cd1b0722f2c86ede1d7c2d4192cfba91d64809fecd79790a7342c65e61b81124",
+    "eval/fixtures/scenarios/flynn-census-exhausted-surveyed/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-first-plan-surveyed/README.md": "633d430c13e873447efe6ca06661e61d28f4f581473c840b0ef1874a67a804cd",
+    "eval/fixtures/scenarios/flynn-first-plan-surveyed/research.json": "ceb54d122d9dff94aa758cb98f1856c211cceb323877750da41670e9ce259e7c",
+    "eval/fixtures/scenarios/flynn-first-plan-surveyed/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-resolved/README.md": "ac925a6fc1693e61f8b3238313289aa0c1227df574179a8b44bdd58bff3a622b",
+    "eval/fixtures/scenarios/flynn-resolved/research.json": "0990e86f1870708062229e51dba30fb4b23f0ed917f6d9c61ec668f1c1d8de76",
+    "eval/fixtures/scenarios/flynn-resolved/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/garcia-romero-compound-surname/README.md": "942f304c2cecf8cc62417f6e8ca48f2dece6cebbad1d03739969c8ce4ffbbcc9",
+    "eval/fixtures/scenarios/garcia-romero-compound-surname/research.json": "1bba54b5c99ccd2197960f056c319b1331d3212e15a2c5850a8f3b789a4381f3",
+    "eval/fixtures/scenarios/garcia-romero-compound-surname/tree.gedcomx.json": "61cbdd78337bdbb8ecf012f86c4c4ee4da555ac71cd42d995f8080425be640a2",
+    "eval/fixtures/scenarios/martha-remarriage-surname-plan/README.md": "2e31d0455d67cc8f3725742a5a10fd38dfe8879db0dbfcee793a1d2e5f5d534b",
+    "eval/fixtures/scenarios/martha-remarriage-surname-plan/research.json": "94c3cbd90af6eceeca65a687349e2f75d69c78aa8432bbdffc5b13539b876593",
+    "eval/fixtures/scenarios/martha-remarriage-surname-plan/tree.gedcomx.json": "d008c6c5ecde5825af13aa1c86e21318dad601ad7d576cfb69d37c53e0b99180",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/plan-continue-authorized-in-message/README.md": "ed4c4c785911dfa90d29dd29af7acc09a361c79ad4b5cc8ff860b16ac3847fab",
+    "eval/fixtures/scenarios/plan-continue-authorized-in-message/research.json": "b269fb1e6ccf1bcc6a1fdf88382190b4709e74a4f6f8092bc84dd9c5e70a95d7",
+    "eval/fixtures/scenarios/plan-continue-authorized-in-message/tree.gedcomx.json": "08e6578af9b7b7baa9ab6a0d9b4edee9e3ed5f118efe783539ea9edee795e75a",
+    "eval/fixtures/scenarios/wilkins-first-plan-surveyed/README.md": "e1859ceb006536283de40a72bf445e9dab45ff191377e5efeb826a252f730240",
+    "eval/fixtures/scenarios/wilkins-first-plan-surveyed/research.json": "c7d0b41eab6e877da89c8919b15a34c7b7675c29dfbffcfb18b29dda5af60663",
+    "eval/fixtures/scenarios/wilkins-first-plan-surveyed/tree.gedcomx.json": "5e74476e2c2556d3405d46a7595622cbd820d5d16d51511b204ebb782d238441",
+    "eval/fixtures/mcp/collections-search-alabama.json": "bfe23ecc885aa8ddfe7129ded297062780ce56d87f1a707ecef9b9ad7b9b5656",
+    "eval/fixtures/mcp/collections-search-baiersbronn.json": "e1bbc122b1af93b22c8a32572009c2a829fce0a3838c4e81a135235512571cf0",
+    "eval/fixtures/mcp/collections-search-blount.json": "173f6290b735c119c0174cb99dd692e6f57323d1138060a6d62eddb7bfa99829",
+    "eval/fixtures/mcp/collections-search-denmark.json": "5d95b3a7d295facdd611bfb2b39039f88f373032aae361789d09484e3218aca0",
+    "eval/fixtures/mcp/collections-search-feliciana.json": "d44863c8098d1beb6951d52b9a14e0347a01f565174903b0b72eb892cea423e3",
+    "eval/fixtures/mcp/collections-search-georgia.json": "95c7ed8c0d019e29e0ab7303be4783e93e1ccf6aab5bc89325de2f62d3d0cb4d",
+    "eval/fixtures/mcp/collections-search-kentucky.json": "2e8a5ad09b2bce4aaec3bcb99e6a98c2c0520d928b610580778ec02d76691555",
+    "eval/fixtures/mcp/collections-search-pennsylvania.json": "cdd578bda3b23080734f2607e565d980e05346deef7e450199ca785aaac6726a",
+    "eval/fixtures/mcp/collections-search-rowan-county.json": "19d350a166555333a0c78ac56132750dd9894dcf05621f4d815b80e4531808d0",
+    "eval/fixtures/mcp/collections-search-schuylkill.json": "cf6416f44b792fe5f1c0bcae48e5ae1a26d4c4aa9f817ce16ffc7def770d04bb",
+    "eval/fixtures/mcp/collections-search-spain.json": "c121e839f9da4554695ce41366b0c448c96bbca4e739f8d4540269b9359be404",
+    "eval/fixtures/mcp/collections-search-sweden.json": "cf85e16a0611c9b7843a78e5549afa29009dbd6edc6008e48275b7a2cfaeacc3",
+    "eval/fixtures/mcp/collections-search-texas-marriage-probate.json": "8a2acf8578e9891ecb5a9361d019b8686fd342a7d9399d56bb2c8d28426b8e1b",
+    "eval/fixtures/mcp/collections-search-us-national.json": "12d87c3362616da47e22965b566dd043ced223eef64dd693faec3c14c84c9f05",
+    "eval/fixtures/mcp/external-links-search-any.json": "1f10f6ce30cf5d84d72a4d95451a7ad758b7b208540f288b03e8d07d112ee0b1",
+    "eval/fixtures/mcp/external-links-search-baiersbronn.json": "fad15cb8f4e63b8d3b42d28fafd53acc5c780e85cfcb5193c6fba83592697f49",
+    "eval/fixtures/mcp/external-links-search-blount.json": "521d24cd6c95f722b6a50aff61a51dde7d669939767d704876f77b1b5f95bac0",
+    "eval/fixtures/mcp/external-links-search-denmark.json": "d7a20d2be659d2442d92c925582ff80e6405251367b037ac51e3e781a01d527b",
+    "eval/fixtures/mcp/external-links-search-feliciana.json": "ec37c4f28d6904c02282c28e8115340fed07472deddb6540558e41ae70a48a49",
+    "eval/fixtures/mcp/external-links-search-kentucky.json": "225390e938378b0e3fc845ec8a21dd54d87eef77d911aaca34d9a7aae5f06587",
+    "eval/fixtures/mcp/external-links-search-pa-census.json": "891175d2a8d120f0bd6df61c637af59e0065ebcf3b678b45d67d5a55f2606cb1",
+    "eval/fixtures/mcp/external-links-search-rowan-county.json": "d2c1d28636fd7f5c4c0aa50392781dfa6978778b952e395f403226081c32927d",
+    "eval/fixtures/mcp/external-links-search-schuylkill.json": "704f84809f51978e597dfef74edb97d5999f91a8218c4ab87cadfa9d0351ec38",
+    "eval/fixtures/mcp/external-links-search-spain.json": "a4ab70a453086e6a621af33448d6bcd9c3bf932021e9bdc573fa6c8a6e824a42",
+    "eval/fixtures/mcp/external-links-search-sweden.json": "400bef560cb090ce77742c370fa64e889fc7dd0313ccabc7ceeb3dce7acd3676",
+    "eval/fixtures/mcp/external-links-search-texas.json": "661978dd2da8090c20f1a35a05e0aa9c68968e366195396cb7518f69c19675e4",
+    "eval/fixtures/mcp/place-population-muhlenberg.json": "71afb191029c40c2ec391f424bc2a4e7061809c406a2549d35c02b45ac0965d8",
+    "eval/fixtures/mcp/place-population-schuylkill.json": "a4d6fde3f2a42491a208a9bda613aade04ac4ed8e318883722ba7558515d259f",
+    "eval/fixtures/mcp/place-search-all-any.json": "3d4f87d7a816d939d1757c4823f35079f13b3061a873c8fe06b7d9f55349ef6c",
+    "eval/fixtures/mcp/place-search-all-baiersbronn.json": "eff75ad164f11cf7a2d2feed9664ed9c7eeb0b4ede5709ce50a6a4615c5a24be",
+    "eval/fixtures/mcp/place-search-all-feliciana.json": "97f4b89bd4186c90697dbe5ea40e6d84a157aedaf5756f57129cd5f104c2c601",
+    "eval/fixtures/mcp/place-search-all-muhlenberg.json": "a75cc25305eda309e7aebce2db886c6c63f08dedb03d0f90e932f264e2fc253f",
+    "eval/fixtures/mcp/place-search-all-schuylkill.json": "b58168f8f2a4ef3ea018c19af809b562450002b21cfbfbf7c05e85b2907f2ac5",
+    "eval/fixtures/mcp/place-search-all-stagstrup.json": "584e3fc45b398fcd2d08b4844ba72e0cb2e448ca69ae758acbea751441ae58c7",
+    "eval/fixtures/mcp/place-search-baiersbronn.json": "06d5a43f751cc83f0ee4df9439f5ad18c88bbd8f74297ed39295a26e9f68edb2",
+    "eval/fixtures/mcp/place-search-barseback.json": "08efe57f38edc6484be138ee7502dae39b54fc34f154414d3f45dcf7f00aa747",
+    "eval/fixtures/mcp/place-search-blount-alabama.json": "ff448b2920a5f1c9f4327e1961ddfe374f0c4beece6e549d7e4f14a7e3eb3e4e",
+    "eval/fixtures/mcp/place-search-east-feliciana.json": "87b78bbceeba8625249564483cfb864ed0aa9b75cb0f269a8067a7d8a4701b26",
+    "eval/fixtures/mcp/place-search-eddy-new-mexico.json": "a743017bbd34b08a285cba0ad4d5a954a06b2a7bb24d45dd203281c8a2b1ed35",
+    "eval/fixtures/mcp/place-search-feliciana-parish.json": "73d2bc8e1d75be487a7e3a007d84ab3565fd4fba98e06e5ad661ea43ecf3d4e7",
+    "eval/fixtures/mcp/place-search-georgia.json": "8cbaf9026cf93cf4625d60c8d8328470bf6a3603e03f2be2442c79a4c09f8dda",
+    "eval/fixtures/mcp/place-search-hill-county-texas.json": "e757ea786a9533f8e53af559a9c9681ebe603dd64996cf045e7abf779afb7b9b",
+    "eval/fixtures/mcp/place-search-kentucky-catchall.json": "e09ad4402817ed4e6e76b15d98ff92deb4bcb7cfb28ae62695f584d0048f4969",
+    "eval/fixtures/mcp/place-search-malmohus.json": "e0716ccf655fc4ef0a5268e75b46c1556bb415c3e63aca7ad5d81aa6b30ca582",
+    "eval/fixtures/mcp/place-search-muhlenberg.json": "f24602c0eeba3975432119beb160750b200cf16679be7474eb0be6e99adead4c",
+    "eval/fixtures/mcp/place-search-pennsylvania.json": "4a4d6585cc9a9e4c2ff952aa3b55a172e0050689e772a9976022d95cdc0d45f2",
+    "eval/fixtures/mcp/place-search-rowan-county.json": "bef85b30c0d4d5f0664d0f5d9853bbd21efcbd97e0044f8e36c1a14681bba1c9",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/place-search-smith-county-texas.json": "2651c843902a31ea4ab65bd4e138fa5c18bb79a8fc8fe21f11f24c318f86f8cf",
+    "eval/fixtures/mcp/place-search-stagstrup.json": "609da66e2bfd1aa0426fc1709a6150c47c2af587d6aeb92ba6dce4c7d0f6290b",
+    "eval/fixtures/mcp/place-search-thisted-denmark.json": "22f35ab15d1f5d40ae06b6644fca2fa9abcae3b530c4233ac3cb59f9d3e32ed2",
+    "eval/fixtures/mcp/place-search-vastra-karaby.json": "a663800dcc27d10c969b889184f26e4963687c48a0b7a5f77744d4b57a04d97a",
+    "eval/fixtures/mcp/place-search-velez-malaga.json": "1d896496733e811798c2efab395e45b82280cb9d66c85397b30bfcd6286000b0",
+    "eval/fixtures/mcp/place-search-west-feliciana.json": "8ba1433a056d54421e2d496c12ac87b484209d6fdaf6d1e381d23bd7c62b5545",
+    "eval/fixtures/mcp/validate-research-schema.json": "0d794d9b0d5461968cecdc6ca7a9c59c4c14ea588ea1b02fdee9aa0436a0572b",
+    "eval/fixtures/mcp/volume-search-baiersbronn.json": "c1ec2d73ab038faa96a93313034a3e801baff1b01e1b20a69bd495e99cb1d511",
+    "eval/fixtures/mcp/volume-search-barseback.json": "1cf6917223c7fd4da68443986f3f4c52f8a8e57b955a6a50c9c816561379a20f",
+    "eval/fixtures/mcp/volume-search-blount.json": "6b786699c3721d37a6314faab179c1a9d48620ebe80be5565f00cef236403fe1",
+    "eval/fixtures/mcp/volume-search-feliciana.json": "f0af4bd67e8a8eb8c28481b57b7c65f818eb34d568ed8ea3c25b826f9c4d1815",
+    "eval/fixtures/mcp/volume-search-muhlenberg.json": "a64afd8ec0147fa15a2271be40334f7ac31f443433419045e54ba29a5713a043",
+    "eval/fixtures/mcp/volume-search-rowan-county.json": "86612677d39d312baa62ce6d15138beb7a0fc7c8c2d06b6f3abe392e850181e3",
+    "eval/fixtures/mcp/volume-search-schuylkill.json": "eae65a2235d76396ac0a48e87a5e0ef96334a85bf64ff002894a4a1951cc0731",
+    "eval/fixtures/mcp/volume-search-texas-marriage-probate.json": "e73f3764d6a5670542193f93f3dd0fe28d04675cf456e9ff55731379a807e396",
+    "eval/fixtures/mcp/volume-search-thisted.json": "28e2cca7253dbb178537b64628cd885e0b979def9c0e6c84fb864ba83db1d84b",
+    "eval/fixtures/mcp/volume-search-vastra-karaby.json": "29136c57a02bb873ef2bc9632e328655d3fa5da8e788377aacbdc0bf1988b764",
+    "eval/fixtures/mcp/volume-search-velez-malaga.json": "8d0148645b44a1ebf6a273038759554c11b862ff243f27f22d839ebfd376c368",
+    "eval/fixtures/mcp/wiki-place-page-kentucky-online-records.json": "cf7cb74a06c759e0d5105fd201c272171d996e9f0037d72961e3f4ea21a20129",
+    "eval/fixtures/mcp/wiki-place-page-kentucky-research-tips.json": "1ab0fceb13681b2501891b941c525a8df3c565352275cac26141cdbf885e63b7",
+    "eval/fixtures/mcp/wiki-place-page-pennsylvania-online-records.json": "1300c48fda43a90351620aea3a0c835c2fbc7b02e707b899fdf3dc0a2eface63",
+    "eval/fixtures/mcp/wiki-place-page-pennsylvania-research-tips.json": "255e6eec30d52fd5a9fcbe2d5239ed6ef969441bda588c7aa810b51ea37668b9",
+    "eval/fixtures/mcp/wiki-read-denmark-military-records.json": "4f5d8e6705072e61e657119f1639172e8800be2467c3e96d75a513dca7622a14",
+    "eval/fixtures/mcp/wiki-read-denmark-naming-customs.json": "a26bb7d94e9a3d63546937de505d3b5b641a02195981a4849ede4ae52596d96e",
+    "eval/fixtures/mcp/wiki-read-ireland-military-records.json": "37ba10da48dbd1571f27ba9d147734582c75d1d52fb66c77afda40cd11b05916",
+    "eval/fixtures/mcp/wiki-read-spain-naming-customs.json": "0f89806bd385efdeffbbf1971f7bf4688305a23b4a3cf959c798be36c62a49c9",
+    "eval/fixtures/mcp/wiki-read-sweden-naming-customs.json": "63316bec1d84351b90323a9c2b492a63788fc031b8b5937e16b514a9f2a516dd",
+    "eval/fixtures/mcp/wiki-search-church-records.json": "ea45770ca52979afcc5502245fcf3d547fac34ed1b327581c0bee60fce5f4b44",
+    "eval/fixtures/mcp/wiki-search-death-records.json": "08f53e05b407283c98cd5268d3d137c678fd9843db1bbc7cec2b5a5d563e21c2",
+    "eval/fixtures/mcp/wiki-search-kentucky.json": "e1e8e7a5c791332259ded396777fd6f83ce16a1a2cd40abb314b4ce99f439e9f",
+    "eval/fixtures/mcp/wiki-search-marriage-records.json": "0c44aa648be82a051b2208e42411a9262a04c7ca648c6c731adb58b03e1e57e7",
+    "eval/fixtures/mcp/wiki-search-military-records.json": "9842f6404b3333fe036ac4b354675517615a3d5cf34da06df3088aa4d30198f1",
+    "eval/fixtures/mcp/wiki-search-pennsylvania-probate.json": "5b72e14f37eafacb981286ca5fc1edd2c8c522a2c9c56bdb8c1f71c1285b2225",
+    "eval/fixtures/mcp/wiki-search-pennsylvania-records.json": "bad1ad05263c20fc78e0f4415ba032d12a159e54f351aec02ff5c01113f2f591",
+    "eval/fixtures/mcp/wiki-search-probate-records.json": "5bbac561ed501bd38c4e69739dd41e2991429b4d2284314f35cab72b2cc20715",
+    "eval/fixtures/mcp/wiki-search-schuylkill-coal-mining.json": "7d019ab9d5eaeff43565c3e2bd6c6832187b2ec53d18b9585dbfab10b6fdfcc1"
+  },
+  "tests": [
+    {
+      "test_id": "ut_research_plan_003",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "flynn-resolved",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the project is completed, all plan items are finished, and no new planning is warranted. The response accurately reflects the project state: q_001 is resolved with exhaustive_declaration.declared=true, pl_002 is completed with all three items done (including the nil probate result), and the next step is a GPS mentor review, not additional searching. All factual claims are supported by the tool responses."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the user's question about what the next plan item should look like. The response comprehensively covered: (1) confirmation that pl_002 is marked completed, (2) enumeration of all three completed items with their results, (3) explanation that the nil probate result is already absorbed into the exhaustive declaration, (4) clear statement that no new plan item is warranted, and (5) identification of the actual next step (GPS mentor review). Nothing the input state required was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP tool calls used correct arguments. The project_context call required only projectPath (provided correctly). Both research_query calls used correct section parameters ('questions' and 'plans'). All calls matched expected_args semantically. No critical identifiers were wrong, and no calls resulted in fixture_not_found errors. The tool usage was appropriate and accurate."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the project is completed, all plan items are finished, and no new planning is warranted. The response accurately reflects the project state: q_001 is resolved with exhaustive_declaration.declared=true, pl_002 is completed with all three items done (including the nil probate result), and the next step is a GPS mentor review, not additional searching. All factual claims are supported by the tool responses."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude fully addressed the user's question about what the next plan item should look like. The response comprehensively covered: (1) confirmation that pl_002 is marked completed, (2) enumeration of all three completed items with their results, (3) explanation that the nil probate result is already absorbed into the exhaustive declaration, (4) clear statement that no new plan item is warranted, and (5) identification of the actual next step (GPS mentor review). Nothing the input state required was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP tool calls used correct arguments. The project_context call required only projectPath (provided correctly). Both research_query calls used correct section parameters ('questions' and 'plans'). All calls matched expected_args semantically. No critical identifiers were wrong, and no calls resulted in fixture_not_found errors. The tool usage was appropriate and accurate."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 44692.76245799847,
+        "duration_api_ms": 44036.0,
+        "judge_duration_ms": 5408.813290996477,
+        "wall_clock_ms": 50465.699911117554,
+        "num_turns": 7,
+        "input_tokens": 375,
+        "cached_input_tokens": 126587,
+        "cache_creation_input_tokens": 28224,
+        "output_tokens": 2154,
+        "judge_input_tokens": 12619,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 427,
+        "skill_cost_usd": 0.1763731,
+        "judge_cost_usd": 0.014754,
+        "total_cost_usd": 0.1911271
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_plan_003_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 44692.76245799847,
+          "duration_api_ms": 44036.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 375,
+          "cached_input_tokens": 126587,
+          "cache_creation_input_tokens": 28224,
+          "output_tokens": 2154,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 364,
+              "outputTokens": 15,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00043900000000000005,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 11,
+              "outputTokens": 2139,
+              "cacheReadInputTokens": 126587,
+              "cacheCreationInputTokens": 28224,
+              "webSearchRequests": 0,
+              "costUSD": 0.17593409999999998,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 35789,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.1763731,
+          "output": {
+            "text_response": "We're done planning. Here's what the project records show:\n\n---\n\n**Question under review:** `q_001` \u2014 \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\"\n\n**Plan `pl_002` is already marked `completed`.** All three items finished:\n\n| # | Record type | Result |\n|---|-------------|--------|\n| 1 | 1860 census, Schuylkill Co. | \u2705 Completed |\n| 2 | Death certificate, 1908 | \u2705 Completed |\n| 3 | Probate, Schuylkill Co., 1870\u20131890 | \u2705 Completed (nil) |\n\n**The nil probate result is already absorbed into the exhaustive declaration for `q_001`.** The recorded justification reads:\n\n> *\"Probate search for Thomas Flynn returned no will or estate records. \u2026 No contradicting evidence was found.\"*\n\nThree independent original sources already converge on Thomas Flynn as Patrick's father \u2014 the 1850 census (indirect), the 1860 census (indirect), and the 1908 death certificate (direct, secondary informant). The empty probate doesn't contradict any of them; it simply means that particular corroborating record doesn't exist (or didn't survive).\n\n**No new plan item is warranted.** The question is resolved, the research has been declared exhaustive (`q_001.exhaustive_declaration.declared = true`), and the project status is `completed`.\n\nThe one remaining step flagged in `q_001`'s `nextStep` is a **GPS mentor review** (`proof-critique` of `ps_001`) \u2014 that's post-planning work, not more searching. Would you like me to invoke that?",
+            "activated": true,
+            "skills_invoked": [
+              "research-plan"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_003-0-0-krxt5_no"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-10-12.0603a3e1.dirty",
+                  "projectStatus": "completed",
+                  "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+                  "openQuestions": [],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "concluded",
+                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "openConflictIds": [],
+                      "storedStatus": "resolved",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    },
+                    {
+                      "id": "q_002",
+                      "state": "evidence-gathered",
+                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "openConflictIds": [],
+                      "storedStatus": "resolved",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Patrick Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [
+                        "S1",
+                        "S3"
+                      ],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": 1908
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Thomas Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [],
+                      "childIds": [
+                        "I1"
+                      ],
+                      "diedByYear": null
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ark:/61903/1:1:MXYZ"
+                      ],
+                      "assertionCount": 5
+                    },
+                    {
+                      "id": "src_002",
+                      "repository": "Ancestry",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ancestry:8054:patrick-flynn-1850"
+                      ],
+                      "assertionCount": 2
+                    },
+                    {
+                      "id": "src_003",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_004",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S3",
+                      "recordIds": [
+                        "ark:/61903/1:1:MDEF"
+                      ],
+                      "assertionCount": 3
+                    }
+                  ],
+                  "localities": [],
+                  "awaitingUser": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_003-0-0-krxt5_no",
+                  "section": "questions"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "questions",
+                  "count": 2,
+                  "items": [
+                    {
+                      "id": "q_001",
+                      "status": "resolved",
+                      "created": "2026-05-01",
+                      "priority": "high",
+                      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?",
+                      "resolved": "2026-05-04",
+                      "unblocks": [],
+                      "rationale": "This is the primary research objective.",
+                      "depends_on": [],
+                      "selection_basis": "objective_decomposition",
+                      "exhaustive_declaration": {
+                        "declared": true,
+                        "justification": "Three independent original sources confirm Thomas Flynn as Patrick's father: 1850 census co-residence (indirect), 1860 census co-residence (indirect \u2014 relationship inferred from household position), and 1908 death certificate (direct, secondary informant). Probate search for Thomas Flynn returned no will or estate records. The birthplace conflict was resolved by weighing source independence and informant proximity. No contradicting evidence was found.",
+                        "log_entry_ids": [
+                          "log_001",
+                          "log_002",
+                          "log_003",
+                          "log_004",
+                          "log_005",
+                          "log_006"
+                        ],
+                        "stop_criteria": {
+                          "overturn_risk": "Low. Three independent lines converge; negative probate does not contradict. New evidence would have to undermine all three sources simultaneously.",
+                          "evidence_class": "Yes \u2014 original census records with indirect evidence of relationship (1850, 1860) and an original death certificate with direct evidence (secondary informant).",
+                          "goal_alignment": "Yes \u2014 three independent original sources name or imply Thomas Flynn as Patrick's father.",
+                          "repository_breadth": "FamilySearch, Ancestry, and MyHeritage searched for census; FamilySearch for vital records and probate. No additional plausible repositories for Schuylkill County records of this era.",
+                          "conflict_resolution": "Birthplace conflict (c_001) resolved by weighing source independence and informant proximity. No other conflicts identified.",
+                          "original_substitution": "FamilySearch provides original census images, the death certificate, and the probate index. Ancestry index is derivative, used only as a cross-check.",
+                          "independent_verification": "Three independent sources support parentage: 1850 census (indirect), 1860 census (indirect), 1908 death certificate (direct)."
+                        }
+                      },
+                      "resolution_assertion_ids": [
+                        "a_004",
+                        "a_010",
+                        "a_013"
+                      ]
+                    },
+                    {
+                      "id": "q_002",
+                      "status": "resolved",
+                      "created": "2026-05-01",
+                      "priority": "high",
+                      "question": "Where was Patrick Flynn in the 1850 census?",
+                      "resolved": "2026-05-02",
+                      "unblocks": [
+                        "q_001"
+                      ],
+                      "rationale": "The 1850 census is the earliest enumeration where Patrick would appear by name (age ~5). Locating him in a household identifies candidate parents.",
+                      "depends_on": [],
+                      "selection_basis": "objective_decomposition",
+                      "exhaustive_declaration": {
+                        "declared": true,
+                        "justification": "Searched 1850 census for Schuylkill County on FamilySearch (indexed and browse), Ancestry (indexed), and MyHeritage (indexed). All three returned the same household. No other Patrick Flynn of matching age found in the county.",
+                        "log_entry_ids": [
+                          "log_001",
+                          "log_002",
+                          "log_003"
+                        ],
+                        "stop_criteria": {
+                          "overturn_risk": "Low \u2014 all three repositories agree, and no competing Patrick Flynn of matching age exists in the county.",
+                          "evidence_class": "Yes \u2014 FamilySearch provides original census image with indeterminate-quality information.",
+                          "goal_alignment": "Yes \u2014 Patrick Flynn located in a specific 1850 household, answering the question.",
+                          "repository_breadth": "Three major repositories searched (FamilySearch, Ancestry, MyHeritage). No additional known indexes of the 1850 Schuylkill County census exist.",
+                          "conflict_resolution": "No conflicts on the 1850 census placement question.",
+                          "original_substitution": "FamilySearch provides the original census image; Ancestry index is derivative but confirmed consistent.",
+                          "independent_verification": "FamilySearch (original) and Ancestry (derivative) both return the same household. Two access paths, one underlying original."
+                        }
+                      },
+                      "resolution_assertion_ids": [
+                        "a_001",
+                        "a_002",
+                        "a_003"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_003-0-0-krxt5_no",
+                  "section": "plans"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "plans",
+                  "count": 2,
+                  "items": [
+                    {
+                      "id": "pl_001",
+                      "items": [
+                        {
+                          "id": "pli_001",
+                          "status": "completed",
+                          "sequence": 1,
+                          "rationale": "1850 census fully indexed on FamilySearch. Free access, start here.",
+                          "date_range": "1850",
+                          "repository": "FamilySearch",
+                          "record_type": "census",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        },
+                        {
+                          "id": "pli_002",
+                          "status": "completed",
+                          "sequence": 2,
+                          "rationale": "Ancestry has independent indexing; cross-check for transcription errors.",
+                          "date_range": "1850",
+                          "repository": "Ancestry",
+                          "record_type": "census",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        },
+                        {
+                          "id": "pli_003",
+                          "status": "completed",
+                          "sequence": 3,
+                          "rationale": "Third independent index for coverage confirmation.",
+                          "date_range": "1850",
+                          "repository": "MyHeritage",
+                          "record_type": "census",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        }
+                      ],
+                      "status": "completed",
+                      "created": "2026-05-01",
+                      "question_id": "q_002"
+                    },
+                    {
+                      "id": "pl_002",
+                      "items": [
+                        {
+                          "id": "pli_004",
+                          "status": "completed",
+                          "sequence": 1,
+                          "rationale": "Confirm Patrick still in Thomas Flynn household in 1860. Strengthens parent-child identification.",
+                          "date_range": "1860",
+                          "repository": "FamilySearch",
+                          "record_type": "census",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        },
+                        {
+                          "id": "pli_005",
+                          "status": "completed",
+                          "sequence": 2,
+                          "rationale": "Death certificate may name parents directly.",
+                          "date_range": "1908",
+                          "repository": "FamilySearch",
+                          "record_type": "vital_record",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        },
+                        {
+                          "id": "pli_006",
+                          "status": "completed",
+                          "sequence": 3,
+                          "rationale": "Thomas Flynn probate/will may name Patrick as son.",
+                          "date_range": "1870-1890",
+                          "repository": "FamilySearch",
+                          "record_type": "probate",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        }
+                      ],
+                      "status": "completed",
+                      "created": "2026-05-02",
+                      "question_id": "q_001"
+                    }
+                  ],
+                  "truncated": false
+                }
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan",
+                  "args": "Probate search came back empty. What should the next plan item look like \u2014 or are we done planning for this question?"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_unchanged_by_research_plan",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_plan_items_planned_status",
+                "passed": true,
+                "error": "skipped: not a new-plan-items-planned-status scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_plan_writes_when_resolved",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_objective_target_leads_the_plan",
+                "passed": true,
+                "error": "skipped: not an objective-target scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_plans_no_deletions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_pli_006_status_unchanged",
+                "passed": true,
+                "error": "skipped: not a pli-006-status-unchanged scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_pre_register_birth_plans_death_route",
+                "passed": true,
+                "error": "skipped: not a pre-register-birth test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_availability_claim_matches_counts",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_fallback_for_in_same_plan",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_new_plan_for_q_001",
+                "passed": true,
+                "error": "skipped: not a research-plan-new-plan-for-q-001 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_no_new_plan",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_plan_no_out_of_lane_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_plan_rationale_identifiers_traceable",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_resolved_question_not_reopened",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_wiki_prework_fetches_triggered_pages",
+                "passed": true,
+                "error": "skipped: not a wiki-prework test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that the project is completed, all plan items are finished, and no new planning is warranted. The response accurately reflects the project state: q_001 is resolved with exhaustive_declaration.declared=true, pl_002 is completed with all three items done (including the nil probate result), and the next step is a GPS mentor review, not additional searching. All factual claims are supported by the tool responses."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude fully addressed the user's question about what the next plan item should look like. The response comprehensively covered: (1) confirmation that pl_002 is marked completed, (2) enumeration of all three completed items with their results, (3) explanation that the nil probate result is already absorbed into the exhaustive declaration, (4) clear statement that no new plan item is warranted, and (5) identification of the actual next step (GPS mentor review). Nothing the input state required was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three MCP tool calls used correct arguments. The project_context call required only projectPath (provided correctly). Both research_query calls used correct section parameters ('questions' and 'plans'). All calls matched expected_args semantically. No critical identifiers were wrong, and no calls resulted in fixture_not_found errors. The tool usage was appropriate and accurate."
+              }
+            ],
+            "judge_cost_usd": 0.014754,
+            "duration_ms": 5408.813290996477,
+            "error": null,
+            "input_tokens": 12619,
+            "cached_input_tokens": 0,
+            "output_tokens": 427
+          },
+          "started_at": 1791831472.075097,
+          "ended_at": 1791831522.540797
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    },
+    {
+      "test_id": "ut_research_plan_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "place-search-schuylkill-county",
+        "collections-search-schuylkill",
+        "collections-search-pennsylvania",
+        "place-search-pennsylvania",
+        "external-links-search-schuylkill",
+        "collections-search-us-national"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude accurately reported the plan status from the tool responses. The plan items (pli_004, pli_005, pli_006) and their statuses match the research_query response. The probate collection (1999196) exists and is correctly identified as browse-only with 3.2M images. No fabricated claims or unsupported assertions. The per-test context confirms q_001's dual state (concluded/in_progress) is accurate reporting of the tool output, not an error."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed all required elements: confirmed pli_006 (probate) is the correct next step with reasoning (direct evidence of parentage); consulted collections-search to verify Schuylkill County probate records are available (collection 1999196, 1683-1994 date range covers 1870-1890); and stated a concrete forward path post-pli_006 (post-1860 censuses or candidate parents' marriage record). No major omissions from the input state requirements."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP calls passed correct arguments. project_context call required no args (matched.kind: live). research_query call correctly specified section='plans' and questionId='q_001'. collections_search call passed standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1870, endYear=1890, matching the expected predicate ~Schuylkill. No fixture_not_found errors. Arguments are semantically correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Record type selection",
+            "score": 3,
+            "rationale": "The plan targets probate records (pli_006) for the parentage question, which is appropriate: a will or estate file naming Patrick as son provides direct positive evidence of the parent-child relationship. The rationale explicitly states the purpose ('Thomas Flynn probate/will may name Patrick as son'). Probate records are well-suited to answer the parentage question when a direct naming exists."
+          },
+          {
+            "source": "rubric",
+            "name": "Objective scope containment",
+            "score": 3,
+            "rationale": "All plan items target evidence about Patrick Flynn (the question's subject). pli_004 and pli_005 confirm Patrick's presence in the household and gather his death facts. pli_006 targets Thomas Flynn's probate records specifically to establish the parent-child relationship by naming Patrick as a son\u2014the rationale ties this directly to proving Patrick's parentage, not to documenting Thomas for his own sake."
+          },
+          {
+            "source": "rubric",
+            "name": "Sequencing logic",
+            "score": 3,
+            "rationale": "The sequence is logical: census records (1860, pli_004) and death certificate (1908, pli_005) are completed first to establish household presence and death facts; probate (pli_006, 1870-1890) follows as the next step to seek direct naming evidence. The date range 1870-1890 is appropriate for Thomas Flynn's will/estate. Claude identifies the forward path (post-1860 censuses or parents' marriage record) after probate, showing awareness of dependency and continuity. No item waits on evidence only a later item can supply."
+          },
+          {
+            "source": "rubric",
+            "name": "Jurisdiction accuracy",
+            "score": 3,
+            "rationale": "Schuylkill County, Pennsylvania is correctly identified for all plan items (pli_004, pli_005, pli_006). The jurisdiction is historically accurate for the 1860-1908 period; Schuylkill County existed as a county throughout this timeframe. The collections_search result confirms probate records for Schuylkill County are available in the FamilySearch collection 1999196 (1683-1994 date range)."
+          },
+          {
+            "source": "rubric",
+            "name": "Plan mode and lifecycle",
+            "score": 3,
+            "rationale": "Claude correctly invoked review mode: the active plan pl_002 has unfinished items (pli_006 in_progress), and the user request was to 'review the research plan and confirm the next step.' The skill did not create a duplicate plan, did not edit prior completed items, and did not alter the active status. The prior completed plan pl_001 remains in the record. Exactly one active plan (pl_002) is maintained for q_001."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude accurately reported the plan status from the tool responses. The plan items (pli_004, pli_005, pli_006) and their statuses match the research_query response. The probate collection (1999196) exists and is correctly identified as browse-only with 3.2M images. No fabricated claims or unsupported assertions. The per-test context confirms q_001's dual state (concluded/in_progress) is accurate reporting of the tool output, not an error."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed all required elements: confirmed pli_006 (probate) is the correct next step with reasoning (direct evidence of parentage); consulted collections-search to verify Schuylkill County probate records are available (collection 1999196, 1683-1994 date range covers 1870-1890); and stated a concrete forward path post-pli_006 (post-1860 censuses or candidate parents' marriage record). No major omissions from the input state requirements."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All three MCP calls passed correct arguments. project_context call required no args (matched.kind: live). research_query call correctly specified section='plans' and questionId='q_001'. collections_search call passed standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1870, endYear=1890, matching the expected predicate ~Schuylkill. No fixture_not_found errors. Arguments are semantically correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Record type selection",
+            "score": 3,
+            "rationale": "The plan targets probate records (pli_006) for the parentage question, which is appropriate: a will or estate file naming Patrick as son provides direct positive evidence of the parent-child relationship. The rationale explicitly states the purpose ('Thomas Flynn probate/will may name Patrick as son'). Probate records are well-suited to answer the parentage question when a direct naming exists."
+          },
+          {
+            "source": "rubric",
+            "name": "Objective scope containment",
+            "score": 3,
+            "rationale": "All plan items target evidence about Patrick Flynn (the question's subject). pli_004 and pli_005 confirm Patrick's presence in the household and gather his death facts. pli_006 targets Thomas Flynn's probate records specifically to establish the parent-child relationship by naming Patrick as a son\u2014the rationale ties this directly to proving Patrick's parentage, not to documenting Thomas for his own sake."
+          },
+          {
+            "source": "rubric",
+            "name": "Sequencing logic",
+            "score": 3,
+            "rationale": "The sequence is logical: census records (1860, pli_004) and death certificate (1908, pli_005) are completed first to establish household presence and death facts; probate (pli_006, 1870-1890) follows as the next step to seek direct naming evidence. The date range 1870-1890 is appropriate for Thomas Flynn's will/estate. Claude identifies the forward path (post-1860 censuses or parents' marriage record) after probate, showing awareness of dependency and continuity. No item waits on evidence only a later item can supply."
+          },
+          {
+            "source": "rubric",
+            "name": "Jurisdiction accuracy",
+            "score": 3,
+            "rationale": "Schuylkill County, Pennsylvania is correctly identified for all plan items (pli_004, pli_005, pli_006). The jurisdiction is historically accurate for the 1860-1908 period; Schuylkill County existed as a county throughout this timeframe. The collections_search result confirms probate records for Schuylkill County are available in the FamilySearch collection 1999196 (1683-1994 date range)."
+          },
+          {
+            "source": "rubric",
+            "name": "Plan mode and lifecycle",
+            "score": 3,
+            "rationale": "Claude correctly invoked review mode: the active plan pl_002 has unfinished items (pli_006 in_progress), and the user request was to 'review the research plan and confirm the next step.' The skill did not create a duplicate plan, did not edit prior completed items, and did not alter the active status. The prior completed plan pl_001 remains in the record. Exactly one active plan (pl_002) is maintained for q_001."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 48557.92391700379,
+        "duration_api_ms": 48247.0,
+        "judge_duration_ms": 13867.932624998502,
+        "wall_clock_ms": 62692.261934280396,
+        "num_turns": 9,
+        "input_tokens": 368,
+        "cached_input_tokens": 227409,
+        "cache_creation_input_tokens": 28086,
+        "output_tokens": 2277,
+        "judge_input_tokens": 10638,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1182,
+        "skill_cost_usd": 0.20793819999999996,
+        "judge_cost_usd": 0.016548,
+        "total_cost_usd": 0.22448619999999997
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_plan_001_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 48557.92391700379,
+          "duration_api_ms": 48247.0,
+          "num_turns": 9,
+          "skill_attempts": 1,
+          "input_tokens": 368,
+          "cached_input_tokens": 227409,
+          "cache_creation_input_tokens": 28086,
+          "output_tokens": 2277,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 353,
+              "outputTokens": 16,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000433,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 15,
+              "outputTokens": 2261,
+              "cacheReadInputTokens": 227409,
+              "cacheCreationInputTokens": 28086,
+              "webSearchRequests": 0,
+              "costUSD": 0.2075052,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 35651,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.20793819999999996,
+          "output": {
+            "text_response": "Here is the current state of plan **pl_002** for question **q_001 \u2014 \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\"**\n\n---\n\n### Plan Status\n\n| # | Item | Record Type | Date Range | Status |\n|---|------|-------------|------------|--------|\n| 1 | pli_004 | Census (1860, Schuylkill Co.) | 1860 | \u2705 Completed |\n| 2 | pli_005 | Vital Record \u2014 death certificate | 1908 | \u2705 Completed |\n| 3 | **pli_006** | **Probate \u2014 Thomas Flynn will/estate** | **1870\u20131890** | \ud83d\udd04 In Progress |\n\n---\n\n### Next Step \u2014 pli_006\n\n**Search Thomas Flynn's probate/estate records in Schuylkill County, Pennsylvania, 1870\u20131890.**\n\nA will or estate file naming Patrick as a son would be direct evidence of parentage. I confirmed availability with a catalog check:\n\n> **Pennsylvania, Probate Records, 1683\u20131994** (FamilySearch collection 1999196) \u2014 browse-only (personCount 0), but holds 3,200,560 images. There is no name index, so this requires an image browse of Schuylkill County's probate dockets for the 1870\u20131890 window.\n\nBecause the collection is browse-only, `search-records` will need to page through the Schuylkill County volume rather than run a name search.\n\n---\n\nWould you like me to start executing this step with `search-records`?",
+            "activated": true,
+            "skills_invoked": [
+              "research-plan"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_001-0-0-de29f4f_"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-10-12.0603a3e1.dirty",
+                  "projectStatus": "active",
+                  "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "concluded",
+                      "nextStep": "gps-mentor (proof-critique) \u2014 ps_001",
+                      "openConflictIds": [],
+                      "storedStatus": "in_progress",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    },
+                    {
+                      "id": "q_002",
+                      "state": "evidence-gathered",
+                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "openConflictIds": [],
+                      "storedStatus": "resolved",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Patrick Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [
+                        "S1",
+                        "S3"
+                      ],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": 1908
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Thomas Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [],
+                      "childIds": [
+                        "I1",
+                        "I3",
+                        "I4"
+                      ],
+                      "diedByYear": null
+                    },
+                    {
+                      "id": "I3",
+                      "name": "Mary Flynn",
+                      "gender": "Female",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": null
+                    },
+                    {
+                      "id": "I4",
+                      "name": "James Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": null
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ark:/61903/1:1:MXYZ"
+                      ],
+                      "assertionCount": 5
+                    },
+                    {
+                      "id": "src_002",
+                      "repository": "Ancestry",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ancestry:8054:patrick-flynn-1850"
+                      ],
+                      "assertionCount": 2
+                    },
+                    {
+                      "id": "src_003",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_004",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S3",
+                      "recordIds": [
+                        "ark:/61903/1:1:MDEF"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_005",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S5",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_006",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S4",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_007",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S6",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_008",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S7",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    },
+                    {
+                      "id": "src_009",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S8",
+                      "recordIds": [],
+                      "assertionCount": 0
+                    }
+                  ],
+                  "localities": [],
+                  "awaitingUser": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_001-0-0-de29f4f_",
+                  "section": "plans",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "plans",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "pl_002",
+                      "items": [
+                        {
+                          "id": "pli_004",
+                          "status": "completed",
+                          "sequence": 1,
+                          "rationale": "Confirm Patrick still in Thomas Flynn household in 1860. Strengthens parent-child identification.",
+                          "date_range": "1860",
+                          "repository": "FamilySearch",
+                          "record_type": "census",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        },
+                        {
+                          "id": "pli_005",
+                          "status": "completed",
+                          "sequence": 2,
+                          "rationale": "Death certificate may name parents directly.",
+                          "date_range": "1908",
+                          "repository": "FamilySearch",
+                          "record_type": "vital_record",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        },
+                        {
+                          "id": "pli_006",
+                          "status": "in_progress",
+                          "sequence": 3,
+                          "rationale": "Thomas Flynn probate/will may name Patrick as son.",
+                          "date_range": "1870-1890",
+                          "repository": "FamilySearch",
+                          "record_type": "probate",
+                          "fallback_for": null,
+                          "jurisdiction": "Schuylkill County, Pennsylvania"
+                        }
+                      ],
+                      "status": "active",
+                      "created": "2026-05-02",
+                      "question_id": "q_001"
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__collections_search",
+                "args": {
+                  "standardPlace": "Schuylkill, Pennsylvania, United States",
+                  "startYear": 1870,
+                  "endYear": 1890
+                },
+                "expected_args": {
+                  "standardPlace": "~Schuylkill"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "collections-search-schuylkill"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/research.json"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__collections_search",
+                  "max_results": "1"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: pli_004, pli_005, pli_006, q_001"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_unchanged_by_research_plan",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_plan_items_planned_status",
+                "passed": true,
+                "error": "skipped: not a new-plan-items-planned-status scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_plan_writes_when_resolved",
+                "passed": true,
+                "error": "skipped: not a no-plan-writes-when-resolved scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_objective_target_leads_the_plan",
+                "passed": true,
+                "error": "skipped: not an objective-target scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_plans_no_deletions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_pli_006_status_unchanged",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_pre_register_birth_plans_death_route",
+                "passed": true,
+                "error": "skipped: not a pre-register-birth test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_availability_claim_matches_counts",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_fallback_for_in_same_plan",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_new_plan_for_q_001",
+                "passed": true,
+                "error": "skipped: not a research-plan-new-plan-for-q-001 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_no_new_plan",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_plan_no_out_of_lane_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_plan_rationale_identifiers_traceable",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_resolved_question_not_reopened",
+                "passed": true,
+                "error": "skipped: not a no-plan-writes-when-resolved scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wiki_prework_fetches_triggered_pages",
+                "passed": true,
+                "error": "skipped: not a wiki-prework test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude accurately reported the plan status from the tool responses. The plan items (pli_004, pli_005, pli_006) and their statuses match the research_query response. The probate collection (1999196) exists and is correctly identified as browse-only with 3.2M images. No fabricated claims or unsupported assertions. The per-test context confirms q_001's dual state (concluded/in_progress) is accurate reporting of the tool output, not an error."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude addressed all required elements: confirmed pli_006 (probate) is the correct next step with reasoning (direct evidence of parentage); consulted collections-search to verify Schuylkill County probate records are available (collection 1999196, 1683-1994 date range covers 1870-1890); and stated a concrete forward path post-pli_006 (post-1860 censuses or candidate parents' marriage record). No major omissions from the input state requirements."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All three MCP calls passed correct arguments. project_context call required no args (matched.kind: live). research_query call correctly specified section='plans' and questionId='q_001'. collections_search call passed standardPlace='Schuylkill, Pennsylvania, United States' with startYear=1870, endYear=1890, matching the expected predicate ~Schuylkill. No fixture_not_found errors. Arguments are semantically correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Record type selection",
+                "score": 3,
+                "rationale": "The plan targets probate records (pli_006) for the parentage question, which is appropriate: a will or estate file naming Patrick as son provides direct positive evidence of the parent-child relationship. The rationale explicitly states the purpose ('Thomas Flynn probate/will may name Patrick as son'). Probate records are well-suited to answer the parentage question when a direct naming exists."
+              },
+              {
+                "source": "rubric",
+                "name": "Objective scope containment",
+                "score": 3,
+                "rationale": "All plan items target evidence about Patrick Flynn (the question's subject). pli_004 and pli_005 confirm Patrick's presence in the household and gather his death facts. pli_006 targets Thomas Flynn's probate records specifically to establish the parent-child relationship by naming Patrick as a son\u2014the rationale ties this directly to proving Patrick's parentage, not to documenting Thomas for his own sake."
+              },
+              {
+                "source": "rubric",
+                "name": "Sequencing logic",
+                "score": 3,
+                "rationale": "The sequence is logical: census records (1860, pli_004) and death certificate (1908, pli_005) are completed first to establish household presence and death facts; probate (pli_006, 1870-1890) follows as the next step to seek direct naming evidence. The date range 1870-1890 is appropriate for Thomas Flynn's will/estate. Claude identifies the forward path (post-1860 censuses or parents' marriage record) after probate, showing awareness of dependency and continuity. No item waits on evidence only a later item can supply."
+              },
+              {
+                "source": "rubric",
+                "name": "Jurisdiction accuracy",
+                "score": 3,
+                "rationale": "Schuylkill County, Pennsylvania is correctly identified for all plan items (pli_004, pli_005, pli_006). The jurisdiction is historically accurate for the 1860-1908 period; Schuylkill County existed as a county throughout this timeframe. The collections_search result confirms probate records for Schuylkill County are available in the FamilySearch collection 1999196 (1683-1994 date range)."
+              },
+              {
+                "source": "rubric",
+                "name": "Plan mode and lifecycle",
+                "score": 3,
+                "rationale": "Claude correctly invoked review mode: the active plan pl_002 has unfinished items (pli_006 in_progress), and the user request was to 'review the research plan and confirm the next step.' The skill did not create a duplicate plan, did not edit prior completed items, and did not alter the active status. The prior completed plan pl_001 remains in the record. Exactly one active plan (pl_002) is maintained for q_001."
+              }
+            ],
+            "judge_cost_usd": 0.016548,
+            "duration_ms": 13867.932624998502,
+            "error": null,
+            "input_tokens": 10638,
+            "cached_input_tokens": 0,
+            "output_tokens": 1182
+          },
+          "started_at": 1791830889.33727,
+          "ended_at": 1791830952.029532
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_research_plan_013",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [
+        "place-search-schuylkill-county",
+        "collections-search-schuylkill",
+        "collections-search-pennsylvania",
+        "collections-search-us-national"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude accurately narrated the active plan pl_002 and its three items (pli_004, pli_005, pli_006) with correct statuses and details. The death certificate informant (James Brown, son-in-law) is correctly identified as secondary for birth facts. The probate collection details (1999196, browse-only, 3.2M images, personCount 0) match the tool response exactly. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed the user's request to review the parentage research plan. Narrated all three plan items, identified pli_006 as the current in-progress step, explained the rationale for each item, and provided context on the proof summary and next steps. Did not create a new plan, as instructed. All required content was covered."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The single collections_search call passed correct arguments: standardPlace 'Schuylkill, Pennsylvania, United States' matches expected ~Schuylkill; startYear 1870 and endYear 1890 align with the plan item's date window. The call was explanatory (verifying collection availability) and did not create new plan items, as required."
+          },
+          {
+            "source": "rubric",
+            "name": "Record type selection",
+            "score": 3,
+            "rationale": "The plan targets probate records (will) for the parentage question, which is appropriate: a will naming Patrick as a son would provide direct, primary evidence of parentage. The rationale explicitly states this would upgrade the conclusion from 'Probable' toward 'Proved.' The record type choice is well-justified for the information need."
+          },
+          {
+            "source": "rubric",
+            "name": "Objective scope containment",
+            "score": 3,
+            "rationale": "All plan items focus on evidence about Patrick Flynn (the question's subject). pli_004 and pli_005 confirm Patrick's identity and parentage directly. pli_006 targets Thomas Flynn's will, but the rationale clearly states the purpose: a will naming Patrick as a son would prove parentage. The FAN item (Thomas's probate) is tied to what it reveals about Patrick, not pursued for its own sake."
+          },
+          {
+            "source": "rubric",
+            "name": "Sequencing logic",
+            "score": 3,
+            "rationale": "The sequence is logical: census records (1850, 1860) establish household presence and consistency; death certificate provides direct naming of father; probate search follows to seek primary evidence. The plan respects evidence dependency\u2014the death certificate already names Thomas, so the probate search builds on that foundation. The date range (1870\u20131890) appropriately targets when Thomas would have died and his estate settled."
+          },
+          {
+            "source": "rubric",
+            "name": "Jurisdiction accuracy",
+            "score": 3,
+            "rationale": "Schuylkill County, Pennsylvania is correctly identified for the 1870\u20131890 period. The probate collection (1999196) covers Pennsylvania statewide and the date range 1683\u20131994, which encompasses the target window. No historical boundary changes or jurisdiction errors are present."
+          },
+          {
+            "source": "rubric",
+            "name": "Plan mode and lifecycle",
+            "score": 3,
+            "rationale": "Claude correctly chose review mode: the active plan pl_002 has an in-progress item (pli_006), so the request for a plan recap is answered by narrating the existing plan, not creating a new one. No new plan was written to research.json. The audit trail is preserved. Exactly one active plan remains for q_001."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude accurately narrated the active plan pl_002 and its three items (pli_004, pli_005, pli_006) with correct statuses and details. The death certificate informant (James Brown, son-in-law) is correctly identified as secondary for birth facts. The probate collection details (1999196, browse-only, 3.2M images, personCount 0) match the tool response exactly. No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude addressed the user's request to review the parentage research plan. Narrated all three plan items, identified pli_006 as the current in-progress step, explained the rationale for each item, and provided context on the proof summary and next steps. Did not create a new plan, as instructed. All required content was covered."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The single collections_search call passed correct arguments: standardPlace 'Schuylkill, Pennsylvania, United States' matches expected ~Schuylkill; startYear 1870 and endYear 1890 align with the plan item's date window. The call was explanatory (verifying collection availability) and did not create new plan items, as required."
+          },
+          {
+            "source": "rubric",
+            "name": "Record type selection",
+            "score": 3,
+            "rationale": "The plan targets probate records (will) for the parentage question, which is appropriate: a will naming Patrick as a son would provide direct, primary evidence of parentage. The rationale explicitly states this would upgrade the conclusion from 'Probable' toward 'Proved.' The record type choice is well-justified for the information need."
+          },
+          {
+            "source": "rubric",
+            "name": "Objective scope containment",
+            "score": 3,
+            "rationale": "All plan items focus on evidence about Patrick Flynn (the question's subject). pli_004 and pli_005 confirm Patrick's identity and parentage directly. pli_006 targets Thomas Flynn's will, but the rationale clearly states the purpose: a will naming Patrick as a son would prove parentage. The FAN item (Thomas's probate) is tied to what it reveals about Patrick, not pursued for its own sake."
+          },
+          {
+            "source": "rubric",
+            "name": "Sequencing logic",
+            "score": 3,
+            "rationale": "The sequence is logical: census records (1850, 1860) establish household presence and consistency; death certificate provides direct naming of father; probate search follows to seek primary evidence. The plan respects evidence dependency\u2014the death certificate already names Thomas, so the probate search builds on that foundation. The date range (1870\u20131890) appropriately targets when Thomas would have died and his estate settled."
+          },
+          {
+            "source": "rubric",
+            "name": "Jurisdiction accuracy",
+            "score": 3,
+            "rationale": "Schuylkill County, Pennsylvania is correctly identified for the 1870\u20131890 period. The probate collection (1999196) covers Pennsylvania statewide and the date range 1683\u20131994, which encompasses the target window. No historical boundary changes or jurisdiction errors are present."
+          },
+          {
+            "source": "rubric",
+            "name": "Plan mode and lifecycle",
+            "score": 3,
+            "rationale": "Claude correctly chose review mode: the active plan pl_002 has an in-progress item (pli_006), so the request for a plan recap is answered by narrating the existing plan, not creating a new one. No new plan was written to research.json. The audit trail is preserved. Exactly one active plan remains for q_001."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 62202.45066599455,
+        "duration_api_ms": 61880.0,
+        "judge_duration_ms": 12221.558000004734,
+        "wall_clock_ms": 74679.33797836304,
+        "num_turns": 7,
+        "input_tokens": 363,
+        "cached_input_tokens": 181000,
+        "cache_creation_input_tokens": 39254,
+        "output_tokens": 3050,
+        "judge_input_tokens": 8566,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 998,
+        "skill_cost_usd": 0.24749949999999998,
+        "judge_cost_usd": 0.013556,
+        "total_cost_usd": 0.2610555
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_research_plan_013_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 62202.45066599455,
+          "duration_api_ms": 61880.0,
+          "num_turns": 7,
+          "skill_attempts": 1,
+          "input_tokens": 363,
+          "cached_input_tokens": 181000,
+          "cache_creation_input_tokens": 39254,
+          "output_tokens": 3050,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 351,
+              "outputTokens": 14,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00042100000000000004,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 12,
+              "outputTokens": 3036,
+              "cacheReadInputTokens": 181000,
+              "cacheCreationInputTokens": 39254,
+              "webSearchRequests": 0,
+              "costUSD": 0.24707849999999998,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 46819,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.24749949999999998,
+          "output": {
+            "text_response": "I can see the active plan for the parentage question (q_001). It's plan **pl_002**, with 3 items \u2014 2 completed, 1 currently in progress. This is a review \u2014 I won't create or modify anything. Let me do a quick catalog check on the in-progress item to confirm collection availability, since it doesn't name a specific collection.\n\nHere's where the active research plan for the parentage question (q_001) stands:\n\n---\n\n## Plan pl_002 \u2014 \"Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?\"\n**Status: Active** \u00b7 Created 2026-05-02 \u00b7 3 items\n\n---\n\n### \u2705 Step 1 \u2014 1860 Census (FamilySearch) `pli_004` \u00b7 *Completed*\nSearched to confirm Patrick was still in the Thomas Flynn household in 1860. Found Patrick, age 15, in the same household in Schuylkill County \u2014 consistent with the 1850 enumeration and supporting the parent-child hypothesis.\n\n---\n\n### \u2705 Step 2 \u2014 Death Certificate / Vital Record, 1908 (FamilySearch) `pli_005` \u00b7 *Completed*\nPatrick's 1908 death certificate was found and names **Thomas Flynn** as his father. The informant was his son-in-law James Brown \u2014 direct evidence of parentage, though from a secondary informant.\n\n---\n\n### \ud83d\udd04 Step 3 \u2014 Thomas Flynn Probate/Will, 1870\u20131890 (FamilySearch) `pli_006` \u00b7 *In Progress* \u2190 **Next**\nThe rationale: a will naming Patrick as a son would be direct, primary evidence of parentage, upgrading the current \"Probable\" conclusion toward \"Proved.\"\n\nThe catalog confirms **Pennsylvania, Probate Records, 1683\u20131994** (collection 1999196) covers this period and Schuylkill County \u2014 but it is **browse-only (personCount 0)**, with 3.2 million images. This is not a name search; it requires browsing the Schuylkill County probate dockets for Thomas Flynn's estate, likely filed sometime in the 1870\u20131890 window based on when he disappears from records.\n\n---\n\n### After Step 3\nOnce pli_006 is complete, all three plan items will be done. The current proof summary (`ps_001`) rates the conclusion as **Probable** and explicitly flags that the 1870, 1880, and 1900 censuses remain unsearched and the gap between 1860 and 1908 is unresolved. If the probate search comes back negative (or positive but insufficient), a new plan will be needed to pursue that broader window and achieve exhaustiveness.\n\n---\n\n**Would you like to continue executing Step 3 \u2014 the Thomas Flynn probate browse on FamilySearch?**",
+            "activated": true,
+            "skills_invoked": [
+              "research-plan"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__collections_search",
+                "args": {
+                  "standardPlace": "Schuylkill, Pennsylvania, United States",
+                  "startYear": 1870,
+                  "endYear": 1890
+                },
+                "expected_args": {
+                  "standardPlace": "~Schuylkill"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "collections-search-schuylkill"
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research-plan",
+                  "args": "review the research plan for the parentage question"
+                }
+              },
+              {
+                "tool": "Glob",
+                "args": {
+                  "pattern": "**/research.json",
+                  "path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_013-0-0-ll_upcx3"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_research_plan_013-0-0-ll_upcx3/research.json"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__collections_search",
+                  "max_results": "1"
+                }
+              }
+            ],
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_gps_jargon_in_response",
+                "observation": "GPS vocabulary in the reply: proof, proved"
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: pli_004, pli_005, pli_006, ps_001, q_001"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_unchanged_by_research_plan",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_new_plan_items_planned_status",
+                "passed": true,
+                "error": "skipped: not a new-plan-items-planned-status scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_plan_writes_when_resolved",
+                "passed": true,
+                "error": "skipped: not a no-plan-writes-when-resolved scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_objective_target_leads_the_plan",
+                "passed": true,
+                "error": "skipped: not an objective-target scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_plans_no_deletions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_pli_006_status_unchanged",
+                "passed": true,
+                "error": "skipped: not a pli-006-status-unchanged scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_pre_register_birth_plans_death_route",
+                "passed": true,
+                "error": "skipped: not a pre-register-birth test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_availability_claim_matches_counts",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_fallback_for_in_same_plan",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_new_plan_for_q_001",
+                "passed": true,
+                "error": "skipped: not a research-plan-new-plan-for-q-001 scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_no_new_plan",
+                "passed": true,
+                "error": "skipped: not a research-plan-no-new-plan scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_plan_no_out_of_lane_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_plan_rationale_identifiers_traceable",
+                "passed": true,
+                "error": "skipped: run added no new plan",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_resolved_question_not_reopened",
+                "passed": true,
+                "error": "skipped: not a no-plan-writes-when-resolved scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wiki_prework_fetches_triggered_pages",
+                "passed": true,
+                "error": "skipped: not a wiki-prework test",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude accurately narrated the active plan pl_002 and its three items (pli_004, pli_005, pli_006) with correct statuses and details. The death certificate informant (James Brown, son-in-law) is correctly identified as secondary for birth facts. The probate collection details (1999196, browse-only, 3.2M images, personCount 0) match the tool response exactly. No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude addressed the user's request to review the parentage research plan. Narrated all three plan items, identified pli_006 as the current in-progress step, explained the rationale for each item, and provided context on the proof summary and next steps. Did not create a new plan, as instructed. All required content was covered."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The single collections_search call passed correct arguments: standardPlace 'Schuylkill, Pennsylvania, United States' matches expected ~Schuylkill; startYear 1870 and endYear 1890 align with the plan item's date window. The call was explanatory (verifying collection availability) and did not create new plan items, as required."
+              },
+              {
+                "source": "rubric",
+                "name": "Record type selection",
+                "score": 3,
+                "rationale": "The plan targets probate records (will) for the parentage question, which is appropriate: a will naming Patrick as a son would provide direct, primary evidence of parentage. The rationale explicitly states this would upgrade the conclusion from 'Probable' toward 'Proved.' The record type choice is well-justified for the information need."
+              },
+              {
+                "source": "rubric",
+                "name": "Objective scope containment",
+                "score": 3,
+                "rationale": "All plan items focus on evidence about Patrick Flynn (the question's subject). pli_004 and pli_005 confirm Patrick's identity and parentage directly. pli_006 targets Thomas Flynn's will, but the rationale clearly states the purpose: a will naming Patrick as a son would prove parentage. The FAN item (Thomas's probate) is tied to what it reveals about Patrick, not pursued for its own sake."
+              },
+              {
+                "source": "rubric",
+                "name": "Sequencing logic",
+                "score": 3,
+                "rationale": "The sequence is logical: census records (1850, 1860) establish household presence and consistency; death certificate provides direct naming of father; probate search follows to seek primary evidence. The plan respects evidence dependency\u2014the death certificate already names Thomas, so the probate search builds on that foundation. The date range (1870\u20131890) appropriately targets when Thomas would have died and his estate settled."
+              },
+              {
+                "source": "rubric",
+                "name": "Jurisdiction accuracy",
+                "score": 3,
+                "rationale": "Schuylkill County, Pennsylvania is correctly identified for the 1870\u20131890 period. The probate collection (1999196) covers Pennsylvania statewide and the date range 1683\u20131994, which encompasses the target window. No historical boundary changes or jurisdiction errors are present."
+              },
+              {
+                "source": "rubric",
+                "name": "Plan mode and lifecycle",
+                "score": 3,
+                "rationale": "Claude correctly chose review mode: the active plan pl_002 has an in-progress item (pli_006), so the request for a plan recap is answered by narrating the existing plan, not creating a new one. No new plan was written to research.json. The audit trail is preserved. Exactly one active plan remains for q_001."
+              }
+            ],
+            "judge_cost_usd": 0.013556,
+            "duration_ms": 12221.558000004734,
+            "error": null,
+            "input_tokens": 8566,
+            "cached_input_tokens": 0,
+            "output_tokens": 998
+          },
+          "started_at": 1791831843.067851,
+          "ended_at": 1791831917.747189
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 155453.1370409968,
+    "duration_api_ms": 154163.0,
+    "judge_duration_ms": 31498.303915999713,
+    "num_turns": 23,
+    "input_tokens": 1106,
+    "cached_input_tokens": 534996,
+    "cache_creation_input_tokens": 95564,
+    "output_tokens": 7481,
+    "judge_input_tokens": 31823,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 2607,
+    "skill_cost_usd": 0.6318108,
+    "judge_cost_usd": 0.044857999999999995,
+    "total_cost_usd": 0.6766688,
+    "wall_clock_ms": 1028409.9190235138
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

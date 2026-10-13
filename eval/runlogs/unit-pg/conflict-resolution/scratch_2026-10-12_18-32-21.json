@@ -1,0 +1,2435 @@
+{
+  "schema_version": 3,
+  "skill": "conflict-resolution",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_18-32-21",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/skills/conflict-resolution/SKILL.md": "a34e4be065825053675438ea024934c63abf8b5a8b6270570afbad9e4c7010a3",
+    "packages/engine/plugin/skills/conflict-resolution/references/historical-contradictions.md": "3150a30c6b9834177c7447c7fc04fb6fbe6384fcf9abad6e4051a8ef29eb5755",
+    "packages/engine/plugin/skills/conflict-resolution/references/places-guidance.md": "89d780012fde12e10fa4fc2b171450e11dda31f0b61d66ab7e654f77c33284d8",
+    "packages/engine/plugin/skills/conflict-resolution/references/resolution-writing.md": "9fd8374e588a0e8bd005a3a00e2c2fda46299f6da2e6c44cc0c51e0eff3ac2f4",
+    "packages/engine/plugin/skills/conflict-resolution/references/weighing-evidence.md": "1cd9e15d5465b82e6404d4ef36a80c28843c727f87f38913749ebdd6413106fc",
+    "eval/tests/unit/conflict-resolution/birthplace-ireland-vs-pennsylvania.json": "070e5706895c6101abe9227238c1f791ce6553a8ca973fe361056a2ac80207d2",
+    "eval/tests/unit/conflict-resolution/calendar-artifact-date-conflict.json": "61b292aef5ac6f967630e16ba27413f3e2846c17856a07688f3687b3646663b5",
+    "eval/tests/unit/conflict-resolution/defer-insufficient-evidence.json": "7b71fc6b5e818a931b3d69fe6e9526d3d83fa086f71237a5a3e4e15e896a8f75",
+    "eval/tests/unit/conflict-resolution/geographic-identity-conflict.json": "88c4f9bb12dbc6050fda53e2f1d92ecd603a312fb22be518066c7f5c48b7ff1e",
+    "eval/tests/unit/conflict-resolution/historical-context-in-rationale.json": "44b85c6259b9d1a334d38e1ed06e3ba442d9fcf724b439b119d645eb8ba80ea8",
+    "eval/tests/unit/conflict-resolution/identity-conflict-analysis.json": "8e246c02eb09517c7642dc8a1929da366bfa300c8e295e2bbe0dafc358584d18",
+    "eval/tests/unit/conflict-resolution/multi-conflict-prioritization.json": "6e0f3dc7e85b9025c3624e5bf990fa040f52e40efcb9ce448bcefd3afc35d0e3",
+    "eval/tests/unit/conflict-resolution/negative-assertion-classification.json": "158f5a896e3b344eecfc85ee93241b3521e5209f4fda101f7f5576a47469de63",
+    "eval/tests/unit/conflict-resolution/negative-hypothesis-tracking.json": "61b7e37961caf3a9978e48d406ef5504f4a341081c40b4fd52f5a77dfb787974",
+    "eval/tests/unit/conflict-resolution/negative-search-request.json": "ffde60f48a523237c3a0d8c9fb7ebd53a061a49ea48af3282693d7274762a9fc",
+    "eval/tests/unit/conflict-resolution/negative-timeline-request.json": "5ef7f9050c854161464e1a30fd39b92d1986e00c02198d93c4cf02dd35abd4f5",
+    "eval/tests/unit/conflict-resolution/patronymic-identity-conflict-from-wiki.json": "c0d3b2e36408efa18ebcee0c2a1e14cfecb3412997cc069038efa9b73dde0090",
+    "eval/tests/unit/conflict-resolution/rubric.md": "912ecf0a25d73a0dbb8030dd33202eec2830a347e45381561f4d41d9603b1040",
+    "eval/tests/unit/conflict-resolution/three-conflict-prioritization.json": "24cc5acbdcc42787f40cf814772c536ada9d514158e4724807740c3224be85e9",
+    "eval/tests/unit/conflict-resolution/user-disputes-ocr-reading.json": "b0ca8619d2f16087e3fe5c4ffecf355635df93d34374a4065ae9dfc111467276",
+    "eval/fixtures/scenarios/dutch-mother-name-disputed/README.md": "fe3aea02873da18d2d37af52bbf062eeb8f9e45818a0a61e96be91f191a39ea2",
+    "eval/fixtures/scenarios/dutch-mother-name-disputed/research.json": "e0be61bcd8912b2130c56a796dfec5bbfb59f0cc39e13ee3204f445a2b68c6a6",
+    "eval/fixtures/scenarios/dutch-mother-name-disputed/tree.gedcomx.json": "6207499909b4fb5ff00c8b1ddb0caa7f2f32b1d87bf781c65848e8c0f5acf14c",
+    "eval/fixtures/scenarios/english-old-style-date-conflict/research.json": "5b79bc6792ec686e7b748e30b360a07d82982fd46e28e51011626a031faca5b3",
+    "eval/fixtures/scenarios/english-old-style-date-conflict/tree.gedcomx.json": "da5d29689e66d2d7c196b5a16387291042790b80b8b7427668c69c11e1cb2a16",
+    "eval/fixtures/scenarios/flynn-competing-fathers/README.md": "9f6da76c082c4ac56dccfbfa2ee35d3178961a3678197d5c711e239678db0bb0",
+    "eval/fixtures/scenarios/flynn-competing-fathers/research.json": "1bf62d5e610856037d2f17c11938326471694d47f6353f6af24d97f81f489194",
+    "eval/fixtures/scenarios/flynn-competing-fathers/tree.gedcomx.json": "38e1e530f3944c30625a5ed38c22c1d9ba4a866630598eff0714a43117aa5bca",
+    "eval/fixtures/scenarios/flynn-identity-geographic/README.md": "8597edc0eb5f0649357ba6b06960d0523ba7d151c612609c86ccef78a9cd4b88",
+    "eval/fixtures/scenarios/flynn-identity-geographic/research.json": "961a8ebdc473d4246bbbc16edb987f437775a20fecb56a6d63143514879608a7",
+    "eval/fixtures/scenarios/flynn-identity-geographic/tree.gedcomx.json": "c9e9ad33465eed0253222738f02a4882f85ff807e3a38ee02811a851fb801aa3",
+    "eval/fixtures/scenarios/flynn-identity-geographic-thin/README.md": "812dbffbb1bc529c9afcacb3167a1bf25a042f89b2bb6faac19a214ac3dc8196",
+    "eval/fixtures/scenarios/flynn-identity-geographic-thin/research.json": "c9d60561b1010a820670e7a0576759a5ef1e54428c3bf10d9fa73c40df39f901",
+    "eval/fixtures/scenarios/flynn-identity-geographic-thin/tree.gedcomx.json": "378ac4631a4a814a30dcc5e4c98962febf8016a8f9f2b1b3c527c795b09d06cd",
+    "eval/fixtures/scenarios/flynn-multi-conflict/README.md": "9580980fdf960770fb2728177727b94551a264d89fa9c187cae8eef2bcd1f130",
+    "eval/fixtures/scenarios/flynn-multi-conflict/research.json": "42d5b217fcf2735a8d116e790a55858c85c1e3e03537493f6b012d2b0718cd4a",
+    "eval/fixtures/scenarios/flynn-multi-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/README.md": "cc7de5fdc61afed0f6392ac72c201c3e48e362d3295178433f48a90f81a5a5e6",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/research.json": "dcfea73cfca5c8402597c6821dbf7899e501ec1b7d891910d9687e38d4f5052e",
+    "eval/fixtures/scenarios/flynn-with-birthplace-conflict/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/README.md": "be7fb144e9acfd8ddb9afd6648a29e511edb227350fbd890cc2222c36cd302e1",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/research.json": "eac67d58f12f39afc6885729fbc40e98a2f33a5441fc4d6b099ccf8caea1d6c6",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/results/log_001.json": "35a2a96f37417a55e7951693c7accecfba631912a7d11fccabe53bb6c461efdc",
+    "eval/fixtures/scenarios/norwegian-patronymic-conflict-link/tree.gedcomx.json": "b06bb9229f0cb69e8ccff536da95086f305cbdb302e9ab1a2fd31f10385a846e",
+    "eval/fixtures/mcp/place-distance-allegheny-schuylkill.json": "8be011c8968732392af0d055deaf8778d1391d67ef2d9de2229ce52354b96146",
+    "eval/fixtures/mcp/place-distance-schuylkill-allegheny.json": "78b708c830cba21a2993734e4480a9785cbfce0e362b8fc0950cfb029923e259",
+    "eval/fixtures/mcp/place-search-allegheny.json": "4d80171683d8b2e2c94707c4bf3a245536c626a02f8b3619d78d4dea149b64ea",
+    "eval/fixtures/mcp/place-search-ireland.json": "cd31839e4d7aeed75a120a7e9d2a5b4d5bc67d6a60048a6b9d4055df39fe3c5b",
+    "eval/fixtures/mcp/place-search-pennsylvania.json": "4a4d6585cc9a9e4c2ff952aa3b55a172e0050689e772a9976022d95cdc0d45f2",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/wiki-read-ireland-naming-customs.json": "f1e9e2bd527594cdd1074b25d06d3a9ad8b36d55d6a2e417230d74ae3ff942f6",
+    "eval/fixtures/mcp/wiki-read-norway-naming-customs.json": "e6ccc39c16675fd35a3e6fe99a49e07d054cd327a83cf9d32ab8651cb6b7be0e",
+    "eval/fixtures/mcp/wiki-read-united-states-naming-customs.json": "fa574c1f10cb135faa18dba1fcdb00fbb4b2da8025b77d5fbf44f930184390f6"
+  },
+  "tests": [
+    {
+      "test_id": "ut_conflict_resolution_015",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "english-old-style-date-conflict",
+      "mcp_fixtures": [],
+      "outcome": "fail",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "fail"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 1,
+            "rationale": "The skill failed to call convert_calendar before ruling on the dates, which the per-test context explicitly requires. The skill stated the 1752 changeover and 25 March year-start from its own knowledge rather than from the tool, violating the requirement that the jurisdiction adoption table must come from the tool. This is the specific failure the test was designed to catch."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's core question: whether this is a real conflict (it is not) and which year to record (1746/47 or 1747 NS). The skill explained the calendar regime, the ambiguous window, and provided actionable guidance on recording. All required elements were covered."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "[coerced-to-na] the run made zero MCP tool calls, so Tool Arguments is N/A; the judge's 1 was coerced to null. Original judge rationale: The skill made zero MCP tool calls. The per-test context explicitly requires calling convert_calendar with a jurisdiction naming England (or Bolton-le-Moors/Lancashire) BEFORE ruling on the dates. The skill's failure to invoke this tool is a critical violation of the test's requirements."
+          },
+          {
+            "source": "rubric",
+            "name": "Source independence analysis",
+            "score": 2,
+            "rationale": "The skill correctly identified that the printed transcript is a derivative of the same register page, not an independent witness, and stated 'Two readings of one entry corroborate nothing.' However, the analysis lacks specificity about the informant chain. The skill should have explicitly named that both sources derive from the same original parish register entry written by the curate, making them a single informant unit, not two independent sources."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence weighing",
+            "score": 2,
+            "rationale": "The skill applied the preponderance hierarchy by preferring the original register (a_001) over the derivative transcript (a_002), which is correct. However, the weighing is somewhat generic\u2014it states the transcript 'silently converted' without grounding the analysis in specific attributes like temporal distance (the transcript was created in 1912, over 160 years after the original 1746 entry) or the informant chain. The reasoning could be more concrete about why the original outweighs the derivative."
+          },
+          {
+            "source": "rubric",
+            "name": "Resolution completeness",
+            "score": 3,
+            "rationale": "The skill addressed both competing assertions (a_001 and a_002) and explained why they are not actually in conflict\u2014they describe the same event under different calendar conventions. The skill explained that a_001 (1746) is the authoritative assertion and a_002 (1747) is a derivative that silently modernised the year. The resolution rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 53317.7827920008,
+        "duration_api_ms": 53492.0,
+        "judge_duration_ms": 8549.563874999876,
+        "wall_clock_ms": 62151.2188911438,
+        "num_turns": 1,
+        "input_tokens": 420,
+        "cached_input_tokens": 7564,
+        "cache_creation_input_tokens": 13707,
+        "output_tokens": 2735,
+        "judge_input_tokens": 4497,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 762,
+        "skill_cost_usd": 0.09487145000000001,
+        "judge_cost_usd": 0.008307,
+        "total_cost_usd": 0.10317845
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_conflict_resolution_015_2026-10-12_18-32-21_0",
+          "outcome": "fail",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 53317.7827920008,
+          "duration_api_ms": 53492.0,
+          "num_turns": 1,
+          "skill_attempts": 1,
+          "input_tokens": 420,
+          "cached_input_tokens": 7564,
+          "cache_creation_input_tokens": 13707,
+          "output_tokens": 2735,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 417,
+              "outputTokens": 25,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000542,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 3,
+              "outputTokens": 2710,
+              "cacheReadInputTokens": 7564,
+              "cacheCreationInputTokens": 13707,
+              "webSearchRequests": 0,
+              "costUSD": 0.09432945000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 21274,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.09487145000000001,
+          "output": {
+            "text_response": "This is not a real conflict \u2014 it is the same event recorded twice using two different year-start conventions, and once you see that, the \"disagreement\" dissolves entirely.\n\n## What is happening\n\nEngland used the **Old Style (Julian) calendar** until the Calendar (New Style) Act 1750 took effect on **1 January 1752**. Under Old Style reckoning, the legal year began on **25 March** (Lady Day), not 1 January.\n\n14 February falls *between* 1 January and 24 March \u2014 the ambiguous window where the historical year and the civil year diverged:\n\n| Convention | Year start | How 14 Feb is written | Describes |\n|---|---|---|---|\n| Old Style (register) | 25 March | 14 Feb **1746** | Same day |\n| New Style (transcript) | 1 January | 14 Feb **1747** | Same day |\n\nThe Bolton-le-Moors parish register used Old Style \u2014 standard for Anglican registers of that era. The printed transcript silently converted to New Style by advancing the year by one for any date before 25 March. Both sources are describing **the same baptism on the same day**.\n\n## Which year to record\n\nUse the **double-dated form: 14 February 1746/47**. This is the scholarly standard (Evidence Explained \u00a72.36) because it:\n- Faithfully represents what the register says (1746)\n- Signals to every reader that the modern equivalent is 1747\n- Eliminates exactly the confusion you just encountered\n\nIf your software forces a single year, use **1747 NS** (New Style) and add a source note explaining the register reads \"1746 OS.\"\n\n## Handling a_001 and a_002\n\nThere is no evidentiary conflict to resolve between these two assertions \u2014 they carry identical information. What you *do* have is a **derivative source problem**: the printed transcript introduced a conversion without flagging it, which is a known hazard of published register abstracts. Record the register (a_001) as the authoritative assertion at 1746/47, note that a_002 is a derivative that silently modernised the year, and classify a_002's 1747 date as *derived* rather than independently corroborating.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "warnings": [
+              {
+                "kind": "coerced_tool_arguments_to_na",
+                "advisory": "judge scored Tool Arguments 1 on a run that made zero MCP tool calls; coerced to null per the N/A rule in judge/prompt.md",
+                "name": "Tool Arguments",
+                "score": 1,
+                "rationale": "The skill made zero MCP tool calls. The per-test context explicitly requires calling convert_calendar with a jurisdiction naming England (or Bolton-le-Moors/Lancashire) BEFORE ruling on the dates. The skill's failure to invoke this tool is a critical violation of the test's requirements."
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: a_001, a_002"
+              }
+            ]
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_at_most_one_conflict_analysis_modified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_calendar_regime_read_from_tool",
+                "passed": false,
+                "error": "calendar-from-tool test must call convert_calendar with a non-empty jurisdiction before ruling on a date conflict; convert_calendar calls seen: []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_competing_assertions_exist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_creates_no_new_conflict",
+                "passed": true,
+                "error": "skipped: not a no-new-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fact_conflicts_have_competing_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a naming-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_new_conflicts_without_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preferred_assertion_is_in_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_conflicts_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_flynn_birthplace",
+                "passed": true,
+                "error": "skipped: not a resolved-flynn-birthplace scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 1,
+                "rationale": "The skill failed to call convert_calendar before ruling on the dates, which the per-test context explicitly requires. The skill stated the 1752 changeover and 25 March year-start from its own knowledge rather than from the tool, violating the requirement that the jurisdiction adoption table must come from the tool. This is the specific failure the test was designed to catch."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user's core question: whether this is a real conflict (it is not) and which year to record (1746/47 or 1747 NS). The skill explained the calendar regime, the ambiguous window, and provided actionable guidance on recording. All required elements were covered."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "[coerced-to-na] the run made zero MCP tool calls, so Tool Arguments is N/A; the judge's 1 was coerced to null. Original judge rationale: The skill made zero MCP tool calls. The per-test context explicitly requires calling convert_calendar with a jurisdiction naming England (or Bolton-le-Moors/Lancashire) BEFORE ruling on the dates. The skill's failure to invoke this tool is a critical violation of the test's requirements."
+              },
+              {
+                "source": "rubric",
+                "name": "Source independence analysis",
+                "score": 2,
+                "rationale": "The skill correctly identified that the printed transcript is a derivative of the same register page, not an independent witness, and stated 'Two readings of one entry corroborate nothing.' However, the analysis lacks specificity about the informant chain. The skill should have explicitly named that both sources derive from the same original parish register entry written by the curate, making them a single informant unit, not two independent sources."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence weighing",
+                "score": 2,
+                "rationale": "The skill applied the preponderance hierarchy by preferring the original register (a_001) over the derivative transcript (a_002), which is correct. However, the weighing is somewhat generic\u2014it states the transcript 'silently converted' without grounding the analysis in specific attributes like temporal distance (the transcript was created in 1912, over 160 years after the original 1746 entry) or the informant chain. The reasoning could be more concrete about why the original outweighs the derivative."
+              },
+              {
+                "source": "rubric",
+                "name": "Resolution completeness",
+                "score": 3,
+                "rationale": "The skill addressed both competing assertions (a_001 and a_002) and explained why they are not actually in conflict\u2014they describe the same event under different calendar conventions. The skill explained that a_001 (1746) is the authoritative assertion and a_002 (1747) is a derivative that silently modernised the year. The resolution rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details."
+              }
+            ],
+            "judge_cost_usd": 0.008307,
+            "duration_ms": 8549.563874999876,
+            "error": null,
+            "input_tokens": 4497,
+            "cached_input_tokens": 0,
+            "output_tokens": 762
+          },
+          "started_at": 1791831027.479566,
+          "ended_at": 1791831089.630785
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_conflict_resolution_005",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "flynn-identity-geographic",
+      "mcp_fixtures": [
+        "place-search-allegheny",
+        "place-search-schuylkill-county",
+        "place-distance-schuylkill-allegheny",
+        "place-distance-allegheny-schuylkill",
+        "wiki-read-ireland-naming-customs",
+        "wiki-read-united-states-naming-customs"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's analysis is factually accurate. It correctly identified that the 1870 Allegheny County record (a_014) is a single uncorroborated entry versus three independent Schuylkill County records spanning 1850\u20131908. The geographic distance (320 km / 199 miles) was correctly quantified via place_search and place_distance tools. The skill accurately noted that rail travel made this distance feasible by 1870, so geography alone does not exclude identity. The naming customs analysis correctly identified that Irish surnames are hereditary (not patronymic), so Mac/O prefix variations don't apply here. The conclusion that the preponderance favors a distinct same-name individual is well-supported by the evidence presented. No fabricated material or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: it analyzed the geographic conflict c_003 as requested, examined all competing assertions (the single a_014 entry for Allegheny County against the Schuylkill County evidence), quantified the distance via tools, assessed travel feasibility for the era, and persisted a complete resolution with independence_analysis, weighing_analysis, and resolution_rationale. The response identified specific bridging records that would be decisive (1870 Schuylkill census, 1880 Allegheny census, marriage/directory records). No major portions of the requested analysis were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls passed arguments matching expected values. place_search was called for both 'Schuylkill County' and 'Allegheny County' with Pennsylvania context (matching ~Schuylkill and ~Allegheny expectations). place_distance received the standardPlace values returned from place_search ('Schuylkill, Pennsylvania, United States' and 'Allegheny, Pennsylvania, United States'), correctly matching the ~Schuylkill and ~Allegheny predicates. research_append correctly updated c_003 with all required fields. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+          },
+          {
+            "source": "rubric",
+            "name": "Source independence analysis",
+            "score": 3,
+            "rationale": "The independence_analysis correctly names the specific informants and records involved. It identifies the 1850 and 1860 censuses as partially dependent (same household-reporting tradition, same household as source, but independent enumerators and occasions), distinguishes the 1908 death certificate as fully independent (different record type, different creator, named informant James Brown with no census connection), and establishes the 1870 Allegheny record as fully independent from all three. The analysis is specific to the identity conflict's information chain, not generic."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence weighing",
+            "score": 3,
+            "rationale": "The weighing_analysis applies the GPS preponderance hierarchy with specific citation of assertion attributes. It cites documentary anchoring (three independent records spanning 58 years vs. one isolated entry), name frequency (Patrick Flynn was among the most common Irish-American names in Pennsylvania's industrial counties, with both Schuylkill and Allegheny drawing from the same emigrant stream), and geographic plausibility (rail travel made 320 km feasible, but requires documented reason\u2014none appears). It correctly invokes GPS Standard 48 Rationale 1 (uncorroborated single item) and does not contradict the independence finding. The weighing is grounded in specific attributes, not abstract hierarchy statements."
+          },
+          {
+            "source": "rubric",
+            "name": "Resolution completeness",
+            "score": 3,
+            "rationale": "The resolution_rationale addresses the single competing assertion (a_014, the 1870 Allegheny County record) and explains why it is less reliable than the Schuylkill County evidence: one uncorroborated record versus three independent records across 58 years, plus the absence of bridging evidence for a 320 km move. The rationale names specific record types that would be decisive (1870 Schuylkill census, 1880 Allegheny census, marriage/directory records). The conflict is left unresolved because a 'different persons' finding affords no preferred assertion under the schema\u2014this is correctly explained. No identity-dependency issue arises here; the competing assertion's person-link is not covered by an unresolved identity conflict."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's analysis is factually accurate. It correctly identified that the 1870 Allegheny County record (a_014) is a single uncorroborated entry versus three independent Schuylkill County records spanning 1850\u20131908. The geographic distance (320 km / 199 miles) was correctly quantified via place_search and place_distance tools. The skill accurately noted that rail travel made this distance feasible by 1870, so geography alone does not exclude identity. The naming customs analysis correctly identified that Irish surnames are hereditary (not patronymic), so Mac/O prefix variations don't apply here. The conclusion that the preponderance favors a distinct same-name individual is well-supported by the evidence presented. No fabricated material or unsupported claims appear."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed all required elements: it analyzed the geographic conflict c_003 as requested, examined all competing assertions (the single a_014 entry for Allegheny County against the Schuylkill County evidence), quantified the distance via tools, assessed travel feasibility for the era, and persisted a complete resolution with independence_analysis, weighing_analysis, and resolution_rationale. The response identified specific bridging records that would be decisive (1870 Schuylkill census, 1880 Allegheny census, marriage/directory records). No major portions of the requested analysis were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All tool calls passed arguments matching expected values. place_search was called for both 'Schuylkill County' and 'Allegheny County' with Pennsylvania context (matching ~Schuylkill and ~Allegheny expectations). place_distance received the standardPlace values returned from place_search ('Schuylkill, Pennsylvania, United States' and 'Allegheny, Pennsylvania, United States'), correctly matching the ~Schuylkill and ~Allegheny predicates. research_append correctly updated c_003 with all required fields. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+          },
+          {
+            "source": "rubric",
+            "name": "Source independence analysis",
+            "score": 3,
+            "rationale": "The independence_analysis correctly names the specific informants and records involved. It identifies the 1850 and 1860 censuses as partially dependent (same household-reporting tradition, same household as source, but independent enumerators and occasions), distinguishes the 1908 death certificate as fully independent (different record type, different creator, named informant James Brown with no census connection), and establishes the 1870 Allegheny record as fully independent from all three. The analysis is specific to the identity conflict's information chain, not generic."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence weighing",
+            "score": 3,
+            "rationale": "The weighing_analysis applies the GPS preponderance hierarchy with specific citation of assertion attributes. It cites documentary anchoring (three independent records spanning 58 years vs. one isolated entry), name frequency (Patrick Flynn was among the most common Irish-American names in Pennsylvania's industrial counties, with both Schuylkill and Allegheny drawing from the same emigrant stream), and geographic plausibility (rail travel made 320 km feasible, but requires documented reason\u2014none appears). It correctly invokes GPS Standard 48 Rationale 1 (uncorroborated single item) and does not contradict the independence finding. The weighing is grounded in specific attributes, not abstract hierarchy statements."
+          },
+          {
+            "source": "rubric",
+            "name": "Resolution completeness",
+            "score": 3,
+            "rationale": "The resolution_rationale addresses the single competing assertion (a_014, the 1870 Allegheny County record) and explains why it is less reliable than the Schuylkill County evidence: one uncorroborated record versus three independent records across 58 years, plus the absence of bridging evidence for a 320 km move. The rationale names specific record types that would be decisive (1870 Schuylkill census, 1880 Allegheny census, marriage/directory records). The conflict is left unresolved because a 'different persons' finding affords no preferred assertion under the schema\u2014this is correctly explained. No identity-dependency issue arises here; the competing assertion's person-link is not covered by an unresolved identity conflict."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 238502.44887500594,
+        "duration_api_ms": 236915.0,
+        "judge_duration_ms": 14477.774792001583,
+        "wall_clock_ms": 253833.09698104858,
+        "num_turns": 20,
+        "input_tokens": 403,
+        "cached_input_tokens": 516816,
+        "cache_creation_input_tokens": 54911,
+        "output_tokens": 12136,
+        "judge_input_tokens": 16230,
+        "judge_cached_input_tokens": 4338,
+        "judge_output_tokens": 1163,
+        "skill_cost_usd": 0.5432580499999999,
+        "judge_cost_usd": 0.022478800000000004,
+        "total_cost_usd": 0.56573685
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_conflict_resolution_005_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 238502.44887500594,
+          "duration_api_ms": 236915.0,
+          "num_turns": 20,
+          "skill_attempts": 1,
+          "input_tokens": 403,
+          "cached_input_tokens": 516816,
+          "cache_creation_input_tokens": 54911,
+          "output_tokens": 12136,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 376,
+              "outputTokens": 20,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.00047599999999999997,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 27,
+              "outputTokens": 12116,
+              "cacheReadInputTokens": 516816,
+              "cacheCreationInputTokens": 54911,
+              "webSearchRequests": 0,
+              "costUSD": 0.54278205,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 54912,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.5432580499999999,
+          "output": {
+            "text_response": "Now let me pull assertion a_014 and all other relevant assertions for I1 (Patrick Flynn).\n\nLet me also fetch the person_evidence for I1 and the remaining assertions (a_001, a_002).\n\nNow let me fetch a_001/a_002 and the reference files in parallel.\n\nNow let me resolve the naming customs check and get precise geographic data in parallel.\n\nConfirmed: **320 km / 199 miles** between the two counties. Ireland uses hereditary (not patronymic) surnames \u2014 no patronymic-mismatch signal applies here.\n\nNow I have everything needed to write the full analysis. Let me load the `research_append` tool and persist the resolution.\n\nNow I'll persist the full analysis to c_003 in a single atomic write.\n\n**c_003 \u2014 status: `unresolved`** (analysis persisted)\n\nThe conflict pits a single 1870 Allegheny County census entry (a_014, src_005) against three independent records placing the subject in Schuylkill County across a 58-year span (1850 census, 1860 census, 1908 death certificate). The measured distance \u2014 **320 km / 199 miles** \u2014 is traversable by 1870 rail, so geography doesn't exclude identity outright, but it demands a bridge record that doesn't exist. \"Patrick Flynn\" was one of the most common Irish-American names in Pennsylvania's industrial counties, and both Schuylkill's anthracite region and Allegheny's Pittsburgh corridor drew from the same emigrant stream \u2014 a distinct same-name individual in Allegheny County is highly probable. The preponderance points to **different persons**, but because a \"different persons\" finding leaves no assertion to prefer, the schema correctly holds the status at `unresolved` rather than forcing a false resolution.\n\n**Ireland naming customs note:** Irish surnames are hereditary (not patronymic) \u2014 the Mac/O prefixes vary across records for the same family, but both records here use \"Flynn\" consistently. No patronymic-mismatch signal applies.\n\n---\n\n**To close this conflict, the decisive records are:**\n1. **An 1870 Schuylkill County census entry for the subject** \u2014 would positively place him there and definitively exclude the Allegheny record\n2. **An 1880 census for the Allegheny County Patrick Flynn** \u2014 continued Pittsburgh-area residence would confirm him as a separate person\n3. **A marriage record or city directory entry** for either man, ca. 1865\u20131880\n\n**Suggested next step:** Would you like me to create a research question targeting the 1870 Schuylkill County census and 1880 Allegheny County census to gather the decisive evidence? That would be a `question-selection` task. Alternatively, since c_001 and c_002 also block q_001, I can move to one of those next.",
+            "activated": true,
+            "skills_invoked": [
+              "conflict-resolution"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-10-12.0603a3e1.dirty",
+                  "projectStatus": "active",
+                  "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "concluded",
+                      "nextStep": "conflict-resolution \u2014 unresolved c_001, c_002, c_003",
+                      "openConflictIds": [
+                        "c_001",
+                        "c_002",
+                        "c_003"
+                      ],
+                      "storedStatus": "in_progress",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    },
+                    {
+                      "id": "q_002",
+                      "state": "evidence-gathered",
+                      "nextStep": "conflict-resolution \u2014 unresolved c_001, c_002",
+                      "openConflictIds": [
+                        "c_001",
+                        "c_002"
+                      ],
+                      "storedStatus": "resolved",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Patrick Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [
+                        "S1",
+                        "S3"
+                      ],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": 1908
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Thomas Flynn",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [],
+                      "childIds": [
+                        "I1"
+                      ],
+                      "diedByYear": null
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ark:/61903/1:1:MXYZ"
+                      ],
+                      "assertionCount": 5
+                    },
+                    {
+                      "id": "src_002",
+                      "repository": "Ancestry",
+                      "gedcomxSourceDescriptionId": "S1",
+                      "recordIds": [
+                        "ancestry:8054:patrick-flynn-1850"
+                      ],
+                      "assertionCount": 2
+                    },
+                    {
+                      "id": "src_003",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_004",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S3",
+                      "recordIds": [
+                        "ark:/61903/1:1:MDEF"
+                      ],
+                      "assertionCount": 3
+                    },
+                    {
+                      "id": "src_005",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S5",
+                      "recordIds": [
+                        "ark:/61903/1:1:MABC"
+                      ],
+                      "assertionCount": 1
+                    }
+                  ],
+                  "localities": [],
+                  "awaitingUser": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx",
+                  "section": "conflicts",
+                  "status": "unresolved"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "conflicts",
+                  "count": 3,
+                  "items": [
+                    {
+                      "id": "c_001",
+                      "status": "unresolved",
+                      "description": "Patrick Flynn's birthplace: Ireland (1850 and 1860 censuses) vs. Pennsylvania (1908 death certificate)",
+                      "conflict_type": "fact",
+                      "identity_question": null,
+                      "weighing_analysis": null,
+                      "disputed_attribute": "birthplace",
+                      "blocks_question_ids": [
+                        "q_001"
+                      ],
+                      "resolution_rationale": null,
+                      "independence_analysis": null,
+                      "preferred_assertion_id": null,
+                      "competing_assertion_ids": [
+                        "a_002",
+                        "a_009",
+                        "a_012"
+                      ]
+                    },
+                    {
+                      "id": "c_002",
+                      "status": "unresolved",
+                      "description": "Is the Patrick Flynn in Thomas Flynn's 1850 household the same person as the Patrick Flynn on the 1908 death certificate? Two Patrick Flynns of similar age are recorded in Schuylkill County in 1850 \u2014 household 84 (age 5) and household 197 (age 6) \u2014 and the death certificate does not name a household or earlier residence to disambiguate.",
+                      "conflict_type": "identity",
+                      "identity_question": "Is the Patrick Flynn enumerated in the Thomas Flynn 1850 household the same person as the Patrick Flynn whose 1908 death certificate is src_004?",
+                      "weighing_analysis": null,
+                      "disputed_attribute": null,
+                      "blocks_question_ids": [
+                        "q_001"
+                      ],
+                      "resolution_rationale": null,
+                      "independence_analysis": null,
+                      "preferred_assertion_id": null,
+                      "competing_assertion_ids": [
+                        "a_001"
+                      ]
+                    },
+                    {
+                      "id": "c_003",
+                      "status": "unresolved",
+                      "description": "An 1870 U.S. Census record (src_005, a_014) places a Patrick Flynn in Allegheny County, ~320 km west of the subject's documented Schuylkill County residences (1850, 1860). Is this the same Patrick Flynn (who would have moved west) or a same-named individual?",
+                      "conflict_type": "identity",
+                      "identity_question": "Is the Patrick Flynn in the 1870 Allegheny County census (a_014) the same person as the subject Patrick Flynn (I1) documented in Schuylkill County?",
+                      "weighing_analysis": null,
+                      "disputed_attribute": null,
+                      "blocks_question_ids": [
+                        "q_001"
+                      ],
+                      "resolution_rationale": null,
+                      "independence_analysis": null,
+                      "preferred_assertion_id": null,
+                      "competing_assertion_ids": [
+                        "a_014"
+                      ]
+                    }
+                  ],
+                  "truncated": false,
+                  "unregisteredDisagreements": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx",
+                  "section": "assertions",
+                  "assertionId": "a_014"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "a_014",
+                      "date": "1870",
+                      "place": "Allegheny County, Pennsylvania",
+                      "value": "Allegheny County, Pennsylvania",
+                      "fact_type": "residence",
+                      "informant": "Census enumerator (witness to residence by visiting the dwelling)",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "source_id": "src_005",
+                      "record_role": "head",
+                      "log_entry_id": "log_006",
+                      "record_basis": "stated",
+                      "date_certainty": "exact",
+                      "informant_proximity": "witness",
+                      "information_quality": "primary",
+                      "informant_bias_notes": "Enumerator is a direct witness to residence. This records a Patrick Flynn in Allegheny County; whether he is the Schuylkill County subject is the open identity question (c_003).",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx",
+                  "section": "assertions",
+                  "questionId": "q_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 8,
+                  "items": [
+                    {
+                      "id": "a_004",
+                      "date": "1850",
+                      "place": "Schuylkill County, Pennsylvania",
+                      "value": "Listed in household of Thomas Flynn (head), position consistent with child",
+                      "fact_type": "relationship",
+                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "record_id": "ark:/61903/1:1:MXYZ",
+                      "source_id": "src_001",
+                      "record_role": "child_1",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": "exact",
+                      "structured_value": {
+                        "relationship_type": "child_inferred",
+                        "related_person_role": "head_of_household"
+                      },
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_005",
+                      "date": null,
+                      "place": null,
+                      "value": "Thomas Flynn",
+                      "fact_type": "name",
+                      "informant": "Unknown household member (likely Thomas Flynn himself) reporting to census enumerator",
+                      "record_id": "ark:/61903/1:1:MXYZ",
+                      "source_id": "src_001",
+                      "record_role": "head_of_household",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. As head of household, Thomas likely provided his own name, but the 1850 census does not identify the informant.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_008",
+                      "date": null,
+                      "place": null,
+                      "value": "Patrick Flynn",
+                      "fact_type": "name",
+                      "informant": "Unknown household member reporting to census enumerator",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "source_id": "src_003",
+                      "record_role": "child_2",
+                      "log_entry_id": "log_004",
+                      "record_basis": "stated",
+                      "date_certainty": null,
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_009",
+                      "date": "~1845",
+                      "place": "Ireland",
+                      "value": "age 15",
+                      "fact_type": "birth",
+                      "informant": "Unknown household member (likely Thomas Flynn or wife)",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "source_id": "src_003",
+                      "record_role": "child_2",
+                      "log_entry_id": "log_004",
+                      "record_basis": "inferred",
+                      "date_certainty": "estimated",
+                      "informant_proximity": "household_member",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "Age and birthplace require active reporting by a household member (same reasoning as a_002).",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_010",
+                      "date": "1860",
+                      "place": "Schuylkill County, Pennsylvania",
+                      "value": "Listed in household of Thomas Flynn (head), position and age consistent with son",
+                      "fact_type": "relationship",
+                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "source_id": "src_003",
+                      "record_role": "child_2",
+                      "log_entry_id": "log_004",
+                      "record_basis": "inferred",
+                      "date_certainty": "exact",
+                      "structured_value": {
+                        "relationship_type": "child_inferred",
+                        "related_person_role": "head_of_household"
+                      },
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_012",
+                      "date": "1845",
+                      "place": "Pennsylvania",
+                      "value": "Born 1845, Pennsylvania",
+                      "fact_type": "birth",
+                      "informant": "James Brown (son-in-law)",
+                      "record_id": "ark:/61903/1:1:MDEF",
+                      "source_id": "src_004",
+                      "record_role": "deceased",
+                      "log_entry_id": "log_005",
+                      "record_basis": "stated",
+                      "date_certainty": "approximate",
+                      "structured_value": {
+                        "year": 1845,
+                        "place": "Pennsylvania"
+                      },
+                      "informant_proximity": "family_not_present",
+                      "information_quality": "secondary",
+                      "informant_bias_notes": "Son-in-law reporting birth facts decades after the event. Note: death cert says Pennsylvania, but census records say Ireland. Son-in-law may not have known Patrick was born in Ireland.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_013",
+                      "date": null,
+                      "place": null,
+                      "value": "Father: Thomas Flynn",
+                      "fact_type": "relationship",
+                      "informant": "James Brown (son-in-law)",
+                      "record_id": "ark:/61903/1:1:MDEF",
+                      "source_id": "src_004",
+                      "record_role": "deceased",
+                      "log_entry_id": "log_005",
+                      "record_basis": "stated",
+                      "date_certainty": null,
+                      "structured_value": {
+                        "relationship_type": "father",
+                        "related_person_role": "deceased"
+                      },
+                      "informant_proximity": "family_not_present",
+                      "information_quality": "secondary",
+                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    },
+                    {
+                      "id": "a_014",
+                      "date": "1870",
+                      "place": "Allegheny County, Pennsylvania",
+                      "value": "Allegheny County, Pennsylvania",
+                      "fact_type": "residence",
+                      "informant": "Census enumerator (witness to residence by visiting the dwelling)",
+                      "record_id": "ark:/61903/1:1:MABC",
+                      "source_id": "src_005",
+                      "record_role": "head",
+                      "log_entry_id": "log_006",
+                      "record_basis": "stated",
+                      "date_certainty": "exact",
+                      "informant_proximity": "witness",
+                      "information_quality": "primary",
+                      "informant_bias_notes": "Enumerator is a direct witness to residence. This records a Patrick Flynn in Allegheny County; whether he is the Schuylkill County subject is the open identity question (c_003).",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx",
+                  "section": "person_evidence",
+                  "personId": "I1"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "person_evidence",
+                  "count": 5,
+                  "items": [
+                    {
+                      "id": "pe_001",
+                      "created": "2026-05-01",
+                      "person_id": "I1",
+                      "rationale": "Name matches (Patrick Flynn), age consistent with ~1845 birth, located in Schuylkill County where subject is known to have lived. Only Patrick Flynn of this age in the county in 1850.",
+                      "confidence": "confident",
+                      "match_score": null,
+                      "assertion_id": "a_001",
+                      "superseded_by": null
+                    },
+                    {
+                      "id": "pe_002",
+                      "created": "2026-05-01",
+                      "person_id": "I1",
+                      "rationale": "Same record as pe_001, same person. Household position and shared surname with head Thomas Flynn suggest parent-child relationship, but 1850 census does not state relationships explicitly.",
+                      "confidence": "probable",
+                      "match_score": null,
+                      "assertion_id": "a_004",
+                      "superseded_by": null
+                    },
+                    {
+                      "id": "pe_004",
+                      "created": "2026-05-02",
+                      "person_id": "I1",
+                      "rationale": "Patrick Flynn age 15 in Thomas Flynn household, 1860 census. Same county, age consistent with 1850 enumeration. Relationship inferred from household position and shared surname (1860 census does not state relationships explicitly).",
+                      "confidence": "confident",
+                      "match_score": null,
+                      "assertion_id": "a_010",
+                      "superseded_by": null
+                    },
+                    {
+                      "id": "pe_005",
+                      "created": "2026-05-03",
+                      "person_id": "I1",
+                      "rationale": "Death certificate for Patrick Flynn, d. 1908, Schuylkill County. Names match, death location matches known residence. Names Thomas Flynn as father.",
+                      "confidence": "confident",
+                      "match_score": null,
+                      "assertion_id": "a_013",
+                      "superseded_by": null
+                    },
+                    {
+                      "id": "pe_007",
+                      "created": "2026-05-04",
+                      "person_id": "I1",
+                      "rationale": "A Patrick Flynn appears in Allegheny County in 1870 \u2014 name matches, age roughly consistent \u2014 but the residence is ~320 km west of the subject's known Schuylkill County home, with no record bridging a move. Linked speculatively pending geographic-feasibility analysis (c_003).",
+                      "confidence": "speculative",
+                      "match_score": null,
+                      "assertion_id": "a_014",
+                      "superseded_by": null
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx",
+                  "section": "assertions",
+                  "assertionId": "a_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "a_001",
+                      "date": null,
+                      "place": null,
+                      "value": "Patrick Flynn",
+                      "fact_type": "name",
+                      "informant": "Unknown household member reporting to census enumerator",
+                      "record_id": "ark:/61903/1:1:MXYZ",
+                      "source_id": "src_001",
+                      "record_role": "child_1",
+                      "log_entry_id": "log_001",
+                      "record_basis": "stated",
+                      "date_certainty": null,
+                      "structured_value": {
+                        "given": "Patrick",
+                        "surname": "Flynn"
+                      },
+                      "informant_proximity": "unknown",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The household member who provided the name is unknown. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have read a sign, heard a neighbor, or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "extracted_for_question_ids": [
+                        "q_002"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__wiki_read",
+                "args": {
+                  "url": "https://www.familysearch.org/en/wiki/Ireland_Naming_Customs"
+                },
+                "expected_args": {
+                  "url": "~Ireland_Naming_Customs"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wiki-read-ireland-naming-customs"
+              },
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Schuylkill County",
+                  "contextName": "Pennsylvania"
+                },
+                "expected_args": {
+                  "placeName": "~Schuylkill"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 1
+                },
+                "response_fixture": "place-search-schuylkill-county"
+              },
+              {
+                "tool": "mcp__genealogy__place_search",
+                "args": {
+                  "placeName": "Allegheny County",
+                  "contextName": "Pennsylvania"
+                },
+                "expected_args": {
+                  "placeName": "~Allegheny"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-search-allegheny"
+              },
+              {
+                "tool": "mcp__genealogy__place_distance",
+                "args": {
+                  "standardPlace1": "Schuylkill, Pennsylvania, United States",
+                  "standardPlace2": "Allegheny, Pennsylvania, United States"
+                },
+                "expected_args": {
+                  "standardPlace1": "~Schuylkill",
+                  "standardPlace2": "~Allegheny"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "place-distance-schuylkill-allegheny"
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx",
+                  "section": "conflicts",
+                  "op": "update",
+                  "entryId": "c_003",
+                  "fields": {
+                    "independence_analysis": "The subject's Schuylkill County presence rests on three records created by different parties at different times: the 1850 census (src_001, enumerator reporting household contents), the 1860 census (src_003, a different enumerator a decade later), and the 1908 death certificate (src_004, informant James Brown, son-in-law). The 1850 and 1860 censuses share a common household-reporting tradition and the same household as their source of information \u2014 partially dependent for facts that informant held consistently \u2014 but they were created by independent enumerators on independent occasions and count as separate record-creation events. The 1908 death certificate stands entirely apart: different record type, different creator, and a named informant (son-in-law James Brown) with no connection to any census enumerator. The 1870 Allegheny County census (src_005, a_014) is fully independent from all three: different year, different county, different enumerator, and no informational connection to the Schuylkill records.",
+                    "weighing_analysis": "Three factors are decisive. First, documentary anchoring: three independent records spanning 1850 to 1908 \u2014 a 58-year frame \u2014 place the subject in Schuylkill County. The Allegheny County record is a single isolated entry with no bridging record in either direction. For it to be the subject, he would have relocated 320 km (199 miles) west by 1870 and then returned 320 km east to Schuylkill County by 1908, with no record of either move surviving. Second, name frequency: 'Patrick Flynn' was among the most common Irish-American names in Pennsylvania's industrial counties. Schuylkill County's anthracite coalfields and Allegheny County's Pittsburgh-area iron and steel industries each independently attracted large Irish immigrant populations during precisely this era, making a distinct same-name individual in Allegheny County highly probable. Third, geographic plausibility: by 1870, rail travel made 320 km feasible in a day, so distance alone does not exclude identity \u2014 but it requires a documented reason, and none appears. The applicable defensible rationale is GPS Standard 48 Rationale 1 (uncorroborated single item): one source supports the Allegheny identification while three independent sources support continuous Schuylkill residence.",
+                    "resolution_rationale": "The question is whether the Patrick Flynn in the 1870 Allegheny County census (a_014) is the same man as subject I1, documented in Schuylkill County. The answer determines which records belong to this research target and whether the subject's life between 1860 and 1908 included a long-distance relocation.\n\nThe 1870 Allegheny County census (src_005) records a Patrick Flynn as head of household. The enumerator visited the dwelling directly, making this a reliable record of where that man lived. His name and age (consistent with ca. 1845 birth) match the subject. On the other side, three independent records anchor the subject to Schuylkill County: (a) the 1850 census placing Patrick Flynn, age ~5, in Thomas Flynn's Schuylkill County household (src_001); (b) the 1860 census placing him at age ~15 in the same household (src_003); and (c) the 1908 death certificate, with son-in-law James Brown reporting the subject's death in Schuylkill County (src_004).\n\nThe preponderance favors the Allegheny County record belonging to a distinct individual. Three independent records from different enumerators and informants anchor the subject to Schuylkill County across 58 years. The Allegheny entry is a single uncorroborated record. If it were the subject, he would have moved 320 km west \u2014 with no surviving bridge record \u2014 and returned 320 km east by 1908, again undocumented. Moreover, 'Patrick Flynn' ranked among the most common Irish-American names in Pennsylvania's industrial counties; both the Schuylkill anthracite region and Allegheny County's Pittsburgh corridor drew heavily from the same Irish emigrant stream, producing large communities where this name appeared abundantly.\n\nThe most defensible explanation is a same-name disambiguation problem well-documented in Pennsylvania industrial-county records: a separate Patrick Flynn, part of the distinct Irish immigrant community working in Pittsburgh-area iron and steel, was enumerated in Allegheny County in 1870. This is not the subject. The conflict remains unresolved \u2014 not because evidence is equal on both sides, but because a 'different persons' finding affords no preferred assertion under the schema. Decisive records would include: (1) an 1870 census entry placing the subject in Schuylkill County, definitively excluding the Allegheny record; (2) an 1880 census for the Allegheny County Patrick Flynn confirming continued Pittsburgh-area residence as a distinct person; or (3) a marriage record or city directory entry for either man firmly establishing county residence ca. 1865\u20131880.",
+                    "preferred_assertion_id": null,
+                    "status": "unresolved"
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "conflicts",
+                  "op": "update",
+                  "entryId": "c_003",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "conflict-resolution",
+                  "args": "Analyze and resolve geographic identity conflict c_003. The conflict involves an 1870 Allegheny County census record flagged as a potential match for Patrick Flynn. Read the project state, examine all"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context",
+                  "max_results": "2"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx/.claude/skills/conflict-resolution/references/weighing-evidence.md"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx/.claude/skills/conflict-resolution/references/historical-contradictions.md"
+                }
+              },
+              {
+                "tool": "Read",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_005-0-0-12znerlx/.claude/skills/conflict-resolution/references/resolution-writing.md"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__place_search,mcp__genealogy__place_distance,mcp__genealogy__wiki_read",
+                  "max_results": "3"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_append",
+                  "max_results": "1"
+                }
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "conflicts"
+                ],
+                "diff": {
+                  "conflicts": {
+                    "added": [],
+                    "modified": [
+                      {
+                        "id": "c_003",
+                        "changed_fields": {
+                          "resolution_rationale": {
+                            "before": null,
+                            "after": "The question is whether the Patrick Flynn in the 1870 Allegheny County census (a_014) is the same man as subject I1, documented in Schuylkill County. The answer determines which records belong to this research target and whether the subject's life between 1860 and 1908 included a long-distance relocation.\n\nThe 1870 Allegheny County census (src_005) records a Patrick Flynn as head of household. The enumerator visited the dwelling directly, making this a reliable record of where that man lived. His name and age (consistent with ca. 1845 birth) match the subject. On the other side, three independent records anchor the subject to Schuylkill County: (a) the 1850 census placing Patrick Flynn, age ~5, in Thomas Flynn's Schuylkill County household (src_001); (b) the 1860 census placing him at age ~15 in the same household (src_003); and (c) the 1908 death certificate, with son-in-law James Brown reporting the subject's death in Schuylkill County (src_004).\n\nThe preponderance favors the Allegheny County record belonging to a distinct individual. Three independent records from different enumerators and informants anchor the subject to Schuylkill County across 58 years. The Allegheny entry is a single uncorroborated record. If it were the subject, he would have moved 320 km west \u2014 with no surviving bridge record \u2014 and returned 320 km east by 1908, again undocumented. Moreover, 'Patrick Flynn' ranked among the most common Irish-American names in Pennsylvania's industrial counties; both the Schuylkill anthracite region and Allegheny County's Pittsburgh corridor drew heavily from the same Irish emigrant stream, producing large communities where this name appeared abundantly.\n\nThe most defensible explanation is a same-name disambiguation problem well-documented in Pennsylvania industrial-county records: a separate Patrick Flynn, part of the distinct Irish immigrant community working in Pittsburgh-area iron and steel, was enumerated in Allegheny County in 1870. This is not the subject. The conflict remains unresolved \u2014 not because evidence is equal on both sides, but because a 'different persons' finding affords no preferred assertion under the schema. Decisive records would include: (1) an 1870 census entry placing the subject in Schuylkill County, definitively excluding the Allegheny record; (2) an 1880 census for the Allegheny County Patrick Flynn confirming continued Pittsburgh-area residence as a distinct person; or (3) a marriage record or city directory entry for either man firmly establishing county residence ca. 1865\u20131880."
+                          },
+                          "weighing_analysis": {
+                            "before": null,
+                            "after": "Three factors are decisive. First, documentary anchoring: three independent records spanning 1850 to 1908 \u2014 a 58-year frame \u2014 place the subject in Schuylkill County. The Allegheny County record is a single isolated entry with no bridging record in either direction. For it to be the subject, he would have relocated 320 km (199 miles) west by 1870 and then returned 320 km east to Schuylkill County by 1908, with no record of either move surviving. Second, name frequency: 'Patrick Flynn' was among the most common Irish-American names in Pennsylvania's industrial counties. Schuylkill County's anthracite coalfields and Allegheny County's Pittsburgh-area iron and steel industries each independently attracted large Irish immigrant populations during precisely this era, making a distinct same-name individual in Allegheny County highly probable. Third, geographic plausibility: by 1870, rail travel made 320 km feasible in a day, so distance alone does not exclude identity \u2014 but it requires a documented reason, and none appears. The applicable defensible rationale is GPS Standard 48 Rationale 1 (uncorroborated single item): one source supports the Allegheny identification while three independent sources support continuous Schuylkill residence."
+                          },
+                          "independence_analysis": {
+                            "before": null,
+                            "after": "The subject's Schuylkill County presence rests on three records created by different parties at different times: the 1850 census (src_001, enumerator reporting household contents), the 1860 census (src_003, a different enumerator a decade later), and the 1908 death certificate (src_004, informant James Brown, son-in-law). The 1850 and 1860 censuses share a common household-reporting tradition and the same household as their source of information \u2014 partially dependent for facts that informant held consistently \u2014 but they were created by independent enumerators on independent occasions and count as separate record-creation events. The 1908 death certificate stands entirely apart: different record type, different creator, and a named informant (son-in-law James Brown) with no connection to any census enumerator. The 1870 Allegheny County census (src_005, a_014) is fully independent from all three: different year, different county, different enumerator, and no informational connection to the Schuylkill records."
+                          }
+                        }
+                      }
+                    ],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: a_001, a_002, a_014, c_001, c_002, c_003, q_001, research_append, src_005"
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_resolution_word_caps",
+                "observation": "conflicts[c_003].resolution_rationale is 381 words on a conflict with 1 competing assertion(s); the skill asks for ~250 or fewer below three."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_at_most_one_conflict_analysis_modified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_calendar_regime_read_from_tool",
+                "passed": true,
+                "error": "skipped: not a calendar-from-tool test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_competing_assertions_exist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_creates_no_new_conflict",
+                "passed": true,
+                "error": "skipped: not a no-new-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fact_conflicts_have_competing_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": "skipped: not a naming-from-wiki test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_new_conflicts_without_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preferred_assertion_is_in_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_conflicts_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_flynn_birthplace",
+                "passed": true,
+                "error": "skipped: not a resolved-flynn-birthplace scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill's analysis is factually accurate. It correctly identified that the 1870 Allegheny County record (a_014) is a single uncorroborated entry versus three independent Schuylkill County records spanning 1850\u20131908. The geographic distance (320 km / 199 miles) was correctly quantified via place_search and place_distance tools. The skill accurately noted that rail travel made this distance feasible by 1870, so geography alone does not exclude identity. The naming customs analysis correctly identified that Irish surnames are hereditary (not patronymic), so Mac/O prefix variations don't apply here. The conclusion that the preponderance favors a distinct same-name individual is well-supported by the evidence presented. No fabricated material or unsupported claims appear."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed all required elements: it analyzed the geographic conflict c_003 as requested, examined all competing assertions (the single a_014 entry for Allegheny County against the Schuylkill County evidence), quantified the distance via tools, assessed travel feasibility for the era, and persisted a complete resolution with independence_analysis, weighing_analysis, and resolution_rationale. The response identified specific bridging records that would be decisive (1870 Schuylkill census, 1880 Allegheny census, marriage/directory records). No major portions of the requested analysis were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All tool calls passed arguments matching expected values. place_search was called for both 'Schuylkill County' and 'Allegheny County' with Pennsylvania context (matching ~Schuylkill and ~Allegheny expectations). place_distance received the standardPlace values returned from place_search ('Schuylkill, Pennsylvania, United States' and 'Allegheny, Pennsylvania, United States'), correctly matching the ~Schuylkill and ~Allegheny predicates. research_append correctly updated c_003 with all required fields. No critical identifiers were wrong, and no calls landed in fixture_not_found."
+              },
+              {
+                "source": "rubric",
+                "name": "Source independence analysis",
+                "score": 3,
+                "rationale": "The independence_analysis correctly names the specific informants and records involved. It identifies the 1850 and 1860 censuses as partially dependent (same household-reporting tradition, same household as source, but independent enumerators and occasions), distinguishes the 1908 death certificate as fully independent (different record type, different creator, named informant James Brown with no census connection), and establishes the 1870 Allegheny record as fully independent from all three. The analysis is specific to the identity conflict's information chain, not generic."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence weighing",
+                "score": 3,
+                "rationale": "The weighing_analysis applies the GPS preponderance hierarchy with specific citation of assertion attributes. It cites documentary anchoring (three independent records spanning 58 years vs. one isolated entry), name frequency (Patrick Flynn was among the most common Irish-American names in Pennsylvania's industrial counties, with both Schuylkill and Allegheny drawing from the same emigrant stream), and geographic plausibility (rail travel made 320 km feasible, but requires documented reason\u2014none appears). It correctly invokes GPS Standard 48 Rationale 1 (uncorroborated single item) and does not contradict the independence finding. The weighing is grounded in specific attributes, not abstract hierarchy statements."
+              },
+              {
+                "source": "rubric",
+                "name": "Resolution completeness",
+                "score": 3,
+                "rationale": "The resolution_rationale addresses the single competing assertion (a_014, the 1870 Allegheny County record) and explains why it is less reliable than the Schuylkill County evidence: one uncorroborated record versus three independent records across 58 years, plus the absence of bridging evidence for a 320 km move. The rationale names specific record types that would be decisive (1870 Schuylkill census, 1880 Allegheny census, marriage/directory records). The conflict is left unresolved because a 'different persons' finding affords no preferred assertion under the schema\u2014this is correctly explained. No identity-dependency issue arises here; the competing assertion's person-link is not covered by an unresolved identity conflict."
+              }
+            ],
+            "judge_cost_usd": 0.022478800000000004,
+            "duration_ms": 14477.774792001583,
+            "error": null,
+            "input_tokens": 16230,
+            "cached_input_tokens": 4338,
+            "output_tokens": 1163
+          },
+          "started_at": 1791829941.760504,
+          "ended_at": 1791830195.593601
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_conflict_resolution_014",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": "norwegian-patronymic-conflict-link",
+      "mcp_fixtures": [
+        "wiki-read-norway-naming-customs"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's factual claims are well-grounded. It correctly identifies the patronymic mismatch as a core-identity conflict, accurately cites the Norway Naming Customs wiki (patronymic system active in 1875, first name law 1923), and correctly concludes that 'Pedersen' and 'Hansen' encode different fathers. The analysis that two boys named Anders, both ~7, in the same rural district is plausible given Norwegian naming patterns is sound. The conflict is properly recorded as unresolved with no preferred_assertion_id, which is the correct schema outcome when the conclusion is 'different persons.' No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything the user message and input state required. It analyzed the identity conflict between Anders Pedersen (census) and Anders Hansen (subject), explained why the patronymic mismatch is decisive, created the conflict entry with full independence and weighing analyses, and explicitly stated what records would decide the question (census household head, separate 1875 entry for Anders Hansen, or baptism register). No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All MCP tool calls passed arguments matching expected values. The wiki_read call correctly targeted 'Norway_Naming_Customs' (matching expected ~Norway_Naming_Customs). The research_query calls for assertions a_001 and a_002 were correct. The project_context and conflicts queries were appropriate. The research_append calls for conflict creation and update used valid section/op/entryId arguments. No tool calls returned fixture_not_found errors. All critical identifiers (assertion IDs, source IDs, project path) were correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Source independence analysis",
+            "score": 3,
+            "rationale": "The independence analysis correctly identifies that both a_001 (name) and a_002 (birth/age) derive from a single source\u2014the 1875 census record (ARK NCR7-AND)\u2014representing one enumerator's transcription of one household visit. It explicitly names the informant chain (enumerator for name, household member for age) and notes that no independent record corroborates either assertion. The analysis correctly concludes they form a single evidential unit with no independent corroboration from other project sources. This is specific to the conflict's fact type (identity via patronymic) and informant chain."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence weighing",
+            "score": 3,
+            "rationale": "The weighing analysis applies the GPS preponderance hierarchy with specific grounding. It cites the patronymic as the decisive factor, correctly establishes that the system was active in 1875 (wiki-sourced), and explains that 'Pedersen' and 'Hansen' encode different fathers\u2014not spelling variants. It notes the household member's firsthand knowledge (proximate, primary report) and correctly applies the hierarchy: the patronymic signal outweighs the surface match (given name, age, district) because traditional Norwegian naming patterns made Anders common and two boys of similar age in the same district plausible. The weighing does not contradict the independence finding and cites specific assertion attributes."
+          },
+          {
+            "source": "rubric",
+            "name": "Resolution completeness",
+            "score": 3,
+            "rationale": "The resolution addresses all competing assertions (a_001 and a_002) and explains why they do not represent the subject. It explicitly states the conclusion: these are two distinct boys\u2014the census 'Anders Pedersen' (son of Peder) and the research subject Anders Hansen (son of Hans Olsen). It correctly explains why no preferred_assertion_id can be named (the conclusion is 'different persons,' so no assertion in the competing set represents the subject). The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The skill does not treat the competing assertions as settled attributes while an identity conflict remains unresolved."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's factual claims are well-grounded. It correctly identifies the patronymic mismatch as a core-identity conflict, accurately cites the Norway Naming Customs wiki (patronymic system active in 1875, first name law 1923), and correctly concludes that 'Pedersen' and 'Hansen' encode different fathers. The analysis that two boys named Anders, both ~7, in the same rural district is plausible given Norwegian naming patterns is sound. The conflict is properly recorded as unresolved with no preferred_assertion_id, which is the correct schema outcome when the conclusion is 'different persons.' No fabricated material or unsupported claims."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed everything the user message and input state required. It analyzed the identity conflict between Anders Pedersen (census) and Anders Hansen (subject), explained why the patronymic mismatch is decisive, created the conflict entry with full independence and weighing analyses, and explicitly stated what records would decide the question (census household head, separate 1875 entry for Anders Hansen, or baptism register). No required work was omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "All MCP tool calls passed arguments matching expected values. The wiki_read call correctly targeted 'Norway_Naming_Customs' (matching expected ~Norway_Naming_Customs). The research_query calls for assertions a_001 and a_002 were correct. The project_context and conflicts queries were appropriate. The research_append calls for conflict creation and update used valid section/op/entryId arguments. No tool calls returned fixture_not_found errors. All critical identifiers (assertion IDs, source IDs, project path) were correct."
+          },
+          {
+            "source": "rubric",
+            "name": "Source independence analysis",
+            "score": 3,
+            "rationale": "The independence analysis correctly identifies that both a_001 (name) and a_002 (birth/age) derive from a single source\u2014the 1875 census record (ARK NCR7-AND)\u2014representing one enumerator's transcription of one household visit. It explicitly names the informant chain (enumerator for name, household member for age) and notes that no independent record corroborates either assertion. The analysis correctly concludes they form a single evidential unit with no independent corroboration from other project sources. This is specific to the conflict's fact type (identity via patronymic) and informant chain."
+          },
+          {
+            "source": "rubric",
+            "name": "Evidence weighing",
+            "score": 3,
+            "rationale": "The weighing analysis applies the GPS preponderance hierarchy with specific grounding. It cites the patronymic as the decisive factor, correctly establishes that the system was active in 1875 (wiki-sourced), and explains that 'Pedersen' and 'Hansen' encode different fathers\u2014not spelling variants. It notes the household member's firsthand knowledge (proximate, primary report) and correctly applies the hierarchy: the patronymic signal outweighs the surface match (given name, age, district) because traditional Norwegian naming patterns made Anders common and two boys of similar age in the same district plausible. The weighing does not contradict the independence finding and cites specific assertion attributes."
+          },
+          {
+            "source": "rubric",
+            "name": "Resolution completeness",
+            "score": 3,
+            "rationale": "The resolution addresses all competing assertions (a_001 and a_002) and explains why they do not represent the subject. It explicitly states the conclusion: these are two distinct boys\u2014the census 'Anders Pedersen' (son of Peder) and the research subject Anders Hansen (son of Hans Olsen). It correctly explains why no preferred_assertion_id can be named (the conclusion is 'different persons,' so no assertion in the competing set represents the subject). The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The skill does not treat the competing assertions as settled attributes while an identity conflict remains unresolved."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 100761.95299999381,
+        "duration_api_ms": 99455.0,
+        "judge_duration_ms": 13613.133332997677,
+        "wall_clock_ms": 115253.83496284485,
+        "num_turns": 11,
+        "input_tokens": 438,
+        "cached_input_tokens": 221968,
+        "cache_creation_input_tokens": 38551,
+        "output_tokens": 5444,
+        "judge_input_tokens": 8593,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 1055,
+        "skill_cost_usd": 0.29308665,
+        "judge_cost_usd": 0.013868,
+        "total_cost_usd": 0.30695465
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_conflict_resolution_014_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 100761.95299999381,
+          "duration_api_ms": 99455.0,
+          "num_turns": 11,
+          "skill_attempts": 1,
+          "input_tokens": 438,
+          "cached_input_tokens": 221968,
+          "cache_creation_input_tokens": 38551,
+          "output_tokens": 5444,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 422,
+              "outputTokens": 20,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000522,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 16,
+              "outputTokens": 5424,
+              "cacheReadInputTokens": 221968,
+              "cacheCreationInputTokens": 38551,
+              "webSearchRequests": 0,
+              "costUSD": 0.29256465,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 38552,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.29308665,
+          "output": {
+            "text_response": "Let me read the project state and assertions before doing anything else.\n\nGood. Now let me fetch Norway's naming customs \u2014 required before handling any patronymic question.\n\nI have everything I need. The naming customs page confirms Norway was fully in its patronymic era in 1875 \u2014 the decisive fact here. Let me now create the conflict entry and complete the full analysis.\n\nGood. Now I'll update with the full independence analysis, weighing analysis, and resolution rationale in one write.\n\n**c_001 written \u2014 status: `unresolved`**\n\n**The conflict:** The 1875 Ringsaker census names the principal \"Anders Pedersen,\" but the research subject is Anders Hansen, son of Hans Olsen. Age (~7) and district match; the patronymic does not.\n\n**Decisive finding \u2014 patronymic mismatch in an active system.** Norway's naming customs wiki confirms the country was fully in its patronymic era in 1875 (the first name law wasn't passed until 1923). \"Pedersen\" encodes *son of Peder*; a son of Hans Olsen would be \"Hansen.\" These are not spelling variants \u2014 they encode different fathers. The household informant who gave the child's name to the enumerator would have known the father firsthand. Two boys named Anders, both ~7, in the same rural district is entirely plausible given traditional Norwegian naming patterns; the surface match is not enough to overcome the patronymic signal.\n\n**Why it stays `unresolved`:** The analysis concludes *different persons*, which means no assertion among the competing set represents our subject \u2014 the schema requires a `preferred_assertion_id` from the competing set for a `resolved` status, and none qualifies here.\n\n---\n\n**What would decide it \u2014 three decisive record types:**\n\n1. **The census household image itself** \u2014 if the head of household for \"Anders Pedersen\" in the 1875 enumeration is named *Peder* (not Hans), that proves two distinct families and closes the question.\n2. **A second 1875 census entry** \u2014 finding Anders Hansen in a Ringsaker household headed by Hans Olsen would positively place your subject and confirm the census persona is someone else.\n3. **The Ringsaker baptism register** \u2014 a parish baptism entry naming both parents would settle the father's given name beyond any doubt.\n\nWould you like me to create a research question targeting those records (question-selection), or go straight to searching the 1875 census image to check the household head (search-images)?",
+            "activated": true,
+            "skills_invoked": [
+              "conflict-resolution"
+            ],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__project_context",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_014-0-0-itae3mt9"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:project_context",
+                "response": {
+                  "ok": true,
+                  "buildId": "0.1.0+2026-10-12.0603a3e1.dirty",
+                  "projectStatus": "active",
+                  "objective": "Confirm the identity and records of Anders Hansen, born ca. 1868 in Ringsaker, Hedmark, Norway (son of Hans Olsen)",
+                  "openQuestions": [
+                    {
+                      "id": "q_001",
+                      "question": "Is the 1875 census 'Anders Pedersen' the same person as the subject Anders Hansen (b. ~1868, son of Hans Olsen)?"
+                    }
+                  ],
+                  "questionStatuses": [
+                    {
+                      "id": "q_001",
+                      "state": "evidence-gathered",
+                      "nextStep": "research-exhaustiveness, then proof-conclusion",
+                      "openConflictIds": [],
+                      "storedStatus": "in_progress",
+                      "unregisteredDisagreements": [],
+                      "competingParentSets": []
+                    }
+                  ],
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "name": "Anders Hansen",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [
+                        "I2"
+                      ],
+                      "childIds": [],
+                      "diedByYear": null
+                    },
+                    {
+                      "id": "I2",
+                      "name": "Hans Olsen",
+                      "gender": "Male",
+                      "sourceRefs": [],
+                      "spouseIds": [],
+                      "parentIds": [],
+                      "childIds": [
+                        "I1"
+                      ],
+                      "diedByYear": null
+                    }
+                  ],
+                  "sources": [
+                    {
+                      "id": "src_001",
+                      "repository": "FamilySearch",
+                      "gedcomxSourceDescriptionId": "S2",
+                      "recordIds": [
+                        "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND"
+                      ],
+                      "assertionCount": 2
+                    }
+                  ],
+                  "localities": [],
+                  "awaitingUser": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_014-0-0-itae3mt9",
+                  "section": "assertions",
+                  "assertionId": "a_001"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "a_001",
+                      "date": null,
+                      "place": null,
+                      "value": "Anders Pedersen",
+                      "fact_type": "name",
+                      "informant": "Census enumerator",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+                      "source_id": "src_001",
+                      "record_role": "principal",
+                      "log_entry_id": "log_001",
+                      "record_basis": "stated",
+                      "date_certainty": null,
+                      "structured_value": {
+                        "given": "Anders",
+                        "surname": "Pedersen"
+                      },
+                      "record_persona_id": "CP1",
+                      "informant_proximity": "official_duty",
+                      "information_quality": "primary",
+                      "informant_bias_notes": "Patronymic recorded by the enumerator; 'Pedersen' denotes son of Peder.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_014-0-0-itae3mt9",
+                  "section": "assertions",
+                  "assertionId": "a_002"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "assertions",
+                  "count": 1,
+                  "items": [
+                    {
+                      "id": "a_002",
+                      "date": "~1868",
+                      "place": "Ringsaker, Hedmark, Norway",
+                      "value": "age 7 in 1875",
+                      "fact_type": "birth",
+                      "informant": "Household member reporting to the enumerator",
+                      "record_id": "https://www.familysearch.org/ark:/61903/1:1:NCR7-AND",
+                      "source_id": "src_001",
+                      "record_role": "principal",
+                      "log_entry_id": "log_001",
+                      "record_basis": "inferred",
+                      "date_certainty": "estimated",
+                      "structured_value": {
+                        "year": 1868
+                      },
+                      "record_persona_id": "CP1",
+                      "informant_proximity": "household_member",
+                      "information_quality": "indeterminate",
+                      "informant_bias_notes": "Age reported in the census; approximate.",
+                      "extracted_for_question_ids": [
+                        "q_001"
+                      ]
+                    }
+                  ],
+                  "truncated": false
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_query",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_014-0-0-itae3mt9",
+                  "section": "conflicts"
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_query",
+                "response": {
+                  "ok": true,
+                  "section": "conflicts",
+                  "count": 0,
+                  "items": [],
+                  "truncated": false,
+                  "unregisteredDisagreements": []
+                }
+              },
+              {
+                "tool": "mcp__genealogy__wiki_read",
+                "args": {
+                  "url": "https://www.familysearch.org/en/wiki/Norway_Naming_Customs"
+                },
+                "expected_args": {
+                  "url": "~Norway_Naming_Customs"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wiki-read-norway-naming-customs"
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_014-0-0-itae3mt9",
+                  "section": "conflicts",
+                  "op": "append",
+                  "entry": {
+                    "conflict_type": "identity",
+                    "description": "1875 Norway census names the principal 'Anders Pedersen' (patronymic implying father = Peder), but the research subject is Anders Hansen (patronymic implying father = Hans Olsen). Same given name, same estimated birth year ~1868, same district (Ringsaker, Hedmark) \u2014 but the patronymics are irreconcilable in Norway's active patronymic system.",
+                    "disputed_attribute": null,
+                    "identity_question": "Is the 'Anders Pedersen' enumerated in the 1875 Ringsaker census (assertions a_001, a_002) the same individual as the research subject Anders Hansen, son of Hans Olsen (b. ~1868)?",
+                    "competing_assertion_ids": [
+                      "a_001",
+                      "a_002"
+                    ],
+                    "independence_analysis": null,
+                    "weighing_analysis": null,
+                    "preferred_assertion_id": null,
+                    "resolution_rationale": null,
+                    "status": "unresolved",
+                    "blocks_question_ids": [
+                      "q_001"
+                    ]
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "conflicts",
+                  "op": "append",
+                  "entryId": "c_001",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              },
+              {
+                "tool": "mcp__genealogy__research_append",
+                "args": {
+                  "projectPath": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_conflict_resolution_014-0-0-itae3mt9",
+                  "section": "conflicts",
+                  "op": "update",
+                  "entryId": "c_001",
+                  "fields": {
+                    "independence_analysis": "Both a_001 (name: Anders Pedersen) and a_002 (birth/age: ~1868, Ringsaker) derive from a single source \u2014 the 1875 Norway census record (ARK NCR7-AND). They represent one enumerator's transcription of one household visit on one occasion. No independent record corroborates either the 'Pedersen' patronymic or the reported age for this census persona. The two assertions therefore form a single evidential unit and receive no more collective credibility than their source as a whole. There is no independent corroboration of the identity question from any other source currently in the project.",
+                    "weighing_analysis": "The decisive factor is the patronymic. The FamilySearch Norway Naming Customs wiki confirms that most of Norway's population used patronymic surnames derived from the father's given name throughout the 19th century; the first name law was not passed until 1923. In 1875 Ringsaker, 'Pedersen' unambiguously encodes 'son of Peder.' The research subject's known father is Hans Olsen, whose son would bear the patronymic 'Hansen' \u2014 son of Hans. 'Pedersen' and 'Hansen' encode different fathers and are not spelling variants of each other in any standard or dialectal form. The household member who reported to the enumerator would have known the father's name firsthand, making this a proximate, primary report. The matching given name (Anders), estimated birth year (~1868), and district (Ringsaker, Hedmark) are consistent \u2014 but these surface features are insufficient to overcome the patronymic signal: traditional Norwegian naming patterns (first son named for paternal grandfather) made Anders a very common given name, and two boys of similar age with the same given name in the same rural district is historically plausible. No evidence in the project establishes that Hans Olsen was ever known as or called Peder, and the project objective itself records the father as 'Hans Olsen.'",
+                    "resolution_rationale": "The conflict concerns whether the 1875 census persona 'Anders Pedersen' (assertions a_001\u2013a_002) is the research subject Anders Hansen, son of Hans Olsen. The surface match \u2014 same given name, same approximate age (~7), same district \u2014 prompted the hit, but the patronymic is irreconcilable. Norway was fully within its patronymic era in 1875: a son of Hans Olsen would be recorded as Hansen, not Pedersen. The census enumerator was recording what a household member stated; that informant would have known the child's father firsthand. The patronymic 'Pedersen' therefore names a different father \u2014 Peder, not Hans \u2014 and the skill instruction is explicit: a patronymic mismatch in an active patronymic system is a different-person signal, never a spelling variant. The preponderance of evidence indicates these are two distinct boys: the census 'Anders Pedersen' (son of a Peder) and the research subject Anders Hansen (son of Hans Olsen). Because the conclusion is 'different persons,' there is no assertion in the competing set that represents our subject, so no preferred_assertion_id can be named and status remains unresolved. What would confirm this conclusively: (1) identify the head of household for 'Anders Pedersen' in the 1875 census image \u2014 if that man is named Peder (not Hans), the distinction is proved; (2) locate a separate 1875 Ringsaker census entry for Anders Hansen in a household headed by Hans Olsen; (3) obtain the baptism register entry for the subject from Ringsaker parish records, which would name both parents and settle the father's given name beyond doubt.",
+                    "status": "unresolved",
+                    "preferred_assertion_id": null
+                  }
+                },
+                "expected_args": null,
+                "matched": {
+                  "kind": "live",
+                  "index": null
+                },
+                "response_fixture": "live:research_append",
+                "response": {
+                  "ok": true,
+                  "section": "conflicts",
+                  "op": "update",
+                  "entryId": "c_001",
+                  "filesWritten": [
+                    "research.json"
+                  ],
+                  "validation": {
+                    "valid": true,
+                    "warnings": []
+                  }
+                }
+              }
+            ],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "conflict-resolution",
+                  "args": "Identity conflict: Anders Hansen (assertions a_001, a_002) vs. Anders Pedersen \u2014 both age 7, same district, 1875 Norway census. Same given name, same age, same place but different patronymic. Are thes"
+                }
+              },
+              {
+                "tool": "ToolSearch",
+                "args": {
+                  "query": "select:mcp__genealogy__research_query,mcp__genealogy__project_context,mcp__genealogy__wiki_read,mcp__genealogy__research_append",
+                  "max_results": "4"
+                }
+              }
+            ],
+            "file_changes": {
+              "research.json": {
+                "sections_modified": [
+                  "conflicts"
+                ],
+                "diff": {
+                  "conflicts": {
+                    "added": [
+                      {
+                        "id": "c_001",
+                        "status": "unresolved",
+                        "description": "1875 Norway census names the principal 'Anders Pedersen' (patronymic implying father = Peder), but the research subject is Anders Hansen (patronymic implying father = Hans Olsen). Same given name, same estimated birth year ~1868, same district (Ringsaker, Hedmark) \u2014 but the patronymics are irreconcilable in Norway's active patronymic system.",
+                        "conflict_type": "identity",
+                        "identity_question": "Is the 'Anders Pedersen' enumerated in the 1875 Ringsaker census (assertions a_001, a_002) the same individual as the research subject Anders Hansen, son of Hans Olsen (b. ~1868)?",
+                        "weighing_analysis": "The decisive factor is the patronymic. The FamilySearch Norway Naming Customs wiki confirms that most of Norway's population used patronymic surnames derived from the father's given name throughout the 19th century; the first name law was not passed until 1923. In 1875 Ringsaker, 'Pedersen' unambiguously encodes 'son of Peder.' The research subject's known father is Hans Olsen, whose son would bear the patronymic 'Hansen' \u2014 son of Hans. 'Pedersen' and 'Hansen' encode different fathers and are not spelling variants of each other in any standard or dialectal form. The household member who reported to the enumerator would have known the father's name firsthand, making this a proximate, primary report. The matching given name (Anders), estimated birth year (~1868), and district (Ringsaker, Hedmark) are consistent \u2014 but these surface features are insufficient to overcome the patronymic signal: traditional Norwegian naming patterns (first son named for paternal grandfather) made Anders a very common given name, and two boys of similar age with the same given name in the same rural district is historically plausible. No evidence in the project establishes that Hans Olsen was ever known as or called Peder, and the project objective itself records the father as 'Hans Olsen.'",
+                        "disputed_attribute": null,
+                        "blocks_question_ids": [
+                          "q_001"
+                        ],
+                        "resolution_rationale": "The conflict concerns whether the 1875 census persona 'Anders Pedersen' (assertions a_001\u2013a_002) is the research subject Anders Hansen, son of Hans Olsen. The surface match \u2014 same given name, same approximate age (~7), same district \u2014 prompted the hit, but the patronymic is irreconcilable. Norway was fully within its patronymic era in 1875: a son of Hans Olsen would be recorded as Hansen, not Pedersen. The census enumerator was recording what a household member stated; that informant would have known the child's father firsthand. The patronymic 'Pedersen' therefore names a different father \u2014 Peder, not Hans \u2014 and the skill instruction is explicit: a patronymic mismatch in an active patronymic system is a different-person signal, never a spelling variant. The preponderance of evidence indicates these are two distinct boys: the census 'Anders Pedersen' (son of a Peder) and the research subject Anders Hansen (son of Hans Olsen). Because the conclusion is 'different persons,' there is no assertion in the competing set that represents our subject, so no preferred_assertion_id can be named and status remains unresolved. What would confirm this conclusively: (1) identify the head of household for 'Anders Pedersen' in the 1875 census image \u2014 if that man is named Peder (not Hans), the distinction is proved; (2) locate a separate 1875 Ringsaker census entry for Anders Hansen in a household headed by Hans Olsen; (3) obtain the baptism register entry for the subject from Ringsaker parish records, which would name both parents and settle the father's given name beyond doubt.",
+                        "independence_analysis": "Both a_001 (name: Anders Pedersen) and a_002 (birth/age: ~1868, Ringsaker) derive from a single source \u2014 the 1875 Norway census record (ARK NCR7-AND). They represent one enumerator's transcription of one household visit on one occasion. No independent record corroborates either the 'Pedersen' patronymic or the reported age for this census persona. The two assertions therefore form a single evidential unit and receive no more collective credibility than their source as a whole. There is no independent corroboration of the identity question from any other source currently in the project.",
+                        "preferred_assertion_id": null,
+                        "competing_assertion_ids": [
+                          "a_001",
+                          "a_002"
+                        ]
+                      }
+                    ],
+                    "modified": [],
+                    "deleted": []
+                  }
+                }
+              }
+            },
+            "warnings": [
+              {
+                "kind": "missing_tool_usage_dimension",
+                "advisory": "Skill called MCP tools but the rubric has no dimension name suggesting tool-usage coverage (matched against keywords: ['tool usage', 'tool use', 'tool work', 'tool call', 'argument quality', 'argument-quality', 'response interpretation', 'tool selection', 'mcp tool', 'fixture']). The judge will grade other dimensions but won't score tool work explicitly. Consider adding a tool-usage dimension or renaming an existing one."
+              },
+              {
+                "kind": "prose_observation",
+                "check": "report_no_internal_identifiers_in_response",
+                "observation": "internal identifiers in the reply: c_001"
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": "skipped: not a direct-agent test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_at_most_one_conflict_analysis_modified",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_calendar_regime_read_from_tool",
+                "passed": true,
+                "error": "skipped: not a calendar-from-tool test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_competing_assertions_exist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_creates_no_new_conflict",
+                "passed": true,
+                "error": "skipped: not a no-new-conflict scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_fact_conflicts_have_competing_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_naming_system_read_from_wiki",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_new_conflicts_without_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_preferred_assertion_is_in_competing",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_conflicts_have_required_fields",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_resolved_flynn_birthplace",
+                "passed": true,
+                "error": "skipped: not a resolved-flynn-birthplace scenario",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill's factual claims are well-grounded. It correctly identifies the patronymic mismatch as a core-identity conflict, accurately cites the Norway Naming Customs wiki (patronymic system active in 1875, first name law 1923), and correctly concludes that 'Pedersen' and 'Hansen' encode different fathers. The analysis that two boys named Anders, both ~7, in the same rural district is plausible given Norwegian naming patterns is sound. The conflict is properly recorded as unresolved with no preferred_assertion_id, which is the correct schema outcome when the conclusion is 'different persons.' No fabricated material or unsupported claims."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed everything the user message and input state required. It analyzed the identity conflict between Anders Pedersen (census) and Anders Hansen (subject), explained why the patronymic mismatch is decisive, created the conflict entry with full independence and weighing analyses, and explicitly stated what records would decide the question (census household head, separate 1875 entry for Anders Hansen, or baptism register). No required work was omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "All MCP tool calls passed arguments matching expected values. The wiki_read call correctly targeted 'Norway_Naming_Customs' (matching expected ~Norway_Naming_Customs). The research_query calls for assertions a_001 and a_002 were correct. The project_context and conflicts queries were appropriate. The research_append calls for conflict creation and update used valid section/op/entryId arguments. No tool calls returned fixture_not_found errors. All critical identifiers (assertion IDs, source IDs, project path) were correct."
+              },
+              {
+                "source": "rubric",
+                "name": "Source independence analysis",
+                "score": 3,
+                "rationale": "The independence analysis correctly identifies that both a_001 (name) and a_002 (birth/age) derive from a single source\u2014the 1875 census record (ARK NCR7-AND)\u2014representing one enumerator's transcription of one household visit. It explicitly names the informant chain (enumerator for name, household member for age) and notes that no independent record corroborates either assertion. The analysis correctly concludes they form a single evidential unit with no independent corroboration from other project sources. This is specific to the conflict's fact type (identity via patronymic) and informant chain."
+              },
+              {
+                "source": "rubric",
+                "name": "Evidence weighing",
+                "score": 3,
+                "rationale": "The weighing analysis applies the GPS preponderance hierarchy with specific grounding. It cites the patronymic as the decisive factor, correctly establishes that the system was active in 1875 (wiki-sourced), and explains that 'Pedersen' and 'Hansen' encode different fathers\u2014not spelling variants. It notes the household member's firsthand knowledge (proximate, primary report) and correctly applies the hierarchy: the patronymic signal outweighs the surface match (given name, age, district) because traditional Norwegian naming patterns made Anders common and two boys of similar age in the same district plausible. The weighing does not contradict the independence finding and cites specific assertion attributes."
+              },
+              {
+                "source": "rubric",
+                "name": "Resolution completeness",
+                "score": 3,
+                "rationale": "The resolution addresses all competing assertions (a_001 and a_002) and explains why they do not represent the subject. It explicitly states the conclusion: these are two distinct boys\u2014the census 'Anders Pedersen' (son of Peder) and the research subject Anders Hansen (son of Hans Olsen). It correctly explains why no preferred_assertion_id can be named (the conclusion is 'different persons,' so no assertion in the competing set represents the subject). The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The skill does not treat the competing assertions as settled attributes while an identity conflict remains unresolved."
+              }
+            ],
+            "judge_cost_usd": 0.013868,
+            "duration_ms": 13613.133332997677,
+            "error": null,
+            "input_tokens": 8593,
+            "cached_input_tokens": 0,
+            "output_tokens": 1055
+          },
+          "started_at": 1791829941.741964,
+          "ended_at": 1791830056.995799
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 392582.18466700055,
+    "duration_api_ms": 389862.0,
+    "judge_duration_ms": 36640.471999999136,
+    "num_turns": 32,
+    "input_tokens": 1261,
+    "cached_input_tokens": 746348,
+    "cache_creation_input_tokens": 107169,
+    "output_tokens": 20315,
+    "judge_input_tokens": 29320,
+    "judge_cached_input_tokens": 4338,
+    "judge_output_tokens": 2980,
+    "skill_cost_usd": 0.9312161499999999,
+    "judge_cost_usd": 0.0446538,
+    "total_cost_usd": 0.97586995,
+    "wall_clock_ms": 1147888.820886612
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

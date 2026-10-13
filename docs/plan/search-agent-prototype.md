@@ -2475,7 +2475,10 @@ that write fixtures to disk hold 1,120 of them) run against the Postgres backend
 writing their fixtures through `getProjectStore()` instead of
 `writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
 the backend), and the unit harness's engine gains the same switch so at least one paid
-run per skill has landed on Postgres before beta. Recorded as R14.
+run per skill has landed on Postgres before beta. Recorded as R14. The tool-suite half
+is built (U15, `docs/plan/familysearch-handoff.md`), by a routing test store that mirrors
+each fixture directory into Postgres rather than by the fixture refactor, and every unit
+suite has run once on Postgres (`run_tests.py --store pg`, 2026-10-12).
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the

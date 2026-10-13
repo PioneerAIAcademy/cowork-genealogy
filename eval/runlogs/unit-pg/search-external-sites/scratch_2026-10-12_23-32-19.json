@@ -1,0 +1,557 @@
+{
+  "schema_version": 3,
+  "skill": "search-external-sites",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_23-32-19",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/search-external-sites.md": "3d261c01298befd903c6790c102d07404bfc200e6b1657a6d7f96b18e8455e1c",
+    "eval/tests/unit/search-external-sites/ancestry-census-search.json": "45f04881815835346fe0afee7beb993849b9dbaefc67e58d166f415e30462fe2",
+    "eval/tests/unit/search-external-sites/archion-browse-handoff.json": "6c5dc8b1d65168b699cf188dc84eb7ac9337b3a7e0e3ee29fe98b312b5170406",
+    "eval/tests/unit/search-external-sites/autonomous-defer-external-search.json": "e2ab20a17cc1a0fc8a3db50655346a227f9e376525eebed9c480f2535c9f78c1",
+    "eval/tests/unit/search-external-sites/caller-supplied-paid-archive.json": "ab3ad6b7200055e72036025879e904598985a7159fb3911052cd7133e0026737",
+    "eval/tests/unit/search-external-sites/collections-fs-holdings.json": "6d40bf584cf4c4a23582b8ac23c425158db66f227d359e2a9f0161e0d4550580",
+    "eval/tests/unit/search-external-sites/direct-handback-planning.json": "9dcbeace4c5ba8009ddac4f8b7929b468ef0a9182c68af2ea8d3ac1132dc6c5b",
+    "eval/tests/unit/search-external-sites/findagrave-burial-search.json": "d437bf686456d5b8c4383df9eb659cfd5663ff2dc551e74746c66ca97f9062da",
+    "eval/tests/unit/search-external-sites/findmypast-irish-birth.json": "01348356963352abd23e03dc8d21d9c89cce5ce649cf3df567d1f16736eee2ad",
+    "eval/tests/unit/search-external-sites/free-newspaper-archive-unnamed-site.json": "9d371d8c08c80dca846b009ac630887f3d7211e96d49ddd2e567e85061f8d44a",
+    "eval/tests/unit/search-external-sites/in-window-page-content.json": "04aec5b25827c631884f590e4e10ed7952b3ea141fcc597718674f816e9d6cda",
+    "eval/tests/unit/search-external-sites/log-at-url-generation.json": "2f5236819aae7ebeb8ad0fc70c09d32754d98e914baf127e0454b35b8ce5bd0d",
+    "eval/tests/unit/search-external-sites/mixed-sites-filter-dedupe.json": "db1a73f88b15065fcac62a142fd085c9b2ae282c051d8d6db3f6c5687b6ec374",
+    "eval/tests/unit/search-external-sites/myheritage-url-generation.json": "77de040dbeba7b4fa0ec33f7dd4e46f4bb8a7ee268f881c0e39df0fb4927f43f",
+    "eval/tests/unit/search-external-sites/newspapers-obituary-search.json": "5be30b442424805ba98ec7fcfc59de060f056cc39f0ff0d07701f132dc492389",
+    "eval/tests/unit/search-external-sites/nil-result-logging.json": "7ffc87d482a0c84e0b8c01246cf3cb49ad706a82d7459498859deeac3366dde8",
+    "eval/tests/unit/search-external-sites/plan-item-stays-open-pending-capture.json": "45a409d98f27a84d0833c0fdeea6110c5c459d01ad07a68ddbc777c5638a543d",
+    "eval/tests/unit/search-external-sites/prestated-birthplace-direct.json": "380cad9c3ad70126f42564b5422a0455db4a6d37145b915ba4d34480cffd1bf3",
+    "eval/tests/unit/search-external-sites/rubric.md": "592b32647227c2259226c160b2d35ae95f6afe230fab1d4367a97bf74493fd1d",
+    "eval/tests/unit/search-external-sites/subscription-aware-warning.json": "cd1cecdfabf7d67e4d0da973880c66e7f4c8271581ebad509c12634f11e2dcb1",
+    "eval/tests/unit/search-external-sites/triage-closes-open-handoff.json": "f357f33af8d86fb6ecd3ec828ecdf525d9d8c01132151c7c8877229ea4dd5f1f",
+    "eval/fixtures/scenarios/archion-baiersbronn/README.md": "cc5daefc57612505a639b3f76d4c2b97c559d3908b0185f2ed80967ca0c4f272",
+    "eval/fixtures/scenarios/archion-baiersbronn/research.json": "369e6077e3bd27eaddaaeb35601a29d8a104f50bfff807fdb3f445a28e943875",
+    "eval/fixtures/scenarios/archion-baiersbronn/tree.gedcomx.json": "a207bd01978663de389aa7af6089133601aba30b2de2945484c1f461539a7600",
+    "eval/fixtures/scenarios/ma-state-census-external/README.md": "7c2a79cc697ae0478897a96f86d3d73b050fd34c4842862a9c9b6e5a4b792803",
+    "eval/fixtures/scenarios/ma-state-census-external/research.json": "9fcc967a09025b46019981bdb98ddfaf4fcf8d55da5f45ee8b93c908f314c0ff",
+    "eval/fixtures/scenarios/ma-state-census-external/tree.gedcomx.json": "a92cb6ac863629fd8614c3c206de510d8b59a560b56208941e7ec06a806ad694",
+    "eval/fixtures/scenarios/ma-state-census-handoff-open/README.md": "e6ab028d41bc71d15b66a340679329745127e6654cf8fcb8e7ebb14e67513c10",
+    "eval/fixtures/scenarios/ma-state-census-handoff-open/research.json": "c6d0feea60b689b743295b7d88f1e25e8dc06b004a63b93d3b6c6c2b6e2e8997",
+    "eval/fixtures/scenarios/ma-state-census-handoff-open/tree.gedcomx.json": "a92cb6ac863629fd8614c3c206de510d8b59a560b56208941e7ec06a806ad694",
+    "eval/fixtures/scenarios/mid-research-flynn/README.md": "f7020ae65e077c8a6c1a25013de7f884210cffc17fea88eae2c8b48558702ddc",
+    "eval/fixtures/scenarios/mid-research-flynn/research.json": "e3e19c382517435b52ef58c3675a0fece91d25c78b28311f7dc4e9d0cfaa2cda",
+    "eval/fixtures/scenarios/mid-research-flynn/tree.gedcomx.json": "efb4f78453dd94f4d94c6ff8d2bd16ae9519b67a6a8aa179d9e9bf41d1326d86",
+    "eval/fixtures/scenarios/mid-research-flynn-ancestry-sub/README.md": "837412f40647cbd2258861af1615855bc13a2f8f280988c73c061815e100b4fa",
+    "eval/fixtures/scenarios/mid-research-flynn-ancestry-sub/research.json": "e1bd2ec3eb06bc2e16dc5c583ac0450b3f981406d9ab1a73dc984c658d2778e9",
+    "eval/fixtures/scenarios/mid-research-flynn-ancestry-sub/tree.gedcomx.json": "65b54727a642fb1e5cfc1ee482bf2284c8f4477c9bfed99f5a2c26b6b2f3f4f0",
+    "eval/fixtures/mcp/collections-search-any.json": "ce29cc5a98be262102d7397c8a57c7577ade23568ad0c779618fad7e14e86fe0",
+    "eval/fixtures/mcp/collections-search-baiersbronn.json": "e1bbc122b1af93b22c8a32572009c2a829fce0a3838c4e81a135235512571cf0",
+    "eval/fixtures/mcp/collections-search-massachusetts-census.json": "e77e34639d4bd0c0167d434771437f56ad42ca1c901ae42e793936b55d768dee",
+    "eval/fixtures/mcp/collections-search-pennsylvania.json": "cdd578bda3b23080734f2607e565d980e05346deef7e450199ca785aaac6726a",
+    "eval/fixtures/mcp/collections-search-schuylkill.json": "cf6416f44b792fe5f1c0bcae48e5ae1a26d4c4aa9f817ce16ffc7def770d04bb",
+    "eval/fixtures/mcp/external-links-search-baiersbronn.json": "fad15cb8f4e63b8d3b42d28fafd53acc5c780e85cfcb5193c6fba83592697f49",
+    "eval/fixtures/mcp/external-links-search-massachusetts.json": "4493e5c6755bef378ec8215f21f6e2052942827eca365664b8900a9024d8fff2",
+    "eval/fixtures/mcp/external-links-search-mixed-sites.json": "5e4aef2d1cd294f621fba82d5ceb74b9d03a155648c77b963cc5e0a6e2216ce7",
+    "eval/fixtures/mcp/external-links-search-pennsylvania.json": "e06cccd4dd695b2d9144a2b115e9e0361e03e2e1681044c9a73a5306ed7c2809",
+    "eval/fixtures/mcp/external-links-search-schuylkill.json": "704f84809f51978e597dfef74edb97d5999f91a8218c4ab87cadfa9d0351ec38",
+    "eval/fixtures/mcp/external-links-search-schuylkill-1870-census.json": "0bb34f3b4b2d4ed958c67cfb791785e596ea3242cd6f424078927795b5d647af",
+    "eval/fixtures/mcp/external-links-search-zero-results.json": "ed1f6029b0a128f13dfa3033d66960f6eaace0c38970e983c73724c3de07ebf4",
+    "eval/fixtures/mcp/place-search-baiersbronn.json": "06d5a43f751cc83f0ee4df9439f5ad18c88bbd8f74297ed39295a26e9f68edb2",
+    "eval/fixtures/mcp/place-search-ireland.json": "cd31839e4d7aeed75a120a7e9d2a5b4d5bc67d6a60048a6b9d4055df39fe3c5b",
+    "eval/fixtures/mcp/place-search-ireland-by-name.json": "e23ca058076cb57ea1fd719e0b1a5c9a4bb6afdfefb11e88ee93498ecd1e2ed5",
+    "eval/fixtures/mcp/place-search-ireland-by-place.json": "5439c5df4b13aa66a5e50e49b439812c8db08164d46cc7731e8d815e48f3a6cf",
+    "eval/fixtures/mcp/place-search-massachusetts.json": "6a79dbd426b07912812ebb0b1caa2060145d462fab6db06bd91268bcf17e3275",
+    "eval/fixtures/mcp/place-search-pennsylvania.json": "4a4d6585cc9a9e4c2ff952aa3b55a172e0050689e772a9976022d95cdc0d45f2",
+    "eval/fixtures/mcp/place-search-pennsylvania-by-name.json": "bb72d4d15a8f6cde1688cb46393b9eeb931245cb0e7a7a7df8e027e66d03a35e",
+    "eval/fixtures/mcp/place-search-pennsylvania-by-place.json": "23c100903edd6c0dd69992a64539820e9c5f811f88fd2fd2e0fbf551e14457bc",
+    "eval/fixtures/mcp/place-search-schuylkill-by-name.json": "9ef0e099326ccfc98288e19dbf7b07f4c3507542c609a1b6593f2c2c0ff8bfed",
+    "eval/fixtures/mcp/place-search-schuylkill-by-place.json": "9c9c9d0721e2fdb7f2011283c8e401221791dc47668fb3431742daa017aa4479",
+    "eval/fixtures/mcp/place-search-schuylkill-county.json": "6edf894822d7af4d413d1605f9ae7a9b7782c6c515def3a8454a6a7959db31bf",
+    "eval/fixtures/mcp/place-search-united-states.json": "e47b5f3235c75f4495b6fbd0e54c5bdd726f3cd5a1a99039f6457af8adc829da"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_external_sites_hbk",
+      "test_type": "negative",
+      "expected_outcome": "pass",
+      "scenario": "mid-research-flynn",
+      "mcp_fixtures": [],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the user's question about which external sites to search next is a planning task, not a site-search task. The delegation asked for site prioritization, which belongs to research-plan, not search-external-sites. Claude's response accurately declined the task and routed to the correct skill."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude provided the complete correct response for a negative test: a clear, accurate decline with explicit routing to research-plan. The test author specified 'the correct reply is a one-line hand-back naming research-plan,' and Claude delivered exactly that. No substantive output was produced when none should have been."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. Claude declined to invoke search-external-sites and instead routed to research-plan, which is the correct behavior for this negative test. N/A applies because zero tool calls were made."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "Claude correctly identified that the user's question about which external sites to search next is a planning task, not a site-search task. The delegation asked for site prioritization, which belongs to research-plan, not search-external-sites. Claude's response accurately declined the task and routed to the correct skill."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "Claude provided the complete correct response for a negative test: a clear, accurate decline with explicit routing to research-plan. The test author specified 'the correct reply is a one-line hand-back naming research-plan,' and Claude delivered exactly that. No substantive output was produced when none should have been."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": null,
+            "rationale": "No MCP tool calls were made. Claude declined to invoke search-external-sites and instead routed to research-plan, which is the correct behavior for this negative test. N/A applies because zero tool calls were made."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 7817.282874995726,
+        "duration_api_ms": 7597.0,
+        "judge_duration_ms": 3686.241792005603,
+        "wall_clock_ms": 11752.722263336182,
+        "num_turns": 2,
+        "input_tokens": 553,
+        "cached_input_tokens": 27912,
+        "cache_creation_input_tokens": 34852,
+        "output_tokens": 264,
+        "judge_input_tokens": 11053,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 325,
+        "skill_cost_usd": 0.14346360000000002,
+        "judge_cost_usd": 0.012678,
+        "total_cost_usd": 0.15614160000000002
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_external_sites_hbk_2026-10-12_23-32-19_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 7817.282874995726,
+          "duration_api_ms": 7597.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 553,
+          "cached_input_tokens": 27912,
+          "cache_creation_input_tokens": 34852,
+          "output_tokens": 264,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 547,
+              "outputTokens": 13,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006119999999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 6,
+              "outputTokens": 251,
+              "cacheReadInputTokens": 27912,
+              "cacheCreationInputTokens": 34852,
+              "webSearchRequests": 0,
+              "costUSD": 0.14285160000000002,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "search-external-sites",
+              "description": "Search external sites for Patrick Flynn's parents",
+              "num_assistant_turns": 1,
+              "max_output_tokens": 34,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 3,
+                "output_tokens": 34,
+                "cache_read_input_tokens": 0,
+                "cache_creation_input_tokens": 21772
+              },
+              "peak_window_tokens": 21775,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 2.176
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20645,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.14346360000000002,
+          "output": {
+            "text_response": "That's a planning question \u2014 picking and prioritizing which sites to search is **research-plan**'s job, not mine. Hand it to research-plan.",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": [],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Search external sites for Patrick Flynn's parents",
+                  "prompt": "Which external sites should we search next to find Patrick Flynn's parents? Pick the best ones and work out the order.\n\nuserPresent: yes\nprojectPath: <workspace>",
+                  "subagent_type": "search-external-sites"
+                }
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "search-external-sites",
+                "text": "That's a planning question \u2014 picking and prioritizing which sites to search is research-plan's job, not mine. Hand it to research-plan."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: no new ParentChild relationships",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_archion_browse_handoff",
+                "passed": true,
+                "error": "skipped: not an archion-browse scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_capture_pending_item_not_terminal",
+                "passed": true,
+                "error": "skipped: this run changed no plan-item status",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_entries_do_not_carry_each_others_fields",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_site_ancestry",
+                "passed": true,
+                "error": "skipped: not a log-site-ancestry scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_site_digital_newspaper_archive",
+                "passed": true,
+                "error": "skipped: not a log-site-digital_newspaper_archive scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_site_findagrave",
+                "passed": true,
+                "error": "skipped: not a log-site-findagrave scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_site_findmypast",
+                "passed": true,
+                "error": "skipped: not a log-site-findmypast scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_site_myheritage",
+                "passed": true,
+                "error": "skipped: not a log-site-myheritage scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_site_newspapers",
+                "passed": true,
+                "error": "skipped: not a log-site-newspapers scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_external_search_or_log_on_routeaway_negative",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_hand_composed_external_site_url",
+                "passed": true,
+                "error": "skipped: only positive tests generate URLs",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_plan_item_status_written_when_no_entry_names_one",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_plan_items_are_updated_never_appended",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_positive_appends_external_site_log_entry",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_resolved_birthplace_conflict_rejected_value_not_encoded",
+                "passed": true,
+                "error": "skipped: only positive tests generate URLs",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_the_log_is_append_only",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_the_url_logged_is_the_url_presented",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_triage_closes_its_open_handoff",
+                "passed": true,
+                "error": "skipped: not a triage-closes-handoff scenario",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_url_generation_log_entry_shape",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_writes_only_to_log_and_plans",
+                "passed": true,
+                "error": "skipped: only positive tests record log entries",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "Claude correctly identified that the user's question about which external sites to search next is a planning task, not a site-search task. The delegation asked for site prioritization, which belongs to research-plan, not search-external-sites. Claude's response accurately declined the task and routed to the correct skill."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "Claude provided the complete correct response for a negative test: a clear, accurate decline with explicit routing to research-plan. The test author specified 'the correct reply is a one-line hand-back naming research-plan,' and Claude delivered exactly that. No substantive output was produced when none should have been."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": null,
+                "rationale": "No MCP tool calls were made. Claude declined to invoke search-external-sites and instead routed to research-plan, which is the correct behavior for this negative test. N/A applies because zero tool calls were made."
+              }
+            ],
+            "judge_cost_usd": 0.012678,
+            "duration_ms": 3686.241792005603,
+            "error": null,
+            "input_tokens": 11053,
+            "cached_input_tokens": 0,
+            "output_tokens": 325
+          },
+          "started_at": 1791848188.738577,
+          "ended_at": 1791848200.4912992
+        }
+      ],
+      "grading_mode": "invariant",
+      "dimensions_gate_outcome": false
+    }
+  ],
+  "totals": {
+    "duration_ms": 7817.282874995726,
+    "duration_api_ms": 7597.0,
+    "judge_duration_ms": 3686.241792005603,
+    "num_turns": 2,
+    "input_tokens": 553,
+    "cached_input_tokens": 27912,
+    "cache_creation_input_tokens": 34852,
+    "output_tokens": 264,
+    "judge_input_tokens": 11053,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 325,
+    "skill_cost_usd": 0.14346360000000002,
+    "judge_cost_usd": 0.012678,
+    "total_cost_usd": 0.15614160000000002,
+    "wall_clock_ms": 11752.722263336182
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}

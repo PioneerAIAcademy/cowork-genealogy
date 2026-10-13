@@ -1,0 +1,3820 @@
+{
+  "schema_version": 3,
+  "skill": "search-familysearch-wiki",
+  "version": null,
+  "released": false,
+  "releasable": false,
+  "invocation": "test",
+  "timestamp": "2026-10-12_18-32-21",
+  "harness_version": "0.1.0",
+  "model": "claude-sonnet-4-6",
+  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "snapshot": {
+    "packages/engine/plugin/agents/search-familysearch-wiki.md": "2d0b894e1d27d87d93873bc50386a48291382517d8f71d41feff2f5b3fffe984",
+    "eval/tests/unit/search-familysearch-wiki/census-records.json": "56371a873880da3b1aa6cc1246b655f23aa31ee0fc40f3f5dd87243ab6546148",
+    "eval/tests/unit/search-familysearch-wiki/church-records.json": "1501b07b84f6761d9193bbc65ac9429e8033c2adc37c5d653d0994ea635f5d63",
+    "eval/tests/unit/search-familysearch-wiki/death-records.json": "b2cd5eb9f4763cc4cd209f1ee9184a2e2ccfcdcdfdec55c1eeb172bc468c2c97",
+    "eval/tests/unit/search-familysearch-wiki/empty-results.json": "f5fd9d26bc94c6b1732fd67b7892ac2d059f4fae156136c56aee6fae007eb9b7",
+    "eval/tests/unit/search-familysearch-wiki/find-italian-birth-records.json": "a99fb9a12defaa4e5863918065dfdd4d10e86601b4433f2b02538fe02341eb9b",
+    "eval/tests/unit/search-familysearch-wiki/german-ancestors.json": "24c7c8920ec6556db0889a79e3523b65e0c58de2e8663cfb8b0242e8e5c9ae77",
+    "eval/tests/unit/search-familysearch-wiki/how-to-german-church-records.json": "865698efdfcc2b5731a9e9131ab78626627616921d81c3916234c95510a19028",
+    "eval/tests/unit/search-familysearch-wiki/immigration-records.json": "63a01629785a7fcbd704bf8ceff1e6da0ee254ea7722ae9e9f9eef6392203407",
+    "eval/tests/unit/search-familysearch-wiki/irish-immigration.json": "5a6c4eb21bf7efe477714318a601547ff8d798c7ce02b325c56dc5014f5b40cf",
+    "eval/tests/unit/search-familysearch-wiki/land-records.json": "1783fd67b3caecde915a9d1a4aa5ff5ee2e922cdd81317b92345eb8a7203f30d",
+    "eval/tests/unit/search-familysearch-wiki/marriage-records.json": "812075cebec2997b0fef4e8a822afc3c9e7c84ed80c9049552c09d1871d08be5",
+    "eval/tests/unit/search-familysearch-wiki/military-records.json": "e8767ac55736cb7e80e3afb083455e48220bf1f7890e39f32fce8753752ca0f9",
+    "eval/tests/unit/search-familysearch-wiki/probate-records.json": "08afca12737f4b45fab6fb8e9de1f9ba6b310b08eb909ca3e8081198997faf83",
+    "eval/tests/unit/search-familysearch-wiki/rubric.md": "4cc8f88256ce32a440a5b621f2e1146a7ad499c0007ae81564a3011c910ddec5",
+    "eval/fixtures/mcp/wiki-search-census-records.json": "5ceaaf6e6f40f2a5bb1620dc2f080518ea44655a50d6ba59249ede84d8f929cc",
+    "eval/fixtures/mcp/wiki-search-church-records.json": "ea45770ca52979afcc5502245fcf3d547fac34ed1b327581c0bee60fce5f4b44",
+    "eval/fixtures/mcp/wiki-search-death-records.json": "08f53e05b407283c98cd5268d3d137c678fd9843db1bbc7cec2b5a5d563e21c2",
+    "eval/fixtures/mcp/wiki-search-empty-results.json": "193e905a558138ddc8ec656cbbc72aa97dd7faeaf20836458ff2f01c9160f4cf",
+    "eval/fixtures/mcp/wiki-search-german-ancestors.json": "48de9fba6c8a4ae7c8c30bc2f00267d20b963b025aa24f177709eebbe478f50c",
+    "eval/fixtures/mcp/wiki-search-german-church-records.json": "b78514c0ba14256192f8f205f93710e953bd5388e48afe057dd4de6a07c99943",
+    "eval/fixtures/mcp/wiki-search-immigration-records.json": "3361849c95d518fe6f5ddcde484a9818f5a1d1b0d2a92bcd11af9955aafc5f6e",
+    "eval/fixtures/mcp/wiki-search-irish-immigration.json": "5a46c5bd6a1af74286f14fd52960ffd756769a33e2ec1804c98fc93392a4adc6",
+    "eval/fixtures/mcp/wiki-search-italian-birth-records.json": "3203e087622dd2aaf148b4d3e88b453bc7a9a7c9cb66e94e9d2bdda944174bae",
+    "eval/fixtures/mcp/wiki-search-land-records.json": "35da014df1a9432d5ebd88ec7771f6488dbd62dba785981c12e5de119231afeb",
+    "eval/fixtures/mcp/wiki-search-marriage-records.json": "0c44aa648be82a051b2208e42411a9262a04c7ca648c6c731adb58b03e1e57e7",
+    "eval/fixtures/mcp/wiki-search-military-records.json": "9842f6404b3333fe036ac4b354675517615a3d5cf34da06df3088aa4d30198f1",
+    "eval/fixtures/mcp/wiki-search-probate-records.json": "5bbac561ed501bd38c4e69739dd41e2991429b4d2284314f35cab72b2cc20715"
+  },
+  "tests": [
+    {
+      "test_id": "ut_search_wiki_008",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-census-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1157.3656249966007,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 12038.216352462769,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_008_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1157.3656249966007,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to use census records to trace my family\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: no file written; covered by test_wrote_exactly_one_markdown_file",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['census-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831964.2376168,
+          "ended_at": 1791831976.2758331
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_012",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-church-records"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's response is factually accurate. The tool returned three wiki chunks about Irish church records, and Claude's summary faithfully reflects their content: the types of records (baptism, marriage, burial), the denominations (Roman Catholic and Church of Ireland), the timeframes (Catholic registers from early 1800s, Church of Ireland from 1700s), the 1922 Public Record Office fire, and the availability on FamilySearch.org and at the National Library of Ireland and Representative Church Body Library. No fabricated material or unsupported claims are present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's request completely. It searched the wiki for guidance on finding church records for Irish ancestors, received three relevant results covering overview, access methods, and record contents, and saved the guidance with sources. The response explains where records are held (FamilySearch, National Library of Ireland, Representative Church Body Library) and how to access them, fulfilling the per-test requirement."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed correct arguments. Claude called mcp__genealogy__wiki_search with query 'How do I find church records for Irish ancestors?', which matches the expected_args predicate of ~church (contains 'church'). The query is a natural-language question about finding church records for Irish ancestors, exactly as required by the per-test context."
+          },
+          {
+            "source": "rubric",
+            "name": "File saved correctly",
+            "score": 3,
+            "rationale": "The skill saved the output to `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_012-0-0-19qzk_q1/irish-church-records.md`. The filename slug 'irish-church-records' is correctly derived from the topic 'Irish church records' \u2014 lowercased, with hyphens replacing spaces and non-alphanumeric characters, no leading or trailing hyphens."
+          },
+          {
+            "source": "rubric",
+            "name": "Sources cited correctly",
+            "score": 3,
+            "rationale": "Claude's response states the file 'includes a Sources section citing the wiki pages used.' The tool response provides three results with page_title, section_heading, and source_url for each. The deterministic validator test_sources_section_matches_wiki_results passed (no failures listed), confirming the Sources section contains properly formatted bullets matching the tool response. The format requirement of `- [page_title \u2014 section_heading](source_url)` is satisfied."
+          },
+          {
+            "source": "rubric",
+            "name": "Summary faithful to wiki content",
+            "score": 3,
+            "rationale": "Every claim in Claude's summary is traceable to the chunk_text returned by the tool. The summary mentions: church records as important sources (chunk 1), Roman Catholic and Church of Ireland denominations (chunk 1), timeframes for registers (chunk 1), the 1922 Public Record Office fire (chunk 1), FamilySearch digitization (chunk 1), access via FamilySearch.org (chunk 2), the National Library of Ireland holdings (chunk 2), and the Representative Church Body Library (chunk 2). No outside facts or fabricated guidance were added."
+          },
+          {
+            "source": "rubric",
+            "name": "No-result handling (negative path)",
+            "score": null,
+            "rationale": "This test did not exercise the empty-results path. The wiki search returned three relevant results with high relevance scores (0.93, 0.89, 0.84), so the no-result handling dimension is N/A."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's response is factually accurate. The tool returned three wiki chunks about Irish church records, and Claude's summary faithfully reflects their content: the types of records (baptism, marriage, burial), the denominations (Roman Catholic and Church of Ireland), the timeframes (Catholic registers from early 1800s, Church of Ireland from 1700s), the 1922 Public Record Office fire, and the availability on FamilySearch.org and at the National Library of Ireland and Representative Church Body Library. No fabricated material or unsupported claims are present."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's request completely. It searched the wiki for guidance on finding church records for Irish ancestors, received three relevant results covering overview, access methods, and record contents, and saved the guidance with sources. The response explains where records are held (FamilySearch, National Library of Ireland, Representative Church Body Library) and how to access them, fulfilling the per-test requirement."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed correct arguments. Claude called mcp__genealogy__wiki_search with query 'How do I find church records for Irish ancestors?', which matches the expected_args predicate of ~church (contains 'church'). The query is a natural-language question about finding church records for Irish ancestors, exactly as required by the per-test context."
+          },
+          {
+            "source": "rubric",
+            "name": "File saved correctly",
+            "score": 3,
+            "rationale": "The skill saved the output to `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_012-0-0-19qzk_q1/irish-church-records.md`. The filename slug 'irish-church-records' is correctly derived from the topic 'Irish church records' \u2014 lowercased, with hyphens replacing spaces and non-alphanumeric characters, no leading or trailing hyphens."
+          },
+          {
+            "source": "rubric",
+            "name": "Sources cited correctly",
+            "score": 3,
+            "rationale": "Claude's response states the file 'includes a Sources section citing the wiki pages used.' The tool response provides three results with page_title, section_heading, and source_url for each. The deterministic validator test_sources_section_matches_wiki_results passed (no failures listed), confirming the Sources section contains properly formatted bullets matching the tool response. The format requirement of `- [page_title \u2014 section_heading](source_url)` is satisfied."
+          },
+          {
+            "source": "rubric",
+            "name": "Summary faithful to wiki content",
+            "score": 3,
+            "rationale": "Every claim in Claude's summary is traceable to the chunk_text returned by the tool. The summary mentions: church records as important sources (chunk 1), Roman Catholic and Church of Ireland denominations (chunk 1), timeframes for registers (chunk 1), the 1922 Public Record Office fire (chunk 1), FamilySearch digitization (chunk 1), access via FamilySearch.org (chunk 2), the National Library of Ireland holdings (chunk 2), and the Representative Church Body Library (chunk 2). No outside facts or fabricated guidance were added."
+          },
+          {
+            "source": "rubric",
+            "name": "No-result handling (negative path)",
+            "score": null,
+            "rationale": "This test did not exercise the empty-results path. The wiki search returned three relevant results with high relevance scores (0.93, 0.89, 0.84), so the no-result handling dimension is N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 19866.402291998384,
+        "duration_api_ms": 19792.0,
+        "judge_duration_ms": 11384.502250002697,
+        "wall_clock_ms": 31540.506839752197,
+        "num_turns": 2,
+        "input_tokens": 537,
+        "cached_input_tokens": 37914,
+        "cache_creation_input_tokens": 17298,
+        "output_tokens": 1154,
+        "judge_input_tokens": 7883,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 986,
+        "skill_cost_usd": 0.0939347,
+        "judge_cost_usd": 0.012813,
+        "total_cost_usd": 0.1067477
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_012_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 19866.402291998384,
+          "duration_api_ms": 19792.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 537,
+          "cached_input_tokens": 37914,
+          "cache_creation_input_tokens": 17298,
+          "output_tokens": 1154,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 529,
+              "outputTokens": 17,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.000614,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 8,
+              "outputTokens": 1137,
+              "cacheReadInputTokens": 37914,
+              "cacheCreationInputTokens": 17298,
+              "webSearchRequests": 0,
+              "costUSD": 0.09332069999999999,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "search-familysearch-wiki",
+              "description": "Search FamilySearch wiki for Irish church records",
+              "num_assistant_turns": 3,
+              "max_output_tokens": 554,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 5,
+                "output_tokens": 810,
+                "cache_read_input_tokens": 10012,
+                "cache_creation_input_tokens": 4090
+              },
+              "peak_window_tokens": 5381,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 12.008
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20773,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.0939347,
+          "output": {
+            "text_response": "The FamilySearch wiki guidance has been saved to **`irish-church-records.md`** in your working folder.\n\nHere's a summary of what it covers:\n\n- **Types of records available** for Irish ancestors (baptisms, marriages, burials, etc.)\n- **Where they are held** \u2014 including freely searchable collections on **FamilySearch.org**, as well as holdings at the:\n  - **National Library of Ireland**\n  - **Representative Church Body Library** (Dublin)\n\nYou can open `irish-church-records.md` to read the full guidance, including direct links and collection names to search. Would you like to proceed with searching for a specific ancestor or county in Ireland?",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wiki_search",
+                "args": {
+                  "query": "How do I find church records for Irish ancestors?"
+                },
+                "expected_args": {
+                  "query": "~church"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wiki-search-church-records"
+              }
+            ],
+            "files_created": [
+              "irish-church-records.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Search FamilySearch wiki for Irish church records",
+                  "prompt": "Search the FamilySearch wiki for how to find church records for my Irish ancestors",
+                  "subagent_type": "search-familysearch-wiki"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_012-0-0-19qzk_q1/irish-church-records.md",
+                  "content": "# FamilySearch Wiki: Irish Church Records\n\nChurch records are among the most important sources for Irish genealogy research. The two main denominations that kept parish registers in Ireland were the R"
+                },
+                "agent_id": "ae339faa158a4fe7e"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "search-familysearch-wiki",
+                "text": "Saved as `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_012-0-0-19qzk_q1/irish-church-records.md`, which includes a Sources section citing the wiki pages used.\n\n---\n\nA search of the FamilySearch Research Wiki was carried out for guidance on finding church records for Irish ancestors, and the guidance that came back \u2014 covering the types of records available, where they are held, and what information they typically contain \u2014 has been saved along with the wiki pages it came from.\n\nThe next step is to review that saved guidance, which points to freely searchable collections at FamilySearch.org as well as holdings at the National Library of Ireland and the Representative Church Body Library in Dublin."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill's response is factually accurate. The tool returned three wiki chunks about Irish church records, and Claude's summary faithfully reflects their content: the types of records (baptism, marriage, burial), the denominations (Roman Catholic and Church of Ireland), the timeframes (Catholic registers from early 1800s, Church of Ireland from 1700s), the 1922 Public Record Office fire, and the availability on FamilySearch.org and at the National Library of Ireland and Representative Church Body Library. No fabricated material or unsupported claims are present."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user's request completely. It searched the wiki for guidance on finding church records for Irish ancestors, received three relevant results covering overview, access methods, and record contents, and saved the guidance with sources. The response explains where records are held (FamilySearch, National Library of Ireland, Representative Church Body Library) and how to access them, fulfilling the per-test requirement."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed correct arguments. Claude called mcp__genealogy__wiki_search with query 'How do I find church records for Irish ancestors?', which matches the expected_args predicate of ~church (contains 'church'). The query is a natural-language question about finding church records for Irish ancestors, exactly as required by the per-test context."
+              },
+              {
+                "source": "rubric",
+                "name": "File saved correctly",
+                "score": 3,
+                "rationale": "The skill saved the output to `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_012-0-0-19qzk_q1/irish-church-records.md`. The filename slug 'irish-church-records' is correctly derived from the topic 'Irish church records' \u2014 lowercased, with hyphens replacing spaces and non-alphanumeric characters, no leading or trailing hyphens."
+              },
+              {
+                "source": "rubric",
+                "name": "Sources cited correctly",
+                "score": 3,
+                "rationale": "Claude's response states the file 'includes a Sources section citing the wiki pages used.' The tool response provides three results with page_title, section_heading, and source_url for each. The deterministic validator test_sources_section_matches_wiki_results passed (no failures listed), confirming the Sources section contains properly formatted bullets matching the tool response. The format requirement of `- [page_title \u2014 section_heading](source_url)` is satisfied."
+              },
+              {
+                "source": "rubric",
+                "name": "Summary faithful to wiki content",
+                "score": 3,
+                "rationale": "Every claim in Claude's summary is traceable to the chunk_text returned by the tool. The summary mentions: church records as important sources (chunk 1), Roman Catholic and Church of Ireland denominations (chunk 1), timeframes for registers (chunk 1), the 1922 Public Record Office fire (chunk 1), FamilySearch digitization (chunk 1), access via FamilySearch.org (chunk 2), the National Library of Ireland holdings (chunk 2), and the Representative Church Body Library (chunk 2). No outside facts or fabricated guidance were added."
+              },
+              {
+                "source": "rubric",
+                "name": "No-result handling (negative path)",
+                "score": null,
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned three relevant results with high relevance scores (0.93, 0.89, 0.84), so the no-result handling dimension is N/A."
+              }
+            ],
+            "judge_cost_usd": 0.012813,
+            "duration_ms": 11384.502250002697,
+            "error": null,
+            "input_tokens": 7883,
+            "cached_input_tokens": 0,
+            "output_tokens": 986
+          },
+          "started_at": 1791831931.902553,
+          "ended_at": 1791831963.44306
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_007",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-death-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1517.4204999930225,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8023.159980773926,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_007_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1517.4204999930225,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to find death records for someone who died in the 1800s\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['death-records-1800s.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831980.8808908,
+          "ended_at": 1791831988.9040508
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_016",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-empty-results"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1261.1296249961015,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7934.687852859497,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_016_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1261.1296249961015,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for blockchain birth certificate records\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": true,
+                "error": "skipped: test declares no expects-file-<name> tag",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no file is written on the empty-results path",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": true,
+                "error": "skipped: empty-results path is covered by test_no_file_on_empty_results",
+                "outcome": "skipped"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832022.406374,
+          "ended_at": 1791832030.3410618
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_001",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-italian-birth-records"
+      ],
+      "outcome": "pass",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "pass"
+        ],
+        "aggregated_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's output is factually correct. The tool returned three wiki results about Italian birth records, and Claude's text response accurately reflects that guidance was found and saved. The response does not fabricate material or contradict the tool results. The claim that a file was saved with a Sources section citing wiki pages is supported by the tool call and the per-test context requirements."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's request fully. The delegation asked for a search of the FamilySearch wiki for guidance on finding Italian birth records. Claude called the wiki_search tool with an appropriate natural-language query, received three relevant results, and reported that the guidance was saved to a file with sources cited. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed correct arguments. Claude called mcp__genealogy__wiki_search with query 'How do I find Italian birth records?', which matches the expected_args pattern '~Italian' and is a natural-language query about the topic as required. The call matched successfully (matched.kind == 'predicate') and returned three relevant results. No fixture_not_found errors occurred."
+          },
+          {
+            "source": "rubric",
+            "name": "File saved correctly",
+            "score": 3,
+            "rationale": "Claude reported that the file was saved to `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_001-0-0-e1c_xjd7/italian-birth-records.md`. The filename slug 'italian-birth-records' is correctly derived from the topic 'Italian birth records' \u2014 lowercased, with non-alphanumeric runs replaced by single hyphens, no leading or trailing hyphens. This matches the required format."
+          },
+          {
+            "source": "rubric",
+            "name": "Sources cited correctly",
+            "score": 3,
+            "rationale": "Claude's text response states that the saved file 'includes a Sources section citing the wiki pages used.' The tool response provides three results with page_title, section_heading, and source_url for each: 'Italy Civil Registration#Birth_Records', 'Italy Church Records#Baptisms', and 'Italy Civil Registration#How_to_Access_the_Records'. The deterministic validator test_sources_section_matches_wiki_results passed (no failures listed), confirming the sources section was formatted correctly with proper URLs from the tool response."
+          },
+          {
+            "source": "rubric",
+            "name": "Summary faithful to wiki content",
+            "score": 3,
+            "rationale": "Claude's text response is brief and does not include a detailed summary that could be checked against chunk_text. The response states that 'guidance that was found has been saved' and notes that 'a genealogy research agent can use that guidance to help locate specific ancestors in Italian civil or church records.' This latter statement is traceable to the tool results, which discuss civil registration and church records. No fabricated facts, dates, or repository names beyond what the wiki returned are present in Claude's response."
+          },
+          {
+            "source": "rubric",
+            "name": "No-result handling (negative path)",
+            "score": null,
+            "rationale": "This test did not exercise the empty-results path. The wiki search returned three relevant results, so the negative-path handling code was not triggered. N/A."
+          }
+        ],
+        "review_dimensions": [
+          {
+            "source": "base",
+            "name": "Correctness",
+            "score": 3,
+            "rationale": "The skill's output is factually correct. The tool returned three wiki results about Italian birth records, and Claude's text response accurately reflects that guidance was found and saved. The response does not fabricate material or contradict the tool results. The claim that a file was saved with a Sources section citing wiki pages is supported by the tool call and the per-test context requirements."
+          },
+          {
+            "source": "base",
+            "name": "Completeness",
+            "score": 3,
+            "rationale": "The skill addressed the user's request fully. The delegation asked for a search of the FamilySearch wiki for guidance on finding Italian birth records. Claude called the wiki_search tool with an appropriate natural-language query, received three relevant results, and reported that the guidance was saved to a file with sources cited. No required elements were omitted."
+          },
+          {
+            "source": "base",
+            "name": "Tool Arguments",
+            "score": 3,
+            "rationale": "The tool call passed correct arguments. Claude called mcp__genealogy__wiki_search with query 'How do I find Italian birth records?', which matches the expected_args pattern '~Italian' and is a natural-language query about the topic as required. The call matched successfully (matched.kind == 'predicate') and returned three relevant results. No fixture_not_found errors occurred."
+          },
+          {
+            "source": "rubric",
+            "name": "File saved correctly",
+            "score": 3,
+            "rationale": "Claude reported that the file was saved to `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_001-0-0-e1c_xjd7/italian-birth-records.md`. The filename slug 'italian-birth-records' is correctly derived from the topic 'Italian birth records' \u2014 lowercased, with non-alphanumeric runs replaced by single hyphens, no leading or trailing hyphens. This matches the required format."
+          },
+          {
+            "source": "rubric",
+            "name": "Sources cited correctly",
+            "score": 3,
+            "rationale": "Claude's text response states that the saved file 'includes a Sources section citing the wiki pages used.' The tool response provides three results with page_title, section_heading, and source_url for each: 'Italy Civil Registration#Birth_Records', 'Italy Church Records#Baptisms', and 'Italy Civil Registration#How_to_Access_the_Records'. The deterministic validator test_sources_section_matches_wiki_results passed (no failures listed), confirming the sources section was formatted correctly with proper URLs from the tool response."
+          },
+          {
+            "source": "rubric",
+            "name": "Summary faithful to wiki content",
+            "score": 3,
+            "rationale": "Claude's text response is brief and does not include a detailed summary that could be checked against chunk_text. The response states that 'guidance that was found has been saved' and notes that 'a genealogy research agent can use that guidance to help locate specific ancestors in Italian civil or church records.' This latter statement is traceable to the tool results, which discuss civil registration and church records. No fabricated facts, dates, or repository names beyond what the wiki returned are present in Claude's response."
+          },
+          {
+            "source": "rubric",
+            "name": "No-result handling (negative path)",
+            "score": null,
+            "rationale": "This test did not exercise the empty-results path. The wiki search returned three relevant results, so the negative-path handling code was not triggered. N/A."
+          }
+        ]
+      },
+      "totals": {
+        "duration_ms": 26039.131917001214,
+        "duration_api_ms": 25798.0,
+        "judge_duration_ms": 11687.027916996158,
+        "wall_clock_ms": 37884.87195968628,
+        "num_turns": 2,
+        "input_tokens": 536,
+        "cached_input_tokens": 36530,
+        "cache_creation_input_tokens": 18420,
+        "output_tokens": 1345,
+        "judge_input_tokens": 7726,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 929,
+        "skill_cost_usd": 0.10058099999999999,
+        "judge_cost_usd": 0.012371,
+        "total_cost_usd": 0.112952
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_001_2026-10-12_18-32-21_0",
+          "outcome": "pass",
+          "aborted_reason": null,
+          "error": null,
+          "duration_ms": 26039.131917001214,
+          "duration_api_ms": 25798.0,
+          "num_turns": 2,
+          "skill_attempts": 1,
+          "input_tokens": 536,
+          "cached_input_tokens": 36530,
+          "cache_creation_input_tokens": 18420,
+          "output_tokens": 1345,
+          "model_usage": {
+            "claude-haiku-4-5-20251001": {
+              "inputTokens": 528,
+              "outputTokens": 18,
+              "cacheReadInputTokens": 0,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.0006180000000000001,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            },
+            "claude-sonnet-4-6": {
+              "inputTokens": 8,
+              "outputTokens": 1327,
+              "cacheReadInputTokens": 36530,
+              "cacheCreationInputTokens": 18420,
+              "webSearchRequests": 0,
+              "costUSD": 0.099963,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "no_result_message": false,
+          "subagents": [
+            {
+              "agent_type": "search-familysearch-wiki",
+              "description": "Search FamilySearch wiki for Italian birth records",
+              "num_assistant_turns": 3,
+              "max_output_tokens": 520,
+              "hit_output_cap": false,
+              "runaway_thinking": false,
+              "usage": {
+                "input_tokens": 5,
+                "output_tokens": 737,
+                "cache_read_input_tokens": 8628,
+                "cache_creation_input_tokens": 5251
+              },
+              "peak_window_tokens": 5252,
+              "compactions": [],
+              "models": [
+                "claude-sonnet-4-6"
+              ],
+              "duration_seconds": 11.572
+            }
+          ],
+          "subagent_capture_status": "captured",
+          "main_thread": {
+            "peak_window_tokens": 20734,
+            "compactions": [],
+            "models": [
+              "claude-sonnet-4-6"
+            ]
+          },
+          "skill_cost_usd": 0.10058099999999999,
+          "output": {
+            "text_response": "The FamilySearch wiki has been searched and the guidance has been saved to **`italian-birth-records.md`** in your working folder.\n\nHere's a summary of what was found:\n\n---\n\n## How to Find Italian Birth Records\n\nItalian genealogical records generally fall into two main categories:\n\n### 1. Civil Registration Records (Stato Civile) \u2014 1809 onward\n- **Napoleon introduced** civil registration in Italy around 1809\u20131815, though dates vary by region.\n- After Italian unification (1861), civil registration became standardized nationwide.\n- Birth records (*atti di nascita*) were kept by local municipalities (*comuni*).\n- **Where to find them:** Many are available on FamilySearch in the collection *Italy, Civil Registration (Stato Civile), 1804\u20131965*, organized by province and comune.\n\n### 2. Church (Parish) Records \u2014 Pre-civil registration\n- Before civil registration, baptism records (*battesimi*) were kept by Catholic parishes.\n- These can stretch back to the 1500s in some areas.\n- **Where to find them:** Many have been microfilmed and are available through FamilySearch; some are also held at diocesan archives or the local *Archivio di Stato* (State Archive).\n\n### Key Tips\n- Identify the **specific comune** (town/village) your ancestor came from \u2014 records are organized locally.\n- FamilySearch has digitized large portions of Italian civil and church records, searchable by name or browsable by film.\n- The **Archivio di Stato** in each province holds original civil records; many have been digitized.\n- For post-1865 records not on FamilySearch, you may need to write to the *comune* directly.\n\n---\n\nThe saved file includes the source wiki pages for further reading.",
+            "activated": true,
+            "skills_invoked": [],
+            "tool_calls": [
+              {
+                "tool": "mcp__genealogy__wiki_search",
+                "args": {
+                  "query": "How do I find Italian birth records?"
+                },
+                "expected_args": {
+                  "query": "~Italian"
+                },
+                "matched": {
+                  "kind": "predicate",
+                  "index": 0
+                },
+                "response_fixture": "wiki-search-italian-birth-records"
+              }
+            ],
+            "files_created": [
+              "italian-birth-records.md"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Agent",
+                "args": {
+                  "description": "Search FamilySearch wiki for Italian birth records",
+                  "prompt": "Search the FamilySearch wiki for guidance on how to find Italian birth records",
+                  "subagent_type": "search-familysearch-wiki"
+                }
+              },
+              {
+                "tool": "Write",
+                "args": {
+                  "file_path": "/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_001-0-0-e1c_xjd7/italian-birth-records.md",
+                  "content": "# FamilySearch Wiki: Italian Birth Records\n\nCivil registration (Stato Civile) of births, marriages, and deaths began in most of Italy in 1809 under Napoleonic rule, lapsed in many regions after 1815, "
+                },
+                "agent_id": "a9635a88efba09747"
+              }
+            ],
+            "agent_returns": [
+              {
+                "subagent_type": "search-familysearch-wiki",
+                "text": "The file `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_001-0-0-e1c_xjd7/italian-birth-records.md` has been saved and includes a Sources section citing the wiki pages used.\n\n---\n\nA search was done in the FamilySearch Research Wiki for guidance on how to find Italian birth records, and the guidance that was found has been saved along with the wiki pages it came from.\n\nFrom here, a genealogy research agent can use that guidance to help locate specific ancestors in Italian civil or church records."
+              }
+            ]
+          },
+          "validators": {
+            "passed": true,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": false,
+            "dimensions": [
+              {
+                "source": "base",
+                "name": "Correctness",
+                "score": 3,
+                "rationale": "The skill's output is factually correct. The tool returned three wiki results about Italian birth records, and Claude's text response accurately reflects that guidance was found and saved. The response does not fabricate material or contradict the tool results. The claim that a file was saved with a Sources section citing wiki pages is supported by the tool call and the per-test context requirements."
+              },
+              {
+                "source": "base",
+                "name": "Completeness",
+                "score": 3,
+                "rationale": "The skill addressed the user's request fully. The delegation asked for a search of the FamilySearch wiki for guidance on finding Italian birth records. Claude called the wiki_search tool with an appropriate natural-language query, received three relevant results, and reported that the guidance was saved to a file with sources cited. No required elements were omitted."
+              },
+              {
+                "source": "base",
+                "name": "Tool Arguments",
+                "score": 3,
+                "rationale": "The tool call passed correct arguments. Claude called mcp__genealogy__wiki_search with query 'How do I find Italian birth records?', which matches the expected_args pattern '~Italian' and is a natural-language query about the topic as required. The call matched successfully (matched.kind == 'predicate') and returned three relevant results. No fixture_not_found errors occurred."
+              },
+              {
+                "source": "rubric",
+                "name": "File saved correctly",
+                "score": 3,
+                "rationale": "Claude reported that the file was saved to `/private/var/folders/ml/615yqgf91nb_nb5lzkw2dtmc0000gp/T/eval-ut_search_wiki_001-0-0-e1c_xjd7/italian-birth-records.md`. The filename slug 'italian-birth-records' is correctly derived from the topic 'Italian birth records' \u2014 lowercased, with non-alphanumeric runs replaced by single hyphens, no leading or trailing hyphens. This matches the required format."
+              },
+              {
+                "source": "rubric",
+                "name": "Sources cited correctly",
+                "score": 3,
+                "rationale": "Claude's text response states that the saved file 'includes a Sources section citing the wiki pages used.' The tool response provides three results with page_title, section_heading, and source_url for each: 'Italy Civil Registration#Birth_Records', 'Italy Church Records#Baptisms', and 'Italy Civil Registration#How_to_Access_the_Records'. The deterministic validator test_sources_section_matches_wiki_results passed (no failures listed), confirming the sources section was formatted correctly with proper URLs from the tool response."
+              },
+              {
+                "source": "rubric",
+                "name": "Summary faithful to wiki content",
+                "score": 3,
+                "rationale": "Claude's text response is brief and does not include a detailed summary that could be checked against chunk_text. The response states that 'guidance that was found has been saved' and notes that 'a genealogy research agent can use that guidance to help locate specific ancestors in Italian civil or church records.' This latter statement is traceable to the tool results, which discuss civil registration and church records. No fabricated facts, dates, or repository names beyond what the wiki returned are present in Claude's response."
+              },
+              {
+                "source": "rubric",
+                "name": "No-result handling (negative path)",
+                "score": null,
+                "rationale": "This test did not exercise the empty-results path. The wiki search returned three relevant results, so the negative-path handling code was not triggered. N/A."
+              }
+            ],
+            "judge_cost_usd": 0.012371,
+            "duration_ms": 11687.027916996158,
+            "error": null,
+            "input_tokens": 7726,
+            "cached_input_tokens": 0,
+            "output_tokens": 929
+          },
+          "started_at": 1791831802.474249,
+          "ended_at": 1791831840.3591208
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_014",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-german-ancestors"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1461.9272499985527,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7817.906141281128,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_014_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1461.9272499985527,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to research my German ancestors\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['german-ancestors.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832008.203739,
+          "ended_at": 1791832016.021645
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_003",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-german-church-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1345.6724999996368,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8563.097953796387,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_003_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1345.6724999996368,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nHow do I find German church records for my ancestors?\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['german-church-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831993.735528,
+          "ended_at": 1791832002.298626
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_013",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-immigration-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1207.9752920108149,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8499.712944030762,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_013_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1207.9752920108149,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to find immigration records for my ancestors\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['immigration-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832004.679368,
+          "ended_at": 1791832013.179081
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_002",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-irish-immigration"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1222.9807080002502,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7766.849994659424,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_002_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1222.9807080002502,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki about Irish immigration to Pennsylvania\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['irish-immigration-pennsylvania.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791832011.236341,
+          "ended_at": 1791832019.003191
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_010",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-land-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1264.3970839999383,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 7537.41192817688,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_010_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1264.3970839999383,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to find land records for my ancestors in Pennsylvania\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['pennsylvania-land-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831978.960742,
+          "ended_at": 1791831986.498154
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_006",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-marriage-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1521.3496659998782,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8544.196844100952,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_006_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1521.3496659998782,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to find marriage records for my ancestors\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['marriage-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831987.0422232,
+          "ended_at": 1791831995.58642
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_009",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-military-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1282.5711250043241,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 8146.538972854614,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_009_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1282.5711250043241,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to find military service records for a Civil War ancestor\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['civil-war-military-service-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831978.029045,
+          "ended_at": 1791831986.175584
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    },
+    {
+      "test_id": "ut_search_wiki_011",
+      "test_type": "positive",
+      "expected_outcome": "pass",
+      "scenario": null,
+      "mcp_fixtures": [
+        "wiki-search-probate-records"
+      ],
+      "outcome": "aborted",
+      "flaky": false,
+      "outcome_summary": {
+        "per_run_outcomes": [
+          "aborted"
+        ],
+        "aggregated_dimensions": [],
+        "review_dimensions": []
+      },
+      "totals": {
+        "duration_ms": 1168.6969169968506,
+        "duration_api_ms": 0.0,
+        "judge_duration_ms": 0.0,
+        "wall_clock_ms": 13249.661922454834,
+        "num_turns": 1,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "output_tokens": 0,
+        "judge_input_tokens": 0,
+        "judge_cached_input_tokens": 0,
+        "judge_output_tokens": 0,
+        "skill_cost_usd": 0.0,
+        "judge_cost_usd": 0.0,
+        "total_cost_usd": 0.0
+      },
+      "runs": [
+        {
+          "run_index": 0,
+          "run_id": "run_ut_search_wiki_011_2026-10-12_18-32-21_0",
+          "outcome": "aborted",
+          "aborted_reason": "error",
+          "error": "Exception: Claude Code returned an error result: success",
+          "duration_ms": 1168.6969169968506,
+          "duration_api_ms": 0.0,
+          "num_turns": 1,
+          "skill_attempts": 3,
+          "input_tokens": 0,
+          "cached_input_tokens": 0,
+          "cache_creation_input_tokens": 0,
+          "output_tokens": 0,
+          "model_usage": {},
+          "no_result_message": false,
+          "subagents": [],
+          "subagent_capture_status": "matched_no_transcripts",
+          "main_thread": {
+            "peak_window_tokens": 0,
+            "compactions": [],
+            "models": []
+          },
+          "skill_cost_usd": 0.0,
+          "output": {
+            "text_response": "Your group's usage limit is set to $0",
+            "activated": false,
+            "skills_invoked": [],
+            "tool_calls": [],
+            "files_created": []
+          },
+          "validators": {
+            "passed": false,
+            "results": [
+              {
+                "name": "test_activated_run_produces_response",
+                "passed": true,
+                "error": "skipped: skill did not activate",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_decline_response_nonempty",
+                "passed": true,
+                "error": "skipped: positive test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_direct_delegation_relayed_verbatim",
+                "passed": false,
+                "error": "the main thread did not relay the delegation verbatim.\n\nEXPECTED to find, as an exact substring:\nSearch the FamilySearch wiki for how to find probate or will records for a deceased ancestor\n\nACTUAL spawn prompt(s):\n(no spawn prompt recorded)",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_direct_test_spawned_its_agent",
+                "passed": false,
+                "error": "direct test did not spawn its agent: expected subagent_type 'search-familysearch-wiki', recorded spawns = (none). A spawn with no `subagent_type` is a general-purpose subagent and does not count.",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_hand_back_names_its_owner",
+                "passed": true,
+                "error": "skipped: not a hand-back test",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_id_references_resolve",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_log_append_only",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_duplicate_tree_ids",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_entries_deleted",
+                "passed": true,
+                "error": "skipped: Missing research.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_no_main_thread_subagent_only_calls",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_out_of_lane_section_writes",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_no_raw_writes_to_protected_files",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing research.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_parent_child_age_plausibility_flagged",
+                "passed": true,
+                "error": "skipped: missing tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_file_changes_route_through_writer_tools",
+                "passed": true,
+                "error": "skipped: Missing research.json/tree.gedcomx.json for diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_project_files_pass_full_validation",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required for full cross-file validation",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_research_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No research.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_skill_calls_name_a_shipped_skill",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tool_allowlist",
+                "passed": true,
+                "error": null,
+                "outcome": "passed"
+              },
+              {
+                "name": "test_tree_facts_agree_with_linked_assertions",
+                "passed": true,
+                "error": "skipped: both research.json and tree.gedcomx.json required",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_gedcomx_json_validates_schema",
+                "passed": true,
+                "error": "skipped: No tree.gedcomx.json in output",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_tree_ownership_table",
+                "passed": true,
+                "error": "skipped: Missing tree.gedcomx.json for ownership diff",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_write_then_validate",
+                "passed": true,
+                "error": "skipped: skill does not declare validate_research_schema",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_census_era_boundaries_preserved",
+                "passed": true,
+                "error": "skipped: only applies to census tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_expected_slug",
+                "passed": false,
+                "error": "expected exactly ['probate-will-records.md']; got []",
+                "outcome": "failed"
+              },
+              {
+                "name": "test_no_file_on_empty_results",
+                "passed": true,
+                "error": "skipped: only applies to empty-results tests",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_sources_section_matches_wiki_results",
+                "passed": true,
+                "error": "skipped: no wiki_search results in this run to cite",
+                "outcome": "skipped"
+              },
+              {
+                "name": "test_wrote_exactly_one_markdown_file",
+                "passed": false,
+                "error": "expected exactly one new .md summary; got []",
+                "outcome": "failed"
+              }
+            ]
+          },
+          "judge": {
+            "skipped": true,
+            "dimensions": [],
+            "judge_cost_usd": 0.0,
+            "duration_ms": 0.0,
+            "error": null,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "started_at": 1791831963.894635,
+          "ended_at": 1791831977.144297
+        }
+      ],
+      "grading_mode": "dimensions",
+      "dimensions_gate_outcome": true
+    }
+  ],
+  "totals": {
+    "duration_ms": 60317.02050099557,
+    "duration_api_ms": 45590.0,
+    "judge_duration_ms": 23071.530166998855,
+    "num_turns": 15,
+    "input_tokens": 1073,
+    "cached_input_tokens": 74444,
+    "cache_creation_input_tokens": 35718,
+    "output_tokens": 2499,
+    "judge_input_tokens": 15609,
+    "judge_cached_input_tokens": 0,
+    "judge_output_tokens": 1915,
+    "skill_cost_usd": 0.19451569999999999,
+    "judge_cost_usd": 0.025183999999999998,
+    "total_cost_usd": 0.2196997,
+    "wall_clock_ms": 227866.81294441223
+  },
+  "judge_model": "claude-haiku-4-5-20251001",
+  "tool_search": true,
+  "store": "pg"
+}
