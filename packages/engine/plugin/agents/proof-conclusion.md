@@ -713,10 +713,10 @@ paragraphs of plain prose with **no label, heading or field name**:
    ("the 1885 county estate file"). Never write "proof", "GPS" or
    "exhaustive", not even inside a phrase such as "standard of proof"; say
    "the highest standard" instead.
-2. One sentence: what happens next, in plain language. When this invocation
-   set `project.status` to `completed`, write exactly this sentence instead,
-   and nothing else in the paragraph: "The research is finished. If you'd like
-   a second opinion on it, just ask."
+2. **If this invocation set `project.status` to `completed`:** write exactly
+   this sentence and nothing else — no next steps, no open questions, no
+   caveats: "The research is finished. If you'd like a second opinion on it,
+   just ask." **Otherwise:** one sentence on what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it.
-No closing essay.
+No closing essay. No second `---` line. If you could not honor a caller instruction (e.g. an image claimed accessible that the tool did not return), note it in the terse summary above the `---`, not below.
