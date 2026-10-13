@@ -69,9 +69,9 @@ def retired_at(dsn: str, session_id: str):
     return sql(dsn, "SELECT retired_at FROM sessions WHERE session_id = %s", (session_id,))[0][0]
 
 
-def run(dsn: str, *, idle_s: int = IDLE_S, tool_calls_s: int = 0) -> dict:
+def run(dsn: str, *, idle_s: int = IDLE_S) -> dict:
     """One pass, every session but the test's own excluded only by their activity."""
-    return worker.retention_once(connect=lambda _dsn: psycopg.connect(dsn), idle_s=idle_s, tool_calls_s=tool_calls_s)
+    return worker.retention_once(connect=lambda _dsn: psycopg.connect(dsn), idle_s=idle_s)
 
 
 async def test_an_idle_session_is_retired_and_purged_and_keeps_its_turns_and_project(pg_dsn, role_dsn):
@@ -117,20 +117,20 @@ async def test_a_session_active_inside_the_period_is_untouched(pg_dsn, shape):
     assert session_rows(pg_dsn, row.session_id) == before and transcript(pg_dsn, sdk) == sorted(SUBPATHS)
 
 
-async def test_tool_calls_age_by_row_except_on_an_open_turn(pg_dsn):
+async def test_a_session_in_use_keeps_every_tool_call_however_old(pg_dsn):
+    """User ruling 2026-10-13: tool_calls is the session's change history, so it goes only
+    with the session. A row far older than the period, on a session still in use, stays."""
     row = session(pg_dsn)
-    open_turn = "turn_" + uuid.uuid4().hex[:10]
-    sql(pg_dsn, "INSERT INTO turns (turn_id, session_id, project_id, message) VALUES (%s, %s, %s, '{}')",
-        (open_turn, row.session_id, row.project_id))
     closed = sql(pg_dsn, "SELECT turn_id FROM turns WHERE session_id = %s AND completed_at IS NOT NULL",
                  (row.session_id,))[0][0]
-    for turn_id, age in ((open_turn, OLD), (closed, OLD), (closed, "now()")):
-        sql(pg_dsn, f"INSERT INTO tool_calls (turn_id, session_id, tool_name, decision, ts) "  # noqa: S608
-                    f"VALUES (%s, %s, 'Read', 'allow', {age})", (turn_id, row.session_id))
-    assert run(pg_dsn, idle_s=0, tool_calls_s=IDLE_S)["tool_calls"] >= 1
-    left = sql(pg_dsn, "SELECT turn_id, ts > now() - interval '1 day' FROM tool_calls WHERE session_id = %s "
-                       "ORDER BY turn_id", (row.session_id,))
-    assert sorted(left) == sorted([(open_turn, False), (closed, True)]), left
+    sql(pg_dsn, f"INSERT INTO tool_calls (turn_id, session_id, tool_name, decision, ts) "  # noqa: S608
+                f"VALUES (%s, %s, 'Read', 'allow', {OLD})", (closed, row.session_id))
+    # The turn and its call are both past the period; only the session's last message is not.
+    sql(pg_dsn, f"UPDATE turns SET completed_at = {OLD} WHERE turn_id = %s", (closed,))  # noqa: S608
+    sql(pg_dsn, "UPDATE sessions SET updated_at = now() WHERE session_id = %s", (row.session_id,))
+    before = sql(pg_dsn, "SELECT count(*) FROM tool_calls WHERE session_id = %s", (row.session_id,))[0][0]
+    assert row.session_id not in run(pg_dsn)["retired"]
+    assert sql(pg_dsn, "SELECT count(*) FROM tool_calls WHERE session_id = %s", (row.session_id,))[0][0] == before >= 1
 
 
 class PausingCommit:
@@ -162,7 +162,7 @@ async def retention_paused_inside(dsn: str):
     inside, go = threading.Event(), threading.Event()
     future = asyncio.ensure_future(asyncio.to_thread(
         worker.retention_once, connect=lambda _dsn: PausingCommit(psycopg.connect(dsn), inside, go),
-        idle_s=IDLE_S, tool_calls_s=0))
+        idle_s=IDLE_S))
     assert await asyncio.to_thread(inside.wait, WAIT_S), "retention never reached its commit"
     return future, go
 

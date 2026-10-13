@@ -109,9 +109,8 @@ FS_GRANT_MAX_START_AGE_S (26400) and FS_GRANT_WAIT_S (300) (U3, below);
 SQSD_MAX_RETRIES (0 = no last-receive close), SQSD_VISIBILITY_TIMEOUT_S,
 SQSD_RETENTION_PERIOD_S (unset = no backstop), SWEEP_INTERVAL_S (300; 0 = off),
 SHUTDOWN_GRACE_S (20) and LONG_AGENT_CALL_S (1500; 0 = off: U19's long-Agent alarm signal,
-checked in flight by the sweep); RETENTION_INTERVAL_S (0 = off), RETENTION_SESSION_IDLE_S and
-RETENTION_TOOL_CALLS_S (U19, below; each 0 = off, and a value under RETENTION_MIN_S is
-refused, not clamped). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
+checked in flight by the sweep); RETENTION_INTERVAL_S (0 = off) and RETENTION_SESSION_IDLE_S
+(U19, below; 0 = off, and a value under RETENTION_MIN_S is refused, not clamped). With QUEUE_URL set (and only then): GENEALOGY_SQS_ACCESS_KEY +
 GENEALOGY_SQS_SECRET_KEY (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone exits 2) and GENEALOGY_SQS_REGION (else the QUEUE_URL
 host's region).
@@ -488,9 +487,7 @@ def _retention_period(name: str) -> int:
 RETENTION_MIN_S = 7 * 86400
 RETENTION_INTERVAL_S = env_int("RETENTION_INTERVAL_S", 0)
 RETENTION_SESSION_IDLE_S = _retention_period("RETENTION_SESSION_IDLE_S")
-RETENTION_TOOL_CALLS_S = _retention_period("RETENTION_TOOL_CALLS_S")
 RETENTION_BATCH = 20
-RETENTION_TOOL_CALLS_BATCH = 1000
 # The deferred last-receive releases run after the grace, inside their own budget: a
 # release starts only if its connect, queue-lock wait and SendMessage, each capped below, can finish
 # before ``started + SHUTDOWN_GRACE_S + RELEASE_BUDGET_S``. That sum is what compose's
@@ -3057,7 +3054,9 @@ def start_sweep(
 # only when the SESSION is idle -- no turn open (running or held) and no message, rename or
 # turn end inside the period -- never by a row's own age, and the session is marked
 # ``retired_at`` in the same transaction, so admit_message refuses it a new message (410).
-# Its sessions row, turns and project documents stay.
+# Its sessions row, turns and project documents stay. tool_calls has no clock of its own
+# either (user ruling 2026-10-13): it is the session's change history (#3262's change
+# review reads it), so it lives exactly as long as the session.
 
 RETENTION_CANDIDATE_SQL = (
     "SELECT s.session_id, s.sdk_session_id FROM sessions s "
@@ -3078,14 +3077,6 @@ RETENTION_RECHECK_SQL = (
 RETIRE_SQL = "UPDATE sessions SET retired_at = now() WHERE session_id = %s AND retired_at IS NULL"
 # What retention purges: grants.SESSION_TABLES, which delete_session clears too, minus turns.
 RETENTION_PURGE_TABLES = tuple(t for t in grants.SESSION_TABLES if t != "turns")
-# tool_calls by its own age, except a row whose turn is still open: the Stop hook and a
-# redelivery's attempt_did_work count those, and finish_tool_call updates them.
-TOOL_CALLS_AGE_SQL = (
-    "DELETE FROM tool_calls WHERE id IN (SELECT c.id FROM tool_calls c "
-    "WHERE c.ts < now() - make_interval(secs => %s) "
-    "AND NOT EXISTS (SELECT 1 FROM turns t WHERE t.turn_id = c.turn_id AND t.completed_at IS NULL) "
-    "ORDER BY c.id LIMIT %s FOR UPDATE SKIP LOCKED)"
-)
 
 
 def retire_sessions(conn: psycopg.Connection, idle_s: int) -> list[str]:
@@ -3121,53 +3112,32 @@ def retire_sessions(conn: psycopg.Connection, idle_s: int) -> list[str]:
     return retired
 
 
-def age_tool_calls(conn: psycopg.Connection, age_s: int) -> int:
-    deleted = 0
-    while not SHUTDOWN.is_set():
-        with conn.cursor() as cur:
-            cur.execute(TOOL_CALLS_AGE_SQL, (age_s, RETENTION_TOOL_CALLS_BATCH))
-            n = cur.rowcount
-        conn.commit()
-        deleted += n
-        if n < RETENTION_TOOL_CALLS_BATCH:
-            break
-    return deleted
-
-
-def retention_once(
-    *, connect=pg_connect, idle_s: int | None = None, tool_calls_s: int | None = None,
-) -> dict[str, Any]:
+def retention_once(*, connect=pg_connect, idle_s: int | None = None) -> dict[str, Any]:
     """One retention pass; logs ``ev=retention`` when anything went."""
     idle_s = RETENTION_SESSION_IDLE_S if idle_s is None else idle_s
-    tool_calls_s = RETENTION_TOOL_CALLS_S if tool_calls_s is None else tool_calls_s
-    result: dict[str, Any] = {"retired": [], "tool_calls": 0}
-    with connect(PG_DSN) as conn:
-        if idle_s > 0:
+    result: dict[str, Any] = {"retired": []}
+    if idle_s > 0:
+        with connect(PG_DSN) as conn:
             result["retired"] = retire_sessions(conn, idle_s)
-        if tool_calls_s > 0:
-            result["tool_calls"] = age_tool_calls(conn, tool_calls_s)
-    if result["retired"] or result["tool_calls"]:
+    if result["retired"]:
         log(ev="retention", **result)
     return result
 
 
-def start_retention(
-    *, interval: float | None = None, idle_s: int | None = None, tool_calls_s: int | None = None,
-) -> threading.Thread | None:
+def start_retention(*, interval: float | None = None, idle_s: int | None = None) -> threading.Thread | None:
     """The retention thread, started only when ``RETENTION_INTERVAL_S`` > 0 and a period is
-    on. Its own toggle, not the dead-letter sweep's: that one is off wherever sqsd's settings
+    set. Its own toggle, not the dead-letter sweep's: that one is off wherever sqsd's settings
     are unset, and base compose keeps both off -- its database holds the transcripts the
     acceptance tools read."""
     interval = RETENTION_INTERVAL_S if interval is None else interval
     idle_s = RETENTION_SESSION_IDLE_S if idle_s is None else idle_s
-    tool_calls_s = RETENTION_TOOL_CALLS_S if tool_calls_s is None else tool_calls_s
-    if interval <= 0 or (idle_s <= 0 and tool_calls_s <= 0):
+    if interval <= 0 or idle_s <= 0:
         return None
 
     def loop() -> None:
         while not SHUTDOWN.wait(interval):
             try:
-                retention_once(idle_s=idle_s, tool_calls_s=tool_calls_s)
+                retention_once(idle_s=idle_s)
             except Exception as exc:  # noqa: BLE001 - the next pass tries again
                 log(ev="retention_failed", error=f"{type(exc).__name__}: {exc}")
 
@@ -3355,7 +3325,7 @@ def main() -> None:
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
         sweep=sweeper is not None, retention=retainer is not None,
         retention_interval_s=RETENTION_INTERVAL_S, retention_session_idle_s=RETENTION_SESSION_IDLE_S,
-        retention_tool_calls_s=RETENTION_TOOL_CALLS_S, shutdown_grace_s=SHUTDOWN_GRACE_S,
+        shutdown_grace_s=SHUTDOWN_GRACE_S,
         tmpdir=tempfile.gettempdir(), tmpdir_free_mb=tmpdir_free_mb(), hook_python=hook_python,
         fs_token_key=grants.key_mode(os.environ), grant_max_start_age_s=FS_GRANT_MAX_START_AGE_S,
         grant_wait_s=FS_GRANT_WAIT_S, turn_users=pool_names,

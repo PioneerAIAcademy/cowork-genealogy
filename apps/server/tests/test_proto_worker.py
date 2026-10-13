@@ -3724,15 +3724,14 @@ def test_a_retention_period_under_the_floor_is_refused_never_clamped(monkeypatch
 
 
 def test_retention_is_off_unless_configured():
-    assert worker.start_retention(interval=0, idle_s=7776000, tool_calls_s=7776000) is None, "RETENTION_INTERVAL_S=0"
-    assert worker.start_retention(interval=3600, idle_s=0, tool_calls_s=0) is None, "no period on"
+    assert worker.start_retention(interval=0, idle_s=7776000) is None, "RETENTION_INTERVAL_S=0"
+    assert worker.start_retention(interval=3600, idle_s=0) is None, "no period on"
     worker.SHUTDOWN.set()  # the thread's loop exits at once
     try:
-        for idle_s, tool_calls_s in ((7776000, 0), (0, 7776000)):
-            thread = worker.start_retention(interval=3600, idle_s=idle_s, tool_calls_s=tool_calls_s)
-            assert thread is not None and thread.daemon
-            thread.join(2)
-            assert not thread.is_alive(), "retention stops on SHUTDOWN"
+        thread = worker.start_retention(interval=3600, idle_s=7776000)
+        assert thread is not None and thread.daemon
+        thread.join(2)
+        assert not thread.is_alive(), "retention stops on SHUTDOWN"
     finally:
         worker.SHUTDOWN.clear()
 
