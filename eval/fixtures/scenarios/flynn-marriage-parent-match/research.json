@@ -2,12 +2,13 @@
   "project": {
     "id": "rp_001",
     "objective": "Confirm whether John Flynn, groom in an 1887 marriage record, was a son of Thomas Flynn and Bridget Sheehy of Schuylkill County, Pennsylvania",
-    "subject_person_ids": ["I1"],
+    "subject_person_ids": [
+      "I1"
+    ],
     "status": "active",
     "created": "2026-08-01",
     "updated": "2026-08-01"
   },
-
   "questions": [
     {
       "id": "q_001",
@@ -21,15 +22,15 @@
       "created": "2026-08-01",
       "resolved": null,
       "resolution_assertion_ids": [],
-      "exhaustive_declaration": {
-        "declared": false,
+      "search_stop": {
+        "stopped_because": null,
         "justification": null,
         "log_entry_ids": [],
-        "stop_criteria": null
+        "stop_criteria": null,
+        "not_reached": []
       }
     }
   ],
-
   "plans": [
     {
       "id": "pl_001",
@@ -51,14 +52,17 @@
       ]
     }
   ],
-
   "log": [
     {
       "id": "log_001",
       "plan_item_id": "pli_001",
       "performed": "2026-08-01T10:00:00Z",
       "tool": "record_search",
-      "query": { "surname": "Flynn", "given": "John", "collection": "Pennsylvania marriages" },
+      "query": {
+        "surname": "Flynn",
+        "given": "John",
+        "collection": "Pennsylvania marriages"
+      },
       "outcome": "positive",
       "results_examined": 1,
       "results_ref": "results/log_001.json",
@@ -67,7 +71,6 @@
       "external_site": null
     }
   ],
-
   "sources": [
     {
       "id": "src_001",
@@ -91,7 +94,6 @@
       "log_entry_id": "log_001"
     }
   ],
-
   "assertions": [
     {
       "id": "a_001",
@@ -101,13 +103,18 @@
       "record_persona_id": "G1",
       "fact_type": "name",
       "value": "John Flynn",
-      "structured_value": { "given": "John", "surname": "Flynn" },
+      "structured_value": {
+        "given": "John",
+        "surname": "Flynn"
+      },
       "information_quality": "primary",
       "informant": "John Flynn",
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_002",
@@ -122,7 +129,9 @@
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_003",
@@ -140,7 +149,9 @@
       "informant_proximity": "official_duty",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_004",
@@ -150,13 +161,18 @@
       "record_persona_id": "G1",
       "fact_type": "relationship",
       "value": "child of Thomas [surname not indexed]",
-      "structured_value": { "relationship_type": "child", "related_person_role": "father_of_groom" },
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father_of_groom"
+      },
       "information_quality": "primary",
       "informant": "John Flynn",
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_005",
@@ -166,13 +182,18 @@
       "record_persona_id": "G1",
       "fact_type": "relationship",
       "value": "child of Bridget Sheehy",
-      "structured_value": { "relationship_type": "child", "related_person_role": "mother_of_groom" },
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother_of_groom"
+      },
       "information_quality": "primary",
       "informant": "John Flynn",
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_006",
@@ -182,14 +203,19 @@
       "record_persona_id": "F1",
       "fact_type": "name",
       "value": "Thomas [surname not indexed]",
-      "structured_value": { "given": "Thomas", "surname": "[not indexed]" },
+      "structured_value": {
+        "given": "Thomas",
+        "surname": "[not indexed]"
+      },
       "information_quality": "primary",
       "informant": "John Flynn",
       "informant_proximity": "self",
       "record_basis": "stated",
       "informant_bias_notes": "Groom declared his father's given name as Thomas. No surname was indexed; 'Flynn' is implied from the groom's own surname but is not confirmed by the index entry.",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_007",
@@ -204,7 +230,9 @@
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_008",
@@ -214,13 +242,18 @@
       "record_persona_id": "M1",
       "fact_type": "name",
       "value": "Bridget Sheehy",
-      "structured_value": { "given": "Bridget", "surname": "Sheehy" },
+      "structured_value": {
+        "given": "Bridget",
+        "surname": "Sheehy"
+      },
       "information_quality": "primary",
       "informant": "John Flynn",
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     },
     {
       "id": "a_009",
@@ -235,10 +268,11 @@
       "informant_proximity": "self",
       "record_basis": "stated",
       "log_entry_id": "log_001",
-      "extracted_for_question_ids": ["q_001"]
+      "extracted_for_question_ids": [
+        "q_001"
+      ]
     }
   ],
-
   "person_evidence": [],
   "conflicts": [],
   "hypotheses": [],
