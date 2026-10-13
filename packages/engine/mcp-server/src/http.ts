@@ -15,7 +15,8 @@
 // Pg/S3 configuration is the one process-wide thing, read from the
 // GENEALOGY_* environment (store/pg-s3-env.ts; the project id is the header,
 // never a variable); a missing variable, a half-set S3 key pair or an invalid
-// GENEALOGY_S3_FORCE_PATH_STYLE is one stderr line and exit 2 before listen.
+// GENEALOGY_S3_FORCE_PATH_STYLE (or orphan sweep variable) is one stderr line
+// and exit 2 before listen.
 // With neither S3 key set the AWS SDK default chain supplies credentials
 // (environment, ~/.aws shared config/SSO, web identity, then instance
 // metadata); one stderr line names the mode, never a key. A set debug hold
@@ -23,12 +24,18 @@
 // logs; with neither set, nothing is printed. Nothing connects
 // before listen: `GET /healthz` probes Postgres (schema included) and S3 per
 // request and answers 503 while either is unreachable, never exiting.
+//
+// The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
+// GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off) and GENEALOGY_ORPHAN_GRACE_S
+// (86400, at least 3600). The first pass waits a minute so it never contends
+// with boot; each pass is one `ev=orphan_sweep` stderr line.
 import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
 import { createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
+import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { configFromEnv } from "./hosted-config-env.js";
 import { debugHoldStartupLine } from "./debug-holds.js";
@@ -53,7 +60,9 @@ if (storeEnv.missing.length > 0) {
 }
 if (storeEnv.invalid.length > 0) {
   process.stderr.write(
-    `http: environment set to an invalid value (expected true or false): ${storeEnv.invalid.join(", ")}\n`,
+    `http: environment set to an invalid value: ${storeEnv.invalid.join(", ")} ` +
+      "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
+      "the grace at least 3600)\n",
   );
   process.exit(2);
 }
@@ -62,11 +71,23 @@ process.stderr.write(
   `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
     `region ${s3Options.region}; endpoint ${s3Options.endpoint ?? "AWS default"}\n`,
 );
+const { intervalS, graceS } = storeEnv.orphanSweep;
+process.stderr.write(
+  intervalS > 0 ? `orphan sweep: every ${intervalS} s, grace ${graceS} s\n` : "orphan sweep: off\n",
+);
 const holdLine = debugHoldStartupLine(process.env);
 if (holdLine) process.stderr.write(holdLine);
 
 // One pool and one S3 client for the process; a store per request over them.
 const backend = createPgS3Backend(storeEnv.backendOptions);
+const sweep: OrphanSweepTimer | undefined =
+  intervalS > 0
+    ? startOrphanSweep(backend, {
+        intervalMs: intervalS * 1000,
+        graceMs: graceS * 1000,
+        firstDelayMs: 60_000 + Math.floor(Math.random() * 30_000),
+      })
+    : undefined;
 setProjectStore(
   unboundProjectStore("build/http.js binds a project store per request; nothing may run outside one"),
 );
@@ -100,6 +121,7 @@ let shuttingDown = false;
 function shutdown(): void {
   if (shuttingDown) return;
   shuttingDown = true;
+  sweep?.stop();
   const closed = new Promise<void>((resolve) => server.close(() => resolve())).then(() =>
     backend.close().catch(() => {}),
   );
