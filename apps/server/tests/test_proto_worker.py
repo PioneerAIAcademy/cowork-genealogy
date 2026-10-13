@@ -631,6 +631,80 @@ def test_the_tool_results_spill_under_the_config_root_is_allowed(tmp_path):
     assert deny.project_read_denied("Read", {"file_path": str(cfg / "projects" / "-project" / "sess.jsonl")}, **kw) is None, "outside the anchor anyway"
 
 
+# The turn's config dir holds mcp.json, whose Authorization header is the owner's FamilySearch
+# token. Matched by the worker-cfg-* name: on a resumed turn config_root is the SDK's
+# claude-resume-* dir, and mcp.json stays in the original.
+
+
+def _cfg_kw(tmp_path, monkeypatch, *, resumed: bool = False):
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    root = tmp_path / "project"
+    root.mkdir()
+    cfg = tmp_path / "worker-cfg-abc123"
+    (cfg / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
+    (cfg / "mcp.json").write_text('{"mcpServers": {}}', encoding="utf-8")
+    resume = tmp_path / "claude-resume-xyz"
+    (resume / "projects" / "-project" / "sess" / "tool-results").mkdir(parents=True)
+    kw = dict(cwd=str(root), project_root=str(root), config_root=str(resume if resumed else cfg))
+    return kw, cfg, resume
+
+
+@pytest.mark.parametrize("resumed", [False, True], ids=["fresh", "resumed"])
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "{cfg}/mcp.json"}),
+    ("Read", {"file_path": "{cfg}"}),
+    ("Read", {"file_path": "{cfg}/projects/-project/sess.jsonl"}),
+    ("Read", {"file_path": "{cfg}/projects/-project/sess/tool-results/../../../../mcp.json"}),
+    ("Grep", {"pattern": "Bearer", "path": "{cfg}"}),
+    ("Grep", {"pattern": "Bearer", "path": "{parent}"}),
+    ("Grep", {"pattern": "Bearer", "path": "/"}),
+    ("Glob", {"pattern": "{parent}/**/mcp.json"}),
+    ("Glob", {"pattern": "**/mcp.json", "path": "{parent}"}),
+    ("Glob", {"pattern": "*", "path": "{cfg}"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_turns_config_dir_is_denied(tmp_path, monkeypatch, resumed, tool_name, tool_input):
+    kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
+    tool_input = {k: v.format(cfg=cfg, parent=tmp_path) for k, v in tool_input.items()}
+    reason = deny.project_read_denied(tool_name, tool_input, **kw)
+    assert reason and "config directory is off limits" in reason, (tool_name, tool_input)
+
+
+def test_a_symlink_into_the_config_dir_is_judged_by_its_target(tmp_path, monkeypatch):
+    kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch)
+    other = tmp_path / "elsewhere"
+    other.mkdir()
+    (other / "x").symlink_to(cfg / "mcp.json")
+    assert deny.project_read_denied("Read", {"file_path": str(other / "x")}, **kw)
+
+
+@pytest.mark.parametrize("resumed", [False, True], ids=["fresh", "resumed"])
+@pytest.mark.parametrize("tool_name,tool_input", [
+    ("Read", {"file_path": "{cfg}/projects/-project/sess/tool-results/r1.txt"}),
+    ("Read", {"file_path": "{resume}/projects/-project/sess/tool-results/r1.txt"}),
+    ("Grep", {"pattern": "x", "path": "{cfg}/projects/-project/sess/tool-results"}),
+    ("Glob", {"pattern": "*.txt", "path": "{resume}/projects/-project/sess/tool-results"}),
+    ("Read", {"file_path": "{parent}/elsewhere.txt"}),
+    ("Grep", {"pattern": "x", "path": "{parent}/project/.claude"}),
+    ("Grep", {"pattern": "x", "path": "/etc"}),
+    ("Read", {"file_path": "{parent}/my-worker-cfg-notes.txt"}),
+], ids=lambda v: v if isinstance(v, str) else None)
+def test_the_spill_and_unrelated_paths_stay_readable(tmp_path, monkeypatch, resumed, tool_name, tool_input):
+    kw, cfg, resume = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
+    tool_input = {k: v.format(cfg=cfg, resume=resume, parent=tmp_path) for k, v in tool_input.items()}
+    assert deny.project_read_denied(tool_name, tool_input, **kw) is None, (tool_name, tool_input)
+
+
+def test_the_hook_denies_the_config_dir_and_allows_the_resumed_spill(tmp_path, monkeypatch):
+    kw, cfg, resume = _cfg_kw(tmp_path, monkeypatch, resumed=True)
+    rows: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=kw["cwd"],
+                                     config_root=lambda: kw["config_root"], record=rows.append)
+    out = _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(cfg / "mcp.json")}})
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    spill = resume / "projects" / "-project" / "sess" / "tool-results" / "r1.txt"
+    assert _call(hook, {"tool_name": "Read", "tool_input": {"file_path": str(spill)}}) == {}
+
+
 # U3: each turn's CLI runs as its own slot user, so the kernel keeps it out of other turns'
 # files and the worker's /proc/<pid>. It cannot keep a process from itself: /proc/self holds
 # the model key the CLI needs, and /dev/fd leads back to any open file -- the hook's job.

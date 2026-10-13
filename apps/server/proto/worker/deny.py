@@ -11,6 +11,12 @@ which the worker cannot import; the three cases are the same:
 - a read under ``<config_root>/projects/**/tool-results/**`` is allowed -- that is where
   the CLI spills an oversized tool result for the model to read back.
 
+The turn's own config dir (``worker-cfg-*``) holds ``mcp.json``, which carries the owner's
+FamilySearch token as ``Authorization: Bearer ...``. A Read/Grep/Glob of such a dir, of
+anything under one, or searching from an ancestor of one is denied -- except the spill
+above. It matches the ``worker-cfg-*`` NAME, not ``config_root``: on a resumed turn the SDK
+runs the CLI from its own ``claude-resume-*`` dir while ``mcp.json`` stays in the original.
+
 A second rule, ``host_path_denied`` (U3), guards what the turn's OWN process holds. Each
 turn's CLI runs as its own slot user (``WORKER_TURN_USERS``), so the kernel already keeps it
 out of other turns' files and the worker's ``/proc/<pid>``; it cannot keep a process from
@@ -29,9 +35,11 @@ The hook that calls this lives in ``options.py``; the tests in
 
 from __future__ import annotations
 
+import glob
 import os
 import posixpath
 import re
+import tempfile
 
 # The read tools inspected, and the argument each names its target in. Grep/Glob's
 # ``path`` is optional and defaults to the working directory -- which IS the anchor.
@@ -102,6 +110,9 @@ def project_read_denied(
         rest = t_r[len(spill_r):].strip("/").split("/")
         if "tool-results" in rest:
             return None
+    reason = config_dir_denied(tool_name, tool_input, cwd=cwd_s, target=target)
+    if reason is not None:
+        return reason
     if not _under(t_r, root_r) or _under(t_r, root_r + "/.claude"):
         return None
     rel = t_r[len(root_r):].strip("/") or "the project root"
@@ -110,6 +121,62 @@ def project_read_denied(
         "not readable directly. Read it through the MCP tools instead: "
         f"{read_route(t_r, root_r)}."
     )
+
+
+# -- the turn's config dir ------------------------------------------------------------
+
+# ``tempfile.mkdtemp(prefix=CONFIG_DIR_PREFIX)`` in worker.py; its ``mcp.json`` holds a token.
+CONFIG_DIR_PREFIX = "worker-cfg-"
+CONFIG_DIR_REASON = (
+    "{tool} on {target} is disabled in this run: the turn's config directory is off "
+    "limits. Read the project through the MCP tools."
+)
+
+
+def _config_spill(path: str) -> bool | None:
+    """None when ``path`` is not inside a ``worker-cfg-*`` dir; else whether it is that
+    dir's ``projects/**/tool-results/**`` spill."""
+    parts = path.split("/")
+    for i, part in enumerate(parts):
+        if part.startswith(CONFIG_DIR_PREFIX):
+            rest = parts[i + 1:]
+            return bool(rest) and rest[0] == "projects" and "tool-results" in rest[1:]
+    return None
+
+
+def config_dirs() -> list[str]:
+    """Every ``worker-cfg-*`` dir in the temp dir worker.py makes them in."""
+    base = tempfile.gettempdir()
+    return [p.replace("\\", "/") for p in glob.glob(os.path.join(glob.escape(base), CONFIG_DIR_PREFIX + "*"))]
+
+
+def config_dir_denied(
+    tool_name: str, tool_input: dict | None, *, cwd: str, target: str | None = None
+) -> str | None:
+    """Why a Read/Grep/Glob reaching a ``worker-cfg-*`` dir is denied, or None."""
+    if tool_name not in PROJECT_READ_TOOLS:
+        return None
+    data = tool_input or {}
+    if target is None:
+        target = read_target(tool_name, data, cwd=cwd)
+    if tool_name == "Glob":
+        reached = glob_root(str(data.get("pattern") or ""), target or cwd)
+        if reached is None:
+            return None  # host_path_denied refuses an unbounded '..'
+        target = reached
+    spellings = {target, _real(target)}
+    for spelled in spellings:
+        inside = _config_spill(spelled)
+        if inside is False:
+            return CONFIG_DIR_REASON.format(tool=tool_name, target=target)
+    if any(_config_spill(s) for s in spellings):
+        return None
+    if tool_name in ("Grep", "Glob"):
+        for cfg in config_dirs():
+            for c in {cfg, _real(cfg)}:
+                if any(_under(c, s) for s in spellings):
+                    return CONFIG_DIR_REASON.format(tool=tool_name, target=target)
+    return None
 
 
 # -- the host-path rule (U3) ---------------------------------------------------------
