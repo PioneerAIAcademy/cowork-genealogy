@@ -26,7 +26,8 @@
 // request and answers 503 while either is unreachable, never exiting.
 //
 // The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
-// GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off) and GENEALOGY_ORPHAN_GRACE_S
+// GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off; at most 2147483, setTimeout's
+// limit) and GENEALOGY_ORPHAN_GRACE_S
 // (86400, at least 3600). The first pass waits a minute so it never contends
 // with boot; each pass is one `ev=orphan_sweep` stderr line.
 import { parseArgs } from "node:util";
@@ -62,7 +63,7 @@ if (storeEnv.invalid.length > 0) {
   process.stderr.write(
     `http: environment set to an invalid value: ${storeEnv.invalid.join(", ")} ` +
       "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
-      "the grace at least 3600)\n",
+      "the grace at least 3600, the interval at most 2147483)\n",
   );
   process.exit(2);
 }

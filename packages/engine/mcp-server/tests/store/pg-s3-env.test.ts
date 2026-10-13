@@ -83,6 +83,9 @@ describe("readPgS3Env", () => {
     expect(r.invalid).toEqual([]);
     expect(r.orphanSweep).toEqual({ intervalS: 0, graceS: 7200 });
     expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "3600" }).orphanSweep.graceS).toBe(3600);
+    // setTimeout's longest wait, and a grace far beyond it (a grace is never a timer).
+    expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "2147483" }).orphanSweep.intervalS).toBe(2_147_483);
+    expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "31536000" }).orphanSweep.graceS).toBe(31_536_000);
   });
 
   it("refuses an orphan sweep value that is not whole seconds, and a grace under an hour", () => {
@@ -90,6 +93,12 @@ describe("readPgS3Env", () => {
       for (const name of ["GENEALOGY_ORPHAN_SWEEP_INTERVAL_S", "GENEALOGY_ORPHAN_GRACE_S"]) {
         expect(readPgS3Env({ ...BASE, [name]: value }).invalid, `${name}=${value}`).toEqual([name]);
       }
+    }
+    // Past setTimeout's 2^31 - 1 ms the timer fires after 1 ms: passes would run back to back.
+    for (const value of ["2147484", "31536000"]) {
+      expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: value }).invalid, value).toEqual([
+        "GENEALOGY_ORPHAN_SWEEP_INTERVAL_S",
+      ]);
     }
     for (const value of ["0", "60", "3599"]) {
       expect(readPgS3Env({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: value }).invalid, value).toEqual([
