@@ -1,6 +1,6 @@
 # Search Agent prototype — results
 
-**2026-09-29 · Dallan Quass · for Richard (FamilySearch) and the FamilySearch leads he shares it with.** Evidence:
+**2026-09-29 · Dallan Quass · for Richard and the FamilySearch leads he shares it with.** Evidence:
 [the prototype plan](./plan/search-agent-prototype.md). What is left, and how to deploy:
 [the handoff](./plan/familysearch-handoff.md).
 
@@ -197,7 +197,7 @@ The review (not in this repo) carries none of these; handoff U22 applies them.
 
 ## Open questions for FamilySearch
 
-Numbers are the handoff's; Richard routes them inside FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28.
+Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sent 2026-09-18; none had a reply as of 2026-09-28.
 
 **Sent or drafted:**
 
