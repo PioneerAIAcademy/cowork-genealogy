@@ -378,9 +378,11 @@ def _pins_nudges_before_compose_up(body: list[str]) -> bool:
 
 def test_proto_turn_pins_the_stop_hook_off_before_compose_up():
     """The web tier stamps its own cap (default 60) on every message and the worker prefers
-    it, so a proto-turn left on that default ran with the Stop hook on: a lookup on a
-    project-less session is never "completed", every stop is vetoed, and the turn ends
-    no_progress. proto-kill's own pin covers only the --kill arm."""
+    it, so a proto-turn left on that default runs with the Stop hook on. The pin went in
+    because a lookup on a project-less session was vetoed and ended no_progress; a session
+    with no research.json is no longer nudged (issue #3274), and the pin stays because
+    lifting it changes what a paid probe run does. proto-kill's own pin covers only the
+    --kill arm."""
     assert _pins_nudges_before_compose_up(_recipe("proto-turn")), "\n".join(_recipe("proto-turn"))
     assert "AUTONOMOUS_MAX_NUDGES" not in (PROTO / "env.sh").read_text(encoding="utf-8"), \
         "env.sh now touches AUTONOMOUS_MAX_NUDGES: the pin's place relative to it matters again"
