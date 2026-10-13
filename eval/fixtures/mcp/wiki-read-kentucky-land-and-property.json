@@ -1,0 +1,11 @@
+{
+  "tool": "wiki_read",
+  "description": "Excerpt from the live Kentucky_Land_and_Property page, probed 2026-10-10 at https://www.familysearch.org/en/wiki/Kentucky_Land_and_Property. Verbatim contiguous excerpt covering the land grant system, record types, and repositories.",
+  "args": {
+    "url": "~Kentucky_Land_and_Property"
+  },
+  "response": {
+    "url": "https://www.familysearch.org/en/wiki/Kentucky_Land_and_Property",
+    "content": "# Kentucky Land and Property\n\n## Background\n\nThe availability of land attracted many immigrants to America and encouraged westward expansion. Kentucky operated as a state-land state where the government controlled all land distribution.\n\n## Land Grant System\n\nThe land grant process in Kentucky involved four steps: applicants selected vacant land and filed claims, warrants were authorized after three months if no opposition existed, surveyors created plats, and patents were issued upon receipt of the necessary documentation.\n\n### Grant Periods\n\n- **Virginia Grants (1773–1792)** — issued for military service in the French and Indian War and the Revolution\n- **Old Kentucky Grants (1793–1856)** — military, seminary, and treasury warrants\n- **Kentucky Land Warrants (1816–1873)** — primarily east of the Tennessee River\n- **Grants South of Green River (1797–1866)**\n- **Tellico Land Grants (1802–1853)**\n- **Grants West of Tennessee River (1822–1900)**\n- **County Court Orders (1836–1955)**\n\n## County Land Records\n\nCounty deeds record person-to-person land transactions. These records may offer genealogical clues such as the given name of the wife, a previous residence, names of children, or death information. Deeds are held at county courthouses from county formation.\n\n## Key Repositories\n\n- **Kentucky Land Office** — Frankfort; holds land grants, original warrants, surveys, and patents\n- **Kentucky Historical Society** — Frankfort; holds additional land records and manuscripts\n- **County courthouses** — deed books from county formation\n\n## Online Resources\n\n- **FamilySearch** — Kentucky Land Office warrants, surveys, grants and related records (1700–1955); digitized images\n- **Ancestry** — Kentucky land grants and related records\n- **BLM General Land Office** — federal land patents (for portions of Kentucky under federal jurisdiction)"
+  }
+}

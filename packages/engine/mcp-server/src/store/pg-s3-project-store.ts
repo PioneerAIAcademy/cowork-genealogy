@@ -39,7 +39,8 @@
 // that throws therefore leaves the ref's bytes, size and hash exactly as they
 // were; a reader never sees content that was not committed. The one residual
 // is an orphan object after a crash between PutObject and the row write, or
-// between COMMIT and the delete; nothing references it and nothing sweeps it.
+// between COMMIT and the delete; nothing references it, and the orphan sweep
+// (s3-orphan-sweep.ts, U19) deletes it once it is older than the sweep's grace.
 //
 // `projectId` is the S3 key prefix, so it is restricted to `[A-Za-z0-9._-]`
 // with a leading letter or digit: a `/` would let two projects share a key.
@@ -148,8 +149,9 @@ class ReadyCheckError extends Error {
   }
 }
 
-/** The label a failed check reports: never `message`. */
-function readyLabel(e: unknown): string {
+/** The label a failed check reports: never `message`. The orphan sweep's
+ *  failure line uses it too. */
+export function readyLabel(e: unknown): string {
   if (e instanceof ReadyCheckError) return e.label;
   const err = e as { code?: unknown; name?: unknown };
   if (typeof err?.code === "string" && err.code) return err.code;
@@ -692,9 +694,31 @@ export class PgS3ProjectStore implements ProjectStore {
       if (r.rowCount === 0) throw enoent(this.projectId, rel);
       return JSON.stringify(r.rows[0].doc, null, 2);
     }
-    const row = await this.indexRow(rel);
-    if (!row) throw enoent(this.projectId, rel);
-    return this.getObject(row.s3_key, rel);
+    const bytes = await this.readObject(rel);
+    if (!bytes) throw enoent(this.projectId, rel);
+    return bytes;
+  }
+
+  /**
+   * A blob or staged ref's bytes, or `null` when no row names it. A read can
+   * lose a race with an overwrite that takes no lock of the reader's, which
+   * points the row at a new object and deletes the old one between the lookup
+   * and the GET. A missing object under a key the row no longer names is that
+   * race, so follow the row; one it still names is a genuinely absent ref.
+   */
+  private async readObject(rel: string): Promise<Uint8Array | null> {
+    let row = await this.indexRow(rel);
+    for (let attempt = 0; ; attempt++) {
+      if (!row) return null;
+      try {
+        return await this.getObject(row.s3_key, rel);
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== "ENOENT" || attempt >= 4) throw e;
+        const now: { s3_key: string } | null = await this.indexRow(rel);
+        if (now?.s3_key === row.s3_key) throw e;
+        row = now;
+      }
+    }
   }
 
   async list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {
@@ -795,8 +819,7 @@ export class PgS3ProjectStore implements ProjectStore {
     // lock already serialises it.
     const body = async (): Promise<void> => {
       await this.touchProject();
-      const existing = await this.indexRow(rel);
-      const head = existing ? await this.getObject(existing.s3_key, rel) : new Uint8Array();
+      const head = (await this.readObject(rel)) ?? new Uint8Array();
       await this.putObjectIndexed(rel, route, Buffer.concat([head, Buffer.from(text, "utf-8")]));
     };
     if (this.tx()) return body();
