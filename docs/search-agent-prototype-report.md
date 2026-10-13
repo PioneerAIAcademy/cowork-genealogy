@@ -223,10 +223,11 @@ Numbers are the handoff's; Richard routes them to FamilySearch. "Sent" means sen
 - **F17, ARB, InfoSec, PRIA, AI Working Group, PM:** ARB scheduling, SLA exception, retention, DR, telemetry, service identity, CAS/TARS entitlement for the email allowlist, mobile. Unblocks go-live. Goes with U22.
 - **F18, FS platform:** web hostname, TLS, edge route. Unblocks integ sign-in.
 
-Retention is built and ships off (U19, PR #3369): a session idle past `RETENTION_SESSION_IDLE_S`
-with no open turn loses its transcript, events and tool calls and answers a new message 410; F17
-sets the period. `delete_session` removes the SDK transcript and keeps a project other sessions
-still use (PR #3356); it leaves the S3 objects. Our own decisions: handoff U21, all made 2026-09-29.
+Retention (U19): a session's delete takes its SDK transcript under both ids (PR #3356), and its
+project's rows only with the project's last session (U2); the S3 orphan sweep deletes the objects
+nothing points at once they pass its grace (PR #3394). Retention is built and ships off (PR #3369): a
+session idle past `RETENTION_SESSION_IDLE_S` with no open turn loses its transcript, events and
+tool calls and answers a new message 410. The period is F17's. Our own decisions: handoff U21, all made 2026-09-29.
 
 ## Where the evidence is
 
