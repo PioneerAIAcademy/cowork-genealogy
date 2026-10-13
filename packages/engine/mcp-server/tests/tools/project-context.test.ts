@@ -5,6 +5,7 @@ import { tmpdir } from "os";
 
 import { projectContext } from "../../src/tools/project-context.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("project_context", () => {
   let dir: string;
@@ -373,6 +374,7 @@ describe("project_context", () => {
   });
 
   it("errors when a project file is missing or unparseable — never throws", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeFile(join(dir, "research.json"), JSON.stringify({ project: { status: "active" } }));
     const missingTree = await projectContext({ projectPath: dir });
     expect(missingTree.ok).toBe(false);

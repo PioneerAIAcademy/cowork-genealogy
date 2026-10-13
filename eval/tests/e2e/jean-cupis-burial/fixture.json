@@ -15,5 +15,5 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 3, hint-samples.csv row 68, flags adds_birth/adds_burial, confidence 3). Draft transcribed from a 1788 Montreuil, Seine-Saint-Denis parish burial register; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 3, hint-samples.csv row 68, flags adds_birth/adds_burial, confidence 3). Resolved 2026-10-12 (#3326): true match. The 1 May 1788 Montreuil parish burial of Jean Baptiste de Cupis (ark:/61903/1:1:DRKL-YZMM) is K642-XP9, decided on the index alone; the page transcription failed calibration and was discarded, so image_basis is off."
 }
