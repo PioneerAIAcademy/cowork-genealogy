@@ -106,13 +106,13 @@ def project_read_denied(
     root = normalise_path(str(project_root), cwd=cwd_s)
     spill_root = normalise_path(str(config_root), cwd=cwd_s) + "/projects"
     t_r, root_r, spill_r = _real(target), _real(root), _real(spill_root)
+    reason = config_dir_denied(tool_name, tool_input, cwd=cwd_s, target=target)
+    if reason is not None:
+        return reason
     if _under(t_r, spill_r):
         rest = t_r[len(spill_r):].strip("/").split("/")
         if "tool-results" in rest:
             return None
-    reason = config_dir_denied(tool_name, tool_input, cwd=cwd_s, target=target)
-    if reason is not None:
-        return reason
     if not _under(t_r, root_r) or _under(t_r, root_r + "/.claude"):
         return None
     rel = t_r[len(root_r):].strip("/") or "the project root"

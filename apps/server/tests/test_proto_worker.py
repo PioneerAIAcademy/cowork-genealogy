@@ -661,6 +661,8 @@ def _cfg_kw(tmp_path, monkeypatch, *, resumed: bool = False):
     ("Glob", {"pattern": "{parent}/**/mcp.json"}),
     ("Glob", {"pattern": "**/mcp.json", "path": "{parent}"}),
     ("Glob", {"pattern": "*", "path": "{cfg}"}),
+    ("Glob", {"pattern": "../../../../mcp.json", "path": "{cfg}/projects/-project/sess/tool-results"}),
+    ("Glob", {"pattern": "../../../../*", "path": "{cfg}/projects/-project/sess/tool-results"}),
 ], ids=lambda v: v if isinstance(v, str) else None)
 def test_the_turns_config_dir_is_denied(tmp_path, monkeypatch, resumed, tool_name, tool_input):
     kw, cfg, _ = _cfg_kw(tmp_path, monkeypatch, resumed=resumed)
