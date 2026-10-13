@@ -597,7 +597,10 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
 # PR #2870 item 1d. The alpha's veto cap per turn. Sized like the prototype's on STEP
 # count rather than on the nudge histogram: over the 189 committed e2e runs, Skill/Task/
 # Agent steps per run are median 15, p90 25, p99 51, max 76. 0 turns the hook off.
-_DEFAULT_MAX_NUDGES = 60
+#: Matches `Settings.autonomous_max_nudges`. This is the in-sandbox fallback used when
+#: the control plane sets no env var, so leaving it at 60 while the setting moved to 30
+#: would make the two disagree exactly where nobody looks.
+_DEFAULT_MAX_NUDGES = 30
 
 
 def _max_nudges(env=None) -> int:

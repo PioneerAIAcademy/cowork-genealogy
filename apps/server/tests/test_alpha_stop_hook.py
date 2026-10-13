@@ -24,6 +24,13 @@ class FakeMatcher:
         self.kw = kw
 
 
+#: The compiled-in default, read from the module rather than retyped. The cases below
+#: that expect it are about "a bad value falls back", not about what the default IS --
+#: the VALUE is pinned once, in test_both_providers_... , so changing it is a one-line
+#: edit there rather than a sweep through ten parametrize entries.
+_DEFAULT = real_agent._DEFAULT_MAX_NUDGES
+
+
 def _hooks(project_dir: Path, monkeypatch, *, max_nudges: int = 60) -> dict:
     monkeypatch.setattr(real_agent, "AUTONOMOUS_MAX_NUDGES", max_nudges)
     return real_agent._build_hooks(FakeMatcher, project_dir)
@@ -207,7 +214,7 @@ def test_the_decision_is_imported_not_reimplemented():
     # `AUTONOMOUS_MAX_NUDGES = int(os.environ.get(...))` completely uncaught -- and that
     # import happens inside the sandbox AND in the prototype worker, where it crash-loops
     # the container rather than degrading.
-    ("forty", 60), ("  ", 60), ("-5", 0),
+    ("forty", _DEFAULT), ("  ", _DEFAULT), ("-5", 0),
 ])
 def test_the_cap_is_configurable_and_a_bad_value_never_breaks_the_import(raw, cap, monkeypatch):
     monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", raw)
@@ -221,15 +228,25 @@ def test_the_cap_is_configurable_and_a_bad_value_never_breaks_the_import(raw, ca
         assert reloaded.AUTONOMOUS_MAX_NUDGES == cap
     finally:
         importlib.reload(real_agent)
-    # p99 of Skill/Task/Agent steps per run over the 189 committed e2e runs is 51.
-    assert real_agent.AUTONOMOUS_MAX_NUDGES >= 51
+    # A floor, so the cap cannot be quietly set to a value that truncates most runs.
+    #
+    # It was p99 (51) while the default was 60. Re-based to p90 on 2026-10-13 when the
+    # default went 60 -> 30 as the cost half of turning continuous work back on: covering
+    # p99 was never the requirement, it was just where 60 happened to land. Re-measured
+    # over the 202 committed e2e runs, p90 of Skill/Task/Agent steps per run is 26 (the
+    # September figures over 189 runs, unmoved), so 30 clears it and 25 -- the bottom of
+    # the range the lead asked for -- would not.
+    #
+    # Lowering it further is a real decision, not a test fix: read config.py first.
+    assert real_agent.AUTONOMOUS_MAX_NUDGES >= 26
 
 
 # ── 1d: the cap has to REACH the sandbox, and must not crash it ──────────────────
 
 
 @pytest.mark.parametrize("raw, expected", [
-    (None, 60), ("", 60), ("   ", 60), ("forty", 60), ("60", 60), ("0", 0), ("30", 30),
+    (None, _DEFAULT), ("", _DEFAULT), ("   ", _DEFAULT), ("forty", _DEFAULT),
+    ("60", 60), ("0", 0), ("30", 30),
     ("-5", 0), (" 12 ", 12),
 ])
 def test_the_cap_parse_never_raises(raw, expected):
@@ -255,7 +272,12 @@ def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue()
     from app.config import Settings
     from app.sandbox import e2b, local
 
-    assert Settings().autonomous_max_nudges == 60
+    # THE pin on the shipped value. Deliberately a literal, not `_DEFAULT`: this is the
+    # one place that asserts what the number is, so a change has to be made here on
+    # purpose. 30 as of 2026-10-13; the reasoning is in config.py.
+    assert Settings().autonomous_max_nudges == 30
+    assert real_agent._DEFAULT_MAX_NUDGES == 30, \
+        "the in-sandbox fallback must match the setting, or they disagree where nobody looks"
 
     for source in (inspect.getsource(e2b.E2BProvider._agent_env),
                    inspect.getsource(local.LocalProvider)):

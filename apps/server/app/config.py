@@ -37,11 +37,27 @@ class Settings(BaseSettings):
     auto_continue_max_steps: int = 30
     # PR #2870 item 1d: the SDK Stop hook's veto cap per turn in the sandbox, which is
     # what makes one user message run a whole research job. Sized on STEP count, not on
-    # the nudge histogram: over the 189 committed e2e runs, Skill/Task/Agent steps per run
-    # are median 15, p90 25, p99 51, max 76. 0 turns the hook off, and `auto_continue:
-    # false` turns it off too -- that flag already meant "one turn per message", and a new
-    # mechanism that ignored it would take an operator's kill switch away without saying so.
-    autonomous_max_nudges: int = 60
+    # the nudge histogram. 0 turns the hook off, and `auto_continue: false` turns it off
+    # too -- that flag already meant "one turn per message", and a new mechanism that
+    # ignored it would take an operator's kill switch away without saying so.
+    #
+    # LOWERED 60 -> 30, 2026-10-13, as the cost half of turning continuous work back on
+    # (it is off in alpha today). Re-measured over the 202 committed e2e runs: steps per
+    # run are median 15, p90 26, p99 51, max 76 -- the September figures the old comment
+    # cited over 189 runs, unmoved. A cap of 30 covers 94% of runs against 60's 99%, and
+    # halves the worst case.
+    #
+    # Exceeding it is not a kill: the cap is consulted only at a VOLUNTARY yield, so a
+    # run past it simply stops being nudged onward and ends where it chose to stop. That
+    # is also why it bounds nothing for the 31% of runs that never yield -- those are
+    # held only by SESSION_SPEND_CAP_USD, which is unchanged here.
+    #
+    # NOT the prototype's cap. `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the Beanstalk
+    # template both stay at 60 on purpose: that is a separate deployment with its own
+    # spend cap, and its recorded U13 acceptance figures were measured at 60
+    # (`docs/plan/familysearch-handoff.md`). Lowering it there would contradict the
+    # measurements, not just change a default.
+    autonomous_max_nudges: int = 30
     # OpenRouter key for the engine's image_transcribe OCR tool. The in-sandbox
     # MCP server reads it config-only (never from env), so — unlike
     # ANTHROPIC_API_KEY, which is written into the sandbox by
