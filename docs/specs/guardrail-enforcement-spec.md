@@ -175,14 +175,14 @@ depends on another shipping first.
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
 | §6 | Field ownership by caller (`project.status`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic and so gates this arm with no edit | a `project.status` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, from either the `fields` or `entry` key, on append **and** update. Keyed on presence, not on a value: any write of the field asserts the project's state. The co-written rest of `project` — including the `updated` activity ping — is untouched | **enforcing** (since 2026-09-24). **Nothing proves this arm binds in Cowork**, which is true of every hook arm (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
-| below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which needs the deferred e2e detector. A nil search stages nothing, so the backlog half is structurally blind to it |
+| below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which `make e2e-advisories SINCE=all` now reports (fired / acted / ignored / condition-never-held / not-observable per advisory, split by `agent_type`). A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
 | §5 | Core-identifier contradiction caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident`/`probable` whose record states a birth place or a birth/christening date contradicting what the tree person attests, or which declares `core_identifier_conflict` | **enforcing** (since 2026-09-24). **Refuses 0 of 323** committed confident/probable entries. Reaching zero took four genealogical scopings, each measured: comparing any place refuses 274 (a census place is not a birthplace); birth-type only refuses 38; excluding secondary/no-proximity informants clears 35 of those (a death record's birthplace, senior genealogist ruling 2026-09-23) and excluding christening PLACE clears the other 3 (you are christened where the church is); scoping to the linked party clears 16 more and excluding two-party relationship assertions the last 14 (a son's birth year is not a contradiction for his father). All 38 of the un-gated arm were read individually per ADR-0011 limit 2 and every one was a false positive. Its limit: a link made through a relationship assertion is bound on the date arm only, and only when another link ties a one-party assertion of the same record party to the same person. One with no such sibling, including a relationship link written before its party's one-party link, is still not bound, because which of the two people it is about is not decidable from the documents |
 | §5 | An unexplained move between countries caps the tier | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` entry at `confident` whose record places the linked party in a recognized country other than every country the tree person's Residence/Census facts attest, with no `move_bridge` | **enforcing** (since this change). **Refuses 0 of 5,893** committed confident links (2,617 comparable). Its limits: it compares countries, never states, so a long move inside one country is the prose cap's to catch; it cannot judge whether the quoted `move_bridge` actually explains the move, only that one was named; and a place whose last segment names no recognized country is not checked |
 | §5 | A logged query names only filters its search sent | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_log_append` op whose explicit `query` names a filter key, with a value, that its staged `record_search` or `fulltext_search` never sent. A differing value is allowed (mostly place normalization, observed by the eval `report_*` validators instead), as are descriptive keys, plumbing and paging. A nil search stages nothing and is never judged | **enforcing** (refuses 18 of 358 paired staged ops, 15 distinct claims, all read individually per ADR-0011 limit 2 and all true positives, measured at a1960c5af by `packages/engine/mcp-server/dev/measure-log-query-claims.ts`; 0 of the 121 paired unit-eval ops, whose misstatements were filled from a staged payload the eval mock built from a fixture's recorded query, fixed at the mock. Unstaged entries — nil searches, searches made without a `projectPath` — and external-site entries are seen only by the eval `report_*` observers in `test_search_records.py` and `test_search_external_sites.py`) |
 | §5 | A resolution in prose must reach `conflicts[]` | engine (MCP tool) — so Cowork, hosted, both harnesses; the harness detector `find_unpersisted_conflict_resolutions` stays as the document-plane reading | a `proof_summaries` write whose question's `exhaustive_declaration.stop_criteria.conflict_resolution` claims a conflict was resolved while `conflicts[]` holds no record of it — empty, or not holding the `c_` id the stop-criterion names. Scoped to the summary written, read live, not tier-gated; a recorded but open conflict is not this miss. Every other conflict gate iterates `conflicts[]` and passes vacuously when it is empty, which is how a tester's project reached `completed` with the Conflicts section blank | **enforcing** (since 2026-09-28; the first guard graduated under ADR-0011's labelled-case rule, its cases in `packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json`, replayed by both planes. **Refuses 10 summaries across 9 of 194 committed e2e final states**, measured at 0b65122bc by `packages/engine/mcp-server/dev/measure-unpersisted-conflict-guard.ts`, which names the same runs, summaries and questions as the harness replay. Every one has an empty `conflicts[]`. All 10 read individually per ADR-0011 limit 2: 9 true positives — two records weighed and settled in prose, or a spelling, index-reading or premise discrepancy of the tester's own class — and 1 borderline, a `cruz-corona-ancestry` run that fires on an illegible surname reading settled by a sibling's record, accepted as a satisfiable cost of one conflict entry. What it lets through is in `unpersistedConflictResolutionInvariants`: a stop-criterion reading "no conflicts remain", rewording to that, a resolution claim written after the summary, and — wider than the rule before it graduated — any `conflicts[]` entry at all backing an id-less claim, so one recorded conflict in a multi-question project turns it off for every other question's id-less claim) |
 | §5 | Hard image cap | engine (MCP tool) — so Cowork, hosted, both harnesses | a 21st distinct `imageId` from one image group in one project, read through `image_read`, `image_transcribe` or `volume_bisect` (one shared count, persisted in `results/image-browse.jsonl`). Thrown before the fetch; instrument: `src/utils/browse-budget.ts`, spec `image-transcribe-tool-spec.md` §5.8. Corpus replay 2026-10-01: 69 distinct images refused (74 calls) in 6 groups over 5 runs, none on an image backing a correct finding | **enforcing** (since 2026-10-01) |
-| §5 | US 1890 census backstop | engine (MCP tool) — so Cowork, hosted, both harnesses | a `timelines[]` `gaps[].expected_events` entry naming the US 1890 federal census, which does not survive (ADR-0012) and can never fill a gap. Three arms: fires on an entry naming the US outright (case-sensitive on the bare abbreviation `US`/`USA`, so the pronoun "us" in prose is not read as the country) regardless of the timeline's places; stays silent on an entry naming some OTHER jurisdiction explicitly (a capitalized word immediately before "census", matched as `[Cc]ensus` rather than a trailing `/i` flag, which would also let the capitalized-word requirement match lowercase — not any capitalized word anywhere, which wrongly silenced ordinary sentence-initial and parenthetical capitals with no jurisdiction meaning — excluding a small, closed set of census-descriptive vocabulary that names no jurisdiction at all (`Census`, `Federal`, `United`, `States`, and, round 5, `Population`, `Decennial`, `Eleventh`, `County`: the bureau's own name and ordinal for the 1890 census, plus the administrative-level word "County" — not a per-country table, per Edmond's own ruling), letting those same words, minus `Federal`, sit as filler between a real jurisdiction and "census" rather than only ruling out the word directly adjacent to it (a second self-review found the adjacency-only cut let a real foreign jurisdiction one word further back disappear behind its own exclusion, e.g. "Essex County census", "Danish Population Census") — `Federal` was then dropped from the filler set (round 6) because it let an ordinary capitalized word that opens the entry ("The"/"Missing") get captured as a fake jurisdiction whenever "Federal" bridged it to "census" ("The Federal Census 1890"), and English articles/demonstratives (`The`/`A`/`An`/`This`/`That`/`These`/`Those` — a fixed closed grammatical class) were added beside the exclusion words for the identical shape through `Population`/`Decennial`/`County`, which must stay as filler ("The Population Census of 1890" vs. "Danish Population Census") — cross-checked against the timeline's own US-placed events, so a US state/county name already recorded on this timeline fires rather than being mistaken for a foreign country; one not yet recorded on this timeline, e.g. "New York census 1890" or a county seat the timeline hasn't mentioned, is still read as foreign and silenced — a known, documented false allow, not fixable without a wider US-places reference that is the per-jurisdiction table ADR-0012 forbids in different clothing; not a per-country table either, which ADR-0012 also forbids directly); and — with no jurisdiction named at all — fires when **any** non-null `event.standard_place` in the timeline ends in `"United States"` (not "every": an immigrant's own non-US birth event must not exempt an otherwise-US timeline, a gap found live by a `--runs-per-test 3` stability check; that "any" choice is itself put to the lead for a ruling, not decided unilaterally); silent on the 1890 veterans schedule (partial survival) and on a bare "federal census" mention with no accompanying US signal | **enforcing** (since 2026-10-08, lead ruling, after two prose attempts in `agents/timeline.md` did not hold). **Corpus replay: 0 of 47 committed `timelines[]` entries** across the e2e final states, the scenario fixtures and the e2e starting documents, re-measured after round 6's fix, by `packages/engine/mcp-server/dev/replay-timeline-1890-guard.ts`. The only true positives observed are this change's own 39 vitest cases (`packages/engine/mcp-server/tests/tools/research-append.test.ts`). No per-country census-survival table exists or is planned — a second country's non-survival fact would be a separate, separately-measured row |
+| §5 | US 1890 census backstop | engine (MCP tool) — so Cowork, hosted, both harnesses | a `timelines[]` `gaps[].expected_events` entry naming the US 1890 federal census, which does not survive (ADR-0012) and can never fill a gap. Three arms: fires on an entry naming the US outright (case-sensitive on the bare abbreviation `US`/`USA`, so the pronoun "us" in prose is not read as the country) regardless of the timeline's places; stays silent on an entry naming some OTHER jurisdiction explicitly (a capitalized word immediately before "census", matched as `[Cc]ensus` rather than a trailing `/i` flag, which would also let the capitalized-word requirement match lowercase — not any capitalized word anywhere, which wrongly silenced ordinary sentence-initial and parenthetical capitals with no jurisdiction meaning — excluding a small, closed set of census-descriptive vocabulary that names no jurisdiction at all (`Census`, `Federal`, `United`, `States`, and, round 5, `Population`, `Decennial`, `Eleventh`, `County`: the bureau's own name and ordinal for the 1890 census, plus the administrative-level word "County" — not a per-country table, per Edmond's own ruling), letting those same words, minus `Federal`, sit as filler between a real jurisdiction and "census" rather than only ruling out the word directly adjacent to it (a second self-review found the adjacency-only cut let a real foreign jurisdiction one word further back disappear behind its own exclusion, e.g. "Essex County census", "Danish Population Census") — `Federal` was then dropped from the filler set (round 6) because it let an ordinary capitalized word that opens the entry ("The"/"Missing") get captured as a fake jurisdiction whenever "Federal" bridged it to "census" ("The Federal Census 1890"), and English articles/demonstratives (`The`/`A`/`An`/`This`/`That`/`These`/`Those` — a fixed closed grammatical class) were added beside the exclusion words for the identical shape through `Population`/`Decennial`/`County`, which must stay as filler ("The Population Census of 1890" vs. "Danish Population Census") — cross-checked against the timeline's own US-placed events, so a US state/county name already recorded on this timeline fires rather than being mistaken for a foreign country; one not yet recorded on this timeline, e.g. "New York census 1890" or a county seat the timeline hasn't mentioned, is still read as foreign and silenced — a known, documented false allow, not fixable without a wider US-places reference that is the per-jurisdiction table ADR-0012 forbids in different clothing; not a per-country table either, which ADR-0012 also forbids directly); and — with no jurisdiction named at all — fires when **any** non-null `event.standard_place` in the timeline ends in `"United States"` (not "every": an immigrant's own non-US birth event must not exempt an otherwise-US timeline, a gap found live by a `--runs-per-test 3` stability check; that "any" choice is itself put to the lead for a ruling, not decided unilaterally); silent on the 1890 veterans schedule (partial survival) and on a bare "federal census" mention with no accompanying US signal | **enforcing** (since 2026-10-08, lead ruling, after two prose attempts in `agents/timeline.md` did not hold). **Corpus replay: 0 of 48 committed `timelines[]` entries** across the e2e final states, the scenario fixtures and the e2e starting documents, re-measured after round 6's fix and the subsequent main merge (post-merge corpus, up from 47), by `packages/engine/mcp-server/dev/replay-timeline-1890-guard.ts`. The only true positives observed are this change's own 39 vitest cases (`packages/engine/mcp-server/tests/tools/research-append.test.ts`). No per-country census-survival table exists or is planned — a second country's non-survival fact would be a separate, separately-measured row |
 | §5 | Set-once project fields | engine (MCP tool) — so Cowork, hosted, both harnesses | a rewrite of `objective`, `title` or `subject_person_ids` after project creation | **enforcing** |
 | §5 | Hypothesis `supported` evidence floor | engine (MCP tool) — so Cowork, hosted, both harnesses | a hypothesis set to `status: "supported"` while a conflict naming its own supporting/contradicting assertions is unresolved, or with neither ≥1 `record_basis: "stated"` supporting assertion nor ≥2 at `record_basis: "inferred"` citing ≥2 distinct sources | **enforcing** (since 2026-09-16, lead ruling 2026-09-07; forward direction only. **Refuses 0 of 9** landed `supported` writes in the calibration corpus — 17 ops attempt it across 13 run logs, 7 refused for unrelated reasons and 1 capture-stripped, so 9 are writes — and 0 of 44 `supported` hypotheses across 276 committed final states and fixtures. **Measured at 587d3c98d**, 2026-09-17, `eval/harness/scripts/count_supported_floor.py`. Mirrors the eval validator `test_supported_requires_evidence_floor`, which stays; the rule now sits on four planes with nothing that can see them disagree — the cross-plane parity work owns that) |
 | §5 | Plan-phase gate on `tree_forget` | engine (MCP tool) — so Cowork, hosted, both harnesses | `tree_forget` called after `research.json` already holds a non-empty `plans` array | **enforcing** |
@@ -280,7 +280,7 @@ closes the vocabulary gap; what it does not close is everything below.
 | Row | False denies | Why |
 |---|---:|---|
 | `plan_items` absent from the table | **1,134** | the tool defines the section; the table's own comment *blesses* the status flip it would deny |
-| `evaluations` absent | 172 | a schema-required section; denying it kills the mandatory proof-critique |
+| `evaluations` absent | 172 | a schema-required section; denying it kills every `gps-mentor` verdict write |
 | `hypotheses` → `{hypothesis-tracking}` | 31 | that skill is invoked **0 times in 154 runs** |
 | three rows narrower than the prose table they mirror | 72 | incl. `questions` omitting `proof-conclusion` |
 | `known_holdings` absent | 1 | the prose table declares owners; the code row is missing |
@@ -1534,7 +1534,7 @@ Two properties are load-bearing and must survive any refactor:
 What it does not do: validate the *content* of `stop_criteria` or cross-check
 `log_entry_ids` against real `log[]` entries — a declaration can still be
 present-and-empty. And it says nothing about overclaiming language in
-`narrative_markdown`; that is `gps-mentor`'s proof-critique job, checked by §8.
+`narrative_markdown`; that is `gps-mentor`'s proof-critique job, run when the user asks for a second opinion.
 
 ## 6. Raw-write lockdown
 
@@ -2297,11 +2297,11 @@ expectation that it graduates.
 
 ## 8. Post-run compliance detectors
 
-Three non-windowed checks over the final project state and the run's tool-call
+Two non-windowed checks over the final project state and the run's tool-call
 log; any violation sets `compliance: fail`. Specified in full — including the historical
 `not_checked` handling — in `docs/specs/e2e-test-spec.md` §7.5. Implemented in
 `skill_invocation.py` (`find_effects_without_invocation`,
-`find_missing_mentor_verdicts`, `find_person_evidence_missing_same_person`).
+`find_person_evidence_missing_same_person`).
 
 **They report; they do not gate.** A violation moves the `compliance` axis and
 nothing else. Until 2026-09-25 it also forced `outcome: fail` regardless of what
@@ -2333,7 +2333,7 @@ Two further properties worth keeping in view here:
   calls away for a different record. That is precisely what §7 exists to catch
   and why both layers are needed.
 - **A required-tool fingerprint beats a proximity heuristic where one exists.**
-  Check 3 works because `same_person` is a *required call*, so "was it called
+  Check 2 works because `same_person` is a *required call*, so "was it called
   for this person" is a fact — but only where the call is possible. It skips a
   link whose own provenance lane cannot yield a record persona from what the run retained, and counts
   what it skipped (§4, "One class of write genuinely cannot satisfy the gate").
@@ -2347,6 +2347,80 @@ keeps no tool-call ledger to run them over.
 
 Each of these was worked through and rejected or deferred with a reason. Read
 this section before reopening one.
+
+- **A surname arm on `research_append`'s person_evidence invariants** — refuse a
+  `confident` link when the project documents the person under another surname.
+  Worked through and **set aside**. Three facts decided it, all re-measured at
+  8296d1527:
+
+  1. **It cannot reach the link it was written for.** The motivating case is the
+     `jimmie-jewel-neal` fixture, where six committed runs attach Wood parents to
+     Martha J and the right surname — Sampson — appears nowhere an agent could
+     read it (it occurs only under `judge_output`, which is the answer key). The
+     harmful Wood-parent link is `confident` in exactly two of the six runs
+     (`run-2026-07-24_22-09-47` `pe_020`/`pe_022`, `run-2026-07-25_15-53-31`
+     `pe_006`/`pe_008`), and in **both** the tree records `LKYG-VKB` under one
+     surname, so a predicate keyed on a second documented surname does not
+     reach it. Where she *does* carry several surnames the link is `probable`
+     (`run-2026-07-31_13-02-13` `pe_086`/`pe_087`) or absent. State the claim at
+     this width: she carries *other* `confident` links in five of the six runs,
+     so "no confident link to that person" is false and was the error in this
+     entry's first draft.
+  2. **The escape clears the case independently anyway.** `LKYG-VKB` sits in a
+     `Couple` relationship carrying a `Marriage` fact in all six runs, so even a
+     `confident` Wood-parent link on a multi-surname tree person would be
+     cleared. Two separate reasons, either sufficient.
+  3. **Inside its own motivating fixture the predicate fires only on the wrong
+     links.** It refuses 80 links across `jimmie-jewel-neal`, 74 of them on
+     `KNXW-M3T` — the fixture's *subject*, once "Yarbro" joins "Neal" — and none
+     on the Wood-parent link it was written for. A predicate whose noise and
+     whose target are in the same fixture, and which hits only the noise, is not
+     a guardrail for this case.
+
+  **Rate, for scale rather than as the reason.** Over 204 committed e2e final
+  states (`git ls-files`, not a glob — the glob picks up a gitignored
+  `scratch_*` run): 5,752 confident person_evidence links, 1,518 on a person
+  carrying more than one distinct surname, **858 of 5,752 (14.9%)** refused
+  after the escape, in 46 of 204 runs (22.5%), measured at 8296d1527. ADR-0011
+  limit 2 is explicit that *"a rate never substitutes for"* inspection, so this
+  is context, not the argument — facts 1–3 are. The refusals collapse to **65**
+  distinct (fixture, person) pairs across 31 fixtures, which is a tractable
+  inspection set should anyone reopen this; `dev/measure-surname-arm.ts --pairs`
+  prints it.
+
+  **The escape is one coarse arm, not three.** Over the 1,518 multi-surname
+  links the arms fire `Couple`-with-`Marriage` 535, a `Marriage` fact 146, and a
+  `MarriedName` name type **15** (they overlap, so they do not sum). The escape
+  is effectively "is this person married at all", not "is this second surname a
+  married name" — which is what makes fact 2 hold, and what anyone tightening
+  the predicate would have to change first.
+
+  **One argument deliberately NOT carried forward.** Earlier drafts rejected the
+  arm partly on the ground that its refusals are "orthographic and patronymic
+  variants" that must not downgrade a match. Only the **orthographic** half of
+  that is doctrine: `agents/person-evidence.md` rules that transcription
+  variants do not downgrade strength, but it separately rules that a
+  **patronymic mismatch IS a core-identifier conflict** capping confidence at
+  `speculative`. So a sampled refusal like `anders-monsen-ancestry` on KZHH-VTX
+  (Halsteinsdatter / Halstensdatter / **Nielsdatter**) reads as a *true*
+  positive, not a false one. Do not reuse that argument; facts 1–3 do not
+  depend on it.
+
+  Reshaping it onto `coreIdentifierContradictionInvariants` was considered and
+  rejected for the same reason as (1): no anchor in the project documents names
+  the other surname. The numbers move as the corpus grows — re-run
+  `npx tsx dev/measure-surname-arm.ts` from `packages/engine/mcp-server/`
+  before reopening.
+
+- **Requiring a new shadow guard to name its graduation instrument, sample and
+  read-date at filing.** Dropped by lead ruling **2026-10-06**, on the ground
+  that it would have no instances to govern: the guard registry's `guards[]`
+  holds one entry and it is already enforcing, the registry test introduced with
+  the labelled-case rule already forces a case set on every *new* harness
+  detector, and two checks graduated after the rule was first proposed. The ruling addresses the
+  graduation-instrument half only; item 3's second sentence — that a guard whose
+  predicate reads free text should name the declared-or-recomputed alternative it
+  rejected — was not separately ruled on and is enforced nowhere today.
 
 - **Converting the four skills to agents** (which would give a real `agent_id`
   and make hook attribution trivial). All four do mandatory on-demand `Read` of
@@ -2467,15 +2541,14 @@ this section before reopening one.
   `probable` tier.
 - **Running the tree-reading §8 arms over a hosted feedback bundle** — cannot be
   done, so the hosted feedback bundle corpus is measured with the transcript-only
-  and `research.json`-only detectors instead. A feedback bundle carries no
+  detector instead. A feedback bundle carries no
   `starting_tree` baseline, and its `tree.gedcomx.json` is redacted before it
   leaves the sandbox (`_redact_person`, `apps/server/app/feedback.py`), so the
   arms that diff the final tree against a seed — `find_effects_without_invocation`
   and `check_guardrail_compliance` — would read every seeded relationship as a
   violation (the same no-baseline defect that killed per-turn scoping, above).
-  Only `find_unguarded_protected_writes` (transcript-only) and
-  `find_missing_mentor_verdicts` (reads `research.json` alone) are valid over a
-  bundle; the adapter and report live in `eval/harness/e2e/`
+  Only `find_unguarded_protected_writes` (transcript-only) is valid over a
+  bundle, and the scan reads no `research.json`; the adapter and report live in `eval/harness/e2e/`
   (`feedback_transcript_adapter.py`, `guardrail_shadow_report.py`).
   **Two of `find_unguarded_protected_writes`' owner arms move their write
   inside an agent, and whether that write is visible is decided per bundle and
@@ -2602,8 +2675,9 @@ this section before reopening one.
   31" and "0 of 123" do not cover the population the rule is aimed at.
 
   The rejection does not rest on the rate. It rests on three things that hold
-  whatever the rate turns out to be: a lost verdict is **caught downstream** by
-  the completion gate as a visible stall rather than silent corruption; the
+  whatever the rate turns out to be: a lost verdict is **visible to the user who
+  asked for it**, since the mentor now runs only on request, rather than silent
+  corruption; the
   sample **grows on its own** now that attribution has shipped, so no monitoring
   task is needed to improve it; and the alternative is a plane that fails open
   and costs a hook invocation per tool call, bought against an unobserved
@@ -2738,9 +2812,6 @@ that outlive any one of them.
   looks identical to the original bug and nothing here catches it — §8 detects
   "skill never invoked," not "skill invoked, its own reference silently
   skipped."
-- **`gps-mentor`'s own gate may be as skippable as the four.** §8 check 2
-  detects a missing verdict after the fact; nothing prevents the router from
-  skipping the invocation under the same context pressure.
 - **`research-append.ts`'s batch ordering was audited for one TOCTOU case
   only** (§5's). Other same-batch orderings that self-satisfy a precondition —
   adding a `person_evidence` link and consuming it for an assertion in one

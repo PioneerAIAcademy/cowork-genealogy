@@ -1,0 +1,19 @@
+{
+  "id": "fernando-suarez-marriage",
+  "name": "Fernando Suarez Franco — marriage in November 1891, Aguadas, Caldas, Colombia",
+  "genre": "record-hint",
+  "source_pid": "GZ6S-8MW",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where did Fernando Suarez Franco, born about 1866 in Antioquia and the son of Juan de Dios Suarez and Manuela Franco, marry Maria Jesus Ramirez Henao, the mother of his children baptized in Caramanta between 1896 and 1904?",
+  "tags": {
+    "question_type": "marriage",
+    "era": "1890s",
+    "geography": "CO"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 6, hint-samples.csv row 189, flag adds_marriage, confidence 3). Draft transcribed from an 1891 Aguadas, Caldas parish marriage register; unverified."
+}

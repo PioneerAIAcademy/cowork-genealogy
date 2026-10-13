@@ -1089,6 +1089,15 @@ judge-report: ## Non-discrimination scan of the UNIT judge over committed run lo
 	# time by LLM judgment; this is the mechanical corpus-wide half.
 	cd eval/harness && uv run python -m judge_report $(if $(SKILL),--skill $(SKILL),) $(if $(SINCE),--since $(SINCE),)
 
+.PHONY: judge-regrade
+judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1
+	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
+	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
+	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
+	# `make harness-test` to prove the renderer reads from disk on every call.
+	# A log that is already skill-side stale (rule 2) is REFUSED, not regraded.
+	cd eval/harness && uv run python -m judge_regrade $(if $(SKILL),--skill $(SKILL),) $(if $(DRY),--dry-run,)
+
 .PHONY: e2e-calibrate
 e2e-calibrate: ## Run judge calibration against committed run annotations (maintainer step; needs an API key)
 	cd eval/harness && uv run python -m e2e.calibrate_judge
@@ -1259,6 +1268,18 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# were removed in PR #2204 (zombie re-lands from stale-base merges).
 	# The transcript fallback code path is retained for local copies only.
 	cd eval/harness && uv run python -m e2e.nudge_report \
+	  $(if $(TEST),--test $(TEST),) \
+	  $(if $(SINCE),--since $(SINCE),)
+
+.PHONY: e2e-advisories
+e2e-advisories: ## Do the 4 advisory return-fields fire, and does the agent act? Over committed e2e runs (issue #3199): make e2e-advisories | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+	# Pure analysis, no API: reads committed run JSONs. For each advisory
+	# (unloggedSearches, nilSearchNeedsLog, sources-without-assertions,
+	# log-without-persistence) prints fired / acted / ignored /
+	# condition-never-held / not-observable, split by agent_type, with run and
+	# call denominators. Turns no advisory into a refusal -- it only measures;
+	# whether a note becomes a deny is the lead's call, made on these numbers.
+	cd eval/harness && uv run python -m e2e.advisory_report \
 	  $(if $(TEST),--test $(TEST),) \
 	  $(if $(SINCE),--since $(SINCE),)
 
@@ -1565,9 +1586,10 @@ eb-bundles-smoke: ## Boot each bundle offline in Docker (AL2023 / node:24-slim):
 # `--frozen`: a group edited in pyproject.toml without `uv lock` fails here instead of
 # exporting the stale lock.
 .PHONY: proto-requirements
-proto-requirements: ## Export uv.lock's proto-web/proto-worker groups to apps/server/proto/{web,worker}/requirements.txt (hashes; commit both after any uv.lock change)
+proto-requirements: ## Export uv.lock's proto-web/proto-worker/sandbox groups to apps/server/{proto/web,proto/worker,sandbox}/requirements.txt (hashes; commit all three after any uv.lock change)
 	cd apps/server && uv export --quiet --locked --only-group proto-web --no-emit-project --format requirements-txt -o proto/web/requirements.txt
 	cd apps/server && uv export --quiet --locked --only-group proto-worker --no-emit-project --format requirements-txt -o proto/worker/requirements.txt
+	cd apps/server && uv export --quiet --locked --only-group sandbox --no-emit-project --format requirements-txt -o sandbox/requirements.txt
 
 # Builds and pushes the E2B agent image. `make deploy` runs this too, so the
 # control plane and the sandbox ship together; it stays a standalone target for
@@ -1636,3 +1658,9 @@ DEPLOY_URL := https://genealogy-workbench.fly.dev
 .PHONY: deploy-status
 deploy-status: ## Health-check the deployed control plane (expect "db":"postgres")
 	curl -s $(DEPLOY_URL)/api/health | jq
+
+# Runs on the Fly machine, which holds DATABASE_URL, so no database credential is needed
+# here. Reads turn_costs (apps/server/app/cost_report.py).
+.PHONY: alpha-costs
+alpha-costs: ## Claude API cost of the hosted alpha: per day, per build, top sessions (DAYS=30)
+	fly ssh console --app genealogy-workbench -C "sh -c 'cd /app/server && python -m app.cost_report --days $(or $(DAYS),30)'"

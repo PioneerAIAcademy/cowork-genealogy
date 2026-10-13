@@ -1,11 +1,11 @@
 // fact-helpers — TypeScript ports of the date/fact aggregation helpers
 // that Java's MobWarnings relies on.
 //
-// Java's per-check methods (hasEventBeforeBirth, earliestChildBirthToBirth,
-// hasEventAfterDeath, etc.) read like:
+// Java's per-check methods (hasEventAfterDeath, earliestChildBirthToBirth,
+// hasEventBeforeChristening, etc.) read like:
 //
-//     Integer diff = factDaysDiffEarliestLatest(mob, null, null,
-//                       FsFactType.BIRTHLIKE_FACT_TYPES, null, false, 0);
+//     Integer diff = factDaysDiffLatestLatest(mob,
+//                       FsFactType.DEATHLIKE_FACT_TYPES, null, null, null, false, 0);
 //     return diff != null && diff > days;
 //
 // This module gives us the same building blocks so the TS warning checks
@@ -126,12 +126,20 @@ export function warningFactsOfPerson(
 
 // ─── Self-fact (anchor) aggregations ──────────────────────────────────────
 
-/** Earliest possible day across all matching facts on the anchor, or null. */
+/**
+ * Earliest possible day across all matching facts on the anchor, or null.
+ *
+ * `bound` picks which end of each fact's day range is compared: `"min"` (the
+ * default) gives the earliest any fact could be; `"max"` gives the earliest
+ * fact read as LATE as its date allows — the generous side of a check that
+ * asks whether some fact came too early (see `hasEventBeforeBirth`).
+ */
 export function earliestDayOfSelfFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
   imperfectDateFudgeDays = 0,
+  bound: "min" | "max" = "min",
 ): number | null {
   const ranges = collectFactDayRanges(
     mob.getFacts(),
@@ -140,19 +148,26 @@ export function earliestDayOfSelfFacts(
     imperfectDateFudgeDays,
   );
   if (ranges.length === 0) return null;
-  let earliest = ranges[0].min;
+  let earliest = ranges[0][bound];
   for (let i = 1; i < ranges.length; i++) {
-    if (ranges[i].min < earliest) earliest = ranges[i].min;
+    if (ranges[i][bound] < earliest) earliest = ranges[i][bound];
   }
   return earliest;
 }
 
-/** Latest possible day across all matching facts on the anchor, or null. */
+/**
+ * Latest possible day across all matching facts on the anchor, or null.
+ *
+ * `bound` picks which end of each fact's day range is compared: `"max"` (the
+ * default) gives the latest any fact could be; `"min"` gives the latest fact
+ * read as EARLY as its date allows.
+ */
 export function latestDayOfSelfFacts(
   mob: Mob,
   factTypes: ReadonlySet<string> | null,
   antiFactTypes: ReadonlySet<string> | null = null,
   imperfectDateFudgeDays = 0,
+  bound: "min" | "max" = "max",
 ): number | null {
   const ranges = collectFactDayRanges(
     mob.getFacts(),
@@ -161,9 +176,9 @@ export function latestDayOfSelfFacts(
     imperfectDateFudgeDays,
   );
   if (ranges.length === 0) return null;
-  let latest = ranges[0].max;
+  let latest = ranges[0][bound];
   for (let i = 1; i < ranges.length; i++) {
-    if (ranges[i].max > latest) latest = ranges[i].max;
+    if (ranges[i][bound] > latest) latest = ranges[i][bound];
   }
   return latest;
 }
@@ -413,43 +428,20 @@ export function earliestYearOfParentFacts(
 }
 
 // ─── Java's day-diff aggregators ──────────────────────────────────────────
-// All four (Earliest-Latest, Latest-Earliest, Earliest-Earliest, Latest-
-// Latest) are direct ports of warnings.java:975-997.
+// Ports of warnings.java:975-997, plus one conservative pairing Java lacks.
+// Java's Earliest-Latest pairing (latest(set 2) − earliest(set 1)) has no
+// helper: its two users, hasEventBeforeBirth and hasEventBeforeChristening,
+// read each date generously instead.
 //
 // Convention matches Java: the diff is always (side-2 quantity) − (side-1
 // quantity). null when either side has no matching dated fact.
-
-/** = latest(set 2) − earliest(set 1). Java warnings.java:975. Used by W1. */
-export function factDaysDiffEarliestLatest(
-  mob: Mob,
-  factTypes1: ReadonlySet<string> | null,
-  antiFactTypes1: ReadonlySet<string> | null,
-  factTypes2: ReadonlySet<string> | null,
-  antiFactTypes2: ReadonlySet<string> | null,
-  imperfectDateFudgeDays = 0,
-): number | null {
-  const earliest1 = earliestDayOfSelfFacts(
-    mob,
-    factTypes1,
-    antiFactTypes1,
-    imperfectDateFudgeDays,
-  );
-  const latest2 = latestDayOfSelfFacts(
-    mob,
-    factTypes2,
-    antiFactTypes2,
-    imperfectDateFudgeDays,
-  );
-  if (earliest1 === null || latest2 === null) return null;
-  return latest2 - earliest1;
-}
 
 /**
  * = earliest(set 2) − latest(set 1). No Java counterpart: this is the
  * CONSERVATIVE pairing, taking the bounds that make a gap look as SMALL as
  * possible, so a warning built on it fires only when the violation holds under
- * every reading the recorded dates permit. `factDaysDiffEarliestLatest` is the
- * opposite pairing and is what the Java ports use. See
+ * every reading the recorded dates permit. Java's Earliest-Latest is the
+ * opposite pairing. See
  * `hasBurialAfterDeath` for why the conservative form exists;
  * `hasDelayedBurial` and `hasStillbirthConflict`'s age branch use it for the
  * same reason.

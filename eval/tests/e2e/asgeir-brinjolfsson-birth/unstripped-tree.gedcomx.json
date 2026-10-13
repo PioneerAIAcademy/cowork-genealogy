@@ -1,0 +1,349 @@
+{
+  "persons": [
+    {
+      "id": "KHJ9-95M",
+      "ark": "ark:/61903/4:1:KHJ9-95M",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Asgeirs",
+          "surname": "Brinjolfssonar",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9Q6G-1PY"
+        },
+        {
+          "ref": "9QX3-YHQ"
+        }
+      ]
+    },
+    {
+      "id": "M34K-BMC",
+      "ark": "ark:/61903/4:1:M34K-BMC",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "Solveig",
+          "surname": "Asgeirs",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "25 JUN 1812",
+          "standard_date": "25 Jun 1812"
+        },
+        {
+          "id": "453dddf0-cce9-4ea8-bf89-7f0161420bc3",
+          "type": "Christening",
+          "date": "25 JUN 1812",
+          "standard_date": "25 Jun 1812",
+          "place": "Leisingiastodum,Hvammur I Hvammissveit,Dalasysla,Iceland",
+          "standard_place": "Hvammur i Hvammissveit, Dalasýsla, Western, Iceland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "22 NOV 1813",
+          "standard_date": "22 Nov 1813"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "9Q6G-1PR"
+        }
+      ]
+    },
+    {
+      "id": "KCMK-VJ8",
+      "ark": "ark:/61903/4:1:KCMK-VJ8",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Malfridur",
+          "surname": "Asgeirsdottir",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Malmfrid",
+          "surname": "Asgeirsson",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Malmfridur",
+          "surname": "Asgeirsdottir",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "7b67460c-14ec-47bd-8806-6d6adebff86d",
+          "type": "Birth",
+          "date": "04 AUG 1808",
+          "standard_date": "4 Aug 1808"
+        },
+        {
+          "id": "fb32b179-b61e-42ac-a43f-192eae4a6c1b",
+          "type": "Christening",
+          "date": "5 Aug 1808",
+          "standard_date": "5 Aug 1808",
+          "place": ", Hvammurhvammisve, Dala, Iceland",
+          "standard_place": "Dalasýsla, Western, Iceland"
+        },
+        {
+          "id": "95b3bf6c-c009-4d63-9281-50b46b4905cb",
+          "type": "Residence",
+          "date": "1812",
+          "standard_date": "1812",
+          "place": "Dalasýsla, Vesturland, Island",
+          "standard_place": "Dalasýsla, Western, Iceland"
+        },
+        {
+          "id": "9adfc353-40b2-49dd-a3c1-d8fe7ee1859e",
+          "type": "Residence",
+          "date": "1835",
+          "standard_date": "1835",
+          "place": "Dalasýsla, Vesturland, Ísland",
+          "standard_place": "Dalasýsla, Western, Iceland"
+        },
+        {
+          "id": "db1bdbb0-85b7-4828-82d0-963ae74c8a65",
+          "type": "Residence",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Hvammur, Dalasýsla, Vesturland, Ísland",
+          "standard_place": "Hvammur, Dalasýsla, Western, Iceland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "1868",
+          "standard_date": "1868"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WXXM-KNT"
+        },
+        {
+          "ref": "WXWH-GW6"
+        },
+        {
+          "ref": "3TCH-J23"
+        },
+        {
+          "ref": "9QX3-YHM"
+        },
+        {
+          "ref": "9QXP-B7H"
+        }
+      ]
+    },
+    {
+      "id": "K8Y9-KFK",
+      "ark": "ark:/61903/4:1:K8Y9-KFK",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Sigridar",
+          "surname": "Petursdottur",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "6b4f81b0-013b-4b04-8a3d-cda7dbf8babc",
+          "type": "Birth",
+          "date": "1834",
+          "standard_date": "1834"
+        },
+        {
+          "id": "42587237-8d69-4ab5-b90b-7ecdc04989c5",
+          "type": "Residence",
+          "date": "1840",
+          "standard_date": "1840",
+          "place": "Hvammur, Dalasýsla, Vesturland, Ísland",
+          "standard_place": "Hvammur, Dalasýsla, Western, Iceland"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WXWH-PWP"
+        },
+        {
+          "ref": "9Q6G-1P1"
+        },
+        {
+          "ref": "9QX3-YHH"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KHJ9-95M",
+      "person2": "K8Y9-KFK"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KHJ9-95M",
+      "child": "KCMK-VJ8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K8Y9-KFK",
+      "child": "KCMK-VJ8",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KHJ9-95M",
+      "child": "M34K-BMC",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K8Y9-KFK",
+      "child": "M34K-BMC",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_KHJ9-95M",
+      "title": "Asgeirs Brinjolfssonar",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Asgeirs Brinjolfssonar (PID KHJ9-95M); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KHJ9-95M"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_M34K-BMC",
+      "title": "Solveig Asgeirs",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Solveig Asgeirs (PID M34K-BMC); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:M34K-BMC"
+    },
+    {
+      "id": "sd_person_KCMK-VJ8",
+      "title": "Malmfrid Asgeirsson",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Malmfrid Asgeirsson (PID KCMK-VJ8); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KCMK-VJ8"
+    },
+    {
+      "id": "sd_person_K8Y9-KFK",
+      "title": "Sigridar Petursdottur",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Sigridar Petursdottur (PID K8Y9-KFK); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K8Y9-KFK"
+    },
+    {
+      "id": "9Q6G-1PY",
+      "title": "Asgeirs Brinjolfssonar in entry for Solveig, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPF-F85 : 23 June 2020), Asgeirs Brinjolfssonar in entry for Solveig, 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPF-F85"
+    },
+    {
+      "id": "9QX3-YHQ",
+      "title": "Asgeirs Brinjolfssonar in entry for Malmfridur, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPF-X52 : 23 June 2020), Asgeirs Brinjolfssonar in entry for Malmfridur, 1808.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPF-X52"
+    },
+    {
+      "id": "9Q6G-1PR",
+      "title": "Solveig, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPF-F8P : 23 June 2020), Solveig, 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPF-F8P"
+    },
+    {
+      "id": "WXXM-KNT",
+      "title": "Málfrídr Ásgeirsdóttir, \"Iceland, Church Census, 1744-1965\"",
+      "citation": "\"Iceland, Church Census, 1744-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8JBG-NXZM : Wed Oct 23 23:38:25 UTC 2024), Entry for Jón Jónsson and Helga Helgadóttir, 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8JBG-NF3Z"
+    },
+    {
+      "id": "WXWH-GW6",
+      "title": "Malfridr Asgeirsdottir, \"Iceland, Church Census, 1744-1965\"",
+      "citation": "\"Iceland, Church Census, 1744-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VYV-3FP6 : Wed Oct 23 23:33:25 UTC 2024), Entry for Gudbr. Oddsson and Sigridr Gudbrandsdottir, 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VYV-3FPJ"
+    },
+    {
+      "id": "3TCH-J23",
+      "title": "Malfridur Asgeirsdottir, \"Iceland, Census, 1835\"",
+      "citation": "\"Iceland, Census, 1835\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:681T-ZV27 : Mon Aug 17 22:48:37 UTC 2026), Entry for Sveinbjorn Jonsson and Malfridur Asgeirsdottir, 1835.",
+      "url": "https://familysearch.org/ark:/61903/1:1:681T-ZV2K"
+    },
+    {
+      "id": "9QX3-YHM",
+      "title": "Malmfridur, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPF-X5K : 23 June 2020), Malmfridur, 1808.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPF-X5K"
+    },
+    {
+      "id": "9QXP-B7H",
+      "title": "Malfridur Asgeirsdr in entry for Helgi, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPV-S7K : 3 November 2025), Malfridur Asgeirsdr in entry for Helgi, 1830.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPV-S7K"
+    },
+    {
+      "id": "WXWH-PWP",
+      "title": "Sigridr Gudbrandsdottir, \"Iceland, Church Census, 1744-1965\"",
+      "citation": "\"Iceland, Church Census, 1744-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6VYV-3FP6 : Wed Oct 23 23:33:25 UTC 2024), Entry for Gudbr. Oddsson and Sigridr Gudbrandsdottir, 1840.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6VYV-3FPX"
+    },
+    {
+      "id": "9Q6G-1P1",
+      "title": "Sigridar Petursdottur in entry for Solveig, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPF-F8R : 23 June 2020), Sigridar Petursdottur in entry for Solveig, 1812.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPF-F8R"
+    },
+    {
+      "id": "9QX3-YHH",
+      "title": "Sigridar Petursdottur in entry for Malmfridur, \"Iceland, Baptisms, 1730-1905\"",
+      "citation": "\"Iceland, Baptisms, 1730-1905\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FGPF-X5L : 23 June 2020), Sigridar Petursdottur in entry for Malmfridur, 1808.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FGPF-X5L"
+    }
+  ]
+}
