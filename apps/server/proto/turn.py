@@ -446,8 +446,8 @@ RESUMED_FAILED_OUTCOMES = frozenset({"no_progress", "retries_exhausted", "transc
 
 def outcome_check(label: str, outcome: Any) -> Check:
     """``<label>: turns.outcome is not <RESUMED_FAILED_OUTCOMES>`` -- the two-turn run's
-    check, the same deny-set as the kill arm's. A turn the worker closed ITSELF (the Stop
-    hook's ``no_progress`` on a project-less lookup) still reaches turn_done with
+    check, the same deny-set as the kill arm's. A turn the worker closed ITSELF (a
+    redelivery's zero-progress ``no_progress``, say) still reaches turn_done with
     completed_at set, so only the outcome says it failed. No outcome at all fails too."""
     return (f"{label}: turns.outcome is not {'/'.join(sorted(RESUMED_FAILED_OUTCOMES))}",
             outcome is not None and outcome not in RESUMED_FAILED_OUTCOMES, f"outcome={outcome}")

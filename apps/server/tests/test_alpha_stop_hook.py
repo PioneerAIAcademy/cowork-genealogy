@@ -108,22 +108,40 @@ def test_it_allows_the_yield_once_the_project_is_complete(tmp_path, monkeypatch)
     assert _call(stop) == {}
 
 
-def test_a_missing_or_unreadable_research_json_is_not_completion(tmp_path, monkeypatch):
-    """`read_research_json` returns None for all three, and None is NOT 'completed' -- so
-    the run keeps going rather than stopping on a file it could not read."""
+def test_a_missing_or_unreadable_research_json_allows_the_stop(tmp_path, monkeypatch):
+    """`read_research_json` returns None for all four, and a session with no research.json
+    is not nudged: the nudge says to re-read a file there is none to read.
+
+    The hook answers an EXCEPTION with `{}` too, so the verdict alone cannot tell "allowed
+    because there is no project" from "allowed because reading it raised". Dropping
+    `JSONDecodeError` or `UnicodeDecodeError` from `read_research_json`'s catch would pass
+    on `{}` -- so the log is checked for the line the hook writes when it fails."""
+    logged: list[str] = []
+    monkeypatch.setattr(real_agent, "_log", logged.append)
+
     # A FRESH hook per case: a second stop on the same hook with no tool call between
     # them is allowed by the no-progress arm, which would make every case below pass for
     # the wrong reason.
     def first_verdict() -> dict:
         return _call(_hooks(tmp_path, monkeypatch)["Stop"][0].kw["hooks"][0])
 
-    assert first_verdict()["decision"] == "block", "no file at all"
+    assert first_verdict() == {}, "no file at all"
     (tmp_path / "research.json").write_text("{not json", encoding="utf-8")
-    assert first_verdict()["decision"] == "block", "unparsable"
+    assert first_verdict() == {}, "unparsable"
     (tmp_path / "research.json").write_text("[]", encoding="utf-8")
-    assert first_verdict()["decision"] == "block", "a JSON array, which .get() would die on"
+    assert first_verdict() == {}, "a JSON array, which .get() would die on"
     (tmp_path / "research.json").write_bytes(b'{"project": {"status": "\xff\xfe"}}')
-    assert first_verdict()["decision"] == "block", "invalid UTF-8 (a ValueError, not an OSError)"
+    assert first_verdict() == {}, "invalid UTF-8 (a ValueError, not an OSError)"
+    assert not [ln for ln in logged if "stop hook failed" in ln], logged
+
+    # The control: that check is worth something only if a real failure says this. A hook
+    # whose counter raises must reach the same except arm and write the line.
+    broken = real_agent.make_stop_hook(
+        tmp_path, max_nudges=60,
+        tool_count=lambda: (_ for _ in ()).throw(RuntimeError("counter is gone")),
+    )
+    assert _call(broken) == {}
+    assert [ln for ln in logged if "stop hook failed" in ln], "the failure line has moved"
 
 
 def test_the_cap_bounds_the_vetoes(tmp_path, monkeypatch):
