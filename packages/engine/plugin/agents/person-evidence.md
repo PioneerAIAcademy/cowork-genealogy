@@ -285,11 +285,7 @@ grows all session):
 - `research_query({ section: "person_evidence", personId })` — the existing
   links for a candidate person, when checking for revisions.
 
-**`assertionId` is NOT a valid filter on the `assertions` section.** The
-`assertions` section accepts only `recordId`, `recordRole`, `sourceId`, and
-`questionId`. If you need to check whether an assertion is already linked,
-query `section: "person_evidence"` with `assertionId` — that is where the
-filter lives. Do not guess; a wrong-section filter errors out.
+**Link status lives only in `person_evidence`.** `research_query({ section: "assertions", assertionId })` returns the assertion itself, never whether it is linked; a hit there does not mean "already linked". To check linkage, query `section: "person_evidence"` with `assertionId`.
 
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
