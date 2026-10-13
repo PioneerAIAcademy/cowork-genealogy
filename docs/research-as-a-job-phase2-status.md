@@ -1,7 +1,7 @@
 # Research as a job — phase 2 status log
 
 **Branch:** `research-as-a-job-phase2`. **Draft PR #3262.**
-**Last updated:** 2026-10-12. Update this file whenever the branch moves.
+**Last updated:** 2026-10-13. Update this file whenever the branch moves.
 
 **Everything this file said was blocking is now closed:** #2793 and #2927 (2026-10-03),
 #3119 (2026-10-08), #2122 (2026-10-12). Nothing external gates this branch.
@@ -24,12 +24,17 @@ is [`docs/plan/research-as-a-job-later-REVISED.md`](./plan/research-as-a-job-lat
 
 ## Where we are in one line
 
-*Before phase 2* is built; its acceptance is met except R2. **Phase 2 is NOT fully met** —
-three acceptance clauses are unbuilt (images, uploads, spend-resume) and three items are
-deferred with no ruling. See "What is left" below, which is now the authoritative list.
-**Phase 2 is built.** Every parent item is done or deferred by design. The measurement is
-still the only thing left, but what blocks it has changed: #2793/#2927 closed on 2026-10-03,
-and it now waits on #3119 restoring the activation tests it measures.
+**Phase 2 is built, and as of 2026-10-13 all seven acceptance clauses are verified
+against a running stack** rather than against a passing suite. That distinction is the
+main thing this file now records: three of the seven were marked built on 2026-10-12 with
+green tests behind them and did not work at all. See "Phase 2's own acceptance" below.
+
+*Before phase 2* is built; its acceptance is met except R2, which is the one genuinely
+open item and is not work — it needs `AUTO_CONTINUE` turned back on, and both of the
+preconditions for asking have now merged (#3372, #3393).
+
+What is left: R2's live measurement, and the two stale eval runs (`research`,
+`init-project`) to be bought at un-draft after the final main merge.
 
 ## Before phase 2 — built
 
@@ -58,10 +63,10 @@ see findings.
 | The step is the chat's unit | **DONE** (`41a45a0c4`, `1cce268de`) — chips render where they arrived, not stacked above the prose |
 | Identifiers become links | **DONE** (`f3908a47a`, `eddb86d5c`) — 193 dead ids open their card; provider hoisted above both panes |
 | Tool chips in FamilySearch's words | **DONE** — labels (`13d6cf010`) and navigation (`357ddcd75`): 544 of 1,009 chips open the card they name. Still deferred: collapsed-card identity, compaction state, retry state |
-| One view of job state | **DONE** (`537ebcf0a`, `b04873198`) — rail deleted, four states on the list, off-plan group |
+| One view of job state | **DONE and now VERIFIED** — rail deleted, off-plan group. The four states shipped broken: `_SELECT` fetched none of `job_state`'s three inputs, so every session read `new`. Fixed and driven through all five states against compose (`068035944`) |
 | The job outlives the tab | **DONE** (`61c1c8941`) |
 | Three kinds of nothing | **DEFERRED BY DESIGN** — R5 pins it to phase 3's errand; one semantic, two eval slots if split |
-| Show the scans, let documents in | **SIDECAR BODIES DONE** (`f2b98b957`) — served from the blob store; 404 now means a log genuinely has none. Still not served: images, uploads, sandbox logs (`_NOT_IN_PROTOTYPE`) |
+| Show the scans, let documents in | **DONE and now VERIFIED** — sidecars, images and uploads all served from the blob store. All three answered 500, not 404, until `479b88090`. Still not served: sandbox logs (501, deliberately) |
 
 Supporting fixes: chips now close on the agent that produced the result
 (`0b6ba0373` — 28 of 1,006 were cross-attributed), and every sub-agent event carries a
@@ -80,11 +85,40 @@ a verification**:
 
 | Clause | State |
 |---|---|
-| "a census page opens from the feed" | **BUILT 2026-10-13** — `GET .../image` serves `images/<key>.jpg` from the blob store |
-| "a PDF attached mid-run reaches the project" | **BUILT 2026-10-13** — `POST .../files` writes `uploads/<name>`, which the worker's deny hook routes to `sidecar_read` and a binary to `image_transcribe` |
-| "a session stopped at the spend bound continues on the same project in one action" | **BUILT 2026-10-13** — `project_id` on `session_out`/`SessionSummary`/`createSession`, and a continue action in ChatPane, which is the only surface that can see a spend stop |
+| "a census page opens from the feed" | **VERIFIED 2026-10-13** — `GET .../image` returns 200, `image/jpeg`, bytes intact (`ffd8` magic) for a real scan; 404 for a missing one |
+| "a PDF attached mid-run reaches the project" | **VERIFIED 2026-10-13** — `POST .../files` returns 200; re-uploading a name replaces it (one row, second body) and the superseded object is deleted (2 objects for 2 names) |
+| "a session stopped at the spend bound continues on the same project in one action" | **VERIFIED 2026-10-13** — one click opens a new session on the same `project_id`, carrying the project's prior work. Works on REPLAY too, so a reader returning to a stopped session still gets it |
 
-All seven clauses are now met. Three notes on how, because each was a near-miss:
+All seven clauses are now met **and verified against a running stack** (2026-10-13).
+
+**Read this before trusting any "built" row above.** Three of these clauses were recorded
+as built on 2026-10-12, with a green suite behind each, and **none of the three worked**.
+They were found by curling the routes and clicking the UI on `make proto-up`, not by any
+test:
+
+- **All three blob routes answered 500, never 404 or 200.** `psycopg` and `PG_DSN` were
+  referenced by the sidecar, image and upload handlers and neither is defined at module
+  scope in that file. Every call that got past validation raised `NameError`. The route
+  tests stub the client and never reach the line. Fixed in `479b88090`; the shared guard
+  is `eval/harness/tests/unit/test_undefined_name_lint.py`, since this was the second
+  `NameError` to reach a running tier.
+- **Every session reported `job_state: "new"`.** `_SELECT` fetched none of the three
+  inputs `job_state` reads, so the pure function took its `latest_outcome is None` branch
+  every time. `test_session_job_state.py` passed throughout — it takes those values as
+  arguments, so it cannot see that nothing supplies them. Fixed in `068035944`, with a
+  pg-backed test because the defect was entirely in SQL.
+- **`make proto-up` could not start at all.** The minio service still carried the
+  `bitnami/minio` command, volume path and healthcheck after the image pin moved to
+  `pgsty/minio`; main had it right and a merge kept the stale side. So nobody could have
+  run the stack to discover the two above. Fixed in `fcc94ae3b`.
+
+The pattern is worth naming, because it will recur: **every one was a gap between two
+correct pieces.** The function was right and nothing fed it; the route was right and a
+name was undefined; the image pin was right and the command was not. A unit test sees one
+piece. Only running the thing sees the seam. A row in this file that says "built" on the
+strength of a passing suite is an unverified claim — say which stack it was exercised on.
+
+Three further notes on the upload path, each a near-miss caught before merge:
 
 - **The web tier had no S3 WRITE path at all**, only `fetch_sidecar`'s read, so the
   upload was not the port it looked like. `project_blobs.put_blob` mirrors the engine's
@@ -120,7 +154,18 @@ real.
   *"Still here — organising what I have found so far…"*. It ranks below reconnecting
   (a lost connection outranks a working pause) and is cleared by the next event,
   because the CLI announces a compaction's START and never its end.
-- **Collapsed-card identity — BUILT.** A collapsed research-log row showed date, tool,
+- **Collapsed-card identity — BUILT, then fixed twice.** It shipped reading **camelCase**
+  keys (`birth_place` as `birthPlace`, and so on) out of `research.json`, which is
+  snake_case throughout, so five of its twelve keys never matched anything and only the
+  single-word ones worked by accident. In the sample project a death search and a
+  marriage search both rendered as bare "Patrick Flynn" — the exact collision the feature
+  exists to prevent. Its unit tests used camelCase too, so they agreed with the
+  implementation and with no real document. Fixing the casing alone was not enough:
+  `birth_place`/`birth_year` are the subject's own attributes, repeated in every query
+  about that person, so with three parts as the whole budget they crowded out what
+  actually differs; keys are now ordered by how discriminating they are. A second pass
+  added value-level de-duplication, since `place`, `jurisdiction` and `death_place` are
+  all "where". Both found in a browser. A collapsed research-log row showed date, tool,
   outcome and a count, so two searches of the same tool on the same day were identical
   on screen. The row now carries a one-line identity from the query — who, then where,
   then when, capped at three parts so a row stays one line.
@@ -142,9 +187,15 @@ So the unit run is **evidence, not acceptance**. #3119 records these tests prove
 on 2026-10-08; a re-run is justified only by this branch's `research/SKILL.md` differing from
 the v19 snapshot.
 
-**The live half is blocked on a decision, not on work:** the hosted alpha has `AUTO_CONTINUE`
-off for cost (2026-10-12), which is the switch for continuous research. Turning it back on is
-the lead's call.
+**The live half needs a decision, not work, and both preconditions for asking it have
+now merged.** The hosted alpha has `AUTO_CONTINUE` off for cost (2026-10-12). Nothing in
+the repo turns it off — `Settings.auto_continue` defaults `True` and neither
+`deploy/fly.toml` nor the web client sets it — the lead turned it off on the deployment
+himself, so it is an operator-set Fly secret and invisible to the codebase. The agreed
+order was: land the enforcement half, have the lower nudge cap already in place, then
+flip. #3372 merged 2026-10-13 and #3393 (cap 60 → 30) merged the same day, so the only
+remaining step is asking for the secret to be unset. Recorded in
+`research-as-a-job-decisions.md`.
 
 ### 4. Eval-run debt
 
@@ -169,6 +220,26 @@ to an agent could never resolve — which is how `ut_init_project_009` broke sil
 days after project-status converted.
 
 ## What we found (each measured, none assumed)
+
+0. **Six defects in one afternoon of running the thing, none caught by ~15,700 passing
+   tests.** The branch's suites were green before and after each. In order found:
+   `entryIdentity` reading camelCase from a snake_case document; the mock agent minting
+   duplicate ids on a seeded project (React: rows "may be duplicated and/or omitted");
+   `make proto-up` dead on a stale minio service; `entryIdentity` printing one value
+   twice; all three blob routes answering 500 on an undefined name; and every session
+   reporting `job_state: "new"`.
+
+   **Every one was a seam between two correct pieces** — the function right and nothing
+   feeding it, the route right and a name undefined, the image pin right and the command
+   stale. A unit test sees one piece; only running it sees the seam. Three of the six
+   were behind rows in this very file that said "built".
+
+   The one that generalises has a guard now: undefined names were the second `NameError`
+   to reach a running tier, so ruff F821 went repo-wide
+   (`eval/harness/tests/unit/test_undefined_name_lint.py`) rather than being fixed twice.
+   The rest are the argument for the manual plan in
+   `research-as-a-job-phase2-test-plan.md`.
+
 
 1. **An offer at the end of a skill body can be a load-bearing STOP.** Removing the
    question let `search-full-text` write `assertions`/`sources`/tree `persons` (all
@@ -213,8 +284,8 @@ days after project-status converted.
 | Item | State | Needs |
 |---|---|---|
 | R1 router re-entry | **BUILT** — per-turn system prompt, plus the ledger recording which callee a Skill/Task call names | Nothing |
-| R4 `delivered` outcome | **BUILT** end to end — tool, hook arm, outcome, label, spec | The enforcement half is #3372, in review. Note the gap it closes was NOT "no instruction": `DELIVERY_GUIDANCE` named the tool on both hosted planes all along. The router body said "end your turn" at the same moment and the nearer instruction won — a conflict, not an absence |
-| "Not every turn is a job" finish line | **BUILT**, across #3147 (the exit), #3187 (the bounded/job decision), #3235 (save what the turn finds), #3286 (compound asks) — all merged — and #3372 (the enforcement half) **in review** | Keep the "in review" qualifier until #3372 merges: if it is rejected this row is wrong again |
+| R4 `delivered` outcome | **BUILT and MERGED** end to end — tool, hook arm, outcome, label, spec | The enforcement half, #3372, merged 2026-10-13. Note the gap it closes was NOT "no instruction": `DELIVERY_GUIDANCE` named the tool on both hosted planes all along. The router body said "end your turn" at the same moment and the nearer instruction won — a conflict, not an absence |
+| "Not every turn is a job" finish line | **BUILT and fully merged**, across #3147 (the exit), #3187 (the bounded/job decision), #3235 (save what the turn finds), #3286 (compound asks) and #3372 (the enforcement half, merged 2026-10-13) | Nothing. The "in review" qualifier this row carried is discharged |
 | Capture a real feed | **DONE 2026-09-29** — `docs/captures/2026-09-29-mcandrew-children/`. 133 min, outcome `completed`, 2,697 events, 282 narration paragraphs | Nothing |
 | `sdk_stream_silence` | **Retry fixed** (`74b477107`) — the threshold was never the defect; a 1s/2s/4s backoff put all three attempts inside ~7s of a three-minute stall. **Residual upstream flake remains**: the 2026-09-30 re-run records 0–2 aborts per run, `ut_research_plan_005` the repeat offender | Nothing here. Do not write a bare "fixed" — the retry is fixed, the flake is not |
 | #2927 | **CLOSED 2026-10-03** | Nothing |
