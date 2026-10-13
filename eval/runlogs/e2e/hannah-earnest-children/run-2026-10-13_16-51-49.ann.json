@@ -1,0 +1,10 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "The right child was found and correctly placed to the right parents, but on very weak evidence (census-derived, ~1 year off on birth date, no christening record recovered) that the match is correct, and no proof conclusion was written."
+  },
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145"
+}
