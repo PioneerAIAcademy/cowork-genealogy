@@ -692,13 +692,22 @@ export class PgS3ProjectStore implements ProjectStore {
       if (r.rowCount === 0) throw enoent(this.projectId, rel);
       return JSON.stringify(r.rows[0].doc, null, 2);
     }
-    // An unlocked read can lose a race with an overwrite, which points the row
-    // at a new object and deletes the old one between this lookup and the GET.
-    // A missing object under a key the row no longer names is that race, so
-    // follow the row; one it still names is a genuinely absent ref.
+    const bytes = await this.readObject(rel);
+    if (!bytes) throw enoent(this.projectId, rel);
+    return bytes;
+  }
+
+  /**
+   * A blob or staged ref's bytes, or `null` when no row names it. A read can
+   * lose a race with an overwrite that takes no lock of the reader's, which
+   * points the row at a new object and deletes the old one between the lookup
+   * and the GET. A missing object under a key the row no longer names is that
+   * race, so follow the row; one it still names is a genuinely absent ref.
+   */
+  private async readObject(rel: string): Promise<Uint8Array | null> {
     let row = await this.indexRow(rel);
     for (let attempt = 0; ; attempt++) {
-      if (!row) throw enoent(this.projectId, rel);
+      if (!row) return null;
       try {
         return await this.getObject(row.s3_key, rel);
       } catch (e) {
@@ -808,8 +817,7 @@ export class PgS3ProjectStore implements ProjectStore {
     // lock already serialises it.
     const body = async (): Promise<void> => {
       await this.touchProject();
-      const existing = await this.indexRow(rel);
-      const head = existing ? await this.getObject(existing.s3_key, rel) : new Uint8Array();
+      const head = (await this.readObject(rel)) ?? new Uint8Array();
       await this.putObjectIndexed(rel, route, Buffer.concat([head, Buffer.from(text, "utf-8")]));
     };
     if (this.tx()) return body();

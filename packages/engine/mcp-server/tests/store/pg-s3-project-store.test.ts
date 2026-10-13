@@ -925,29 +925,57 @@ if (!DSN || !ENDPOINT) {
           expect(r.rows[0].doc).toEqual({ v: 3 });
         }));
 
+      /** Before each of the first `times` GETs, a second store overwrites `ref`
+       *  with `v1\n`, `v2\n`…: the row moves to a new object and the old one is
+       *  deleted between the reader's index lookup and its GET — the
+       *  interleaving vitest-pg hit as a conformance failure on PR #3358. */
+      async function raceGets<T>(projectId: string, ref: string, times: number, read: () => Promise<T>) {
+        const writer = new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR });
+        const send = backend.s3.send.bind(backend.s3) as (...a: unknown[]) => Promise<unknown>;
+        let raced = 0;
+        const spy = vi.spyOn(backend.s3, "send").mockImplementation((async (cmd: unknown, ...rest: unknown[]) => {
+          if (raced < times && cmd instanceof GetObjectCommand) {
+            raced++;
+            // Outside the reader's async context, or the writer would join the
+            // reader's transaction rather than race it as another call does.
+            const v = Buffer.from(`v${raced}\n`);
+            await backend.transactions.exit(() => writer.writeBytes(ANCHOR, ref, v));
+          }
+          return send(cmd, ...rest);
+        }) as never);
+        try {
+          const result = await read();
+          return { result, raced };
+        } finally {
+          spy.mockRestore();
+        }
+      }
+
       it("an unlocked read that loses a race with an overwrite returns the new bytes, not ENOENT", () =>
         withProject(async ({ projectId, store }) => {
-          // The overwrite lands between the read's index lookup and its GET:
-          // the row moves to a new object and the old one is deleted — the
-          // interleaving vitest-pg hit as a conformance failure on PR #3358.
           const ref = "results/match-scores.jsonl";
           await store.writeBytes(ANCHOR, ref, Buffer.from("old\n"));
-          const writer = new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR });
-          const send = backend.s3.send.bind(backend.s3) as (...a: unknown[]) => Promise<unknown>;
-          let raced = false;
-          const spy = vi.spyOn(backend.s3, "send").mockImplementation((async (cmd: unknown, ...rest: unknown[]) => {
-            if (!raced && cmd instanceof GetObjectCommand) {
-              raced = true;
-              await writer.writeBytes(ANCHOR, ref, Buffer.from("new\n"));
-            }
-            return send(cmd, ...rest);
-          }) as never);
-          try {
-            expect(await store.readText(ANCHOR, ref)).toBe("new\n");
-            expect(raced).toBe(true);
-          } finally {
-            spy.mockRestore();
-          }
+          const { result, raced } = await raceGets(projectId, ref, 1, () => store.readText(ANCHOR, ref));
+          expect(raced).toBe(1);
+          expect(result).toBe("v1\n");
+        }));
+
+      it("a read that loses the race again on each retry still follows the row", () =>
+        withProject(async ({ projectId, store }) => {
+          const ref = "results/match-scores.jsonl";
+          await store.writeBytes(ANCHOR, ref, Buffer.from("old\n"));
+          const { result, raced } = await raceGets(projectId, ref, 3, () => store.readText(ANCHOR, ref));
+          expect(raced).toBe(3);
+          expect(result).toBe("v3\n");
+        }));
+
+      it("an append whose read loses a race with an unlocked overwrite appends to the new bytes", () =>
+        withProject(async ({ projectId, store }) => {
+          const ref = "results/match-scores.jsonl";
+          await store.writeBytes(ANCHOR, ref, Buffer.from("old\n"));
+          const { raced } = await raceGets(projectId, ref, 1, () => store.appendText(ANCHOR, ref, "tail\n"));
+          expect(raced).toBe(1);
+          expect(await store.readText(ANCHOR, ref)).toBe("v1\ntail\n");
         }));
 
       it("a read whose object is gone under the key the row still names is ENOENT", () =>
