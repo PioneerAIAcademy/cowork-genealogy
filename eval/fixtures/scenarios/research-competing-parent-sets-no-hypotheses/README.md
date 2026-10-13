@@ -20,4 +20,4 @@ The real project was messier when proof-conclusion ran. It had 10 positive log e
 
 ## PII
 
-The persons are deceased, public Family Tree persons already named on public issue #3177, and the competing parent sets are the finding under test. Names are kept, as for a recorded e2e run.
+The persons are deceased, public Family Tree persons already named on public issue #3177, and the competing parent sets are the finding under test. Names are kept, as for a recorded e2e run. The carve left four leftovers in place: the removed 1802 death date is still mentioned at `research.json:56` and `research.json:101`; S3 (M233) and S5 (M602) are source descriptions no fact references, at `tree.gedcomx.json:743` and `:755`; and pli_001's rationale cites log_001, which the carve removed.
