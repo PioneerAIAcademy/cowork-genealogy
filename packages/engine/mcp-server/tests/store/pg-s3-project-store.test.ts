@@ -925,6 +925,45 @@ if (!DSN || !ENDPOINT) {
           expect(r.rows[0].doc).toEqual({ v: 3 });
         }));
 
+      it("an unlocked read that loses a race with an overwrite returns the new bytes, not ENOENT", () =>
+        withProject(async ({ projectId, store }) => {
+          // The overwrite lands between the read's index lookup and its GET:
+          // the row moves to a new object and the old one is deleted — the
+          // interleaving vitest-pg hit as a conformance failure on PR #3358.
+          const ref = "results/match-scores.jsonl";
+          await store.writeBytes(ANCHOR, ref, Buffer.from("old\n"));
+          const writer = new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR });
+          const send = backend.s3.send.bind(backend.s3) as (...a: unknown[]) => Promise<unknown>;
+          let raced = false;
+          const spy = vi.spyOn(backend.s3, "send").mockImplementation((async (cmd: unknown, ...rest: unknown[]) => {
+            if (!raced && cmd instanceof GetObjectCommand) {
+              raced = true;
+              await writer.writeBytes(ANCHOR, ref, Buffer.from("new\n"));
+            }
+            return send(cmd, ...rest);
+          }) as never);
+          try {
+            expect(await store.readText(ANCHOR, ref)).toBe("new\n");
+            expect(raced).toBe(true);
+          } finally {
+            spy.mockRestore();
+          }
+        }));
+
+      it("a read whose object is gone under the key the row still names is ENOENT", () =>
+        withProject(async ({ projectId, store }) => {
+          const ref = "images/a.jpg";
+          await store.writeBytes(ANCHOR, ref, new Uint8Array([1]));
+          const row = await backend.pool.query("SELECT s3_key FROM blobs WHERE project_id = $1 AND key = $2", [
+            projectId,
+            ref,
+          ]);
+          await backend.s3.send(
+            new DeleteObjectsCommand({ Bucket: BUCKET, Delete: { Objects: [{ Key: row.rows[0].s3_key }] } }),
+          );
+          await expect(store.readBytes(ANCHOR, ref)).rejects.toMatchObject({ code: "ENOENT" });
+        }));
+
       it("readText of a document parses back to the written value", () =>
         withProject(async ({ store }) => {
           const value = { b: [1, { c: "x" }], a: null, n: 1.5, s: "é — “quoted”" };

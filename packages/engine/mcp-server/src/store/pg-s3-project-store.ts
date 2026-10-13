@@ -692,9 +692,22 @@ export class PgS3ProjectStore implements ProjectStore {
       if (r.rowCount === 0) throw enoent(this.projectId, rel);
       return JSON.stringify(r.rows[0].doc, null, 2);
     }
-    const row = await this.indexRow(rel);
-    if (!row) throw enoent(this.projectId, rel);
-    return this.getObject(row.s3_key, rel);
+    // An unlocked read can lose a race with an overwrite, which points the row
+    // at a new object and deletes the old one between this lookup and the GET.
+    // A missing object under a key the row no longer names is that race, so
+    // follow the row; one it still names is a genuinely absent ref.
+    let row = await this.indexRow(rel);
+    for (let attempt = 0; ; attempt++) {
+      if (!row) throw enoent(this.projectId, rel);
+      try {
+        return await this.getObject(row.s3_key, rel);
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== "ENOENT" || attempt >= 4) throw e;
+        const now: { s3_key: string } | null = await this.indexRow(rel);
+        if (now?.s3_key === row.s3_key) throw e;
+        row = now;
+      }
+    }
   }
 
   async list(projectPath: string, dirRef: string): Promise<ProjectEntry[]> {
