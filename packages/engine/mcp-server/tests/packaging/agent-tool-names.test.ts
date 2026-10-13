@@ -648,12 +648,14 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // locality-guide (issue #2117) holds exactly the eleven tools the skill it
-  // replaced declared, plus `Read`: Step 6 persists only when research.json
-  // exists at the project path, and the narration line reads it.
+  // locality-guide (issue #2117) holds the eleven MCP tools the skill it
+  // replaced declared, plus `catalog_search` (issue #3107), plus `Read`:
+  // Step 6 persists only when research.json exists at the project path, and
+  // the narration line reads it.
   "locality-guide.md": {
     tools: [
       "Read",
+      "catalog_search",
       "collections_search",
       "external_links_search",
       "place_population",
@@ -684,6 +686,22 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "wiki_read",
       "wiki_search",
       "wikipedia_search",
+    ],
+    denies: [],
+  },
+
+  // New agent (issue #3273), not a conversion, no hook route. It surveys before a
+  // project exists, so it holds no `Read`, no `project_context` and no writer:
+  // there is no research.json to read or write. `tree_gaps` finds the holes;
+  // the other five check what FamilySearch has for them.
+  "tree-survey.md": {
+    tools: [
+      "collections_search",
+      "person_quality",
+      "person_record_matches",
+      "place_search",
+      "record_search",
+      "tree_gaps",
     ],
     denies: [],
   },
@@ -850,6 +868,24 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   "translation.md": {
     tools: ["Read"],
+    denies: [],
+  },
+
+  // The folded init-project skill (issue #2122) holds the tools that skill
+  // declared less `place_search` (project_create standardizes places), plus
+  // `Read`, which it had as the main thread: a large `person_read` result is
+  // persisted to a file the agent pages through. Its `research_append` is laned
+  // to `project` (which it owns), `researcher_profile`, `known_holdings` and
+  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // so no spawn tool.
+  "init-project.md": {
+    tools: [
+      "Read",
+      "person_read",
+      "person_search",
+      "project_create",
+      "research_append",
+    ],
     denies: [],
   },
 };

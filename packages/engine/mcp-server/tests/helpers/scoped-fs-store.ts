@@ -46,12 +46,16 @@ export class ScopedFsStore implements ProjectStore {
   }
 
   private assertAnchor(projectPath: unknown): void {
+    if (typeof projectPath !== "string" || projectPath.trim() === "") {
+      throw new Error("projectPath is required");
+    }
     if (!this.isAnchor(projectPath)) {
       throw new Error(`projectPath '${String(projectPath)}' is not this store's project (${SCOPED_ANCHOR})`);
     }
   }
 
   async withTransaction<T>(projectPath: string, fn: () => Promise<T>): Promise<T> {
+    if (typeof projectPath !== "string" || projectPath.trim() === "") return fn();
     this.assertAnchor(projectPath);
     return this.inner.withTransaction(this.map(projectPath), fn);
   }

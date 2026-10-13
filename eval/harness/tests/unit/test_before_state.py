@@ -361,3 +361,119 @@ def test_conflict_values_win_the_budget_over_source_detail(monkeypatch):
     # ...while the fat source detail is what yields (its id stays complete above).
     assert "detail omitted for prompt size: src_001" in rendered
     assert "src_001" in rendered  # id still present in the never-clipped id list
+
+
+# --- Project state beyond sources and conflicts (issue #2478) ---------------
+#
+# A scenario README used to paraphrase questions, plans and the tree for the
+# judge. These blocks render that state from the fixture itself, so a judge
+# brief carries only what the JSON cannot say.
+
+from harness.orchestrator import _STATE_BLOCK_NOTE  # noqa: E402
+
+
+def _project_state() -> dict:
+    return {
+        "research_json": {
+            "questions": [{"id": "q_001", "question": "Who were Patrick's parents?",
+                           "status": "open", "rationale": "r" * 50}],
+            "plans": [{"id": "pl_001", "question_id": "q_001", "status": "active",
+                       "items": [{"id": "pli_001"}, {"id": "pli_002"}]}],
+            "hypotheses": [{"id": "h_001", "status": "active", "claim": "c"}],
+            "log": [{"id": "log_001", "notes": "n" * 500}, {"id": "log_002"}],
+        },
+        "tree_gedcomx_json": {
+            "persons": [{"id": "I1", "gender": "Male", "facts": [{"type": "Birth"}],
+                         "names": [{"given": "Patrick", "surname": "Flynn", "preferred": True}]}],
+            "relationships": [{"id": "R1", "type": "ParentChild", "parent": "I2", "child": "I1"}],
+        },
+    }
+
+
+def test_project_state_blocks_render_each_section():
+    rendered = _summarize_before_state(_project_state())
+    for label in (
+        "research.json questions on file before this run",
+        "research.json plans on file before this run",
+        "research.json hypotheses on file before this run",
+        "research.json log entries on file before this run",
+        "tree.gedcomx.json persons on file before this run",
+        "tree.gedcomx.json relationships on file before this run",
+    ):
+        assert label in rendered, label
+    for token in ("q_001", "Who were Patrick's parents?", "pl_001", '"item_count": 2',
+                  "h_001", "log_002", "Patrick Flynn", "R1", '"parent": "I2"'):
+        assert token in rendered, token
+
+
+def test_project_state_blocks_carry_their_own_label():
+    rendered = _summarize_before_state(_project_state())
+    assert rendered.count(_STATE_BLOCK_NOTE) >= 6
+
+
+def test_project_state_renders_only_the_projected_fields():
+    rendered = _summarize_before_state(_project_state())
+    assert "r" * 50 not in rendered  # question rationale
+    assert "n" * 500 not in rendered  # log notes: ids only
+    assert '"facts"' not in rendered  # person facts are not projected
+    assert '"claim"' not in rendered  # hypotheses: id and status only
+
+
+def test_log_renders_ids_without_a_detail_block():
+    rendered = _summarize_before_state({"research_json": {"log": [{"id": "log_001"}]}})
+    assert "log_001" in rendered
+    assert "log entries on file before this run (ids only)" in rendered
+    assert "per-entry detail" not in rendered
+
+
+def test_empty_project_state_sections_render_nothing():
+    before = {"research_json": {"questions": [], "plans": [], "log": []},
+              "tree_gedcomx_json": {"persons": [], "relationships": []}}
+    assert _summarize_before_state(before) == "(none)"
+
+
+def test_project_state_ids_survive_a_tiny_budget(monkeypatch):
+    from harness import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_BEFORE_STATE_MAX_CHARS", 10)
+    rendered = orchestrator._summarize_before_state(_project_state())
+    for sid in ("q_001", "pl_001", "h_001", "log_001", "log_002", "I1", "R1"):
+        assert sid in rendered, sid
+
+
+def test_source_detail_keeps_its_budget_ahead_of_project_state():
+    from harness import orchestrator
+
+    before = _project_state()
+    before["research_json"]["sources"] = [{"id": "src_001", "citation": "CITATION_TEXT"}]
+    full = orchestrator._summarize_before_state(before)
+    i_src = full.index("CITATION_TEXT")
+    i_q = full.index("Who were Patrick's parents?")
+    assert i_src < i_q
+
+
+def test_no_sources_or_conflicts_is_stated_when_other_state_exists():
+    from harness.orchestrator import _NO_SOURCES_OR_CONFLICTS
+
+    rendered = _summarize_before_state(
+        {"tree_gedcomx_json": {"persons": [{"id": "I1", "names": []}]}}
+    )
+    assert rendered.startswith(_NO_SOURCES_OR_CONFLICTS)
+    with_source = _summarize_before_state({
+        "research_json": {"sources": [{"id": "src_001"}]},
+        "tree_gedcomx_json": {"persons": [{"id": "I1", "names": []}]},
+    })
+    assert _NO_SOURCES_OR_CONFLICTS not in with_source
+
+
+def test_many_log_ids_do_not_crowd_out_source_detail(monkeypatch):
+    from harness import orchestrator
+
+    monkeypatch.setattr(orchestrator, "_BEFORE_STATE_MAX_CHARS", 2_000)
+    before = {"research_json": {
+        "sources": [{"id": "src_001", "citation": "CITATION_TEXT"}],
+        "log": [{"id": f"log_{i:04d}"} for i in range(500)],
+    }}
+    rendered = orchestrator._summarize_before_state(before)
+    assert "CITATION_TEXT" in rendered
+    assert "log_0499" in rendered

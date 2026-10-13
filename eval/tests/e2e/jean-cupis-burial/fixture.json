@@ -1,0 +1,19 @@
+{
+  "id": "jean-cupis-burial",
+  "name": "Jean-Baptiste Cupis — burial in May 1788, Montreuil, France",
+  "genre": "record-hint",
+  "source_pid": "K642-XP9",
+  "captured": "2026-10-12",
+  "researcher_question": "When and where was Jean-Baptiste Cupis buried? He was the son of Ferdinand-Joseph Cupis and Marie-Anne De Smedt, was christened in Brussels on 23 November 1711, married Constance Dufour in 1729, and died on 30 April 1788.",
+  "tags": {
+    "question_type": "death_date",
+    "era": "1780s",
+    "geography": "FR"
+  },
+  "model": {
+    "agent": "claude-sonnet-4-6",
+    "judge": "claude-haiku-4-5-20251001"
+  },
+  "difficulty": "medium",
+  "notes": "Record-hint fixture (filtered-list-samples-3.csv row 3, hint-samples.csv row 68, flags adds_birth/adds_burial, confidence 3). Resolved 2026-10-12 (#3326): true match. The 1 May 1788 Montreuil parish burial of Jean Baptiste de Cupis (ark:/61903/1:1:DRKL-YZMM) is K642-XP9, decided on the index alone; the page transcription failed calibration and was discarded, so image_basis is off."
+}

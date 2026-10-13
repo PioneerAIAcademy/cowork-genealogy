@@ -45,7 +45,7 @@ does not expose.
 | US federal census · 1790–1840 · 1850 · 1860 · 1870 · 1880 · 1890 · 1900 · 1910 · 1920 · 1930 · 1940 · 1950 | **wiki** — `United_States_Census`, and its own per-year `United_States_Census_{year}` links |
 | England & Wales census · 1841 · 1851 onward | **wiki** — `England_Census`, which carries more than this file did (1921, 1931, the 1939 Register) |
 | Applying this | **body** — Step 4: state what the schedule recorded, label the rest inferred **for any uncollected field**; a missing field is not a defective record; a blank field that did exist is meaningful; state censuses follow their own schedules; an immigration-year mismatch is not automatically a conflict |
-| Phrasing a pre-1880 household | **tool (already)** — `requirePre1880CensusHedge` in `research-log-append.ts` refuses the unhedged claim at the write boundary, and `test_pre1880_census_structure_marked_inferred` grades it. `rubric.md` forbids the judge re-grading it |
+| Phrasing a pre-1880 household | **tool (already)** — `requirePre1880CensusHedge` in `research-log-append.ts` refuses the unhedged claim at the write boundary, and `test_pre1880_census_structure_marked_inferred` checks that a refused search is logged again. `rubric.md` forbids the judge re-grading it |
 | Sources | delete — superseded by the probe table below |
 
 **Read the gate's real scope before trusting it.** It skips Ireland, Canada,
@@ -338,6 +338,25 @@ card and a decision, not a fourth prose attempt — filed as issue #3054.
 
 **Read this before re-wording the Norway entry.** Three variants have been
 measured; a fourth needs a mechanism, not a rewrite.
+
+**Resolved 2026-10-08 by a mechanism keyed on the surname, not the collection.**
+The decision went past the data-source blocker above: `record_search` now
+returns `surnameVariantHints` on a search that did not find its subject whenever
+a surname field ends in `-datter`/`-dotter`, listing `dr`/`dtr`/`d` forms from
+the wiki's Norway and Sweden Naming Customs pages. That needs no plugin file and
+no per-collection table (record-search spec, "`surnameVariantHints`"). Measured
+with `--runs-per-test 10`, the only difference being the hint:
+
+| | per-run | `record_search` calls per run |
+|---|---|---|
+| Without the hint (test restored, nothing else changed) | 4 pass / 6 fail | passing 2; failing 9–12 |
+| With the hint | **10 pass / 0 fail**, every dimension 3 | 2 in 8 runs; 4–5 in two that also tried the other forms after the hit |
+
+All six baseline failures had one cause: no call ever sent an abbreviated
+surname. (One also tripped `test_capture_pending_item_not_terminal` on the
+escalation path the failure led to; with the hint no run reached it.) The new
+`test_surname_variant_hints_followed` validator ran and passed in all ten runs.
+The Norway entry in `collection-quirks.md` is unchanged.
 
 ## The ARK sentence was innocent; the "Collect impartially" rewording was not
 

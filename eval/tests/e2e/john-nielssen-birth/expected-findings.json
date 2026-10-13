@@ -1,0 +1,19 @@
+{
+  "findings": [
+    {
+      "id": "f1",
+      "type": "fact",
+      "description": "John Nielssen was born in 1846; the 1877 Bygland baptism of his son Torjus gives the father, Jon Nilson, a birth year of 1846 and the mother, Anne Torjusdatter of Klep, 1852. The entry states no birthplace for him.",
+      "details": {
+        "subject_person": "John Nielssen (KHKC-867)",
+        "fact_type": "Birth",
+        "date": "1846",
+        "place": "not stated (record from Bygland, Aust-Agder, Norway)"
+      },
+      "supporting_sources": [
+        "Norway, Church Books, 1797-1958 — baptism entry for Torjus, son of Jon Nilson and Anne Torjusdatter, 17 Oct 1877"
+      ],
+      "required": true
+    }
+  ]
+}

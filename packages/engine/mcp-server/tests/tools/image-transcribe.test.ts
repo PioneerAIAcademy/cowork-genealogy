@@ -32,12 +32,12 @@ import {
 } from "../../src/utils/image-store.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
-import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import {
   runWithProjectStore,
   type ProjectStore,
 } from "../../src/store/project-store.js";
 import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
+import { backingStore, fileStoreOnly } from "../helpers/store-backend.js";
 
 /** The tool's return is `ImageTranscribeResult | NoProjectResult` (#2048); every
  *  test here expects a transcription, so the no-project arm is a failure. */
@@ -527,7 +527,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
     ).rejects.toThrow(/rejected \(401\)/);
   });
 
-  it("sends the 401 to the config file, never to the chat", async () => {
+  it("sends the 401 to where the key is set, never to the chat", async () => {
     mockOpenRouterStatus(401);
     const message = await transcribe({
       imageId: "004884748_02613",
@@ -535,8 +535,10 @@ describe("imageTranscribeTool — key / auth errors", () => {
       () => "",
       (e: unknown) => (e instanceof Error ? e.message : String(e))
     );
-    // The rejected key is replaced in config.json, so the instruction must
-    // name that file and must not route a fresh key through a tool call.
+    // The rejected key is replaced in the extension's settings or config.json,
+    // so the instruction must name both and must not route a fresh key through
+    // a tool call.
+    expect(message).toContain("Settings → Extensions → Genealogy Research");
     expect(message).toContain("~/.familysearch-mcp/config.json");
     expect(message).not.toMatch(/configure_openrouter/i);
     expect(message).not.toMatch(/\b(?:ask|paste|send|share|enter)\b/i);
@@ -748,7 +750,7 @@ describe("imageTranscribeTool — hard image cap (#3010, spec §5.8)", () => {
   });
 
   it("a failed log write never fails the read, and the in-process count still refuses", async () => {
-    const real = new FsProjectStore();
+    const real = backingStore();
     const failingAppend = Object.assign(Object.create(Object.getPrototypeOf(real)), real, {
       appendText: async () => {
         throw new Error("S3 down");
@@ -1100,6 +1102,7 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
   });
 
   it("names a missing file, and rejects a directory", async () => {
+    fileStoreOnly("a ref naming a directory has no Postgres meaning: refs name rows");
     await expect(transcribe({ file: "uploads/nope.jpg", projectPath: dir }, LOCAL)).rejects.toThrow(
       /'uploads\/nope.jpg' was not found under the project folder/,
     );
@@ -1120,6 +1123,7 @@ describe("imageTranscribeTool — `file` input (#2048)", () => {
   });
 
   it("rejects a ref that escapes the project through a symlink (the store's containment guard)", async () => {
+    fileStoreOnly("a symlink has no Postgres meaning");
     const outside = await mkdtemp(join(tmpdir(), "imgt-outside-"));
     try {
       await writeFile(join(outside, "secret.jpg"), JPEG);

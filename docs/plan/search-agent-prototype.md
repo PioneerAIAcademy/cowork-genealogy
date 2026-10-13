@@ -678,14 +678,12 @@ reachable too — but the **verdict body is not**: those live in the file, and `
 is a required schema field. The documented fallback is to re-invoke `@plugin:gps-mentor`,
 so every gated transition becomes a redundant paid delegation rather than a blocked
 one. Correct, and expensive. 64 corpus reads target `<project>/evaluations/**`.
-**And the gate itself is a filename glob**, not a query: `research/SKILL.md` says to
-check `evaluations/` for a `proof-critique-<ps_id>-*.json` and for a
-`<focus>-<target_id>-*.json` newer than the target's last change — two instructions
-against a directory that will not exist, in a skill whose `allowed-tools` are only
-`validate_research_schema` and `research_query`. Both sites must be rewritten to
-compare `research_query({section:"evaluations", targetId, focus})` timestamps. Same
-"the grant alone is inert" shape as `gps-mentor` below; add both to the D6–8 site
-list.
+**The orchestrator-side filename-glob gate is gone.** `research/SKILL.md` used to check
+`evaluations/` for a `proof-critique-<ps_id>-*.json` and a `<focus>-<target_id>-*.json`;
+issue #2951 took `gps-mentor` off the default `/research` path, and both instructions
+went with it. What remains is the agent's own existing-verdict check, which reads the
+`evaluations[]` array through `research_query` — the same "the grant alone is inert"
+shape as `gps-mentor` below.
 
 **The reproducible counts**, over 161 runs and 4,950 `Read` calls, **matching on paths
 normalised with `\` → `/`**: **1,025** under `**/references/**`, **226** under
@@ -2477,7 +2475,10 @@ that write fixtures to disk hold 1,120 of them) run against the Postgres backend
 writing their fixtures through `getProjectStore()` instead of
 `writeFile` (a test-helper refactor, one file at a time, with `PROTO_STORE=pg` selecting
 the backend), and the unit harness's engine gains the same switch so at least one paid
-run per skill has landed on Postgres before beta. Recorded as R14.
+run per skill has landed on Postgres before beta. Recorded as R14. The tool-suite half
+is built (U15, `docs/plan/familysearch-handoff.md`), by a routing test store that mirrors
+each fixture directory into Postgres rather than by the fixture refactor, and every unit
+suite has run once on Postgres (`run_tests.py --store pg`, 2026-10-12).
 
 **Prove totality with a lint, not with 48 ports.** `no-fs-outside-store.test.ts`,
 modelled on the existing `no-bare-fetch.test.ts`, banning `fs` imports outside the

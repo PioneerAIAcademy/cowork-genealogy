@@ -89,6 +89,18 @@ const placeIdRepsCache = new Map<string, string[]>();
  *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
 
+/** Test-only: when set, `resolveStandardPlace` answers from this table (keyed
+ *  by the place text, normalized) and never reaches the network; a place not in
+ *  it resolves to null. The eval harness sets it from the test's own
+ *  `place_search` fixtures so a live `project_create` stays offline. */
+let placeTableForTests: Map<string, string | null> | null = null;
+
+/** Test-only: install (or, with null, remove) the table above. */
+export function __usePlaceTableForTests(table: Record<string, string | null> | null): void {
+  placeTableForTests =
+    table === null ? null : new Map(Object.entries(table).map(([k, v]) => [normalizeKey(k), v]));
+}
+
 /** Test-only: clear every cache so cases don't bleed into each other. */
 export function __clearPlaceResolverCachesForTests(): void {
   standardizeCache.clear();
@@ -496,6 +508,7 @@ export async function resolveStandardPlace(
   originalText: string,
   opts: ResolveOpts = {},
 ): Promise<string | null> {
+  if (placeTableForTests) return placeTableForTests.get(normalizeKey(originalText)) ?? null;
   if (!normalizeKey(originalText)) return null;
   if (placeSegments(originalText).length === 1 && !opts.contextName) {
     return resolveBareName(originalText, opts);

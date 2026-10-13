@@ -27,7 +27,7 @@ The format and harness in this spec target **single-turn skill evaluation**. The
 
 **Multi-turn skills — covered via decomposition.** Two skills have multi-turn workflows in production. Both are testable in v1, but with reduced coverage:
 
-- **`init-project`** — production workflow asks the user for the research objective. For testing, put the full objective into `user_message`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The skill should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not whether the skill asks for the objective when the message is vague; that coverage is deferred.
+- **`init-project`** (an agent) — production workflow asks the user for the research objective. For testing, put the full objective into `input.delegation`: *"Create a project to identify parents of Patrick Flynn, born ~1845 PA, died 1908 Schuylkill Co."* The agent should write a valid `research.json` and `tree.gedcomx.json` without needing follow-ups. v1 tests cover *structural output* but not whether the agent asks for the objective when the message is vague; that coverage is deferred.
 - **`search-external-sites`** — production workflow is "generate URL → user pastes capture → analyze capture." Decompose into two single-turn tests:
   - *URL generation test* — positive test under `search-external-sites`. The skill generates a search URL; grade on URL correctness, log entry shape.
   - *Capture analysis test* — positive test under `record-extraction` (the receiving skill) with the pasted capture content embedded in `user_message`. Grade as a normal extraction.
@@ -106,9 +106,34 @@ eval/fixtures/scenarios/<scenario-name>/
   research.json        # Starting research.json state
   tree.gedcomx.json    # Starting tree.gedcomx.json state
   README.md            # Human-readable description for the UI dropdown
+  judge-brief.md       # What the judge reads about this scenario (optional)
 ```
 
 Both JSON files must conform to their respective schemas (`docs/specs/research-schema-spec.md` and `docs/specs/simplified-gedcomx-spec.md`).
+
+**`judge-brief.md` is the judge's copy; `README.md` is the author's.** The judge's
+`{scenario_readme}` slot reads `judge-brief.md` whole when it exists, and the README
+only when it does not (`harness/scenario_brief.py::load_scenario_brief`, shared by
+the live run and `make judge-regrade`). A brief carries only what the fixture JSON
+cannot say, because `{before_state}` already renders the project state from the
+JSON: that the data is synthetic and every tool response mocked, and which parts
+of the state are intentional rather than defects. It never states what a correct
+run does, and every concrete claim in it is checked against the fixture files: a
+false statement of content leaks as badly as a verdict. Provenance, authoring
+notes and "what it exercises" stay in the README, which reaches no grader once a
+brief exists. An empty brief is a deliberate "tell the judge nothing" and renders
+`(scenario brief intentionally empty)`, distinct from `(stateless test)`. A
+scenario with neither file still stages its state, so it renders
+`(scenario has no judge brief or README)`, never `(stateless test)`.
+
+The README fallback exists until every referenced scenario has a brief. It is
+reported, never silent: each fallback run carries a `scenario_readme_fallback`
+entry in `output.warnings` (a harness advisory, not a judge rule), or
+`scenario_brief_missing` when the scenario has neither file, the end of every
+suite prints `N test(s) graded without a judge brief, on a README or nothing`,
+and a regrade prints the same count. Removing the fallback is the last step of
+the brief sweep. A scenario name must match its directory exactly; a mis-cased
+name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
 **How scenarios reach Claude:** The harness creates a temp directory per test, copies scenario files into it, and sets it as the `cwd` for the Claude Agent SDK session. Skills read `research.json` and `tree.gedcomx.json` with the `Read` tool exactly as they do in Cowork — no mocking of file I/O. See Section 15 for full details.
 
@@ -136,7 +161,7 @@ Any count bullet you write in a real scenario README is checked against its
 
 Scenario creation tooling (the form-based UI that generates valid JSON) is specified in [`eval-crud-ui-spec.md`](eval-crud-ui-spec.md). Until that UI ships, scenarios are dev-authored; until a needed scenario exists, tests that reference it via `scenario_notes` fail the runnability gate (§9).
 
-Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md is **hand-authored** — no generator exists, and the file is pasted verbatim into the judge prompt as `{scenario_readme}` (§ "Judge prompt"), so it is a second source of truth the judge is told to believe. Any count it states is therefore pinned against `research.json` by `test_scenario_readme_counts_match_research_json` (`eval/harness/tests/unit/test_scenario_fixtures.py`), which fails CI on a mismatch. The lint reaches counts only: prose such as a delta against a parent scenario, or an "everything else is identical" claim, is unchecked.
+Scenarios are reusable. When a junior creates a new scenario (or a dev creates one on their behalf), other juniors can select it from the dropdown for their tests. The README.md and judge-brief.md are **hand-authored** — no generator exists, and the brief (or, until one exists, the README) is pasted verbatim into the judge prompt as `{scenario_readme}` (§ "Judge prompt"), so it is a second source of truth the judge is told to believe. Any count either file states is therefore pinned against `research.json` by `test_scenario_readme_counts_match_research_json` (`eval/harness/tests/unit/test_scenario_fixtures.py`), which fails CI on a mismatch. The lint reaches counts only: prose such as a delta against a parent scenario, or an "everything else is identical" claim, is unchecked.
 
 **When to create a new scenario vs reuse:** If an existing scenario is close to what you need, select it and describe the differences in `scenario_notes`. If 3+ tests need the same modification, promote to a new named scenario.
 
@@ -895,7 +920,7 @@ Guidelines for writing `judge_context` notes:
   **The leak is not confined to `judge_context`** — three other channels reach the same dimension, and no rule about notes touches any of them. If the note says "score 3 if it reasons about X", nothing else may state X. Apply the neutrality test to:
   - **`input.user_message`** — handing the skill the reasoning under test lets it pass by echoing the prompt. **`input.delegation` is deliberately exempt** (§5.2.1): a direct-agent test's adversarial delegation names the artifact and pre-states the answer on purpose, because resisting exactly that is what it grades.
   - **the scenario's `research.json`** — plan-item rationales are read by the skill and are the natural place to restate the answer.
-  - **the scenario's `README.md`** — this one reaches the **judge**, not the skill: `_load_scenario_readme` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A "What it exercises" bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write those bullets as the *capability* under test, never the correct outcome.
+  - **the scenario's `judge-brief.md`, or its `README.md` while it has no brief** — this one reaches the **judge**, not the skill: `load_scenario_brief` reads the whole file and it is rendered verbatim in the judge prompt under "Scenario summary". A bullet phrased as "the skill must do X" is therefore an answer key delivered straight to the grader, and it applies to every test sharing that scenario at once. Write a brief per §3.1; a README that still reaches the judge is held to the same rule.
 
   **Negative tests are the deliberate exception.** The harness generates their framing itself (`_negative_judge_context`), including "a clear, accurate decline is a full pass" and "score Correctness and Completeness as fail (1)". Those are verdicts by design: a negative test grades the routing decision, runs on an empty rubric, and without the framing the judge reads a correct decline as a failed attempt. Don't rewrite them, and don't read this rule as forbidding them. The route the framing names is `correct_skill` **minus the skill under test**: a test listing itself there would otherwise be told its correct route is the skill it must not run, and a list that empties renders the "decline without invoking any skill" arm.
 
@@ -1269,7 +1294,7 @@ Three independent layers. Each feeds results into the run log. The layers do not
 | Layer | What | Model | Sees | Output |
 |-------|------|-------|------|--------|
 | Layer 1: Deterministic | Structural correctness | Python (no LLM) | Full before/after state + tool calls | Binary pass/fail per check |
-| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario README + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
+| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario judge brief (README fallback) + before-state + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
 | Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
 
 **Layer 2 runs on every non-aborted run, including one whose Layer 1 validators failed.** The failing validator names are handed to the judge, which grades the substantive dimensions and discounts the defect itself. The run's outcome is already `fail` (Section 7); grading it buys the per-dimension diagnosis. Only an abort skips Layer 2.
@@ -1372,7 +1397,8 @@ For skills where tool work *is* the work (e.g., `search-records`, `search-full-t
 
 | Input | What | Why |
 |-------|------|-----|
-| Scenario README | 3-5 line summary of research state | Context without sending 700+ lines of JSON |
+| Scenario judge brief | What the fixture JSON cannot say (synthetic data, intentional state); the README while no brief exists (§3.1) | Context the before-state cannot carry, without a verdict |
+| Before-state | Project state rendered from the fixture JSON | Ground truth for "not on file" claims, without sending 700+ lines of JSON |
 | User message | What the user asked | The task the skill was supposed to accomplish |
 | Claude's full text response | Everything Claude said | Evaluate reasoning quality, not just file changes |
 | research.json diff | Entries added/modified | The structural output to evaluate |
@@ -1390,25 +1416,33 @@ The judge prompt template lives at `eval/harness/judge/prompt.md`. The system pr
 ```
 {rubric}                            — contents of eval/tests/unit/<skill>/rubric.md
 {judge_context}                     — bullet list from the test JSON
-{scenario_readme}                   — scenario README.md, or "(stateless test)"
+{scenario_readme}                   — scenario judge-brief.md; README.md while no brief exists; "(scenario brief intentionally empty)" for an empty brief; "(scenario has no judge brief or README)" for a scenario with neither; "(stateless test)" with no scenario
 {user_message}                      — verbatim from the test; on a direct-agent test, the `delegation` under a one-line harness label (§5.2.1)
 {skills_invoked}                    — list of skills Claude actually invoked, with each agent the main thread spawned inserted in call order as `<name> (agent)`; on a direct-agent test, the agent that was spawned (no skill runs)
 {text_response}                     — Claude's full output text (or sidecar ref)
 {file_changes_summary}              — pre-rendered diff summary, ~500 tokens max
 {tool_calls}                        — list of MCP calls with args + matched fixture
-{before_state}                      — sources and conflicts on file BEFORE the run
+{before_state}                      — project state on file BEFORE the run: conflicts, sources, then questions, plans, hypotheses, log ids, tree persons and relationships
 ```
 
-`{before_state}` renders the project's `sources` and `conflicts` as they existed
-*before* the skill ran, so the judge can mechanically check "not on file" /
-"fabricated" claims against the record. Each block renders its complete
-`count` + `all_ids` first (never clipped — that is the existence-check ground
-truth), then a heavy `detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`;
-conflicts render first so their preferred/competing assertion **values**
-(resolved from `assertions[]`) win the budget over source-citation detail. A
-dropped entry is named in an omission note, and `(none)` means the project had
-no prior sources or conflicts. Added-this-run material appears under
-`{file_changes_summary}`, not here.
+`{before_state}` renders the project's state as it existed *before* the skill
+ran, so the judge can mechanically check "not on file" / "fabricated" claims
+against the record. Each block renders its complete `count` + `all_ids` first
+(never clipped — that is the existence-check ground truth), then a heavy
+`detail` sample trimmed under `_BEFORE_STATE_MAX_CHARS`; conflicts render first
+so their preferred/competing assertion **values** (resolved from `assertions[]`)
+win the budget, then sources. After them come the rest of the project state,
+each projected to a few fields: questions (id, question, status),
+plans (id, question_id, status, item count), hypotheses (id, status), the
+research log (ids only), and the tree's persons (id, name, gender) and
+relationships (id, type, endpoints). The template's heading still names only
+sources and conflicts, because editing it moves `judge_prompt_hash`; so each of
+these blocks carries its own label inside the rendered value, ending "Project
+state for context; not a statement of what the skill should do." This is the
+state a scenario README used to paraphrase, which is why a judge brief carries
+only what the JSON cannot say. A dropped entry is named in an omission note,
+and `(none)` means the project had none of this state. Added-this-run material
+appears under `{file_changes_summary}`, not here.
 
 Each call's `response_summary` renders **every** result, not a 3-item sample:
 a grounding rubric marks a correct citation of result 4+ as fabricated when the
@@ -1420,6 +1454,14 @@ cap was rejected — it only moves the cliff.
 `{skills_invoked}` is provided to the judge as diagnostic context, not as a grading input. The wrong-skill detection for positive and negative tests is already deterministic (Section 7 per-run outcome) — the judge doesn't decide whether the right skill was chosen, only how well it executed. Including `skills_invoked` in the prompt lets the judge write more grounded rationales ("the right skill was invoked but it skipped the citation step") rather than guessing what ran. The slot names each agent the skill spawned as well, because `skills_invoked` holds `Skill` calls only: a test's `judge_context` can ask whether the skill delegated to an agent (`ut_init_project_q7b` does), and without the spawns the judge answered that blind. The slot is filled as a value, not edited in the template, so adding the spawns did not move `judge_prompt_hash`.
 
 The template is versioned with the harness; its SHA-256 hash is recorded in the run log as `judge_prompt_hash`. The skill rubric's content hash is recorded as `rubric_hash`. A change to either invalidates apples-to-apples comparison with prior runs and forces a re-baseline.
+
+**`make judge-regrade` is the cheap satisfaction path for a judge-prompt edit.** A judge-prompt change does not alter what the skill under test produced — only how that output is graded. A full `make eval-skill` run across every stale suite would cost roughly $95 to answer a question that needs no skill run; a regrade costs roughly $5 of judge-only spend. `make judge-regrade` re-renders the judge prompt from disk for every test (bypasses `judge.judge_prompt_template()`'s `@lru_cache` — nothing stores or replays a rendered prompt, which is how a prose-only judge edit otherwise certifies as a no-op), calls `judge.grade(...)` fresh, re-runs the post-judge pipeline (including `flag_routing_negative_judge_fail` + `_compute_outcome`), and writes the log back with the refreshed `judge_prompt_hash` + `judge_model`. It leaves `review_sample` and every `.ann.json` byte-identical — a human corrected score grades the skill's output, which the regrade did not change. Rule 2b in `check_runlogs.py` BLOCKS on a judge-prompt-only PR until the committed scores and hash are refreshed, with a warn-only fallback when the baseline log is already skill-side stale (rule 2 blocks for its own reason there; a regrade cannot satisfy an inactive log). The regrade **refuses** on a skill-side-stale log rather than silently rewriting scores against inputs the skill never saw. `DRY=1` renders every eligible prompt and hashes it without a model call — used by `make harness-test` to prove the renderer reads from disk on every call.
+
+**The regrade builds the before-state the way a live run does**: `build_workspace` stages the scenario and `snapshot_files` reads it back, the two calls the orchestrator makes. It once hand-built that snapshot under the file names as keys, which `_summarize_before_state` does not read, so every regraded prompt carried a `(none)` before-state the live run never sent. The two committed logs regraded that way (`validate-schema/v1`, `gps-mentor/v3`) moved no score. The parity test now builds its live side from those calls rather than from any regrade helper, and gives the scenario a source so the slot is not empty on both sides.
+
+**Scratch mode measures a judge input without certifying anything.** `make judge-regrade SCRATCH=<dir>` (`--runlogs-root`) copies each skill's latest committed log into `<dir>/<skill>/` and regrades the copy; the committed log is never written. It waives both refusals above, because the input it exists to measure, a scenario `judge-brief.md`, stales the skill-side snapshot without moving `judge_prompt_hash`. `SCENARIO="a b"` keeps only tests on those scenarios, `SLOT=readme` forces each scenario's README into the judge slot so an A/B runs both arms on one tree, and `DRY=1` renders and counts without a model call or a write. Each pass needs a fresh dir, given as an absolute path. Scratch mode refuses a relative path, a `SCENARIO` that names no scenario directory, and any `<skill>/` dir that already holds a log, all before the first judge call, so no pass regrades another's output; it exits non-zero when no test matched; and it deletes a skill's copy whose regrade failed, since that copy still holds the committed scores. Copies are not schema-validated on write: they are never committed, and a stale log can predate a later schema field. `eval/harness/scripts/compare_regrades.py <dir> <dir> …` lines the passes up per test, run and dimension. Compare arm against arm, never against the committed score, which was graded on whatever inputs that run saw.
+
+**Why a brief stays in the skill-side snapshot.** A judge brief changes only grades, like `rubric.md` and `judge_context`, and all three sit in the snapshot, so editing any of them stales the committed log and owes a paid `make eval-skill` run for it; a scratch regrade measures the effect but does not refresh the committed log. Moving judge-only files out of the snapshot (a judge-side snapshot partition) was ruled not planned on 2026-09-10 (1 of 1009 PR-level commits since 2026-06-01 changed a judge-side file with no skill-side file), so that is a separate decision, not this mode's.
 
 **Structured output.** The judge invokes Claude with tool_use forcing a single tool call against a `submit_grading` tool with this input schema:
 
@@ -1526,6 +1568,8 @@ This composition cleanly handles all edge cases:
 - `runs_per_test: 5+` — only when calibrating a high-variance rubric dimension and you specifically need a tighter estimate of per-dimension stability.
 
 `run_tests.py --no-tool-search` (Makefile `eval-skill ... TOOL_SEARCH=0`) is the other CLI-only override: it sends `ENABLE_TOOL_SEARCH=false`, so every tool schema is loaded up front instead of deferred behind ToolSearch. It is experiment-only — the invocation is non-releasable and writes a `scratch_` log, by the same mechanism as `--runs-per-test N` — and the run log records it as `tool_search: false` (see "Field details").
+
+`run_tests.py --store pg` (Makefile `eval-skill ... STORE=pg`, U15) is the third: every live tool call runs on `PgS3ProjectStore` against the compose Postgres + MinIO instead of the workspace directory. `mock_mcp._run_node_eval` preloads `eval/harness/harness/pg_store_prelude.mjs` into each `node --eval`. The workspace is seeded into its own Postgres project once, right after `build_workspace` (`seed_pg_workspace`), and every tool write is mirrored back, so snapshots, validators and the judge run unchanged; a file the agent writes with its own Write tool after the seed is not imported, as on the hosted path. The run is non-releasable, records `store: "pg"`, and writes to `eval/runlogs/unit-pg/<skill>/` — committed, outside every skill's release lineage and `check_runlogs`. It is judged by parity, not graded: `make unit-pg-parity` compares each skill's Postgres results with its newest file-store log and fails on a live response that reads as a store fault. These logs are scratch-named, so the keep-newest-5 prune never touches them (~20 MB a full pass): a full re-run of a skill supersedes its earlier `unit-pg/` logs — delete them in the same PR. A partial re-run keeps them, because the parity report merges a skill's logs newest-first per test.
 
 So `flaky` never fires in a *committed* run log and no cross-PR dashboard surfaces a flapping test. **That is the committed instrument being blind, not the suite being stable** — do not cite a silent `flaky` column as evidence that a test is consistent. To check a test you suspect, surface its flakiness deliberately: `run_tests.py --test <id> --runs-per-test 3 --runlogs-root <tmp>`, then read `flaky` and the per-dimension scores off the scratch log. Treat any disagreement between those runs as a bug to fix before the test is trusted again.
 
@@ -1907,6 +1951,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1). The
 - **`flaky`** — true when the per-run outcomes are not unanimous. Composes orthogonally with `outcome` (Section 7). A test can be `outcome: pass, flaky: true` (modal-passing but unstable).
 - **`harness_version`** — the semver of the harness package. Bumping the harness (new validator, new judge prompt scaffolding, fixture-matching changes) invalidates apples-to-apples comparison with prior runs. Pinning the version makes that explicit.
 - **`rubric_hash` / `judge_prompt_hash`** — SHA-256 of the rubric and judge prompt template files at run time. A change to either silently invalidates historical scores; recording the hash forces a re-baseline rather than letting old runs look comparable.
+- **`judge_model`** — identifier of the judge model used for this run log (optional, envelope-level; absent on logs committed before the field was added). Lets a judge-model change be dated and compared rather than silently invalidating historical scores. Reversed the earlier "project-global, not per-run-versioned" rule (`eval/CLAUDE.md` § "Model Pinning"); `make judge-regrade` stamps this field alongside the refreshed `judge_prompt_hash` on each regraded log.
+- **`store`** (envelope) — `"pg"` under `--store pg`; absent on the file store, as on every earlier log. Also picks the directory: `unit-pg/` instead of `unit/`.
 - **`tool_search`** (envelope) — `true`, or `false` under `--no-tool-search`. Written on every log the harness writes, the default included; optional in the schema and absent on logs written before it existed, which all ran with tool search on and are read that way. Recorded so `make unit-compare` names a differing setting ("run settings that differ") instead of reporting a cost move with no changed file as wobble.
 - **Every token field covers every model the run touched** — the main thread plus
   any plugin agent it delegated to. They are read from the SDK's per-model ledger
@@ -2529,7 +2575,7 @@ After the skill executes and output is captured:
      → No: continue
      ↓
 2. Run LLM judge (Haiku)
-   Inputs: scenario README, user message, text output, diffs, tool calls, rubric, judge_context
+   Inputs: scenario judge brief (README fallback), before-state, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
 3. Write run log to eval/runlogs/unit/<skill>/v1_<timestamp>.json
@@ -2597,7 +2643,7 @@ The following seed files exist in the repo as working references for harness dev
 
 Two scenarios are shipped today: `mid-research-flynn` and `flynn-with-birthplace-conflict` (both under `eval/fixtures/scenarios/`). The full list of bootstrap scenarios devs must seed for Phase 1 — including which are still needed — lives in [`docs/skill-mcp-testing-plan.md`](../skill-mcp-testing-plan.md) under "Sequencing > Phase 1." That's the single source of truth for scenario inventory and priority; this section links rather than restates to prevent drift.
 
-Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`. The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
+Each scenario directory contains `research.json`, `tree.gedcomx.json`, and `README.md`, and optionally the `judge-brief.md` the judge reads in the README's place (§3.1). The two JSON files must validate against [`research.schema.json`](schemas/research.schema.json) and [`tree-gedcomx.schema.json`](schemas/tree-gedcomx.schema.json).
 
 ### MCP Fixtures
 
