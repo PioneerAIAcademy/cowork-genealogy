@@ -4,14 +4,14 @@
     "skill": "research",
     "name": "Routes a no-project, no-objective request to the tree-survey agent",
     "type": "positive",
-    "description": "The user starts /research in an empty folder and states no person or question: \"what should I research?\". No research.json exists and there is no objective, so the router spawns @plugin:tree-survey (no projectPath) instead of init-project, relays its suggestions, and stops for the researcher's pick; init-project follows only once the researcher picks (issue #3273). The message enters /research; a bare \"what should I research in my tree?\" is matched by tree-survey's own description and never reaches the router. tree-survey is stubbed so the test does not depend on a live survey.",
+    "description": "The user starts /research in an empty folder and asks to start a new project, stating no person or question. No research.json exists and there is no objective, so the router spawns @plugin:tree-survey (no projectPath) instead of init-project, relays its suggestions, and stops for the researcher's pick; init-project follows only once the researcher picks (issue #3273). The message enters /research; a bare \"what should I research in my tree?\" is matched by tree-survey's own description and never reaches the router. tree-survey is stubbed so the test does not depend on a live survey.",
     "tags": [
       "routing",
       "routes-to:tree-survey"
     ]
   },
   "input": {
-    "user_message": "/research Get me started. I have no person or question in mind yet.",
+    "user_message": "/research Let's start a new research project.",
     "scenario": "empty-folder-no-project"
   },
   "execution": {
