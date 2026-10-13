@@ -85,11 +85,11 @@ jobs:
           # `^eval/triggering/` also gate the repo-wide encoding lint
           # (tests/unit/test_encoding_lint.py, issue #1285) and the Unix-only
           # import lint (test_unix_only_import_lint.py, issue #3310), which
-          # AST-scan every .py in the repo: the job must run whenever a scanned
-          # .py under those trees changes, or a reintroduced bare
-          # open()/read_text() or top-level `import pwd` there merges green. All apps/ Python lives under apps/server/, so
-          # ^apps/server/ (not the broader ^apps/) is exact coverage -- apps/web and
-          # apps/electron hold no .py.
+          # AST-scan every .py in the repo. `\.py$` (issue #3310) is the catch-all
+          # for both: a .py in a new location (tools/, docs/) otherwise merges
+          # unscanned and the failure lands on the next unrelated PR. All apps/
+          # Python lives under apps/server/, so ^apps/server/ (not the broader
+          # ^apps/) is exact coverage -- apps/web and apps/electron hold no .py.
           #
           # `^\.claude/skills/(.*\.py$|lib/tests/)` (issue #2621): the suite under
           # .claude/skills/lib/tests/ covers merge-issues/slots.py, and the ruff step
@@ -101,10 +101,8 @@ jobs:
           # non-.py fixture landing there still triggers the job.
           #
           # `^scripts/` (issue #1776): test_setup_feedback_case.py shells out to
-          # scripts/setup-feedback-case.sh, and the encoding lint above AST-scans
-          # scripts/claude-hooks/*.py — the only scanned .py outside the trees
-          # already matched here. Without it a scripts/-only diff reported success
-          # without running either check.
+          # scripts/setup-feedback-case.sh. Without it a scripts/-only diff
+          # reported success without running it.
           #
           # `^packages/engine/plugin/agents/` (issue #2745): check_rubric_tool_drift.py
           # scans agent bodies, and test_no_stale_suppressions asserts every
@@ -113,7 +111,7 @@ jobs:
           # on main -- and the failure then lands on whichever unrelated later PR does
           # match a pattern here. The trailing slash is load-bearing: without it a
           # sibling path like `agents-notes.md` would match too.
-          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^packages/engine/plugin/agents/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.claude/skills/(.*\.py$|lib/tests/)|^\.github/workflows/eval-harness-tests\.yml$'
+          PATTERNS: '^eval/harness/|^eval/runlogs/|^packages/engine/plugin/skills/|^packages/engine/plugin/hooks/|^packages/engine/plugin/agents/|^apps/server/|^eval/triggering/|^eval/fixtures/|^eval/tests/|^docs/specs/schemas/|^packages/schema/schemas/|^packages/engine/mcp-server/|^scripts/|^\.claude/skills/(.*\.py$|lib/tests/)|^\.github/workflows/eval-harness-tests\.yml$|\.py$'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

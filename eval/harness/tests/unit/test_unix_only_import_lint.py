@@ -13,7 +13,8 @@ class bodies and module-level ``if``/``try``/``with``/``for``/``match``
 blocks all run on import. There is no exemption for ``try: ... except ImportError``
 or ``if sys.platform ...``; the fix is a function-local import, as in
 ``turn_users.parse``. ``from .pwd import x`` (``level > 0``) is a local module and
-is not flagged.
+is not flagged. The body of an ``if TYPE_CHECKING:`` block never runs, so it is
+not flagged; its ``else:`` branch does run and is.
 
 The lint checks where an import is written, not what runs: a module-level call
 to a function holding a lazy import (``_X = _uid()``) still imports ``pwd`` on
@@ -52,8 +53,8 @@ LAZY_EXAMPLE = "apps/server/proto/worker/turn_users.py"
 
 # 504 .py files on 2026-10-12. parents[3] lands on eval/, which has its own
 # CLAUDE.md and 340 .py files -- the floor sits above that so a wrong root fails
-# here, not just on the LAZY_EXAMPLE check.
-MIN_FILES_SCANNED = 450
+# here, not just on the LAZY_EXAMPLE check, and leaves room for a cleanup PR.
+MIN_FILES_SCANNED = 400
 
 
 class _ImportTimeImports(ast.NodeVisitor):
@@ -65,6 +66,15 @@ class _ImportTimeImports(ast.NodeVisitor):
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         return
+
+    def visit_If(self, node: ast.If) -> None:
+        test = node.test
+        name = test.id if isinstance(test, ast.Name) else getattr(test, "attr", None)
+        if name == "TYPE_CHECKING":
+            for child in node.orelse:
+                self.visit(child)
+            return
+        self.generic_visit(node)
 
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
@@ -141,6 +151,16 @@ def test_import_time_shapes_are_flagged():
     assert _offenders_in("with x:\n    import termios") == [(2, "termios")]
     assert _offenders_in("for _ in x:\n    import tty") == [(2, "tty")]
     assert _offenders_in("match x:\n    case 1:\n        import pty") == [(3, "pty")]
+    assert _offenders_in("if TYPE_CHECKING:\n    pass\nelse:\n    import pwd") == [(4, "pwd")]
+    assert _offenders_in("if not TYPE_CHECKING:\n    import pwd") == [(2, "pwd")]
+
+
+def test_every_unix_only_module_is_flagged():
+    # Issue #3310's list, spelled out so a dropped or mistyped UNIX_ONLY entry fails.
+    issue_list = "pwd grp fcntl termios resource posix syslog crypt spwd pty tty curses readline"
+    for module in issue_list.split():
+        assert _offenders_in(f"import {module}") == [(1, module)], module
+        assert _offenders_in(f"from {module} import x") == [(1, module)], module
 
 
 def test_lazy_and_local_shapes_are_not_flagged():
@@ -152,6 +172,8 @@ def test_lazy_and_local_shapes_are_not_flagged():
     assert _offenders_in("from . import pwd") == []
     assert _offenders_in("import pwdx\nimport posixpath") == []
     assert _offenders_in("from os import path") == []
+    assert _offenders_in("if TYPE_CHECKING:\n    import resource") == []
+    assert _offenders_in("if typing.TYPE_CHECKING:\n    from pwd import struct_passwd") == []
 
 
 def test_turn_users_lazy_import_is_accepted():
