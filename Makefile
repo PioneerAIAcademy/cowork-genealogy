@@ -530,8 +530,9 @@ proto-grant: ## U3: sign in on the dev key and store the dev-login patron's gran
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
 # refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
-# unless the caller sets it non-empty): a lookup on a project-less session is never
-# "completed", so the hook would veto every stop and end the turn no_progress. `:-0`,
+# unless the caller sets it non-empty). A lookup on a project-less session used to be
+# vetoed and end no_progress; a session with no research.json is no longer nudged (issue
+# #3274), but the pin stays because lifting it changes what a paid probe run does. `:-0`,
 # not `-0`: an empty value would reach compose's `:-60` on the web tier and turn it on.
 .PHONY: proto-turn
 proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)

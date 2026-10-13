@@ -37,6 +37,7 @@ from typing import Any
 #   decision         the agent asked something only the patron can answer (phase 3)
 #   delivered        a BOUNDED request was met and the turn stopped on purpose
 #   mcp_unavailable  the genealogy tool surface went away
+#   ok               the session has no research.json; the browser shows nothing
 #
 # The point of having more than one: ``complete()`` used to hardcode 'ok', so EVERY way a
 # run ended looked like success -- including the two ways an unattended run actually ends.
@@ -53,6 +54,11 @@ TERMINAL_DECISION = "decision"
 # renders it as nothing, while a delivery has something to report.
 TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
+# A session with no research.json: nothing to nudge toward, so the stop is allowed. It is
+# `ok` ("ended with no terminal reason", per the note above `delivered`) because the browser
+# leaves that unlabelled, where `delivered` would render "Done" on a turn that may have
+# stopped to ask for a person id.
+TERMINAL_OK = "ok"
 
 
 # The signal that produces TERMINAL_DELIVERED above. Shared because BOTH planes match on
@@ -214,13 +220,21 @@ def should_continue_run(
              isn't making progress, so another nudge won't either), a message the patron
              typed mid-turn is waiting (1b), the agent has asked something only the patron
              can answer (the clause phase 3 fills in), the agent met a BOUNDED request and
-             stopped on purpose (`delivered`), or the genealogy MCP surface is
+             stopped on purpose (`delivered`), there is no research.json (lead ruling
+             2026-10-12, issue #3274), or the genealogy MCP surface is
              gone -- which neither plane can observe today, so callers leave the default.
 
     ``stopped`` is FIRST, ahead of everything. None of the original four paths is "the
     patron stopped", and the no-progress escape cannot stand in for one: a halted call
     still writes a tool_calls row and the counter counts ROWS, so it moves and that escape
     never fires.
+
+    ``research is None`` sits just before ``project_completed``, so a project-less session
+    still ends ``stopped``, ``delivered`` and so on when one of those is why it ended. It is
+    an ``is None`` test, not a falsy one: ``read_research_json`` returns None for a missing,
+    unreadable and corrupt file alike, while an empty ``{}`` document is a project that has
+    not started and still reads as incomplete. The nudge says to re-read research.json, which
+    cannot help a session that has none.
 
     The four added flags default False, so the harness's own truth table -- which the first
     five parameters are a port of -- still describes this function exactly.
@@ -239,6 +253,8 @@ def should_continue_run(
     if pending_decision:
         return False
     if delivered:
+        return False
+    if research is None:
         return False
     if project_completed(research):
         return False
@@ -281,6 +297,8 @@ def terminal_reason(
         return TERMINAL_DECISION
     if delivered:
         return TERMINAL_DELIVERED
+    if research is None:
+        return TERMINAL_OK
     if project_completed(research):
         return TERMINAL_COMPLETED
     if nudges_used >= max_nudges:

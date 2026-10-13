@@ -13,10 +13,10 @@ network.
 ## Why it is a tool and not a sentence
 
 Since continuous work shipped, the Stop hook vetoes every voluntary stop until
-`project.status` is `completed`. So a request bounded to one deliverable — "create a plan
-but leave it at that", a single christening lookup, "where are we?" — runs on to the proof,
-the nudge cap or the spend bound. The finish line has to belong to the request that named
-it.
+`project.status` is `completed`, except on a session with no `research.json`. So a request
+bounded to one deliverable — "create a plan but leave it at that", a single christening
+lookup, "where are we?" — runs on to the proof, the nudge cap or the spend bound. The
+finish line has to belong to the request that named it.
 
 A hook can match a **tool name** exactly. It cannot rely on prose the model may not honour,
 and prose triggering has been measured flipping about half the time.
