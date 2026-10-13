@@ -55,8 +55,11 @@ eval/runlogs/unit/*/scratch_*.ann.json
 # staging file.
 eval/runlogs/unit/*/.partial_*.json
 eval/runlogs/unit/*/.partial_*.json.tmp
+eval/runlogs/unit-pg/*/.partial_*.json
+eval/runlogs/unit-pg/*/.partial_*.json.tmp
 # Readable per-run reports (`make unit-report`), regenerable from the run log.
 eval/runlogs/unit/*/reports/
+eval/runlogs/unit-pg/*/reports/
 eval/runlogs/e2e/*/reports/
 eval/runlogs/e2e/*/comparison/
 
