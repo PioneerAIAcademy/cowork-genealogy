@@ -11,6 +11,7 @@ import {
   withProjectLock,
   findNestingAncestor,
 } from "../../src/utils/project-io.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("project-io write layer", () => {
   let dir: string;
@@ -92,6 +93,7 @@ describe("project-io write layer", () => {
     });
 
     it("dot-prefixes its temp files so a crash-left temp is a dotfile the feedback bundler skips (issue #2333)", async () => {
+      fileStoreOnly("temp files are the file store's rename mechanism; Postgres writes in one transaction");
       // The feedback bundler skips dotfiles and redacts by exact name, so a
       // NON-dot temp (`tree.gedcomx.json.tmp-<uuid>`) left by a crash between
       // write and rename would ship unredacted. Observe the real temp name
@@ -143,6 +145,7 @@ describe("project-io write layer", () => {
     });
 
     it("a failure injected between the two renames leaves the first new and the second old", async () => {
+      fileStoreOnly("the rename seam has no Postgres counterpart: writeJsonBoth is one transaction there");
       const treePath = join(dir, "tree.gedcomx.json");
       const researchPath = join(dir, "research.json");
       await writeFile(treePath, JSON.stringify({ tree: "old" }), "utf-8");
@@ -178,7 +181,7 @@ describe("project-io write layer", () => {
           // Re-acquiring the SAME project's lock from inside the critical section.
           return withProjectLock(dir, async () => "unreachable");
         }),
-      ).rejects.toThrow(/re-entered for '.*': a locked writer called another/);
+      ).rejects.toThrow(/re-entered for (project )?'.*': a locked writer called another/);
     });
 
     it("catches re-entry reached through a non-lock await chain", async () => {
@@ -225,12 +228,14 @@ describe("project-io write layer", () => {
     });
 
     it("finds an ancestor one level up", async () => {
+      fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
       await writeFile(join(dir, "research.json"), "{}", "utf-8");
       const candidate = join(dir, "sub-project");
       expect(await findNestingAncestor(candidate)).toBe(realDir());
     });
 
     it("finds an ancestor several levels up, returning the FIRST one found", async () => {
+      fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
       await writeFile(join(dir, "research.json"), "{}", "utf-8");
       // A second, nested project between dir and the candidate — the walk
       // must stop at this closer one, not the outer one.
@@ -242,6 +247,7 @@ describe("project-io write layer", () => {
     });
 
     it("still finds the ancestor when projectPath itself does not exist yet", async () => {
+      fileStoreOnly("projects do not nest in Postgres: findNestingAncestor is always null there");
       await writeFile(join(dir, "research.json"), "{}", "utf-8");
       // Nothing on this path below `dir` has been created.
       const candidate = join(dir, "not-created", "yet");

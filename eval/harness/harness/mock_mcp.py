@@ -82,6 +82,7 @@ Current live tools:
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -289,6 +290,82 @@ NODE_EVAL_TIMEOUT_LONG = 60
 NODE_EVAL_TIMEOUT_PATTERN = re.compile(r"timed out after [\d.]+ seconds")
 
 
+#: Preloaded into every node subprocess under ``run_tests.py --store pg`` (U15):
+#: it installs a PgS3ProjectStore-backed store, so the live tools read and write
+#: Postgres + S3 instead of the workspace directory.
+PG_STORE_PRELUDE = Path(__file__).resolve().parent / "pg_store_prelude.mjs"
+
+
+def _store_import_args() -> list[str]:
+    """``["--import", <prelude>]`` when the run is on the Postgres store, else ``[]``.
+
+    Keyed on ``PROTO_STORE=pg``, which ``run_tests.py --store pg`` sets in the
+    harness process (and its node children) after checking the stack's
+    variables. A file URL, so a Windows drive-letter path loads too.
+    """
+    if os.environ.get("PROTO_STORE") != "pg":
+        return []
+    return ["--import", PG_STORE_PRELUDE.as_uri()]
+
+
+def seed_pg_workspace(workspace: Path) -> None:
+    """Under ``--store pg``, write a freshly built workspace into its Postgres
+    project before the agent runs; a no-op on the file store.
+
+    The prelude seeds a workspace on its first store call, so this is that call,
+    made at a known moment: every file the harness staged is in the project, and
+    nothing the agent writes later with its own Write tool is (on the hosted path
+    no such file reaches the store either). Raises with node's stderr on failure,
+    because a run whose seed failed would grade a store that holds nothing.
+    """
+    if os.environ.get("PROTO_STORE") != "pg":
+        return
+    ps_js = _MCP_BUILD / "store" / "project-store.js"
+    posix = str(ps_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    ws = str(workspace).replace("\\", "/").replace("'", "\\'")
+    script = (
+        f"import {{ getProjectStore }} from '{url}';"
+        f" const c = await getProjectStore().classifyProject('{ws}');"
+        " process.stdout.write(JSON.stringify({ c }));"
+    )
+    proc = _run_node_eval(script, timeout=NODE_EVAL_TIMEOUT_LONG)
+    if proc.returncode != 0 or not proc.stdout.strip():
+        raise RuntimeError(
+            f"--store pg: seeding the workspace into Postgres failed: "
+            f"{(proc.stderr or 'no output').strip()[:1000]}"
+        )
+
+
+def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
+    """The store faults the prelude recorded for `workspace` under
+    ``--store pg`` (``HARNESS_PG_FAULT_LOG``, one JSON line each); [] on the
+    file store or when there were none.
+
+    Read from every node process the test spawned — the live tools and the
+    mock-side staging and scoring pipelines alike, which swallow their own
+    failures — so a fault there reaches the run log instead of surfacing a step
+    later as "nothing staged" read as model wobble.
+    """
+    log = os.environ.get("HARNESS_PG_FAULT_LOG")
+    if os.environ.get("PROTO_STORE") != "pg" or not log:
+        return []
+    try:
+        lines = Path(log).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    want = os.path.realpath(workspace)
+    out: list[dict[str, str]] = []
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(entry, dict) and os.path.realpath(str(entry.get("dir", ""))) == want:
+            out.append({"op": str(entry.get("op", "")), "message": str(entry.get("message", ""))})
+    return out
+
+
 def _run_node_eval(
     script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
 ) -> subprocess.CompletedProcess[str]:
@@ -306,7 +383,7 @@ def _run_node_eval(
     only the subprocess invocation itself is shared.
     """
     return subprocess.run(
-        ["node", "--input-type=module", "--eval", script],
+        ["node", *_store_import_args(), "--input-type=module", "--eval", script],
         input=input_str,
         capture_output=True,
         text=True,

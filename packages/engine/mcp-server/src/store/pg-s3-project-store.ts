@@ -414,12 +414,12 @@ const STAGING_DIR = "results/.staging";
 const STAGING_PREFIX = `${STAGING_DIR}/`;
 const BLOB_DIRS = new Set(["results", "images", "uploads"]);
 
-type Route =
+export type Route =
   | { kind: "staging"; stagingId: string }
   | { kind: "blob" }
   | { kind: "document" };
 
-function routeRef(ref: string): Route {
+export function routeRef(ref: string): Route {
   if (ref.startsWith(STAGING_PREFIX)) {
     return { kind: "staging", stagingId: ref.slice(STAGING_PREFIX.length) };
   }
@@ -525,6 +525,11 @@ export class PgS3ProjectStore implements ProjectStore {
   /** For writes and the transaction: a wrong projectPath is an error, never a
    *  silent write somewhere else. */
   private assertAnchor(projectPath: unknown): void {
+    // A missing one gets the answer the tools give it (project-io.ts's
+    // MISSING_PROJECT_PATH_MESSAGE), as the file backend lets it reach them.
+    if (typeof projectPath !== "string" || projectPath.trim() === "") {
+      throw new Error("projectPath is required");
+    }
     if (!this.isAnchor(projectPath)) {
       throw new Error(
         `projectPath '${String(projectPath)}' is not this store's project (${this.anchorPath})`,
@@ -613,6 +618,11 @@ export class PgS3ProjectStore implements ProjectStore {
   // ── ProjectStore ─────────────────────────────────────────────────────────
 
   async withTransaction<T>(projectPath: string, fn: () => Promise<T>): Promise<T> {
+    // A missing projectPath runs the body unlocked, as the file backend does, so
+    // the tool's own read answers it loudly (ok:false, "projectPath is
+    // required") instead of the lock throwing first. Every write it attempts
+    // still refuses: there is no anchor to write to.
+    if (typeof projectPath !== "string" || projectPath.trim() === "") return fn();
     this.assertAnchor(projectPath);
     if (this.tx()) {
       throw new Error(
