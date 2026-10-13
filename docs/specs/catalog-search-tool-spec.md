@@ -488,10 +488,9 @@ the agent previously guessed a mother parish.
 
 ## Not in this spec
 
-The two skill-side callers. `locality-guide` is being replaced by an agent, so
-its grant and the Javorje acceptance test belong to that work; `research-plan`'s
-`planning-standards.md` line is being routed elsewhere and may not survive.
-Editing either here would buy a paid eval run for a file about to move.
+`research-plan`'s `planning-standards.md` line is being routed elsewhere and
+may not survive. Editing it here would buy a paid eval run for a file about to
+move. The `locality-guide` grant and Javorje acceptance test shipped separately.
 
 `search-records` grants the tool and names it in its 0-hit lever and its
 exhaustive-exit checklist (`references/search-strategy-levers.md`); its unit
