@@ -16,6 +16,7 @@ description: >-
 allowed-tools:
   - validate_research_schema
   - research_query
+  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -106,7 +107,7 @@ transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 a status question such as "where are we?".
 Two or more of them in one message is still bounded: deliver each, name each,
-and end the turn when the last one is met. A message that also asks for
+and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
 open-ended research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
@@ -132,13 +133,17 @@ attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
-When a bounded request is met, **end your turn**. Say what you produced first:
-the turn ends where you stop, so anything you were going to add afterwards never
-reaches the researcher. Name what this turn saved and where — "Saved to Susan
-Cornwell: death index, 4 Apr 1892" — and name anything this turn found but did
-not save: the record and the person it was for, not "an extraction did not
-finish". Then offer to take it further, and end. The offer is not
-something you wait for — their answer arrives as the next message.
+When a bounded request is met, **end your turn by calling `research_delivered`**.
+Say what you produced first: the turn ends where you stop, so anything you were
+going to add afterwards never reaches the researcher. Name what this turn saved
+and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
+anything this turn found but did not save: the record and the person it was for,
+not "an extraction did not finish". Then offer to take it further. The offer is
+not something you wait for — their answer arrives as the next message.
+
+Call it last, with a one-sentence summary of what you delivered, after everything
+you want the researcher to read. If you do not already hold its schema, search for
+it by name.
 
 ## What to do
 
@@ -462,8 +467,9 @@ turn to report progress or to say what you'll do next; return to step 2
 of "What to do" and invoke the next sub-skill. (See "Continuous work".)
 
 **A bounded request has a fifth: its deliverable.** When everything the
-message asked for is produced — one deliverable or several — end the turn;
-see §"Bounded request or job".
+message asked for is produced — one deliverable or several — end the turn as
+§"Bounded request or job" says to.
+
 
 ### Candidates, not verdicts
 
