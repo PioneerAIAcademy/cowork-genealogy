@@ -144,9 +144,14 @@ the alpha there is in fact no spend meter at all (ruling 2026-09-25), so the
 nudge cap is not a spend control and must not be described as one.
 
 Recorded here because it existed only in a working session, and PR #3393's
-review asked for a link to it. **What nobody has confirmed:** what actually
-turns `AUTO_CONTINUE` off today. Nothing in `deploy/fly.toml` or the web client
-sets it and `Settings.auto_continue` defaults to `True`, so it is either a Fly
-secret or it is not off at all — `fly secrets list -a genealogy-workbench`
-settles it, and the answer decides whether #3393 is inert until the flip or goes
-live on the next deploy.
+review asked for a link to it.
+
+**How it is off, answered 2026-10-12.** Nothing in the repo turns it off:
+`deploy/fly.toml` does not set it, the web client does not, and
+`Settings.auto_continue` defaults to `True`. The lead turned it off himself, on
+the deployment, so it is an operator-set Fly secret and invisible to the
+codebase. Two consequences worth keeping: #3393's lower cap really is **inert
+until someone unsets that secret**, and the repo's own default is still `True`,
+so anyone reading the code alone will conclude continuous work is on when it is
+not. Checking it needs `fly secrets list -a genealogy-workbench`; there is no
+in-repo answer.
