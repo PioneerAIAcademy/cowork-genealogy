@@ -2334,10 +2334,9 @@ console output is also the artifact stakeholders see.
 
 ## 10. Privacy
 
-All fixtures use deceased-person data only. FamilySearch's terms
-permit this for FS-sponsored work, which covers this project. Each
-fixture's `README.md` states the PID and confirms the person is
-deceased. No additional anonymization for v1.
+All fixtures use deceased-person data only. Each fixture's `README.md`
+states the PID and confirms the person is deceased. No additional
+anonymization for v1.
 
 **This is mechanically enforced, not just a documentation convention.**
 `e2e/author.py`'s `living_gate()` refuses to snapshot a person marked
